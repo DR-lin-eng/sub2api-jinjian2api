@@ -74,8 +74,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { PromptAuditDraft, PromptAuditGroup } from '../types'
-import { cloneData, SCANNER_CATALOG } from '../viewModel'
+import type { PromptAuditDraft, PromptAuditGroup } from '@/features/prompt-audit/domain/models/promptAuditTypes'
+import { cloneData, SCANNER_CATALOG } from '@/features/prompt-audit/domain/promptAuditViewModel'
 
 const props = defineProps<{ draft: PromptAuditDraft; groups: PromptAuditGroup[] }>()
 const emit = defineEmits<{ (event: 'update:draft', value: PromptAuditDraft): void }>()

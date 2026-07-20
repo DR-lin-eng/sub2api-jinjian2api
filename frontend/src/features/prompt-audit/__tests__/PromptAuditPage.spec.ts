@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
-import type { PromptAuditConfig, PromptAuditRuntime } from '../types'
-import { SCANNER_CATALOG } from '../viewModel'
-import PromptAuditView from '../PromptAuditView.vue'
+import type { PromptAuditConfig, PromptAuditRuntime } from '@/features/prompt-audit/domain/models/promptAuditTypes'
+import { SCANNER_CATALOG } from '@/features/prompt-audit/domain/promptAuditViewModel'
+import PromptAuditPage from '@/features/prompt-audit/presentation/pages/PromptAuditPage.vue'
 
 const mocks = vi.hoisted(() => ({
   getConfig: vi.fn(), updateConfig: vi.fn(), probeEndpoint: vi.fn(), getRuntime: vi.fn(), listEvents: vi.fn(),
@@ -53,12 +53,12 @@ const FilterDeleteStub = defineComponent({
 })
 
 function mountView() {
-  return mount(PromptAuditView, {
+  return mount(PromptAuditPage, {
     global: { stubs: { AppLayout: AppLayoutStub, RuntimeOverview: RuntimeStub, EndpointPool: EndpointStub, PolicyPanel: PolicyStub, EventWorkspace: EventsStub, EventDetailDialog: DetailStub, FilterDeleteDialog: FilterDeleteStub, ConfirmDialog: ConfirmStub } },
   })
 }
 
-describe('PromptAuditView', () => {
+describe('PromptAuditPage', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((mock) => mock.mockReset())
     mocks.getConfig.mockResolvedValue(baseConfig())

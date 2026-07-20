@@ -4,7 +4,7 @@ import type {
   PromptAuditEndpointDraft,
   PromptAuditUpdateRequest,
   PromptEventFilters,
-} from './types'
+} from './models/promptAuditTypes'
 
 export const DEFAULT_GUARD_MODEL = 'sileader/qwen3guard:0.6b'
 

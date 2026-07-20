@@ -107,8 +107,8 @@
 import { computed, defineComponent, h, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Pagination from '@/common/widgets/data/Pagination.vue'
-import type { PromptAuditEvent, PromptEventFilters } from '../types'
-import { cloneData, emptyEventFilters, SCANNER_CATALOG } from '../viewModel'
+import type { PromptAuditEvent, PromptEventFilters } from '@/features/prompt-audit/domain/models/promptAuditTypes'
+import { cloneData, emptyEventFilters, SCANNER_CATALOG } from '@/features/prompt-audit/domain/promptAuditViewModel'
 
 const props = defineProps<{
   events: PromptAuditEvent[]; total: number; page: number; pageSize: number

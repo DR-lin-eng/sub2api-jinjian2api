@@ -142,8 +142,8 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import type { PromptAuditEndpointDraft, PromptProbeResult } from '../types'
-import { cloneData, createDefaultEndpoint } from '../viewModel'
+import type { PromptAuditEndpointDraft, PromptProbeResult } from '@/features/prompt-audit/domain/models/promptAuditTypes'
+import { cloneData, createDefaultEndpoint } from '@/features/prompt-audit/domain/promptAuditViewModel'
 
 const props = defineProps<{
   endpoints: PromptAuditEndpointDraft[]

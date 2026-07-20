@@ -120,7 +120,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import type { PromptDeletePreview, PromptEventFilters } from '../types'
+import type { PromptDeletePreview, PromptEventFilters } from '@/features/prompt-audit/domain/models/promptAuditTypes'
 import {
   DELETE_RANGE_PRESETS,
   cloneData,
@@ -128,7 +128,7 @@ import {
   hasExplicitDeleteRange,
   resolveDeleteRangeFilters,
   type DeleteRangePreset,
-} from '../viewModel'
+} from '@/features/prompt-audit/domain/promptAuditViewModel'
 
 const props = defineProps<{
   show: boolean

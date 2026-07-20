@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 import { mount } from '@vue/test-utils'
-import EndpointPool from '../components/EndpointPool.vue'
-import PolicyPanel from '../components/PolicyPanel.vue'
-import EventWorkspace from '../components/EventWorkspace.vue'
-import EventDetailDialog from '../components/EventDetailDialog.vue'
-import FilterDeleteDialog from '../components/FilterDeleteDialog.vue'
-import type { PromptAuditDraft, PromptAuditEndpointDraft, PromptAuditEvent, PromptEventFilters } from '../types'
-import { emptyEventFilters, resolveDeleteRangeFilters, SCANNER_CATALOG } from '../viewModel'
+import EndpointPool from '@/features/prompt-audit/presentation/widgets/EndpointPool.vue'
+import PolicyPanel from '@/features/prompt-audit/presentation/widgets/PolicyPanel.vue'
+import EventWorkspace from '@/features/prompt-audit/presentation/widgets/EventWorkspace.vue'
+import EventDetailDialog from '@/features/prompt-audit/presentation/widgets/EventDetailDialog.vue'
+import FilterDeleteDialog from '@/features/prompt-audit/presentation/widgets/FilterDeleteDialog.vue'
+import type { PromptAuditDraft, PromptAuditEndpointDraft, PromptAuditEvent, PromptEventFilters } from '@/features/prompt-audit/domain/models/promptAuditTypes'
+import { emptyEventFilters, resolveDeleteRangeFilters, SCANNER_CATALOG } from '@/features/prompt-audit/domain/promptAuditViewModel'
 
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')

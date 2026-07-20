@@ -79,8 +79,8 @@
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import type { PromptAuditEvent, PromptIssueSummary } from '../types'
-import { SCANNER_CATALOG } from '../viewModel'
+import type { PromptAuditEvent, PromptIssueSummary } from '@/features/prompt-audit/domain/models/promptAuditTypes'
+import { SCANNER_CATALOG } from '@/features/prompt-audit/domain/promptAuditViewModel'
 
 const props = defineProps<{ show: boolean; event: PromptAuditEvent | null; loading: boolean }>()
 defineEmits<{ (event: 'close'): void }>()

@@ -149,13 +149,13 @@ import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import { useAppStore } from '@/stores/app'
 import { extractApiErrorCode, extractApiErrorMessage } from '@/core/utils/apiError'
-import RuntimeOverview from './components/RuntimeOverview.vue'
-import EndpointPool from './components/EndpointPool.vue'
-import PolicyPanel from './components/PolicyPanel.vue'
-import EventWorkspace from './components/EventWorkspace.vue'
-import EventDetailDialog from './components/EventDetailDialog.vue'
-import FilterDeleteDialog from './components/FilterDeleteDialog.vue'
-import promptAuditAPI from './api'
+import RuntimeOverview from '@/features/prompt-audit/presentation/widgets/RuntimeOverview.vue'
+import EndpointPool from '@/features/prompt-audit/presentation/widgets/EndpointPool.vue'
+import PolicyPanel from '@/features/prompt-audit/presentation/widgets/PolicyPanel.vue'
+import EventWorkspace from '@/features/prompt-audit/presentation/widgets/EventWorkspace.vue'
+import EventDetailDialog from '@/features/prompt-audit/presentation/widgets/EventDetailDialog.vue'
+import FilterDeleteDialog from '@/features/prompt-audit/presentation/widgets/FilterDeleteDialog.vue'
+import promptAuditAPI from '@/features/prompt-audit/api'
 import type {
   PromptAuditDraft,
   PromptAuditEndpointDraft,
@@ -167,8 +167,8 @@ import type {
   PromptEventPage,
   PromptLoadErrors,
   PromptProbeResult,
-} from './types'
-import { buildUpdateRequest, cloneData, configToDraft, draftFingerprint, emptyEventFilters } from './viewModel'
+} from '@/features/prompt-audit/domain/models/promptAuditTypes'
+import { buildUpdateRequest, cloneData, configToDraft, draftFingerprint, emptyEventFilters } from '@/features/prompt-audit/domain/promptAuditViewModel'
 
 const { t, locale } = useI18n()
 const appStore = useAppStore()

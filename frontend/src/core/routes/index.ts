@@ -602,7 +602,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/prompt-audit',
     name: 'AdminPromptAudit',
-    component: () => import('@/features/prompt-audit/PromptAuditView.vue'),
+    component: () => import('@/features/prompt-audit/presentation/pages/PromptAuditPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,

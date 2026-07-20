@@ -74,7 +74,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { PromptAuditRuntime } from '../types'
+import type { PromptAuditRuntime } from '@/features/prompt-audit/domain/models/promptAuditTypes'
 
 const props = defineProps<{ runtime: PromptAuditRuntime | null; loading: boolean; error: string }>()
 defineEmits<{ (event: 'refresh'): void }>()
