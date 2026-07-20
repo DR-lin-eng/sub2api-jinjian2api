@@ -43,7 +43,7 @@ vi.mock('@/features/groups-user/data/datasources/groupsUserDatasource', () => ({
   userGroupsAPI: { getUserGroupRates: vi.fn() },
 }))
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     cachedPublicSettings: null,
     showError: vi.fn(),

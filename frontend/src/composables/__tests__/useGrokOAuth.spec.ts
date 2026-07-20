@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError: vi.fn()
   })

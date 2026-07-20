@@ -159,8 +159,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth'
-import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { useAppStore } from '@/core/stores/appStore'
 import { userAPI } from '@/api'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import type { NotifyEmailEntry } from '@/types'

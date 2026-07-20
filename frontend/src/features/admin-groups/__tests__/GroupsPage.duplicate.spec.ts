@@ -44,11 +44,11 @@ vi.mock('@/api/admin', () => ({
   }
 }))
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({ showSuccess, showError })
 }))
 
-vi.mock('@/stores/onboarding', () => ({
+vi.mock('@/core/stores/onboardingStore', () => ({
   useOnboardingStore: () => ({
     isCurrentStep: vi.fn(() => false),
     nextStep: vi.fn()

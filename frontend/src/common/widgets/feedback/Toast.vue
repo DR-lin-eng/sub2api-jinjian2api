@@ -79,7 +79,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Icon from '@/components/icons/Icon.vue'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 
 const appStore = useAppStore()
 

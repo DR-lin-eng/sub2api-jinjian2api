@@ -1138,7 +1138,7 @@ import type {
   UpdateContentModerationConfig,
 } from '@/features/admin-risk-control/data/datasources/adminRiskControlDatasource'
 import type { AdminGroup, SelectOption } from '@/types'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { formatDateTime as formatDateTimeValue } from '@/core/utils/format'
 

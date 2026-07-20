@@ -75,7 +75,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { useClipboard } from '@/composables/useClipboard'
 import { adminAPI } from '@/api/admin'
 import type { AdminUser, UserAttributeValuesMap } from '@/types'
@@ -83,7 +83,7 @@ import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import UserAttributeForm from '@/features/admin-users/presentation/widgets/UserAttributeForm.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { useStepUp, isStepUpBlocked, isStepUpCancelled, stepUpBlockReason } from '@/composables/useStepUp'
-import TotpStepUpDialog from '@/components/auth/TotpStepUpDialog.vue'
+import TotpStepUpDialog from '@/features/auth/presentation/widgets/TotpStepUpDialog.vue'
 
 const props = defineProps<{ show: boolean, user: AdminUser | null }>()
 const emit = defineEmits(['close', 'success'])

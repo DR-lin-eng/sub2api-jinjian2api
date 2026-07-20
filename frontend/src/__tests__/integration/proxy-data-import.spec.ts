@@ -5,7 +5,7 @@ import ImportDataModal from '@/features/admin-proxies/presentation/widgets/Impor
 const showError = vi.fn()
 const showSuccess = vi.fn()
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError,
     showSuccess

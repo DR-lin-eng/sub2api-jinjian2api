@@ -69,7 +69,7 @@
  * `AppSidebar.NavItem.featureFlag`, where `false` hides the menu entry.
  */
 
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import type { PublicSettings } from '@/types'
 
 export type FeatureFlagMode = 'opt-in' | 'opt-out'

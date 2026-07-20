@@ -45,7 +45,7 @@ vi.mock('vue-i18n', async () => {
   }
 })
 
-vi.mock('@/stores/auth', () => ({
+vi.mock('@/features/auth/presentation/stores/authStore', () => ({
   useAuthStore: () => ({
     user: {
       username: 'demo-user',

@@ -4,7 +4,7 @@ import BulkEditAccountDialog from '@/features/admin-accounts/presentation/widget
 import ModelWhitelistSelector from '@/features/admin-accounts/presentation/widgets/ModelWhitelistSelector.vue'
 import { adminAPI } from '@/api/admin'
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError: vi.fn(),
     showSuccess: vi.fn(),

@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { adminAPI } from '@/api/admin'
 import type { GeminiOAuthCapabilities } from '@/features/admin-accounts/data/datasources/geminiDatasource'
 

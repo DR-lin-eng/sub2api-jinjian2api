@@ -23,11 +23,11 @@ vi.mock('@/api', () => ({
   }
 }))
 
-vi.mock('@/stores/auth', () => ({
+vi.mock('@/features/auth/presentation/stores/authStore', () => ({
   useAuthStore: () => authStoreState
 }))
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showSuccess: showSuccessMock,
     showError: showErrorMock

@@ -28,7 +28,7 @@ vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
   checkUpdates: vi.fn(),
 }))
 
-vi.mock('@/api/auth', () => ({
+vi.mock('@/features/auth/data/datasources/authDatasource', () => ({
   getPublicSettings: vi.fn().mockResolvedValue({}),
 }))
 
@@ -36,14 +36,14 @@ vi.mock('@/api/auth', () => ({
 const mockShowSuccess = vi.fn()
 const mockShowError = vi.fn()
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showSuccess: mockShowSuccess,
     showError: mockShowError,
   }),
 }))
 
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 
 /**
  * 简化的 API Key 创建测试组件

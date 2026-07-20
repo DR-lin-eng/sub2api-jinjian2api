@@ -473,7 +473,7 @@ import Input from '@/common/widgets/forms/Input.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
 import { Icon } from '@/components/icons'
 import { adminAPI } from '@/api/admin'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { formatDateTime } from '@/core/utils/format'
 import type { ScheduledTestPlan, ScheduledTestResult } from '@/types'
 

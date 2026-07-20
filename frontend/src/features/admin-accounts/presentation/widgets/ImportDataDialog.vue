@@ -100,7 +100,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import { adminAPI } from '@/api/admin'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import type { AdminDataImportResult, AdminDataPayload } from '@/types'
 
 interface Props {

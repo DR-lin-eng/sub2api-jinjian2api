@@ -8028,7 +8028,7 @@ import {
   isStepUpBlocked,
   stepUpBlockReason,
 } from "@/composables/useStepUp";
-import TotpStepUpDialog from "@/components/auth/TotpStepUpDialog.vue";
+import TotpStepUpDialog from "@/features/auth/presentation/widgets/TotpStepUpDialog.vue";
 import { affiliatesAPI, type AffiliateAdminEntry, type SimpleUser as AffiliateSimpleUser } from "@/features/affiliate/data/datasources/adminAffiliatesDatasource";
 import { extractApiErrorMessage, extractI18nErrorMessage } from "@/core/utils/apiError";
 import { useAppStore } from "@/stores";

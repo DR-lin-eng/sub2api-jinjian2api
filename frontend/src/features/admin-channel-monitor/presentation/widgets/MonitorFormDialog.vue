@@ -252,7 +252,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { adminAPI } from '@/api/admin'
 import { keysAPI } from '@/features/keys/data/datasources/keysDatasource'

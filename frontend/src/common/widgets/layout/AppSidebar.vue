@@ -739,14 +739,14 @@ const personalNavItems = computed((): NavItem[] => finalizeNav(buildSelfNavItems
 const customMenuItemsForUser = computed(() => {
   const items = appStore.cachedPublicSettings?.custom_menu_items ?? []
   return items
-    .filter((item) => item.visibility === 'user')
-    .sort((a, b) => a.sort_order - b.sort_order)
+    .filter((item: any) => item.visibility === 'user')
+    .sort((a: any, b: any) => a.sort_order - b.sort_order)
 })
 
 const customMenuItemsForAdmin = computed(() => {
   return adminSettingsStore.customMenuItems
-    .filter((item) => item.visibility === 'admin')
-    .sort((a, b) => a.sort_order - b.sort_order)
+    .filter((item: any) => item.visibility === 'admin')
+    .sort((a: any, b: any) => a.sort_order - b.sort_order)
 })
 
 // Admin navigation items

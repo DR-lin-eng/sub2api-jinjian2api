@@ -72,8 +72,8 @@ export async function setLocale(locale: string): Promise<void> {
   // 同步更新浏览器页签标题，使其跟随语言切换
   const { resolveRouteDocumentTitle } = await import('@/core/routes/title')
   const { default: router } = await import('@/core/routes')
-  const { useAppStore } = await import('@/stores/app')
-  const { useAuthStore } = await import('@/stores/auth')
+  const { useAppStore } = await import('@/core/stores/appStore')
+  const { useAuthStore } = await import('@/features/auth/presentation/stores/authStore')
   const { useAdminSettingsStore } = await import('@/features/admin-settings/presentation/stores/adminSettingsStore')
   const route = router.currentRoute.value
   const appStore = useAppStore()

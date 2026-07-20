@@ -78,14 +78,14 @@ vi.mock('@/api', () => ({
   },
 }))
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError,
     showSuccess,
   }),
 }))
 
-vi.mock('@/stores/onboarding', () => ({
+vi.mock('@/core/stores/onboardingStore', () => ({
   useOnboardingStore: () => ({
     isCurrentStep,
     nextStep,

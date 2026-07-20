@@ -6,7 +6,7 @@ const showError = vi.fn()
 const showSuccess = vi.fn()
 const showWarning = vi.fn()
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError,
     showSuccess,

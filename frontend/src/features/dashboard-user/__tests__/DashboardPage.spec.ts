@@ -9,7 +9,7 @@ const { keysList, getDashboardApiKeysUsage } = vi.hoisted(() => ({
   getDashboardApiKeysUsage: vi.fn()
 }))
 
-vi.mock('@/stores/auth', () => ({
+vi.mock('@/features/auth/presentation/stores/authStore', () => ({
   useAuthStore: () => ({
     user: ref({ balance: 0 }),
     isSimpleMode: false,

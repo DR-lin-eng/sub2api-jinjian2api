@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { apiClient } from '@/core/networks/client'
-import { login, register } from '../auth'
+import { login, register } from '@/features/auth/data/datasources/authDatasource'
 import { createCredentialEnvelope } from '@/core/networks/credentialEncryption'
 import type { CredentialEnvelope } from '@/types'
 

@@ -4,8 +4,8 @@
  */
 
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { useAppStore } from '@/core/stores/appStore'
 import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
 import { useAdminComplianceStore } from '@/features/admin-settings/presentation/stores/adminComplianceStore'
 import { useNavigationLoadingState } from '@/composables/useNavigationLoading'
@@ -42,7 +42,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/auth/LoginView.vue'),
+    component: () => import('@/features/auth/presentation/pages/LoginPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'Login',
@@ -52,7 +52,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/register',
     name: 'Register',
-    component: () => import('@/views/auth/RegisterView.vue'),
+    component: () => import('@/features/auth/presentation/pages/RegisterPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'Register',
@@ -62,7 +62,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/email-verify',
     name: 'EmailVerify',
-    component: () => import('@/views/auth/EmailVerifyView.vue'),
+    component: () => import('@/features/auth/presentation/pages/EmailVerifyPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'Verify Email'
@@ -72,7 +72,7 @@ const routes: RouteRecordRaw[] = [
     path: '/auth/callback',
     name: 'OAuthCallback',
     alias: '/auth/oauth/callback',
-    component: () => import('@/views/auth/OAuthCallbackView.vue'),
+    component: () => import('@/features/auth/presentation/pages/OAuthCallbackPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'OAuth Callback',
@@ -82,7 +82,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/auth/linuxdo/callback',
     name: 'LinuxDoOAuthCallback',
-    component: () => import('@/views/auth/LinuxDoCallbackView.vue'),
+    component: () => import('@/features/auth/presentation/pages/LinuxDoCallbackPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'LinuxDo OAuth Callback',
@@ -92,7 +92,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/auth/wechat/callback',
     name: 'WeChatOAuthCallback',
-    component: () => import('@/views/auth/WechatCallbackView.vue'),
+    component: () => import('@/features/auth/presentation/pages/WechatCallbackPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'WeChat OAuth Callback',
@@ -102,7 +102,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/auth/wechat/payment/callback',
     name: 'WeChatPaymentOAuthCallback',
-    component: () => import('@/views/auth/WechatPaymentCallbackView.vue'),
+    component: () => import('@/features/billing/presentation/pages/WechatPaymentCallbackPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'WeChat Payment Callback',
@@ -112,7 +112,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/auth/dingtalk/callback',
     name: 'DingTalkOAuthCallback',
-    component: () => import('@/views/auth/DingTalkCallbackView.vue'),
+    component: () => import('@/features/auth/presentation/pages/DingTalkCallbackPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'DingTalk OAuth Callback',
@@ -122,7 +122,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/auth/dingtalk/email-completion',
     name: 'dingtalk-email-completion',
-    component: () => import('@/views/auth/DingTalkEmailCompletionView.vue'),
+    component: () => import('@/features/auth/presentation/pages/DingTalkEmailCompletionPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'DingTalk Email Completion'
@@ -131,7 +131,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/auth/oidc/callback',
     name: 'OIDCOAuthCallback',
-    component: () => import('@/views/auth/OidcCallbackView.vue'),
+    component: () => import('@/features/auth/presentation/pages/OidcCallbackPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'OIDC OAuth Callback',
@@ -141,7 +141,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/forgot-password',
     name: 'ForgotPassword',
-    component: () => import('@/views/auth/ForgotPasswordView.vue'),
+    component: () => import('@/features/auth/presentation/pages/ForgotPasswordPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'Forgot Password',
@@ -151,7 +151,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/reset-password',
     name: 'ResetPassword',
-    component: () => import('@/views/auth/ResetPasswordView.vue'),
+    component: () => import('@/features/auth/presentation/pages/ResetPasswordPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'Reset Password'

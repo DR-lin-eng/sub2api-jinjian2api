@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useAppStore } from '@/stores/app'
-import { getPublicSettings } from '@/api/auth'
+import { useAppStore } from '@/core/stores/appStore'
+import { getPublicSettings } from '@/features/auth/data/datasources/authDatasource'
 import type { PublicSettings } from '@/types'
 
 function createDeferred<T>() {
@@ -65,7 +65,7 @@ vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
   checkUpdates: vi.fn(),
 }))
 
-vi.mock('@/api/auth', () => ({
+vi.mock('@/features/auth/data/datasources/authDatasource', () => ({
   getPublicSettings: vi.fn(),
 }))
 

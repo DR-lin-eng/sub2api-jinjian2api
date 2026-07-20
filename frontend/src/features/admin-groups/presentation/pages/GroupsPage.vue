@@ -3973,8 +3973,8 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useAppStore } from "@/stores/app";
-import { useOnboardingStore } from "@/stores/onboarding";
+import { useAppStore } from "@/core/stores/appStore";
+import { useOnboardingStore } from "@/core/stores/onboardingStore";
 import { adminAPI } from "@/api/admin";
 import type {
   AdminGroup,

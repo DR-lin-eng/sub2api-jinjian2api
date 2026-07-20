@@ -72,7 +72,7 @@
 <script setup lang="ts">
 import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { adminAPI } from '@/api/admin'
 import { formatDateTime } from '@/core/utils/format'
 import type { AnnouncementUserReadStatus } from '@/types'

@@ -13,11 +13,11 @@ const appStore = vi.hoisted(() => ({
   cachedPublicSettings: null as null | Record<string, unknown>,
 }))
 
-vi.mock('@/stores/auth', () => ({
+vi.mock('@/features/auth/presentation/stores/authStore', () => ({
   useAuthStore: () => authStore,
 }))
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => appStore,
 }))
 

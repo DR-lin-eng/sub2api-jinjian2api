@@ -215,7 +215,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { keysAPI, usageAPI, userGroupsAPI } from '@/api'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'

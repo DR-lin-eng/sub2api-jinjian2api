@@ -41,8 +41,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth'
-import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { useAppStore } from '@/core/stores/appStore'
 import { userAPI } from '@/api'
 
 const props = withDefaults(defineProps<{

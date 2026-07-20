@@ -251,7 +251,7 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import subscriptionsAPI from '@/features/subscriptions/data/datasources/subscriptionsDatasource'
 import type { UserSubscription } from '@/types'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'

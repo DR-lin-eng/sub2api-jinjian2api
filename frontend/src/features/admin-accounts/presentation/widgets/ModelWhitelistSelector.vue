@@ -131,7 +131,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { accountsAPI } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
 import type { SyncUpstreamPreviewParams } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
 import ModelIcon from '@/common/widgets/icons/ModelIcon.vue'

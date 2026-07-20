@@ -120,7 +120,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Icon from '@/components/icons/Icon.vue'
@@ -155,10 +155,10 @@ const menuItemId = computed(() => route.params.id as string)
 const menuItem = computed(() => {
   const id = menuItemId.value
   const publicItems = appStore.cachedPublicSettings?.custom_menu_items ?? []
-  const found = publicItems.find((item) => item.id === id) ?? null
+  const found = publicItems.find((item: any) => item.id === id) ?? null
   if (found) return found
   if (authStore.isAdmin) {
-    return adminSettingsStore.customMenuItems.find((item) => item.id === id) ?? null
+    return adminSettingsStore.customMenuItems.find((item: any) => item.id === id) ?? null
   }
   return null
 })

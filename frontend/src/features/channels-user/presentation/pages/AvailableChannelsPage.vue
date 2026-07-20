@@ -57,7 +57,7 @@ import Icon from '@/components/icons/Icon.vue'
 import AvailableChannelsTable from '@/features/channels-user/presentation/widgets/AvailableChannelsTable.vue'
 import userChannelsAPI, { type UserAvailableChannel } from '@/features/channels-user/data/datasources/channelsUserDatasource'
 import userGroupsAPI from '@/features/groups-user/data/datasources/groupsUserDatasource'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 
 const { t } = useI18n()

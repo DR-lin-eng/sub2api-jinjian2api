@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 
 interface UseFormOptions<T> {
   form: T

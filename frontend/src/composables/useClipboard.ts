@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { i18n } from '@/core/i18n'
 
 const { t } = i18n.global

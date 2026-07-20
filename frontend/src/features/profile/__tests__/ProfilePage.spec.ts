@@ -15,11 +15,11 @@ const {
   }
 }))
 
-vi.mock('@/stores/auth', () => ({
+vi.mock('@/features/auth/presentation/stores/authStore', () => ({
   useAuthStore: () => authState
 }))
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     fetchPublicSettings: fetchPublicSettingsMock
   })

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import Select from '@/common/widgets/forms/Select.vue'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/components/icons/Icon.vue'

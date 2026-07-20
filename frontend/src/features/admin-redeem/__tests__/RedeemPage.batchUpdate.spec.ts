@@ -29,7 +29,7 @@ vi.mock('@/api/admin', () => ({
   }
 }))
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showSuccess,
     showError,

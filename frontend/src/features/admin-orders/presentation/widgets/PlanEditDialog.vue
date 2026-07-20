@@ -93,7 +93,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { adminPaymentAPI } from '@/features/admin-orders/data/datasources/adminPaymentDatasource'
 import type { AdminPaymentConfig } from '@/features/admin-orders/data/datasources/adminPaymentDatasource'
 import { extractApiErrorMessage } from '@/core/utils/apiError'

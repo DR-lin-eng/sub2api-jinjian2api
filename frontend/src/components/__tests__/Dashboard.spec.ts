@@ -31,7 +31,7 @@ vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
   checkUpdates: vi.fn(),
 }))
 
-vi.mock('@/api/auth', () => ({
+vi.mock('@/features/auth/data/datasources/authDatasource', () => ({
   getPublicSettings: vi.fn().mockResolvedValue({}),
 }))
 

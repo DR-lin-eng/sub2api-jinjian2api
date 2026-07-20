@@ -19,7 +19,7 @@ export {
   setAuthToken,
   setRefreshToken,
   setTokenExpiresAt,
-} from './auth'
+} from '@/features/auth/data/datasources/authDatasource'
 
 // User APIs
 export { keysAPI } from '@/features/keys/data/datasources/keysDatasource'

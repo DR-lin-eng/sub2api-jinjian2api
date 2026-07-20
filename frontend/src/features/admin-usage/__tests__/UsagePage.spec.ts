@@ -55,7 +55,7 @@ vi.mock('@/features/admin-ops/data/datasources/adminOpsDatasource', () => ({
   listErrorLogs,
 }))
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError: vi.fn(),
     showWarning: vi.fn(),

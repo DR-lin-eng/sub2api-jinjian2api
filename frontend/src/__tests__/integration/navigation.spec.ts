@@ -33,7 +33,7 @@ const MockUsage = defineComponent({
 })
 
 // Mock stores
-vi.mock('@/stores/auth', () => ({
+vi.mock('@/features/auth/presentation/stores/authStore', () => ({
   useAuthStore: () => ({
     isAuthenticated: true,
     isAdmin: false,
@@ -42,7 +42,7 @@ vi.mock('@/stores/auth', () => ({
   })
 }))
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     siteName: 'Test Site'
   })

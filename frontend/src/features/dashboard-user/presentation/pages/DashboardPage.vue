@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'; import { useAuthStore } from '@/stores/auth'; import { usageAPI, type UserDashboardStats as UserStatsType } from '@/features/usage/data/datasources/usageDatasource'
+import { ref, computed, onMounted } from 'vue'; import { useAuthStore } from '@/features/auth/presentation/stores/authStore'; import { usageAPI, type UserDashboardStats as UserStatsType } from '@/features/usage/data/datasources/usageDatasource'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'; import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import UserDashboardStats from '@/features/dashboard-user/presentation/widgets/UserDashboardStats.vue'; import UserDashboardCharts from '@/features/dashboard-user/presentation/widgets/UserDashboardCharts.vue'
 import UserDashboardRecentUsage from '@/features/dashboard-user/presentation/widgets/UserDashboardRecentUsage.vue'; import UserDashboardQuickActions from '@/features/dashboard-user/presentation/widgets/UserDashboardQuickActions.vue'

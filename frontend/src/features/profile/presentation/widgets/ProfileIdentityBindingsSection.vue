@@ -200,7 +200,7 @@ import {
   hasExplicitWeChatOAuthCapabilities,
   resolveWeChatOAuthStartStrict,
   type WeChatOAuthPublicSettings,
-} from '@/api/auth'
+} from '@/features/auth/data/datasources/authDatasource'
 import {
   bindEmailIdentity,
   sendEmailBindingCode,

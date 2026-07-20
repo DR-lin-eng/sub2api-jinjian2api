@@ -1,8 +1,8 @@
 import { onMounted, onUnmounted, nextTick } from 'vue'
 import { driver, type Driver, type DriveStep } from 'driver.js'
 import 'driver.js/dist/driver.css'
-import { useAuthStore as useUserStore } from '@/stores/auth'
-import { useOnboardingStore } from '@/stores/onboarding'
+import { useAuthStore as useUserStore } from '@/features/auth/presentation/stores/authStore'
+import { useOnboardingStore } from '@/core/stores/onboardingStore'
 import { useI18n } from 'vue-i18n'
 import { getAdminSteps, getUserSteps } from '@/components/Guide/steps'
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { opsAPI } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
 import type { OpsAlertRuntimeSettings } from '@/features/admin-ops/presentation/opsTypeSignals'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'

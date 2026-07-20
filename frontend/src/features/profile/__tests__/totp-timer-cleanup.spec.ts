@@ -19,7 +19,7 @@ vi.mock('vue-i18n', () => ({
   })
 }))
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showSuccess: mocks.showSuccess,
     showError: mocks.showError

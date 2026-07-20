@@ -14,7 +14,7 @@ vi.mock('@/i18n', () => ({
 const mockShowSuccess = vi.fn()
 const mockShowError = vi.fn()
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showSuccess: mockShowSuccess,
     showError: mockShowError,

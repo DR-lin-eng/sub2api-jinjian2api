@@ -82,8 +82,8 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { userAPI } from '@/api'
-import { useAppStore } from '@/stores/app'
-import { useAuthStore } from '@/stores/auth'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import type { User } from '@/types'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 

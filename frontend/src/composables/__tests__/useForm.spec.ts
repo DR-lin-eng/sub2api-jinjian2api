@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useForm } from '@/composables/useForm'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 
 // Mock API 依赖（app store 内部引用了这些）
 vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
   checkUpdates: vi.fn(),
 }))
-vi.mock('@/api/auth', () => ({
+vi.mock('@/features/auth/data/datasources/authDatasource', () => ({
   getPublicSettings: vi.fn(),
 }))
 

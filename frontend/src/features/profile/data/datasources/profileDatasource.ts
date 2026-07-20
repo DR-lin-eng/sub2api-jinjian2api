@@ -8,7 +8,7 @@ import {
   resolveWeChatOAuthStartStrict,
   prepareOAuthBindAccessTokenCookie,
   type WeChatOAuthPublicSettings,
-} from '@/api/auth'
+} from '@/features/auth/data/datasources/authDatasource'
 import type {
   User,
   ChangePasswordRequest,

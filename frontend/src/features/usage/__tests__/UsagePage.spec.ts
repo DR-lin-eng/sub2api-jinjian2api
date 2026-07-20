@@ -83,7 +83,7 @@ vi.mock('@/api', () => ({
   },
 }))
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError,
     showWarning,

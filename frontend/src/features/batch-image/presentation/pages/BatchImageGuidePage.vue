@@ -763,7 +763,7 @@ import SearchInput from '@/common/widgets/forms/SearchInput.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { useClipboard } from '@/composables/useClipboard'
 import { getPersistedPageSize, setPersistedPageSize } from '@/composables/usePersistedPageSize'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { keysAPI } from '@/api'
 import {
   cancelBatchImageJob,

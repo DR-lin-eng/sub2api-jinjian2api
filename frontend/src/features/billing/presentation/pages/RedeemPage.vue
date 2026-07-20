@@ -344,8 +344,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/stores/auth'
-import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { useAppStore } from '@/core/stores/appStore'
 import { useSubscriptionStore } from '@/features/subscriptions/presentation/stores/subscriptionsStore'
 import { redeemAPI, authAPI, type RedeemHistoryItem } from '@/api'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'

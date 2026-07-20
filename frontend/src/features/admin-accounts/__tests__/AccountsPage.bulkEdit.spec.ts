@@ -43,7 +43,7 @@ vi.mock('@/api/admin', () => ({
   }
 }))
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError: vi.fn(),
     showSuccess: vi.fn(),
@@ -51,7 +51,7 @@ vi.mock('@/stores/app', () => ({
   })
 }))
 
-vi.mock('@/stores/auth', () => ({
+vi.mock('@/features/auth/presentation/stores/authStore', () => ({
   useAuthStore: () => ({
     token: 'test-token'
   })

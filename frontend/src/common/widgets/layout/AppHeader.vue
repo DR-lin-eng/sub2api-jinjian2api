@@ -302,8 +302,8 @@ const pageTitle = computed(() => {
   if (route.name === 'CustomPage') {
     const id = route.params.id as string
     const publicItems = appStore.cachedPublicSettings?.custom_menu_items ?? []
-    const menuItem = publicItems.find((item) => item.id === id)
-      ?? (authStore.isAdmin ? adminSettingsStore.customMenuItems.find((item) => item.id === id) : undefined)
+    const menuItem = publicItems.find((item: any) => item.id === id)
+      ?? (authStore.isAdmin ? adminSettingsStore.customMenuItems.find((item: any) => item.id === id) : undefined)
     if (menuItem?.label) return menuItem.label
   }
   const titleKey = route.meta.titleKey as string

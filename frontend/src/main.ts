@@ -3,7 +3,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from '@/core/routes'
 import i18n, { initI18n } from '@/core/i18n'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { updateFavicon } from '@/core/services/branding'
 import '@/core/themes/style.css'
 

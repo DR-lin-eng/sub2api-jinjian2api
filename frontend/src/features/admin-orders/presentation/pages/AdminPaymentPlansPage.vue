@@ -77,7 +77,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores/app'
+import { useAppStore } from '@/core/stores/appStore'
 import { adminPaymentAPI } from '@/features/admin-orders/data/datasources/adminPaymentDatasource'
 import type { AdminPaymentConfig } from '@/features/admin-orders/data/datasources/adminPaymentDatasource'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
