@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import '@/styles/onboarding.css'
+import '@/core/themes/onboarding.css'
 import { computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores'
 import { useAuthStore } from '@/stores/auth'

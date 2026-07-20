@@ -1,7 +1,4 @@
-export function resolveCompletedSetupRedirectPath(isAuthenticated: boolean, isAdmin: boolean): string {
-  if (!isAuthenticated) {
-    return '/login'
-  }
-
-  return isAdmin ? '/admin/dashboard' : '/dashboard'
-}
+/**
+ * @deprecated Use @/core/routes/setupRedirect. This shim will be removed in Wave 3.
+ */
+export * from '@/core/routes/setupRedirect'

@@ -1,18 +1,2 @@
-interface PendingRegistrationCredentials {
-  email: string
-  password: string
-}
-
-let pendingCredentials: PendingRegistrationCredentials | null = null
-
-export function setPendingRegistrationCredentials(email: string, password: string): void {
-  pendingCredentials = { email, password }
-}
-
-export function getPendingRegistrationCredentials(): PendingRegistrationCredentials | null {
-  return pendingCredentials ? { ...pendingCredentials } : null
-}
-
-export function clearPendingRegistrationCredentials(): void {
-  pendingCredentials = null
-}
+/** @deprecated Use @/core/utils/pendingRegistrationCredentials. Shim removed in Wave 3. */
+export * from "@/core/utils/pendingRegistrationCredentials"

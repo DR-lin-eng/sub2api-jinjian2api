@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import OpsErrorLogTable from '../OpsErrorLogTable.vue'
-import zhLocale from '@/i18n/locales/zh'
-import enLocale from '@/i18n/locales/en'
+import zhLocale from '@/core/i18n/locales/zh'
+import enLocale from '@/core/i18n/locales/en'
 import type { OpsErrorLog } from '@/api/admin/ops'
 
 vi.mock('vue-i18n', async (importOriginal) => {

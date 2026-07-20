@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import OpsSystemLogTable from '../OpsSystemLogTable.vue'
-import enLocale from '@/i18n/locales/en'
-import zhLocale from '@/i18n/locales/zh'
+import enLocale from '@/core/i18n/locales/en'
+import zhLocale from '@/core/i18n/locales/zh'
 
 const mockListSystemLogs = vi.fn()
 const mockCleanupSystemLogs = vi.fn()
