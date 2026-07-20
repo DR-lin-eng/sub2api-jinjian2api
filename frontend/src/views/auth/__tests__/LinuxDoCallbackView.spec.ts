@@ -4,7 +4,7 @@ import {
   clearTokenMemory,
   getRefreshTokenMemory,
   getTokenExpiresAtMemory
-} from '@/api/tokenStore'
+} from '@/core/networks/tokenStore'
 
 import LinuxDoCallbackView from '../LinuxDoCallbackView.vue'
 
@@ -58,7 +58,7 @@ vi.mock('@/stores', () => ({
   })
 }))
 
-vi.mock('@/api/client', () => ({
+vi.mock('@/core/networks/client', () => ({
   apiClient: {
     post: (...args: any[]) => apiClientPost(...args)
   }

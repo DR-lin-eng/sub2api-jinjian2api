@@ -3,7 +3,7 @@
  * 参考 CRS 项目的 format.js 实现
  */
 
-import { i18n, getLocale } from '@/i18n'
+import { i18n, getLocale } from '@/core/i18n'
 
 /**
  * 格式化相对时间

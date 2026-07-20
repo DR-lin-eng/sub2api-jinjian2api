@@ -235,12 +235,12 @@ import {
   prefetchCredentialKey
 } from '@/api/auth'
 import type { LoginAgreementDocument, TotpLoginResponse } from '@/types'
-import { extractI18nErrorMessage } from '@/utils/apiError'
-import { clearAllAffiliateReferralCodes } from '@/utils/oauthAffiliate'
+import { extractI18nErrorMessage } from '@/core/utils/apiError'
+import { clearAllAffiliateReferralCodes } from '@/core/utils/oauthAffiliate'
 import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
-} from '@/utils/humanVerification'
+} from '@/core/services/humanVerification'
 
 const { t } = useI18n()
 const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'

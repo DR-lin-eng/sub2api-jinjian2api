@@ -3,8 +3,8 @@
  * Handles user login, registration, and logout operations
  */
 
-import { apiClient } from './client'
-import { createCredentialEnvelope } from './credentialEncryption'
+import { apiClient } from '@/core/networks/client'
+import { createCredentialEnvelope } from '@/core/networks/credentialEncryption'
 import {
   clearTokenMemory,
   getAccessToken,
@@ -13,8 +13,8 @@ import {
   setAccessToken,
   setRefreshTokenMemory,
   setTokenExpiresAtMemory
-} from './tokenStore'
-import { refreshBrowserSession, type SessionRefreshResult } from './sessionRefresh'
+} from '@/core/networks/tokenStore'
+import { refreshBrowserSession, type SessionRefreshResult } from '@/core/networks/sessionRefresh'
 import type {
   LoginRequest,
   RegisterRequest,
@@ -32,7 +32,7 @@ export {
   clearCredentialKeyPrefetch,
   createCredentialEnvelope,
   prefetchCredentialKey
-} from './credentialEncryption'
+} from '@/core/networks/credentialEncryption'
 
 /**
  * Login response type - can be either full auth or 2FA required

@@ -129,14 +129,14 @@ import Pagination from '@/components/common/Pagination.vue'
 import UserErrorDetailModal from '@/components/user/UserErrorDetailModal.vue'
 import IpGeoCell from '@/components/common/IpGeoCell.vue'
 import IpGeoBatchToolbar from '@/components/common/IpGeoBatchToolbar.vue'
-import { formatDateTime } from '@/utils/format'
+import { formatDateTime } from '@/core/utils/format'
 import {
   mapErrorSortKey,
   numericRequestTypeKind,
   requestTypeBadgeClass,
   requestTypeLabelKey,
   statusCodeBadgeClass,
-} from '@/utils/errorBadges'
+} from '@/core/utils/errorBadges'
 import type { UserErrorRequest } from '@/types'
 import type { Column } from '@/components/common/types'
 

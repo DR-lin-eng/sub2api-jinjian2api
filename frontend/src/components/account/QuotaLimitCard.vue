@@ -2,7 +2,7 @@
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import QuotaDimensionRow from './QuotaDimensionRow.vue'
-import type { QuotaThresholdType, QuotaResetMode } from '@/constants/account'
+import type { QuotaThresholdType, QuotaResetMode } from '@/core/constants/account'
 
 const { t } = useI18n()
 

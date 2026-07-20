@@ -58,7 +58,7 @@ import AvailableChannelsTable from '@/components/channels/AvailableChannelsTable
 import userChannelsAPI, { type UserAvailableChannel } from '@/api/channels'
 import userGroupsAPI from '@/api/groups'
 import { useAppStore } from '@/stores/app'
-import { extractApiErrorMessage } from '@/utils/apiError'
+import { extractApiErrorMessage } from '@/core/utils/apiError'
 
 const { t } = useI18n()
 const appStore = useAppStore()

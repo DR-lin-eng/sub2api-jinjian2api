@@ -3,7 +3,7 @@
  * Handles API key management for administrators
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type { ApiKey } from '@/types'
 
 export interface UpdateApiKeyGroupResult {

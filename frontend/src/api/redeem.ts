@@ -3,7 +3,7 @@
  * Handles redeem code redemption for users
  */
 
-import { apiClient } from './client'
+import { apiClient } from '@/core/networks/client'
 import type { RedeemCodeRequest } from '@/types'
 
 export interface RedeemHistoryItem {

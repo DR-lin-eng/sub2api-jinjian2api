@@ -24,7 +24,7 @@ describe('browser session refresh coordination', () => {
     const post = vi.spyOn(axios, 'post').mockReturnValue(new Promise((resolve) => {
       resolveRequest = resolve
     }))
-    const { refreshBrowserSession } = await import('@/api/sessionRefresh')
+    const { refreshBrowserSession } = await import('@/core/networks/sessionRefresh')
 
     const first = refreshBrowserSession()
     const second = refreshBrowserSession()
@@ -43,7 +43,7 @@ describe('browser session refresh coordination', () => {
     vi.spyOn(axios, 'post').mockResolvedValue({
       data: { code: 0, message: 'success', data: refreshPayload },
     })
-    const { refreshBrowserSession } = await import('@/api/sessionRefresh')
+    const { refreshBrowserSession } = await import('@/core/networks/sessionRefresh')
 
     await expect(refreshBrowserSession()).resolves.toEqual(refreshPayload)
     expect(request).toHaveBeenCalledWith(

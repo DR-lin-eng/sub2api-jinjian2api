@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveDocumentTitle, resolveRouteDocumentTitle } from '@/router/title'
+import { resolveDocumentTitle, resolveRouteDocumentTitle } from '@/core/routes/title'
 
 describe('resolveDocumentTitle', () => {
   it('路由存在标题时，使用“路由标题 - 站点名”格式', () => {

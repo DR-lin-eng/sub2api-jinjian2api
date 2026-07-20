@@ -4,7 +4,7 @@ import {
   clearTokenMemory,
   getRefreshTokenMemory,
   getTokenExpiresAtMemory
-} from '@/api/tokenStore'
+} from '@/core/networks/tokenStore'
 import WechatCallbackView from '@/views/auth/WechatCallbackView.vue'
 
 const {
@@ -134,7 +134,7 @@ vi.mock('@/stores', () => ({
   }),
 }))
 
-vi.mock('@/api/client', () => ({
+vi.mock('@/core/networks/client', () => ({
   apiClient: {
     post: (...args: any[]) => apiClientPostMock(...args),
   },

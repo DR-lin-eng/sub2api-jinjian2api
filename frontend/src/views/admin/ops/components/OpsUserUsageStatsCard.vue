@@ -10,7 +10,7 @@ import {
   type OpsUserUsageStatsResponse,
   type OpsUserUsageStatsTimeRange
 } from '@/api/admin/ops'
-import { formatCurrency, formatDateTime } from '@/utils/format'
+import { formatCurrency, formatDateTime } from '@/core/utils/format'
 import { formatCompactNumber, formatExactNumber } from '../utils/opsFormatters'
 
 interface Props {

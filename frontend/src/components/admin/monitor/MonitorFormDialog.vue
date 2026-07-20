@@ -253,7 +253,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
-import { extractApiErrorMessage } from '@/utils/apiError'
+import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { adminAPI } from '@/api/admin'
 import { keysAPI } from '@/api/keys'
 import { userGroupsAPI } from '@/api/groups'
@@ -290,7 +290,7 @@ import {
   DEFAULT_INTERVAL_SECONDS,
   MONITOR_MODE_ACTIVE,
   MONITOR_MODE_PASSIVE,
-} from '@/constants/channelMonitor'
+} from '@/core/constants/channelMonitor'
 
 const props = defineProps<{
   show: boolean

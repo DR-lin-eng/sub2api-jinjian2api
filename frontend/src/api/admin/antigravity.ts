@@ -3,7 +3,7 @@
  * Handles Antigravity (Google Cloud AI Companion) OAuth flows for administrators
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 
 export interface AntigravityAuthUrlResponse {
   auth_url: string

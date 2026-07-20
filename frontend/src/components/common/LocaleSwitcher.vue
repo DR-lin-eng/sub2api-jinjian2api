@@ -45,7 +45,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
-import { setLocale, availableLocales } from '@/i18n'
+import { setLocale, availableLocales } from '@/core/i18n'
 
 const { locale } = useI18n()
 

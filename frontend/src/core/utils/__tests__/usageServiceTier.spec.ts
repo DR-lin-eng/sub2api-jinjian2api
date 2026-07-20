@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatUsageServiceTier, getUsageServiceTierLabel, normalizeUsageServiceTier } from '@/utils/usageServiceTier'
+import { formatUsageServiceTier, getUsageServiceTierLabel, normalizeUsageServiceTier } from '@/core/utils/usageServiceTier'
 
 describe('usageServiceTier utils', () => {
   it('normalizes fast/default aliases', () => {

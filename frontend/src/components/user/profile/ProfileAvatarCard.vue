@@ -85,7 +85,7 @@ import { userAPI } from '@/api'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
 import type { User } from '@/types'
-import { extractApiErrorMessage } from '@/utils/apiError'
+import { extractApiErrorMessage } from '@/core/utils/apiError'
 
 const props = withDefaults(defineProps<{
   user: User | null

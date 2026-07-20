@@ -230,7 +230,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
-import { extractApiErrorMessage } from '@/utils/apiError'
+import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { adminAPI } from '@/api/admin'
 import type {
   APIMode,
@@ -251,7 +251,7 @@ import {
   PROVIDER_GROK,
   API_MODE_CHAT_COMPLETIONS,
   API_MODE_RESPONSES,
-} from '@/constants/channelMonitor'
+} from '@/core/constants/channelMonitor'
 
 const props = defineProps<{ show: boolean }>()
 const emit = defineEmits<{

@@ -163,8 +163,8 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useClipboard } from '@/composables/useClipboard'
 import { useAppStore, useAuthStore } from '@/stores'
-import { apiClient } from '@/api/client'
-import { buildApiUrl } from '@/api/url'
+import { apiClient } from '@/core/networks/client'
+import { buildApiUrl } from '@/core/networks/url'
 import {
   exchangePendingOAuthCompletion,
   login2FA,
@@ -175,7 +175,7 @@ import {
   clearAllAffiliateReferralCodes,
   loadOAuthAffiliateCode,
   oauthAffiliatePayload
-} from '@/utils/oauthAffiliate'
+} from '@/core/utils/oauthAffiliate'
 
 const route = useRoute()
 const router = useRouter()

@@ -3,7 +3,7 @@
  * Handles user custom attribute definitions and values
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type {
   UserAttributeDefinition,
   UserAttributeValue,

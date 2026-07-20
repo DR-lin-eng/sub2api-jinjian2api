@@ -1,4 +1,4 @@
-import { getConfiguredTableDefaultPageSize, normalizeTablePageSize } from '@/utils/tablePreferences'
+import { getConfiguredTableDefaultPageSize, normalizeTablePageSize } from '@/core/utils/tablePreferences'
 
 const STORAGE_KEY = 'table-page-size'
 

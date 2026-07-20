@@ -145,7 +145,7 @@ import { getPublicSettings, forgotPassword } from '@/api/auth'
 import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
-} from '@/utils/humanVerification'
+} from '@/core/services/humanVerification'
 
 const { t } = useI18n()
 

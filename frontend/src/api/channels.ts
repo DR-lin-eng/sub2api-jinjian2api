@@ -3,8 +3,8 @@
  * 用户侧「可用渠道」聚合查询：渠道 + 用户可访问的分组 + 支持模型（含定价）。
  */
 
-import { apiClient } from './client'
-import type { BillingMode } from '@/constants/channel'
+import { apiClient } from '@/core/networks/client'
+import type { BillingMode } from '@/core/constants/channel'
 
 export interface UserAvailableGroup {
   id: number

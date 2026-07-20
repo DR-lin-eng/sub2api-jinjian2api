@@ -7,7 +7,7 @@ import {
   normalizeRegistrationEmailSuffixDomains,
   normalizeRegistrationEmailSuffixWhitelist,
   parseRegistrationEmailSuffixWhitelistInput
-} from '@/utils/registrationEmailPolicy'
+} from '@/core/utils/registrationEmailPolicy'
 
 describe('registrationEmailPolicy utils', () => {
   it('normalizeRegistrationEmailSuffixDomain lowercases, strips @, and ignores invalid chars', () => {

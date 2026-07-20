@@ -6,7 +6,7 @@ import {
   isUserTimingAPIPath,
   shouldMarkAdminUIRequest,
   shouldMarkUserUIRequest,
-} from '@/api/adminUIRequest'
+} from '@/core/networks/adminUIRequest'
 
 describe('Admin UI request marker', () => {
   it('uses the stable request header name', () => {

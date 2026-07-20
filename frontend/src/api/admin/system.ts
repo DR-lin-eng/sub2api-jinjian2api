@@ -2,7 +2,7 @@
  * System API endpoints for admin operations
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 
 export interface ReleaseInfo {
   name: string

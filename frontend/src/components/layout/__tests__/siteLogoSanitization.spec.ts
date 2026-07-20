@@ -11,7 +11,7 @@ const keyUsageViewSource = readFileSync(resolve(dir, '../../../views/KeyUsageVie
 
 describe('site_logo sanitization', () => {
   it('AppSidebar imports sanitizeUrl and applies it to siteLogo', () => {
-    expect(sidebarSource).toContain("import { sanitizeUrl } from '@/utils/url'")
+    expect(sidebarSource).toContain("import { sanitizeUrl } from '@/core/utils/url'")
     expect(sidebarSource).toContain('sanitizeUrl(appStore.siteLogo')
   })
 

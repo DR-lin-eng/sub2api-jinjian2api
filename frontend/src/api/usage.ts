@@ -3,7 +3,7 @@
  * Handles usage logs and statistics retrieval
  */
 
-import { apiClient } from './client'
+import { apiClient } from '@/core/networks/client'
 import type {
   UsageLog,
   UsageQueryParams,

@@ -20,7 +20,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { fetchBatch, getEntry } from '@/utils/ipGeoLookup'
+import { fetchBatch, getEntry } from '@/core/utils/ipGeoLookup'
 
 // 当前页 IP 批量地理查询工具条:传入原始 IP 列表(可含空值),内部去重;
 // 无 IP 时自身不渲染。批量失败 emit failed,由使用方弹提示。

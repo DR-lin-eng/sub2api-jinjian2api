@@ -55,14 +55,6 @@ vi.mock('@/stores', () => ({
   }),
 }))
 
-vi.mock('@/api/client', () => ({
-  apiClient: {
-    post: (...args: any[]) => apiPostMock(...args),
-  },
-}))
-
-// Wave 1: also mock the new @/core/networks/client path so mock catches usages
-// via either the shim or the real target.
 vi.mock('@/core/networks/client', () => ({
   apiClient: {
     post: (...args: any[]) => apiPostMock(...args),

@@ -62,7 +62,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
-import { fetchOne, getEntry } from '@/utils/ipGeoLookup'
+import { fetchOne, getEntry } from '@/core/utils/ipGeoLookup'
 
 const props = defineProps<{ ip: string }>()
 const { t } = useI18n()

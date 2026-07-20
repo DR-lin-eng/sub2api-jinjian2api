@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildAuthErrorMessage } from '@/utils/authError'
+import { buildAuthErrorMessage } from '@/core/utils/authError'
 
 describe('buildAuthErrorMessage', () => {
   it('prefers response detail message when available', () => {

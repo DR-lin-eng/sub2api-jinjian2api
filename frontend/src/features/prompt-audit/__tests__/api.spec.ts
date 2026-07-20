@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { emptyEventFilters } from '../viewModel'
 
 const client = vi.hoisted(() => ({ get: vi.fn(), put: vi.fn(), post: vi.fn(), delete: vi.fn() }))
-vi.mock('@/api/client', () => ({ apiClient: client }))
+vi.mock('@/core/networks/client', () => ({ apiClient: client }))
 
 import promptAuditAPI from '../api'
 

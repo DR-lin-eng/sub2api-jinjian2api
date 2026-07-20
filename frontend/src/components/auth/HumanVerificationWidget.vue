@@ -16,7 +16,7 @@
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import 'cap-widget'
 import TurnstileWidget from '@/components/TurnstileWidget.vue'
-import type { ExternalHumanVerificationProvider } from '@/utils/humanVerification'
+import type { ExternalHumanVerificationProvider } from '@/core/services/humanVerification'
 
 interface RecaptchaAPI {
   render: (container: HTMLElement, options: {

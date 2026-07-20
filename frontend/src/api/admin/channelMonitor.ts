@@ -3,7 +3,7 @@
  * Handles channel monitor (uptime/health) management for administrators
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 
 export type Provider = 'openai' | 'anthropic' | 'gemini' | 'grok'
 export type MonitorMode = 'active' | 'passive'

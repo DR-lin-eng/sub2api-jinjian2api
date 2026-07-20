@@ -2,7 +2,7 @@
  * Admin Announcements API endpoints
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type {
   Announcement,
   AnnouncementUserReadStatus,

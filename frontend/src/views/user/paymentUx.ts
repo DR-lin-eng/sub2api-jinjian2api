@@ -1,5 +1,5 @@
 import { normalizeVisibleMethod } from '@/components/payment/paymentFlow'
-import { extractApiErrorCode } from '@/utils/apiError'
+import { extractApiErrorCode } from '@/core/utils/apiError'
 
 const DISPLAY_METHOD_ALIASES: Record<string, string> = {
   wechat: 'wxpay',

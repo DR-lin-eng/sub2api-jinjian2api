@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
   fetchOne: vi.fn(),
 }))
 
-vi.mock('@/utils/ipGeoLookup', () => ({
+vi.mock('@/core/utils/ipGeoLookup', () => ({
   getEntry: mocks.getEntry,
   fetchOne: mocks.fetchOne,
 }))

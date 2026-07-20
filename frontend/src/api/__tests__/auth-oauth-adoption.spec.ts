@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { clearTokenMemory, setAccessToken } from '@/api/tokenStore'
+import { clearTokenMemory, setAccessToken } from '@/core/networks/tokenStore'
 
 const post = vi.fn()
 
-vi.mock('@/api/client', () => ({
+vi.mock('@/core/networks/client', () => ({
   apiClient: {
     post
   }

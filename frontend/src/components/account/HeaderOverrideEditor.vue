@@ -56,7 +56,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { createStableObjectKeyResolver } from '@/utils/stableObjectKey'
+import { createStableObjectKeyResolver } from '@/core/utils/stableObjectKey'
 import HeaderOverrideJsonTools from './HeaderOverrideJsonTools.vue'
 import type { HeaderOverrideRow } from './credentialsBuilder'
 

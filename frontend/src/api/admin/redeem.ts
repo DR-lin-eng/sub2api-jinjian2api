@@ -3,7 +3,7 @@
  * Handles redeem code generation and management for administrators
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type {
   RedeemCode,
   GenerateRedeemCodesRequest,

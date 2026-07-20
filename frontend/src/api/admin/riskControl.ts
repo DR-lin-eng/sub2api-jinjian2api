@@ -1,4 +1,4 @@
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 
 export type ModerationMode = 'off' | 'observe' | 'pre_block'
 export type KeywordBlockingMode = 'keyword_only' | 'keyword_and_api' | 'api_only'

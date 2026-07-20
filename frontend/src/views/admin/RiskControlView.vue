@@ -1139,8 +1139,8 @@ import type {
 } from '@/api/admin/riskControl'
 import type { AdminGroup, SelectOption } from '@/types'
 import { useAppStore } from '@/stores/app'
-import { extractApiErrorMessage } from '@/utils/apiError'
-import { formatDateTime as formatDateTimeValue } from '@/utils/format'
+import { extractApiErrorMessage } from '@/core/utils/apiError'
+import { formatDateTime as formatDateTimeValue } from '@/core/utils/format'
 
 type SettingsTab = 'basic' | 'scope' | 'runtime' | 'response' | 'riskThresholds' | 'retention' | 'keywords'
 type WorkerSlotState = 'active' | 'idle' | 'disabled'

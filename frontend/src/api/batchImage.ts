@@ -1,4 +1,4 @@
-import { buildGatewayUrl } from './client'
+import { buildGatewayUrl } from '@/core/networks/client'
 
 export type BatchImageStatus =
   | 'queued'

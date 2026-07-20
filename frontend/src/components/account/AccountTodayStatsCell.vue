@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import type { WindowStats } from '@/types'
-import { formatNumber, formatCurrency } from '@/utils/format'
+import { formatNumber, formatCurrency } from '@/core/utils/format'
 
 const props = withDefaults(
   defineProps<{

@@ -9,16 +9,16 @@ vi.mock('@/i18n', () => ({
 
 describe('API Client', () => {
   let apiClient: AxiosInstance
-  let tokenStore: typeof import('@/api/tokenStore')
+  let tokenStore: typeof import('@/core/networks/tokenStore')
 
   beforeEach(async () => {
     localStorage.clear()
     window.history.replaceState({}, '', '/')
     // 每次测试重新导入以获取干净的模块状态
     vi.resetModules()
-    tokenStore = await import('@/api/tokenStore')
+    tokenStore = await import('@/core/networks/tokenStore')
     tokenStore.clearTokenMemory()
-    const mod = await import('@/api/client')
+    const mod = await import('@/core/networks/client')
     apiClient = mod.apiClient
   })
 
@@ -34,7 +34,7 @@ describe('API Client', () => {
       vi.resetModules()
       vi.stubEnv('VITE_API_BASE_URL', 'api/v1')
 
-      const mod = await import('@/api/client')
+      const mod = await import('@/core/networks/client')
 
       expect(mod.apiClient.defaults.baseURL).toBe('/api/v1')
       expect(mod.buildApiUrl('/auth/oauth/github/callback?code=abc')).toBe(

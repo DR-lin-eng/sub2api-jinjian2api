@@ -83,7 +83,7 @@
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getUserBreakdown, type UserBreakdownParams } from '@/api/admin/dashboard'
-import { formatCompactNumber, formatCostFixed } from '@/utils/format'
+import { formatCompactNumber, formatCostFixed } from '@/core/utils/format'
 import type { UserBreakdownItem } from '@/types'
 import Select from '@/components/common/Select.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'

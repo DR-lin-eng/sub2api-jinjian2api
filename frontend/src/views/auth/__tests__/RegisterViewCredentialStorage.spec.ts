@@ -4,7 +4,7 @@ import RegisterView from '@/views/auth/RegisterView.vue'
 import {
   clearPendingRegistrationCredentials,
   getPendingRegistrationCredentials
-} from '@/utils/pendingRegistrationCredentials'
+} from '@/core/utils/pendingRegistrationCredentials'
 
 const {
   pushMock,

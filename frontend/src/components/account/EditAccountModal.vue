@@ -2663,9 +2663,9 @@ import {
   HEADER_OVERRIDES_CREDENTIAL_KEY,
   type HeaderOverrideRow
 } from '@/components/account/credentialsBuilder'
-import { formatDateTime, formatDateTimeLocalInput, parseDateTimeLocalInput } from '@/utils/format'
-import { createStableObjectKeyResolver } from '@/utils/stableObjectKey'
-import { VERTEX_LOCATION_OPTIONS } from '@/constants/account'
+import { formatDateTime, formatDateTimeLocalInput, parseDateTimeLocalInput } from '@/core/utils/format'
+import { createStableObjectKeyResolver } from '@/core/utils/stableObjectKey'
+import { VERTEX_LOCATION_OPTIONS } from '@/core/constants/account'
 import {
   OPENAI_WS_MODE_CTX_POOL,
   OPENAI_WS_MODE_OFF,
@@ -2675,7 +2675,7 @@ import {
   resolveOpenAIWSModeConcurrencyHintKey,
   type OpenAIWSMode,
   resolveOpenAIWSModeFromExtra
-} from '@/utils/openaiWsMode'
+} from '@/core/utils/openaiWsMode'
 import {
   getPresetMappingsByPlatform,
   commonErrorCodes,

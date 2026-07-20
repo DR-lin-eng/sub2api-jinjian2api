@@ -30,13 +30,13 @@ import { AuthLayout } from '@/components/layout'
 import PendingOAuthCreateAccountForm, {
   type PendingOAuthCreateAccountPayload
 } from '@/components/auth/PendingOAuthCreateAccountForm.vue'
-import { apiClient } from '@/api/client'
+import { apiClient } from '@/core/networks/client'
 import { useAuthStore, useAppStore } from '@/stores'
 import {
   persistOAuthTokenContext,
   type PendingOAuthExchangeResponse
 } from '@/api/auth'
-import { clearAllAffiliateReferralCodes } from '@/utils/oauthAffiliate'
+import { clearAllAffiliateReferralCodes } from '@/core/utils/oauthAffiliate'
 
 const route = useRoute()
 const router = useRouter()

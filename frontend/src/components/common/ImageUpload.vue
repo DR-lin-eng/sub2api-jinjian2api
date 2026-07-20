@@ -71,7 +71,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import Icon from '@/components/icons/Icon.vue'
-import { sanitizeSvg } from '@/utils/sanitize'
+import { sanitizeSvg } from '@/core/utils/sanitize'
 
 const props = withDefaults(defineProps<{
   modelValue: string

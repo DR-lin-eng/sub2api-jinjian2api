@@ -2,7 +2,7 @@
  * Admin Promo Codes API endpoints
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type {
   PromoCode,
   PromoCodeUsage,

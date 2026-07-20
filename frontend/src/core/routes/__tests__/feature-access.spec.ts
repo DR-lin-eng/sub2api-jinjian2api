@@ -107,7 +107,7 @@ function runGuard(meta: Record<string, unknown>, path: string) {
 
 describe('feature route guard', () => {
   beforeAll(async () => {
-    await import('@/router')
+    await import('@/core/routes')
   })
 
   beforeEach(() => {

@@ -1,4 +1,4 @@
-import { sanitizeUrl } from '@/utils/url'
+import { sanitizeUrl } from '@/core/utils/url'
 
 export function updateFavicon(logoUrl: string): void {
   const sanitizedLogoUrl = sanitizeUrl(logoUrl, {

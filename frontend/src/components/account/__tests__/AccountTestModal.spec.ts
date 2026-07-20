@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { defineComponent } from 'vue'
-import { clearTokenMemory, setAccessToken } from '@/api/tokenStore'
+import { clearTokenMemory, setAccessToken } from '@/core/networks/tokenStore'
 import AccountTestModal from '../AccountTestModal.vue'
 
 const { getAvailableModelsMock } = vi.hoisted(() => ({

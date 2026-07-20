@@ -3,7 +3,7 @@
  * Handles TLS fingerprint profile CRUD for administrators
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 
 /**
  * TLS fingerprint profile interface

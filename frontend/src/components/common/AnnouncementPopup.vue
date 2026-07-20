@@ -89,7 +89,7 @@ import { useI18n } from 'vue-i18n'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { useAnnouncementStore } from '@/stores/announcements'
-import { formatRelativeWithDateTime } from '@/utils/format'
+import { formatRelativeWithDateTime } from '@/core/utils/format'
 
 const { t } = useI18n()
 const announcementStore = useAnnouncementStore()

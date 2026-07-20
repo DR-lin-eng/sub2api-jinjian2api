@@ -159,7 +159,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
 import type { Account } from '@/types'
-import { formatCountdown, formatDateTime, formatCountdownWithSuffix, formatTime } from '@/utils/format'
+import { formatCountdown, formatDateTime, formatCountdownWithSuffix, formatTime } from '@/core/utils/format'
 
 const { t } = useI18n()
 

@@ -3,10 +3,10 @@
  * Handles channel management for administrators
  */
 
-import { apiClient } from '../client'
-import type { BillingMode, ChannelStatus, BillingModelSource } from '@/constants/channel'
+import { apiClient } from '@/core/networks/client'
+import type { BillingMode, ChannelStatus, BillingModelSource } from '@/core/constants/channel'
 
-export type { BillingMode } from '@/constants/channel'
+export type { BillingMode } from '@/core/constants/channel'
 
 export interface PricingInterval {
   id?: number

@@ -181,8 +181,8 @@ import Icon from '@/components/icons/Icon.vue'
 import Toggle from '@/components/common/Toggle.vue'
 import { adminAPI } from '@/api/admin'
 import type { ClusterInstanceStatus, ClusterStatusResponse, ClusterTaskRun, ClusterTaskStatus } from '@/api/admin/cluster'
-import { formatDateTime, formatRelativeTime } from '@/utils/format'
-import { extractApiErrorMessage } from '@/utils/apiError'
+import { formatDateTime, formatRelativeTime } from '@/core/utils/format'
+import { extractApiErrorMessage } from '@/core/utils/apiError'
 
 const { t } = useI18n()
 const status = ref<ClusterStatusResponse | null>(null)

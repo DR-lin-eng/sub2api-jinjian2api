@@ -144,19 +144,19 @@ import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { useClipboard } from '@/composables/useClipboard'
-import { formatDateTime, formatReasoningEffort } from '@/utils/format'
-import { resolveUsageRequestType } from '@/utils/usageRequestType'
-import { calculateOutputTokensPerSecond } from '@/utils/usageMetrics'
+import { formatDateTime, formatReasoningEffort } from '@/core/utils/format'
+import { resolveUsageRequestType } from '@/core/utils/usageRequestType'
+import { calculateOutputTokensPerSecond } from '@/core/utils/usageMetrics'
 import {
   BILLING_MODE_IMAGE,
   BILLING_MODE_VIDEO,
   getBillingModeBadgeClass,
   getBillingModeLabel,
-} from '@/utils/billingMode'
+} from '@/core/utils/billingMode'
 import {
   buildUsageBillingCalculation,
   type UsageBillingCostLine,
-} from '@/utils/usageBillingCalculation'
+} from '@/core/utils/usageBillingCalculation'
 import type { AdminUsageLog } from '@/types'
 
 const props = defineProps<{

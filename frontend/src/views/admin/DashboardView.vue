@@ -369,7 +369,7 @@ import Select from '@/components/common/Select.vue'
 import ModelDistributionChart from '@/components/charts/ModelDistributionChart.vue'
 import TokenUsageTrend from '@/components/charts/TokenUsageTrend.vue'
 import { useBatchImageAccess } from '@/composables/useBatchImageAccess'
-import { getLast24HourRange } from '@/utils/dateRange'
+import { getLast24HourRange } from '@/core/utils/dateRange'
 
 import {
   Chart as ChartJS,

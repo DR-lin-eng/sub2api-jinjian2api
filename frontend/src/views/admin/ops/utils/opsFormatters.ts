@@ -6,7 +6,7 @@
  */
 
 import type { OpsSeverity } from '@/api/admin/ops'
-import { formatBytes } from '@/utils/format'
+import { formatBytes } from '@/core/utils/format'
 
 const COMPACT_NUMBER_UNITS = ['', 'K', 'M', 'B', 'T', 'P', 'E', 'Z', 'Y'] as const
 

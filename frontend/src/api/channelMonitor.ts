@@ -3,7 +3,7 @@
  * Read-only views for end users to inspect channel availability/status.
  */
 
-import { apiClient } from './client'
+import { apiClient } from '@/core/networks/client'
 import type { Provider, MonitorMode, MonitorStatus } from './admin/channelMonitor'
 
 export type { Provider, MonitorMode, MonitorStatus } from './admin/channelMonitor'

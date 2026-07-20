@@ -3,7 +3,7 @@
  * API for regular users to view their own subscriptions and progress
  */
 
-import { apiClient } from './client'
+import { apiClient } from '@/core/networks/client'
 import type { UserSubscription, SubscriptionProgress } from '@/types'
 
 /**

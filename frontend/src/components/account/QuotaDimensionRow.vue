@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import QuotaNotifyToggle from './QuotaNotifyToggle.vue'
-import type { QuotaThresholdType, QuotaResetMode } from '@/constants/account'
+import type { QuotaThresholdType, QuotaResetMode } from '@/core/constants/account'
 
 const { t } = useI18n()
 

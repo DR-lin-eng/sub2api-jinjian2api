@@ -33,7 +33,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { resolveWeChatOAuthStart } from '@/api/auth'
 import { useAppStore } from '@/stores'
-import { resolveAffiliateReferralCode, storeOAuthAffiliateCode } from '@/utils/oauthAffiliate'
+import { resolveAffiliateReferralCode, storeOAuthAffiliateCode } from '@/core/utils/oauthAffiliate'
 
 const props = withDefaults(defineProps<{
   disabled?: boolean

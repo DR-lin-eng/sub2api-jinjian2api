@@ -8,7 +8,7 @@ import {
   DEFAULT_GROK_MODEL,
   PROVIDERS,
   PROVIDER_GROK,
-} from '@/constants/channelMonitor'
+} from '@/core/constants/channelMonitor'
 
 const { createMonitor, listChannels, listGroups, listTemplates } = vi.hoisted(() => ({
   createMonitor: vi.fn(),

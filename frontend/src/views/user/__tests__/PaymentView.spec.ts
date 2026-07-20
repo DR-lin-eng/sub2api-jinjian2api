@@ -82,7 +82,7 @@ vi.mock('@/api/payment', () => ({
   },
 }))
 
-vi.mock('@/utils/device', () => ({
+vi.mock('@/core/utils/device', () => ({
   isMobileDevice: () => true,
 }))
 

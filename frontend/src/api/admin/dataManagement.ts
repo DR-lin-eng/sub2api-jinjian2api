@@ -1,4 +1,4 @@
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 
 export type BackupType = 'postgres' | 'redis' | 'full'
 export type BackupJobStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'partial_succeeded'

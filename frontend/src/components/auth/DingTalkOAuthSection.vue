@@ -37,7 +37,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { resolveAffiliateReferralCode, storeOAuthAffiliateCode } from '@/utils/oauthAffiliate'
+import { resolveAffiliateReferralCode, storeOAuthAffiliateCode } from '@/core/utils/oauthAffiliate'
 
 const props = withDefaults(defineProps<{
   disabled?: boolean

@@ -333,26 +333,26 @@ import {
   clearCredentialKeyPrefetch,
   prefetchCredentialKey
 } from '@/api/auth'
-import { buildAuthErrorMessage } from '@/utils/authError'
-import { extractI18nErrorMessage } from '@/utils/apiError'
+import { buildAuthErrorMessage } from '@/core/utils/authError'
+import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import {
   formatRegistrationEmailSuffixWhitelistForMessage,
   isRegistrationEmailSuffixAllowed,
   normalizeRegistrationEmailSuffixWhitelist
-} from '@/utils/registrationEmailPolicy'
+} from '@/core/utils/registrationEmailPolicy'
 import {
   clearAffiliateReferralCode,
   loadAffiliateReferralCode,
   resolveAffiliateReferralCode
-} from '@/utils/oauthAffiliate'
+} from '@/core/utils/oauthAffiliate'
 import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
-} from '@/utils/humanVerification'
+} from '@/core/services/humanVerification'
 import {
   clearPendingRegistrationCredentials,
   setPendingRegistrationCredentials
-} from '@/utils/pendingRegistrationCredentials'
+} from '@/core/utils/pendingRegistrationCredentials'
 import type { LoginAgreementDocument } from '@/types'
 
 const { t, locale } = useI18n()

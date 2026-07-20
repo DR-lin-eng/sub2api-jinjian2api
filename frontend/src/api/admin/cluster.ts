@@ -1,4 +1,4 @@
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 
 export type ClusterInstanceStatus = 'online' | 'stale' | 'stopped'
 export type ClusterTaskStatus = 'running' | 'succeeded' | 'failed' | 'lost'

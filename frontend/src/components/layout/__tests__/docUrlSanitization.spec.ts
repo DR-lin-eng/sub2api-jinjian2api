@@ -11,7 +11,7 @@ const keyUsageViewSource = readFileSync(resolve(dir, '../../../views/KeyUsageVie
 
 describe('doc_url sanitization', () => {
   it('AppHeader imports sanitizeUrl', () => {
-    expect(headerSource).toContain("import { sanitizeUrl } from '@/utils/url'")
+    expect(headerSource).toContain("import { sanitizeUrl } from '@/core/utils/url'")
   })
 
   it('AppHeader applies sanitizeUrl to docUrl', () => {
@@ -19,7 +19,7 @@ describe('doc_url sanitization', () => {
   })
 
   it('HomeView imports sanitizeUrl', () => {
-    expect(homeViewSource).toContain("import { sanitizeUrl } from '@/utils/url'")
+    expect(homeViewSource).toContain("import { sanitizeUrl } from '@/core/utils/url'")
   })
 
   it('HomeView applies sanitizeUrl to docUrl', () => {
@@ -27,7 +27,7 @@ describe('doc_url sanitization', () => {
   })
 
   it('KeyUsageView imports sanitizeUrl', () => {
-    expect(keyUsageViewSource).toContain("import { sanitizeUrl } from '@/utils/url'")
+    expect(keyUsageViewSource).toContain("import { sanitizeUrl } from '@/core/utils/url'")
   })
 
   it('KeyUsageView applies sanitizeUrl to docUrl', () => {

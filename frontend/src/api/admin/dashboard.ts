@@ -3,7 +3,7 @@
  * Provides system-wide statistics and metrics
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type {
   DashboardStats,
   TrendDataPoint,

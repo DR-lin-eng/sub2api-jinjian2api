@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatScaled } from '@/utils/pricing'
+import { formatScaled } from '@/core/utils/pricing'
 
 const props = withDefaults(
   defineProps<{

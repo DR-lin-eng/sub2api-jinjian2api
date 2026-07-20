@@ -3,7 +3,7 @@
  * Handles user subscription management for administrators
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type {
   UserSubscription,
   SubscriptionProgress,

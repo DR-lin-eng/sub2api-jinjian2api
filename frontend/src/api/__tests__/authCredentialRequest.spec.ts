@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import { login, register } from '../auth'
-import { createCredentialEnvelope } from '../credentialEncryption'
+import { createCredentialEnvelope } from '@/core/networks/credentialEncryption'
 import type { CredentialEnvelope } from '@/types'
 
-vi.mock('../credentialEncryption', () => ({
+vi.mock('@/core/networks/credentialEncryption', () => ({
   createCredentialEnvelope: vi.fn()
 }))
 

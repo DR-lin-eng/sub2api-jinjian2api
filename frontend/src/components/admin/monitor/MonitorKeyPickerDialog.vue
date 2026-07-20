@@ -79,7 +79,7 @@ import type { ApiKey } from '@/types'
 import type { Provider } from '@/api/admin/channelMonitor'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import GroupBadge from '@/components/common/GroupBadge.vue'
-import { maskApiKey } from '@/utils/maskApiKey'
+import { maskApiKey } from '@/core/utils/maskApiKey'
 
 const props = withDefaults(defineProps<{
   show: boolean

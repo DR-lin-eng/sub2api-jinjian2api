@@ -1,10 +1,10 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
-import router from './router'
-import i18n, { initI18n } from './i18n'
+import router from '@/core/routes'
+import i18n, { initI18n } from '@/core/i18n'
 import { useAppStore } from '@/stores/app'
-import { updateFavicon } from '@/utils/branding'
+import { updateFavicon } from '@/core/services/branding'
 import '@/core/themes/style.css'
 
 function initThemeClass() {

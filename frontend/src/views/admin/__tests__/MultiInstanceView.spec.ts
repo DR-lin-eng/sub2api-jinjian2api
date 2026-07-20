@@ -16,12 +16,12 @@ vi.mock('vue-i18n', async (importOriginal) => {
   }
 })
 
-vi.mock('@/utils/format', () => ({
+vi.mock('@/core/utils/format', () => ({
   formatDateTime: (value: string) => value,
   formatRelativeTime: () => 'now',
 }))
 
-vi.mock('@/utils/apiError', () => ({
+vi.mock('@/core/utils/apiError', () => ({
   extractApiErrorMessage: (_error: unknown, fallback: string) => fallback,
 }))
 

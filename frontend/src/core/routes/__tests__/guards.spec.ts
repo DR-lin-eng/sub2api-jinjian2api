@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { resolveCompletedSetupRedirectPath } from '@/router/setupRedirect'
+import { resolveCompletedSetupRedirectPath } from '@/core/routes/setupRedirect'
 
 // Mock 导航加载状态
 vi.mock('@/composables/useNavigationLoading', () => {

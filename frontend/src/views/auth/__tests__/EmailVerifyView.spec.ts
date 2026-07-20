@@ -4,7 +4,7 @@ import EmailVerifyView from '@/views/auth/EmailVerifyView.vue'
 import {
   clearPendingRegistrationCredentials,
   setPendingRegistrationCredentials
-} from '@/utils/pendingRegistrationCredentials'
+} from '@/core/utils/pendingRegistrationCredentials'
 
 const {
   pushMock,
@@ -103,7 +103,7 @@ vi.mock('@/api/auth', async () => {
   }
 })
 
-vi.mock('@/api/client', () => ({
+vi.mock('@/core/networks/client', () => ({
   apiClient: {
     post: (...args: any[]) => apiClientPostMock(...args),
   },

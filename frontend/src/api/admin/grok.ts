@@ -3,7 +3,7 @@
  * Handles xAI OAuth flows for administrators.
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type { GrokBillingSummary, GrokQuotaWindow, WindowStats } from '@/types'
 
 export type { GrokBillingSummary, GrokQuotaWindow } from '@/types'

@@ -34,7 +34,7 @@ vi.mock('@/stores/app', () => ({
   })
 }))
 
-vi.mock('@/utils/apiError', () => ({
+vi.mock('@/core/utils/apiError', () => ({
   extractApiErrorMessage: (error: unknown) => (error as Error).message || 'request failed'
 }))
 

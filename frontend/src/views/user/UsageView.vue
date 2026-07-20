@@ -230,11 +230,11 @@ import TokenUsageTrend from '@/components/charts/TokenUsageTrend.vue'
 import Icon from '@/components/icons/Icon.vue'
 import UserErrorRequestsTable from '@/components/user/UserErrorRequestsTable.vue'
 import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
-import { formatReasoningEffort } from '@/utils/format'
-import { getLast24HourRange, parseRangeBoundary, toDateInputValue } from '@/utils/dateRange'
-import { BILLING_MODE_IMAGE, getBillingModeLabel } from '@/utils/billingMode'
-import { calculateOutputTokensPerSecond } from '@/utils/usageMetrics'
-import { resolveUsageRequestType, requestTypeToLegacyStream } from '@/utils/usageRequestType'
+import { formatReasoningEffort } from '@/core/utils/format'
+import { getLast24HourRange, parseRangeBoundary, toDateInputValue } from '@/core/utils/dateRange'
+import { BILLING_MODE_IMAGE, getBillingModeLabel } from '@/core/utils/billingMode'
+import { calculateOutputTokensPerSecond } from '@/core/utils/usageMetrics'
+import { resolveUsageRequestType, requestTypeToLegacyStream } from '@/core/utils/usageRequestType'
 import type {
   ApiKey,
   EndpointStat,
@@ -248,7 +248,7 @@ import type {
   UserErrorRequest,
 } from '@/types'
 import type { Column } from '@/components/common/types'
-import { COMMON_ERROR_STATUS_CODES } from '@/utils/errorBadges'
+import { COMMON_ERROR_STATUS_CODES } from '@/core/utils/errorBadges'
 
 const { t } = useI18n()
 const appStore = useAppStore()

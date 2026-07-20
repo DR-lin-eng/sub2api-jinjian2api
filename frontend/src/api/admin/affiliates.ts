@@ -4,7 +4,7 @@
  * exclusive invite codes (overrides aff_code) and exclusive rebate rates.
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type { PaginatedResponse } from '@/types'
 
 export interface AffiliateAdminEntry {

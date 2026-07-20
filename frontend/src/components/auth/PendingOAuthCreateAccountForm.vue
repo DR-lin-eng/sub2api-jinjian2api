@@ -110,7 +110,7 @@ import { useAppStore } from '@/stores'
 import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
-} from '@/utils/humanVerification'
+} from '@/core/services/humanVerification'
 
 export type PendingOAuthCreateAccountPayload = {
   email: string

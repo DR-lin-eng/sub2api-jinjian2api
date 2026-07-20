@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { clearTokenMemory, setAccessToken } from '@/api/tokenStore'
+import { clearTokenMemory, setAccessToken } from '@/core/networks/tokenStore'
 import AccountTestModal from '../AccountTestModal.vue'
 
 const { getAvailableModels, copyToClipboard } = vi.hoisted(() => ({

@@ -4,7 +4,7 @@ import {
   clearTokenMemory,
   getRefreshTokenMemory,
   getTokenExpiresAtMemory
-} from '@/api/tokenStore'
+} from '@/core/networks/tokenStore'
 
 import OidcCallbackView from '../OidcCallbackView.vue'
 
@@ -61,7 +61,7 @@ vi.mock('@/stores', () => ({
   })
 }))
 
-vi.mock('@/api/client', () => ({
+vi.mock('@/core/networks/client', () => ({
   apiClient: {
     post: (...args: any[]) => apiClientPost(...args)
   }

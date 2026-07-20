@@ -22,7 +22,7 @@ import {
   STATUS_FAILED,
   STATUS_ERROR,
   STATUS_UNKNOWN,
-} from '@/constants/channelMonitor'
+} from '@/core/constants/channelMonitor'
 
 const NEUTRAL_BADGE = 'bg-gray-100 text-gray-800 dark:bg-dark-700 dark:text-gray-300'
 

@@ -9,7 +9,7 @@ import {
   openAIWSModeFromEnabled,
   resolveOpenAIWSModeConcurrencyHintKey,
   resolveOpenAIWSModeFromExtra
-} from '@/utils/openaiWsMode'
+} from '@/core/utils/openaiWsMode'
 
 describe('openaiWsMode utils', () => {
   it('normalizes mode values', () => {

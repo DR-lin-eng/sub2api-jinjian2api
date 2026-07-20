@@ -3,7 +3,7 @@
  * Handles user profile management and password changes
  */
 
-import { apiClient } from './client'
+import { apiClient } from '@/core/networks/client'
 import {
   resolveWeChatOAuthStartStrict,
   prepareOAuthBindAccessTokenCookie,

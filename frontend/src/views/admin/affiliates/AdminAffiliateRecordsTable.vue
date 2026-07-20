@@ -155,8 +155,8 @@ import type { Column } from '@/components/common/types'
 import { useAppStore } from '@/stores/app'
 import { affiliatesAPI, type AffiliateInviteRecord, type AffiliateRebateRecord, type AffiliateTransferRecord, type AffiliateUserOverview, type ListAffiliateRecordsParams } from '@/api/admin/affiliates'
 import type { PaginatedResponse } from '@/types'
-import { extractI18nErrorMessage } from '@/utils/apiError'
-import { formatDateTime as formatDisplayDateTime } from '@/utils/format'
+import { extractI18nErrorMessage } from '@/core/utils/apiError'
+import { formatDateTime as formatDisplayDateTime } from '@/core/utils/format'
 
 type RecordType = 'invites' | 'rebates' | 'transfers'
 type AffiliateRecord = AffiliateInviteRecord | AffiliateRebateRecord | AffiliateTransferRecord

@@ -57,7 +57,7 @@
  * ## Usage
  *
  * ```ts
- * import { FeatureFlags, makeSidebarFlag } from '@/utils/featureFlags'
+ * import { FeatureFlags, makeSidebarFlag } from '@/core/services/featureFlags'
  *
  * const flagAvailableChannels = makeSidebarFlag(FeatureFlags.availableChannels)
  * // ...

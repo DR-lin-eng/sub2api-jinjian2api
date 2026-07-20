@@ -1,6 +1,6 @@
 import { reactive, ref } from 'vue'
 import { adminAPI } from '@/api/admin'
-import { QUOTA_THRESHOLD_TYPE_FIXED, type QuotaThresholdType } from '@/constants/account'
+import { QUOTA_THRESHOLD_TYPE_FIXED, type QuotaThresholdType } from '@/core/constants/account'
 
 export const QUOTA_NOTIFY_DIMS = ['daily', 'weekly', 'total'] as const
 export type QuotaNotifyDim = (typeof QUOTA_NOTIFY_DIMS)[number]

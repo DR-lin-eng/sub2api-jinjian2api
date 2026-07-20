@@ -3,7 +3,7 @@
  * Handles CRUD operations for user API keys
  */
 
-import { apiClient } from './client'
+import { apiClient } from '@/core/networks/client'
 import type { ApiKey, CreateApiKeyRequest, UpdateApiKeyRequest, PaginatedResponse } from '@/types'
 
 /**

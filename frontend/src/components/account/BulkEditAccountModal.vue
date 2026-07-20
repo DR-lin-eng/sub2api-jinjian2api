@@ -1273,8 +1273,8 @@ import {
   OPENAI_WS_MODE_HTTP_BRIDGE,
   isOpenAIWSModeEnabled,
   resolveOpenAIWSModeConcurrencyHintKey
-} from '@/utils/openaiWsMode'
-import type { OpenAIWSMode } from '@/utils/openaiWsMode'
+} from '@/core/utils/openaiWsMode'
+import type { OpenAIWSMode } from '@/core/utils/openaiWsMode'
 interface Props {
   show: boolean
   accountIds: number[]

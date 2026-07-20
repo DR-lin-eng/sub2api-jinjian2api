@@ -238,7 +238,7 @@ import type {
   EmailTemplateOption,
 } from "@/api/admin/settings";
 import { useAppStore } from "@/stores";
-import { extractApiErrorMessage } from "@/utils/apiError";
+import { extractApiErrorMessage } from "@/core/utils/apiError";
 
 const { t, locale } = useI18n();
 const appStore = useAppStore();

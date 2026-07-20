@@ -2,7 +2,7 @@
  * User Announcements API endpoints
  */
 
-import { apiClient } from './client'
+import { apiClient } from '@/core/networks/client'
 import type { UserAnnouncement } from '@/types'
 
 export async function list(unreadOnly: boolean = false): Promise<UserAnnouncement[]> {

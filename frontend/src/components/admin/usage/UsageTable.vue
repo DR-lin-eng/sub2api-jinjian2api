@@ -487,12 +487,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { formatDateTime, formatReasoningEffort } from '@/utils/format'
-import { formatCacheTokens, formatMultiplier } from '@/utils/formatters'
-import { formatTokenPricePerMillion } from '@/utils/usagePricing'
-import { getUsageServiceTierLabel } from '@/utils/usageServiceTier'
-import { calculateOutputTokensPerSecond } from '@/utils/usageMetrics'
-import { resolveUsageRequestType } from '@/utils/usageRequestType'
+import { formatDateTime, formatReasoningEffort } from '@/core/utils/format'
+import { formatCacheTokens, formatMultiplier } from '@/core/utils/formatters'
+import { formatTokenPricePerMillion } from '@/core/utils/usagePricing'
+import { getUsageServiceTierLabel } from '@/core/utils/usageServiceTier'
+import { calculateOutputTokensPerSecond } from '@/core/utils/usageMetrics'
+import { resolveUsageRequestType } from '@/core/utils/usageRequestType'
 import {
   LATENCY_BAR_CLASSES,
   LATENCY_BAR_FROM_CLASSES,
@@ -500,7 +500,7 @@ import {
   LATENCY_TEXT_CLASSES,
   durationSeverity,
   firstTokenSeverity,
-} from '@/utils/latencyHealth'
+} from '@/core/utils/latencyHealth'
 import {
   BILLING_MODE_TOKEN,
   getBillingModeLabel,
@@ -508,7 +508,7 @@ import {
   isImageUsage,
   getDisplayBillingMode,
   imageUnitPrice,
-} from '@/utils/billingMode'
+} from '@/core/utils/billingMode'
 import {
   formatImageBillingSize,
   formatImageInputSize,
@@ -521,7 +521,7 @@ import {
   hasImageInputTokens,
   textInputTokens,
   hasImageInputCost,
-} from '@/utils/imageUsage'
+} from '@/core/utils/imageUsage'
 
 /** Compute the account-billed cost for display: (account_stats_cost ?? total_cost) * rate_multiplier */
 function accountBilled(row: { total_cost?: number | null; account_stats_cost?: number | null; account_rate_multiplier?: number | null }): number {
@@ -536,7 +536,7 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import IpGeoCell from '@/components/common/IpGeoCell.vue'
 import Icon from '@/components/icons/Icon.vue'
 import UsageDetailModal from './UsageDetailModal.vue'
-import { fetchBatch, getEntry } from '@/utils/ipGeoLookup'
+import { fetchBatch, getEntry } from '@/core/utils/ipGeoLookup'
 import type { AdminUsageLog } from '@/types'
 import type { Column } from '@/components/common/types'
 

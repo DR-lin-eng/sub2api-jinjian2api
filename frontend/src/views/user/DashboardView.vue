@@ -24,7 +24,7 @@ import UserDashboardApiKeyUsage from '@/components/user/dashboard/UserDashboardA
 import type { UsageLog, TrendDataPoint, ModelStat, PlatformQuotaItem, ApiKey } from '@/types'
 import { getMyPlatformQuotas } from '@/api/user'
 import { keysAPI } from '@/api/keys'
-import { formatDateLocalInput } from '@/utils/format'
+import { formatDateLocalInput } from '@/core/utils/format'
 
 const authStore = useAuthStore(); const user = computed(() => authStore.user)
 const stats = ref<UserStatsType | null>(null); const loading = ref(false); const loadingUsage = ref(false); const loadingCharts = ref(false)

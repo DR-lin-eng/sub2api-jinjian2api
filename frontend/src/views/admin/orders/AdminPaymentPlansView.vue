@@ -80,7 +80,7 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { adminPaymentAPI } from '@/api/admin/payment'
 import type { AdminPaymentConfig } from '@/api/admin/payment'
-import { extractI18nErrorMessage } from '@/utils/apiError'
+import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import adminAPI from '@/api/admin'
 import type { SubscriptionPlan } from '@/types/payment'
 import type { AdminGroup } from '@/types'
@@ -92,7 +92,7 @@ import Icon from '@/components/icons/Icon.vue'
 import GroupBadge from '@/components/common/GroupBadge.vue'
 import PlanEditDialog from './PlanEditDialog.vue'
 import { currencySymbol } from '@/components/payment/currency'
-import { platformTextClass } from '@/utils/platformColors'
+import { platformTextClass } from '@/core/utils/platformColors'
 
 const { t } = useI18n()
 const appStore = useAppStore()

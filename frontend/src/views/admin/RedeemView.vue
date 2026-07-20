@@ -649,7 +649,7 @@ import { useClipboard } from '@/composables/useClipboard'
 import { useTableSelection } from '@/composables/useTableSelection'
 import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
 import { adminAPI } from '@/api/admin'
-import { formatDateTime } from '@/utils/format'
+import { formatDateTime } from '@/core/utils/format'
 import type {
   RedeemCode,
   RedeemCodeType,

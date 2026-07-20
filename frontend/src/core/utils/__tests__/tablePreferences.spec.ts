@@ -6,7 +6,7 @@ import {
   getConfiguredTableDefaultPageSize,
   getConfiguredTablePageSizeOptions,
   normalizeTablePageSize
-} from '@/utils/tablePreferences'
+} from '@/core/utils/tablePreferences'
 
 describe('tablePreferences', () => {
   afterEach(() => {

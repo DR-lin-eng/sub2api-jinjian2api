@@ -149,8 +149,8 @@ import type { UserAffiliateDetail } from '@/types'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
 import { useClipboard } from '@/composables/useClipboard'
-import { formatCurrency, formatDateTime } from '@/utils/format'
-import { extractApiErrorMessage } from '@/utils/apiError'
+import { formatCurrency, formatDateTime } from '@/core/utils/format'
+import { extractApiErrorMessage } from '@/core/utils/apiError'
 
 const { t } = useI18n()
 const appStore = useAppStore()

@@ -71,7 +71,7 @@ import {
   PROVIDER_ANTHROPIC,
   PROVIDER_GEMINI,
   PROVIDER_GROK,
-} from '@/constants/channelMonitor'
+} from '@/core/constants/channelMonitor'
 
 defineProps<{
   loading: boolean

@@ -3,7 +3,7 @@
  * Handles payment operations for regular users
  */
 
-import { apiClient } from './client'
+import { apiClient } from '@/core/networks/client'
 import type {
   PaymentConfig,
   SubscriptionPlan,

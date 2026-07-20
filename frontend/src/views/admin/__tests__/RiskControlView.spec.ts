@@ -49,7 +49,7 @@ vi.mock('@/stores/app', () => ({
   }),
 }))
 
-vi.mock('@/utils/apiError', () => ({
+vi.mock('@/core/utils/apiError', () => ({
   extractApiErrorMessage: (_err: unknown, fallback: string) => fallback,
 }))
 

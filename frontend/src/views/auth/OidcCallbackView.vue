@@ -250,7 +250,7 @@ import { AuthLayout } from '@/components/layout'
 import PendingOAuthCreateAccountForm, {
   type PendingOAuthCreateAccountPayload
 } from '@/components/auth/PendingOAuthCreateAccountForm.vue'
-import { apiClient } from '@/api/client'
+import { apiClient } from '@/core/networks/client'
 import { useAuthStore, useAppStore } from '@/stores'
 import {
   completeOIDCOAuthRegistration,
@@ -268,7 +268,7 @@ import {
   clearAllAffiliateReferralCodes,
   loadOAuthAffiliateCode,
   oauthAffiliatePayload
-} from '@/utils/oauthAffiliate'
+} from '@/core/utils/oauthAffiliate'
 
 const route = useRoute()
 const router = useRouter()

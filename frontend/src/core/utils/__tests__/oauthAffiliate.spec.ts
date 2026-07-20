@@ -7,7 +7,7 @@ import {
   resolveAffiliateReferralCode,
   storeAffiliateReferralCode,
   storeOAuthAffiliateCode
-} from '@/utils/oauthAffiliate'
+} from '@/core/utils/oauthAffiliate'
 
 describe('oauthAffiliate', () => {
   beforeEach(() => {

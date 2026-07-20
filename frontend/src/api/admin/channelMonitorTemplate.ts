@@ -5,7 +5,7 @@
  * 应用到监控 = 拷贝快照；模板后续变动不自动同步，需手动点「应用到关联监控」刷新。
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type { APIMode, BodyOverrideMode, Provider } from './channelMonitor'
 
 export interface ChannelMonitorTemplate {

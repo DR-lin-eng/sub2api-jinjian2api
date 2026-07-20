@@ -3,7 +3,7 @@
  * Handles API key group management for administrators
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type {
   AdminGroup,
   GroupPlatform,

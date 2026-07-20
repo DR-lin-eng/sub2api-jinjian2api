@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { updateFavicon } from '@/utils/branding'
+import { updateFavicon } from '@/core/services/branding'
 
 describe('updateFavicon', () => {
   beforeEach(() => {

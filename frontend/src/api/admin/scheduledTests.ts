@@ -3,7 +3,7 @@
  * Handles scheduled test plan management for account connectivity monitoring
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type {
   ScheduledTestPlan,
   ScheduledTestResult,

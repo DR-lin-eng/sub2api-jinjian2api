@@ -149,7 +149,7 @@ import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
 import type { Account, TempUnschedulableStatus } from '@/types'
 import BaseDialog from '@/components/common/BaseDialog.vue'
-import { formatDateTime } from '@/utils/format'
+import { formatDateTime } from '@/core/utils/format'
 
 const props = defineProps<{
   show: boolean

@@ -1,4 +1,4 @@
-import { apiClient } from '@/api/client'
+import { apiClient } from '@/core/networks/client'
 import type {
   PromptAuditConfig,
   PromptAuditEvent,

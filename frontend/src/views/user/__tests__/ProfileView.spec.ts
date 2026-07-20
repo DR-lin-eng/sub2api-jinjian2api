@@ -25,7 +25,7 @@ vi.mock('@/stores/app', () => ({
   })
 }))
 
-vi.mock('@/utils/format', () => ({
+vi.mock('@/core/utils/format', () => ({
   formatDate: () => 'April 2026'
 }))
 

@@ -9,7 +9,7 @@ import { adminAPI } from '@/api'
 import { opsAPI, type OpsDashboardOverview, type OpsMetricThresholds, type OpsRealtimeTrafficSummary } from '@/api/admin/ops'
 import type { OpsRequestDetailsPreset } from './OpsRequestDetailsModal.vue'
 import { useAdminSettingsStore } from '@/stores'
-import { formatBytes } from '@/utils/format'
+import { formatBytes } from '@/core/utils/format'
 import {
   formatCompactNumber,
   formatDurationMs,

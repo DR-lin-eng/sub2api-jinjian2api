@@ -319,7 +319,7 @@ import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { useAppStore } from '@/stores/app'
 import { useAnnouncementStore } from '@/stores/announcements'
-import { formatRelativeTime, formatRelativeWithDateTime } from '@/utils/format'
+import { formatRelativeTime, formatRelativeWithDateTime } from '@/core/utils/format'
 import type { UserAnnouncement } from '@/types'
 import Icon from '@/components/icons/Icon.vue'
 

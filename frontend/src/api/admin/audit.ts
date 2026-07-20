@@ -7,7 +7,7 @@
  * only be cleared with a fresh TOTP verification.
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type { PaginatedResponse } from '@/types'
 
 export interface AuditLog {

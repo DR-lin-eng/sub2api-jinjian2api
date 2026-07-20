@@ -3,7 +3,7 @@
  * Handles Two-Factor Authentication with Google Authenticator
  */
 
-import { apiClient } from './client'
+import { apiClient } from '@/core/networks/client'
 import type {
   TotpStatus,
   TotpSetupRequest,

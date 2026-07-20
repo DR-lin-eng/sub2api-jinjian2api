@@ -3,7 +3,7 @@
  * Handles AI platform account management for administrators
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type {
   Account,
   CreateAccountRequest,

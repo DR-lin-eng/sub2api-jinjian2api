@@ -125,7 +125,7 @@ import Pagination from '@/components/common/Pagination.vue'
 import UsageFilters from '@/components/admin/usage/UsageFilters.vue'
 import { adminUsageAPI } from '@/api/admin/usage'
 import type { AdminUsageQueryParams, UsageCleanupTask, CreateUsageCleanupTaskRequest } from '@/api/admin/usage'
-import { requestTypeToLegacyStream } from '@/utils/usageRequestType'
+import { requestTypeToLegacyStream } from '@/core/utils/usageRequestType'
 
 interface Props {
   show: boolean

@@ -246,7 +246,7 @@ import BaseDialog from '@/components/common/BaseDialog.vue'
 import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
 import Icon from '@/components/icons/Icon.vue'
 import Select from '@/components/common/Select.vue'
-import { createStableObjectKeyResolver } from '@/utils/stableObjectKey'
+import { createStableObjectKeyResolver } from '@/core/utils/stableObjectKey'
 
 const { t } = useI18n()
 const appStore = useAppStore()

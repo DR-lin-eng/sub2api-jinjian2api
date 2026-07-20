@@ -1,4 +1,4 @@
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 
 export interface BackupS3Config {
   endpoint: string

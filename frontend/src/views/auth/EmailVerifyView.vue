@@ -181,28 +181,28 @@ import {
   sendPendingOAuthVerifyCode,
   sendVerifyCode,
 } from '@/api/auth'
-import { apiClient } from '@/api/client'
-import { buildAuthErrorMessage } from '@/utils/authError'
-import { extractI18nErrorMessage } from '@/utils/apiError'
+import { apiClient } from '@/core/networks/client'
+import { buildAuthErrorMessage } from '@/core/utils/authError'
+import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import {
   formatRegistrationEmailSuffixWhitelistForMessage,
   isRegistrationEmailSuffixAllowed,
   normalizeRegistrationEmailSuffixWhitelist
-} from '@/utils/registrationEmailPolicy'
+} from '@/core/utils/registrationEmailPolicy'
 import {
   clearAllAffiliateReferralCodes,
   loadAffiliateReferralCode,
   oauthAffiliatePayload
-} from '@/utils/oauthAffiliate'
+} from '@/core/utils/oauthAffiliate'
 import {
   clearPendingRegistrationCredentials,
   getPendingRegistrationCredentials
-} from '@/utils/pendingRegistrationCredentials'
+} from '@/core/utils/pendingRegistrationCredentials'
 import type { EncryptedRegisterRequest } from '@/types'
 import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
-} from '@/utils/humanVerification'
+} from '@/core/services/humanVerification'
 
 const { t, locale } = useI18n()
 

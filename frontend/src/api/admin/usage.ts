@@ -3,7 +3,7 @@
  * Handles admin-level usage logs and statistics retrieval
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 import type { AdminUsageLog, UsageQueryParams, PaginatedResponse, UsageRequestType } from '@/types'
 import type { EndpointStat } from '@/types'
 

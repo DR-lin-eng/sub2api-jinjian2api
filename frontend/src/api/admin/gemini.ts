@@ -3,7 +3,7 @@
  * Handles Gemini OAuth flows for administrators
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 
 export interface GeminiAuthUrlResponse {
   auth_url: string

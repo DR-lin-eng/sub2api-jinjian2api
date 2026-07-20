@@ -112,7 +112,7 @@ import {
   DEFAULT_GROK_MODEL,
   PROVIDER_GROK,
   PROVIDER_OPENAI,
-} from '@/constants/channelMonitor'
+} from '@/core/constants/channelMonitor'
 
 const props = defineProps<{
   provider?: Provider

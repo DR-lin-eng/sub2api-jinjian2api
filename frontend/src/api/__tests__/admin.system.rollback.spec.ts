@@ -5,7 +5,7 @@ const { get, post } = vi.hoisted(() => ({
   post: vi.fn(),
 }))
 
-vi.mock('../client', () => ({
+vi.mock('@/core/networks/client', () => ({
   apiClient: {
     get,
     post,

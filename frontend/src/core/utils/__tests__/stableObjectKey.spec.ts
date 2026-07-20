@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createStableObjectKeyResolver } from '@/utils/stableObjectKey'
+import { createStableObjectKeyResolver } from '@/core/utils/stableObjectKey'
 
 describe('createStableObjectKeyResolver', () => {
   it('对同一对象返回稳定 key', () => {

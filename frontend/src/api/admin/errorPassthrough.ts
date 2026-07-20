@@ -3,7 +3,7 @@
  * Handles error passthrough rule management for administrators
  */
 
-import { apiClient } from '../client'
+import { apiClient } from '@/core/networks/client'
 
 /**
  * Error passthrough rule interface

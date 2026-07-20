@@ -3,7 +3,7 @@
  * Handles system settings management for administrators
  */
 
-import { apiClient } from "../client";
+import { apiClient } from "@/core/networks/client";
 import type {
   CustomEndpoint,
   CustomMenuItem,

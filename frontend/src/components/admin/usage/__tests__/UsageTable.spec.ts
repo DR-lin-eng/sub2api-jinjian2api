@@ -4,7 +4,7 @@ const ipGeoMocks = vi.hoisted(() => ({
   fetchBatch: vi.fn(),
 }))
 
-vi.mock('@/utils/ipGeoLookup', () => ipGeoMocks)
+vi.mock('@/core/utils/ipGeoLookup', () => ipGeoMocks)
 
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'

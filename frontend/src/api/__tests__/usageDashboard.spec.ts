@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { post } = vi.hoisted(() => ({ post: vi.fn() }))
-vi.mock('../client', () => ({ apiClient: { post } }))
+vi.mock('@/core/networks/client', () => ({ apiClient: { post } }))
 
 import { getDashboardApiKeysUsage } from '../usage'
 

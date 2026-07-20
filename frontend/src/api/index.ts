@@ -4,7 +4,7 @@
  */
 
 // Re-export the HTTP client
-export { apiClient } from './client'
+export { apiClient } from '@/core/networks/client'
 
 // Auth API
 export {
@@ -38,4 +38,4 @@ export { channelMonitorUserAPI } from './channelMonitor'
 export { adminAPI } from './admin'
 
 // Default export
-export { default } from './client'
+export { default } from '@/core/networks/client'

@@ -121,7 +121,7 @@ vi.mock("@/composables/useClipboard", () => ({
   }),
 }));
 
-vi.mock("@/utils/apiError", () => ({
+vi.mock("@/core/utils/apiError", () => ({
   extractApiErrorMessage: () => "error",
 }));
 

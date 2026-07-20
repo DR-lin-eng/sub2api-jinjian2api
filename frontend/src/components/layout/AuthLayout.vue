@@ -65,7 +65,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useAppStore } from '@/stores'
-import { sanitizeUrl } from '@/utils/url'
+import { sanitizeUrl } from '@/core/utils/url'
 
 const appStore = useAppStore()
 
