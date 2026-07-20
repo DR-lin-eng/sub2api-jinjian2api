@@ -61,6 +61,14 @@ vi.mock('@/api/client', () => ({
   },
 }))
 
+// Wave 1: also mock the new @/core/networks/client path so mock catches usages
+// via either the shim or the real target.
+vi.mock('@/core/networks/client', () => ({
+  apiClient: {
+    post: (...args: any[]) => apiPostMock(...args),
+  },
+}))
+
 vi.mock('@/api/auth', async () => {
   const actual = await vi.importActual<typeof import('@/api/auth')>('@/api/auth')
   return {
