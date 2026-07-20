@@ -12,7 +12,7 @@ vi.mock('@/core/networks/client', () => ({
   },
 }))
 
-import { paymentAPI } from '@/api/payment'
+import { paymentAPI } from '@/features/billing/data/datasources/paymentDatasource'
 
 describe('payment api', () => {
   beforeEach(() => {

@@ -255,8 +255,8 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { adminAPI } from '@/api/admin'
-import { keysAPI } from '@/api/keys'
-import { userGroupsAPI } from '@/api/groups'
+import { keysAPI } from '@/features/keys/data/datasources/keysDatasource'
+import { userGroupsAPI } from '@/features/groups-user/data/datasources/groupsUserDatasource'
 import type {
   BodyOverrideMode,
   ChannelMonitor,
@@ -276,8 +276,8 @@ import ModelTagInput from '@/components/admin/channel/ModelTagInput.vue'
 import { getPlatformTextClass } from '@/components/admin/channel/types'
 import MonitorKeyPickerDialog from '@/components/admin/monitor/MonitorKeyPickerDialog.vue'
 import MonitorAdvancedRequestConfig from '@/components/admin/monitor/MonitorAdvancedRequestConfig.vue'
-import ProviderIcon from '@/components/user/monitor/ProviderIcon.vue'
-import { useChannelMonitorFormat } from '@/composables/useChannelMonitorFormat'
+import ProviderIcon from '@/features/channel-monitor-user/presentation/widgets/ProviderIcon.vue'
+import { useChannelMonitorFormat } from '@/features/channel-monitor-user/presentation/composables/useChannelMonitorFormat'
 import {
   PROVIDER_OPENAI,
   PROVIDER_ANTHROPIC,

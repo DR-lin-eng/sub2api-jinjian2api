@@ -35,11 +35,11 @@ vi.mock('@/api/admin', () => ({
   },
 }))
 
-vi.mock('@/api/keys', () => ({
+vi.mock('@/features/keys/data/datasources/keysDatasource', () => ({
   keysAPI: { list: vi.fn() },
 }))
 
-vi.mock('@/api/groups', () => ({
+vi.mock('@/features/groups-user/data/datasources/groupsUserDatasource', () => ({
   userGroupsAPI: { getUserGroupRates: vi.fn() },
 }))
 

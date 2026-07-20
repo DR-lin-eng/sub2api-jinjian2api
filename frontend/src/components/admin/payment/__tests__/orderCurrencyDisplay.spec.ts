@@ -4,7 +4,7 @@ import type { PaymentOrder } from '@/types/payment'
 import AdminOrderDetail from '../AdminOrderDetail.vue'
 import AdminOrderTable from '../AdminOrderTable.vue'
 import AdminRefundDialog from '../AdminRefundDialog.vue'
-import OrderTable from '@/components/payment/OrderTable.vue'
+import OrderTable from '@/features/billing/presentation/widgets/OrderTable.vue'
 
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')

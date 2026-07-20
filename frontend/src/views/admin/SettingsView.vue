@@ -8011,8 +8011,8 @@ import AppLayout from "@/common/widgets/layout/AppLayout.vue";
 import Icon from "@/components/icons/Icon.vue";
 import Select from "@/common/widgets/forms/Select.vue";
 import ConfirmDialog from "@/common/widgets/feedback/ConfirmDialog.vue";
-import PaymentProviderList from "@/components/payment/PaymentProviderList.vue";
-import PaymentProviderDialog from "@/components/payment/PaymentProviderDialog.vue";
+import PaymentProviderList from "@/features/billing/presentation/widgets/PaymentProviderList.vue";
+import PaymentProviderDialog from "@/features/billing/presentation/widgets/PaymentProviderDialog.vue";
 import GroupBadge from "@/common/widgets/data/GroupBadge.vue";
 import GroupOptionItem from "@/common/widgets/data/GroupOptionItem.vue";
 import Toggle from "@/common/widgets/forms/Toggle.vue";
@@ -8033,7 +8033,7 @@ import { affiliatesAPI, type AffiliateAdminEntry, type SimpleUser as AffiliateSi
 import { extractApiErrorMessage, extractI18nErrorMessage } from "@/core/utils/apiError";
 import { useAppStore } from "@/stores";
 import { useAdminSettingsStore } from "@/stores/adminSettings";
-import { normalizeVisibleMethod } from "@/components/payment/paymentFlow";
+import { normalizeVisibleMethod } from "@/features/billing/presentation/paymentFlowResolver";
 import {
   isRegistrationEmailSuffixDomainValid,
   normalizeRegistrationEmailSuffixDomain,

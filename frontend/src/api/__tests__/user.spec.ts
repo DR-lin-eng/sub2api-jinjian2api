@@ -11,7 +11,7 @@ describe('user api oauth binding urls', () => {
   })
 
   it('builds third-party bind urls against the bind start endpoint', async () => {
-    const { buildOAuthBindingStartURL } = await import('@/api/user')
+    const { buildOAuthBindingStartURL } = await import('@/features/profile/data/datasources/profileDatasource')
 
     expect(buildOAuthBindingStartURL('linuxdo', { redirectTo: '/settings/profile' })).toBe(
       'https://api.example.com/api/v1/auth/oauth/linuxdo/bind/start?redirect=%2Fsettings%2Fprofile&intent=bind_current_user'

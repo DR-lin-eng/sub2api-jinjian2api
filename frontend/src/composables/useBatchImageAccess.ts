@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue'
-import { keysAPI } from '@/api/keys'
+import { keysAPI } from '@/features/keys/data/datasources/keysDatasource'
 import { useAuthStore } from '@/stores/auth'
 import type { ApiKey } from '@/types'
 

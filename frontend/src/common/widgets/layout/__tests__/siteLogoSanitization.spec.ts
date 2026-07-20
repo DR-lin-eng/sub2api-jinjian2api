@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest'
 const dir = dirname(fileURLToPath(import.meta.url))
 const sidebarSource = readFileSync(resolve(dir, '../AppSidebar.vue'), 'utf8')
 const homeViewSource = readFileSync(resolve(dir, '../../../pages/HomePage.vue'), 'utf8')
-const keyUsageViewSource = readFileSync(resolve(dir, '../../../pages/KeyUsagePage.vue'), 'utf8')
+const keyUsageViewSource = readFileSync(resolve(dir, '../../../../features/keys/presentation/pages/KeyUsagePage.vue'), 'utf8')
 
 describe('site_logo sanitization', () => {
   it('AppSidebar imports sanitizeUrl and applies it to siteLogo', () => {

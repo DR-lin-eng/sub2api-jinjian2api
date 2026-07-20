@@ -6,10 +6,10 @@
 export { useAuthStore } from './auth'
 export { useAppStore } from './app'
 export { useAdminSettingsStore } from './adminSettings'
-export { useSubscriptionStore } from './subscriptions'
+export { useSubscriptionStore } from '@/features/subscriptions/presentation/stores/subscriptionsStore'
 export { useOnboardingStore } from './onboarding'
-export { useAnnouncementStore } from './announcements'
-export { usePaymentStore } from './payment'
+export { useAnnouncementStore } from '@/features/announcements/presentation/stores/announcementsStore'
+export { usePaymentStore } from '@/features/billing/presentation/stores/paymentStore'
 export { useAdminComplianceStore } from './adminCompliance'
 
 // Re-export types for convenience

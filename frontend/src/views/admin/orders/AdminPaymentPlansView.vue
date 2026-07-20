@@ -91,7 +91,7 @@ import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Icon from '@/components/icons/Icon.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import PlanEditDialog from './PlanEditDialog.vue'
-import { currencySymbol } from '@/components/payment/currency'
+import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
 import { platformTextClass } from '@/core/utils/platformColors'
 
 const { t } = useI18n()

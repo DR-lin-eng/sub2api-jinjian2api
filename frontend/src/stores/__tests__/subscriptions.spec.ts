@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useSubscriptionStore } from '@/stores/subscriptions'
+import { useSubscriptionStore } from '@/features/subscriptions/presentation/stores/subscriptionsStore'
 
 // Mock subscriptions API
 const mockGetActiveSubscriptions = vi.fn()
 
-vi.mock('@/api/subscriptions', () => ({
+vi.mock('@/features/subscriptions/data/datasources/subscriptionsDatasource', () => ({
   default: {
     getActiveSubscriptions: (...args: any[]) => mockGetActiveSubscriptions(...args),
   },

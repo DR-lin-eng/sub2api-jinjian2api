@@ -142,8 +142,8 @@ import DataTable from '@/common/widgets/data/DataTable.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import Icon from '@/components/icons/Icon.vue'
-import { statusBadgeClass, canRefund, formatOrderDateTime } from '@/components/payment/orderUtils'
-import { currencySymbol } from '@/components/payment/currency'
+import { statusBadgeClass, canRefund, formatOrderDateTime } from '@/features/billing/presentation/orderUtilsFormatter'
+import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
 
 const { t } = useI18n()
 
