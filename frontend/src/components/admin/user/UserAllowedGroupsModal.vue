@@ -184,8 +184,8 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
 import type { AdminUser, Group, GroupPlatform } from '@/types'
-import BaseDialog from '@/components/common/BaseDialog.vue'
-import PlatformIcon from '@/components/common/PlatformIcon.vue'
+import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
+import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
 
 interface GroupRateConfig {
   groupId: number

@@ -174,8 +174,8 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
-import PlatformIcon from '@/components/common/PlatformIcon.vue'
-import GroupBadge from '@/components/common/GroupBadge.vue'
+import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
+import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import SupportedModelChip from './SupportedModelChip.vue'
 import type { UserAvailableChannel, UserAvailableGroup, UserChannelPlatformSection } from '@/api/channels'
 import type { GroupPlatform, SubscriptionType } from '@/types'

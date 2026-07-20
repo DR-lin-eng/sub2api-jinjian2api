@@ -136,7 +136,7 @@
 <script setup lang="ts">
 import { computed, ref, reactive, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { AuthLayout } from '@/components/layout'
+import { AuthLayout } from '@/common/widgets/layout'
 import Icon from '@/components/icons/Icon.vue'
 import HumanVerificationWidget from '@/components/auth/HumanVerificationWidget.vue'
 import LocalCaptchaWidget from '@/components/auth/LocalCaptchaWidget.vue'

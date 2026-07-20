@@ -658,15 +658,15 @@ import type {
   SubscriptionType,
   BatchUpdateRedeemCodeFields
 } from '@/types'
-import type { Column } from '@/components/common/types'
-import AppLayout from '@/components/layout/AppLayout.vue'
-import TablePageLayout from '@/components/layout/TablePageLayout.vue'
-import DataTable from '@/components/common/DataTable.vue'
-import Pagination from '@/components/common/Pagination.vue'
-import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
-import Select from '@/components/common/Select.vue'
-import GroupBadge from '@/components/common/GroupBadge.vue'
-import GroupOptionItem from '@/components/common/GroupOptionItem.vue'
+import type { Column } from '@/common/types/uiTypes'
+import AppLayout from '@/common/widgets/layout/AppLayout.vue'
+import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
+import DataTable from '@/common/widgets/data/DataTable.vue'
+import Pagination from '@/common/widgets/data/Pagination.vue'
+import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
+import Select from '@/common/widgets/forms/Select.vue'
+import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
+import GroupOptionItem from '@/common/widgets/data/GroupOptionItem.vue'
 import Icon from '@/components/icons/Icon.vue'
 
 const { t } = useI18n()

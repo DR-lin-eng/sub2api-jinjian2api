@@ -141,7 +141,7 @@ import {
   type OpenAIQuotaUsage,
   type OpenAIQuotaResetResult
 } from '@/api/admin/accounts'
-import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 
 const props = defineProps<{
   account: Account

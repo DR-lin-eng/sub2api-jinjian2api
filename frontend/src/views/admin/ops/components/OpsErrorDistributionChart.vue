@@ -5,8 +5,8 @@ import { Chart as ChartJS, ArcElement, Legend, Tooltip } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
 import type { OpsErrorDistributionResponse } from '@/api/admin/ops'
 import type { ChartState } from '../types'
-import HelpTooltip from '@/components/common/HelpTooltip.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
+import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
+import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import { formatCompactNumber, formatExactNumber } from '../utils/opsFormatters'
 
 ChartJS.register(ArcElement, Tooltip, Legend)

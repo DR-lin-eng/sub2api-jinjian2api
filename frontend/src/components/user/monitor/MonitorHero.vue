@@ -59,7 +59,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
-import AutoRefreshButton from '@/components/common/AutoRefreshButton.vue'
+import AutoRefreshButton from '@/common/widgets/data/AutoRefreshButton.vue'
 export type MonitorWindow = '7d' | '15d' | '30d'
 export type OverallStatus = 'operational' | 'degraded'
 

@@ -1116,12 +1116,12 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import AppLayout from '@/components/layout/AppLayout.vue'
-import BaseDialog from '@/components/common/BaseDialog.vue'
+import AppLayout from '@/common/widgets/layout/AppLayout.vue'
+import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/components/icons/Icon.vue'
-import Select from '@/components/common/Select.vue'
-import Toggle from '@/components/common/Toggle.vue'
-import Pagination from '@/components/common/Pagination.vue'
+import Select from '@/common/widgets/forms/Select.vue'
+import Toggle from '@/common/widgets/forms/Toggle.vue'
+import Pagination from '@/common/widgets/data/Pagination.vue'
 import ModelWhitelistSelector from '@/components/account/ModelWhitelistSelector.vue'
 import { adminAPI } from '@/api/admin'
 import type {

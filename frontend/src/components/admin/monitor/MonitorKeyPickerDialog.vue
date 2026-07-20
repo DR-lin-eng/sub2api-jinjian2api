@@ -77,8 +77,8 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ApiKey } from '@/types'
 import type { Provider } from '@/api/admin/channelMonitor'
-import BaseDialog from '@/components/common/BaseDialog.vue'
-import GroupBadge from '@/components/common/GroupBadge.vue'
+import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
+import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import { maskApiKey } from '@/core/utils/maskApiKey'
 
 const props = withDefaults(defineProps<{

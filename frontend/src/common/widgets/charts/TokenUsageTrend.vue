@@ -33,7 +33,7 @@ import {
   Filler
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import type { TrendDataPoint } from '@/types'
 
 ChartJS.register(

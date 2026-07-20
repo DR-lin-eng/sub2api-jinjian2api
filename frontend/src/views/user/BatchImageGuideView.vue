@@ -754,12 +754,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import AppLayout from '@/components/layout/AppLayout.vue'
-import TablePageLayout from '@/components/layout/TablePageLayout.vue'
-import DataTable from '@/components/common/DataTable.vue'
-import BaseDialog from '@/components/common/BaseDialog.vue'
-import Select, { type SelectOption } from '@/components/common/Select.vue'
-import SearchInput from '@/components/common/SearchInput.vue'
+import AppLayout from '@/common/widgets/layout/AppLayout.vue'
+import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
+import DataTable from '@/common/widgets/data/DataTable.vue'
+import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
+import Select, { type SelectOption } from '@/common/widgets/forms/Select.vue'
+import SearchInput from '@/common/widgets/forms/SearchInput.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { useClipboard } from '@/composables/useClipboard'
 import { getPersistedPageSize, setPersistedPageSize } from '@/composables/usePersistedPageSize'
@@ -784,7 +784,7 @@ import {
   type BatchImageSubmitItem,
 } from '@/api/batchImage'
 import type { ApiKey } from '@/types'
-import type { Column } from '@/components/common/types'
+import type { Column } from '@/common/types/uiTypes'
 
 type BatchImageJobRow = Pick<BatchImageJob, 'id' | 'task_name' | 'parent_batch_id' | 'status' | 'model' | 'provider' | 'item_count' | 'success_count' | 'fail_count' | 'estimated_cost' | 'hold_amount' | 'actual_cost' | 'created_at' | 'downloaded_at'> & {
   api_key_id: number

@@ -42,8 +42,8 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { PaymentOrder } from '@/types/payment'
-import type { Column } from '@/components/common/types'
-import DataTable from '@/components/common/DataTable.vue'
+import type { Column } from '@/common/types/uiTypes'
+import DataTable from '@/common/widgets/data/DataTable.vue'
 import OrderStatusBadge from '@/components/payment/OrderStatusBadge.vue'
 import { currencySymbol } from '@/components/payment/currency'
 

@@ -6,8 +6,8 @@ import { describe, expect, it } from 'vitest'
 
 const dir = dirname(fileURLToPath(import.meta.url))
 const headerSource = readFileSync(resolve(dir, '../AppHeader.vue'), 'utf8')
-const homeViewSource = readFileSync(resolve(dir, '../../../views/HomeView.vue'), 'utf8')
-const keyUsageViewSource = readFileSync(resolve(dir, '../../../views/KeyUsageView.vue'), 'utf8')
+const homeViewSource = readFileSync(resolve(dir, '../../../pages/HomePage.vue'), 'utf8')
+const keyUsageViewSource = readFileSync(resolve(dir, '../../../pages/KeyUsagePage.vue'), 'utf8')
 
 describe('doc_url sanitization', () => {
   it('AppHeader imports sanitizeUrl', () => {

@@ -112,9 +112,9 @@ import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
 import { formatDateTime } from '@/core/utils/format'
 import type { AdminUser, AdminGroup, ApiKey } from '@/types'
-import BaseDialog from '@/components/common/BaseDialog.vue'
-import GroupBadge from '@/components/common/GroupBadge.vue'
-import GroupOptionItem from '@/components/common/GroupOptionItem.vue'
+import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
+import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
+import GroupOptionItem from '@/common/widgets/data/GroupOptionItem.vue'
 
 const props = defineProps<{ show: boolean; user: AdminUser | null }>()
 const emit = defineEmits(['close'])

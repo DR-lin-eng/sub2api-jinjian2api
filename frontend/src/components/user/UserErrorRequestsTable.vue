@@ -123,12 +123,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import DataTable from '@/components/common/DataTable.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
-import Pagination from '@/components/common/Pagination.vue'
+import DataTable from '@/common/widgets/data/DataTable.vue'
+import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
+import Pagination from '@/common/widgets/data/Pagination.vue'
 import UserErrorDetailModal from '@/components/user/UserErrorDetailModal.vue'
-import IpGeoCell from '@/components/common/IpGeoCell.vue'
-import IpGeoBatchToolbar from '@/components/common/IpGeoBatchToolbar.vue'
+import IpGeoCell from '@/common/widgets/data/IpGeoCell.vue'
+import IpGeoBatchToolbar from '@/common/widgets/data/IpGeoBatchToolbar.vue'
 import { formatDateTime } from '@/core/utils/format'
 import {
   mapErrorSortKey,
@@ -138,7 +138,7 @@ import {
   statusCodeBadgeClass,
 } from '@/core/utils/errorBadges'
 import type { UserErrorRequest } from '@/types'
-import type { Column } from '@/components/common/types'
+import type { Column } from '@/common/types/uiTypes'
 
 const props = defineProps<{
   rows: UserErrorRequest[]

@@ -8007,17 +8007,17 @@ import type {
   Proxy,
 } from "@/types";
 import type { ProviderInstance } from "@/types/payment";
-import AppLayout from "@/components/layout/AppLayout.vue";
+import AppLayout from "@/common/widgets/layout/AppLayout.vue";
 import Icon from "@/components/icons/Icon.vue";
-import Select from "@/components/common/Select.vue";
-import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
+import Select from "@/common/widgets/forms/Select.vue";
+import ConfirmDialog from "@/common/widgets/feedback/ConfirmDialog.vue";
 import PaymentProviderList from "@/components/payment/PaymentProviderList.vue";
 import PaymentProviderDialog from "@/components/payment/PaymentProviderDialog.vue";
-import GroupBadge from "@/components/common/GroupBadge.vue";
-import GroupOptionItem from "@/components/common/GroupOptionItem.vue";
-import Toggle from "@/components/common/Toggle.vue";
-import ProxySelector from "@/components/common/ProxySelector.vue";
-import ImageUpload from "@/components/common/ImageUpload.vue";
+import GroupBadge from "@/common/widgets/data/GroupBadge.vue";
+import GroupOptionItem from "@/common/widgets/data/GroupOptionItem.vue";
+import Toggle from "@/common/widgets/forms/Toggle.vue";
+import ProxySelector from "@/common/widgets/data/ProxySelector.vue";
+import ImageUpload from "@/common/widgets/data/ImageUpload.vue";
 import BackupSettings from "@/views/admin/BackupView.vue";
 import EmailTemplateEditor from "@/views/admin/settings/EmailTemplateEditor.vue";
 import OpenAIFastPolicyUserSelector from "@/views/admin/settings/OpenAIFastPolicyUserSelector.vue";

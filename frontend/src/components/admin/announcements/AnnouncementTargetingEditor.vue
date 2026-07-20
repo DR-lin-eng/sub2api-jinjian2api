@@ -176,8 +176,8 @@ import type {
   AnnouncementOperator
 } from '@/types'
 
-import Select from '@/components/common/Select.vue'
-import GroupSelector from '@/components/common/GroupSelector.vue'
+import Select from '@/common/widgets/forms/Select.vue'
+import GroupSelector from '@/common/widgets/data/GroupSelector.vue'
 import Icon from '@/components/icons/Icon.vue'
 
 const { t } = useI18n()

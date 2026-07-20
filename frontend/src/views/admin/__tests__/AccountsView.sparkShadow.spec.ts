@@ -3,9 +3,9 @@ import { flushPromises, mount } from '@vue/test-utils'
 
 import AccountsView from '../AccountsView.vue'
 import AccountActionMenu from '@/components/admin/account/AccountActionMenu.vue'
-import PlatformTypeBadge from '@/components/common/PlatformTypeBadge.vue'
-import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
-import HelpTooltip from '@/components/common/HelpTooltip.vue'
+import PlatformTypeBadge from '@/common/widgets/icons/PlatformTypeBadge.vue'
+import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
+import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 
 // 外审 F2:AccountActionMenu emit 'create-spark-shadow',但 AccountsView 此前未监听,
 // 导致按钮点击无效。本测试通过真实组件引用 emit 该事件,断言父页面接线调用 API。

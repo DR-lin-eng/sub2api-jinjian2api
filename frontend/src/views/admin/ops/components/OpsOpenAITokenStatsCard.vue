@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Select from '@/components/common/Select.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
+import Select from '@/common/widgets/forms/Select.vue'
+import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import { opsAPI, type OpsOpenAITokenStatsResponse, type OpsOpenAITokenStatsTimeRange } from '@/api/admin/ops'
 import { formatCompactNumber, formatDurationMs, formatExactDurationMs, formatExactNumber } from '../utils/opsFormatters'
 

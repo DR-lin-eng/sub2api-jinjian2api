@@ -40,7 +40,7 @@ import {
   type UserMonitorView,
   type UserMonitorDetail,
 } from '@/api/channelMonitor'
-import AppLayout from '@/components/layout/AppLayout.vue'
+import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import MonitorHero, {
   type MonitorWindow,
   type OverallStatus,

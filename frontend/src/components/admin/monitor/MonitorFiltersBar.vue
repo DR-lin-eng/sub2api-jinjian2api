@@ -64,7 +64,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Provider } from '@/api/admin/channelMonitor'
-import Select from '@/components/common/Select.vue'
+import Select from '@/common/widgets/forms/Select.vue'
 import Icon from '@/components/icons/Icon.vue'
 import {
   PROVIDER_OPENAI,

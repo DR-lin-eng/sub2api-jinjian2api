@@ -176,9 +176,9 @@
 <script setup lang="ts">
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import AppLayout from '@/components/layout/AppLayout.vue'
+import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Icon from '@/components/icons/Icon.vue'
-import Toggle from '@/components/common/Toggle.vue'
+import Toggle from '@/common/widgets/forms/Toggle.vue'
 import { adminAPI } from '@/api/admin'
 import type { ClusterInstanceStatus, ClusterStatusResponse, ClusterTaskRun, ClusterTaskStatus } from '@/api/admin/cluster'
 import { formatDateTime, formatRelativeTime } from '@/core/utils/format'

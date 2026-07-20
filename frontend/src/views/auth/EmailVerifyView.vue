@@ -165,7 +165,7 @@
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { AuthLayout } from '@/components/layout'
+import { AuthLayout } from '@/common/widgets/layout'
 import Icon from '@/components/icons/Icon.vue'
 import HumanVerificationWidget from '@/components/auth/HumanVerificationWidget.vue'
 import LocalCaptchaWidget from '@/components/auth/LocalCaptchaWidget.vue'

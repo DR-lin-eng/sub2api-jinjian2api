@@ -22,7 +22,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/setup',
     name: 'Setup',
-    component: () => import('@/views/setup/SetupWizardView.vue'),
+    component: () => import('@/common/pages/SetupWizardPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'Setup'
@@ -33,7 +33,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/home',
     name: 'Home',
-    component: () => import('@/views/HomeView.vue'),
+    component: () => import('@/common/pages/HomePage.vue'),
     meta: {
       requiresAuth: false,
       title: 'Home'
@@ -160,7 +160,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/key-usage',
     name: 'KeyUsage',
-    component: () => import('@/views/KeyUsageView.vue'),
+    component: () => import('@/common/pages/KeyUsagePage.vue'),
     meta: {
       requiresAuth: false,
       title: 'Key Usage',
@@ -169,7 +169,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/legal/:documentId',
     name: 'LegalDocument',
-    component: () => import('@/views/public/LegalDocumentView.vue'),
+    component: () => import('@/common/pages/LegalDocumentPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'Legal Document'
@@ -708,7 +708,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('@/views/NotFoundView.vue'),
+    component: () => import('@/common/pages/NotFoundPage.vue'),
     meta: {
       title: '404 Not Found'
     }

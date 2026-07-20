@@ -80,7 +80,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import GroupBadge from '@/components/common/GroupBadge.vue'
+import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import type { Group } from '@/types'
 
 interface Props {

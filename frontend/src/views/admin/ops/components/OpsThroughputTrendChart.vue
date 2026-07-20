@@ -7,8 +7,8 @@ import type { ChartComponentRef } from 'vue-chartjs'
 import type { OpsThroughputGroupBreakdownItem, OpsThroughputPlatformBreakdownItem, OpsThroughputTrendPoint } from '@/api/admin/ops'
 import type { ChartState } from '../types'
 import { formatCompactNumber, formatExactNumber, formatHistoryLabel, sumNumbers } from '../utils/opsFormatters'
-import HelpTooltip from '@/components/common/HelpTooltip.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
+import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
+import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 
 ChartJS.register(Title, Tooltip, Legend, LineElement, LinearScale, PointElement, CategoryScale, Filler)
 

@@ -145,8 +145,8 @@
 <script setup lang="ts">
 import { computed, defineComponent, h, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import AppLayout from '@/components/layout/AppLayout.vue'
-import ConfirmDialog from '@/components/common/ConfirmDialog.vue'
+import AppLayout from '@/common/widgets/layout/AppLayout.vue'
+import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import { useAppStore } from '@/stores/app'
 import { extractApiErrorCode, extractApiErrorMessage } from '@/core/utils/apiError'
 import RuntimeOverview from './components/RuntimeOverview.vue'

@@ -93,7 +93,7 @@ import { useAppStore } from '@/stores/app'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { adminAPI } from '@/api/admin'
 import type { AssociatedMonitorBrief } from '@/api/admin/channelMonitorTemplate'
-import BaseDialog from '@/components/common/BaseDialog.vue'
+import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 
 const props = defineProps<{
   show: boolean

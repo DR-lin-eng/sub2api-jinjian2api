@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import EmptyState from '@/components/common/EmptyState.vue'
+import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import { opsAPI, type OpsImageGenerationStatsResponse } from '@/api/admin/ops'
 import { formatCompactNumber, formatDurationMs, formatExactDurationMs, formatExactNumber } from '../utils/opsFormatters'
 

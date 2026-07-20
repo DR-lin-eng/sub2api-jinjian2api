@@ -59,7 +59,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import type { ChannelMonitor } from '@/api/admin/channelMonitor'
-import HelpTooltip from '@/components/common/HelpTooltip.vue'
+import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import { useChannelMonitorFormat } from '@/composables/useChannelMonitorFormat'
 
 defineProps<{

@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
-import NavigationProgress from '../../common/NavigationProgress.vue'
+import NavigationProgress from '../NavigationProgress.vue'
 
 // Mock useNavigationLoadingState
 const mockIsLoading = ref(false)

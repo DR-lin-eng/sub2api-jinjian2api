@@ -171,7 +171,7 @@ import {
 // 复用 api/channels.ts 的用户侧最小形态 DTO。
 // admin 侧 ChannelModelPricing 字段更多，但结构上是用户 DTO 的超集，admin 视图传入可直接通过结构化子类型检查。
 import type { UserPricingInterval, UserSupportedModel } from '@/api/channels'
-import PlatformIcon from '@/components/common/PlatformIcon.vue'
+import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
 import type { GroupPlatform } from '@/types'
 import { platformBadgeClass, platformBorderClass, platformBadgeLightClass } from '@/core/utils/platformColors'
 

@@ -244,9 +244,9 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import BaseDialog from '@/components/common/BaseDialog.vue'
-import Select from '@/components/common/Select.vue'
-import TextArea from '@/components/common/TextArea.vue'
+import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
+import Select from '@/common/widgets/forms/Select.vue'
+import TextArea from '@/common/widgets/forms/TextArea.vue'
 import { Icon } from '@/components/icons'
 import { useClipboard } from '@/composables/useClipboard'
 import { buildApiUrl } from '@/core/networks/client'

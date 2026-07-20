@@ -86,7 +86,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import HelpTooltip from '@/components/common/HelpTooltip.vue'
+import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import Icon from '@/components/icons/Icon.vue'
 import type { Account, UpstreamBillingProbeSnapshot } from '@/types'
 

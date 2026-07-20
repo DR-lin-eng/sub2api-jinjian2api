@@ -8,9 +8,9 @@ import {
   type OpsSystemLogCleanupRequest,
   type OpsSystemLogSinkHealth
 } from '@/api/admin/ops'
-import Pagination from '@/components/common/Pagination.vue'
-import Select from '@/components/common/Select.vue'
-import Toggle from '@/components/common/Toggle.vue'
+import Pagination from '@/common/widgets/data/Pagination.vue'
+import Select from '@/common/widgets/forms/Select.vue'
+import Toggle from '@/common/widgets/forms/Toggle.vue'
 import { useAppStore } from '@/stores'
 import { formatCompactNumber, formatExactNumber } from '../utils/opsFormatters'
 

@@ -37,8 +37,8 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import EmptyState from '@/components/common/EmptyState.vue'
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
+import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import Icon from '@/components/icons/Icon.vue'
 
 defineProps<{ rows: Array<{ id: number, name: string, totalTokens: number, actualSpend: number }>, loading: boolean, error: boolean }>()

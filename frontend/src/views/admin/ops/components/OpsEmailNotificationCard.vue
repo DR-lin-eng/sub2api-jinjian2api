@@ -4,8 +4,8 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { opsAPI } from '@/api/admin/ops'
 import type { EmailNotificationConfig, AlertSeverity } from '../types'
-import BaseDialog from '@/components/common/BaseDialog.vue'
-import Select from '@/components/common/Select.vue'
+import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
+import Select from '@/common/widgets/forms/Select.vue'
 
 const { t } = useI18n()
 const appStore = useAppStore()

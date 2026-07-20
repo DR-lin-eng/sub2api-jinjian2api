@@ -531,14 +531,14 @@ function accountBilled(row: { total_cost?: number | null; account_stats_cost?: n
 }
 
 
-import DataTable from '@/components/common/DataTable.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
-import IpGeoCell from '@/components/common/IpGeoCell.vue'
+import DataTable from '@/common/widgets/data/DataTable.vue'
+import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
+import IpGeoCell from '@/common/widgets/data/IpGeoCell.vue'
 import Icon from '@/components/icons/Icon.vue'
 import UsageDetailModal from './UsageDetailModal.vue'
 import { fetchBatch, getEntry } from '@/core/utils/ipGeoLookup'
 import type { AdminUsageLog } from '@/types'
-import type { Column } from '@/components/common/types'
+import type { Column } from '@/common/types/uiTypes'
 
 interface Props {
   data: AdminUsageLog[]

@@ -5,8 +5,8 @@ import { Chart as ChartJS, BarElement, CategoryScale, Legend, LinearScale, Toolt
 import { Bar } from 'vue-chartjs'
 import type { OpsLatencyHistogramResponse } from '@/api/admin/ops'
 import type { ChartState } from '../types'
-import HelpTooltip from '@/components/common/HelpTooltip.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
+import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
+import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import { formatCompactNumber } from '../utils/opsFormatters'
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend)

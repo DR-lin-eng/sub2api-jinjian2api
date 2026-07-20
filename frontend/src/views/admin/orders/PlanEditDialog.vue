@@ -100,10 +100,10 @@ import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { formatPaymentAmount } from '@/components/payment/currency'
 import type { SubscriptionPlan } from '@/types/payment'
 import type { AdminGroup } from '@/types'
-import BaseDialog from '@/components/common/BaseDialog.vue'
-import Select from '@/components/common/Select.vue'
+import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
+import Select from '@/common/widgets/forms/Select.vue'
 import Icon from '@/components/icons/Icon.vue'
-import GroupBadge from '@/components/common/GroupBadge.vue'
+import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import { platformTextClass } from '@/core/utils/platformColors'
 
 const props = defineProps<{

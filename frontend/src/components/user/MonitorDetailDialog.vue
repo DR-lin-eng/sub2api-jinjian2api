@@ -68,7 +68,7 @@ import {
   status as fetchChannelMonitorDetail,
   type UserMonitorDetail,
 } from '@/api/channelMonitor'
-import BaseDialog from '@/components/common/BaseDialog.vue'
+import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import { useChannelMonitorFormat } from '@/composables/useChannelMonitorFormat'
 
 const props = defineProps<{

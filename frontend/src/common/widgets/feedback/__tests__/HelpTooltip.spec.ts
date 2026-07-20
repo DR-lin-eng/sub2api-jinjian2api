@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import HelpTooltip from '@/components/common/HelpTooltip.vue'
+import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 
 function getTooltipElement(): HTMLDivElement {
   const tooltip = document.body.querySelector('[role="tooltip"]')

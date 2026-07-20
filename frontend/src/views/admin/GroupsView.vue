@@ -3986,20 +3986,20 @@ import type {
   GroupPlatform,
   SubscriptionType,
 } from "@/types";
-import type { Column } from "@/components/common/types";
-import AppLayout from "@/components/layout/AppLayout.vue";
-import TablePageLayout from "@/components/layout/TablePageLayout.vue";
-import DataTable from "@/components/common/DataTable.vue";
-import Pagination from "@/components/common/Pagination.vue";
-import BaseDialog from "@/components/common/BaseDialog.vue";
-import ConfirmDialog from "@/components/common/ConfirmDialog.vue";
-import EmptyState from "@/components/common/EmptyState.vue";
-import Select from "@/components/common/Select.vue";
-import PlatformIcon from "@/components/common/PlatformIcon.vue";
+import type { Column } from "@/common/types/uiTypes";
+import AppLayout from "@/common/widgets/layout/AppLayout.vue";
+import TablePageLayout from "@/common/widgets/layout/TablePageLayout.vue";
+import DataTable from "@/common/widgets/data/DataTable.vue";
+import Pagination from "@/common/widgets/data/Pagination.vue";
+import BaseDialog from "@/common/widgets/feedback/BaseDialog.vue";
+import ConfirmDialog from "@/common/widgets/feedback/ConfirmDialog.vue";
+import EmptyState from "@/common/widgets/feedback/EmptyState.vue";
+import Select from "@/common/widgets/forms/Select.vue";
+import PlatformIcon from "@/common/widgets/icons/PlatformIcon.vue";
 import Icon from "@/components/icons/Icon.vue";
 import GroupRateMultipliersModal from "@/components/admin/group/GroupRateMultipliersModal.vue";
 import GroupRPMOverridesModal from "@/components/admin/group/GroupRPMOverridesModal.vue";
-import GroupCapacityBadge from "@/components/common/GroupCapacityBadge.vue";
+import GroupCapacityBadge from "@/common/widgets/data/GroupCapacityBadge.vue";
 import { VueDraggable } from "vue-draggable-plus";
 import { createStableObjectKeyResolver } from "@/core/utils/stableObjectKey";
 import { extractApiErrorMessage } from "@/core/utils/apiError";

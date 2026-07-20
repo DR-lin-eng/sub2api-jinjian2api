@@ -42,8 +42,8 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
+import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
+import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { formatDateTime } from '@/core/utils/format'
 import type { UsageLog } from '@/types'

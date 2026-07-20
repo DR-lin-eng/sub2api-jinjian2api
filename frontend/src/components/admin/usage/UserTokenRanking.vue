@@ -85,8 +85,8 @@ import { useI18n } from 'vue-i18n'
 import { getUserBreakdown, type UserBreakdownParams } from '@/api/admin/dashboard'
 import { formatCompactNumber, formatCostFixed } from '@/core/utils/format'
 import type { UserBreakdownItem } from '@/types'
-import Select from '@/components/common/Select.vue'
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import Select from '@/common/widgets/forms/Select.vue'
+import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 
 const props = defineProps<{
   startDate: string

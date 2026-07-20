@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import UpstreamBillingRateCell from '../UpstreamBillingRateCell.vue'
-import HelpTooltip from '@/components/common/HelpTooltip.vue'
+import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import type { Account } from '@/types'
 
 vi.mock('vue-i18n', async () => {

@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 
-import KeyUsageView from '../KeyUsageView.vue'
+import KeyUsagePage from '../KeyUsagePage.vue'
 
 const { showInfo, showSuccess, showError, fetchPublicSettings } = vi.hoisted(() => ({
   showInfo: vi.fn(),
@@ -97,7 +97,7 @@ vi.mock('@/stores', () => ({
   }),
 }))
 
-describe('KeyUsageView daily detail', () => {
+describe('KeyUsagePage daily detail', () => {
   beforeEach(() => {
     showInfo.mockReset()
     showSuccess.mockReset()
@@ -167,7 +167,7 @@ describe('KeyUsageView daily detail', () => {
   })
 
   it('renders daily usage detail rows after a successful query', async () => {
-    const wrapper = mount(KeyUsageView, {
+    const wrapper = mount(KeyUsagePage, {
       global: {
         stubs: {
           RouterLink: { template: '<a><slot /></a>' },
@@ -211,7 +211,7 @@ describe('KeyUsageView daily detail', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date(2026, 6, 13, 0, 30))
 
-    const wrapper = mount(KeyUsageView, {
+    const wrapper = mount(KeyUsagePage, {
       global: {
         stubs: {
           RouterLink: { template: '<a><slot /></a>' },

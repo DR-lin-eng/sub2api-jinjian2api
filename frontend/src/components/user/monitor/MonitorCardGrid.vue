@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import type { UserMonitorView, UserMonitorDetail } from '@/api/channelMonitor'
-import EmptyState from '@/components/common/EmptyState.vue'
+import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import MonitorCard from './MonitorCard.vue'
 
 const props = defineProps<{
