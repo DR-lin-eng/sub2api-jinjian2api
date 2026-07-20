@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/api/admin/accounts', () => ({
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', () => ({
   getAntigravityDefaultModelMapping: vi.fn()
 }))
 

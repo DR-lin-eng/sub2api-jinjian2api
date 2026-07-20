@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import ImportDataModal from '@/components/admin/account/ImportDataModal.vue'
+import ImportDataModal from '@/features/admin-accounts/presentation/widgets/ImportDataDialog.vue'
 
 const showError = vi.fn()
 const showSuccess = vi.fn()

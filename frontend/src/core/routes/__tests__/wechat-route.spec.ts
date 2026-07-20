@@ -21,7 +21,7 @@ vi.mock('@/stores/app', () => ({
   useAppStore: () => appStore,
 }))
 
-vi.mock('@/stores/adminSettings', () => ({
+vi.mock('@/features/admin-settings/presentation/stores/adminSettingsStore', () => ({
   useAdminSettingsStore: () => ({
     customMenuItems: [],
   }),

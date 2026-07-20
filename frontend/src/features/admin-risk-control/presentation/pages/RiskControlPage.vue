@@ -1122,7 +1122,7 @@ import Icon from '@/components/icons/Icon.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
-import ModelWhitelistSelector from '@/components/account/ModelWhitelistSelector.vue'
+import ModelWhitelistSelector from '@/features/admin-accounts/presentation/widgets/ModelWhitelistSelector.vue'
 import { adminAPI } from '@/api/admin'
 import type {
   ContentModerationAPIKeyLoad,

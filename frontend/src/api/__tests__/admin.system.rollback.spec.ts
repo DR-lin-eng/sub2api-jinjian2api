@@ -12,7 +12,7 @@ vi.mock('@/core/networks/client', () => ({
   },
 }))
 
-import { getRollbackVersions, rollback, type RollbackVersionInfo } from '@/api/admin/system'
+import { getRollbackVersions, rollback, type RollbackVersionInfo } from '@/features/admin-settings/data/datasources/systemDatasource'
 
 describe('admin system rollback API', () => {
   beforeEach(() => {

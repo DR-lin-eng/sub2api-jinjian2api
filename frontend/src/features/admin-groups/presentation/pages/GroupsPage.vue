@@ -4629,7 +4629,7 @@ const accountSearchRunner = useKeyedDebouncedSearch<SimpleAccount[]>({
       },
       { signal },
     );
-    return res.items.map((account) => ({ id: account.id, name: account.name }));
+    return res.items.map((account: any) => ({ id: account.id, name: account.name }));
   },
   onSuccess: (key, result) => {
     accountSearchResults.value[key] = result;

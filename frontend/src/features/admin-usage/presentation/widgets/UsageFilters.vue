@@ -390,7 +390,7 @@ const debounceAccountSearch = () => {
     }
     try {
       const res = await adminAPI.accounts.list(1, 20, { search: accountKeyword.value })
-      accountResults.value = res.items.map((a) => ({ id: a.id, name: a.name }))
+      accountResults.value = res.items.map((a: any) => ({ id: a.id, name: a.name }))
     } catch {
       accountResults.value = []
     }

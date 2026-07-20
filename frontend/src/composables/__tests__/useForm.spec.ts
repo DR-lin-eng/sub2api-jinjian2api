@@ -4,7 +4,7 @@ import { useForm } from '@/composables/useForm'
 import { useAppStore } from '@/stores/app'
 
 // Mock API 依赖（app store 内部引用了这些）
-vi.mock('@/api/admin/system', () => ({
+vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
   checkUpdates: vi.fn(),
 }))
 vi.mock('@/api/auth', () => ({

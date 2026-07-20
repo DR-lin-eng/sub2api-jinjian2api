@@ -8,7 +8,7 @@ vi.mock('@/core/networks/client', () => ({
   apiClient: { post }
 }))
 
-import { duplicate } from '@/api/admin/accounts'
+import { duplicate } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
 
 describe('admin account duplicate API', () => {
   beforeEach(() => {
@@ -49,7 +49,7 @@ describe('admin account duplicate API', () => {
 
     vi.resetModules()
     post.mockResolvedValueOnce({ data: { id: 78, name: 'reload (Copy)' } })
-    const { duplicate: duplicateAfterReload } = await import('@/api/admin/accounts')
+    const { duplicate: duplicateAfterReload } = await import('@/features/admin-accounts/data/datasources/adminAccountsDatasource')
     await duplicateAfterReload(77)
 
     expect(post).toHaveBeenCalledTimes(2)

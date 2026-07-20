@@ -16,7 +16,7 @@ import {
   probeUpstreamBillingBatch,
   setUpstreamBillingProbeEnabled,
   updateUpstreamBillingProbeSettings
-} from '@/api/admin/accounts'
+} from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
 
 describe('admin account upstream billing probe API', () => {
   beforeEach(() => {

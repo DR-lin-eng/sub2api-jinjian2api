@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { adminAPI } from '@/api/admin'
-import type { GrokTokenInfo } from '@/api/admin/grok'
+import type { GrokTokenInfo } from '@/features/admin-accounts/data/datasources/grokDatasource'
 import { extractApiErrorMessage, extractI18nErrorMessage } from '@/core/utils/apiError'
 
 export function useGrokOAuth() {

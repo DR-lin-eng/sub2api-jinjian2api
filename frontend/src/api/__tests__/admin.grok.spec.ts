@@ -8,7 +8,7 @@ vi.mock('@/core/networks/client', () => ({
   apiClient: { post },
 }))
 
-import { createFromSSO, getGrokSSOImportTimeout } from '@/api/admin/grok'
+import { createFromSSO, getGrokSSOImportTimeout } from '@/features/admin-accounts/data/datasources/grokDatasource'
 
 describe('admin Grok SSO import API', () => {
   beforeEach(() => {

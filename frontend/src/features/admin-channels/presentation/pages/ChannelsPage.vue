@@ -990,7 +990,7 @@ const ruleAccountSearchRunner = useKeyedDebouncedSearch<SimpleAccount[]>({
   search: async (keyword, { key, signal }) => {
     const platform = key.split('-')[0]
     const res = await adminAPI.accounts.list(1, 20, { platform, search: keyword }, { signal })
-    return res.items.map(a => ({ id: a.id, name: a.name, platform: a.platform }))
+    return res.items.map((a: any) => ({ id: a.id, name: a.name, platform: a.platform }))
   },
   onSuccess: (key, result) => { ruleAccountSearchResults.value[key] = result },
   onError: (key) => { ruleAccountSearchResults.value[key] = [] },

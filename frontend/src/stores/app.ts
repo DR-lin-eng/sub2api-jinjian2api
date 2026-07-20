@@ -11,7 +11,7 @@ import {
   checkUpdates as checkUpdatesAPI,
   type VersionInfo,
   type ReleaseInfo
-} from '@/api/admin/system'
+} from '@/features/admin-settings/data/datasources/systemDatasource'
 import { getPublicSettings as fetchPublicSettingsAPI } from '@/api/auth'
 
 export const useAppStore = defineStore('app', () => {

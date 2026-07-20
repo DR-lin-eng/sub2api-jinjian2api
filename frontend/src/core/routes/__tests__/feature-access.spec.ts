@@ -49,11 +49,11 @@ vi.mock('@/stores/app', () => ({
   useAppStore: () => appStore,
 }))
 
-vi.mock('@/stores/adminSettings', () => ({
+vi.mock('@/features/admin-settings/presentation/stores/adminSettingsStore', () => ({
   useAdminSettingsStore: () => ({ customMenuItems: [] }),
 }))
 
-vi.mock('@/stores/adminCompliance', () => ({
+vi.mock('@/features/admin-settings/presentation/stores/adminComplianceStore', () => ({
   useAdminComplianceStore: () => ({
     initialized: true,
     fetchStatus: vi.fn(),

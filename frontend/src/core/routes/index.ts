@@ -6,8 +6,8 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
-import { useAdminSettingsStore } from '@/stores/adminSettings'
-import { useAdminComplianceStore } from '@/stores/adminCompliance'
+import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
+import { useAdminComplianceStore } from '@/features/admin-settings/presentation/stores/adminComplianceStore'
 import { useNavigationLoadingState } from '@/composables/useNavigationLoading'
 import { useRoutePrefetch } from '@/composables/useRoutePrefetch'
 import { getSetupStatus } from '@/features/setup/data/datasources/setupDatasource'
@@ -406,7 +406,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/ops',
     name: 'AdminOps',
-    component: () => import('@/views/admin/ops/OpsDashboard.vue'),
+    component: () => import('@/features/admin-ops/presentation/pages/OpsDashboardPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -517,7 +517,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/accounts',
     name: 'AdminAccounts',
-    component: () => import('@/views/admin/AccountsView.vue'),
+    component: () => import('@/features/admin-accounts/presentation/pages/AccountsPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -577,7 +577,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/settings',
     name: 'AdminSettings',
-    component: () => import('@/views/admin/SettingsView.vue'),
+    component: () => import('@/features/admin-settings/presentation/pages/SettingsPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,

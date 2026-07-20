@@ -22,7 +22,7 @@ export function useQuotaNotifyState() {
   function loadGlobalState() {
     adminAPI.settings
       .getSettings()
-      .then((settings) => {
+      .then((settings: any) => {
         globalEnabled.value = settings.account_quota_notify_enabled === true
       })
       .catch(() => {

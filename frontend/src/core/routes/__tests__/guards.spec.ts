@@ -38,7 +38,7 @@ vi.mock('@/api', () => ({
   isTotp2FARequired: () => false,
 }))
 
-vi.mock('@/api/admin/system', () => ({
+vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
   checkUpdates: vi.fn(),
 }))
 

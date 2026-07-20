@@ -25,7 +25,7 @@ vi.mock('@/api', () => ({
   isTotp2FARequired: (response: any) => response?.requires_2fa === true,
 }))
 
-vi.mock('@/api/admin/system', () => ({
+vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
   checkUpdates: vi.fn(),
 }))
 

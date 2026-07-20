@@ -51,7 +51,7 @@ vi.mock('@/features/admin-usage/data/datasources/adminUsageDatasource', () => ({
   },
 }))
 
-vi.mock('@/api/admin/ops', () => ({
+vi.mock('@/features/admin-ops/data/datasources/adminOpsDatasource', () => ({
   listErrorLogs,
 }))
 
