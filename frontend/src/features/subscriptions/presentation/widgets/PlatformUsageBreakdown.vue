@@ -46,7 +46,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/components/icons/Icon.vue'
-import type { PlatformUsage } from '@/api/admin/dashboard'
+import type { PlatformUsage } from '@/features/admin-dashboard/data/datasources/adminDashboardDatasource'
 
 const props = defineProps<{
   today: number

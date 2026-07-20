@@ -142,15 +142,15 @@ const queryModeOptions = computed(() => [
 ])
 
 const groupOptions = computed(() => {
-  const filtered = props.platform ? groups.value.filter((g) => g.platform === props.platform) : groups.value
-  return [{ value: null, label: t('common.all') }, ...filtered.map((g) => ({ value: g.id, label: g.name }))]
+  const filtered = props.platform ? groups.value.filter((g: any) => g.platform === props.platform) : groups.value
+  return [{ value: null, label: t('common.all') }, ...filtered.map((g: any) => ({ value: g.id, label: g.name }))]
 })
 
 watch(
   () => props.platform,
   (newPlatform) => {
     if (!newPlatform) return
-    const currentGroup = groups.value.find((g) => g.id === props.groupId)
+    const currentGroup = groups.value.find((g: any) => g.id === props.groupId)
     if (currentGroup && currentGroup.platform !== newPlatform) {
       emit('update:group', null)
     }
@@ -160,7 +160,7 @@ watch(
 onMounted(async () => {
   try {
     const list = await adminAPI.groups.getAll()
-    groups.value = list.map((g) => ({ id: g.id, name: g.name, platform: g.platform }))
+    groups.value = list.map((g: any) => ({ id: g.id, name: g.name, platform: g.platform }))
   } catch (e) {
     console.error('[OpsDashboardHeader] Failed to load groups', e)
     groups.value = []

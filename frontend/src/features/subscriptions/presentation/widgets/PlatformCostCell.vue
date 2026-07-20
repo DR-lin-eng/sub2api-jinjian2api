@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import type { PlatformUsage } from '@/api/admin/dashboard'
+import type { PlatformUsage } from '@/features/admin-dashboard/data/datasources/adminDashboardDatasource'
 
 defineProps<{
   usage?: PlatformUsage

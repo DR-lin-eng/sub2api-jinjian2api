@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 
-import UsageView from '@/features/usage/presentation/pages/UsagePage.vue'
+import UsagePage from '@/features/usage/presentation/pages/UsagePage.vue'
 
 const {
   query,
@@ -142,8 +142,8 @@ const usageLog = {
   stream: false,
 }
 
-function mountUsageView() {
-  return mount(UsageView, {
+function mountUsagePage() {
+  return mount(UsagePage, {
     global: {
       stubs: {
         AppLayout: simpleStub,
@@ -162,7 +162,7 @@ function mountUsageView() {
   })
 }
 
-describe('user UsageView', () => {
+describe('user UsagePage', () => {
   beforeEach(() => {
     query.mockReset()
     getStats.mockReset()
@@ -208,7 +208,7 @@ describe('user UsageView', () => {
   })
 
   it('loads logs, stats, model stats, and snapshot on first render', async () => {
-    mountUsageView()
+    mountUsagePage()
     await flushPromises()
 
     expect(query).toHaveBeenCalled()
@@ -224,20 +224,20 @@ describe('user UsageView', () => {
   })
 
   it('hides usage details by default and exposes the action only when enabled globally', async () => {
-    const disabledWrapper = mountUsageView()
+    const disabledWrapper = mountUsagePage()
     await flushPromises()
     expect(disabledWrapper.getComponent({ name: 'UsageTable' }).props('columns'))
       .not.toEqual(expect.arrayContaining([expect.objectContaining({ key: 'actions' })]))
 
     appStoreState.cachedPublicSettings = { allow_user_view_usage_details: true }
-    const enabledWrapper = mountUsageView()
+    const enabledWrapper = mountUsagePage()
     await flushPromises()
     expect(enabledWrapper.getComponent({ name: 'UsageTable' }).props('columns'))
       .toEqual(expect.arrayContaining([expect.objectContaining({ key: 'actions' })]))
   })
 
   it('exports csv with current filters and without admin-only fields', async () => {
-    const wrapper = mountUsageView()
+    const wrapper = mountUsagePage()
     await flushPromises()
 
     let exportedBlob: Blob | null = null
@@ -311,7 +311,7 @@ describe('user UsageView', () => {
       pages: 1,
     })
 
-    const wrapper = mountUsageView()
+    const wrapper = mountUsagePage()
     await flushPromises()
 
     let csvContent = ''

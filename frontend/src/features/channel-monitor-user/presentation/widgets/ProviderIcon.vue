@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Provider } from '@/api/admin/channelMonitor'
+import type { Provider } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
 
 interface IconData {
   paths: string[]

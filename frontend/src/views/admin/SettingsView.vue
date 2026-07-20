@@ -8029,7 +8029,7 @@ import {
   stepUpBlockReason,
 } from "@/composables/useStepUp";
 import TotpStepUpDialog from "@/components/auth/TotpStepUpDialog.vue";
-import { affiliatesAPI, type AffiliateAdminEntry, type SimpleUser as AffiliateSimpleUser } from "@/api/admin/affiliates";
+import { affiliatesAPI, type AffiliateAdminEntry, type SimpleUser as AffiliateSimpleUser } from "@/features/affiliate/data/datasources/adminAffiliatesDatasource";
 import { extractApiErrorMessage, extractI18nErrorMessage } from "@/core/utils/apiError";
 import { useAppStore } from "@/stores";
 import { useAdminSettingsStore } from "@/stores/adminSettings";
@@ -9465,7 +9465,7 @@ async function saveWebSearchConfig(): Promise<boolean> {
 const defaultSubscriptionGroupOptions = computed<
   DefaultSubscriptionGroupOption[]
 >(() =>
-  subscriptionGroups.value.map((group) => ({
+  subscriptionGroups.value.map((group: any) => ({
     value: group.id,
     label: group.name,
     description: group.description,
@@ -10047,7 +10047,7 @@ async function loadSubscriptionGroups() {
   try {
     const groups = await adminAPI.groups.getAll();
     subscriptionGroups.value = groups.filter(
-      (group) =>
+      (group: any) =>
         group.subscription_type === "subscription" && group.status === "active",
     );
   } catch (_error: unknown) {
@@ -10059,7 +10059,7 @@ function findNextAvailableSubscriptionGroup(
   existingGroupIDs: number[],
 ): AdminGroup | undefined {
   const existing = new Set(existingGroupIDs);
-  return subscriptionGroups.value.find((group) => !existing.has(group.id));
+  return subscriptionGroups.value.find((group: any) => !existing.has(group.id));
 }
 
 function addDefaultSubscription() {
@@ -10553,7 +10553,7 @@ async function saveSettings() {
       payload.openai_fast_policy_settings = {
         rules: openaiFastPolicyForm.rules.map((rule) => {
           const whitelist = (rule.model_whitelist || [])
-            .map((p) => p.trim())
+            .map((p: any) => p.trim())
             .filter((p) => p !== "");
           const hasWhitelist = whitelist.length > 0;
           return {
@@ -11512,7 +11512,7 @@ async function loadProviders() {
     // Normalize supported_types: backend returns null when the list is empty
     // (Go nil slice → JSON null). Without this, ProviderCard's isSelected()
     // throws TypeError on null.includes(), causing the card to vanish.
-    providers.value = (res.data || []).map((p) => ({
+    providers.value = (res.data || []).map((p: any) => ({
       ...p,
       supported_types: Array.isArray(p.supported_types)
         ? p.supported_types

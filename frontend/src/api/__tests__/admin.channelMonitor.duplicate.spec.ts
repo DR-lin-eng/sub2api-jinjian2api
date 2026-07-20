@@ -8,7 +8,7 @@ vi.mock('@/core/networks/client', () => ({
   apiClient: { post },
 }))
 
-import { duplicate } from '@/api/admin/channelMonitor'
+import { duplicate } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
 
 describe('admin channel monitor duplicate API', () => {
   beforeEach(() => {
@@ -55,7 +55,7 @@ describe('admin channel monitor duplicate API', () => {
 
     vi.resetModules()
     post.mockResolvedValueOnce({ data: { id: 78, name: 'reload (Copy)' } })
-    const { duplicate: duplicateAfterReload } = await import('@/api/admin/channelMonitor')
+    const { duplicate: duplicateAfterReload } = await import('@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource')
     await duplicateAfterReload(77)
 
     expect(post).toHaveBeenCalledTimes(2)

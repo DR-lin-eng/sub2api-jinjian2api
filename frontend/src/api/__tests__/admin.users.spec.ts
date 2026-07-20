@@ -17,7 +17,7 @@ import {
   type AdminBoundAuthIdentity,
   type BatchUpdateUserLimitsRequest,
   type BatchUpdateUserLimitsResponse,
-} from '@/api/admin/users'
+} from '@/features/admin-users/data/datasources/adminUsersDatasource'
 
 type Assert<T extends true> = T
 type IsExact<T, U> = (

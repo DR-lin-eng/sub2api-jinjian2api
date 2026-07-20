@@ -394,7 +394,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/dashboard',
     name: 'AdminDashboard',
-    component: () => import('@/views/admin/DashboardView.vue'),
+    component: () => import('@/features/admin-dashboard/presentation/pages/DashboardPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -442,7 +442,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/users',
     name: 'AdminUsers',
-    component: () => import('@/views/admin/UsersView.vue'),
+    component: () => import('@/features/admin-users/presentation/pages/UsersPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -454,7 +454,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/groups',
     name: 'AdminGroups',
-    component: () => import('@/views/admin/GroupsView.vue'),
+    component: () => import('@/features/admin-groups/presentation/pages/GroupsPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -470,7 +470,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/channels/pricing',
     name: 'AdminChannels',
-    component: () => import('@/views/admin/ChannelsView.vue'),
+    component: () => import('@/features/admin-channels/presentation/pages/ChannelsPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -482,7 +482,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/channels/monitor',
     name: 'AdminChannelMonitor',
-    component: () => import('@/views/admin/ChannelMonitorView.vue'),
+    component: () => import('@/features/admin-channel-monitor/presentation/pages/ChannelMonitorPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -529,7 +529,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/announcements',
     name: 'AdminAnnouncements',
-    component: () => import('@/views/admin/AnnouncementsView.vue'),
+    component: () => import('@/features/announcements/presentation/pages/AnnouncementsPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -541,7 +541,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/proxies',
     name: 'AdminProxies',
-    component: () => import('@/views/admin/ProxiesView.vue'),
+    component: () => import('@/features/admin-proxies/presentation/pages/ProxiesPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -615,7 +615,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/usage',
     name: 'AdminUsage',
-    component: () => import('@/views/admin/UsageView.vue'),
+    component: () => import('@/features/admin-usage/presentation/pages/UsagePage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -631,7 +631,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/affiliates/invites',
     name: 'AdminAffiliateInvites',
-    component: () => import('@/views/admin/affiliates/AdminAffiliateInvitesView.vue'),
+    component: () => import('@/features/affiliate/presentation/pages/AdminAffiliateInvitesPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -643,7 +643,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/affiliates/rebates',
     name: 'AdminAffiliateRebates',
-    component: () => import('@/views/admin/affiliates/AdminAffiliateRebatesView.vue'),
+    component: () => import('@/features/affiliate/presentation/pages/AdminAffiliateRebatesPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -655,7 +655,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/affiliates/transfers',
     name: 'AdminAffiliateTransfers',
-    component: () => import('@/views/admin/affiliates/AdminAffiliateTransfersView.vue'),
+    component: () => import('@/features/affiliate/presentation/pages/AdminAffiliateTransfersPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -670,7 +670,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/orders/dashboard',
     name: 'AdminPaymentDashboard',
-    component: () => import('@/views/admin/orders/AdminPaymentDashboardView.vue'),
+    component: () => import('@/features/admin-orders/presentation/pages/AdminPaymentDashboardPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -682,7 +682,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/orders',
     name: 'AdminOrders',
-    component: () => import('@/views/admin/orders/AdminOrdersView.vue'),
+    component: () => import('@/features/admin-orders/presentation/pages/AdminOrdersPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -694,7 +694,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/orders/plans',
     name: 'AdminPaymentPlans',
-    component: () => import('@/views/admin/orders/AdminPaymentPlansView.vue'),
+    component: () => import('@/features/admin-orders/presentation/pages/AdminPaymentPlansPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,

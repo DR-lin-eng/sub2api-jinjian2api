@@ -7,7 +7,7 @@
  * `useChannelMonitorFormat`.
  */
 
-import type { APIMode, Provider, MonitorMode, MonitorStatus } from '@/api/admin/channelMonitor'
+import type { APIMode, Provider, MonitorMode, MonitorStatus } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
 
 export const PROVIDER_OPENAI: Provider = 'openai'
 export const PROVIDER_ANTHROPIC: Provider = 'anthropic'

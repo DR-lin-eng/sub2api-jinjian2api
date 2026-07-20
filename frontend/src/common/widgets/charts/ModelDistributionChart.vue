@@ -250,7 +250,7 @@ import { Doughnut } from 'vue-chartjs'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import UserBreakdownSubTable from './UserBreakdownSubTable.vue'
 import type { ModelStat, UserSpendingRankingItem, UserBreakdownItem } from '@/types'
-import { getUserBreakdown } from '@/api/admin/dashboard'
+import { getUserBreakdown } from '@/features/admin-dashboard/data/datasources/adminDashboardDatasource'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 

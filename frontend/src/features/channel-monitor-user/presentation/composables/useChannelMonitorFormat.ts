@@ -11,7 +11,7 @@
  */
 
 import { useI18n } from 'vue-i18n'
-import type { MonitorStatus, Provider } from '@/api/admin/channelMonitor'
+import type { MonitorStatus, Provider } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
 import {
   PROVIDER_OPENAI,
   PROVIDER_ANTHROPIC,

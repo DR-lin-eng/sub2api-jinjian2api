@@ -74,7 +74,7 @@ const groupOptionsBase = ref<SelectOption[]>([])
 async function loadGroups() {
   try {
     const list = await adminAPI.groups.getAll()
-    groupOptionsBase.value = list.map((g) => ({ value: g.id, label: g.name }))
+    groupOptionsBase.value = list.map((g: any) => ({ value: g.id, label: g.name }))
   } catch (err) {
     console.error('[OpsAlertRulesCard] Failed to load groups', err)
     groupOptionsBase.value = []
