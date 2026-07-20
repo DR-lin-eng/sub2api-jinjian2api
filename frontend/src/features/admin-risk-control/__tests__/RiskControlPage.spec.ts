@@ -3,8 +3,8 @@ import { defineComponent, h } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import type { DOMWrapper, VueWrapper } from '@vue/test-utils'
 
-import RiskControlView from '../RiskControlView.vue'
-import type { ContentModerationConfig, UpdateContentModerationConfig } from '@/api/admin/riskControl'
+import RiskControlPage from '@/features/admin-risk-control/presentation/pages/RiskControlPage.vue'
+import type { ContentModerationConfig, UpdateContentModerationConfig } from '@/features/admin-risk-control/data/datasources/adminRiskControlDatasource'
 
 const {
   getConfig,
@@ -184,7 +184,7 @@ function findButtonByText(wrapper: VueWrapper, text: string): DOMWrapper<HTMLBut
   return button
 }
 
-describe('admin RiskControlView', () => {
+describe('admin RiskControlPage', () => {
   beforeEach(() => {
     getConfig.mockReset()
     updateConfig.mockReset()
@@ -211,7 +211,7 @@ describe('admin RiskControlView', () => {
   })
 
   it('saves the selected model filter mode and models', async () => {
-    const wrapper = mount(RiskControlView, {
+    const wrapper = mount(RiskControlPage, {
       global: {
         stubs: {
           AppLayout: AppLayoutStub,
@@ -244,7 +244,7 @@ describe('admin RiskControlView', () => {
   })
 
   it('submits edited risk control thresholds when saving moderation config', async () => {
-    const wrapper = mount(RiskControlView, {
+    const wrapper = mount(RiskControlPage, {
       global: {
         stubs: {
           AppLayout: AppLayoutStub,
@@ -284,7 +284,7 @@ describe('admin RiskControlView', () => {
       queue_length: 2,
     })
 
-    const wrapper = mount(RiskControlView, {
+    const wrapper = mount(RiskControlPage, {
       global: {
         stubs: {
           AppLayout: AppLayoutStub,
@@ -351,7 +351,7 @@ describe('admin RiskControlView', () => {
       ],
     })
 
-    const wrapper = mount(RiskControlView, {
+    const wrapper = mount(RiskControlPage, {
       global: {
         stubs: {
           AppLayout: AppLayoutStub,

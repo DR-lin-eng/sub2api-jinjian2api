@@ -8018,7 +8018,7 @@ import GroupOptionItem from "@/common/widgets/data/GroupOptionItem.vue";
 import Toggle from "@/common/widgets/forms/Toggle.vue";
 import ProxySelector from "@/common/widgets/data/ProxySelector.vue";
 import ImageUpload from "@/common/widgets/data/ImageUpload.vue";
-import BackupSettings from "@/views/admin/BackupView.vue";
+import BackupSettings from "@/features/admin-backup/presentation/pages/BackupPage.vue";
 import EmailTemplateEditor from "@/views/admin/settings/EmailTemplateEditor.vue";
 import OpenAIFastPolicyUserSelector from "@/views/admin/settings/OpenAIFastPolicyUserSelector.vue";
 import { useClipboard } from "@/composables/useClipboard";

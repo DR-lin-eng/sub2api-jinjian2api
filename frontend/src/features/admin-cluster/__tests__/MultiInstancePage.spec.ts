@@ -1,6 +1,6 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import MultiInstanceView from '../MultiInstanceView.vue'
+import MultiInstancePage from '@/features/admin-cluster/presentation/pages/MultiInstancePage.vue'
 
 const { getStatus } = vi.hoisted(() => ({ getStatus: vi.fn() }))
 
@@ -73,14 +73,14 @@ function statusFixture() {
   }
 }
 
-describe('MultiInstanceView', () => {
+describe('MultiInstancePage', () => {
   beforeEach(() => {
     getStatus.mockReset()
     getStatus.mockResolvedValue(statusFixture())
   })
 
   it('renders node health, resolved worker mode, and active task lease', async () => {
-    const wrapper = mount(MultiInstanceView, {
+    const wrapper = mount(MultiInstancePage, {
       global: {
         mocks: { $t: (key: string) => key },
         stubs: {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 
-import RedeemView from '../RedeemView.vue'
+import RedeemPage from '@/features/admin-redeem/presentation/pages/RedeemPage.vue'
 
 const { listRedeemCodes, batchUpdateRedeemCodes, getAllGroups, showSuccess, showError, showInfo } =
   vi.hoisted(() => ({
@@ -99,7 +99,7 @@ const SelectStub = {
   `
 }
 
-describe('admin RedeemView batch update', () => {
+describe('admin RedeemPage batch update', () => {
   beforeEach(() => {
     localStorage.clear()
     document.body.innerHTML = ''
@@ -146,7 +146,7 @@ describe('admin RedeemView batch update', () => {
   })
 
   it('submits only checked fields for selected redeem codes', async () => {
-    const wrapper = mount(RedeemView, {
+    const wrapper = mount(RedeemPage, {
       attachTo: document.body,
       global: {
         stubs: {

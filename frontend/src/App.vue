@@ -7,7 +7,7 @@ import AdminComplianceDialog from '@/components/admin/AdminComplianceDialog.vue'
 import { resolveRouteDocumentTitle } from '@/core/routes/title'
 import AnnouncementPopup from '@/common/widgets/data/AnnouncementPopup.vue'
 import { useAppStore, useAuthStore, useSubscriptionStore, useAnnouncementStore, useAdminComplianceStore, useAdminSettingsStore } from '@/stores'
-import { getSetupStatus } from '@/api/setup'
+import { getSetupStatus } from '@/features/setup/data/datasources/setupDatasource'
 import { updateFavicon } from '@/core/services/branding'
 
 const router = useRouter()

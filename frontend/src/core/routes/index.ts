@@ -10,7 +10,7 @@ import { useAdminSettingsStore } from '@/stores/adminSettings'
 import { useAdminComplianceStore } from '@/stores/adminCompliance'
 import { useNavigationLoadingState } from '@/composables/useNavigationLoading'
 import { useRoutePrefetch } from '@/composables/useRoutePrefetch'
-import { getSetupStatus } from '@/api/setup'
+import { getSetupStatus } from '@/features/setup/data/datasources/setupDatasource'
 import { resolveCompletedSetupRedirectPath } from './setupRedirect'
 import { resolveRouteDocumentTitle } from './title'
 
@@ -22,7 +22,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/setup',
     name: 'Setup',
-    component: () => import('@/common/pages/SetupWizardPage.vue'),
+    component: () => import('@/features/setup/presentation/pages/SetupWizardPage.vue'),
     meta: {
       requiresAuth: false,
       title: 'Setup'
@@ -418,7 +418,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/audit-logs',
     name: 'AdminAuditLogs',
-    component: () => import('@/views/admin/AuditLogView.vue'),
+    component: () => import('@/features/admin-audit/presentation/pages/AuditLogPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -430,7 +430,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/multi-instance',
     name: 'AdminMultiInstance',
-    component: () => import('@/views/admin/MultiInstanceView.vue'),
+    component: () => import('@/features/admin-cluster/presentation/pages/MultiInstancePage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -505,7 +505,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/subscriptions',
     name: 'AdminSubscriptions',
-    component: () => import('@/views/admin/SubscriptionsView.vue'),
+    component: () => import('@/features/admin-subscriptions/presentation/pages/SubscriptionsPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -553,7 +553,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/redeem',
     name: 'AdminRedeem',
-    component: () => import('@/views/admin/RedeemView.vue'),
+    component: () => import('@/features/admin-redeem/presentation/pages/RedeemPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -565,7 +565,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/promo-codes',
     name: 'AdminPromoCodes',
-    component: () => import('@/views/admin/PromoCodesView.vue'),
+    component: () => import('@/features/admin-promo/presentation/pages/PromoCodesPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
@@ -589,7 +589,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/admin/risk-control',
     name: 'AdminRiskControl',
-    component: () => import('@/views/admin/RiskControlView.vue'),
+    component: () => import('@/features/admin-risk-control/presentation/pages/RiskControlPage.vue'),
     meta: {
       requiresAuth: true,
       requiresAdmin: true,
