@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
-import { useKeyedDebouncedSearch } from '@/composables/useKeyedDebouncedSearch'
+import { useKeyedDebouncedSearch } from '@/common/composables/useKeyedDebouncedSearch'
 
 const flushPromises = () => Promise.resolve()
 

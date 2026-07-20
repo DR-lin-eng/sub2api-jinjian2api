@@ -12,7 +12,7 @@ vi.mock('vue-i18n', () => ({
   })
 }))
 
-vi.mock('@/composables/useClipboard', () => ({
+vi.mock('@/common/composables/useClipboard', () => ({
   useClipboard: () => ({
     copyToClipboard: copyToClipboardMock
   })

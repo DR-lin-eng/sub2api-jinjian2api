@@ -1251,11 +1251,11 @@ import Select from '@/common/widgets/forms/Select.vue'
 import ProxySelector from '@/common/widgets/data/ProxySelector.vue'
 import GroupSelector from '@/common/widgets/data/GroupSelector.vue'
 import ModelWhitelistSelector from '@/features/admin-accounts/presentation/widgets/ModelWhitelistSelector.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import {
   buildModelMappingObject as buildModelMappingPayload,
   getPresetMappingsByPlatform
-} from '@/composables/useModelWhitelist'
+} from '@/features/admin-accounts/presentation/composables/useModelWhitelist'
 import HeaderOverrideEditor from '@/features/admin-accounts/presentation/widgets/HeaderOverrideEditor.vue'
 import {
   buildHeaderOverridesObject,

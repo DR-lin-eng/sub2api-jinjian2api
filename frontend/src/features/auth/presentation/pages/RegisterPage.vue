@@ -322,7 +322,7 @@ import WechatOAuthSection from '@/features/auth/presentation/widgets/WechatOAuth
 import EmailOAuthButtons from '@/features/auth/presentation/widgets/EmailOAuthButtons.vue'
 import LoginAgreementPrompt from '@/features/auth/presentation/widgets/LoginAgreementPrompt.vue'
 import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptchaWidget.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
 import { useAuthStore, useAppStore } from '@/stores'
 import {

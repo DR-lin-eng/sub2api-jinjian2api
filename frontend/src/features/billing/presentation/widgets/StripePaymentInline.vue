@@ -73,7 +73,7 @@ import { useAppStore } from '@/stores'
 import { getPaymentPopupFeatures } from '@/features/billing/presentation/providerConfigSignals'
 import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
 import type { Stripe, StripeElements } from '@stripe/stripe-js'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 // Stripe payment methods that open a popup (redirect or QR code)
 const POPUP_METHODS = new Set(['alipay', 'wechat_pay'])

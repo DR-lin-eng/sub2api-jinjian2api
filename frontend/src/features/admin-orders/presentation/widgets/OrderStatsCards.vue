@@ -62,7 +62,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import type { DashboardStats } from '@/types/payment'
 
 const { t } = useI18n()

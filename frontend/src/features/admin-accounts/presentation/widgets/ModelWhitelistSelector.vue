@@ -135,8 +135,8 @@ import { useAppStore } from '@/core/stores/appStore'
 import { accountsAPI } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
 import type { SyncUpstreamPreviewParams } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
 import ModelIcon from '@/common/widgets/icons/ModelIcon.vue'
-import Icon from '@/components/icons/Icon.vue'
-import { allModels, getModelsByPlatform } from '@/composables/useModelWhitelist'
+import Icon from '@/common/widgets/icons/Icon.vue'
+import { allModels, getModelsByPlatform } from '@/features/admin-accounts/presentation/composables/useModelWhitelist'
 
 const { t } = useI18n()
 

@@ -4,7 +4,7 @@
  * 在页面顶部显示加载进度，提供导航反馈
  */
 import { computed } from 'vue'
-import { useNavigationLoadingState } from '@/composables/useNavigationLoading'
+import { useNavigationLoadingState } from '@/common/composables/useNavigationLoading'
 
 const { isLoading } = useNavigationLoadingState()
 

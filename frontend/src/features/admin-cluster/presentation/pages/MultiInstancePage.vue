@@ -177,7 +177,7 @@
 import { computed, defineComponent, h, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
 import { adminAPI } from '@/api/admin'
 import type { ClusterInstanceStatus, ClusterStatusResponse, ClusterTaskRun, ClusterTaskStatus } from '@/features/admin-cluster/data/datasources/adminClusterDatasource'

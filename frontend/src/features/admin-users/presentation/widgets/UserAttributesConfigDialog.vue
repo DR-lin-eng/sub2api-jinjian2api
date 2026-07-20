@@ -244,7 +244,7 @@ import { adminAPI } from '@/api/admin'
 import type { UserAttributeDefinition, UserAttributeType, UserAttributeOption } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import { createStableObjectKeyResolver } from '@/core/utils/stableObjectKey'
 

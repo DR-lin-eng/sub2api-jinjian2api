@@ -349,7 +349,7 @@ import { useAppStore } from '@/core/stores/appStore'
 import { useSubscriptionStore } from '@/features/subscriptions/presentation/stores/subscriptionsStore'
 import { redeemAPI, authAPI, type RedeemHistoryItem } from '@/api'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import { formatDateTime } from '@/core/utils/format'
 
 const { t } = useI18n()

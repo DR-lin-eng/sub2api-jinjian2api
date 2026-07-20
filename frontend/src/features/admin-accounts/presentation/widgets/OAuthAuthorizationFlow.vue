@@ -812,9 +812,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useClipboard } from '@/composables/useClipboard'
-import Icon from '@/components/icons/Icon.vue'
-import type { AddMethod, AuthInputMethod } from '@/composables/useAccountOAuth'
+import { useClipboard } from '@/common/composables/useClipboard'
+import Icon from '@/common/widgets/icons/Icon.vue'
+import type { AddMethod, AuthInputMethod } from '@/features/admin-accounts/presentation/composables/useAccountOAuth'
 import type { AccountPlatform } from '@/types'
 
 interface Props {

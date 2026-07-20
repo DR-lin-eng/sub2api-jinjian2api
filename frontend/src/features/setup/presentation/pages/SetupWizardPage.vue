@@ -496,7 +496,7 @@ import { testDatabase, testRedis, install, type InstallRequest } from '@/feature
 import { buildGatewayUrl } from '@/core/networks/client'
 import Select from '@/common/widgets/forms/Select.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()
 

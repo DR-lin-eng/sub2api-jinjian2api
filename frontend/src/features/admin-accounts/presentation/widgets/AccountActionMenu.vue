@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { computed, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Icon } from '@/components/icons'
+import { Icon } from '@/common/widgets/icons'
 import type { Account } from '@/types'
 
 const props = defineProps<{ show: boolean; account: Account | null; position: { top: number; left: number } | null }>()

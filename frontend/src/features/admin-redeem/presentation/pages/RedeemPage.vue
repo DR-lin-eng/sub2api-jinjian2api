@@ -645,9 +645,9 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { useClipboard } from '@/composables/useClipboard'
-import { useTableSelection } from '@/composables/useTableSelection'
-import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
+import { useClipboard } from '@/common/composables/useClipboard'
+import { useTableSelection } from '@/common/composables/useTableSelection'
+import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 import { adminAPI } from '@/api/admin'
 import { formatDateTime } from '@/core/utils/format'
 import type {
@@ -667,7 +667,7 @@ import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import GroupOptionItem from '@/common/widgets/data/GroupOptionItem.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()
 const appStore = useAppStore()

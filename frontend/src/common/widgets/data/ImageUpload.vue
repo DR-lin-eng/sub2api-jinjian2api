@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import { sanitizeSvg } from '@/core/utils/sanitize'
 
 const props = withDefaults(defineProps<{

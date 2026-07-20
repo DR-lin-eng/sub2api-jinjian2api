@@ -648,8 +648,8 @@ import {
   rollback as rollbackAPI,
   type RollbackVersionInfo
 } from '@/features/admin-settings/data/datasources/systemDatasource'
-import { useClipboard } from '@/composables/useClipboard'
-import Icon from '@/components/icons/Icon.vue'
+import { useClipboard } from '@/common/composables/useClipboard'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 const GITHUB_REPO = 'Wei-Shaw/sub2api'
 // Docker Hub image published by CI (tags carry no "v" prefix, e.g. weishaw/sub2api:0.1.146)

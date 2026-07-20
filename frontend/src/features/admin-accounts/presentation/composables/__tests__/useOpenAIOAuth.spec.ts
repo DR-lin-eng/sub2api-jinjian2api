@@ -29,7 +29,7 @@ vi.mock('@/api/admin', () => ({
   }
 }))
 
-import { useOpenAIOAuth } from '@/composables/useOpenAIOAuth'
+import { useOpenAIOAuth } from '@/features/admin-accounts/presentation/composables/useOpenAIOAuth'
 import { adminAPI } from '@/api/admin'
 
 describe('useOpenAIOAuth.buildCredentials', () => {

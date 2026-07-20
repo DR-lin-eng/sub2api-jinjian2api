@@ -21,7 +21,7 @@ vi.mock('@/core/stores/appStore', () => ({
   }),
 }))
 
-import { useClipboard } from '@/composables/useClipboard'
+import { useClipboard } from '@/common/composables/useClipboard'
 
 describe('useClipboard', () => {
   beforeEach(() => {

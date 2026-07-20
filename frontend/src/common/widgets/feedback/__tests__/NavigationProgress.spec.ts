@@ -9,7 +9,7 @@ import NavigationProgress from '../NavigationProgress.vue'
 // Mock useNavigationLoadingState
 const mockIsLoading = ref(false)
 
-vi.mock('@/composables/useNavigationLoading', () => ({
+vi.mock('@/common/composables/useNavigationLoading', () => ({
   useNavigationLoadingState: () => ({
     isLoading: mockIsLoading
   })

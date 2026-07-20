@@ -55,7 +55,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Component } from 'vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()
 

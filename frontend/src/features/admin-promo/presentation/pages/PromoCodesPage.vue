@@ -389,8 +389,8 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { useClipboard } from '@/composables/useClipboard'
-import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
+import { useClipboard } from '@/common/composables/useClipboard'
+import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 import { adminAPI } from '@/api/admin'
 import { formatDateTime } from '@/core/utils/format'
 import type { PromoCode, PromoCodeUsage } from '@/types'
@@ -402,7 +402,7 @@ import Pagination from '@/common/widgets/data/Pagination.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()
 const appStore = useAppStore()

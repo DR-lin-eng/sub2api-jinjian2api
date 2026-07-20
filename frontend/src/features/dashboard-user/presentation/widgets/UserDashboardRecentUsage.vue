@@ -44,7 +44,7 @@
 import { useI18n } from 'vue-i18n'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import { formatDateTime } from '@/core/utils/format'
 import type { UsageLog } from '@/types'
 

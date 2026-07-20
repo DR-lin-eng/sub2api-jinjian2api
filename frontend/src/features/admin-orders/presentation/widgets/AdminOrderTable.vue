@@ -141,7 +141,7 @@ import type { Column } from '@/common/types/uiTypes'
 import DataTable from '@/common/widgets/data/DataTable.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import Select from '@/common/widgets/forms/Select.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import { statusBadgeClass, canRefund, formatOrderDateTime } from '@/features/billing/presentation/orderUtilsFormatter'
 import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
 

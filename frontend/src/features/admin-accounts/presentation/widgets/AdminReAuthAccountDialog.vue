@@ -192,14 +192,14 @@ import {
   useAccountOAuth,
   type AddMethod,
   type AuthInputMethod
-} from '@/composables/useAccountOAuth'
-import { useOpenAIOAuth } from '@/composables/useOpenAIOAuth'
-import { useGeminiOAuth } from '@/composables/useGeminiOAuth'
-import { useAntigravityOAuth } from '@/composables/useAntigravityOAuth'
-import { useGrokOAuth } from '@/composables/useGrokOAuth'
+} from '@/features/admin-accounts/presentation/composables/useAccountOAuth'
+import { useOpenAIOAuth } from '@/features/admin-accounts/presentation/composables/useOpenAIOAuth'
+import { useGeminiOAuth } from '@/features/admin-accounts/presentation/composables/useGeminiOAuth'
+import { useAntigravityOAuth } from '@/features/admin-accounts/presentation/composables/useAntigravityOAuth'
+import { useGrokOAuth } from '@/features/admin-accounts/presentation/composables/useGrokOAuth'
 import type { Account } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import OAuthAuthorizationFlow from '@/features/admin-accounts/presentation/widgets/OAuthAuthorizationFlow.vue'
 
 // Type for exposed OAuthAuthorizationFlow component

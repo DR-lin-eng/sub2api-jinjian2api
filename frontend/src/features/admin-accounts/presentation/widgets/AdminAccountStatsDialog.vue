@@ -476,7 +476,7 @@ import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import ModelDistributionChart from '@/common/widgets/charts/ModelDistributionChart.vue'
 import EndpointDistributionChart from '@/common/widgets/charts/EndpointDistributionChart.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import { adminAPI } from '@/api/admin'
 import type { Account, AccountUsageStatsResponse } from '@/types'
 

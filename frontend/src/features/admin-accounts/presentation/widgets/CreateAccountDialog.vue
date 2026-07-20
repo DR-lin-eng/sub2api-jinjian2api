@@ -3524,19 +3524,19 @@ import {
   buildModelMappingObject,
   fetchAntigravityDefaultMappings,
   isValidWildcardPattern
-} from '@/composables/useModelWhitelist'
+} from '@/features/admin-accounts/presentation/composables/useModelWhitelist'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { adminAPI } from '@/api/admin'
-import { useQuotaNotifyState } from '@/composables/useQuotaNotifyState'
+import { useQuotaNotifyState } from '@/features/admin-accounts/presentation/composables/useQuotaNotifyState'
 import {
   useAccountOAuth,
   type AddMethod,
   type AuthInputMethod
-} from '@/composables/useAccountOAuth'
-import { useOpenAIOAuth } from '@/composables/useOpenAIOAuth'
-import { useGeminiOAuth } from '@/composables/useGeminiOAuth'
-import { useAntigravityOAuth } from '@/composables/useAntigravityOAuth'
-import { useGrokOAuth } from '@/composables/useGrokOAuth'
+} from '@/features/admin-accounts/presentation/composables/useAccountOAuth'
+import { useOpenAIOAuth } from '@/features/admin-accounts/presentation/composables/useOpenAIOAuth'
+import { useGeminiOAuth } from '@/features/admin-accounts/presentation/composables/useGeminiOAuth'
+import { useAntigravityOAuth } from '@/features/admin-accounts/presentation/composables/useAntigravityOAuth'
+import { useGrokOAuth } from '@/features/admin-accounts/presentation/composables/useGrokOAuth'
 import type {
   Proxy,
   AdminGroup,
@@ -3553,7 +3553,7 @@ import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import ProxySelector from '@/common/widgets/data/ProxySelector.vue'
 import ProxyAdBanner from '@/common/widgets/data/ProxyAdBanner.vue'
 import GroupSelector from '@/common/widgets/data/GroupSelector.vue'

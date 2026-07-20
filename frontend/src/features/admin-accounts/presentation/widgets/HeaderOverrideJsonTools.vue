@@ -49,7 +49,7 @@
 import { computed, nextTick, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { useClipboard } from '@/composables/useClipboard'
+import { useClipboard } from '@/common/composables/useClipboard'
 import {
   parseHeaderOverridesJson,
   serializeHeaderOverrideRows,

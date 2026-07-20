@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 defineProps(['loading'])
 defineEmits(['refresh', 'create'])

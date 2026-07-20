@@ -365,7 +365,7 @@ import type {
   BackupRecord,
   ImageStorageConfig,
 } from '@/features/admin-backup/data/datasources/adminBackupDatasource'
-import { useStepUp, isStepUpBlocked, isStepUpCancelled, stepUpBlockReason } from '@/composables/useStepUp'
+import { useStepUp, isStepUpBlocked, isStepUpCancelled, stepUpBlockReason } from '@/common/composables/useStepUp'
 import TotpStepUpDialog from '@/features/auth/presentation/widgets/TotpStepUpDialog.vue'
 
 const { t } = useI18n()

@@ -248,7 +248,7 @@ import { useAdminSettingsStore } from '@/features/admin-settings/presentation/st
 import LocaleSwitcher from '@/common/widgets/data/LocaleSwitcher.vue'
 import SubscriptionProgressMini from '@/common/widgets/data/SubscriptionProgressMini.vue'
 import AnnouncementBell from '@/common/widgets/data/AnnouncementBell.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import { sanitizeUrl } from '@/core/utils/url'
 
 const router = useRouter()

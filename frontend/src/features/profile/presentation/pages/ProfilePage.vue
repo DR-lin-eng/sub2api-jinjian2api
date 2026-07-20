@@ -51,7 +51,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Icon } from '@/components/icons'
+import { Icon } from '@/common/widgets/icons'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import ProfileBalanceNotifyCard from '@/features/profile/presentation/widgets/ProfileBalanceNotifyCard.vue'
 import ProfileInfoCard from '@/features/profile/presentation/widgets/ProfileInfoCard.vue'

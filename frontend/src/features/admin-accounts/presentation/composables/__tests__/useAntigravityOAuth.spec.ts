@@ -22,7 +22,7 @@ vi.mock('@/api/admin', () => ({
   }
 }))
 
-import { useAntigravityOAuth } from '@/composables/useAntigravityOAuth'
+import { useAntigravityOAuth } from '@/features/admin-accounts/presentation/composables/useAntigravityOAuth'
 
 describe('useAntigravityOAuth.buildCredentials', () => {
   it('falls back to the submitted refresh token when the response omits it', () => {

@@ -8008,7 +8008,7 @@ import type {
 } from "@/types";
 import type { ProviderInstance } from "@/types/payment";
 import AppLayout from "@/common/widgets/layout/AppLayout.vue";
-import Icon from "@/components/icons/Icon.vue";
+import Icon from "@/common/widgets/icons/Icon.vue";
 import Select from "@/common/widgets/forms/Select.vue";
 import ConfirmDialog from "@/common/widgets/feedback/ConfirmDialog.vue";
 import PaymentProviderList from "@/features/billing/presentation/widgets/PaymentProviderList.vue";
@@ -8021,13 +8021,13 @@ import ImageUpload from "@/common/widgets/data/ImageUpload.vue";
 import BackupSettings from "@/features/admin-backup/presentation/pages/BackupPage.vue";
 import EmailTemplateEditor from "@/features/admin-settings/presentation/widgets/EmailTemplateEditor.vue";
 import OpenAIFastPolicyUserSelector from "@/features/admin-settings/presentation/widgets/OpenAIFastPolicyUserSelector.vue";
-import { useClipboard } from "@/composables/useClipboard";
+import { useClipboard } from "@/common/composables/useClipboard";
 import {
   useStepUp,
   isStepUpCancelled,
   isStepUpBlocked,
   stepUpBlockReason,
-} from "@/composables/useStepUp";
+} from "@/common/composables/useStepUp";
 import TotpStepUpDialog from "@/features/auth/presentation/widgets/TotpStepUpDialog.vue";
 import { affiliatesAPI, type AffiliateAdminEntry, type SimpleUser as AffiliateSimpleUser } from "@/features/affiliate/data/datasources/adminAffiliatesDatasource";
 import { extractApiErrorMessage, extractI18nErrorMessage } from "@/core/utils/apiError";

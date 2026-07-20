@@ -74,7 +74,7 @@
 import { ref, computed, watch, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import { usePaymentStore } from '@/features/billing/presentation/stores/paymentStore'
 import { useAppStore } from '@/stores'
 import { paymentAPI } from '@/features/billing/data/datasources/paymentDatasource'

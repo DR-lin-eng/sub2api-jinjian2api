@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useForm } from '@/composables/useForm'
+import { useForm } from '@/common/composables/useForm'
 import { useAppStore } from '@/core/stores/appStore'
 
 // Mock API 依赖（app store 内部引用了这些）

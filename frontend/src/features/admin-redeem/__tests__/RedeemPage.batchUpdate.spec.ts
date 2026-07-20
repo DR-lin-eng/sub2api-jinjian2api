@@ -37,7 +37,7 @@ vi.mock('@/core/stores/appStore', () => ({
   })
 }))
 
-vi.mock('@/composables/useClipboard', () => ({
+vi.mock('@/common/composables/useClipboard', () => ({
   useClipboard: () => ({
     copyToClipboard: vi.fn()
   })

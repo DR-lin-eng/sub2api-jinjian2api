@@ -334,7 +334,7 @@ import { adminAPI } from '@/api/admin'
 import type { TLSFingerprintProfile } from '@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 const props = defineProps<{
   show: boolean

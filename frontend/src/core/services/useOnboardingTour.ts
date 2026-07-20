@@ -4,7 +4,7 @@ import 'driver.js/dist/driver.css'
 import { useAuthStore as useUserStore } from '@/features/auth/presentation/stores/authStore'
 import { useOnboardingStore } from '@/core/stores/onboardingStore'
 import { useI18n } from 'vue-i18n'
-import { getAdminSteps, getUserSteps } from '@/components/Guide/steps'
+import { getAdminSteps, getUserSteps } from '@/core/services/guide/steps'
 
 export interface OnboardingOptions {
   storageKey?: string

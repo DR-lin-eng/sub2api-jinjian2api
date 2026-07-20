@@ -39,7 +39,7 @@
 import { useI18n } from 'vue-i18n'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 defineProps<{ rows: Array<{ id: number, name: string, totalTokens: number, actualSpend: number }>, loading: boolean, error: boolean }>()
 const emit = defineEmits<{ retry: [] }>()

@@ -644,12 +644,12 @@ import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import Select from '@/common/widgets/forms/Select.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
 import PricingEntryCard from '@/features/admin-channels/presentation/widgets/PricingEntryCard.vue'
-import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
-import { useKeyedDebouncedSearch } from '@/composables/useKeyedDebouncedSearch'
+import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
+import { useKeyedDebouncedSearch } from '@/common/composables/useKeyedDebouncedSearch'
 
 const { t } = useI18n()
 const appStore = useAppStore()

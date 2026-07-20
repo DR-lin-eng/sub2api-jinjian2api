@@ -61,7 +61,7 @@ vi.mock('@/features/admin-settings/presentation/stores/adminComplianceStore', ()
   }),
 }))
 
-vi.mock('@/composables/useNavigationLoading', () => ({
+vi.mock('@/common/composables/useNavigationLoading', () => ({
   useNavigationLoadingState: () => ({
     startNavigation: vi.fn(),
     endNavigation: vi.fn(),
@@ -69,7 +69,7 @@ vi.mock('@/composables/useNavigationLoading', () => ({
   }),
 }))
 
-vi.mock('@/composables/useRoutePrefetch', () => ({
+vi.mock('@/common/composables/useRoutePrefetch', () => ({
   useRoutePrefetch: () => ({
     triggerPrefetch: vi.fn(),
     cancelPendingPrefetch: vi.fn(),

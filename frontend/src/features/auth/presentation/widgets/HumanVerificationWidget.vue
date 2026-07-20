@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import 'cap-widget'
-import TurnstileWidget from '@/components/TurnstileWidget.vue'
+import TurnstileWidget from '@/features/auth/presentation/widgets/TurnstileWidget.vue'
 import type { ExternalHumanVerificationProvider } from '@/core/services/humanVerification'
 
 interface RecaptchaAPI {

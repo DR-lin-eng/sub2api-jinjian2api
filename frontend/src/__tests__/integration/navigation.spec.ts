@@ -7,8 +7,8 @@ import { createRouter, createWebHistory, type Router } from 'vue-router'
 import { createPinia, setActivePinia } from 'pinia'
 import { mount, flushPromises } from '@vue/test-utils'
 import { defineComponent, h, nextTick } from 'vue'
-import { useNavigationLoadingState, _resetNavigationLoadingInstance } from '@/composables/useNavigationLoading'
-import { useRoutePrefetch } from '@/composables/useRoutePrefetch'
+import { useNavigationLoadingState, _resetNavigationLoadingInstance } from '@/common/composables/useNavigationLoading'
+import { useRoutePrefetch } from '@/common/composables/useRoutePrefetch'
 
 // Mock 视图组件
 const MockDashboard = defineComponent({

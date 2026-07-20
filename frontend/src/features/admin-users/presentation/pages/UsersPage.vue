@@ -775,10 +775,10 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
-import { useTableSelection } from '@/composables/useTableSelection'
+import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
+import { useTableSelection } from '@/common/composables/useTableSelection'
 import { formatDateTime } from '@/core/utils/format'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()
 import { adminAPI } from '@/api/admin'

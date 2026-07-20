@@ -32,7 +32,7 @@ vi.mock('vue-i18n', async () => {
   }
 })
 
-vi.mock('@/composables/usePersistedPageSize', () => ({
+vi.mock('@/common/composables/usePersistedPageSize', () => ({
   getPersistedPageSize: () => 20,
 }))
 

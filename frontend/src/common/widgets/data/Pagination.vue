@@ -120,10 +120,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import { getConfiguredTablePageSizeOptions, normalizeTablePageSize } from '@/core/utils/tablePreferences'
-import { setPersistedPageSize } from '@/composables/usePersistedPageSize'
+import { setPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 
 const { t } = useI18n()
 

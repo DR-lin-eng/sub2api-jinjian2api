@@ -178,7 +178,7 @@ import type {
 
 import Select from '@/common/widgets/forms/Select.vue'
 import GroupSelector from '@/common/widgets/data/GroupSelector.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()
 

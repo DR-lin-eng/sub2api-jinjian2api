@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { useDebounceFn } from '@vueuse/core'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 const props = withDefaults(defineProps<{
   modelValue: string

@@ -321,7 +321,7 @@ import { useAppStore } from '@/core/stores/appStore'
 import { useAnnouncementStore } from '@/features/announcements/presentation/stores/announcementsStore'
 import { formatRelativeTime, formatRelativeWithDateTime } from '@/core/utils/format'
 import type { UserAnnouncement } from '@/types'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()
 const appStore = useAppStore()

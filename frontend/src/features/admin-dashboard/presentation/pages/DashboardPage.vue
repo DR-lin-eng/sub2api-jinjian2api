@@ -363,12 +363,12 @@ import type {
 } from '@/types'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import DateRangePicker from '@/common/widgets/forms/DateRangePicker.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import ModelDistributionChart from '@/common/widgets/charts/ModelDistributionChart.vue'
 import TokenUsageTrend from '@/common/widgets/charts/TokenUsageTrend.vue'
-import { useBatchImageAccess } from '@/composables/useBatchImageAccess'
+import { useBatchImageAccess } from '@/features/batch-image/presentation/composables/useBatchImageAccess'
 import { getLast24HourRange } from '@/core/utils/dateRange'
 
 import {

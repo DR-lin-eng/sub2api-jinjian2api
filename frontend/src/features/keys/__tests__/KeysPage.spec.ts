@@ -92,7 +92,7 @@ vi.mock('@/core/stores/onboardingStore', () => ({
   }),
 }))
 
-vi.mock('@/composables/useClipboard', () => ({
+vi.mock('@/common/composables/useClipboard', () => ({
   useClipboard: () => ({
     copyToClipboard,
   }),

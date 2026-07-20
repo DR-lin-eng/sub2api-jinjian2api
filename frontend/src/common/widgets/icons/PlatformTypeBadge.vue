@@ -70,7 +70,7 @@ import { useI18n } from 'vue-i18n'
 import type { AccountPlatform, AccountType } from '@/types'
 import GrokFreeIcon from './GrokFreeIcon.vue'
 import PlatformIcon from './PlatformIcon.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()
 

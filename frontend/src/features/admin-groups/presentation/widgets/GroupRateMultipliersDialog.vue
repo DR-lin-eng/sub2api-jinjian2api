@@ -247,7 +247,7 @@ import type { GroupRateMultiplierEntry } from '@/features/admin-groups/data/data
 import type { AdminGroup, AdminUser } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
 
 interface LocalEntry extends GroupRateMultiplierEntry {}

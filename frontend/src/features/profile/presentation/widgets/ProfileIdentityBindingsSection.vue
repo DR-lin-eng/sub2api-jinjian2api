@@ -207,7 +207,7 @@ import {
   startOAuthBinding,
   unbindAuthIdentity,
 } from '@/features/profile/data/datasources/profileDatasource'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import { useAppStore, useAuthStore } from '@/stores'
 import type { User, UserAuthBindingStatus, UserAuthProvider } from '@/types'
 

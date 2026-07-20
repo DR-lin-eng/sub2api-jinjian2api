@@ -115,7 +115,7 @@ vi.mock("@/features/admin-settings/presentation/stores/adminSettingsStore", () =
   }),
 }));
 
-vi.mock("@/composables/useClipboard", () => ({
+vi.mock("@/common/composables/useClipboard", () => ({
   useClipboard: () => ({
     copyToClipboard: vi.fn(),
   }),

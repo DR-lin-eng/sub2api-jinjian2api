@@ -240,7 +240,7 @@ import type {
 import type { ChannelMonitorTemplate } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorTemplateDatasource'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import MonitorAdvancedRequestConfig from '@/features/admin-channel-monitor/presentation/widgets/MonitorAdvancedRequestConfig.vue'
 import MonitorTemplateApplyPickerDialog from '@/features/admin-channel-monitor/presentation/widgets/MonitorTemplateApplyPickerDialog.vue'
 import { useChannelMonitorFormat } from '@/features/channel-monitor-user/presentation/composables/useChannelMonitorFormat'

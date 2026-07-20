@@ -765,7 +765,7 @@ import type { UserSubscription, Group, GroupPlatform, SubscriptionType } from '@
 import type { SimpleUser } from '@/features/admin-usage/data/datasources/adminUsageDatasource'
 import type { Column } from '@/common/types/uiTypes'
 import { formatDateTimeToMinute } from '@/core/utils/format'
-import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
+import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
 import DataTable from '@/common/widgets/data/DataTable.vue'
@@ -776,7 +776,7 @@ import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import GroupOptionItem from '@/common/widgets/data/GroupOptionItem.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import { getRemainingDurationParts, isOneTimeDailyQuota, type RemainingDurationParts } from '@/core/utils/subscriptionQuota'
 
 const { t } = useI18n()

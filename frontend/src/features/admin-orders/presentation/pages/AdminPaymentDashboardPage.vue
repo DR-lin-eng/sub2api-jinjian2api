@@ -76,7 +76,7 @@ import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import type { DashboardStats } from '@/types/payment'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import OrderStatsCards from '@/features/admin-orders/presentation/widgets/OrderStatsCards.vue'
 import DailyRevenueChart from '@/features/admin-orders/presentation/widgets/DailyRevenueChart.vue'
 

@@ -161,7 +161,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { useClipboard } from '@/composables/useClipboard'
+import { useClipboard } from '@/common/composables/useClipboard'
 import { useAppStore, useAuthStore } from '@/stores'
 import { apiClient } from '@/core/networks/client'
 import { buildApiUrl } from '@/core/networks/url'

@@ -182,7 +182,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import ProfileAvatarCard from '@/features/profile/presentation/widgets/ProfileAvatarCard.vue'
 import ProfileEditForm from '@/features/profile/presentation/widgets/ProfileEditForm.vue'
 import ProfileIdentityBindingsSection from '@/features/profile/presentation/widgets/ProfileIdentityBindingsSection.vue'

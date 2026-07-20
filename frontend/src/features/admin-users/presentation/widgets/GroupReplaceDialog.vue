@@ -82,7 +82,7 @@ import { useAppStore } from '@/core/stores/appStore'
 import { adminAPI } from '@/api/admin'
 import type { AdminUser, AdminGroup } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 interface Props {
   show: boolean

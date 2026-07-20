@@ -92,7 +92,7 @@ import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import OrderTable from '@/features/billing/presentation/widgets/OrderTable.vue'
 
 const { t } = useI18n()

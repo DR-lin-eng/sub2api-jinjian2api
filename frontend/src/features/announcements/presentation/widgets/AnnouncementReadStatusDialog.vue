@@ -77,12 +77,12 @@ import { adminAPI } from '@/api/admin'
 import { formatDateTime } from '@/core/utils/format'
 import type { AnnouncementUserReadStatus } from '@/types'
 import type { Column } from '@/common/types/uiTypes'
-import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
+import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import DataTable from '@/common/widgets/data/DataTable.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()
 const appStore = useAppStore()

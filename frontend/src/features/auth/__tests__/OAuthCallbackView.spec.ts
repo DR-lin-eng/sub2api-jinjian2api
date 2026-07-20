@@ -70,7 +70,7 @@ vi.mock('@/features/auth/data/datasources/authDatasource', async () => {
   }
 })
 
-vi.mock('@/composables/useClipboard', () => ({
+vi.mock('@/common/composables/useClipboard', () => ({
   useClipboard: () => ({
     copyToClipboard: (...args: any[]) => copyToClipboardMock(...args),
   }),

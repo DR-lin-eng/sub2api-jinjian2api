@@ -199,8 +199,8 @@
 import { ref, computed, h, watch, type Component } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import Icon from '@/components/icons/Icon.vue'
-import { useClipboard } from '@/composables/useClipboard'
+import Icon from '@/common/widgets/icons/Icon.vue'
+import { useClipboard } from '@/common/composables/useClipboard'
 import type { GroupPlatform } from '@/types'
 
 interface Props {

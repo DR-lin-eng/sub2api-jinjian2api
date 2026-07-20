@@ -29,7 +29,7 @@ vi.mock('@/api/admin', () => ({
   }
 }))
 
-import { useGrokOAuth } from '@/composables/useGrokOAuth'
+import { useGrokOAuth } from '@/features/admin-accounts/presentation/composables/useGrokOAuth'
 import { adminAPI } from '@/api/admin'
 
 describe('useGrokOAuth.exchangeAuthCode', () => {

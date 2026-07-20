@@ -282,7 +282,7 @@ import {
 import { platformAccentBarClass, platformBadgeLightClass, platformBadgeClass, platformTextClass, platformLabel } from '@/core/utils/platformColors'
 import SubscriptionPlanCard from '@/features/subscriptions/presentation/widgets/SubscriptionPlanCard.vue'
 import PaymentStatusPanel from '@/features/billing/presentation/widgets/PaymentStatusPanel.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import { DEFAULT_PAYMENT_CURRENCY, formatPaymentAmount, normalizePaymentCurrency } from '@/features/billing/presentation/currencyFormatter'
 import type { PaymentMethodOption } from '@/features/billing/presentation/widgets/PaymentMethodSelector.vue'
 import { buildPaymentErrorToastMessage, describePaymentScenarioError } from '@/features/billing/presentation/paymentUxSignals'

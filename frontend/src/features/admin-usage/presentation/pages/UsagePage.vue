@@ -187,7 +187,7 @@ import { useI18n } from 'vue-i18n'
 import { saveAs } from 'file-saver'
 import { useRoute } from 'vue-router'
 import { useAppStore } from '@/core/stores/appStore'; import { adminAPI } from '@/api/admin'; import { adminUsageAPI } from '@/features/admin-usage/data/datasources/adminUsageDatasource'
-import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
+import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 import { formatReasoningEffort } from '@/core/utils/format'
 import { calculateOutputTokensPerSecond } from '@/core/utils/usageMetrics'
 import { resolveUsageRequestType, requestTypeToLegacyStream } from '@/core/utils/usageRequestType'
@@ -204,7 +204,7 @@ import { listErrorLogs } from '@/features/admin-ops/data/datasources/adminOpsDat
 import type { OpsErrorLog } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
 import ModelDistributionChart from '@/common/widgets/charts/ModelDistributionChart.vue'; import GroupDistributionChart from '@/common/widgets/charts/GroupDistributionChart.vue'; import TokenUsageTrend from '@/common/widgets/charts/TokenUsageTrend.vue'
 import EndpointDistributionChart from '@/common/widgets/charts/EndpointDistributionChart.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import type { AdminUsageLog, TrendDataPoint, ModelStat, GroupStat, EndpointStat, AdminUser } from '@/types'; import type { AdminUsageStatsResponse, AdminUsageQueryParams } from '@/features/admin-usage/data/datasources/adminUsageDatasource'
 
 const { t } = useI18n()

@@ -84,7 +84,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { adminAPI } from "@/api/admin";
 import type { SimpleUser } from "@/features/admin-usage/data/datasources/adminUsageDatasource";
-import Icon from "@/components/icons/Icon.vue";
+import Icon from "@/common/widgets/icons/Icon.vue";
 
 const props = defineProps<{
   modelValue: number[];

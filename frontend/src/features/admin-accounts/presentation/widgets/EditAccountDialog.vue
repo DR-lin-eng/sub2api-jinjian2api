@@ -2626,7 +2626,7 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { adminAPI } from '@/api/admin'
-import { useQuotaNotifyState } from '@/composables/useQuotaNotifyState'
+import { useQuotaNotifyState } from '@/features/admin-accounts/presentation/composables/useQuotaNotifyState'
 import type {
   Account,
   Proxy,
@@ -2640,7 +2640,7 @@ import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import ProxySelector from '@/common/widgets/data/ProxySelector.vue'
 import ProxyAdBanner from '@/common/widgets/data/ProxyAdBanner.vue'
 import GroupSelector from '@/common/widgets/data/GroupSelector.vue'
@@ -2682,7 +2682,7 @@ import {
   buildModelMappingObject,
   splitModelMappingObject,
   isValidWildcardPattern
-} from '@/composables/useModelWhitelist'
+} from '@/features/admin-accounts/presentation/composables/useModelWhitelist'
 
 interface Props {
   show: boolean

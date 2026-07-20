@@ -142,7 +142,7 @@ import Pagination from '@/common/widgets/data/Pagination.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
-import Icon from '@/components/icons/Icon.vue'
+import Icon from '@/common/widgets/icons/Icon.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
 import MonitorFiltersBar from '@/features/admin-channel-monitor/presentation/widgets/MonitorFiltersBar.vue'
 import MonitorFormDialog from '@/features/admin-channel-monitor/presentation/widgets/MonitorFormDialog.vue'
@@ -150,7 +150,7 @@ import MonitorTemplateManagerDialog from '@/features/admin-channel-monitor/prese
 import MonitorRunResultDialog from '@/features/admin-channel-monitor/presentation/widgets/MonitorRunResultDialog.vue'
 import MonitorPrimaryModelCell from '@/features/admin-channel-monitor/presentation/widgets/MonitorPrimaryModelCell.vue'
 import MonitorActionsCell from '@/features/admin-channel-monitor/presentation/widgets/MonitorActionsCell.vue'
-import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
+import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 import { useChannelMonitorFormat } from '@/features/channel-monitor-user/presentation/composables/useChannelMonitorFormat'
 
 const { t } = useI18n()

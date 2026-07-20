@@ -3996,15 +3996,15 @@ import ConfirmDialog from "@/common/widgets/feedback/ConfirmDialog.vue";
 import EmptyState from "@/common/widgets/feedback/EmptyState.vue";
 import Select from "@/common/widgets/forms/Select.vue";
 import PlatformIcon from "@/common/widgets/icons/PlatformIcon.vue";
-import Icon from "@/components/icons/Icon.vue";
+import Icon from "@/common/widgets/icons/Icon.vue";
 import GroupRateMultipliersModal from "@/features/admin-groups/presentation/widgets/GroupRateMultipliersDialog.vue";
 import GroupRPMOverridesModal from "@/features/admin-groups/presentation/widgets/GroupRPMOverridesDialog.vue";
 import GroupCapacityBadge from "@/common/widgets/data/GroupCapacityBadge.vue";
 import { VueDraggable } from "vue-draggable-plus";
 import { createStableObjectKeyResolver } from "@/core/utils/stableObjectKey";
 import { extractApiErrorMessage } from "@/core/utils/apiError";
-import { useKeyedDebouncedSearch } from "@/composables/useKeyedDebouncedSearch";
-import { getPersistedPageSize } from "@/composables/usePersistedPageSize";
+import { useKeyedDebouncedSearch } from "@/common/composables/useKeyedDebouncedSearch";
+import { getPersistedPageSize } from "@/common/composables/usePersistedPageSize";
 import {
   createDefaultMessagesDispatchFormState,
   messagesDispatchConfigToFormState,

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { useTableLoader } from '@/composables/useTableLoader'
+import { useTableLoader } from '@/common/composables/useTableLoader'
 
 // Mock @vueuse/core 的 useDebounceFn
 vi.mock('@vueuse/core', () => ({

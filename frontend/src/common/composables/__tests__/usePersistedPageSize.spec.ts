@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { getPersistedPageSize } from '@/composables/usePersistedPageSize'
+import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 
 describe('usePersistedPageSize', () => {
   afterEach(() => {
