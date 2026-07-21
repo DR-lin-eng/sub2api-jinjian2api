@@ -170,7 +170,7 @@ import {
   login2FA,
   persistOAuthTokenContext,
   type OAuthTokenResponse
-} from '@/features/auth/data/datasources/authDatasource'
+} from '@/features/auth/presentation/api'
 import {
   clearAllAffiliateReferralCodes,
   loadOAuthAffiliateCode,

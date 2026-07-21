@@ -253,7 +253,7 @@ import {
   type OAuthAdoptionDecision,
   type OAuthTokenResponse,
   type PendingOAuthExchangeResponse
-} from '@/features/auth/data/datasources/authDatasource'
+} from '@/features/auth/presentation/api'
 import {
   clearAllAffiliateReferralCodes,
   loadOAuthAffiliateCode,

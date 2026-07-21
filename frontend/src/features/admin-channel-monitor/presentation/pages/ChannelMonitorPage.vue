@@ -133,7 +133,7 @@ import type {
   CheckResult,
   ListParams,
   Provider,
-} from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
+} from '@/features/admin-channel-monitor/presentation/api'
 import type { Column } from '@/common/types/uiTypes'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'

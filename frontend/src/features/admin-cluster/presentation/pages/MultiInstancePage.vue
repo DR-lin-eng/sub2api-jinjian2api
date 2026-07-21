@@ -180,7 +180,7 @@ import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
 import { adminAPI } from '@/api/admin'
-import type { ClusterInstanceStatus, ClusterStatusResponse, ClusterTaskRun, ClusterTaskStatus } from '@/features/admin-cluster/data/datasources/adminClusterDatasource'
+import type { ClusterInstanceStatus, ClusterStatusResponse, ClusterTaskRun, ClusterTaskStatus } from '@/features/admin-cluster/presentation/api'
 import { formatDateTime, formatRelativeTime } from '@/core/utils/format'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 

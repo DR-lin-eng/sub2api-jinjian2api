@@ -1136,7 +1136,7 @@ import type {
   KeywordBlockingMode,
   ModerationMode,
   UpdateContentModerationConfig,
-} from '@/features/admin-risk-control/data/datasources/adminRiskControlDatasource'
+} from '@/features/admin-risk-control/presentation/api'
 import type { AdminGroup, SelectOption } from '@/types'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'

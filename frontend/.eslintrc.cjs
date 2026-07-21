@@ -48,7 +48,7 @@ module.exports = {
     {
       files: ["src/core/utils/**/*.{ts,vue}", "src/core/constants/**/*.{ts,vue}", "src/core/types/**/*.{ts,vue}"],
       rules: {
-        "no-restricted-imports": ["warn", {
+        "no-restricted-imports": ["error", {
           patterns: [
             { group: ["@/core/networks/**"], message: "core/utils|constants|types MUST 是纯 TS，禁止引用其它 core/* 子目录（spec §3 R2）" },
             { group: ["@/core/stores/**"], message: "core/utils|constants|types MUST 是纯 TS，禁止引用其它 core/* 子目录（spec §3 R2）" },
@@ -68,7 +68,7 @@ module.exports = {
     {
       files: ["src/core/networks/**/*.{ts,vue}"],
       rules: {
-        "no-restricted-imports": ["warn", {
+        "no-restricted-imports": ["error", {
           patterns: [
             { group: ["@/core/stores/**"], message: "core/networks MUST NOT import core/stores（避免循环，spec §3 R2）" },
             { group: ["@/core/routes/**"], message: "core/networks MUST NOT import core/routes（避免循环，spec §3 R2）" },
@@ -84,7 +84,7 @@ module.exports = {
     {
       files: ["src/core/i18n/**/*.{ts,vue}", "src/core/themes/**/*.{ts,vue}", "src/core/animations/**/*.{ts,vue}"],
       rules: {
-        "no-restricted-imports": ["warn", {
+        "no-restricted-imports": ["error", {
           patterns: [
             { group: ["@/core/networks/**"], message: "core/i18n|themes|animations MUST 是自包含叶子模块（spec §3 R2）" },
             { group: ["@/core/stores/**"], message: "core/i18n|themes|animations MUST 是自包含叶子模块（spec §3 R2）" },
@@ -101,7 +101,7 @@ module.exports = {
     {
       files: ["src/core/**/*.{ts,vue}"],
       rules: {
-        "no-restricted-imports": ["warn", {
+        "no-restricted-imports": ["error", {
           patterns: [
             { group: ["@/common/**"], message: "core/** MUST NOT import common/**（spec §3 R2）" },
             { group: ["@/features/**"], message: "core/** MUST NOT import features/**（spec §3 R2）" },
@@ -116,7 +116,7 @@ module.exports = {
     {
       files: ["src/common/composables/**/*.{ts,vue}"],
       rules: {
-        "no-restricted-imports": ["warn", {
+        "no-restricted-imports": ["error", {
           patterns: [
             { group: ["@/common/widgets/**"], message: "common/composables MUST NOT import common/widgets（spec §3 R2）" },
             { group: ["@/common/pages/**"], message: "common/composables MUST NOT import common/pages（spec §3 R2）" },
@@ -130,7 +130,7 @@ module.exports = {
     {
       files: ["src/common/pages/**/*.{ts,vue}"],
       rules: {
-        "no-restricted-imports": ["warn", {
+        "no-restricted-imports": ["error", {
           patterns: [
             { group: ["@/features/**"], message: "common/** MUST NOT import features/**（spec §3 R2）" },
           ],
@@ -142,7 +142,7 @@ module.exports = {
     {
       files: ["src/common/widgets/**/*.{ts,vue}"],
       rules: {
-        "no-restricted-imports": ["warn", {
+        "no-restricted-imports": ["error", {
           patterns: [
             { group: ["@/features/**"], message: "common/** MUST NOT import features/**（spec §3 R2）" },
           ],
@@ -154,7 +154,7 @@ module.exports = {
     {
       files: ["src/common/types/**/*.{ts,vue}"],
       rules: {
-        "no-restricted-imports": ["warn", {
+        "no-restricted-imports": ["error", {
           patterns: [
             { group: ["vue"], message: "common/types MUST 是纯 TypeScript（spec §3 R2）" },
             { group: ["pinia"], message: "common/types MUST 是纯 TypeScript（spec §3 R2）" },
@@ -174,7 +174,7 @@ module.exports = {
       files: ["src/features/*/domain/**/*.{ts,vue}"],
       rules: {
         "no-restricted-imports": "off",
-        "@typescript-eslint/no-restricted-imports": ["warn", {
+        "@typescript-eslint/no-restricted-imports": ["error", {
           patterns: [
             { group: ["axios"], message: "features/*/domain/** MUST 是纯 TypeScript（spec §3 R2）" },
             { group: ["pinia"], message: "features/*/domain/** MUST 是纯 TypeScript（spec §3 R2）" },
@@ -192,7 +192,7 @@ module.exports = {
     {
       files: ["src/features/*/data/**/*.{ts,vue}"],
       rules: {
-        "no-restricted-imports": ["warn", {
+        "no-restricted-imports": ["error", {
           patterns: [
             { group: ["@/features/*/presentation/**"], message: "data/** MUST NOT import presentation/**（spec §3 R2）" },
             { group: ["pinia"], message: "data/** MUST 与状态管理解耦，禁止 import pinia（spec §3 R2）" },
@@ -209,7 +209,7 @@ module.exports = {
       files: ["src/features/*/presentation/stores/**/*.{ts,vue}", "src/features/*/presentation/composables/**/*.{ts,vue}"],
       rules: {
         "no-restricted-imports": "off",
-        "@typescript-eslint/no-restricted-imports": ["warn", {
+        "@typescript-eslint/no-restricted-imports": ["error", {
           patterns: [
             { group: ["axios"], message: "store/composable MUST NOT import axios（spec §5.4 R5 / §5.5 R6）" },
             { group: ["@/core/networks/client*"], message: "store/composable MUST NOT import apiClient（spec §5.4 R5 / §5.5 R6）" },
@@ -225,7 +225,7 @@ module.exports = {
     {
       files: ["src/features/*/presentation/pages/**/*.{ts,vue}"],
       rules: {
-        "no-restricted-imports": ["warn", {
+        "no-restricted-imports": ["error", {
           patterns: [
             { group: ["axios"], message: "Page MUST NOT import axios（spec §5.6 R7）" },
             { group: ["@/features/*/data/datasources/**"], message: "Page MUST NOT import datasource（spec §5.6 R7）" },

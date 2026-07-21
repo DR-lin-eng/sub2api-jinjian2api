@@ -179,7 +179,7 @@ import {
   type OpsThroughputTrendResponse,
   type OpsMetricThresholds,
   type OpsAdvancedSettings
-} from '@/features/admin-ops/data/datasources/adminOpsDatasource'
+} from '@/features/admin-ops/presentation/api'
 import { useAdminSettingsStore, useAppStore } from '@/stores'
 import OpsDashboardHeader from '@/features/admin-ops/presentation/widgets/OpsDashboardHeader.vue'
 import OpsDashboardSkeleton from '@/features/admin-ops/presentation/widgets/OpsDashboardSkeleton.vue'

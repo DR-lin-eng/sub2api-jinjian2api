@@ -233,7 +233,7 @@ import {
   isTotp2FARequired,
   isWeChatWebOAuthEnabled,
   prefetchCredentialKey
-} from '@/features/auth/data/datasources/authDatasource'
+} from '@/features/auth/presentation/api'
 import type { LoginAgreementDocument, TotpLoginResponse } from '@/types'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import { clearAllAffiliateReferralCodes } from '@/core/utils/oauthAffiliate'

@@ -35,7 +35,7 @@ import { useAuthStore, useAppStore } from '@/stores'
 import {
   persistOAuthTokenContext,
   type PendingOAuthExchangeResponse
-} from '@/features/auth/data/datasources/authDatasource'
+} from '@/features/auth/presentation/api'
 import { clearAllAffiliateReferralCodes } from '@/core/utils/oauthAffiliate'
 
 const route = useRoute()

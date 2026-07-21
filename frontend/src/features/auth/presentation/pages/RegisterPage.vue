@@ -332,7 +332,7 @@ import {
   validateInvitationCode,
   clearCredentialKeyPrefetch,
   prefetchCredentialKey
-} from '@/features/auth/data/datasources/authDatasource'
+} from '@/features/auth/presentation/api'
 import { buildAuthErrorMessage } from '@/core/utils/authError'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import {

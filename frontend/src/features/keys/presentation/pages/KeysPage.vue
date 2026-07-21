@@ -1156,7 +1156,7 @@ import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
 	import GroupOptionItem from '@/common/widgets/data/GroupOptionItem.vue'
 	import type { ApiKey, Group, PublicSettings, SubscriptionType, GroupPlatform, UpdateApiKeyRequest } from '@/types'
 import type { Column } from '@/common/types/uiTypes'
-import type { BatchApiKeyUsageStats } from '@/features/usage/data/datasources/usageDatasource'
+import type { BatchApiKeyUsageStats } from '@/features/usage/presentation/api'
 import { formatDateTime } from '@/core/utils/format'
 import { maskApiKey } from '@/core/utils/maskApiKey'
 import {

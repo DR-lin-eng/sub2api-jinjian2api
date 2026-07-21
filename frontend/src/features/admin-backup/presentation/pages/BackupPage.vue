@@ -364,7 +364,7 @@ import type {
   BackupScheduleConfig,
   BackupRecord,
   ImageStorageConfig,
-} from '@/features/admin-backup/data/datasources/adminBackupDatasource'
+} from '@/features/admin-backup/presentation/api'
 import { useStepUp, isStepUpBlocked, isStepUpCancelled, stepUpBlockReason } from '@/common/composables/useStepUp'
 import TotpStepUpDialog from '@/features/auth/presentation/widgets/TotpStepUpDialog.vue'
 

@@ -782,7 +782,7 @@ import {
   type BatchImageReferenceImage,
   type BatchImageStatus,
   type BatchImageSubmitItem,
-} from '@/features/batch-image/data/datasources/batchImageDatasource'
+} from '@/features/batch-image/presentation/api'
 import type { ApiKey } from '@/types'
 import type { Column } from '@/common/types/uiTypes'
 

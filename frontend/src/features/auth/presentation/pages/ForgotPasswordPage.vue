@@ -141,7 +141,7 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
 import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptchaWidget.vue'
 import { useAppStore } from '@/stores'
-import { getPublicSettings, forgotPassword } from '@/features/auth/data/datasources/authDatasource'
+import { getPublicSettings, forgotPassword } from '@/features/auth/presentation/api'
 import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider

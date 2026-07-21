@@ -71,7 +71,7 @@
 import { ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminPaymentAPI } from '@/features/admin-orders/data/datasources/adminPaymentDatasource'
+import { adminPaymentAPI } from '@/features/admin-orders/presentation/api'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import type { DashboardStats } from '@/types/payment'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'

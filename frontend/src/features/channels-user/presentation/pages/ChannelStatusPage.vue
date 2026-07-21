@@ -39,7 +39,7 @@ import {
   statusBatch as fetchChannelMonitorDetails,
   type UserMonitorView,
   type UserMonitorDetail,
-} from '@/features/channel-monitor-user/data/datasources/channelMonitorUserDatasource'
+} from '@/features/channel-monitor-user/presentation/api'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import MonitorHero, {
   type MonitorWindow,

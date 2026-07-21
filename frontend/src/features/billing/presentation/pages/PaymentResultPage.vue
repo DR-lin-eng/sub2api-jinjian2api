@@ -107,8 +107,8 @@ import {
   readPaymentRecoverySnapshot,
 } from '@/features/billing/presentation/paymentFlowResolver'
 import { usePaymentStore } from '@/features/billing/presentation/stores/paymentStore'
-import { paymentAPI } from '@/features/billing/data/datasources/paymentDatasource'
-import type { PublicOrderVerifyResult } from '@/features/billing/data/datasources/paymentDatasource'
+import { paymentAPI } from '@/features/billing/presentation/api'
+import type { PublicOrderVerifyResult } from '@/features/billing/presentation/api'
 import type { OrderStatus, PaymentOrder } from '@/types/payment'
 import { formatPaymentAmount, normalizePaymentCurrency } from '@/features/billing/presentation/currencyFormatter'
 import { normalizePaymentMethodForDisplay, paymentMethodI18nKey } from '@/features/billing/presentation/paymentUxSignals'

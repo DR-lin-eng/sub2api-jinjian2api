@@ -206,7 +206,7 @@ import { useI18n } from 'vue-i18n'
 import { AuthLayout } from '@/common/widgets/layout'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { useAppStore } from '@/stores'
-import { resetPassword } from '@/features/auth/data/datasources/authDatasource'
+import { resetPassword } from '@/features/auth/presentation/api'
 
 const { t } = useI18n()
 

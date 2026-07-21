@@ -180,7 +180,7 @@ import {
   type PendingOAuthSendVerifyCodeResponse,
   sendPendingOAuthVerifyCode,
   sendVerifyCode,
-} from '@/features/auth/data/datasources/authDatasource'
+} from '@/features/auth/presentation/api'
 import { apiClient } from '@/core/networks/client'
 import { buildAuthErrorMessage } from '@/core/utils/authError'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'

@@ -7982,7 +7982,7 @@ import {
   deriveWeChatConnectStoredMode,
   normalizeDefaultSubscriptionSettings,
   resolveWeChatConnectModeCapabilities,
-} from "@/features/admin-settings/data/datasources/adminSettingsDatasource";
+} from "@/features/admin-settings/presentation/api";
 import type {
   AuthSourceDefaultsState,
   AuthSourceType,
@@ -7999,7 +7999,7 @@ import type {
   WebSearchTestResult,
   AdminApiKey,
   AdminApiKeyScope,
-} from "@/features/admin-settings/data/datasources/adminSettingsDatasource";
+} from "@/features/admin-settings/presentation/api";
 import type {
   AdminGroup,
   LoginAgreementDocument,
@@ -8029,7 +8029,7 @@ import {
   stepUpBlockReason,
 } from "@/common/composables/useStepUp";
 import TotpStepUpDialog from "@/features/auth/presentation/widgets/TotpStepUpDialog.vue";
-import { affiliatesAPI, type AffiliateAdminEntry, type SimpleUser as AffiliateSimpleUser } from "@/features/affiliate/data/datasources/adminAffiliatesDatasource";
+import { affiliatesAPI, type AffiliateAdminEntry, type SimpleUser as AffiliateSimpleUser } from "@/features/affiliate/presentation/api";
 import { extractApiErrorMessage, extractI18nErrorMessage } from "@/core/utils/apiError";
 import { useAppStore } from "@/stores";
 import { useAdminSettingsStore } from "@/core/stores/adminSettingsStore";
