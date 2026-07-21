@@ -28,7 +28,8 @@ import backupAPI from '@/features/admin-backup/data/datasources/adminBackupDatas
 import tlsFingerprintProfileAPI from '@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource'
 import channelsAPI from '@/features/admin-channels/data/datasources/adminChannelsDatasource'
 import channelMonitorAPI from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
-import channelMonitorTemplateAPI from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorTemplateDatasource'
+import channelMonitorTemplateAPI
+    from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorTemplateDatasource'
 import adminPaymentAPI from '@/features/admin-orders/data/datasources/adminPaymentDatasource'
 import affiliatesAPI from '@/features/affiliate/data/datasources/adminAffiliatesDatasource'
 import riskControlAPI from '@/features/admin-risk-control/data/datasources/adminRiskControlDatasource'
@@ -40,81 +41,91 @@ import clusterAPI from '@/features/admin-cluster/data/datasources/adminClusterDa
  * Unified admin API object for convenient access
  */
 export const adminAPI = {
-  dashboard: dashboardAPI,
-  users: usersAPI,
-  groups: groupsAPI,
-  accounts: accountsAPI,
-  proxies: proxiesAPI,
-  redeem: redeemAPI,
-  promo: promoAPI,
-  announcements: announcementsAPI,
-  settings: settingsAPI,
-  system: systemAPI,
-  subscriptions: subscriptionsAPI,
-  usage: usageAPI,
-  gemini: geminiAPI,
-  antigravity: antigravityAPI,
-  grok: grokAPI,
-  userAttributes: userAttributesAPI,
-  ops: opsAPI,
-  errorPassthrough: errorPassthroughAPI,
-  dataManagement: dataManagementAPI,
-  apiKeys: apiKeysAPI,
-  scheduledTests: scheduledTestsAPI,
-  backup: backupAPI,
-  tlsFingerprintProfiles: tlsFingerprintProfileAPI,
-  channels: channelsAPI,
-  channelMonitor: channelMonitorAPI,
-  channelMonitorTemplate: channelMonitorTemplateAPI,
-  payment: adminPaymentAPI,
-  affiliates: affiliatesAPI,
-  riskControl: riskControlAPI,
-  compliance: adminComplianceAPI,
-	  audit: auditAPI,
-	  cluster: clusterAPI
+    dashboard: dashboardAPI,
+    users: usersAPI,
+    groups: groupsAPI,
+    accounts: accountsAPI,
+    proxies: proxiesAPI,
+    redeem: redeemAPI,
+    promo: promoAPI,
+    announcements: announcementsAPI,
+    settings: settingsAPI,
+    system: systemAPI,
+    subscriptions: subscriptionsAPI,
+    usage: usageAPI,
+    gemini: geminiAPI,
+    antigravity: antigravityAPI,
+    grok: grokAPI,
+    userAttributes: userAttributesAPI,
+    ops: opsAPI,
+    errorPassthrough: errorPassthroughAPI,
+    dataManagement: dataManagementAPI,
+    apiKeys: apiKeysAPI,
+    scheduledTests: scheduledTestsAPI,
+    backup: backupAPI,
+    tlsFingerprintProfiles: tlsFingerprintProfileAPI,
+    channels: channelsAPI,
+    channelMonitor: channelMonitorAPI,
+    channelMonitorTemplate: channelMonitorTemplateAPI,
+    payment: adminPaymentAPI,
+    affiliates: affiliatesAPI,
+    riskControl: riskControlAPI,
+    compliance: adminComplianceAPI,
+    audit: auditAPI,
+    cluster: clusterAPI
 }
 
 export {
-  dashboardAPI,
-  usersAPI,
-  groupsAPI,
-  accountsAPI,
-  proxiesAPI,
-  redeemAPI,
-  promoAPI,
-  announcementsAPI,
-  settingsAPI,
-  systemAPI,
-  subscriptionsAPI,
-  usageAPI,
-  geminiAPI,
-  antigravityAPI,
-  grokAPI,
-  userAttributesAPI,
-  opsAPI,
-  errorPassthroughAPI,
-  dataManagementAPI,
-  apiKeysAPI,
-  scheduledTestsAPI,
-  backupAPI,
-  tlsFingerprintProfileAPI,
-  channelsAPI,
-  channelMonitorAPI,
-  channelMonitorTemplateAPI,
-  adminPaymentAPI,
-  affiliatesAPI,
-  riskControlAPI,
-  adminComplianceAPI,
-	  auditAPI,
-	  clusterAPI
+    dashboardAPI,
+    usersAPI,
+    groupsAPI,
+    accountsAPI,
+    proxiesAPI,
+    redeemAPI,
+    promoAPI,
+    announcementsAPI,
+    settingsAPI,
+    systemAPI,
+    subscriptionsAPI,
+    usageAPI,
+    geminiAPI,
+    antigravityAPI,
+    grokAPI,
+    userAttributesAPI,
+    opsAPI,
+    errorPassthroughAPI,
+    dataManagementAPI,
+    apiKeysAPI,
+    scheduledTestsAPI,
+    backupAPI,
+    tlsFingerprintProfileAPI,
+    channelsAPI,
+    channelMonitorAPI,
+    channelMonitorTemplateAPI,
+    adminPaymentAPI,
+    affiliatesAPI,
+    riskControlAPI,
+    adminComplianceAPI,
+    auditAPI,
+    clusterAPI
 }
 
 export default adminAPI
 
 // Re-export types used by components
-export type { AuditLog, AuditLogQuery, AuditLogListResponse } from '@/features/admin-audit/data/datasources/adminAuditDatasource'
-export type { BalanceHistoryItem } from '@/features/admin-users/data/datasources/adminUsersDatasource'
-export type { ErrorPassthroughRule, CreateRuleRequest, UpdateRuleRequest } from '@/features/admin-settings/data/datasources/errorPassthroughDatasource'
-export type { BackupAgentHealth, DataManagementConfig } from '@/features/admin-backup/data/datasources/dataManagementDatasource'
-export type { TLSFingerprintProfile, CreateProfileRequest, UpdateProfileRequest } from '@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource'
-export type { ContentModerationConfig, ContentModerationLog, ModerationMode } from '@/features/admin-risk-control/data/datasources/adminRiskControlDatasource'
+export type {
+    AuditLog, AuditLogQuery, AuditLogListResponse
+} from '@/features/admin-audit/data/datasources/adminAuditDatasource'
+export type {BalanceHistoryItem} from '@/features/admin-users/data/datasources/adminUsersDatasource'
+export type {
+    ErrorPassthroughRule, CreateRuleRequest, UpdateRuleRequest
+} from '@/features/admin-settings/data/datasources/errorPassthroughDatasource'
+export type {
+    BackupAgentHealth, DataManagementConfig
+} from '@/features/admin-backup/data/datasources/dataManagementDatasource'
+export type {
+    TLSFingerprintProfile, CreateProfileRequest, UpdateProfileRequest
+} from '@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource'
+export type {
+    ContentModerationConfig, ContentModerationLog, ModerationMode
+} from '@/features/admin-risk-control/data/datasources/adminRiskControlDatasource'
