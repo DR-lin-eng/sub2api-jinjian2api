@@ -1,22 +1,12 @@
 /**
- * Prompt Audit Action Repository (interface).
- * See promptAuditQueryRepository.ts for the pattern.
+ * PromptAuditActionRepository (interface). Auto-generated from promptAuditActionDatasource.ts.
  */
+import type * as ds from '@/features/prompt-audit/data/datasources/promptAuditActionDatasource'
 
-import type {
-  PromptAuditConfig,
-  PromptAuditEndpointDraft,
-  PromptAuditUpdateRequest,
-  PromptDeletePreview,
-  PromptDeleteResult,
-  PromptEventFilters,
-  PromptProbeResult,
-} from '@/features/prompt-audit/domain/models/promptAuditTypes'
-
-export interface PromptAuditActionRepository {
-  updateConfig(payload: PromptAuditUpdateRequest): Promise<PromptAuditConfig>
-  probeEndpoint(endpoint: PromptAuditEndpointDraft): Promise<PromptProbeResult>
-  deleteEvent(id: number): Promise<PromptDeleteResult>
-  batchDeleteEvents(ids: number[]): Promise<PromptDeleteResult>
-  deleteEventsByFilter(filters: PromptEventFilters, preview: PromptDeletePreview): Promise<PromptDeleteResult>
+export type PromptAuditActionRepository = {
+  readonly updateConfig: typeof ds.updateConfig
+  readonly probeEndpoint: typeof ds.probeEndpoint
+  readonly deleteEvent: typeof ds.deleteEvent
+  readonly batchDeleteEvents: typeof ds.batchDeleteEvents
+  readonly deleteEventsByFilter: typeof ds.deleteEventsByFilter
 }

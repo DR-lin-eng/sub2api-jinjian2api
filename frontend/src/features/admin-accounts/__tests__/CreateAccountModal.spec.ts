@@ -22,7 +22,7 @@ vi.mock('@/core/stores/appStore', () => ({
   }),
 }))
 
-vi.mock('@/features/auth/presentation/stores/authStore', () => ({
+vi.mock('@/core/stores/authStore', () => ({
   useAuthStore: () => ({ isSimpleMode: true }),
 }))
 

@@ -7,7 +7,13 @@
  * `useChannelMonitorFormat`.
  */
 
-import type { APIMode, Provider, MonitorMode, MonitorStatus } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
+// Provider/status type shape shared across channel-monitor features.
+// Kept co-located with the constants so that neither admin-channel-monitor
+// nor channel-monitor-user needs to reach into the other's datasource.
+export type Provider = 'openai' | 'anthropic' | 'gemini' | 'grok'
+export type MonitorMode = 'active' | 'passive'
+export type MonitorStatus = 'operational' | 'degraded' | 'failed' | 'error' | 'unknown'
+export type APIMode = 'chat_completions' | 'responses'
 
 export const PROVIDER_OPENAI: Provider = 'openai'
 export const PROVIDER_ANTHROPIC: Provider = 'anthropic'

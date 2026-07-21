@@ -159,7 +159,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { useAuthStore } from '@/core/stores/authStore'
 import { useAppStore } from '@/core/stores/appStore'
 import { userAPI } from '@/api'
 import { extractApiErrorMessage } from '@/core/utils/apiError'

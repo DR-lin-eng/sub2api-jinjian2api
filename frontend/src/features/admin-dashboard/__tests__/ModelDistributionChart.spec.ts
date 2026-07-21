@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 
-import ModelDistributionChart from '../ModelDistributionChart.vue'
+import ModelDistributionChart from '@/features/admin-dashboard/presentation/widgets/ModelDistributionChart.vue'
 
 const messages: Record<string, string> = {
   'admin.dashboard.modelDistribution': 'Model Distribution',

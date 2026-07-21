@@ -3,7 +3,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { resolveCompletedSetupRedirectPath } from '@/core/routes/setupRedirect'
 
 // Mock 导航加载状态
-vi.mock('@/common/composables/useNavigationLoading', () => {
+vi.mock('@/core/routes/composables/useNavigationLoading', () => {
   const mockStart = vi.fn()
   const mockEnd = vi.fn()
   return {
@@ -21,7 +21,7 @@ vi.mock('@/common/composables/useNavigationLoading', () => {
 })
 
 // Mock 路由预加载
-vi.mock('@/common/composables/useRoutePrefetch', () => ({
+vi.mock('@/core/routes/composables/useRoutePrefetch', () => ({
   useRoutePrefetch: () => ({
     triggerPrefetch: vi.fn(),
     cancelPendingPrefetch: vi.fn(),
@@ -40,6 +40,8 @@ vi.mock('@/api', () => ({
 
 vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
   checkUpdates: vi.fn(),
+  systemAPI: {},
+  default: {},
 }))
 
 vi.mock('@/features/auth/data/datasources/authDatasource', () => ({

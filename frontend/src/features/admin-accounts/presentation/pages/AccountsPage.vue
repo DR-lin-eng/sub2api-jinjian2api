@@ -477,7 +477,7 @@ import { ref, reactive, computed, onMounted, onUnmounted, toRaw, watch } from 'v
 import { useIntervalFn } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { useAuthStore } from '@/core/stores/authStore'
 import { adminAPI } from '@/api/admin'
 import { useTableLoader } from '@/common/composables/useTableLoader'
 import { useSwipeSelect, type SwipeSelectVirtualContext } from '@/common/composables/useSwipeSelect'

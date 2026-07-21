@@ -1,15 +1,14 @@
 /**
- * GrokRepository (interface). Auto-generated from grokDatasource.ts by .tmp_gen_repo.mjs.
- * Per spec §5.2 R4: presentation depends on this interface; data/repositories/grokRepositoryImpl is the ONLY code that may call the datasource.
+ * GrokRepository (interface). Auto-generated from grokDatasource.ts.
  */
 import type * as ds from '@/features/admin-accounts/data/datasources/grokDatasource'
 
 export type GrokRepository = {
-  getGrokSSOImportTimeout: typeof ds.getGrokSSOImportTimeout
-  generateAuthUrl: typeof ds.generateAuthUrl
-  exchangeCode: typeof ds.exchangeCode
-  refreshGrokToken: typeof ds.refreshGrokToken
-  queryQuota: typeof ds.queryQuota
-  resetQuota: typeof ds.resetQuota
-  createFromSSO: typeof ds.createFromSSO
+  readonly getGrokSSOImportTimeout: typeof ds.getGrokSSOImportTimeout
+  readonly generateAuthUrl: typeof ds.generateAuthUrl
+  readonly exchangeCode: typeof ds.exchangeCode
+  readonly refreshGrokToken: typeof ds.refreshGrokToken
+  readonly queryQuota: typeof ds.queryQuota
+  readonly resetQuota: typeof ds.resetQuota
+  readonly createFromSSO: typeof ds.createFromSSO
 }

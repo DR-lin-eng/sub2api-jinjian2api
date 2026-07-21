@@ -1,24 +1,23 @@
 /**
- * AdminProxiesRepository (interface). Auto-generated from adminProxiesDatasource.ts by .tmp_gen_repo.mjs.
- * Per spec §5.2 R4: presentation depends on this interface; data/repositories/adminProxiesRepositoryImpl is the ONLY code that may call the datasource.
+ * AdminProxiesRepository (interface). Auto-generated from adminProxiesDatasource.ts.
  */
 import type * as ds from '@/features/admin-proxies/data/datasources/adminProxiesDatasource'
 
 export type AdminProxiesRepository = {
-  list: typeof ds.list
-  getAll: typeof ds.getAll
-  getAllWithCount: typeof ds.getAllWithCount
-  getById: typeof ds.getById
-  create: typeof ds.create
-  update: typeof ds.update
-  deleteProxy: typeof ds.deleteProxy
-  toggleStatus: typeof ds.toggleStatus
-  testProxy: typeof ds.testProxy
-  checkProxyQuality: typeof ds.checkProxyQuality
-  getStats: typeof ds.getStats
-  getProxyAccounts: typeof ds.getProxyAccounts
-  batchCreate: typeof ds.batchCreate
-  batchDelete: typeof ds.batchDelete
-  exportData: typeof ds.exportData
-  importData: typeof ds.importData
+  readonly list: typeof ds.list
+  readonly getAll: typeof ds.getAll
+  readonly getAllWithCount: typeof ds.getAllWithCount
+  readonly getById: typeof ds.getById
+  readonly create: typeof ds.create
+  readonly update: typeof ds.update
+  readonly deleteProxy: typeof ds.deleteProxy
+  readonly toggleStatus: typeof ds.toggleStatus
+  readonly testProxy: typeof ds.testProxy
+  readonly checkProxyQuality: typeof ds.checkProxyQuality
+  readonly getStats: typeof ds.getStats
+  readonly getProxyAccounts: typeof ds.getProxyAccounts
+  readonly batchCreate: typeof ds.batchCreate
+  readonly batchDelete: typeof ds.batchDelete
+  readonly exportData: typeof ds.exportData
+  readonly importData: typeof ds.importData
 }

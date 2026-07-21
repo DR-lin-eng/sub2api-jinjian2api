@@ -1,17 +1,16 @@
 /**
- * AdminRedeemRepository (interface). Auto-generated from adminRedeemDatasource.ts by .tmp_gen_repo.mjs.
- * Per spec §5.2 R4: presentation depends on this interface; data/repositories/adminRedeemRepositoryImpl is the ONLY code that may call the datasource.
+ * AdminRedeemRepository (interface). Auto-generated from adminRedeemDatasource.ts.
  */
 import type * as ds from '@/features/admin-redeem/data/datasources/adminRedeemDatasource'
 
 export type AdminRedeemRepository = {
-  list: typeof ds.list
-  getById: typeof ds.getById
-  generate: typeof ds.generate
-  deleteCode: typeof ds.deleteCode
-  batchDelete: typeof ds.batchDelete
-  batchUpdate: typeof ds.batchUpdate
-  expire: typeof ds.expire
-  getStats: typeof ds.getStats
-  exportCodes: typeof ds.exportCodes
+  readonly list: typeof ds.list
+  readonly getById: typeof ds.getById
+  readonly generate: typeof ds.generate
+  readonly deleteCode: typeof ds.deleteCode
+  readonly batchDelete: typeof ds.batchDelete
+  readonly batchUpdate: typeof ds.batchUpdate
+  readonly expire: typeof ds.expire
+  readonly getStats: typeof ds.getStats
+  readonly exportCodes: typeof ds.exportCodes
 }

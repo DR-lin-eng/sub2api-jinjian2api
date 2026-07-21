@@ -5,11 +5,16 @@ import { useSubscriptionStore } from '@/features/subscriptions/presentation/stor
 // Mock subscriptions API
 const mockGetActiveSubscriptions = vi.fn()
 
-vi.mock('@/features/subscriptions/data/datasources/subscriptionsDatasource', () => ({
-  default: {
+vi.mock('@/features/subscriptions/data/datasources/subscriptionsDatasource', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>()
+  return {
+    ...actual,
+    default: {
+      getActiveSubscriptions: (...args: any[]) => mockGetActiveSubscriptions(...args),
+    },
     getActiveSubscriptions: (...args: any[]) => mockGetActiveSubscriptions(...args),
-  },
-}))
+  }
+})
 
 const fakeSubscriptions = [
   {

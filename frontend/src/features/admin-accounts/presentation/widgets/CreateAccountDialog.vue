@@ -3525,7 +3525,7 @@ import {
   fetchAntigravityDefaultMappings,
   isValidWildcardPattern
 } from '@/features/admin-accounts/presentation/composables/useModelWhitelist'
-import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { useAuthStore } from '@/core/stores/authStore'
 import { adminAPI } from '@/api/admin'
 import { useQuotaNotifyState } from '@/features/admin-accounts/presentation/composables/useQuotaNotifyState'
 import {

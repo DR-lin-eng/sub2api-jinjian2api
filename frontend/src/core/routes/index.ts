@@ -4,13 +4,13 @@
  */
 
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { useAuthStore } from '@/core/stores/authStore'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
-import { useAdminComplianceStore } from '@/features/admin-settings/presentation/stores/adminComplianceStore'
-import { useNavigationLoadingState } from '@/common/composables/useNavigationLoading'
-import { useRoutePrefetch } from '@/common/composables/useRoutePrefetch'
-import { getSetupStatus } from '@/features/setup/data/datasources/setupDatasource'
+import { useAdminSettingsStore } from '@/core/stores/adminSettingsStore'
+import { useAdminComplianceStore } from '@/core/stores/adminComplianceStore'
+import { useNavigationLoadingState } from '@/core/routes/composables/useNavigationLoading'
+import { useRoutePrefetch } from '@/core/routes/composables/useRoutePrefetch'
+import { getSetupStatus } from '@/api'
 import { resolveCompletedSetupRedirectPath } from './setupRedirect'
 import { resolveRouteDocumentTitle } from './title'
 

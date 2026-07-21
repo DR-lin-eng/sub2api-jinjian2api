@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 
-import TokenUsageTrend from '../TokenUsageTrend.vue'
+import TokenUsageTrend from '@/features/admin-dashboard/presentation/widgets/TokenUsageTrend.vue'
 
 const messages: Record<string, string> = {
   'admin.dashboard.tokenUsageTrend': 'Token Usage Trend',

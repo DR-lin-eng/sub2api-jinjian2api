@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 
-import GroupDistributionChart from '../GroupDistributionChart.vue'
+import GroupDistributionChart from '@/features/admin-dashboard/presentation/widgets/GroupDistributionChart.vue'
 
 const messages: Record<string, string> = {
   'admin.dashboard.groupDistribution': 'Group Distribution',

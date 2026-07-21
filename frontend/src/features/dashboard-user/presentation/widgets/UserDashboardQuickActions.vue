@@ -72,7 +72,7 @@ import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import { useBatchImageAccess } from '@/features/batch-image/presentation/composables/useBatchImageAccess'
+import { useBatchImageAccess } from '@/core/services/useBatchImageAccess'
 const router = useRouter()
 const { t } = useI18n()
 const { canUseBatchImage, refreshBatchImageAccess } = useBatchImageAccess()

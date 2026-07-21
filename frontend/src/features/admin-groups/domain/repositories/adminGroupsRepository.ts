@@ -1,35 +1,34 @@
 /**
- * AdminGroupsRepository (interface). Auto-generated from adminGroupsDatasource.ts by .tmp_gen_repo.mjs.
- * Per spec §5.2 R4: presentation depends on this interface; data/repositories/adminGroupsRepositoryImpl is the ONLY code that may call the datasource.
+ * AdminGroupsRepository (interface). Auto-generated from adminGroupsDatasource.ts.
  */
 import type * as ds from '@/features/admin-groups/data/datasources/adminGroupsDatasource'
 
 export type AdminGroupsRepository = {
-  list: typeof ds.list
-  getAll: typeof ds.getAll
-  getAllIncludingInactive: typeof ds.getAllIncludingInactive
-  getByPlatform: typeof ds.getByPlatform
-  getById: typeof ds.getById
-  getModelsListCandidates: typeof ds.getModelsListCandidates
-  create: typeof ds.create
-  duplicate: typeof ds.duplicate
-  update: typeof ds.update
-  deleteGroup: typeof ds.deleteGroup
-  toggleStatus: typeof ds.toggleStatus
-  getStats: typeof ds.getStats
-  getGroupApiKeys: typeof ds.getGroupApiKeys
-  listCompositeRoutes: typeof ds.listCompositeRoutes
-  createCompositeRoute: typeof ds.createCompositeRoute
-  updateCompositeRoute: typeof ds.updateCompositeRoute
-  deleteCompositeRoute: typeof ds.deleteCompositeRoute
-  previewCompositeRoute: typeof ds.previewCompositeRoute
-  getGroupRateMultipliers: typeof ds.getGroupRateMultipliers
-  updateSortOrder: typeof ds.updateSortOrder
-  clearGroupRateMultipliers: typeof ds.clearGroupRateMultipliers
-  batchSetGroupRateMultipliers: typeof ds.batchSetGroupRateMultipliers
-  getGroupRPMOverrides: typeof ds.getGroupRPMOverrides
-  batchSetGroupRPMOverrides: typeof ds.batchSetGroupRPMOverrides
-  clearGroupRPMOverrides: typeof ds.clearGroupRPMOverrides
-  getUsageSummary: typeof ds.getUsageSummary
-  getCapacitySummary: typeof ds.getCapacitySummary
+  readonly list: typeof ds.list
+  readonly getAll: typeof ds.getAll
+  readonly getAllIncludingInactive: typeof ds.getAllIncludingInactive
+  readonly getByPlatform: typeof ds.getByPlatform
+  readonly getById: typeof ds.getById
+  readonly getModelsListCandidates: typeof ds.getModelsListCandidates
+  readonly create: typeof ds.create
+  readonly duplicate: typeof ds.duplicate
+  readonly update: typeof ds.update
+  readonly deleteGroup: typeof ds.deleteGroup
+  readonly toggleStatus: typeof ds.toggleStatus
+  readonly getStats: typeof ds.getStats
+  readonly getGroupApiKeys: typeof ds.getGroupApiKeys
+  readonly listCompositeRoutes: typeof ds.listCompositeRoutes
+  readonly createCompositeRoute: typeof ds.createCompositeRoute
+  readonly updateCompositeRoute: typeof ds.updateCompositeRoute
+  readonly deleteCompositeRoute: typeof ds.deleteCompositeRoute
+  readonly previewCompositeRoute: typeof ds.previewCompositeRoute
+  readonly getGroupRateMultipliers: typeof ds.getGroupRateMultipliers
+  readonly updateSortOrder: typeof ds.updateSortOrder
+  readonly clearGroupRateMultipliers: typeof ds.clearGroupRateMultipliers
+  readonly batchSetGroupRateMultipliers: typeof ds.batchSetGroupRateMultipliers
+  readonly getGroupRPMOverrides: typeof ds.getGroupRPMOverrides
+  readonly batchSetGroupRPMOverrides: typeof ds.batchSetGroupRPMOverrides
+  readonly clearGroupRPMOverrides: typeof ds.clearGroupRPMOverrides
+  readonly getUsageSummary: typeof ds.getUsageSummary
+  readonly getCapacitySummary: typeof ds.getCapacitySummary
 }

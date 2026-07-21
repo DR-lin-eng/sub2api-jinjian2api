@@ -1,16 +1,15 @@
 /**
- * AdminChannelMonitorRepository (interface). Auto-generated from adminChannelMonitorDatasource.ts by .tmp_gen_repo.mjs.
- * Per spec §5.2 R4: presentation depends on this interface; data/repositories/adminChannelMonitorRepositoryImpl is the ONLY code that may call the datasource.
+ * AdminChannelMonitorRepository (interface). Auto-generated from adminChannelMonitorDatasource.ts.
  */
 import type * as ds from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
 
 export type AdminChannelMonitorRepository = {
-  list: typeof ds.list
-  get: typeof ds.get
-  create: typeof ds.create
-  duplicate: typeof ds.duplicate
-  update: typeof ds.update
-  del: typeof ds.del
-  runNow: typeof ds.runNow
-  listHistory: typeof ds.listHistory
+  readonly list: typeof ds.list
+  readonly get: typeof ds.get
+  readonly create: typeof ds.create
+  readonly duplicate: typeof ds.duplicate
+  readonly update: typeof ds.update
+  readonly del: typeof ds.del
+  readonly runNow: typeof ds.runNow
+  readonly listHistory: typeof ds.listHistory
 }

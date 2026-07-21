@@ -1,26 +1,13 @@
 /**
- * Prompt Audit Query Repository (interface)
- *
- * Per spec §5.2 R4: interface lives in domain/repositories, implementation
- * lives in data/repositories/*Impl. Presentation code (Store/Composable/Page)
- * MUST depend on this interface, never the impl.
+ * PromptAuditQueryRepository (interface). Auto-generated from promptAuditQueryDatasource.ts.
  */
+import type * as ds from '@/features/prompt-audit/data/datasources/promptAuditQueryDatasource'
 
-import type {
-  PromptAuditConfig,
-  PromptAuditEvent,
-  PromptAuditGroup,
-  PromptAuditRuntime,
-  PromptDeletePreview,
-  PromptEventFilters,
-  PromptEventPage,
-} from '@/features/prompt-audit/domain/models/promptAuditTypes'
-
-export interface PromptAuditQueryRepository {
-  getConfig(): Promise<PromptAuditConfig>
-  getRuntime(): Promise<PromptAuditRuntime>
-  listEvents(filters: PromptEventFilters, page: number, pageSize: number): Promise<PromptEventPage>
-  getEvent(id: number): Promise<PromptAuditEvent>
-  previewDelete(filters: PromptEventFilters): Promise<PromptDeletePreview>
-  listGroups(): Promise<PromptAuditGroup[]>
+export type PromptAuditQueryRepository = {
+  readonly getConfig: typeof ds.getConfig
+  readonly getRuntime: typeof ds.getRuntime
+  readonly listEvents: typeof ds.listEvents
+  readonly getEvent: typeof ds.getEvent
+  readonly previewDelete: typeof ds.previewDelete
+  readonly listGroups: typeof ds.listGroups
 }

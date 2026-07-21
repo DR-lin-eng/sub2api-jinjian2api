@@ -5,7 +5,7 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import subscriptionsAPI from '@/features/subscriptions/data/datasources/subscriptionsDatasource'
+import { subscriptionsRepository as subscriptionsAPI } from '@/features/subscriptions/data/repositories/subscriptionsRepositoryImpl'
 import type { UserSubscription } from '@/types'
 
 // Cache TTL: 60 seconds

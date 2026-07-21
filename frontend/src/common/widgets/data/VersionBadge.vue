@@ -646,8 +646,8 @@ import {
   restartService,
   getRollbackVersions,
   rollback as rollbackAPI,
-  type RollbackVersionInfo
-} from '@/features/admin-settings/data/datasources/systemDatasource'
+  type RollbackVersionInfo,
+} from '@/api'
 import { useClipboard } from '@/common/composables/useClipboard'
 import Icon from '@/common/widgets/icons/Icon.vue'
 

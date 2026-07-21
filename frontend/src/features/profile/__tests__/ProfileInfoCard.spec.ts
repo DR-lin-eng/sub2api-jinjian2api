@@ -9,7 +9,7 @@ vi.mock('vue-router', () => ({
   })
 }))
 
-vi.mock('@/features/auth/presentation/stores/authStore', () => ({
+vi.mock('@/core/stores/authStore', () => ({
   useAuthStore: () => ({
     user: null
   })

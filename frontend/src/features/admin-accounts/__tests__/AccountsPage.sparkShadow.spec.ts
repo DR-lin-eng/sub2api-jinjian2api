@@ -54,7 +54,7 @@ vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({ showError, showSuccess, showInfo: vi.fn() })
 }))
 
-vi.mock('@/features/auth/presentation/stores/authStore', () => ({
+vi.mock('@/core/stores/authStore', () => ({
   useAuthStore: () => ({ token: 'test-token' })
 }))
 

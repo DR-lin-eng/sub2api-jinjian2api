@@ -9,10 +9,10 @@ import type { Toast, ToastType, PublicSettings } from '@/types'
 import { i18n } from '@/core/i18n'
 import {
   checkUpdates as checkUpdatesAPI,
+  getPublicSettings as fetchPublicSettingsAPI,
   type VersionInfo,
-  type ReleaseInfo
-} from '@/features/admin-settings/data/datasources/systemDatasource'
-import { getPublicSettings as fetchPublicSettingsAPI } from '@/features/auth/data/datasources/authDatasource'
+  type ReleaseInfo,
+} from '@/api'
 
 export const useAppStore = defineStore('app', () => {
   // ==================== State ====================

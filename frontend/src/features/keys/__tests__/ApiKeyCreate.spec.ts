@@ -26,6 +26,8 @@ vi.mock('@/api', () => ({
 
 vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
   checkUpdates: vi.fn(),
+  systemAPI: {},
+  default: {},
 }))
 
 vi.mock('@/features/auth/data/datasources/authDatasource', () => ({

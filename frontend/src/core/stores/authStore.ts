@@ -8,7 +8,8 @@ import { ref, computed, readonly } from 'vue'
 import {
   authAPI,
   isTotp2FARequired,
-  type LoginResponse
+  type LoginResponse,
+  type RefreshTokenResponse,
 } from '@/api'
 import {
   clearTokenMemory,
@@ -24,7 +25,6 @@ import type {
   EncryptedRegisterRequest,
   AuthResponse
 } from '@/types'
-import type { RefreshTokenResponse } from '@/features/auth/data/datasources/authDatasource'
 
 const clearAuthToken = clearTokenMemory
 const getTokenExpiresAt = getTokenExpiresAtMemory

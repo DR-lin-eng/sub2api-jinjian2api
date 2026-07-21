@@ -4,12 +4,13 @@
  */
 
 import { apiClient } from '@/core/networks/client'
+// Shared provider/status types live in core/constants to avoid cross-feature
+// dependency (channel-monitor-user reads the same types). Re-export for
+// backward compat so callers can keep `from '.../adminChannelMonitorDatasource'`.
+export type { Provider, MonitorMode, MonitorStatus, APIMode } from '@/core/constants/channelMonitor'
+import type { Provider, MonitorMode, MonitorStatus, APIMode } from '@/core/constants/channelMonitor'
 
-export type Provider = 'openai' | 'anthropic' | 'gemini' | 'grok'
-export type MonitorMode = 'active' | 'passive'
-export type MonitorStatus = 'operational' | 'degraded' | 'failed' | 'error' | 'unknown'
 export type BodyOverrideMode = 'off' | 'merge' | 'replace'
-export type APIMode = 'chat_completions' | 'responses'
 
 export interface ChannelMonitor {
   id: number

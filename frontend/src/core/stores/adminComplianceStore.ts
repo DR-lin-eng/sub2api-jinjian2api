@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import adminComplianceAPI, { type AdminComplianceStatus } from '@/features/admin-settings/data/datasources/complianceDatasource'
+import { adminComplianceAPI, type AdminComplianceStatus } from '@/api'
 import { getLocale } from '@/core/i18n'
 
 const FALLBACK_ZH_PHRASE = '我已阅读、理解并同意 Sub2API 部署与运营合规承诺'

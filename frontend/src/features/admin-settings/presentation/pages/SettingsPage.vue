@@ -8032,7 +8032,7 @@ import TotpStepUpDialog from "@/features/auth/presentation/widgets/TotpStepUpDia
 import { affiliatesAPI, type AffiliateAdminEntry, type SimpleUser as AffiliateSimpleUser } from "@/features/affiliate/data/datasources/adminAffiliatesDatasource";
 import { extractApiErrorMessage, extractI18nErrorMessage } from "@/core/utils/apiError";
 import { useAppStore } from "@/stores";
-import { useAdminSettingsStore } from "@/features/admin-settings/presentation/stores/adminSettingsStore";
+import { useAdminSettingsStore } from "@/core/stores/adminSettingsStore";
 import { normalizeVisibleMethod } from "@/features/billing/presentation/paymentFlowResolver";
 import {
   isRegistrationEmailSuffixDomainValid,

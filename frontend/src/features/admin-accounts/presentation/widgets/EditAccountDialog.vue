@@ -2624,7 +2624,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { useAuthStore } from '@/core/stores/authStore'
 import { adminAPI } from '@/api/admin'
 import { useQuotaNotifyState } from '@/features/admin-accounts/presentation/composables/useQuotaNotifyState'
 import type {

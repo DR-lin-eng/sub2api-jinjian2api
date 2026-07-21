@@ -10,6 +10,7 @@ export { apiClient } from '@/core/networks/client'
 export {
   authAPI,
   isTotp2FARequired,
+  getPublicSettings,
   type LoginResponse,
   type RefreshTokenResponse,
   clearAuthToken,
@@ -20,6 +21,27 @@ export {
   setRefreshToken,
   setTokenExpiresAt,
 } from '@/features/auth/data/datasources/authDatasource'
+
+// System API (for update checks and public settings)
+export {
+  checkUpdates,
+  performUpdate,
+  restartService,
+  getRollbackVersions,
+  rollback,
+  type VersionInfo,
+  type ReleaseInfo,
+  type RollbackVersionInfo,
+} from '@/features/admin-settings/data/datasources/systemDatasource'
+
+// Admin compliance API (for core adminComplianceStore)
+export {
+  default as adminComplianceAPI,
+  type AdminComplianceStatus,
+} from '@/features/admin-settings/data/datasources/complianceDatasource'
+
+// Setup API (for core routes navigation guard)
+export { getSetupStatus } from '@/features/setup/data/datasources/setupDatasource'
 
 // User APIs
 export { keysAPI } from '@/features/keys/data/datasources/keysDatasource'

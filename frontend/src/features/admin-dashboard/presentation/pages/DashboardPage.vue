@@ -366,9 +366,9 @@ import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import DateRangePicker from '@/common/widgets/forms/DateRangePicker.vue'
 import Select from '@/common/widgets/forms/Select.vue'
-import ModelDistributionChart from '@/common/widgets/charts/ModelDistributionChart.vue'
-import TokenUsageTrend from '@/common/widgets/charts/TokenUsageTrend.vue'
-import { useBatchImageAccess } from '@/features/batch-image/presentation/composables/useBatchImageAccess'
+import ModelDistributionChart from '@/features/admin-dashboard/presentation/widgets/ModelDistributionChart.vue'
+import TokenUsageTrend from '@/features/admin-dashboard/presentation/widgets/TokenUsageTrend.vue'
+import { useBatchImageAccess } from '@/core/services/useBatchImageAccess'
 import { getLast24HourRange } from '@/core/utils/dateRange'
 
 import {

@@ -169,17 +169,19 @@ module.exports = {
     // --- features/** 内部规则 (spec §3 R2) ---
 
     // features/*/domain/** MUST 是纯 TS
+    // 使用 @typescript-eslint/no-restricted-imports 以支持 allowTypeImports
     {
       files: ["src/features/*/domain/**/*.{ts,vue}"],
       rules: {
-        "no-restricted-imports": ["warn", {
+        "no-restricted-imports": "off",
+        "@typescript-eslint/no-restricted-imports": ["warn", {
           patterns: [
             { group: ["axios"], message: "features/*/domain/** MUST 是纯 TypeScript（spec §3 R2）" },
             { group: ["pinia"], message: "features/*/domain/** MUST 是纯 TypeScript（spec §3 R2）" },
             { group: ["vue"], message: "features/*/domain/** MUST 是纯 TypeScript（spec §3 R2）" },
             { group: ["vue-router"], message: "features/*/domain/** MUST 是纯 TypeScript（spec §3 R2）" },
             { group: ["vue-i18n"], message: "features/*/domain/** MUST 是纯 TypeScript（spec §3 R2）" },
-            { group: ["@/features/*/data/**"], message: "domain MUST NOT import data 层实现（spec §3 R2）" },
+            { group: ["@/features/*/data/**"], message: "domain MUST NOT import data 层运行时；`import type` 从 datasource 拿签名允许（Repository interface typeof 复用）", allowTypeImports: true },
             { group: ["@/features/*/presentation/**"], message: "domain MUST NOT import presentation 层（spec §3 R2）" },
           ],
         }],
@@ -200,28 +202,35 @@ module.exports = {
       },
     },
 
-    // features/*/presentation/stores/** & composables/** 禁止穿透 data 层
+    // features/*/presentation/stores/** & composables/** 禁止穿透 datasource；
+    // 允许 import data/repositories/*Impl（因为 §5.4 R5.1 双导出模式要 new Impl）。
+    // Type-only import from datasource 允许（读取共享类型 signature）。
     {
       files: ["src/features/*/presentation/stores/**/*.{ts,vue}", "src/features/*/presentation/composables/**/*.{ts,vue}"],
       rules: {
-        "no-restricted-imports": ["warn", {
+        "no-restricted-imports": "off",
+        "@typescript-eslint/no-restricted-imports": ["warn", {
           patterns: [
             { group: ["axios"], message: "store/composable MUST NOT import axios（spec §5.4 R5 / §5.5 R6）" },
             { group: ["@/core/networks/client*"], message: "store/composable MUST NOT import apiClient（spec §5.4 R5 / §5.5 R6）" },
-            { group: ["@/features/*/data/**"], message: "store/composable MUST NOT import data 层；MUST 通过 domain/repositories 接口（spec §5.4 R5 / §5.5 R6）" },
+            { group: ["@/features/*/data/datasources/**"], message: "store/composable MUST NOT import datasource 运行时；MUST 通过 domain/repositories interface（spec §5.4 R5 / §5.5 R6）；type-only import 允许", allowTypeImports: true },
+            { group: ["@/features/*/data/models/**"], message: "store/composable MUST NOT import DTO；MUST 通过 domain/models（spec §5.4 R5）", allowTypeImports: true },
           ],
         }],
       },
     },
 
-    // features/*/presentation/pages/** 禁止 axios/data
+    // features/*/presentation/pages/** 禁止 axios/datasource/DTO 直接依赖；
+    // Page MUST 通过 composable/store 拿数据（§5.6 R7）
     {
       files: ["src/features/*/presentation/pages/**/*.{ts,vue}"],
       rules: {
         "no-restricted-imports": ["warn", {
           patterns: [
             { group: ["axios"], message: "Page MUST NOT import axios（spec §5.6 R7）" },
-            { group: ["@/features/*/data/**"], message: "Page MUST NOT import data 层（spec §5.6 R7）" },
+            { group: ["@/features/*/data/datasources/**"], message: "Page MUST NOT import datasource（spec §5.6 R7）" },
+            { group: ["@/features/*/data/models/**"], message: "Page MUST NOT import DTO；MUST 通过 domain/models（spec §5.6 R7）" },
+            { group: ["@/features/*/data/repositories/**"], message: "Page MUST NOT import Repository Impl；MUST 通过 domain/repositories interface + store（spec §5.6 R7）" },
           ],
         }],
       },

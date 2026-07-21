@@ -1,14 +1,13 @@
 /**
- * SystemRepository (interface). Auto-generated from systemDatasource.ts by .tmp_gen_repo.mjs.
- * Per spec §5.2 R4: presentation depends on this interface; data/repositories/systemRepositoryImpl is the ONLY code that may call the datasource.
+ * SystemRepository (interface). Auto-generated from systemDatasource.ts.
  */
 import type * as ds from '@/features/admin-settings/data/datasources/systemDatasource'
 
 export type SystemRepository = {
-  getVersion: typeof ds.getVersion
-  checkUpdates: typeof ds.checkUpdates
-  getRollbackVersions: typeof ds.getRollbackVersions
-  performUpdate: typeof ds.performUpdate
-  rollback: typeof ds.rollback
-  restartService: typeof ds.restartService
+  readonly getVersion: typeof ds.getVersion
+  readonly checkUpdates: typeof ds.checkUpdates
+  readonly getRollbackVersions: typeof ds.getRollbackVersions
+  readonly performUpdate: typeof ds.performUpdate
+  readonly rollback: typeof ds.rollback
+  readonly restartService: typeof ds.restartService
 }

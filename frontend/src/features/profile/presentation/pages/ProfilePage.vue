@@ -59,7 +59,7 @@ import ProfilePasswordForm from '@/features/profile/presentation/widgets/Profile
 import ProfileTotpCard from '@/features/profile/presentation/widgets/ProfileTotpCard.vue'
 import { isWeChatWebOAuthEnabled } from '@/features/auth/data/datasources/authDatasource'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { useAuthStore } from '@/core/stores/authStore'
 
 const { t } = useI18n()
 const appStore = useAppStore()

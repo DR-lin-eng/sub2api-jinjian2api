@@ -202,8 +202,8 @@ import OpsErrorLogTable from '@/features/admin-ops/presentation/widgets/OpsError
 import OpsErrorDetailModal from '@/features/admin-ops/presentation/widgets/OpsErrorDetailDialog.vue'
 import { listErrorLogs } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
 import type { OpsErrorLog } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import ModelDistributionChart from '@/common/widgets/charts/ModelDistributionChart.vue'; import GroupDistributionChart from '@/common/widgets/charts/GroupDistributionChart.vue'; import TokenUsageTrend from '@/common/widgets/charts/TokenUsageTrend.vue'
-import EndpointDistributionChart from '@/common/widgets/charts/EndpointDistributionChart.vue'
+import ModelDistributionChart from '@/features/admin-dashboard/presentation/widgets/ModelDistributionChart.vue'; import GroupDistributionChart from '@/features/admin-dashboard/presentation/widgets/GroupDistributionChart.vue'; import TokenUsageTrend from '@/features/admin-dashboard/presentation/widgets/TokenUsageTrend.vue'
+import EndpointDistributionChart from '@/features/admin-dashboard/presentation/widgets/EndpointDistributionChart.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import type { AdminUsageLog, TrendDataPoint, ModelStat, GroupStat, EndpointStat, AdminUser } from '@/types'; import type { AdminUsageStatsResponse, AdminUsageQueryParams } from '@/features/admin-usage/data/datasources/adminUsageDatasource'
 

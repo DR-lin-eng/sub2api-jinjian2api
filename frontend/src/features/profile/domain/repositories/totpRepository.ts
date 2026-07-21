@@ -1,15 +1,14 @@
 /**
- * TotpRepository (interface). Auto-generated from totpDatasource.ts by .tmp_gen_repo.mjs.
- * Per spec §5.2 R4: presentation depends on this interface; data/repositories/totpRepositoryImpl is the ONLY code that may call the datasource.
+ * TotpRepository (interface). Auto-generated from totpDatasource.ts.
  */
 import type * as ds from '@/features/profile/data/datasources/totpDatasource'
 
 export type TotpRepository = {
-  getStatus: typeof ds.getStatus
-  getVerificationMethod: typeof ds.getVerificationMethod
-  sendVerifyCode: typeof ds.sendVerifyCode
-  initiateSetup: typeof ds.initiateSetup
-  enable: typeof ds.enable
-  disable: typeof ds.disable
-  stepUp: typeof ds.stepUp
+  readonly getStatus: typeof ds.getStatus
+  readonly getVerificationMethod: typeof ds.getVerificationMethod
+  readonly sendVerifyCode: typeof ds.sendVerifyCode
+  readonly initiateSetup: typeof ds.initiateSetup
+  readonly enable: typeof ds.enable
+  readonly disable: typeof ds.disable
+  readonly stepUp: typeof ds.stepUp
 }
