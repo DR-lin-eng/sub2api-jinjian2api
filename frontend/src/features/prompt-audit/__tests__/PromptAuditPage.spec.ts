@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 import { flushPromises, mount } from '@vue/test-utils'
 import type { PromptAuditConfig, PromptAuditRuntime } from '@/features/prompt-audit/domain/models/promptAuditTypes'
 import { SCANNER_CATALOG } from '@/features/prompt-audit/domain/promptAuditViewModel'
@@ -11,7 +12,23 @@ const mocks = vi.hoisted(() => ({
   showSuccess: vi.fn(), showError: vi.fn(),
 }))
 
-vi.mock('../api', () => ({ default: mocks }))
+// Mock the underlying datasources — the Query/Action Repository Impls read
+// them lazily via getters, so this transparently redirects the whole stack.
+vi.mock('@/features/prompt-audit/data/datasources/promptAuditQueryDatasource', () => ({
+  getConfig: mocks.getConfig,
+  getRuntime: mocks.getRuntime,
+  listEvents: mocks.listEvents,
+  getEvent: mocks.getEvent,
+  previewDelete: mocks.previewDelete,
+  listGroups: mocks.listGroups,
+}))
+vi.mock('@/features/prompt-audit/data/datasources/promptAuditActionDatasource', () => ({
+  updateConfig: mocks.updateConfig,
+  probeEndpoint: mocks.probeEndpoint,
+  deleteEvent: mocks.deleteEvent,
+  batchDeleteEvents: mocks.batchDeleteEvents,
+  deleteEventsByFilter: mocks.deleteEventsByFilter,
+}))
 vi.mock('@/core/stores/appStore', () => ({ useAppStore: () => ({ showSuccess: mocks.showSuccess, showError: mocks.showError }) }))
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
@@ -54,12 +71,16 @@ const FilterDeleteStub = defineComponent({
 
 function mountView() {
   return mount(PromptAuditPage, {
-    global: { stubs: { AppLayout: AppLayoutStub, RuntimeOverview: RuntimeStub, EndpointPool: EndpointStub, PolicyPanel: PolicyStub, EventWorkspace: EventsStub, EventDetailDialog: DetailStub, FilterDeleteDialog: FilterDeleteStub, ConfirmDialog: ConfirmStub } },
+    global: {
+      plugins: [createPinia()],
+      stubs: { AppLayout: AppLayoutStub, RuntimeOverview: RuntimeStub, EndpointPool: EndpointStub, PolicyPanel: PolicyStub, EventWorkspace: EventsStub, EventDetailDialog: DetailStub, FilterDeleteDialog: FilterDeleteStub, ConfirmDialog: ConfirmStub },
+    },
   })
 }
 
 describe('PromptAuditPage', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
     Object.values(mocks).forEach((mock) => mock.mockReset())
     mocks.getConfig.mockResolvedValue(baseConfig())
     mocks.getRuntime.mockResolvedValue(runtime())
