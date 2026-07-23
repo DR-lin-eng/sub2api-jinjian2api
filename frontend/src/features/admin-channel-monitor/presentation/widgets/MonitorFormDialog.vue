@@ -125,13 +125,13 @@
 
       <div v-if="form.monitor_mode === MONITOR_MODE_ACTIVE">
         <label class="input-label">
-          {{ t('admin.channelMonitor.form.apiKey') }}<span v-if="!editing || !editing.api_key_masked" class="text-red-500"> *</span>
+          {{ t('admin.channelMonitor.form.apiKey') }}<span v-if="!editing || !editing.apiKeyMasked" class="text-red-500"> *</span>
         </label>
         <div class="flex gap-2">
           <input
             v-model="form.api_key"
             type="password"
-            :required="form.monitor_mode === MONITOR_MODE_ACTIVE && (!editing || !editing.api_key_masked)"
+            :required="form.monitor_mode === MONITOR_MODE_ACTIVE && (!editing || !editing.apiKeyMasked)"
             class="input flex-1"
             :placeholder="editing ? t('admin.channelMonitor.form.apiKeyEditPlaceholder') : t('admin.channelMonitor.form.apiKeyPlaceholder')"
           />
@@ -139,7 +139,7 @@
             {{ t('admin.channelMonitor.form.useMyKey') }}
           </button>
         </div>
-        <p v-if="editing && editing.api_key_masked" class="mt-1 text-xs text-gray-400">{{ editing.api_key_masked }}</p>
+        <p v-if="editing && editing.apiKeyMasked" class="mt-1 text-xs text-gray-400">{{ editing.apiKeyMasked }}</p>
       </div>
 
       <div>
@@ -254,26 +254,22 @@ import { ref, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
-import { adminAPI } from '@/api/admin'
-import { keysAPI } from '@/features/keys/data/datasources/keysDatasource'
+import { useAdminChannelMonitor } from '@/features/admin-channel-monitor/presentation/composables/useAdminChannelMonitor'
+import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
 import { userGroupsAPI } from '@/features/groups-user/data/datasources/groupsUserDatasource'
-import type {
-  BodyOverrideMode,
-  ChannelMonitor,
-  CreateParams,
-  APIMode,
-  MonitorMode,
-  Provider,
-  UpdateParams,
-} from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
-import type { ChannelMonitorTemplate } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorTemplateDatasource'
-import type { Channel } from '@/features/admin-channels/data/datasources/adminChannelsDatasource'
-import type { AdminGroup, ApiKey } from '@/types'
+import type { APIMode, BodyOverrideMode, MonitorMode, Provider } from '@/core/constants/channelMonitor'
+import type { ChannelMonitor } from '@/features/admin-channel-monitor/domain/models/channelMonitor'
+import type { CreateChannelMonitorRequest } from '@/features/admin-channel-monitor/data/requests_models/createChannelMonitorRequest'
+import type { UpdateChannelMonitorRequest } from '@/features/admin-channel-monitor/data/requests_models/updateChannelMonitorRequest'
+import type { ChannelMonitorTemplate } from '@/features/admin-channel-monitor/domain/models/channelMonitorTemplate'
+import type { Channel } from '@/features/admin-channels/domain/models/channel'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
+import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import ModelTagInput from '@/features/admin-channels/presentation/widgets/ModelTagInput.vue'
-import { getPlatformTextClass } from '@/features/admin-channels/presentation/adminChannelSignals'
+import { getPlatformTextClass } from '@/features/admin-channels/presentation/composables/useChannelPricingForm'
 import MonitorKeyPickerDialog from '@/features/admin-channel-monitor/presentation/widgets/MonitorKeyPickerDialog.vue'
 import MonitorAdvancedRequestConfig from '@/features/admin-channel-monitor/presentation/widgets/MonitorAdvancedRequestConfig.vue'
 import ProviderIcon from '@/features/channel-monitor-user/presentation/widgets/ProviderIcon.vue'
@@ -305,11 +301,12 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const appStore = useAppStore()
 const { providerPickerClass } = useChannelMonitorFormat()
+const channelMonitor = useAdminChannelMonitor()
 
 // System-configured default interval for new monitors. Falls back to the static
 // constant when public settings haven't loaded yet or store the legacy 0 value.
 const systemDefaultInterval = computed<number>(() => {
-  const configured = appStore.cachedPublicSettings?.channel_monitor_default_interval_seconds
+  const configured = appStore.cachedPublicSettings?.channelMonitorDefaultIntervalSeconds
   return configured && configured > 0 ? configured : DEFAULT_INTERVAL_SECONDS
 })
 
@@ -441,7 +438,7 @@ const templateOptions = computed(() => {
   const items = templatesCache.value.filter((t) => {
     if (t.provider !== form.provider) return false
     if (form.provider !== PROVIDER_OPENAI) return true
-    return normalizeAPIMode(t.api_mode) === form.api_mode
+    return normalizeAPIMode(t.apiMode) === form.api_mode
   })
   return [
     { value: '', label: t('admin.channelMonitor.templateField.none') },
@@ -453,7 +450,7 @@ async function loadTemplates() {
   if (templatesCache.value.length > 0) return
   templatesLoading.value = true
   try {
-    const { items } = await adminAPI.channelMonitorTemplate.list()
+    const { items } = await channelMonitor.listTemplates()
     templatesCache.value = items
   } catch (err: unknown) {
     // 模板拉取失败不阻塞监控表单，用户可以不选模板
@@ -478,11 +475,11 @@ const templateSelectValue = computed<string>({
     const tpl = templatesCache.value.find((t) => t.id === id)
     if (tpl) {
       suppressFormWatchers = true
-      form.api_mode = normalizeAPIMode(tpl.api_mode)
+      form.api_mode = normalizeAPIMode(tpl.apiMode)
       form.template_id = id
-      form.extra_headers = { ...(tpl.extra_headers || {}) }
-      form.body_override_mode = tpl.body_override_mode
-      form.body_override = tpl.body_override ? { ...tpl.body_override } : null
+      form.extra_headers = { ...(tpl.extraHeaders || {}) }
+      form.body_override_mode = tpl.bodyOverrideMode
+      form.body_override = tpl.bodyOverride ? { ...tpl.bodyOverride } : null
       suppressFormWatchers = false
     }
   },
@@ -534,7 +531,7 @@ function apiModeButtonClass(mode: APIMode): string {
 
 function templateOptionLabel(tpl: ChannelMonitorTemplate): string {
   if (tpl.provider !== PROVIDER_OPENAI) return tpl.name
-  const labelKey = normalizeAPIMode(tpl.api_mode) === API_MODE_RESPONSES
+  const labelKey = normalizeAPIMode(tpl.apiMode) === API_MODE_RESPONSES
     ? 'admin.channelMonitor.form.apiModeResponses'
     : 'admin.channelMonitor.form.apiModeChatCompletions'
   return `${tpl.name} · ${t(labelKey)}`
@@ -633,24 +630,24 @@ function resetForm() {
 function loadFromMonitor(m: ChannelMonitor) {
   suppressFormWatchers = true
   form.name = m.name
-  form.monitor_mode = m.monitor_mode || MONITOR_MODE_ACTIVE
-  form.channel_id = m.channel_id ?? null
-  form.group_id = m.group_id ?? null
-  passiveTarget.value = m.group_id != null ? 'group' : 'channel'
+  form.monitor_mode = m.monitorMode || MONITOR_MODE_ACTIVE
+  form.channel_id = m.channelId ?? null
+  form.group_id = m.groupId ?? null
+  passiveTarget.value = m.groupId != null ? 'group' : 'channel'
   form.provider = m.provider
-  form.api_mode = normalizeAPIMode(m.api_mode)
+  form.api_mode = normalizeAPIMode(m.apiMode)
   form.endpoint = m.endpoint
   form.api_key = ''
-  form.primary_model = m.primary_model
-  form.extra_models = [...(m.extra_models || [])]
-  form.group_name = m.group_name || ''
-  form.interval_seconds = m.interval_seconds || systemDefaultInterval.value
-  form.jitter_seconds = m.jitter_seconds || 0
+  form.primary_model = m.primaryModel
+  form.extra_models = [...(m.extraModels || [])]
+  form.group_name = m.groupName || ''
+  form.interval_seconds = m.intervalSeconds || systemDefaultInterval.value
+  form.jitter_seconds = m.jitterSeconds || 0
   form.enabled = m.enabled
-  form.template_id = m.template_id ?? null
-  form.extra_headers = { ...(m.extra_headers || {}) }
-  form.body_override_mode = m.body_override_mode || 'off'
-  form.body_override = m.body_override ? { ...m.body_override } : null
+  form.template_id = m.templateId ?? null
+  form.extra_headers = { ...(m.extraHeaders || {}) }
+  form.body_override_mode = m.bodyOverrideMode || 'off'
+  form.body_override = m.bodyOverride ? { ...m.bodyOverride } : null
   suppressFormWatchers = false
 }
 
@@ -662,7 +659,7 @@ watch(
     if (!show) return
     if (m) loadFromMonitor(m)
     else resetForm()
-    if ((m?.monitor_mode || MONITOR_MODE_ACTIVE) === MONITOR_MODE_PASSIVE) loadPassiveTargets()
+    if ((m?.monitorMode || MONITOR_MODE_ACTIVE) === MONITOR_MODE_PASSIVE) loadPassiveTargets()
     else void loadTemplates()
   },
   { immediate: true },
@@ -676,17 +673,18 @@ async function openMyKeyPicker() {
   showKeyPicker.value = true
   if (myActiveKeys.value.length > 0) return
   myKeysLoading.value = true
+  const keysQuery = useKeysQueryStore()
   try {
     const [res, rates] = await Promise.all([
-      keysAPI.list(1, 100, { status: 'active' }),
+      keysQuery.list(1, 100, { status: 'active' }),
       userGroupsAPI.getUserGroupRates(),
     ])
     const items = res.items || []
     const now = Date.now()
     myActiveKeys.value = items.filter(k => {
       if (k.status !== 'active') return false
-      if (!k.expires_at) return true
-      return new Date(k.expires_at).getTime() > now
+      if (!k.expiresAt) return true
+      return new Date(k.expiresAt).getTime() > now
     })
     userGroupRates.value = rates
   } catch (err: unknown) {
@@ -701,8 +699,8 @@ function pickMyKey(k: ApiKey) {
   showKeyPicker.value = false
 }
 
-function buildPayload(): CreateParams {
-  const payload: CreateParams = {
+function buildPayload(): CreateChannelMonitorRequest {
+  const payload: CreateChannelMonitorRequest = {
     name: form.name.trim(),
     provider: form.provider,
     monitor_mode: form.monitor_mode,
@@ -748,10 +746,10 @@ async function handleSubmit() {
     const target = editing.value
     if (target) {
       const { api_key, ...rest } = buildPayload()
-      const req: UpdateParams = { ...rest }
+      const req: UpdateChannelMonitorRequest = { ...rest }
       // Only send api_key if user typed a new value
       if (api_key) req.api_key = api_key
-      // template_id=null 用 clear_template=true 明确告诉后端清空（pointer 语义）
+      // template_id=null uses clear_template=true to explicitly clear (pointer semantics)
       if (form.template_id == null) {
         req.clear_template = true
         delete req.template_id
@@ -768,10 +766,10 @@ async function handleSubmit() {
         req.clear_channel = true
         delete req.channel_id
       }
-      await adminAPI.channelMonitor.update(target.id, req)
+      await channelMonitor.update(target.id, req)
       appStore.showSuccess(t('admin.channelMonitor.updateSuccess'))
     } else {
-      await adminAPI.channelMonitor.create(buildPayload())
+      await channelMonitor.create(buildPayload())
       appStore.showSuccess(t('admin.channelMonitor.createSuccess'))
     }
     emit('saved')

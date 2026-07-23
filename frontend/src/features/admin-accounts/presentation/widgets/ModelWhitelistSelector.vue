@@ -132,8 +132,8 @@
 import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { accountsAPI } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
-import type { SyncUpstreamPreviewParams } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
+import type { SyncUpstreamPreviewParams } from '@/features/admin-accounts/domain/repositories/adminAccountsActionRepository'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
 import ModelIcon from '@/common/widgets/icons/ModelIcon.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { allModels, getModelsByPlatform } from '@/features/admin-accounts/presentation/composables/useModelWhitelist'
@@ -158,6 +158,7 @@ const emit = defineEmits<{
 }>()
 
 const appStore = useAppStore()
+const actionStore = useAdminAccountsActionStore()
 
 const showDropdown = ref(false)
 const searchQuery = ref('')
@@ -268,9 +269,9 @@ const syncUpstreamModels = async () => {
   try {
     let result
     if (props.accountId) {
-      result = await accountsAPI.syncUpstreamModels(props.accountId)
+      result = await actionStore.syncUpstreamModels(props.accountId)
     } else if (props.syncCredentials) {
-      result = await accountsAPI.syncUpstreamModelsPreview(props.syncCredentials as SyncUpstreamPreviewParams)
+      result = await actionStore.syncUpstreamModelsPreview(props.syncCredentials as SyncUpstreamPreviewParams)
     } else {
       return
     }

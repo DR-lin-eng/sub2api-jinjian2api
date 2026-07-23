@@ -104,10 +104,10 @@
                   {{ formatNumber(item.requests) }}
                 </td>
                 <td class="py-1.5 text-right text-gray-600 dark:text-gray-400">
-                  {{ formatTokens(item.total_tokens) }}
+                  {{ formatTokens(item.totalTokens) }}
                 </td>
                 <td class="py-1.5 text-right text-green-600 dark:text-green-400">
-                  ${{ formatCost(item.actual_cost) }}
+                  ${{ formatCost(item.actualCost) }}
                 </td>
                 <td class="py-1.5 text-right text-gray-400 dark:text-gray-500">
                   ${{ formatCost(item.cost) }}
@@ -139,12 +139,14 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import UserBreakdownSubTable from './UserBreakdownSubTable.vue'
-import type { EndpointStat, UserBreakdownItem } from '@/types'
-import { getUserBreakdown } from '@/features/admin-dashboard/data/datasources/adminDashboardDatasource'
+import { useAdminDashboardQueryStore } from '@/features/admin-dashboard/presentation/stores/adminDashboardQueryStore'
+import type { EndpointStat } from '@/features/admin-dashboard/domain/models/endpointStat'
+import type { UserBreakdownItem } from '@/features/admin-dashboard/domain/models/userBreakdownItem'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 const { t } = useI18n()
+const dashboardStore = useAdminDashboardQueryStore()
 
 type DistributionMetric = 'tokens' | 'actual_cost'
 type EndpointSource = 'inbound' | 'upstream' | 'path'
@@ -196,7 +198,7 @@ const toggleBreakdown = async (endpoint: string) => {
   breakdownLoading.value = true
   breakdownItems.value = []
   try {
-    const res = await getUserBreakdown({
+    const res = await dashboardStore.getUserBreakdown({
       ...props.filters,
       start_date: props.startDate,
       end_date: props.endDate,
@@ -234,7 +236,7 @@ const displayEndpointStats = computed(() => {
       : props.endpointStats
   if (!sourceStats?.length) return []
 
-  const metricKey = props.metric === 'actual_cost' ? 'actual_cost' : 'total_tokens'
+  const metricKey = props.metric === 'actual_cost' ? 'actualCost' : 'totalTokens'
   return [...sourceStats].sort((a, b) => b[metricKey] - a[metricKey])
 })
 
@@ -246,7 +248,7 @@ const chartData = computed(() => {
     datasets: [
       {
         data: displayEndpointStats.value.map((item) =>
-          props.metric === 'actual_cost' ? item.actual_cost : item.total_tokens
+          props.metric === 'actual_cost' ? item.actualCost : item.totalTokens
         ),
         backgroundColor: chartColors.slice(0, displayEndpointStats.value.length),
         borderWidth: 0

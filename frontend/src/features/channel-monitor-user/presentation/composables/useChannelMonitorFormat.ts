@@ -11,7 +11,7 @@
  */
 
 import { useI18n } from 'vue-i18n'
-import type { MonitorStatus, Provider } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
+import type { MonitorStatus, Provider } from '@/core/constants/channelMonitor'
 import {
   PROVIDER_OPENAI,
   PROVIDER_ANTHROPIC,
@@ -32,8 +32,12 @@ const HSL_SATURATION = 72
 const HSL_LIGHTNESS = 42
 
 export interface AvailabilityRow {
-  primary_status: MonitorStatus | ''
-  availability_7d: number | null | undefined
+  /** camelCase (admin domain) */
+  primaryStatus?: MonitorStatus | ''
+  availability7d?: number | null
+  /** snake_case (user-side wire) */
+  primary_status?: MonitorStatus | ''
+  availability_7d?: number | null
 }
 
 export function useChannelMonitorFormat() {
@@ -127,8 +131,9 @@ export function useChannelMonitorFormat() {
   }
 
   function formatAvailability(row: AvailabilityRow): string {
-    if (!row.primary_status) return '-'
-    return formatPercent(row.availability_7d)
+    const status = row.primaryStatus ?? row.primary_status
+    if (!status) return '-'
+    return formatPercent(row.availability7d ?? row.availability_7d)
   }
 
   function formatRelativeTime(iso: string | null | undefined): string {

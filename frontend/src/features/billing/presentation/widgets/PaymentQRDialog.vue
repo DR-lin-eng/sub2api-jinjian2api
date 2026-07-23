@@ -49,7 +49,7 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.payAmount') }}</span>
-            <span class="font-medium text-gray-900 dark:text-white">{{ paymentAmountSymbol(paidOrder) }}{{ paidOrder.pay_amount.toFixed(2) }}</span>
+            <span class="font-medium text-gray-900 dark:text-white">{{ paymentAmountSymbol(paidOrder) }}{{ paidOrder.payAmount.toFixed(2) }}</span>
           </div>
         </div>
       </div>
@@ -213,7 +213,7 @@ async function pollStatus() {
 
 async function tryRecoverPendingOrder(order: PaymentOrder): Promise<PaymentOrder> {
   if (!isWxpay.value) return order
-  const outTradeNo = String(order.out_trade_no || '').trim()
+  const outTradeNo = String(order.outTradeNo || '').trim()
   if (!outTradeNo) return order
   const normalizedStatus = String(order.status || '').trim().toUpperCase()
   if (normalizedStatus !== 'PENDING') return order

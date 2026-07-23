@@ -4,27 +4,13 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type { AdminUsageLog, UsageQueryParams, PaginatedResponse, UsageRequestType } from '@/types'
-import type { EndpointStat } from '@/types'
+import type { PaginatedResponse } from '@/types'
+import type { AdminUsageLog, AdminUsageStatsResponse, UsageQueryParams, UsageRequestType } from '@/features/admin-usage/domain/models/adminUsage'
+import { type AdminUsageLogDto, toEntity as adminUsageLogToEntity } from '@/features/admin-usage/data/models/adminUsageLogDto'
+import { type AdminUsageStatsResponseDto, toEntity as adminUsageStatsToEntity } from '@/features/admin-usage/data/models/adminUsageStatsResponseDto'
 
+export type { AdminUsageStatsResponse }
 // ==================== Types ====================
-
-export interface AdminUsageStatsResponse {
-  total_requests: number
-  total_input_tokens: number
-  total_output_tokens: number
-  total_cache_tokens: number
-  total_cache_creation_tokens: number
-  total_cache_read_tokens: number
-  total_tokens: number
-  total_cost: number
-  total_actual_cost: number
-  total_account_cost: number
-  average_duration_ms: number
-  endpoints?: EndpointStat[]
-  upstream_endpoints?: EndpointStat[]
-  endpoint_paths?: EndpointStat[]
-}
 
 export interface SimpleUser {
   id: number
@@ -81,15 +67,11 @@ export interface CreateUsageCleanupTaskRequest {
 }
 
 export interface AdminUsageQueryParams extends UsageQueryParams {
-  user_id?: number
-  exact_total?: boolean
-  billing_mode?: string
-  sort_by?: string
-  sort_order?: 'asc' | 'desc'
   // 错误请求 tab 专属筛选(仅传给错误列表接口;共用同一 filters 对象)
-  error_phase?: string | null
-  error_category?: string | null
-  status_code?: number | null
+  errorPhase?: string | null
+  errorCategory?: string | null
+  statusCode?: number | null
+  exactTotal?: boolean
 }
 
 // ==================== API Functions ====================
@@ -103,11 +85,14 @@ export async function list(
   params: AdminUsageQueryParams,
   options?: { signal?: AbortSignal }
 ): Promise<PaginatedResponse<AdminUsageLog>> {
-  const { data } = await apiClient.get<PaginatedResponse<AdminUsageLog>>('/admin/usage', {
+  const { data } = await apiClient.get<PaginatedResponse<AdminUsageLogDto>>('/admin/usage', {
     params,
     signal: options?.signal
   })
-  return data
+  return {
+    ...data,
+    items: (data.items || []).map(adminUsageLogToEntity),
+  }
 }
 
 /**
@@ -129,10 +114,10 @@ export async function getStats(params: {
   timezone?: string
   nocache?: number
 }): Promise<AdminUsageStatsResponse> {
-  const { data } = await apiClient.get<AdminUsageStatsResponse>('/admin/usage/stats', {
+  const { data } = await apiClient.get<AdminUsageStatsResponseDto>('/admin/usage/stats', {
     params
   })
-  return data
+  return adminUsageStatsToEntity(data)
 }
 
 /**

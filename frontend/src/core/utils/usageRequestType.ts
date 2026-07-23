@@ -1,4 +1,4 @@
-import type { UsageRequestType } from '@/types'
+import type { UsageRequestType } from '@/features/admin-usage/domain/models/adminUsage'
 
 export interface UsageRequestTypeLike {
   request_type?: string | null

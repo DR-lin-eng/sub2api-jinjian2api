@@ -4,15 +4,8 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type {
-  UserSubscription,
-  SubscriptionProgress,
-  AssignSubscriptionRequest,
-  BulkAssignSubscriptionRequest,
-  ExtendSubscriptionRequest,
-  PaginatedResponse
-} from '@/types'
-
+import type { PaginatedResponse } from '@/types'
+import type { UserSubscription, SubscriptionProgress, AssignSubscriptionRequest, BulkAssignSubscriptionRequest, ExtendSubscriptionRequest } from '@/features/admin-subscriptions/domain/models/subscription'
 /**
  * List all subscriptions with pagination
  * @param page - Page number (default: 1)

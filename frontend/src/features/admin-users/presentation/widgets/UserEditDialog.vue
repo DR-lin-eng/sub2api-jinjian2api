@@ -78,12 +78,13 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { useClipboard } from '@/common/composables/useClipboard'
 import { adminAPI } from '@/api/admin'
-import type { AdminUser, UserAttributeValuesMap } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import UserAttributeForm from '@/features/admin-users/presentation/widgets/UserAttributeForm.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { useStepUp, isStepUpBlocked, isStepUpCancelled, stepUpBlockReason } from '@/common/composables/useStepUp'
 import TotpStepUpDialog from '@/features/auth/presentation/widgets/TotpStepUpDialog.vue'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
+import type { UserAttributeValuesMap } from '@/features/admin-users/domain/models/userAttributes'
 
 const props = defineProps<{ show: boolean, user: AdminUser | null }>()
 const emit = defineEmits(['close', 'success'])
@@ -94,7 +95,7 @@ const form = reactive({ email: '', password: '', username: '', notes: '', role: 
 
 watch(() => props.user, (u) => {
   if (u) {
-    Object.assign(form, { email: u.email, password: '', username: u.username || '', notes: u.notes || '', role: u.role || 'user', concurrency: u.concurrency, rpm_limit: u.rpm_limit ?? 0, customAttributes: {} })
+    Object.assign(form, { email: u.email, password: '', username: u.username || '', notes: u.notes || '', role: u.role || 'user', concurrency: u.concurrency, rpm_limit: u.rpmLimit ?? 0, customAttributes: {} })
     passwordCopied.value = false
   }
 }, { immediate: true })

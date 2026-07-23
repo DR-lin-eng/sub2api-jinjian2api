@@ -162,8 +162,8 @@ const resetFilters = () => {
   localFilters.value = { ...props.filters }
   localStartDate.value = props.startDate
   localEndDate.value = props.endDate
-  localFilters.value.start_date = localStartDate.value
-  localFilters.value.end_date = localEndDate.value
+  localFilters.value.startDate = localStartDate.value
+  localFilters.value.endDate = localEndDate.value
   tasksPage.value = 1
   tasksTotal.value = 0
 }
@@ -248,8 +248,8 @@ const loadTasks = async () => {
     if (res.page) {
       tasksPage.value = res.page
     }
-    if (res.page_size) {
-      tasksPageSize.value = res.page_size
+    if (res.pageSize) {
+      tasksPageSize.value = res.pageSize
     }
   } catch (error) {
     console.error('Failed to load cleanup tasks:', error)
@@ -296,32 +296,32 @@ const buildPayload = (): CreateUsageCleanupTaskRequest | null => {
     timezone: getUserTimezone()
   }
 
-  if (localFilters.value.user_id && localFilters.value.user_id > 0) {
-    payload.user_id = localFilters.value.user_id
+  if (localFilters.value.userId && localFilters.value.userId > 0) {
+    payload.user_id = localFilters.value.userId
   }
-  if (localFilters.value.api_key_id && localFilters.value.api_key_id > 0) {
-    payload.api_key_id = localFilters.value.api_key_id
+  if (localFilters.value.apiKeyId && localFilters.value.apiKeyId > 0) {
+    payload.api_key_id = localFilters.value.apiKeyId
   }
-  if (localFilters.value.account_id && localFilters.value.account_id > 0) {
-    payload.account_id = localFilters.value.account_id
+  if (localFilters.value.accountId && localFilters.value.accountId > 0) {
+    payload.account_id = localFilters.value.accountId
   }
-  if (localFilters.value.group_id && localFilters.value.group_id > 0) {
-    payload.group_id = localFilters.value.group_id
+  if (localFilters.value.groupId && localFilters.value.groupId > 0) {
+    payload.group_id = localFilters.value.groupId
   }
   if (localFilters.value.model) {
     payload.model = localFilters.value.model
   }
-  if (localFilters.value.request_type) {
-    payload.request_type = localFilters.value.request_type
-    const legacyStream = requestTypeToLegacyStream(localFilters.value.request_type)
+  if (localFilters.value.requestType) {
+    payload.request_type = localFilters.value.requestType
+    const legacyStream = requestTypeToLegacyStream(localFilters.value.requestType)
     if (legacyStream !== null && legacyStream !== undefined) {
       payload.stream = legacyStream
     }
   } else if (localFilters.value.stream !== null && localFilters.value.stream !== undefined) {
     payload.stream = localFilters.value.stream
   }
-  if (localFilters.value.billing_type !== null && localFilters.value.billing_type !== undefined) {
-    payload.billing_type = localFilters.value.billing_type
+  if (localFilters.value.billingType !== null && localFilters.value.billingType !== undefined) {
+    payload.billing_type = localFilters.value.billingType
   }
 
   return payload

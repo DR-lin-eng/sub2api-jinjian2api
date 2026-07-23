@@ -11,7 +11,7 @@
         <span class="font-medium text-gray-900 dark:text-white">{{ group.name }}</span>
         <span class="text-gray-400">|</span>
         <span class="text-gray-600 dark:text-gray-400">
-          {{ t('admin.groups.columns.rateMultiplier') }}: {{ group.rate_multiplier }}x
+          {{ t('admin.groups.columns.rateMultiplier') }}: {{ group.rateMultiplier }}x
         </span>
       </div>
 
@@ -169,7 +169,7 @@
                         min="0.001"
                         autocomplete="off"
                         :value="entry.rate_multiplier ?? ''"
-                        :placeholder="String(props.group?.rate_multiplier ?? 1)"
+                        :placeholder="String(props.group?.rateMultiplier ?? 1)"
                         class="hide-spinner w-20 rounded border border-gray-200 bg-white px-2 py-1 text-center text-sm font-medium transition-colors focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/20 dark:border-dark-500 dark:bg-dark-700 dark:focus:border-primary-500"
                         @change="updateLocalRate(entry.user_id, ($event.target as HTMLInputElement).value)"
                       />
@@ -244,11 +244,12 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { adminAPI } from '@/api/admin'
 import type { GroupRateMultiplierEntry } from '@/features/admin-groups/data/datasources/adminGroupsDatasource'
-import type { AdminGroup, AdminUser } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
 
 interface LocalEntry extends GroupRateMultiplierEntry {}
 
@@ -296,7 +297,7 @@ const showFinalRate = computed(() => {
 
 // 计算最终倍率预览
 const computeFinalRate = (rate: number | null | undefined) => {
-  const base = rate ?? props.group?.rate_multiplier ?? 1
+  const base = rate ?? props.group?.rateMultiplier ?? 1
   if (!batchFactor.value) return base
   return parseFloat((base * batchFactor.value).toFixed(6))
 }
@@ -323,7 +324,7 @@ const loadEntries = async () => {
   try {
     const raw = await adminAPI.groups.getGroupRateMultipliers(props.group.id)
     // 仅显示已设置 rate_multiplier 的条目；rpm_override 在另一个弹窗管理，保留不动
-    serverEntries.value = raw.filter((e: any) => e.rate_multiplier != null)
+    serverEntries.value = raw.filter((e: any) => e.rateMultiplier != null)
     localEntries.value = cloneEntries(serverEntries.value)
     adjustPage()
   } catch (error) {

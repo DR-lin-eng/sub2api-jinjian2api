@@ -4,20 +4,11 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type {
-  UsageLog,
-  UsageQueryParams,
-  UsageStatsResponse,
-  PaginatedResponse,
-  TrendDataPoint,
-  ModelStat,
-  GroupStat,
-  UsageRequestType,
-  UserErrorRequest,
-  UserErrorRequestDetail,
-  UserErrorListParams
-} from '@/types'
-
+import type { PaginatedResponse, UserErrorRequest, UserErrorRequestDetail, UserErrorListParams } from '@/types'
+import type { UsageLog, UsageRequestType, UsageQueryParams, UsageStatsResponse } from '@/features/admin-usage/domain/models/adminUsage'
+import type { TrendDataPoint } from '@/features/admin-dashboard/domain/models/trendDataPoint'
+import type { ModelStat } from '@/features/admin-dashboard/domain/models/modelStat'
+import type { GroupStat } from '@/features/admin-dashboard/domain/models/groupStat'
 // ==================== Dashboard Types ====================
 
 export interface PlatformDashboardStats {
@@ -131,11 +122,11 @@ export async function list(
 ): Promise<PaginatedResponse<UsageLog>> {
   const params: UsageQueryParams = {
     page,
-    page_size: pageSize
+    pageSize: pageSize
   }
 
   if (apiKeyId !== undefined) {
-    params.api_key_id = apiKeyId
+    params.apiKeyId = apiKeyId
   }
 
   const { data } = await apiClient.get<PaginatedResponse<UsageLog>>('/usage', {
@@ -224,14 +215,14 @@ export async function getByDateRange(
   apiKeyId?: number
 ): Promise<PaginatedResponse<UsageLog>> {
   const params: UsageQueryParams = {
-    start_date: startDate,
-    end_date: endDate,
+    startDate: startDate,
+    endDate: endDate,
     page: 1,
-    page_size: 100
+    pageSize: 100
   }
 
   if (apiKeyId !== undefined) {
-    params.api_key_id = apiKeyId
+    params.apiKeyId = apiKeyId
   }
 
   const { data } = await apiClient.get<PaginatedResponse<UsageLog>>('/usage', {

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AccountStatusIndicator from '@/features/admin-accounts/presentation/widgets/AccountStatusIndicator.vue'
-import type { Account } from '@/types'
+import { Account } from '@/types'
 
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
@@ -22,32 +22,32 @@ vi.mock('@/core/utils/format', async () => {
 })
 
 function makeAccount(overrides: Partial<Account>): Account {
-  return {
+  return Object.assign(new Account(), {
     id: 1,
     name: 'account',
     platform: 'antigravity',
     type: 'oauth',
-    proxy_id: null,
+    proxyId: 0,
     concurrency: 1,
     priority: 1,
     status: 'active',
-    error_message: null,
-    last_used_at: null,
-    expires_at: null,
-    auto_pause_on_expired: true,
-    created_at: '2026-03-15T00:00:00Z',
-    updated_at: '2026-03-15T00:00:00Z',
+    errorMessage: '',
+    lastUsedAt: '',
+    expiresAt: '',
+    autoPauseOnExpired: true,
+    createdAt: '2026-03-15T00:00:00Z',
+    updatedAt: '2026-03-15T00:00:00Z',
     schedulable: true,
-    rate_limited_at: null,
-    rate_limit_reset_at: null,
-    overload_until: null,
-    temp_unschedulable_until: null,
-    temp_unschedulable_reason: null,
-    session_window_start: null,
-    session_window_end: null,
-    session_window_status: null,
+    rateLimitedAt: '',
+    rateLimitResetAt: '',
+    overloadUntil: '',
+    tempUnschedulableUntil: '',
+    tempUnschedulableReason: '',
+    sessionWindowStart: '',
+    sessionWindowEnd: '',
+    sessionWindowStatus: '',
     ...overrides,
-  }
+  })
 }
 
 describe('AccountStatusIndicator', () => {
@@ -58,10 +58,10 @@ describe('AccountStatusIndicator', () => {
           id: 5,
           name: 'grok-free-1',
           platform: 'grok',
-          rate_limited_at: '2026-07-11T12:00:00Z',
-          rate_limit_reset_at: '2099-07-11T13:00:00Z',
-          temp_unschedulable_until: '2099-07-11T12:30:00Z',
-          temp_unschedulable_reason: 'legacy grok rate limited'
+          rateLimitedAt: '2026-07-11T12:00:00Z',
+          rateLimitResetAt: '2099-07-11T13:00:00Z',
+          tempUnschedulableUntil: '2099-07-11T12:30:00Z',
+          tempUnschedulableReason: 'legacy grok rate limited'
         })
       },
       global: {

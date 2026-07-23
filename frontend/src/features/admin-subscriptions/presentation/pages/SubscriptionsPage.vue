@@ -192,7 +192,7 @@
               </div>
               <span class="font-medium text-gray-900 dark:text-white">
                 {{ userColumnMode === 'email'
-                  ? (row.user?.email || t('admin.redeem.userPrefix', { id: row.user_id }))
+                  ? (row.user?.email || t('admin.redeem.userPrefix', { id: row.userId }))
                   : (row.user?.username || '-')
                 }}
               </span>
@@ -204,8 +204,8 @@
               v-if="row.group"
               :name="row.group.name"
               :platform="row.group.platform"
-              :subscription-type="row.group.subscription_type"
-              :rate-multiplier="row.group.rate_multiplier"
+              :subscription-type="row.group.subscriptionType"
+              :rate-multiplier="row.group.rateMultiplier"
               :show-rate="false"
             />
             <span v-else class="text-sm text-gray-400 dark:text-dark-500">-</span>
@@ -214,25 +214,25 @@
           <template #cell-usage="{ row }">
             <div class="min-w-[280px] space-y-2">
               <!-- Daily Usage -->
-              <div v-if="row.group?.daily_limit_usd" class="usage-row">
+              <div v-if="row.group?.dailyLimitUsd" class="usage-row">
                 <div class="flex items-center gap-2">
                   <span class="usage-label">{{ t('admin.subscriptions.daily') }}</span>
                   <div class="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-dark-600">
                     <div
                       class="h-1.5 rounded-full transition-all"
-                      :class="getProgressClass(row.daily_usage_usd, row.group?.daily_limit_usd)"
+                      :class="getProgressClass(row.dailyUsageUsd, row.group?.dailyLimitUsd)"
                       :style="{
-                        width: getProgressWidth(row.daily_usage_usd, row.group?.daily_limit_usd)
+                        width: getProgressWidth(row.dailyUsageUsd, row.group?.dailyLimitUsd)
                       }"
                     ></div>
                   </div>
                   <span class="usage-amount">
-                    ${{ row.daily_usage_usd?.toFixed(2) || '0.00' }}
+                    ${{ row.dailyUsageUsd?.toFixed(2) || '0.00' }}
                     <span class="text-gray-400">/</span>
-                    ${{ row.group?.daily_limit_usd?.toFixed(2) }}
+                    ${{ row.group?.dailyLimitUsd?.toFixed(2) }}
                   </span>
                 </div>
-                <div class="reset-info" v-if="row.daily_window_start">
+                <div class="reset-info" v-if="row.dailyWindowStart">
                   <svg
                     class="h-3 w-3"
                     fill="none"
@@ -251,25 +251,25 @@
               </div>
 
               <!-- Weekly Usage -->
-              <div v-if="row.group?.weekly_limit_usd" class="usage-row">
+              <div v-if="row.group?.weeklyLimitUsd" class="usage-row">
                 <div class="flex items-center gap-2">
                   <span class="usage-label">{{ t('admin.subscriptions.weekly') }}</span>
                   <div class="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-dark-600">
                     <div
                       class="h-1.5 rounded-full transition-all"
-                      :class="getProgressClass(row.weekly_usage_usd, row.group?.weekly_limit_usd)"
+                      :class="getProgressClass(row.weeklyUsageUsd, row.group?.weeklyLimitUsd)"
                       :style="{
-                        width: getProgressWidth(row.weekly_usage_usd, row.group?.weekly_limit_usd)
+                        width: getProgressWidth(row.weeklyUsageUsd, row.group?.weeklyLimitUsd)
                       }"
                     ></div>
                   </div>
                   <span class="usage-amount">
-                    ${{ row.weekly_usage_usd?.toFixed(2) || '0.00' }}
+                    ${{ row.weeklyUsageUsd?.toFixed(2) || '0.00' }}
                     <span class="text-gray-400">/</span>
-                    ${{ row.group?.weekly_limit_usd?.toFixed(2) }}
+                    ${{ row.group?.weeklyLimitUsd?.toFixed(2) }}
                   </span>
                 </div>
-                <div class="reset-info" v-if="row.weekly_window_start">
+                <div class="reset-info" v-if="row.weeklyWindowStart">
                   <svg
                     class="h-3 w-3"
                     fill="none"
@@ -283,30 +283,30 @@
                       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <span>{{ formatResetTime(row.weekly_window_start, 'weekly') }}</span>
+                  <span>{{ formatResetTime(row.weeklyWindowStart, 'weekly') }}</span>
                 </div>
               </div>
 
               <!-- Monthly Usage -->
-              <div v-if="row.group?.monthly_limit_usd" class="usage-row">
+              <div v-if="row.group?.monthlyLimitUsd" class="usage-row">
                 <div class="flex items-center gap-2">
                   <span class="usage-label">{{ t('admin.subscriptions.monthly') }}</span>
                   <div class="h-1.5 flex-1 rounded-full bg-gray-200 dark:bg-dark-600">
                     <div
                       class="h-1.5 rounded-full transition-all"
-                      :class="getProgressClass(row.monthly_usage_usd, row.group?.monthly_limit_usd)"
+                      :class="getProgressClass(row.monthlyUsageUsd, row.group?.monthlyLimitUsd)"
                       :style="{
-                        width: getProgressWidth(row.monthly_usage_usd, row.group?.monthly_limit_usd)
+                        width: getProgressWidth(row.monthlyUsageUsd, row.group?.monthlyLimitUsd)
                       }"
                     ></div>
                   </div>
                   <span class="usage-amount">
-                    ${{ row.monthly_usage_usd?.toFixed(2) || '0.00' }}
+                    ${{ row.monthlyUsageUsd?.toFixed(2) || '0.00' }}
                     <span class="text-gray-400">/</span>
-                    ${{ row.group?.monthly_limit_usd?.toFixed(2) }}
+                    ${{ row.group?.monthlyLimitUsd?.toFixed(2) }}
                   </span>
                 </div>
-                <div class="reset-info" v-if="row.monthly_window_start">
+                <div class="reset-info" v-if="row.monthlyWindowStart">
                   <svg
                     class="h-3 w-3"
                     fill="none"
@@ -320,16 +320,16 @@
                       d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <span>{{ formatResetTime(row.monthly_window_start, 'monthly') }}</span>
+                  <span>{{ formatResetTime(row.monthlyWindowStart, 'monthly') }}</span>
                 </div>
               </div>
 
               <!-- No Limits - Unlimited badge -->
               <div
                 v-if="
-                  !row.group?.daily_limit_usd &&
-                  !row.group?.weekly_limit_usd &&
-                  !row.group?.monthly_limit_usd
+                  !row.group?.dailyLimitUsd &&
+                  !row.group?.weeklyLimitUsd &&
+                  !row.group?.monthlyLimitUsd
                 "
                 class="flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 px-3 py-2 dark:from-emerald-900/20 dark:to-teal-900/20"
               >
@@ -597,16 +597,16 @@
             {{ t('admin.subscriptions.currentExpiration') }}:
             <span class="font-medium text-gray-900 dark:text-white">
               {{
-                extendingSubscription.expires_at
-                  ? formatDateTimeToMinute(extendingSubscription.expires_at)
+                extendingSubscription.expiresAt
+                  ? formatDateTimeToMinute(extendingSubscription.expiresAt)
                   : t('admin.subscriptions.noExpiration')
               }}
             </span>
           </p>
-          <p v-if="extendingSubscription.expires_at" class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+          <p v-if="extendingSubscription.expiresAt" class="mt-1 text-sm text-gray-600 dark:text-gray-400">
             {{ t('admin.subscriptions.remainingDays') }}:
             <span class="font-medium text-gray-900 dark:text-white">
-              {{ getDaysRemaining(extendingSubscription.expires_at) ?? 0 }}
+              {{ getDaysRemaining(extendingSubscription.expiresAt) ?? 0 }}
             </span>
           </p>
         </div>
@@ -760,8 +760,6 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { UserSubscription, Group, GroupPlatform, SubscriptionType } from '@/types'
 import type { SimpleUser } from '@/features/admin-usage/presentation/api'
 import type { Column } from '@/common/types/uiTypes'
 import { formatDateTimeToMinute } from '@/core/utils/format'
@@ -778,6 +776,14 @@ import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import GroupOptionItem from '@/common/widgets/data/GroupOptionItem.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { getRemainingDurationParts, isOneTimeDailyQuota, type RemainingDurationParts } from '@/core/utils/subscriptionQuota'
+import { useAdminSubscriptions } from '@/features/admin-subscriptions/presentation/composables/useAdminSubscriptions'
+import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
+import { useAdminUsage } from '@/features/admin-usage/presentation/composables/useAdminUsage'
+import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/subscription'
+import type { Group, GroupPlatform, SubscriptionType } from '@/features/admin-groups/domain/models/adminGroups'
+const $subscriptions = useAdminSubscriptions()
+const $groups = useAdminGroups()
+const $usage = useAdminUsage()
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -995,14 +1001,14 @@ const platformFilterOptions = computed(() => [
 // Group options for assign (only subscription type groups)
 const subscriptionGroupOptions = computed(() =>
   groups.value
-    .filter((g) => g.subscription_type === 'subscription' && g.status === 'active')
+    .filter((g) => g.subscriptionType === 'subscription' && g.status === 'active')
     .map((g) => ({
       value: g.id,
       label: g.name,
       description: g.description,
       platform: g.platform,
-      subscriptionType: g.subscription_type,
-      rate: g.rate_multiplier
+      subscriptionType: g.subscriptionType,
+      rate: g.rateMultiplier
     }))
 )
 
@@ -1021,7 +1027,7 @@ const loadSubscriptions = async () => {
 
   loading.value = true
   try {
-    const response = await adminAPI.subscriptions.list(
+    const response = await $subscriptions.list(
       pagination.page,
       pagination.page_size,
       {
@@ -1056,7 +1062,7 @@ const loadSubscriptions = async () => {
 
 const loadGroups = async () => {
   try {
-    groups.value = await adminAPI.groups.getAll()
+    groups.value = await $groups.getAll()
   } catch (error) {
     console.error('Error loading groups:', error)
   }
@@ -1087,7 +1093,7 @@ const searchFilterUsers = async () => {
 
   filterUserLoading.value = true
   try {
-    filterUserResults.value = await adminAPI.usage.searchUsers(keyword)
+    filterUserResults.value = await $usage.searchUsers(keyword)
   } catch (error) {
     console.error('Failed to search users:', error)
     filterUserResults.value = []
@@ -1137,7 +1143,7 @@ const searchUsers = async () => {
 
   userSearchLoading.value = true
   try {
-    userSearchResults.value = await adminAPI.usage.searchUsers(keyword)
+    userSearchResults.value = await $usage.searchUsers(keyword)
   } catch (error) {
     console.error('Failed to search users:', error)
     userSearchResults.value = []
@@ -1206,10 +1212,10 @@ const handleAssignSubscription = async () => {
 
   submitting.value = true
   try {
-    await adminAPI.subscriptions.assign({
-      user_id: assignForm.user_id,
-      group_id: assignForm.group_id,
-      validity_days: assignForm.validity_days
+    await $subscriptions.assign({
+      userId: assignForm.user_id,
+      groupId: assignForm.group_id,
+      validityDays: assignForm.validity_days
     })
     appStore.showSuccess(t('admin.subscriptions.subscriptionAssigned'))
     closeAssignModal()
@@ -1237,8 +1243,8 @@ const handleExtendSubscription = async () => {
   if (!extendingSubscription.value) return
 
   // 前端验证：调整后的过期时间必须在未来
-  if (extendingSubscription.value.expires_at) {
-    const expiresAt = new Date(extendingSubscription.value.expires_at)
+  if (extendingSubscription.value.expiresAt) {
+    const expiresAt = new Date(extendingSubscription.value.expiresAt)
     const newExpiresAt = new Date(expiresAt.getTime() + extendForm.days * 24 * 60 * 60 * 1000)
     if (newExpiresAt <= new Date()) {
       appStore.showError(t('admin.subscriptions.adjustWouldExpire'))
@@ -1248,7 +1254,7 @@ const handleExtendSubscription = async () => {
 
   submitting.value = true
   try {
-    await adminAPI.subscriptions.extend(extendingSubscription.value.id, {
+    await $subscriptions.extend(extendingSubscription.value.id, {
       days: extendForm.days
     })
     appStore.showSuccess(t('admin.subscriptions.subscriptionAdjusted'))
@@ -1271,7 +1277,7 @@ const confirmRevoke = async () => {
   if (!revokingSubscription.value) return
 
   try {
-    await adminAPI.subscriptions.revoke(revokingSubscription.value.id)
+    await $subscriptions.revoke(revokingSubscription.value.id)
     appStore.showSuccess(t('admin.subscriptions.subscriptionRevoked'))
     showRevokeDialog.value = false
     revokingSubscription.value = null
@@ -1291,7 +1297,7 @@ const confirmRestore = async () => {
   if (!restoringSubscription.value) return
 
   try {
-    await adminAPI.subscriptions.restore(restoringSubscription.value.id)
+    await $subscriptions.restore(restoringSubscription.value.id)
     appStore.showSuccess(t('admin.subscriptions.subscriptionRestored'))
     showRestoreDialog.value = false
     restoringSubscription.value = null
@@ -1312,7 +1318,7 @@ const confirmResetQuota = async () => {
   if (resettingQuota.value) return
   resettingQuota.value = true
   try {
-    await adminAPI.subscriptions.resetQuota(resettingSubscription.value.id, { daily: true, weekly: true, monthly: true })
+    await $subscriptions.resetQuota(resettingSubscription.value.id, { daily: true, weekly: true, monthly: true })
     appStore.showSuccess(t('admin.subscriptions.quotaResetSuccess'))
     showResetQuotaConfirm.value = false
     resettingSubscription.value = null
@@ -1380,12 +1386,12 @@ const formatQuotaEndDuration = (parts: RemainingDurationParts): string => {
 }
 
 const formatDailyUsageWindow = (subscription: UserSubscription): string => {
-  if (isOneTimeDailyQuota(subscription) && subscription.expires_at) {
-    const parts = getRemainingDurationParts(subscription.expires_at)
+  if (isOneTimeDailyQuota(subscription) && subscription.expiresAt) {
+    const parts = getRemainingDurationParts(subscription.expiresAt)
     return parts ? formatQuotaEndDuration(parts) : t('admin.subscriptions.windowNotActive')
   }
 
-  return formatResetTime(subscription.daily_window_start, 'daily')
+  return formatResetTime(subscription.dailyWindowStart, 'daily')
 }
 
 // Format reset time based on window start and period type

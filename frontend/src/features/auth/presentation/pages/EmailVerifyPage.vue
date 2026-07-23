@@ -198,11 +198,11 @@ import {
   clearPendingRegistrationCredentials,
   getPendingRegistrationCredentials
 } from '@/core/utils/pendingRegistrationCredentials'
-import type { EncryptedRegisterRequest } from '@/types'
 import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
 } from '@/core/services/humanVerification'
+import type { EncryptedRegisterRequest } from '@/features/auth/domain/models/auth'
 
 const { t, locale } = useI18n()
 
@@ -355,9 +355,9 @@ onMounted(async () => {
     humanVerificationAPIEndpoint.value = verification.apiEndpoint
     humanVerificationProvider.value = verification.externalProvider
     localCaptchaEnabled.value = verification.provider === 'local'
-    siteName.value = settings.site_name || 'Sub2API'
+    siteName.value = settings.siteName || 'Sub2API'
     registrationEmailSuffixWhitelist.value = normalizeRegistrationEmailSuffixWhitelist(
-      settings.registration_email_suffix_whitelist || []
+      settings.registrationEmailSuffixWhitelist || []
     )
   } catch (error) {
     console.error('Failed to load public settings:', error)
@@ -624,11 +624,11 @@ async function handleVerify(): Promise<void> {
       // Register with verification code
       const encryptedCredentials = await createCredentialEnvelope(email.value, password.value)
       const request: EncryptedRegisterRequest = {
-        credential_envelope: encryptedCredentials,
-        verify_code: verifyCode.value.trim(),
-        captcha_token: initialTurnstileToken.value || undefined,
-        promo_code: promoCode.value || undefined,
-        invitation_code: invitationCode.value || undefined,
+        credentialEnvelope: encryptedCredentials,
+        verifyCode: verifyCode.value.trim(),
+        captchaToken: initialTurnstileToken.value || undefined,
+        promoCode: promoCode.value || undefined,
+        invitationCode: invitationCode.value || undefined,
         ...(affCode.value ? { aff_code: affCode.value } : {})
       }
       await authStore.register(request)

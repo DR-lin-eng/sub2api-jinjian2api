@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', () => ({
-  getAntigravityDefaultModelMapping: vi.fn()
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountsQueryDatasource', () => ({
+  getAntigravityDefaultModelMapping: vi.fn(),
+  adminAccountsQueryDatasource: { getAntigravityDefaultModelMapping: vi.fn() },
 }))
 
 import { buildModelMappingObject, getModelsByPlatform, splitModelMappingObject } from '../useModelWhitelist'

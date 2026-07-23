@@ -760,7 +760,7 @@ export default {
         },
         sessionIdMasking: {
           label: 'Session ID Masking',
-          hint: 'When enabled, fixes the session ID in metadata.user_id for 15 minutes, making upstream think requests come from the same session'
+          hint: 'When enabled, fixes the session ID in metadata.userId for 15 minutes, making upstream think requests come from the same session'
         },
         cacheTTLOverride: {
           label: 'Cache TTL Override',

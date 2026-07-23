@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import ImportDataModal from '@/features/admin-accounts/presentation/widgets/ImportDataDialog.vue'
+import ImportDataDialog from '@/features/admin-accounts/presentation/widgets/ImportDataDialog.vue'
 
 const showError = vi.fn()
 const showSuccess = vi.fn()
@@ -28,8 +28,8 @@ vi.mock('vue-i18n', () => ({
   })
 }))
 
-const mountModal = () =>
-  mount(ImportDataModal, {
+const mountDialog = () =>
+  mount(ImportDataDialog, {
     props: { show: true },
     global: {
       stubs: {
@@ -53,7 +53,7 @@ const setInputFiles = (element: Element, files: File[]) => {
   })
 }
 
-describe('ImportDataModal', () => {
+describe('ImportDataDialog', () => {
   beforeEach(async () => {
     showError.mockReset()
     showSuccess.mockReset()
@@ -63,7 +63,7 @@ describe('ImportDataModal', () => {
   })
 
   it('未选择文件时提示错误', async () => {
-    const wrapper = mountModal()
+    const wrapper = mountDialog()
 
     await wrapper.find('form').trigger('submit')
     expect(showError).toHaveBeenCalledWith('admin.accounts.dataImportSelectFile')
@@ -71,7 +71,7 @@ describe('ImportDataModal', () => {
 
   it('无效 JSON 时按文件名提示解析失败', async () => {
     const { adminAPI } = await import('@/api/admin')
-    const wrapper = mountModal()
+    const wrapper = mountDialog()
 
     const input = wrapper.find('input[type="file"]')
     setInputFiles(input.element, [makeJsonFile('data.json', 'invalid json')])
@@ -86,7 +86,7 @@ describe('ImportDataModal', () => {
 
   it('不是导出数据的 JSON 按文件名拒绝', async () => {
     const { adminAPI } = await import('@/api/admin')
-    const wrapper = mountModal()
+    const wrapper = mountDialog()
 
     const input = wrapper.find('input[type="file"]')
     setInputFiles(input.element, [makeJsonFile('random.json', JSON.stringify({ name: 'test' }))])
@@ -109,7 +109,7 @@ describe('ImportDataModal', () => {
       account_failed: 0
     })
 
-    const wrapper = mountModal()
+    const wrapper = mountDialog()
     const input = wrapper.find('input[type="file"]')
 
     const valid = makeJsonFile(
@@ -144,7 +144,7 @@ describe('ImportDataModal', () => {
       account_failed: 0
     })
 
-    const wrapper = mountModal()
+    const wrapper = mountDialog()
 
     const input = wrapper.find('input[type="file"]')
     const first = makeJsonFile(
@@ -185,7 +185,7 @@ describe('ImportDataModal', () => {
       account_failed: 1
     })
 
-    const wrapper = mountModal()
+    const wrapper = mountDialog()
     const input = wrapper.find('input[type="file"]')
     setInputFiles(input.element, [
       makeJsonFile(

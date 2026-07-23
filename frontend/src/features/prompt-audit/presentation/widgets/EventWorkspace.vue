@@ -36,10 +36,10 @@
         </select>
       </label>
       <FilterInput v-model="localFilters.endpoint" :label="t('admin.promptAudit.events.endpoint')" @change="filtersChanged" />
-      <FilterInput v-model="localFilters.group_id" :label="t('admin.promptAudit.events.groupId')" type="number" @change="filtersChanged" />
-      <FilterInput v-model="localFilters.user_id" :label="t('admin.promptAudit.events.userId')" type="number" @change="filtersChanged" />
-      <FilterInput v-model="localFilters.api_key_id" :label="t('admin.promptAudit.events.apiKeyId')" type="number" @change="filtersChanged" />
-      <FilterInput v-model="localFilters.request_id" :label="t('admin.promptAudit.events.requestId')" @change="filtersChanged" />
+      <FilterInput v-model="localFilters.group_id" :label="t('admin.promptAudit.events.group_id')" type="number" @change="filtersChanged" />
+      <FilterInput v-model="localFilters.user_id" :label="t('admin.promptAudit.events.user_id')" type="number" @change="filtersChanged" />
+      <FilterInput v-model="localFilters.api_key_id" :label="t('admin.promptAudit.events.api_key_id')" type="number" @change="filtersChanged" />
+      <FilterInput v-model="localFilters.request_id" :label="t('admin.promptAudit.events.request_id')" @change="filtersChanged" />
       <FilterInput v-model="localFilters.prompt_hash" :label="t('admin.promptAudit.events.promptHash')" @change="filtersChanged" />
       <FilterInput v-model="localFilters.keyword" :label="t('admin.promptAudit.events.keyword')" @change="filtersChanged" />
       <label class="text-xs text-gray-600 dark:text-dark-200">

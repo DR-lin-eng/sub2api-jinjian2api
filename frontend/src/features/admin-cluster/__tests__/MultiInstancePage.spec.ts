@@ -1,12 +1,19 @@
 import { flushPromises, mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MultiInstancePage from '@/features/admin-cluster/presentation/pages/MultiInstancePage.vue'
+import type { ClusterStatusResponse } from '@/features/admin-cluster/domain/models/clusterStatusResponse'
 
 const { getStatus } = vi.hoisted(() => ({ getStatus: vi.fn() }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: { cluster: { getStatus } },
+vi.mock('@/features/admin-cluster/data/repositories/adminClusterQueryRepositoryImpl', () => ({
+  adminClusterQueryRepository: { getStatus },
 }))
+
+// Stub unrelated admin API aggregator to avoid pulling in the pre-existing
+// missing @/features/admin-audit datasource via transitive imports.
+vi.mock('@/api/admin', () => ({ adminAPI: {} }))
+vi.mock('@/api', () => ({}))
 
 vi.mock('vue-i18n', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-i18n')>()
@@ -25,56 +32,64 @@ vi.mock('@/core/utils/apiError', () => ({
   extractApiErrorMessage: (_error: unknown, fallback: string) => fallback,
 }))
 
-function statusFixture() {
+function statusFixture(): ClusterStatusResponse {
   return {
     deployment: {
       mode: 'multi_instance',
-      node_name: 'api-a',
-      runner_id: 'api-a-runner',
-      worker_mode: 'auto',
-      worker_enabled: true,
-      frontend_enabled: true,
-      heartbeat_interval_seconds: 30,
-      stale_after_seconds: 90,
-      task_lease_seconds: 60,
+      nodeName: 'api-a',
+      runnerId: 'api-a-runner',
+      workerMode: 'auto',
+      workerEnabled: true,
+      frontendEnabled: true,
+      heartbeatIntervalSeconds: 30,
+      staleAfterSeconds: 90,
+      taskLeaseSeconds: 60,
     },
-    summary: { online_nodes: 2, stale_nodes: 0, stopped_nodes: 0, worker_nodes: 2, active_tasks: 1, unhealthy_nodes: 0 },
+    summary: {
+      onlineNodes: 2,
+      staleNodes: 0,
+      stoppedNodes: 0,
+      workerNodes: 2,
+      activeTasks: 1,
+      unhealthyNodes: 0,
+    },
     instances: [{
-      runner_id: 'api-a-runner',
-      node_name: 'api-a',
-      deployment_mode: 'multi_instance',
-      worker_mode: 'auto',
-      worker_enabled: true,
+      runnerId: 'api-a-runner',
+      nodeName: 'api-a',
+      deploymentMode: 'multi_instance',
+      workerMode: 'auto',
+      workerEnabled: true,
       version: '1.2.3',
       hostname: 'host-a',
-      process_id: 10,
-      database_ok: true,
-      redis_ok: true,
-      started_at: '2026-07-15T00:00:00Z',
-      last_seen_at: '2026-07-15T00:01:00Z',
+      processId: 10,
+      databaseOk: true,
+      redisOk: true,
+      startedAt: '2026-07-15T00:00:00Z',
+      lastSeenAt: '2026-07-15T00:01:00Z',
       status: 'online',
       current: true,
     }],
     tasks: [{
       id: 1,
-      run_id: 'run-1',
-      task_key: 'backup:scheduled',
+      runId: 'run-1',
+      taskKey: 'backup:scheduled',
       status: 'running',
-      node_name: 'api-a',
-      runner_id: 'api-a-runner',
+      nodeName: 'api-a',
+      runnerId: 'api-a-runner',
       metadata: {},
       result: {},
-      error_message: '',
-      started_at: '2026-07-15T00:00:00Z',
-      heartbeat_at: '2026-07-15T00:01:00Z',
-      lease_until: '2026-07-15T00:02:00Z',
+      errorMessage: '',
+      startedAt: '2026-07-15T00:00:00Z',
+      heartbeatAt: '2026-07-15T00:01:00Z',
+      leaseUntil: '2026-07-15T00:02:00Z',
     }],
-    observed_at: '2026-07-15T00:01:00Z',
+    observedAt: '2026-07-15T00:01:00Z',
   }
 }
 
 describe('MultiInstancePage', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
     getStatus.mockReset()
     getStatus.mockResolvedValue(statusFixture())
   })

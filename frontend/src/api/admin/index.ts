@@ -5,37 +5,117 @@
 
 import dashboardAPI from '@/features/admin-dashboard/data/datasources/adminDashboardDatasource'
 import usersAPI from '@/features/admin-users/data/datasources/adminUsersDatasource'
-import groupsAPI from '@/features/admin-groups/data/datasources/adminGroupsDatasource'
-import accountsAPI from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
+import { adminGroupsQueryRepository } from '@/features/admin-groups/data/repositories/adminGroupsQueryRepositoryImpl'
+import { adminGroupsActionRepository } from '@/features/admin-groups/data/repositories/adminGroupsActionRepositoryImpl'
+
+const groupsAPI = {
+  list: adminGroupsQueryRepository.list.bind(adminGroupsQueryRepository),
+  getAll: adminGroupsQueryRepository.getAll.bind(adminGroupsQueryRepository),
+  getAllIncludingInactive: adminGroupsQueryRepository.getAllIncludingInactive.bind(adminGroupsQueryRepository),
+  getByPlatform: adminGroupsQueryRepository.getByPlatform.bind(adminGroupsQueryRepository),
+  getById: adminGroupsQueryRepository.getById.bind(adminGroupsQueryRepository),
+  getModelsListCandidates: adminGroupsQueryRepository.getModelsListCandidates.bind(adminGroupsQueryRepository),
+  getStats: adminGroupsQueryRepository.getStats.bind(adminGroupsQueryRepository),
+  getGroupApiKeys: adminGroupsQueryRepository.getGroupApiKeys.bind(adminGroupsQueryRepository),
+  listCompositeRoutes: adminGroupsQueryRepository.listCompositeRoutes.bind(adminGroupsQueryRepository),
+  previewCompositeRoute: adminGroupsQueryRepository.previewCompositeRoute.bind(adminGroupsQueryRepository),
+  getGroupRateMultipliers: adminGroupsQueryRepository.getGroupRateMultipliers.bind(adminGroupsQueryRepository),
+  getGroupRPMOverrides: adminGroupsQueryRepository.getGroupRPMOverrides.bind(adminGroupsQueryRepository),
+  getUsageSummary: adminGroupsQueryRepository.getUsageSummary.bind(adminGroupsQueryRepository),
+  getCapacitySummary: adminGroupsQueryRepository.getCapacitySummary.bind(adminGroupsQueryRepository),
+  create: adminGroupsActionRepository.create.bind(adminGroupsActionRepository),
+  duplicate: adminGroupsActionRepository.duplicate.bind(adminGroupsActionRepository),
+  update: adminGroupsActionRepository.update.bind(adminGroupsActionRepository),
+  delete: adminGroupsActionRepository.deleteGroup.bind(adminGroupsActionRepository),
+  toggleStatus: adminGroupsActionRepository.toggleStatus.bind(adminGroupsActionRepository),
+  createCompositeRoute: adminGroupsActionRepository.createCompositeRoute.bind(adminGroupsActionRepository),
+  updateCompositeRoute: adminGroupsActionRepository.updateCompositeRoute.bind(adminGroupsActionRepository),
+  deleteCompositeRoute: adminGroupsActionRepository.deleteCompositeRoute.bind(adminGroupsActionRepository),
+  updateSortOrder: adminGroupsActionRepository.updateSortOrder.bind(adminGroupsActionRepository),
+  clearGroupRateMultipliers: adminGroupsActionRepository.clearGroupRateMultipliers.bind(adminGroupsActionRepository),
+  batchSetGroupRateMultipliers: adminGroupsActionRepository.batchSetGroupRateMultipliers.bind(adminGroupsActionRepository),
+  batchSetGroupRPMOverrides: adminGroupsActionRepository.batchSetGroupRPMOverrides.bind(adminGroupsActionRepository),
+  clearGroupRPMOverrides: adminGroupsActionRepository.clearGroupRPMOverrides.bind(adminGroupsActionRepository),
+}
 import proxiesAPI from '@/features/admin-proxies/data/datasources/adminProxiesDatasource'
 import redeemAPI from '@/features/admin-redeem/data/datasources/adminRedeemDatasource'
-import promoAPI from '@/features/admin-promo/data/datasources/adminPromoDatasource'
+
 import announcementsAPI from '@/features/announcements/data/datasources/adminAnnouncementsDatasource'
 import settingsAPI from '@/features/admin-settings/data/datasources/adminSettingsDatasource'
 import systemAPI from '@/features/admin-settings/data/datasources/systemDatasource'
 import subscriptionsAPI from '@/features/admin-subscriptions/data/datasources/adminSubscriptionsDatasource'
 import usageAPI from '@/features/admin-usage/data/datasources/adminUsageDatasource'
-import geminiAPI from '@/features/admin-accounts/data/datasources/geminiDatasource'
-import antigravityAPI from '@/features/admin-accounts/data/datasources/antigravityDatasource'
-import grokAPI from '@/features/admin-accounts/data/datasources/grokDatasource'
 import userAttributesAPI from '@/features/admin-users/data/datasources/userAttributesDatasource'
 import opsAPI from '@/features/admin-ops/data/datasources/adminOpsDatasource'
 import errorPassthroughAPI from '@/features/admin-settings/data/datasources/errorPassthroughDatasource'
-import dataManagementAPI from '@/features/admin-backup/data/datasources/dataManagementDatasource'
 import apiKeysAPI from '@/features/admin-usage/data/datasources/apiKeysDatasource'
-import scheduledTestsAPI from '@/features/admin-accounts/data/datasources/scheduledTestsDatasource'
-import backupAPI from '@/features/admin-backup/data/datasources/adminBackupDatasource'
 import tlsFingerprintProfileAPI from '@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource'
-import channelsAPI from '@/features/admin-channels/data/datasources/adminChannelsDatasource'
-import channelMonitorAPI from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
-import channelMonitorTemplateAPI
-    from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorTemplateDatasource'
-import adminPaymentAPI from '@/features/admin-orders/data/datasources/adminPaymentDatasource'
+import { adminChannelsQueryRepository } from '@/features/admin-channels/data/repositories/adminChannelsQueryRepositoryImpl'
+import { adminChannelsActionRepository } from '@/features/admin-channels/data/repositories/adminChannelsActionRepositoryImpl'
+
+const channelsAPI = {
+    list: adminChannelsQueryRepository.list.bind(adminChannelsQueryRepository),
+    getById: adminChannelsQueryRepository.getById.bind(adminChannelsQueryRepository),
+    getModelDefaultPricing: adminChannelsQueryRepository.getModelDefaultPricing.bind(adminChannelsQueryRepository),
+    create: adminChannelsActionRepository.create.bind(adminChannelsActionRepository),
+    update: adminChannelsActionRepository.update.bind(adminChannelsActionRepository),
+    remove: adminChannelsActionRepository.remove.bind(adminChannelsActionRepository),
+    syncPricingModels: adminChannelsActionRepository.syncPricingModels.bind(adminChannelsActionRepository),
+}
+import { adminChannelMonitorQueryRepository } from '@/features/admin-channel-monitor/data/repositories/adminChannelMonitorQueryRepositoryImpl'
+import { adminChannelMonitorActionRepository } from '@/features/admin-channel-monitor/data/repositories/adminChannelMonitorActionRepositoryImpl'
+
+const channelMonitorAPI = {
+    list: adminChannelMonitorQueryRepository.list.bind(adminChannelMonitorQueryRepository),
+    get: adminChannelMonitorQueryRepository.getById.bind(adminChannelMonitorQueryRepository),
+    listHistory: adminChannelMonitorQueryRepository.listHistory.bind(adminChannelMonitorQueryRepository),
+    create: adminChannelMonitorActionRepository.create.bind(adminChannelMonitorActionRepository),
+    update: adminChannelMonitorActionRepository.update.bind(adminChannelMonitorActionRepository),
+    del: adminChannelMonitorActionRepository.deleteMonitor.bind(adminChannelMonitorActionRepository),
+    runNow: adminChannelMonitorActionRepository.runNow.bind(adminChannelMonitorActionRepository),
+    duplicate: adminChannelMonitorActionRepository.duplicate.bind(adminChannelMonitorActionRepository),
+}
+
+const channelMonitorTemplateAPI = {
+    list: adminChannelMonitorQueryRepository.listTemplates.bind(adminChannelMonitorQueryRepository),
+    get: adminChannelMonitorQueryRepository.getTemplateById.bind(adminChannelMonitorQueryRepository),
+    listAssociatedMonitors: adminChannelMonitorQueryRepository.listAssociatedMonitors.bind(adminChannelMonitorQueryRepository),
+    create: adminChannelMonitorActionRepository.createTemplate.bind(adminChannelMonitorActionRepository),
+    update: adminChannelMonitorActionRepository.updateTemplate.bind(adminChannelMonitorActionRepository),
+    del: adminChannelMonitorActionRepository.deleteTemplate.bind(adminChannelMonitorActionRepository),
+    apply: adminChannelMonitorActionRepository.applyTemplate.bind(adminChannelMonitorActionRepository),
+}
+import { adminOrdersQueryRepository } from '@/features/admin-orders/data/repositories/adminOrdersQueryRepositoryImpl'
+import { adminOrdersActionRepository } from '@/features/admin-orders/data/repositories/adminOrdersActionRepositoryImpl'
+
+const adminPaymentAPI = {
+    getConfig: adminOrdersQueryRepository.getConfig.bind(adminOrdersQueryRepository),
+    getDashboard: adminOrdersQueryRepository.getDashboard.bind(adminOrdersQueryRepository),
+    getOrders: adminOrdersQueryRepository.getOrders.bind(adminOrdersQueryRepository),
+    getOrder: adminOrdersQueryRepository.getOrder.bind(adminOrdersQueryRepository),
+    getPlans: adminOrdersQueryRepository.getPlans.bind(adminOrdersQueryRepository),
+    getProviders: adminOrdersQueryRepository.getProviders.bind(adminOrdersQueryRepository),
+    updateConfig: adminOrdersActionRepository.updateConfig.bind(adminOrdersActionRepository),
+    cancelOrder: adminOrdersActionRepository.cancelOrder.bind(adminOrdersActionRepository),
+    retryRecharge: adminOrdersActionRepository.retryRecharge.bind(adminOrdersActionRepository),
+    refundOrder: adminOrdersActionRepository.refundOrder.bind(adminOrdersActionRepository),
+    queryRefund: adminOrdersActionRepository.queryRefund.bind(adminOrdersActionRepository),
+    createPlan: adminOrdersActionRepository.createPlan.bind(adminOrdersActionRepository),
+    updatePlan: adminOrdersActionRepository.updatePlan.bind(adminOrdersActionRepository),
+    deletePlan: adminOrdersActionRepository.deletePlan.bind(adminOrdersActionRepository),
+    createProvider: adminOrdersActionRepository.createProvider.bind(adminOrdersActionRepository),
+    updateProvider: adminOrdersActionRepository.updateProvider.bind(adminOrdersActionRepository),
+    deleteProvider: adminOrdersActionRepository.deleteProvider.bind(adminOrdersActionRepository),
+}
 import affiliatesAPI from '@/features/affiliate/data/datasources/adminAffiliatesDatasource'
 import riskControlAPI from '@/features/admin-risk-control/data/datasources/adminRiskControlDatasource'
 import adminComplianceAPI from '@/features/admin-settings/data/datasources/complianceDatasource'
 import auditAPI from '@/features/admin-audit/data/datasources/adminAuditDatasource'
-import clusterAPI from '@/features/admin-cluster/data/datasources/adminClusterDatasource'
+import { adminClusterQueryRepository } from '@/features/admin-cluster/data/repositories/adminClusterQueryRepositoryImpl'
+
+const clusterAPI = {
+    getStatus: adminClusterQueryRepository.getStatus.bind(adminClusterQueryRepository),
+}
 
 /**
  * Unified admin API object for convenient access
@@ -44,25 +124,18 @@ export const adminAPI = {
     dashboard: dashboardAPI,
     users: usersAPI,
     groups: groupsAPI,
-    accounts: accountsAPI,
     proxies: proxiesAPI,
     redeem: redeemAPI,
-    promo: promoAPI,
+
     announcements: announcementsAPI,
     settings: settingsAPI,
     system: systemAPI,
     subscriptions: subscriptionsAPI,
     usage: usageAPI,
-    gemini: geminiAPI,
-    antigravity: antigravityAPI,
-    grok: grokAPI,
     userAttributes: userAttributesAPI,
     ops: opsAPI,
     errorPassthrough: errorPassthroughAPI,
-    dataManagement: dataManagementAPI,
     apiKeys: apiKeysAPI,
-    scheduledTests: scheduledTestsAPI,
-    backup: backupAPI,
     tlsFingerprintProfiles: tlsFingerprintProfileAPI,
     channels: channelsAPI,
     channelMonitor: channelMonitorAPI,
@@ -79,25 +152,18 @@ export {
     dashboardAPI,
     usersAPI,
     groupsAPI,
-    accountsAPI,
     proxiesAPI,
     redeemAPI,
-    promoAPI,
+
     announcementsAPI,
     settingsAPI,
     systemAPI,
     subscriptionsAPI,
     usageAPI,
-    geminiAPI,
-    antigravityAPI,
-    grokAPI,
     userAttributesAPI,
     opsAPI,
     errorPassthroughAPI,
-    dataManagementAPI,
     apiKeysAPI,
-    scheduledTestsAPI,
-    backupAPI,
     tlsFingerprintProfileAPI,
     channelsAPI,
     channelMonitorAPI,
@@ -120,9 +186,6 @@ export type {BalanceHistoryItem} from '@/features/admin-users/data/datasources/a
 export type {
     ErrorPassthroughRule, CreateRuleRequest, UpdateRuleRequest
 } from '@/features/admin-settings/data/datasources/errorPassthroughDatasource'
-export type {
-    BackupAgentHealth, DataManagementConfig
-} from '@/features/admin-backup/data/datasources/dataManagementDatasource'
 export type {
     TLSFingerprintProfile, CreateProfileRequest, UpdateProfileRequest
 } from '@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource'

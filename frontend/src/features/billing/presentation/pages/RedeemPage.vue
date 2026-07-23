@@ -480,7 +480,7 @@ onMounted(async () => {
   fetchHistory()
   try {
     const settings = await authAPI.getPublicSettings()
-    contactInfo.value = settings.contact_info || ''
+    contactInfo.value = settings.contactInfo || ''
   } catch (error) {
     console.error('Failed to load contact info:', error)
   }

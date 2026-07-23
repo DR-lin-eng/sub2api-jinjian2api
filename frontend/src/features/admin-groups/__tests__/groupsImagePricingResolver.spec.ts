@@ -10,7 +10,7 @@ import {
   supportsImagePricingPlatform,
   supportsVideoPricingPlatform,
   videoPricingI18nKey,
-} from "@/features/admin-groups/presentation/groupsImagePricingResolver";
+} from "@/features/admin-groups/presentation/utils/groupsImagePricingResolver";
 
 describe("groups image pricing platform support", () => {
   it("includes Grok image groups", () => {

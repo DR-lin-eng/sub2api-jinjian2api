@@ -4366,7 +4366,7 @@
                   </label>
                   <input
                     id="upstream-billing-probe-interval"
-                    v-model.number="upstreamBillingProbeForm.interval_minutes"
+                    v-model.number="upstreamBillingProbeForm.intervalMinutes"
                     type="number"
                     min="5"
                     max="1440"
@@ -6152,12 +6152,12 @@
                       {{ t("admin.settings.customMenu.iconSvg") }}
                     </label>
                     <ImageUpload
-                      :model-value="item.icon_svg"
+                      :model-value="item.iconSvg"
                       mode="svg"
                       size="sm"
                       :upload-label="t('admin.settings.customMenu.uploadSvg')"
                       :remove-label="t('admin.settings.customMenu.removeSvg')"
-                      @update:model-value="(v: string) => (item.icon_svg = v)"
+                      @update:model-value="(v: string) => (item.iconSvg = v)"
                     />
                   </div>
                 </div>
@@ -6377,7 +6377,7 @@
                         {{ localText("Markdown 内容", "Markdown content") }}
                       </label>
                         <textarea
-                          v-model="doc.content_md"
+                          v-model="doc.contentMd"
                           rows="8"
                           class="input font-mono text-sm"
                           :placeholder="localText('在这里填写正式 Markdown 内容。', 'Write the final Markdown content here.')"
@@ -7972,7 +7972,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { adminAPI } from "@/api";
 import {
   appendAuthSourceDefaultsToUpdateRequest,
   buildAuthSourceDefaultsState,
@@ -8045,7 +8044,16 @@ import {
   serializeFingerprintRowsToJSON,
   defaultFingerprintSignalRows,
   type FingerprintSignalRow,
-} from "@/features/admin-accounts/presentation/codexFingerprintSignals";
+} from "@/features/admin-accounts/presentation/utils/codexFingerprintSignals";
+import { useAdminSettings } from '@/features/admin-settings/presentation/composables/useAdminSettings'
+import { useAdminProxies } from '@/features/admin-proxies/presentation/composables/useAdminProxies'
+import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
+import { useAdminAccounts } from '@/features/admin-accounts/presentation/composables/useAdminAccounts'
+import { adminAPI } from '@/api/admin'
+const $settings = useAdminSettings()
+const $proxies = useAdminProxies()
+const $groups = useAdminGroups()
+const $accounts = useAdminAccounts()
 
 const { t, locale } = useI18n();
 const appStore = useAppStore();
@@ -8201,7 +8209,7 @@ const upstreamBillingProbeLoading = ref(true);
 const upstreamBillingProbeSaving = ref(false);
 const upstreamBillingProbeForm = reactive({
   enabled: true,
-  interval_minutes: 30,
+  intervalMinutes: 30,
 });
 
 // Overload Cooldown (529) 状态
@@ -8284,22 +8292,22 @@ function defaultLoginAgreementDocuments(): LoginAgreementDocument[] {
     {
       id: "terms",
       title: localText("服务条款", "Terms of Service"),
-      content_md: "",
+      contentMd: "",
     },
     {
       id: "usage-policy",
       title: localText("使用政策", "Usage Policy"),
-      content_md: "",
+      contentMd: "",
     },
     {
       id: "supported-regions",
       title: localText("支持的国家和地区", "Supported Countries and Regions"),
-      content_md: "",
+      contentMd: "",
     },
     {
       id: "service-specific-terms",
       title: localText("服务特定条款", "Service-Specific Terms"),
-      content_md: "",
+      contentMd: "",
     },
   ];
 }
@@ -8699,7 +8707,7 @@ interface DefaultSubscriptionGroupOption {
   label: string;
   description: string | null;
   platform: AdminGroup["platform"];
-  subscriptionType: AdminGroup["subscription_type"];
+  subscriptionType: AdminGroup["subscriptionType"];
   rate: number;
   [key: string]: unknown;
 }
@@ -8898,10 +8906,10 @@ const form = reactive<SettingsForm>({
   custom_menu_items: [] as Array<{
     id: string;
     label: string;
-    icon_svg: string;
+    iconSvg: string;
     url: string;
     visibility: "user" | "admin";
-    sort_order: number;
+    sortOrder: number;
   }>,
   custom_endpoints: [] as Array<{
     name: string;
@@ -9371,7 +9379,7 @@ async function resetWebSearchUsage(idx: number) {
   if (!confirm(t("admin.settings.webSearchEmulation.resetUsageConfirm")))
     return;
   try {
-    await adminAPI.settings.resetWebSearchUsage({
+    await $settings.resetWebSearchUsage({
       provider_type: provider.type,
     });
     provider.quota_used = 0;
@@ -9406,7 +9414,7 @@ async function testWebSearchProvider() {
     const query =
       wsTestQuery.value.trim() ||
       t("admin.settings.webSearchEmulation.testDefaultQuery");
-    wsTestResult.value = await adminAPI.settings.testWebSearchEmulation(query);
+    wsTestResult.value = await $settings.testWebSearchEmulation(query);
   } catch (err: unknown) {
     appStore.showError(extractApiErrorMessage(err, t("common.error")));
   } finally {
@@ -9417,8 +9425,8 @@ async function testWebSearchProvider() {
 async function loadWebSearchConfig() {
   try {
     const [resp, proxiesResp] = await Promise.all([
-      adminAPI.settings.getWebSearchEmulationConfig(),
-      adminAPI.proxies.list().catch(() => ({ items: [] as Proxy[] })),
+      $settings.getWebSearchEmulationConfig(),
+      $proxies.list().catch(() => ({ items: [] as Proxy[] })),
     ]);
     if (resp) {
       webSearchConfig.enabled = resp.enabled || false;
@@ -9451,7 +9459,7 @@ async function saveWebSearchConfig(): Promise<boolean> {
         quota_limit: Number(p.quota_limit) > 0 ? Number(p.quota_limit) : null,
       }),
     );
-    await adminAPI.settings.updateWebSearchEmulationConfig({
+    await $settings.updateWebSearchEmulationConfig({
       enabled: webSearchConfig.enabled,
       providers,
     });
@@ -9470,8 +9478,8 @@ const defaultSubscriptionGroupOptions = computed<
     label: group.name,
     description: group.description,
     platform: group.platform,
-    subscriptionType: group.subscription_type,
-    rate: group.rate_multiplier,
+    subscriptionType: group.subscriptionType,
+    rate: group.rateMultiplier,
   })),
 );
 
@@ -9702,10 +9710,10 @@ function addMenuItem() {
   form.custom_menu_items.push({
     id: "",
     label: "",
-    icon_svg: "",
+    iconSvg: "",
     url: "",
     visibility: "user",
-    sort_order: form.custom_menu_items.length,
+    sortOrder: form.custom_menu_items.length,
   });
 }
 
@@ -9713,7 +9721,7 @@ function removeMenuItem(index: number) {
   form.custom_menu_items.splice(index, 1);
   // Re-index sort_order
   form.custom_menu_items.forEach((item, i) => {
-    item.sort_order = i;
+    item.sortOrder = i;
   });
 }
 
@@ -9726,7 +9734,7 @@ function moveMenuItem(index: number, direction: -1 | 1) {
   items[targetIndex] = temp;
   // Re-index sort_order
   items.forEach((item, i) => {
-    item.sort_order = i;
+    item.sortOrder = i;
   });
 }
 
@@ -9743,7 +9751,7 @@ function addLoginAgreementDocument() {
   form.login_agreement_documents.push({
     id: `custom-${Date.now().toString(36)}`,
     title: "",
-    content_md: "",
+    contentMd: "",
   });
 }
 
@@ -9758,9 +9766,9 @@ function normalizeLoginAgreementDocumentsForSave(): LoginAgreementDocument[] {
         normalizeLoginAgreementDocumentId(doc.id || doc.title) ||
         `doc-${index + 1}`,
       title: doc.title.trim(),
-      content_md: doc.content_md.trim(),
+      contentMd: doc.contentMd.trim(),
     }))
-    .filter((doc: any) => doc.title || doc.content_md);
+    .filter((doc: any) => doc.title || doc.contentMd);
 }
 
 function findDuplicateLoginAgreementDocumentId(
@@ -9887,7 +9895,7 @@ async function loadSettings() {
   loading.value = true;
   loadFailed.value = false;
   try {
-    const settings = await adminAPI.settings.getSettings();
+    const settings = await $settings.getSettings();
     settings.payment_load_balance_strategy =
       settings.payment_load_balance_strategy || "round-robin";
     // Only assign non-null values from backend (null means unconfigured, keep defaults)
@@ -9928,7 +9936,7 @@ async function loadSettings() {
         ? settings.login_agreement_documents.map((doc: any) => ({
             id: doc.id || "",
             title: doc.title || "",
-            content_md: doc.content_md || "",
+            contentMd: doc.contentMd || "",
           }))
         : defaultLoginAgreementDocuments();
     Object.assign(authSourceDefaults, buildAuthSourceDefaultsState(settings));
@@ -10045,10 +10053,10 @@ async function loadSettings() {
 
 async function loadSubscriptionGroups() {
   try {
-    const groups = await adminAPI.groups.getAll();
+    const groups = await $groups.getAll();
     subscriptionGroups.value = groups.filter(
       (group: any) =>
-        group.subscription_type === "subscription" && group.status === "active",
+        group.subscriptionType === "subscription" && group.status === "active",
     );
   } catch (_error: unknown) {
     subscriptionGroups.value = [];
@@ -10193,7 +10201,7 @@ async function saveSettings() {
     if (duplicateDefaultSubscription) {
       appStore.showError(
         t("admin.settings.defaults.defaultSubscriptionsDuplicate", {
-          groupId: duplicateDefaultSubscription.group_id,
+          group_id: duplicateDefaultSubscription.group_id,
         }),
       );
       return;
@@ -10212,7 +10220,7 @@ async function saveSettings() {
           `${authSource.title}: ${t(
             "admin.settings.defaults.defaultSubscriptionsDuplicate",
             {
-              groupId: duplicate.group_id,
+              group_id: duplicate.group_id,
             },
           )}`,
         );
@@ -10557,7 +10565,7 @@ async function saveSettings() {
             .filter((p: any) => p !== "");
           const hasWhitelist = whitelist.length > 0;
           return {
-            service_tier: rule.service_tier,
+            service_tier: rule.serviceTier,
             action: rule.action,
             scope: rule.scope,
             user_ids:
@@ -10565,7 +10573,7 @@ async function saveSettings() {
                 ? [...rule.user_ids]
                 : undefined,
             error_message:
-              rule.action === "block" ? rule.error_message : undefined,
+              rule.action === "block" ? rule.errorMessage : undefined,
             model_whitelist: hasWhitelist ? whitelist : undefined,
             fallback_action: hasWhitelist
               ? rule.fallback_action || "pass"
@@ -10583,7 +10591,7 @@ async function saveSettings() {
     appendAuthSourceDefaultsToUpdateRequest(payload, authSourceDefaults);
 
     const updated = await settingsStepUp.run(() =>
-      adminAPI.settings.updateSettings(payload),
+      $settings.updateSettings(payload),
     ) as SystemSettings;
     for (const [key, value] of Object.entries(updated)) {
       if (key === "openai_fast_policy_settings") continue;
@@ -10697,7 +10705,7 @@ async function testSmtpConnection() {
     const smtpPasswordForTest = smtpPasswordManuallyEdited.value
       ? form.smtp_password
       : "";
-    const result = await adminAPI.settings.testSmtpConnection({
+    const result = await $settings.testSmtpConnection({
       smtp_host: form.smtp_host,
       smtp_port: form.smtp_port,
       smtp_username: form.smtp_username,
@@ -10728,7 +10736,7 @@ async function sendTestEmail() {
     const smtpPasswordForSend = smtpPasswordManuallyEdited.value
       ? form.smtp_password
       : "";
-    const result = await adminAPI.settings.sendTestEmail({
+    const result = await $settings.sendTestEmail({
       email: testEmailAddress.value,
       smtp_host: form.smtp_host,
       smtp_port: form.smtp_port,
@@ -10753,7 +10761,7 @@ async function sendTestEmail() {
 async function loadScopedAdminApiKeys() {
   adminApiKeyPanelLoading.value = true;
   try {
-    scopedAdminApiKeys.value = (await adminAPI.settings.listAdminApiKeys()).items;
+    scopedAdminApiKeys.value = (await $settings.listAdminApiKeys()).items;
   } catch (_error: unknown) {
     // Keep the legacy card usable when the scoped-key endpoint is unavailable.
   } finally {
@@ -10781,10 +10789,10 @@ async function createScopedAdminApiKey() {
       expires_at: adminApiKeyExpiryPayload(),
     };
     if (editingAdminApiKeyId.value) {
-      await adminAPI.settings.updateAdminApiKey(editingAdminApiKeyId.value, request);
+      await $settings.updateAdminApiKey(editingAdminApiKeyId.value, request);
       editingAdminApiKeyId.value = null;
     } else {
-      const result = await adminAPI.settings.createAdminApiKey(request);
+      const result = await $settings.createAdminApiKey(request);
       adminApiKeyPanelSecret.value = result.key;
     }
     adminApiKeyForm.name = "";
@@ -10818,7 +10826,7 @@ async function rotateScopedAdminApiKey(id: string) {
   if (!confirm(t("admin.settings.adminApiKey.regenerateConfirm"))) return;
   adminApiKeyPanelOperating.value = true;
   try {
-    const result = await adminAPI.settings.rotateAdminApiKey(id);
+    const result = await $settings.rotateAdminApiKey(id);
     adminApiKeyPanelSecret.value = result.key;
     await loadScopedAdminApiKeys();
   } catch (error: unknown) {
@@ -10832,7 +10840,7 @@ async function revokeScopedAdminApiKey(id: string) {
   if (!confirm(t("admin.settings.adminApiKey.deleteConfirm"))) return;
   adminApiKeyPanelOperating.value = true;
   try {
-    await adminAPI.settings.revokeAdminApiKey(id);
+    await $settings.revokeAdminApiKey(id);
     await loadScopedAdminApiKeys();
     appStore.showSuccess(t("admin.settings.adminApiKey.keyDeleted"));
   } catch (error: unknown) {
@@ -10851,7 +10859,7 @@ function copyScopedAdminApiKey() {
 async function loadAdminApiKey() {
   adminApiKeyLoading.value = true;
   try {
-    const status = await adminAPI.settings.getAdminApiKey();
+    const status = await $settings.getAdminApiKey();
     adminApiKeyExists.value = status.exists;
     adminApiKeyMasked.value = status.masked_key;
   } catch (_error: unknown) {
@@ -10864,7 +10872,7 @@ async function loadAdminApiKey() {
 async function createAdminApiKey() {
   adminApiKeyOperating.value = true;
   try {
-    const result = await adminAPI.settings.regenerateAdminApiKey();
+    const result = await $settings.regenerateAdminApiKey();
     newAdminApiKey.value = result.key;
     adminApiKeyExists.value = true;
     adminApiKeyMasked.value =
@@ -10886,7 +10894,7 @@ async function deleteAdminApiKey() {
   if (!confirm(t("admin.settings.adminApiKey.deleteConfirm"))) return;
   adminApiKeyOperating.value = true;
   try {
-    await adminAPI.settings.deleteAdminApiKey();
+    await $settings.deleteAdminApiKey();
     adminApiKeyExists.value = false;
     adminApiKeyMasked.value = "";
     newAdminApiKey.value = "";
@@ -10914,7 +10922,7 @@ async function loadUpstreamBillingProbeSettings() {
   try {
     Object.assign(
       upstreamBillingProbeForm,
-      await adminAPI.accounts.getUpstreamBillingProbeSettings(),
+      await $accounts.getUpstreamBillingProbeSettings(),
     );
   } catch (_error: unknown) {
     // Keep defaults when this optional setting cannot be loaded.
@@ -10926,7 +10934,7 @@ async function loadUpstreamBillingProbeSettings() {
 async function saveUpstreamBillingProbeSettings() {
   upstreamBillingProbeSaving.value = true;
   try {
-    const updated = await adminAPI.accounts.updateUpstreamBillingProbeSettings({
+    const updated = await $accounts.updateUpstreamBillingProbeSettings({
       ...upstreamBillingProbeForm,
     });
     Object.assign(upstreamBillingProbeForm, updated);
@@ -10947,7 +10955,7 @@ async function saveUpstreamBillingProbeSettings() {
 async function loadOverloadCooldownSettings() {
   overloadCooldownLoading.value = true;
   try {
-    const settings = await adminAPI.settings.getOverloadCooldownSettings();
+    const settings = await $settings.getOverloadCooldownSettings();
     Object.assign(overloadCooldownForm, settings);
   } catch (_error: unknown) {
     // Silent fail - settings will use defaults
@@ -10959,7 +10967,7 @@ async function loadOverloadCooldownSettings() {
 async function saveOverloadCooldownSettings() {
   overloadCooldownSaving.value = true;
   try {
-    const updated = await adminAPI.settings.updateOverloadCooldownSettings({
+    const updated = await $settings.updateOverloadCooldownSettings({
       enabled: overloadCooldownForm.enabled,
       cooldown_minutes: overloadCooldownForm.cooldown_minutes,
     });
@@ -10981,7 +10989,7 @@ async function saveOverloadCooldownSettings() {
 async function loadRateLimit429CooldownSettings() {
   rateLimit429CooldownLoading.value = true;
   try {
-    const settings = await adminAPI.settings.getRateLimit429CooldownSettings();
+    const settings = await $settings.getRateLimit429CooldownSettings();
     Object.assign(rateLimit429CooldownForm, settings);
   } catch (_error: unknown) {
     // Silent fail - settings will use defaults
@@ -10993,7 +11001,7 @@ async function loadRateLimit429CooldownSettings() {
 async function saveRateLimit429CooldownSettings() {
   rateLimit429CooldownSaving.value = true;
   try {
-    const updated = await adminAPI.settings.updateRateLimit429CooldownSettings({
+    const updated = await $settings.updateRateLimit429CooldownSettings({
       enabled: rateLimit429CooldownForm.enabled,
       cooldown_seconds: rateLimit429CooldownForm.cooldown_seconds,
     });
@@ -11016,7 +11024,7 @@ async function loadGlobalTempUnschedulableSettings() {
   globalTempUnschedulableLoading.value = true;
   try {
     const settings =
-      await adminAPI.settings.getGlobalTempUnschedulableSettings();
+      await $settings.getGlobalTempUnschedulableSettings();
     Object.assign(globalTempUnschedulableForm, settings);
   } catch (_error: unknown) {
     // Silent fail - settings will use defaults
@@ -11029,7 +11037,7 @@ async function saveGlobalTempUnschedulableSettings() {
   globalTempUnschedulableSaving.value = true;
   try {
     const updated =
-      await adminAPI.settings.updateGlobalTempUnschedulableSettings({
+      await $settings.updateGlobalTempUnschedulableSettings({
         enabled: globalTempUnschedulableForm.enabled,
       });
     Object.assign(globalTempUnschedulableForm, updated);
@@ -11052,7 +11060,7 @@ async function saveGlobalTempUnschedulableSettings() {
 async function loadStreamTimeoutSettings() {
   streamTimeoutLoading.value = true;
   try {
-    const settings = await adminAPI.settings.getStreamTimeoutSettings();
+    const settings = await $settings.getStreamTimeoutSettings();
     Object.assign(streamTimeoutForm, settings);
   } catch (_error: unknown) {
     // Silent fail - settings will use defaults
@@ -11064,7 +11072,7 @@ async function loadStreamTimeoutSettings() {
 async function saveStreamTimeoutSettings() {
   streamTimeoutSaving.value = true;
   try {
-    const updated = await adminAPI.settings.updateStreamTimeoutSettings({
+    const updated = await $settings.updateStreamTimeoutSettings({
       enabled: streamTimeoutForm.enabled,
       action: streamTimeoutForm.action,
       temp_unsched_minutes: streamTimeoutForm.temp_unsched_minutes,
@@ -11089,7 +11097,7 @@ async function saveStreamTimeoutSettings() {
 async function loadRectifierSettings() {
   rectifierLoading.value = true;
   try {
-    const settings = await adminAPI.settings.getRectifierSettings();
+    const settings = await $settings.getRectifierSettings();
     Object.assign(rectifierForm, settings);
     // 确保 patterns 是数组（旧数据可能为 null）
     if (!Array.isArray(rectifierForm.apikey_signature_patterns)) {
@@ -11105,7 +11113,7 @@ async function loadRectifierSettings() {
 async function saveRectifierSettings() {
   rectifierSaving.value = true;
   try {
-    const updated = await adminAPI.settings.updateRectifierSettings({
+    const updated = await $settings.updateRectifierSettings({
       enabled: rectifierForm.enabled,
       thinking_signature_enabled: rectifierForm.thinking_signature_enabled,
       thinking_budget_enabled: rectifierForm.thinking_budget_enabled,
@@ -11208,7 +11216,7 @@ function addQuickPattern(
 async function loadBetaPolicySettings() {
   betaPolicyLoading.value = true;
   try {
-    const settings = await adminAPI.settings.getBetaPolicySettings();
+    const settings = await $settings.getBetaPolicySettings();
     betaPolicyForm.rules = settings.rules;
   } catch (_error: unknown) {
     // Silent fail - settings will use defaults
@@ -11288,7 +11296,7 @@ async function saveBetaPolicySettings() {
         beta_token: rule.beta_token,
         action: rule.action,
         scope: rule.scope,
-        error_message: rule.error_message,
+        error_message: rule.errorMessage,
         model_whitelist: hasWhitelist ? whitelist : undefined,
         fallback_action: hasWhitelist
           ? rule.fallback_action || "pass"
@@ -11299,7 +11307,7 @@ async function saveBetaPolicySettings() {
             : undefined,
       };
     });
-    const updated = await adminAPI.settings.updateBetaPolicySettings({
+    const updated = await $settings.updateBetaPolicySettings({
       rules: cleanedRules,
     });
     betaPolicyForm.rules = updated.rules;
@@ -11345,7 +11353,7 @@ function togglePaymentType(type: string) {
 
 async function disableProvidersByType(type: string) {
   const matching = providers.value.filter(
-    (p: any) => p.provider_key === type && p.enabled,
+    (p) => p.providerKey === type && p.enabled,
   );
   for (const p of matching) {
     try {
@@ -11418,7 +11426,7 @@ const cancelRateLimitModeOptions = computed(() => [
 
 type ProviderEnablementCandidate = Pick<
   ProviderInstance,
-  "id" | "provider_key" | "supported_types" | "enabled" | "name"
+  "id" | "providerKey" | "supportedTypes" | "enabled" | "name"
 >;
 
 function getProviderVisibleMethods(
@@ -11428,8 +11436,8 @@ function getProviderVisibleMethods(
     return [];
   }
 
-  const supportedTypes = Array.isArray(provider.supported_types)
-    ? provider.supported_types
+  const supportedTypes = Array.isArray(provider.supportedTypes)
+    ? provider.supportedTypes
     : [];
   const methods = new Set<"alipay" | "wxpay">();
   const addMethod = (type: string) => {
@@ -11439,7 +11447,7 @@ function getProviderVisibleMethods(
     }
   };
 
-  if (provider.provider_key === "alipay") {
+  if (provider.providerKey === "alipay") {
     if (supportedTypes.length === 0) {
       methods.add("alipay");
     } else {
@@ -11449,7 +11457,7 @@ function getProviderVisibleMethods(
         }
       });
     }
-  } else if (provider.provider_key === "wxpay") {
+  } else if (provider.providerKey === "wxpay") {
     if (supportedTypes.length === 0) {
       methods.add("wxpay");
     } else {
@@ -11459,7 +11467,7 @@ function getProviderVisibleMethods(
         }
       });
     }
-  } else if (provider.provider_key === "easypay") {
+  } else if (provider.providerKey === "easypay") {
     supportedTypes.forEach(addMethod);
   }
 
@@ -11514,8 +11522,8 @@ async function loadProviders() {
     // throws TypeError on null.includes(), causing the card to vanish.
     providers.value = (res.data || []).map((p: any) => ({
       ...p,
-      supported_types: Array.isArray(p.supported_types)
-        ? p.supported_types
+      supportedTypes: Array.isArray(p.supportedTypes)
+        ? p.supportedTypes
         : [],
     }));
   } catch (err: unknown) {
@@ -11544,10 +11552,10 @@ async function handleSaveProvider(payload: Partial<ProviderInstance>) {
   try {
     const candidate: ProviderEnablementCandidate = {
       id: editingProvider.value?.id ?? 0,
-      provider_key:
-        payload.provider_key ?? editingProvider.value?.provider_key ?? "",
-      supported_types:
-        payload.supported_types ?? editingProvider.value?.supported_types ?? [],
+      providerKey:
+        payload.providerKey ?? editingProvider.value?.providerKey ?? "",
+      supportedTypes:
+        payload.supportedTypes ?? editingProvider.value?.supportedTypes ?? [],
       enabled: payload.enabled ?? editingProvider.value?.enabled ?? false,
       name: payload.name ?? editingProvider.value?.name ?? "",
     };
@@ -11576,18 +11584,18 @@ async function handleSaveProvider(payload: Partial<ProviderInstance>) {
 
 async function handleToggleField(
   provider: ProviderInstance,
-  field: "enabled" | "refund_enabled" | "allow_user_refund",
+  field: "enabled" | "refundEnabled" | "allowUserRefund",
 ) {
   let newValue: boolean;
   if (field === "enabled") newValue = !provider.enabled;
-  else if (field === "refund_enabled") newValue = !provider.refund_enabled;
-  else newValue = !provider.allow_user_refund;
+  else if (field === "refundEnabled") newValue = !provider.refundEnabled;
+  else newValue = !provider.allowUserRefund;
 
   if (field === "enabled" && newValue) {
     const conflict = findProviderEnablementConflict({
       id: provider.id,
-      provider_key: provider.provider_key,
-      supported_types: provider.supported_types,
+      providerKey: provider.providerKey,
+      supportedTypes: provider.supportedTypes,
       enabled: true,
       name: provider.name,
     });
@@ -11598,9 +11606,9 @@ async function handleToggleField(
   }
 
   const payload: Record<string, boolean> = { [field]: newValue };
-  // Cascade: turning off refund_enabled also turns off allow_user_refund
-  if (field === "refund_enabled" && !newValue) {
-    payload.allow_user_refund = false;
+  // Cascade: turning off refundEnabled also turns off allowUserRefund
+  if (field === "refundEnabled" && !newValue) {
+    payload.allowUserRefund = false;
   }
   try {
     await adminAPI.payment.updateProvider(provider.id, payload);
@@ -11611,16 +11619,16 @@ async function handleToggleField(
 }
 
 async function handleToggleType(provider: ProviderInstance, type: string) {
-  const currentTypes = Array.isArray(provider.supported_types)
-    ? provider.supported_types
+  const currentTypes = Array.isArray(provider.supportedTypes)
+    ? provider.supportedTypes
     : [];
   const updated = currentTypes.includes(type)
     ? currentTypes.filter((t) => t !== type)
     : [...currentTypes, type];
   const conflict = findProviderEnablementConflict({
     id: provider.id,
-    provider_key: provider.provider_key,
-    supported_types: updated,
+    providerKey: provider.providerKey,
+    supportedTypes: updated,
     enabled: provider.enabled,
     name: provider.name,
   });
@@ -11630,8 +11638,8 @@ async function handleToggleType(provider: ProviderInstance, type: string) {
   }
   try {
     await adminAPI.payment.updateProvider(provider.id, {
-      supported_types: updated,
-    } as any);
+      supportedTypes: updated,
+    });
     await loadProviders();
   } catch (err: unknown) {
     appStore.showError(extractI18nErrorMessage(err, t, "payment.errors", t("common.error")));
@@ -11644,14 +11652,14 @@ function confirmDeleteProvider(provider: ProviderInstance) {
 }
 
 async function handleReorderProviders(
-  updates: { id: number; sort_order: number }[],
+  updates: { id: number; sortOrder: number }[],
 ) {
   try {
     await Promise.all(
       updates.map((u) =>
         adminAPI.payment.updateProvider(u.id, {
-          sort_order: u.sort_order,
-        } as Partial<ProviderInstance>),
+          sortOrder: u.sortOrder,
+        }),
       ),
     );
     await loadProviders();

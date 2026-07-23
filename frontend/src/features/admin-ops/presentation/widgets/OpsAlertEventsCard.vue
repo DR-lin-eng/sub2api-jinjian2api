@@ -181,7 +181,7 @@ function formatDimensionsSummary(event: AlertEvent): string {
   const parts: string[] = []
   const platform = getDimensionString(event, 'platform')
   if (platform) parts.push(`platform=${platform}`)
-  const groupId = event.dimensions?.group_id
+  const groupId = event.dimensions?.groupId
   if (groupId != null && groupId !== '') parts.push(`group_id=${String(groupId)}`)
   const region = getDimensionString(event, 'region')
   if (region) parts.push(`region=${region}`)
@@ -224,7 +224,7 @@ async function loadHistory() {
   historyLoading.value = true
   try {
     const platform = getDimensionString(ev, 'platform')
-    const groupIdRaw = ev.dimensions?.group_id
+    const groupIdRaw = ev.dimensions?.groupId
     const groupId = typeof groupIdRaw === 'number' ? groupIdRaw : undefined
 
     const items = await opsAPI.listAlertEvents({
@@ -241,8 +241,8 @@ async function loadHistory() {
       const p1 = getDimensionString(it, 'platform')
       const p2 = getDimensionString(ev, 'platform')
       if ((p1 || '') !== (p2 || '')) return false
-      const g1 = it.dimensions?.group_id
-      const g2 = ev.dimensions?.group_id
+      const g1 = it.dimensions?.groupId
+      const g2 = ev.dimensions?.groupId
       return (g1 ?? null) === (g2 ?? null)
     })
   } catch (err: any) {
@@ -268,7 +268,7 @@ async function silenceAlert() {
   detailActionLoading.value = true
   try {
     const platform = getDimensionString(ev, 'platform')
-    const groupIdRaw = ev.dimensions?.group_id
+    const groupIdRaw = ev.dimensions?.groupId
     const groupId = typeof groupIdRaw === 'number' ? groupIdRaw : null
     const region = getDimensionString(ev, 'region') || null
 
@@ -580,7 +580,7 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
                 </a>
                 <a
                   class="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-[11px] font-bold text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50 dark:bg-dark-800 dark:text-gray-200 dark:ring-dark-700 dark:hover:bg-dark-700"
-                  :href="`/admin/ops?platform=${encodeURIComponent(getDimensionString(selected,'platform')||'')}&group_id=${selected.dimensions?.group_id || ''}&error_type=request&open_error_details=1`"
+                  :href="`/admin/ops?platform=${encodeURIComponent(getDimensionString(selected,'platform')||'')}&group_id=${selected.dimensions?.groupId || ''}&error_type=request&open_error_details=1`"
                 >
                   <Icon name="externalLink" size="xs" />
                   {{ t('admin.ops.alertEvents.detail.viewLogs') }}
@@ -591,7 +591,7 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
               <div class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ t('admin.ops.alertEvents.detail.dimensions') }}</div>
               <div class="mt-1 text-sm text-gray-900 dark:text-white">
                 <div v-if="getDimensionString(selected, 'platform')">platform={{ getDimensionString(selected, 'platform') }}</div>
-                <div v-if="selected.dimensions?.group_id">group_id={{ selected.dimensions.group_id }}</div>
+                <div v-if="selected.dimensions?.groupId">group_id={{ selected.dimensions.groupId }}</div>
                 <div v-if="getDimensionString(selected, 'region')">region={{ getDimensionString(selected, 'region') }}</div>
               </div>
             </div>

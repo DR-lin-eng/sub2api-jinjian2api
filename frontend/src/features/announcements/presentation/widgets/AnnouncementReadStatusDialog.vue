@@ -75,7 +75,6 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { adminAPI } from '@/api/admin'
 import { formatDateTime } from '@/core/utils/format'
-import type { AnnouncementUserReadStatus } from '@/types'
 import type { Column } from '@/common/types/uiTypes'
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 
@@ -83,6 +82,7 @@ import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import DataTable from '@/common/widgets/data/DataTable.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
+import type { AnnouncementUserReadStatus } from '@/features/announcements/domain/models/announcement'
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -175,7 +175,7 @@ async function load() {
     pagination.total = res.total
     pagination.pages = res.pages
     pagination.page = res.page
-    pagination.page_size = res.page_size
+    pagination.page_size = res.pageSize
   } catch (error: any) {
     if (
       signal.aborted ||

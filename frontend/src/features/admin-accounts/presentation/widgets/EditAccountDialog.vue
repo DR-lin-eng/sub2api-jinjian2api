@@ -2625,17 +2625,12 @@ import { ref, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/core/stores/authStore'
-import { adminAPI } from '@/api/admin'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
+import { useAdminSettingsQueryStore } from '@/features/admin-settings/presentation/stores/adminSettingsQueryStore'
+
+const actionStore = useAdminAccountsActionStore()
+const adminSettingsQueryStore = useAdminSettingsQueryStore()
 import { useQuotaNotifyState } from '@/features/admin-accounts/presentation/composables/useQuotaNotifyState'
-import type {
-  Account,
-  Proxy,
-  AdminGroup,
-  CheckMixedChannelResponse,
-  OpenAICompactMode,
-  OpenAIResponsesMode,
-  OpenAIEndpointCapability
-} from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
@@ -2662,7 +2657,7 @@ import {
   HEADER_OVERRIDE_ENABLED_CREDENTIAL_KEY,
   HEADER_OVERRIDES_CREDENTIAL_KEY,
   type HeaderOverrideRow
-} from '@/features/admin-accounts/presentation/credentialsBuilder'
+} from '@/features/admin-accounts/presentation/utils/credentialsBuilder'
 import { formatDateTime, formatDateTimeLocalInput, parseDateTimeLocalInput } from '@/core/utils/format'
 import { createStableObjectKeyResolver } from '@/core/utils/stableObjectKey'
 import { VERTEX_LOCATION_OPTIONS } from '@/core/constants/account'
@@ -2683,6 +2678,11 @@ import {
   splitModelMappingObject,
   isValidWildcardPattern
 } from '@/features/admin-accounts/presentation/composables/useModelWhitelist'
+import type { OpenAICompactMode, OpenAIResponsesMode, OpenAIEndpointCapability } from '@/types'
+import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { CheckMixedChannelResponse } from '@/features/admin-accounts/domain/models/checkMixedChannelResponse'
+import type { Proxy } from '@/features/admin-proxies/domain/models/proxy'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
 
 interface Props {
   show: boolean
@@ -2703,7 +2703,7 @@ const authStore = useAuthStore()
 
 // Spark 影子账号(parent_account_id 非空):代理恒继承母账号,不可独立编辑(外审 B/P1),
 // 故隐藏代理选择器。
-const isSparkShadow = computed(() => props.account?.parent_account_id != null)
+const isSparkShadow = computed(() => props.account?.parentAccountId > 0)
 
 // Platform-specific hint for Base URL
 const baseUrlHint = computed(() => {
@@ -2894,7 +2894,7 @@ const {
 } = useQuotaNotifyState()
 
 // Load global feature states once
-adminAPI.settings.getWebSearchEmulationConfig().then((cfg: any) => {
+adminSettingsQueryStore.getWebSearchEmulationConfig().then((cfg: any) => {
   webSearchGlobalEnabled.value = cfg?.enabled === true && (cfg?.providers?.length ?? 0) > 0
 }).catch(() => { webSearchGlobalEnabled.value = false })
 
@@ -3295,21 +3295,21 @@ const syncFormFromAccount = (newAccount: Account | null) => {
   mixedChannelWarningAction.value = null
   form.name = newAccount.name
   form.notes = newAccount.notes || ''
-  form.proxy_id = newAccount.proxy_id
+  form.proxy_id = newAccount.proxyId
   form.concurrency = newAccount.concurrency
-  form.load_factor = newAccount.load_factor ?? null
+  form.load_factor = newAccount.loadFactor ?? null
   form.priority = newAccount.priority
-  form.rate_multiplier = newAccount.rate_multiplier ?? 1
+  form.rate_multiplier = newAccount.rateMultiplier ?? 1
   form.status = (newAccount.status === 'active' || newAccount.status === 'inactive' || newAccount.status === 'error')
     ? newAccount.status
     : 'active'
-  form.group_ids = newAccount.group_ids || []
-  form.expires_at = newAccount.expires_at ?? null
+  form.group_ids = newAccount.groupIds || []
+  form.expires_at = newAccount.expiresAt ?? null
 
   // Load intercept warmup requests setting (applies to all account types)
   const credentials = newAccount.credentials as Record<string, unknown> | undefined
   interceptWarmupRequests.value = credentials?.intercept_warmup_requests === true
-  autoPauseOnExpired.value = newAccount.auto_pause_on_expired === true
+  autoPauseOnExpired.value = newAccount.autoPauseOnExpired === true
   editVertexProjectId.value = ''
   editVertexClientEmail.value = ''
   editVertexLocation.value = 'us-central1'
@@ -3423,19 +3423,19 @@ const syncFormFromAccount = (newAccount: Account | null) => {
 
   // Load quota limit for apikey/bedrock accounts (bedrock quota is also loaded in its own branch above)
   if (newAccount.type === 'apikey' || newAccount.type === 'bedrock') {
-    const quotaVal = extra?.quota_limit as number | undefined
+    const quotaVal = extra?.quotaLimit as number | undefined
     editQuotaLimit.value = (quotaVal && quotaVal > 0) ? quotaVal : null
-    const dailyVal = extra?.quota_daily_limit as number | undefined
+    const dailyVal = extra?.quotaDailyLimit as number | undefined
     editQuotaDailyLimit.value = (dailyVal && dailyVal > 0) ? dailyVal : null
-    const weeklyVal = extra?.quota_weekly_limit as number | undefined
+    const weeklyVal = extra?.quotaWeeklyLimit as number | undefined
     editQuotaWeeklyLimit.value = (weeklyVal && weeklyVal > 0) ? weeklyVal : null
     // Load quota reset mode config
-    editDailyResetMode.value = (extra?.quota_daily_reset_mode as 'rolling' | 'fixed') || null
-    editDailyResetHour.value = (extra?.quota_daily_reset_hour as number) ?? null
-    editWeeklyResetMode.value = (extra?.quota_weekly_reset_mode as 'rolling' | 'fixed') || null
-    editWeeklyResetDay.value = (extra?.quota_weekly_reset_day as number) ?? null
-    editWeeklyResetHour.value = (extra?.quota_weekly_reset_hour as number) ?? null
-    editResetTimezone.value = (extra?.quota_reset_timezone as string) || null
+    editDailyResetMode.value = (extra?.quotaDailyResetMode as 'rolling' | 'fixed') || null
+    editDailyResetHour.value = (extra?.quotaDailyResetHour as number) ?? null
+    editWeeklyResetMode.value = (extra?.quotaWeeklyResetMode as 'rolling' | 'fixed') || null
+    editWeeklyResetDay.value = (extra?.quotaWeeklyResetDay as number) ?? null
+    editWeeklyResetHour.value = (extra?.quotaWeeklyResetHour as number) ?? null
+    editResetTimezone.value = (extra?.quotaResetTimezone as string) || null
     // Load quota notify config
     loadQuotaNotifyFromExtra(extra)
   } else {
@@ -3572,9 +3572,9 @@ const syncFormFromAccount = (newAccount: Account | null) => {
 
     // Load quota limits for bedrock
     const bedrockExtra = (newAccount.extra as Record<string, unknown>) || {}
-    editQuotaLimit.value = typeof bedrockExtra.quota_limit === 'number' ? bedrockExtra.quota_limit : null
-    editQuotaDailyLimit.value = typeof bedrockExtra.quota_daily_limit === 'number' ? bedrockExtra.quota_daily_limit : null
-    editQuotaWeeklyLimit.value = typeof bedrockExtra.quota_weekly_limit === 'number' ? bedrockExtra.quota_weekly_limit : null
+    editQuotaLimit.value = typeof bedrockExtra.quotaLimit === 'number' ? bedrockExtra.quotaLimit : null
+    editQuotaDailyLimit.value = typeof bedrockExtra.quotaDailyLimit === 'number' ? bedrockExtra.quotaDailyLimit : null
+    editQuotaWeeklyLimit.value = typeof bedrockExtra.quotaWeeklyLimit === 'number' ? bedrockExtra.quotaWeeklyLimit : null
     // Load quota notify for bedrock
     loadQuotaNotifyFromExtra(bedrockExtra)
 
@@ -3622,7 +3622,7 @@ const syncFormFromAccount = (newAccount: Account | null) => {
 
 async function loadTLSProfiles() {
   try {
-    const profiles = await adminAPI.tlsFingerprintProfiles.list()
+    const profiles = await adminSettingsQueryStore.tlsFingerprintProfile_list()
     tlsFingerprintProfiles.value = profiles.map((p: any) => ({ id: p.id, name: p.name }))
   } catch {
     tlsFingerprintProfiles.value = []
@@ -3691,7 +3691,7 @@ const syncAntigravityUpstreamModels = async () => {
 
   isSyncingAntigravityUpstream.value = true
   try {
-    const result = await adminAPI.accounts.syncUpstreamModels(props.account.id)
+    const result = await actionStore.syncUpstreamModels(props.account.id)
     const upstreamModels = result.models.map((model: any) => model.trim()).filter(Boolean)
     if (upstreamModels.length === 0) {
       appStore.showInfo(t('admin.accounts.syncUpstreamModelsEmpty'))
@@ -3901,50 +3901,50 @@ function loadQuotaControlSettings(account: Account) {
   }
 
   // Load from extra field (via backend DTO fields)
-  if (account.window_cost_limit != null && account.window_cost_limit > 0) {
+  if (account.windowCostLimit != null && account.windowCostLimit > 0) {
     windowCostEnabled.value = true
-    windowCostLimit.value = account.window_cost_limit
-    windowCostStickyReserve.value = account.window_cost_sticky_reserve ?? 10
+    windowCostLimit.value = account.windowCostLimit
+    windowCostStickyReserve.value = account.windowCostStickyReserve ?? 10
   }
 
-  if (account.max_sessions != null && account.max_sessions > 0) {
+  if (account.maxSessions != null && account.maxSessions > 0) {
     sessionLimitEnabled.value = true
-    maxSessions.value = account.max_sessions
-    sessionIdleTimeout.value = account.session_idle_timeout_minutes ?? 5
+    maxSessions.value = account.maxSessions
+    sessionIdleTimeout.value = account.sessionIdleTimeoutMinutes ?? 5
   }
 
   // RPM limit
-  if (account.base_rpm != null && account.base_rpm > 0) {
+  if (account.baseRpm != null && account.baseRpm > 0) {
     rpmLimitEnabled.value = true
-    baseRpm.value = account.base_rpm
-    rpmStrategy.value = (account.rpm_strategy as 'tiered' | 'sticky_exempt') || 'tiered'
-    rpmStickyBuffer.value = account.rpm_sticky_buffer ?? null
+    baseRpm.value = account.baseRpm
+    rpmStrategy.value = (account.rpmStrategy as 'tiered' | 'sticky_exempt') || 'tiered'
+    rpmStickyBuffer.value = account.rpmStickyBuffer ?? null
   }
 
   // UMQ mode（独立于 RPM 加载，防止编辑无 RPM 账号时丢失已有配置）
-  userMsgQueueMode.value = account.user_msg_queue_mode ?? ''
+  userMsgQueueMode.value = account.userMsgQueueMode ?? ''
 
   // Load TLS fingerprint setting
-  if (account.enable_tls_fingerprint === true) {
+  if (account.enableTlsFingerprint === true) {
     tlsFingerprintEnabled.value = true
   }
-  tlsFingerprintProfileId.value = account.tls_fingerprint_profile_id ?? null
+  tlsFingerprintProfileId.value = account.tlsFingerprintProfileId ?? null
 
   // Load session ID masking setting
-  if (account.session_id_masking_enabled === true) {
+  if (account.sessionIdMaskingEnabled === true) {
     sessionIdMaskingEnabled.value = true
   }
 
   // Load cache TTL override setting
-  if (account.cache_ttl_override_enabled === true) {
+  if (account.cacheTtlOverrideEnabled === true) {
     cacheTTLOverrideEnabled.value = true
-    cacheTTLOverrideTarget.value = account.cache_ttl_override_target || '5m'
+    cacheTTLOverrideTarget.value = account.cacheTtlOverrideTarget || '5m'
   }
 
   // Load custom base URL setting
-  if (account.custom_base_url_enabled === true) {
+  if (account.customBaseUrlEnabled === true) {
     customBaseUrlEnabled.value = true
-    customBaseUrl.value = account.custom_base_url || ''
+    customBaseUrl.value = account.customBaseUrl || ''
   }
 }
 
@@ -3985,9 +3985,9 @@ const buildMixedChannelDetails = (resp?: CheckMixedChannelResponse) => {
     return null
   }
   return {
-    groupName: details.group_name || 'Unknown',
-    currentPlatform: details.current_platform || 'Unknown',
-    otherPlatform: details.other_platform || 'Unknown'
+    groupName: details.groupName || 'Unknown',
+    currentPlatform: details.currentPlatform || 'Unknown',
+    otherPlatform: details.otherPlatform || 'Unknown'
   }
 }
 
@@ -4034,12 +4034,12 @@ const ensureAntigravityMixedChannelConfirmed = async (onConfirm: () => Promise<v
   }
 
   try {
-    const result = await adminAPI.accounts.checkMixedChannelRisk({
+    const result = await actionStore.checkMixedChannelRisk({
       platform: props.account.platform,
       group_ids: form.group_ids,
       account_id: props.account.id
     })
-    if (!result.has_risk) {
+    if (!result.hasRisk) {
       return true
     }
     openMixedChannelDialog({
@@ -4069,7 +4069,7 @@ const handleClose = () => {
 const submitUpdateAccount = async (accountID: number, updatePayload: Record<string, unknown>) => {
   submitting.value = true
   try {
-    const updatedAccount = await adminAPI.accounts.update(accountID, withAntigravityConfirmFlag(updatePayload))
+    const updatedAccount = await actionStore.update(accountID, withAntigravityConfirmFlag(updatePayload))
     appStore.showSuccess(t('admin.accounts.accountUpdated'))
     emit('updated', updatedAccount)
     handleClose()
@@ -4102,18 +4102,18 @@ const handleSubmit = async () => {
   const updatePayload: Record<string, unknown> = { ...form }
   try {
     // 后端期望 proxy_id: 0 表示清除代理，而不是 null
-    if (updatePayload.proxy_id === null) {
-      updatePayload.proxy_id = 0
+    if (updatePayload.proxyId === null) {
+      updatePayload.proxyId = 0
     }
     if (form.expires_at === null) {
-      updatePayload.expires_at = 0
+      updatePayload.expiresAt = 0
     }
     // load_factor: 空值/NaN/0/负数 时发送 0（后端约定 <= 0 = 清除）
     const lf = form.load_factor
     if (lf == null || Number.isNaN(lf) || lf <= 0) {
-      updatePayload.load_factor = 0
+      updatePayload.loadFactor = 0
     }
-    updatePayload.auto_pause_on_expired = autoPauseOnExpired.value
+    updatePayload.autoPauseOnExpired = autoPauseOnExpired.value
 
     // For apikey type, handle credentials update
     if (props.account.type === 'apikey') {
@@ -4133,7 +4133,7 @@ const handleSubmit = async () => {
       // 若后端尚未升级（无 credentials_status），回退读旧结构 currentCredentials.api_key。
       // 两者都无才报错。
       const hasExistingApiKey =
-        props.account.credentials_status?.has_api_key ?? Boolean(currentCredentials.api_key)
+        props.account.credentialsStatus?.has_api_key ?? Boolean(currentCredentials.api_key)
       if (editApiKey.value.trim()) {
         newCredentials.api_key = editApiKey.value.trim()
       } else if (!hasExistingApiKey) {
@@ -4243,7 +4243,7 @@ const handleSubmit = async () => {
 
       // SA JSON 已脱敏不再随 credentials 返回，存在性优先读 credentials_status。
       // 若后端尚未升级（无 credentials_status），回退读旧结构 service_account_json / service_account。
-      const credentialsStatus = props.account.credentials_status
+      const credentialsStatus = props.account.credentialsStatus
       const hasExistingServiceAccountJson = credentialsStatus
         ? Boolean(
             credentialsStatus.has_service_account_json || credentialsStatus.has_service_account
@@ -4468,84 +4468,84 @@ const handleSubmit = async () => {
 
       // Window cost limit settings
       if (windowCostEnabled.value && windowCostLimit.value != null && windowCostLimit.value > 0) {
-        newExtra.window_cost_limit = windowCostLimit.value
-        newExtra.window_cost_sticky_reserve = windowCostStickyReserve.value ?? 10
+        newExtra.windowCostLimit = windowCostLimit.value
+        newExtra.windowCostStickyReserve = windowCostStickyReserve.value ?? 10
       } else {
-        delete newExtra.window_cost_limit
-        delete newExtra.window_cost_sticky_reserve
+        delete newExtra.windowCostLimit
+        delete newExtra.windowCostStickyReserve
       }
 
       // Session limit settings
       if (sessionLimitEnabled.value && maxSessions.value != null && maxSessions.value > 0) {
-        newExtra.max_sessions = maxSessions.value
-        newExtra.session_idle_timeout_minutes = sessionIdleTimeout.value ?? 5
+        newExtra.maxSessions = maxSessions.value
+        newExtra.sessionIdleTimeoutMs = sessionIdleTimeout.value ?? 5
       } else {
-        delete newExtra.max_sessions
-        delete newExtra.session_idle_timeout_minutes
+        delete newExtra.maxSessions
+        delete newExtra.sessionIdleTimeoutMs
       }
 
       // RPM limit settings
       if (rpmLimitEnabled.value) {
         const DEFAULT_BASE_RPM = 15
-        newExtra.base_rpm = (baseRpm.value != null && baseRpm.value > 0)
+        newExtra.baseRpm = (baseRpm.value != null && baseRpm.value > 0)
           ? baseRpm.value
           : DEFAULT_BASE_RPM
-        newExtra.rpm_strategy = rpmStrategy.value
+        newExtra.rpmStrategy = rpmStrategy.value
         if (rpmStickyBuffer.value != null && rpmStickyBuffer.value > 0) {
-          newExtra.rpm_sticky_buffer = rpmStickyBuffer.value
+          newExtra.rpmStickyBuffer = rpmStickyBuffer.value
         } else {
-          delete newExtra.rpm_sticky_buffer
+          delete newExtra.rpmStickyBuffer
         }
       } else {
-        delete newExtra.base_rpm
-        delete newExtra.rpm_strategy
-        delete newExtra.rpm_sticky_buffer
+        delete newExtra.baseRpm
+        delete newExtra.rpmStrategy
+        delete newExtra.rpmStickyBuffer
       }
 
       // UMQ mode（独立于 RPM 保存）
       if (userMsgQueueMode.value) {
-        newExtra.user_msg_queue_mode = userMsgQueueMode.value
+        newExtra.userMsgQueueMode = userMsgQueueMode.value
       } else {
-        delete newExtra.user_msg_queue_mode
+        delete newExtra.userMsgQueueMode
       }
       delete newExtra.user_msg_queue_enabled  // 清理旧字段
 
       // TLS fingerprint setting
       if (tlsFingerprintEnabled.value) {
-        newExtra.enable_tls_fingerprint = true
+        newExtra.enableTlsFingerprint = true
         if (tlsFingerprintProfileId.value) {
-          newExtra.tls_fingerprint_profile_id = tlsFingerprintProfileId.value
+          newExtra.tlsFingerprintProfileId = tlsFingerprintProfileId.value
         } else {
-          delete newExtra.tls_fingerprint_profile_id
+          delete newExtra.tlsFingerprintProfileId
         }
       } else {
-        delete newExtra.enable_tls_fingerprint
-        delete newExtra.tls_fingerprint_profile_id
+        delete newExtra.enableTlsFingerprint
+        delete newExtra.tlsFingerprintProfileId
       }
 
       // Session ID masking setting
       if (sessionIdMaskingEnabled.value) {
-        newExtra.session_id_masking_enabled = true
+        newExtra.sessionIdMaskingEnabled = true
       } else {
-        delete newExtra.session_id_masking_enabled
+        delete newExtra.sessionIdMaskingEnabled
       }
 
       // Cache TTL override setting
       if (cacheTTLOverrideEnabled.value) {
-        newExtra.cache_ttl_override_enabled = true
-        newExtra.cache_ttl_override_target = cacheTTLOverrideTarget.value
+        newExtra.cacheTtlOverrideEnabled = true
+        newExtra.cacheTtlOverrideTarget = cacheTTLOverrideTarget.value
       } else {
-        delete newExtra.cache_ttl_override_enabled
-        delete newExtra.cache_ttl_override_target
+        delete newExtra.cacheTtlOverrideEnabled
+        delete newExtra.cacheTtlOverrideTarget
       }
 
       // Custom base URL relay setting
       if (customBaseUrlEnabled.value && customBaseUrl.value.trim()) {
-        newExtra.custom_base_url_enabled = true
-        newExtra.custom_base_url = customBaseUrl.value.trim()
+        newExtra.customBaseUrlEnabled = true
+        newExtra.customBaseUrl = customBaseUrl.value.trim()
       } else {
-        delete newExtra.custom_base_url_enabled
-        delete newExtra.custom_base_url
+        delete newExtra.customBaseUrlEnabled
+        delete newExtra.customBaseUrl
       }
 
       updatePayload.extra = newExtra
@@ -4681,47 +4681,47 @@ const handleSubmit = async () => {
       const newExtra: Record<string, unknown> = { ...currentExtra }
       // Total quota
       if (editQuotaLimit.value != null && editQuotaLimit.value > 0) {
-        newExtra.quota_limit = editQuotaLimit.value
+        newExtra.quotaLimit = editQuotaLimit.value
       } else {
-        delete newExtra.quota_limit
+        delete newExtra.quotaLimit
       }
       // Daily quota
       if (editQuotaDailyLimit.value != null && editQuotaDailyLimit.value > 0) {
-        newExtra.quota_daily_limit = editQuotaDailyLimit.value
+        newExtra.quotaDailyLimit = editQuotaDailyLimit.value
       } else {
-        delete newExtra.quota_daily_limit
-        delete newExtra.quota_daily_used
+        delete newExtra.quotaDailyLimit
+        delete newExtra.quotaDailyUsed
         delete newExtra.quota_daily_start
       }
       // Weekly quota
       if (editQuotaWeeklyLimit.value != null && editQuotaWeeklyLimit.value > 0) {
-        newExtra.quota_weekly_limit = editQuotaWeeklyLimit.value
+        newExtra.quotaWeeklyLimit = editQuotaWeeklyLimit.value
       } else {
-        delete newExtra.quota_weekly_limit
-        delete newExtra.quota_weekly_used
+        delete newExtra.quotaWeeklyLimit
+        delete newExtra.quotaWeeklyUsed
         delete newExtra.quota_weekly_start
       }
       // Quota reset mode config
       if (editDailyResetMode.value === 'fixed') {
-        newExtra.quota_daily_reset_mode = 'fixed'
-        newExtra.quota_daily_reset_hour = editDailyResetHour.value ?? 0
+        newExtra.quotaDailyResetMode = 'fixed'
+        newExtra.quotaDailyResetHour = editDailyResetHour.value ?? 0
       } else {
-        delete newExtra.quota_daily_reset_mode
-        delete newExtra.quota_daily_reset_hour
+        delete newExtra.quotaDailyResetMode
+        delete newExtra.quotaDailyResetHour
       }
       if (editWeeklyResetMode.value === 'fixed') {
-        newExtra.quota_weekly_reset_mode = 'fixed'
-        newExtra.quota_weekly_reset_day = editWeeklyResetDay.value ?? 1
-        newExtra.quota_weekly_reset_hour = editWeeklyResetHour.value ?? 0
+        newExtra.quotaWeeklyResetMode = 'fixed'
+        newExtra.quotaWeeklyResetDay = editWeeklyResetDay.value ?? 1
+        newExtra.quotaWeeklyResetHour = editWeeklyResetHour.value ?? 0
       } else {
-        delete newExtra.quota_weekly_reset_mode
-        delete newExtra.quota_weekly_reset_day
-        delete newExtra.quota_weekly_reset_hour
+        delete newExtra.quotaWeeklyResetMode
+        delete newExtra.quotaWeeklyResetDay
+        delete newExtra.quotaWeeklyResetHour
       }
       if (editDailyResetMode.value === 'fixed' || editWeeklyResetMode.value === 'fixed') {
-        newExtra.quota_reset_timezone = editResetTimezone.value || 'UTC'
+        newExtra.quotaResetTimezone = editResetTimezone.value || 'UTC'
       } else {
-        delete newExtra.quota_reset_timezone
+        delete newExtra.quotaResetTimezone
       }
       // Quota notify config
       writeQuotaNotifyToExtra(newExtra, 'update')

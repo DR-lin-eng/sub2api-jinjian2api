@@ -31,8 +31,8 @@
             <span v-if="plan.currency" class="text-xs font-medium text-gray-400 dark:text-dark-500">{{ plan.currency }}</span>
           </div>
           <span class="text-[11px] text-gray-400 dark:text-dark-500">/ {{ validitySuffix }}</span>
-          <div v-if="plan.original_price" class="mt-0.5 flex items-center justify-end gap-1.5">
-            <span class="text-xs text-gray-400 line-through dark:text-dark-500">{{ planCurrencySymbol }}{{ plan.original_price }}<template v-if="plan.currency"> {{ plan.currency }}</template></span>
+          <div v-if="plan.originalPrice" class="mt-0.5 flex items-center justify-end gap-1.5">
+            <span class="text-xs text-gray-400 line-through dark:text-dark-500">{{ planCurrencySymbol }}{{ plan.originalPrice }}<template v-if="plan.currency"> {{ plan.currency }}</template></span>
             <span :class="['rounded px-1 py-0.5 text-[10px] font-semibold', discountClass]">{{ discountText }}</span>
           </div>
         </div>
@@ -48,19 +48,19 @@
           <span class="text-gray-400 dark:text-dark-500">{{ t('payment.planCard.peakRate') }}</span>
           <span class="text-right font-medium text-amber-700 dark:text-amber-300">{{ peakRateDisplay }}</span>
         </div>
-        <div v-if="plan.daily_limit_usd != null" class="flex items-center justify-between">
+        <div v-if="plan.dailyLimitUsd != null" class="flex items-center justify-between">
           <span class="text-gray-400 dark:text-dark-500">{{ t('payment.planCard.dailyLimit') }}</span>
-          <span class="font-medium text-gray-700 dark:text-gray-300">${{ plan.daily_limit_usd }}</span>
+          <span class="font-medium text-gray-700 dark:text-gray-300">${{ plan.dailyLimitUsd }}</span>
         </div>
-        <div v-if="plan.weekly_limit_usd != null" class="flex items-center justify-between">
+        <div v-if="plan.weeklyLimitUsd != null" class="flex items-center justify-between">
           <span class="text-gray-400 dark:text-dark-500">{{ t('payment.planCard.weeklyLimit') }}</span>
-          <span class="font-medium text-gray-700 dark:text-gray-300">${{ plan.weekly_limit_usd }}</span>
+          <span class="font-medium text-gray-700 dark:text-gray-300">${{ plan.weeklyLimitUsd }}</span>
         </div>
-        <div v-if="plan.monthly_limit_usd != null" class="flex items-center justify-between">
+        <div v-if="plan.monthlyLimitUsd != null" class="flex items-center justify-between">
           <span class="text-gray-400 dark:text-dark-500">{{ t('payment.planCard.monthlyLimit') }}</span>
-          <span class="font-medium text-gray-700 dark:text-gray-300">${{ plan.monthly_limit_usd }}</span>
+          <span class="font-medium text-gray-700 dark:text-gray-300">${{ plan.monthlyLimitUsd }}</span>
         </div>
-        <div v-if="plan.daily_limit_usd == null && plan.weekly_limit_usd == null && plan.monthly_limit_usd == null" class="flex items-center justify-between">
+        <div v-if="plan.dailyLimitUsd == null && plan.weeklyLimitUsd == null && plan.monthlyLimitUsd == null" class="flex items-center justify-between">
           <span class="text-gray-400 dark:text-dark-500">{{ t('payment.planCard.quota') }}</span>
           <span class="font-medium text-gray-700 dark:text-gray-300">{{ t('payment.planCard.unlimited') }}</span>
         </div>
@@ -103,7 +103,6 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { SubscriptionPlan } from '@/types/payment'
-import type { UserSubscription } from '@/types'
 import { useAppStore } from '@/core/stores/appStore'
 import { hasPeakRate as groupHasPeakRate, formatPeakRateWindow, serverTimezoneLabel } from '@/core/utils/peak-rate'
 import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
@@ -117,14 +116,15 @@ import {
   platformDiscountClass,
   platformLabel,
 } from '@/core/utils/platformColors'
+import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/subscription'
 
 const props = defineProps<{ plan: SubscriptionPlan; activeSubscriptions?: UserSubscription[] }>()
 const emit = defineEmits<{ select: [plan: SubscriptionPlan] }>()
 const { t } = useI18n()
 
-const platform = computed(() => props.plan.group_platform || '')
+const platform = computed(() => props.plan.groupPlatform || '')
 const isRenewal = computed(() =>
-  props.activeSubscriptions?.some(s => s.group_id === props.plan.group_id && s.status === 'active') ?? false
+  props.activeSubscriptions?.some(s => s.groupId === props.plan.groupId && s.status === 'active') ?? false
 )
 
 // Derived color classes from central config
@@ -138,13 +138,13 @@ const discountClass = computed(() => platformDiscountClass(platform.value))
 const pLabel = computed(() => platformLabel(platform.value))
 
 const discountText = computed(() => {
-  if (!props.plan.original_price || props.plan.original_price <= 0) return ''
-  const pct = Math.round((1 - props.plan.price / props.plan.original_price) * 100)
+  if (!props.plan.originalPrice || props.plan.originalPrice <= 0) return ''
+  const pct = Math.round((1 - props.plan.price / props.plan.originalPrice) * 100)
   return pct > 0 ? `-${pct}%` : ''
 })
 
 const rateDisplay = computed(() => {
-  const rate = props.plan.rate_multiplier ?? 1
+  const rate = props.plan.rateMultiplier ?? 1
   return `×${Number(rate.toPrecision(10))}`
 })
 
@@ -154,7 +154,7 @@ const planCurrencySymbol = computed(() => currencySymbol(props.plan.currency || 
 const hasPeakRate = computed(() => groupHasPeakRate(props.plan))
 
 const peakRateDisplay = computed(() => {
-  return formatPeakRateWindow(props.plan, serverTimezoneLabel(appStore.cachedPublicSettings?.server_utc_offset))
+  return formatPeakRateWindow(props.plan, serverTimezoneLabel(appStore.cachedPublicSettings?.serverUtcOffset))
 })
 
 const MODEL_SCOPE_LABELS: Record<string, string> = {
@@ -165,15 +165,15 @@ const MODEL_SCOPE_LABELS: Record<string, string> = {
 
 const modelScopeLabels = computed(() => {
   if (platform.value !== 'antigravity') return []
-  const scopes = props.plan.supported_model_scopes
+  const scopes = props.plan.supportedModelScopes
   if (!scopes || scopes.length === 0) return []
   return scopes.map(s => MODEL_SCOPE_LABELS[s] || s)
 })
 
 const validitySuffix = computed(() => {
-  const u = props.plan.validity_unit || 'day'
+  const u = props.plan.validityUnit || 'day'
   if (u === 'month') return t('payment.perMonth')
   if (u === 'year') return t('payment.perYear')
-  return `${props.plan.validity_days}${t('payment.days')}`
+  return `${props.plan.validityDays}${t('payment.days')}`
 })
 </script>

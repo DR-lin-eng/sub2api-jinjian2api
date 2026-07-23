@@ -5,7 +5,7 @@ import {
   messagesDispatchConfigToFormState,
   messagesDispatchFormStateToConfig,
   resetMessagesDispatchFormState,
-} from "@/features/admin-groups/presentation/groupsMessagesDispatchResolver";
+} from "@/features/admin-groups/presentation/utils/groupsMessagesDispatchResolver";
 
 describe("groupsMessagesDispatch", () => {
   it("returns the expected default form state", () => {

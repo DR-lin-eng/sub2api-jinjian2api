@@ -4,14 +4,7 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type {
-  UserAttributeDefinition,
-  UserAttributeValue,
-  CreateUserAttributeRequest,
-  UpdateUserAttributeRequest,
-  UserAttributeValuesMap
-} from '@/types'
-
+import type { UserAttributeDefinition, UserAttributeValue, CreateUserAttributeRequest, UpdateUserAttributeRequest, UserAttributeValuesMap } from '@/features/admin-users/domain/models/userAttributes'
 /**
  * Get all attribute definitions
  */

@@ -87,10 +87,10 @@
                 <span class="truncate font-medium">{{ proxy.name }}</span>
                 <!-- Account count badge -->
                 <span
-                  v-if="proxy.account_count !== undefined"
+                  v-if="proxy.accountCount !== undefined"
                   class="inline-flex flex-shrink-0 items-center rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600 dark:bg-dark-600 dark:text-gray-400"
                 >
-                  {{ proxy.account_count }}
+                  {{ proxy.accountCount }}
                 </span>
                 <!-- Test result badges -->
                 <template v-if="testResults[proxy.id]">
@@ -172,8 +172,7 @@ import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { adminAPI } from '@/api/admin'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import type { Proxy } from '@/types'
-
+import type { Proxy } from '@/features/admin-proxies/domain/models/proxy'
 const { t } = useI18n()
 
 interface ProxyTestResult {

@@ -196,6 +196,7 @@ import VersionBadge from '@/common/widgets/data/VersionBadge.vue'
 import { sanitizeSvg } from '@/core/utils/sanitize'
 import { sanitizeUrl } from '@/core/utils/url'
 import { FeatureFlags, makeSidebarFlag } from '@/core/services/featureFlags'
+// TODO(spec-exception): useBatchImageAccess is a temporary cross-feature service; see .eslintrc.cjs override.
 import { useBatchImageAccess } from '@/core/services/useBatchImageAccess'
 
 interface NavItem {
@@ -715,7 +716,7 @@ function buildSelfNavItems(withDashboard: boolean): NavItem[] {
       path: `/custom/${item.id}`,
       label: item.label,
       icon: null,
-      iconSvg: item.icon_svg,
+      iconSvg: item.iconSvg,
     })),
   )
   return items
@@ -737,16 +738,16 @@ const personalNavItems = computed((): NavItem[] => finalizeNav(buildSelfNavItems
 
 // Custom menu items filtered by visibility
 const customMenuItemsForUser = computed(() => {
-  const items = appStore.cachedPublicSettings?.custom_menu_items ?? []
+  const items = appStore.cachedPublicSettings?.customMenuItems ?? []
   return items
     .filter((item: any) => item.visibility === 'user')
-    .sort((a: any, b: any) => a.sort_order - b.sort_order)
+    .sort((a: any, b: any) => a.sortOrder - b.sortOrder)
 })
 
 const customMenuItemsForAdmin = computed(() => {
   return adminSettingsStore.customMenuItems
     .filter((item: any) => item.visibility === 'admin')
-    .sort((a: any, b: any) => a.sort_order - b.sort_order)
+    .sort((a: any, b: any) => a.sortOrder - b.sortOrder)
 })
 
 // Admin navigation items
@@ -824,14 +825,14 @@ const adminNavItems = computed((): NavItem[] => {
     filtered.push({ path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon })
     filtered.push({ path: '/admin/settings', label: t('nav.settings'), icon: CogIcon })
     for (const cm of customMenuItemsForAdmin.value) {
-      filtered.push({ path: `/custom/${cm.id}`, label: cm.label, icon: null, iconSvg: cm.icon_svg })
+      filtered.push({ path: `/custom/${cm.id}`, label: cm.label, icon: null, iconSvg: cm.iconSvg })
     }
     return filtered
   }
 
   visible.push({ path: '/admin/settings', label: t('nav.settings'), icon: CogIcon })
   for (const cm of customMenuItemsForAdmin.value) {
-    visible.push({ path: `/custom/${cm.id}`, label: cm.label, icon: null, iconSvg: cm.icon_svg })
+    visible.push({ path: `/custom/${cm.id}`, label: cm.label, icon: null, iconSvg: cm.iconSvg })
   }
   return visible
 })

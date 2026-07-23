@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { setActivePinia, createPinia } from 'pinia'
 
 vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
@@ -19,18 +20,32 @@ vi.mock('vue-i18n', () => ({
   })
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    accounts: {
-      generateAuthUrl: vi.fn(),
-      exchangeCode: vi.fn(),
-      refreshOpenAIToken: vi.fn()
-    }
-  }
+const {
+  generateAuthUrl,
+  exchangeCode,
+  refreshOpenAIToken,
+} = vi.hoisted(() => ({
+  generateAuthUrl: vi.fn(),
+  exchangeCode: vi.fn(),
+  refreshOpenAIToken: vi.fn(),
+}))
+
+vi.mock('@/features/admin-accounts/presentation/stores/adminAccountsActionStore', () => ({
+  useAdminAccountsActionStore: () => ({
+    generateAuthUrl,
+    exchangeCode,
+    refreshOpenAIToken,
+  }),
 }))
 
 import { useOpenAIOAuth } from '@/features/admin-accounts/presentation/composables/useOpenAIOAuth'
-import { adminAPI } from '@/api/admin'
+
+beforeEach(() => {
+  setActivePinia(createPinia())
+  generateAuthUrl.mockReset()
+  exchangeCode.mockReset()
+  refreshOpenAIToken.mockReset()
+})
 
 describe('useOpenAIOAuth.buildCredentials', () => {
   it('should keep client_id when token response contains it', () => {
@@ -77,7 +92,7 @@ describe('useOpenAIOAuth.buildCredentials', () => {
 
 describe('useOpenAIOAuth.exchangeAuthCode', () => {
   it('shows a clear proxy hint when code exchange fails without a proxy', async () => {
-    vi.mocked(adminAPI.accounts.exchangeCode).mockRejectedValueOnce({
+    exchangeCode.mockRejectedValueOnce({
       status: 502,
       reason: 'OPENAI_OAUTH_PROXY_REQUIRED',
       message: 'OpenAI OAuth token exchange failed: no proxy is configured.'

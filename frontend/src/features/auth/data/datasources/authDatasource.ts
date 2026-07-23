@@ -15,19 +15,8 @@ import {
   setTokenExpiresAtMemory
 } from '@/core/networks/tokenStore'
 import { refreshBrowserSession, type SessionRefreshResult } from '@/core/networks/sessionRefresh'
-import type {
-  LoginRequest,
-  RegisterRequest,
-  AuthResponse,
-  CurrentUserResponse,
-  SendVerifyCodeRequest,
-  SendVerifyCodeResponse,
-  PublicSettings,
-  TotpLoginResponse,
-  TotpLogin2FARequest,
-  EncryptedRegisterRequest
-} from '@/types'
-
+import type { LoginRequest, RegisterRequest, AuthResponse, CurrentUserResponse, SendVerifyCodeRequest, SendVerifyCodeResponse, PublicSettings, EncryptedRegisterRequest } from '@/features/auth/domain/models/auth'
+import type { TotpLoginResponse, TotpLogin2FARequest } from '@/features/auth/domain/models/totp'
 export {
   clearCredentialKeyPrefetch,
   createCredentialEnvelope,
@@ -120,12 +109,12 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 
   // Only store token if 2FA is not required
   if (!isTotp2FARequired(data)) {
-    setAuthToken(data.access_token)
-    if (data.refresh_token) {
-      setRefreshToken(data.refresh_token)
+    setAuthToken(data.accessToken)
+    if (data.refreshToken) {
+      setRefreshToken(data.refreshToken)
     }
-    if (data.expires_in) {
-      setTokenExpiresAt(data.expires_in)
+    if (data.expiresIn) {
+      setTokenExpiresAt(data.expiresIn)
     }
     localStorage.setItem('auth_user', JSON.stringify(data.user))
   }
@@ -142,12 +131,12 @@ export async function login2FA(request: TotpLogin2FARequest): Promise<AuthRespon
   const { data } = await apiClient.post<AuthResponse>('/auth/login/2fa', request)
 
   // Store token and user data
-  setAuthToken(data.access_token)
-  if (data.refresh_token) {
-    setRefreshToken(data.refresh_token)
+  setAuthToken(data.accessToken)
+  if (data.refreshToken) {
+    setRefreshToken(data.refreshToken)
   }
-  if (data.expires_in) {
-    setTokenExpiresAt(data.expires_in)
+  if (data.expiresIn) {
+    setTokenExpiresAt(data.expiresIn)
   }
   localStorage.setItem('auth_user', JSON.stringify(data.user))
 
@@ -161,24 +150,24 @@ export async function login2FA(request: TotpLogin2FARequest): Promise<AuthRespon
  */
 export async function register(userData: RegisterRequest | EncryptedRegisterRequest): Promise<AuthResponse> {
   let requestData: EncryptedRegisterRequest
-  if ('credential_envelope' in userData) {
+  if ('credentialEnvelope' in userData) {
     requestData = userData
   } else {
     const { email, password, ...registrationData } = userData
     requestData = {
       ...registrationData,
-      credential_envelope: await createCredentialEnvelope(email, password)
+      credentialEnvelope: await createCredentialEnvelope(email, password)
     }
   }
   const { data } = await apiClient.post<AuthResponse>('/auth/register', requestData)
 
   // Store token and user data
-  setAuthToken(data.access_token)
-  if (data.refresh_token) {
-    setRefreshToken(data.refresh_token)
+  setAuthToken(data.accessToken)
+  if (data.refreshToken) {
+    setRefreshToken(data.refreshToken)
   }
-  if (data.expires_in) {
-    setTokenExpiresAt(data.expires_in)
+  if (data.expiresIn) {
+    setTokenExpiresAt(data.expiresIn)
   }
   localStorage.setItem('auth_user', JSON.stringify(data.user))
 
@@ -374,35 +363,35 @@ export interface ResolvedWeChatOAuthStart {
 }
 
 export type WeChatOAuthPublicSettings = {
-  wechat_oauth_enabled?: boolean
-  wechat_oauth_open_enabled?: boolean
-  wechat_oauth_mp_enabled?: boolean
-  wechat_oauth_mobile_enabled?: boolean
+  wechatOauthEnabled?: boolean
+  wechatOauthOpenEnabled?: boolean
+  wechatOauthMpEnabled?: boolean
+  wechatOauthMobileEnabled?: boolean
 }
 
 export function isWeChatWebOAuthEnabled(
   settings: WeChatOAuthPublicSettings | null | undefined,
 ): boolean {
-  const legacyEnabled = settings?.wechat_oauth_enabled ?? false
+  const legacyEnabled = settings?.wechatOauthEnabled ?? false
   const hasExplicitCapabilities =
-    typeof settings?.wechat_oauth_open_enabled === 'boolean' ||
-    typeof settings?.wechat_oauth_mp_enabled === 'boolean'
+    typeof settings?.wechatOauthOpenEnabled === 'boolean' ||
+    typeof settings?.wechatOauthMpEnabled === 'boolean'
 
   if (!hasExplicitCapabilities) {
     return legacyEnabled
   }
 
-  return settings?.wechat_oauth_open_enabled === true || settings?.wechat_oauth_mp_enabled === true
+  return settings?.wechatOauthOpenEnabled === true || settings?.wechatOauthMpEnabled === true
 }
 
 export function hasExplicitWeChatOAuthCapabilities(
   settings: WeChatOAuthPublicSettings | null | undefined,
 ): settings is WeChatOAuthPublicSettings & {
-  wechat_oauth_open_enabled: boolean
-  wechat_oauth_mp_enabled: boolean
+  wechatOauthOpenEnabled: boolean
+  wechatOauthMpEnabled: boolean
 } {
-  return typeof settings?.wechat_oauth_open_enabled === 'boolean'
-    && typeof settings?.wechat_oauth_mp_enabled === 'boolean'
+  return typeof settings?.wechatOauthOpenEnabled === 'boolean'
+    && typeof settings?.wechatOauthMpEnabled === 'boolean'
 }
 
 export function resolveWeChatOAuthStart(
@@ -413,15 +402,15 @@ export function resolveWeChatOAuthStart(
     ?? (typeof navigator !== 'undefined' ? navigator.userAgent : '')
     ?? '').trim()
   const isWeChatBrowser = /MicroMessenger/i.test(normalizedUserAgent)
-  const legacyEnabled = settings?.wechat_oauth_enabled ?? false
-  const openEnabled = typeof settings?.wechat_oauth_open_enabled === 'boolean'
-    ? settings.wechat_oauth_open_enabled
+  const legacyEnabled = settings?.wechatOauthEnabled ?? false
+  const openEnabled = typeof settings?.wechatOauthOpenEnabled === 'boolean'
+    ? settings.wechatOauthOpenEnabled
     : legacyEnabled
-  const mpEnabled = typeof settings?.wechat_oauth_mp_enabled === 'boolean'
-    ? settings.wechat_oauth_mp_enabled
+  const mpEnabled = typeof settings?.wechatOauthMpEnabled === 'boolean'
+    ? settings.wechatOauthMpEnabled
     : legacyEnabled
-  const mobileEnabled = typeof settings?.wechat_oauth_mobile_enabled === 'boolean'
-    ? settings.wechat_oauth_mobile_enabled
+  const mobileEnabled = typeof settings?.wechatOauthMobileEnabled === 'boolean'
+    ? settings.wechatOauthMobileEnabled
     : false
 
   if (isWeChatBrowser) {
@@ -493,8 +482,8 @@ export async function sendPendingOAuthVerifyCode(
  */
 export interface ValidatePromoCodeResponse {
   valid: boolean
-  bonus_amount?: number
-  error_code?: string
+  bonusAmount?: number
+  errorCode?: string
   message?: string
 }
 
@@ -513,7 +502,7 @@ export async function validatePromoCode(code: string): Promise<ValidatePromoCode
  */
 export interface ValidateInvitationCodeResponse {
   valid: boolean
-  error_code?: string
+  errorCode?: string
 }
 
 /**

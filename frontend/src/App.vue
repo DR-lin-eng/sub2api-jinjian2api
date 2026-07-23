@@ -21,7 +21,7 @@ const adminSettingsStore = useAdminSettingsStore()
 
 function updateDocumentTitle() {
   const customMenuItems = [
-    ...(appStore.cachedPublicSettings?.custom_menu_items ?? []),
+    ...(appStore.cachedPublicSettings?.customMenuItems ?? []),
     ...(authStore.isAdmin ? adminSettingsStore.customMenuItems : []),
   ]
   document.title = resolveRouteDocumentTitle(route, appStore.siteName, customMenuItems)
@@ -44,7 +44,7 @@ watch(
     () => route.meta.title,
     () => route.meta.titleKey,
     () => appStore.siteName,
-    () => appStore.cachedPublicSettings?.custom_menu_items,
+    () => appStore.cachedPublicSettings?.customMenuItems,
     () => authStore.isAdmin,
     () => adminSettingsStore.customMenuItems,
   ],

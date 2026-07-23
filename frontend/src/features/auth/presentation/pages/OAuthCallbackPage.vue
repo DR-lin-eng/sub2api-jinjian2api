@@ -358,8 +358,8 @@ async function handleSubmitTotpChallenge() {
   if (!totpTempToken.value || code.length !== 6) return
   isSubmitting.value = true
   try {
-    const completion = await login2FA({ temp_token: totpTempToken.value, totp_code: code })
-    await authStore.setToken(completion.access_token)
+    const completion = await login2FA({ tempToken: totpTempToken.value, totpCode: code })
+    await authStore.setToken(completion.accessToken)
     clearAllAffiliateReferralCodes()
     appStore.showSuccess(t('auth.loginSuccess'))
     await router.replace(redirectTo.value)

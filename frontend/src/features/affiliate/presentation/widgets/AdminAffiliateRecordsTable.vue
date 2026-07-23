@@ -46,7 +46,7 @@
           </template>
           <template #cell-user="{ row }">
             <UserCell
-              :id="row.user_id"
+              :id="row.userId"
               :email="row.user_email"
               :username="row.username"
               :clickable="true"
@@ -96,7 +96,7 @@
             <NullableAmountText :value="row.history_quota_after" />
           </template>
           <template #cell-created_at="{ row }">
-            <span class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(row.created_at) }}</span>
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(row.createdAt) }}</span>
           </template>
         </DataTable>
       </template>

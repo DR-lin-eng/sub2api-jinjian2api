@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createModelsListCandidatesTracker,
-} from "@/features/admin-groups/presentation/groupsModelsListCandidatesResolver";
+} from "@/features/admin-groups/presentation/utils/groupsModelsListCandidatesResolver";
 
 describe("groupsModelsListCandidates", () => {
   it("rejects stale candidate responses after a newer platform request starts", () => {

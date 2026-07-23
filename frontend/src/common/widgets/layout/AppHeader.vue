@@ -264,9 +264,9 @@ const dropdownOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
 const contactInfo = computed(() => appStore.contactInfo)
 const docUrl = computed(() => sanitizeUrl(appStore.docUrl))
-const avatarUrl = computed(() => user.value?.avatar_url?.trim() || '')
+const avatarUrl = computed(() => user.value?.avatarUrl?.trim() || '')
 const availableBalance = computed(() => Number(user.value?.balance || 0))
-const frozenBalance = computed(() => Number(user.value?.frozen_balance || 0))
+const frozenBalance = computed(() => Number(user.value?.frozenBalance || 0))
 const totalBalance = computed(() => availableBalance.value + frozenBalance.value)
 const balanceAvailableText = computed(() => t('common.availableBalance') === 'common.availableBalance' ? '可用余额' : t('common.availableBalance'))
 const balanceFrozenText = computed(() => t('common.frozenBalance') === 'common.frozenBalance' ? '冻结金额' : t('common.frozenBalance'))
@@ -301,7 +301,7 @@ const pageTitle = computed(() => {
   // For custom pages, use the menu item's label instead of generic "自定义页面"
   if (route.name === 'CustomPage') {
     const id = route.params.id as string
-    const publicItems = appStore.cachedPublicSettings?.custom_menu_items ?? []
+    const publicItems = appStore.cachedPublicSettings?.customMenuItems ?? []
     const menuItem = publicItems.find((item: any) => item.id === id)
       ?? (authStore.isAdmin ? adminSettingsStore.customMenuItems.find((item: any) => item.id === id) : undefined)
     if (menuItem?.label) return menuItem.label

@@ -4,8 +4,7 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type { RedeemCodeRequest } from '@/types'
-
+import type { RedeemCodeRequest } from '@/features/billing/domain/models/redeem'
 export interface RedeemHistoryItem {
   id: number
   code: string

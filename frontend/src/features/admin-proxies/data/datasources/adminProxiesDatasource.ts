@@ -4,17 +4,10 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type {
-  Proxy,
-  ProxyAccountSummary,
-  ProxyQualityCheckResult,
-  CreateProxyRequest,
-  UpdateProxyRequest,
-  PaginatedResponse,
-  AdminDataPayload,
-  AdminDataImportResult
-} from '@/types'
-
+import type { PaginatedResponse } from '@/types'
+import type { Proxy, ProxyAccountSummary, ProxyQualityCheckResult, CreateProxyRequest, UpdateProxyRequest } from '@/features/admin-proxies/domain/models/proxy'
+import type { AdminDataPayload } from '@/features/admin-accounts/domain/models/adminDataPayload'
+import type { AdminDataImportResult } from '@/features/admin-accounts/domain/models/adminDataImportResult'
 /**
  * List all proxies with pagination
  * @param page - Page number (default: 1)

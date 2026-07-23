@@ -21,54 +21,54 @@
           <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.baseAmount') }}</p>
           <p class="text-sm font-medium text-gray-900 dark:text-white">{{ paymentAmountSymbol }}{{ baseAmount.toFixed(2) }}</p>
         </div>
-        <div v-if="order.fee_rate > 0">
-          <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.fee') }} ({{ order.fee_rate }}%)</p>
+        <div v-if="order.feeRate > 0">
+          <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.fee') }} ({{ order.feeRate }}%)</p>
           <p class="text-sm font-medium text-gray-900 dark:text-white">{{ paymentAmountSymbol }}{{ feeAmount.toFixed(2) }}</p>
         </div>
         <div>
           <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.payAmount') }}</p>
-          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ paymentAmountSymbol }}{{ order.pay_amount.toFixed(2) }}</p>
+          <p class="text-sm font-medium text-gray-900 dark:text-white">{{ paymentAmountSymbol }}{{ order.payAmount.toFixed(2) }}</p>
         </div>
-        <div v-if="order.amount !== order.pay_amount">
+        <div v-if="order.amount !== order.payAmount">
           <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.creditedAmount') }}</p>
           <p class="text-sm font-medium text-gray-900 dark:text-white">{{ creditedAmountSymbol }}{{ order.amount.toFixed(2) }}</p>
         </div>
         <div>
           <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.paymentMethod') }}</p>
           <p class="text-sm text-gray-700 dark:text-gray-300">
-            {{ t('payment.methods.' + order.payment_type, order.payment_type) }}
+            {{ t('payment.methods.' + order.paymentType, order.paymentType) }}
           </p>
         </div>
         <div>
           <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.orderType') }}</p>
           <p class="text-sm text-gray-700 dark:text-gray-300">
-            {{ t('payment.admin.' + order.order_type + 'Order', order.order_type) }}
+            {{ t('payment.admin.' + order.orderType + 'Order', order.orderType) }}
           </p>
         </div>
         <div>
           <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.userId') }}</p>
-          <p class="text-sm text-gray-700 dark:text-gray-300">#{{ order.user_id }}</p>
+          <p class="text-sm text-gray-700 dark:text-gray-300">#{{ order.userId }}</p>
         </div>
         <div>
           <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.createdAt') }}</p>
-          <p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(order.created_at) }}</p>
+          <p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(order.createdAt) }}</p>
         </div>
         <div>
           <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.expiresAt') }}</p>
-          <p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(order.expires_at) }}</p>
+          <p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(order.expiresAt) }}</p>
         </div>
-        <div v-if="order.paid_at">
+        <div v-if="order.paidAt">
           <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.paidAt') }}</p>
-          <p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(order.paid_at) }}</p>
+          <p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(order.paidAt) }}</p>
         </div>
-        <div v-if="order.completed_at">
+        <div v-if="order.completedAt">
           <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.completedAt') }}</p>
-          <p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(order.completed_at) }}</p>
+          <p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(order.completedAt) }}</p>
         </div>
       </div>
 
       <div
-        v-if="order.refund_amount"
+        v-if="order.refundAmount"
         class="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20"
       >
         <h4 class="mb-2 text-sm font-semibold text-red-700 dark:text-red-400">
@@ -77,11 +77,11 @@
         <div class="grid grid-cols-2 gap-2 text-sm">
           <div>
             <span class="text-red-600 dark:text-red-400">{{ t('payment.admin.refundAmount') }}:</span>
-            <span class="ml-1 font-medium text-red-700 dark:text-red-300">{{ creditedAmountSymbol }}{{ order.refund_amount.toFixed(2) }}</span>
+            <span class="ml-1 font-medium text-red-700 dark:text-red-300">{{ creditedAmountSymbol }}{{ order.refundAmount.toFixed(2) }}</span>
           </div>
-          <div v-if="order.refund_reason" class="col-span-2">
+          <div v-if="order.refundReason" class="col-span-2">
             <span class="text-red-600 dark:text-red-400">{{ t('payment.admin.refundReason') }}:</span>
-            <span class="ml-1 text-red-700 dark:text-red-300">{{ order.refund_reason }}</span>
+            <span class="ml-1 text-red-700 dark:text-red-300">{{ order.refundReason }}</span>
           </div>
         </div>
       </div>
@@ -117,7 +117,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import type { PaymentOrder } from '@/types/payment'
+import type { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
 import { statusBadgeClass, canRefund as canRefundStatus, formatOrderDateTime } from '@/features/billing/presentation/orderUtilsFormatter'
 import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
 
@@ -135,17 +135,17 @@ const paymentAmountSymbol = computed(() => currencySymbol(props.order?.currency)
 /** 充值金额 (base amount before fee) = pay_amount - fee = pay_amount / (1 + fee_rate/100) */
 const baseAmount = computed(() => {
   if (!props.order) return 0
-  const feeRate = Number(props.order.fee_rate) || 0
-  if (feeRate <= 0) return props.order.pay_amount
-  return props.order.pay_amount / (1 + feeRate / 100)
+  const feeRate = Number(props.order.feeRate) || 0
+  if (feeRate <= 0) return props.order.payAmount
+  return props.order.payAmount / (1 + feeRate / 100)
 })
 
 /** 手续费 = pay_amount - baseAmount */
 const feeAmount = computed(() => {
   if (!props.order) return 0
-  const feeRate = Number(props.order.fee_rate) || 0
+  const feeRate = Number(props.order.feeRate) || 0
   if (feeRate <= 0) return 0
-  return props.order.pay_amount - baseAmount.value
+  return props.order.payAmount - baseAmount.value
 })
 
 const emit = defineEmits<{

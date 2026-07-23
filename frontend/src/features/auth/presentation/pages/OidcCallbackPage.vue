@@ -403,7 +403,7 @@ function sanitizeRedirectPath(path: string | null | undefined): string {
 async function loadProviderName() {
   try {
     const settings = await getPublicSettings()
-    const name = settings.oidc_oauth_provider_name?.trim()
+    const name = settings.oidcOauthProviderName?.trim()
     if (name) {
       providerName.value = name
     }
@@ -750,10 +750,10 @@ async function handleSubmitTotpChallenge() {
   isSubmitting.value = true
   try {
     const completion = await login2FA({
-      temp_token: totpTempToken.value,
-      totp_code: code
+      tempToken: totpTempToken.value,
+      totpCode: code
     })
-    await authStore.setToken(completion.access_token)
+    await authStore.setToken(completion.accessToken)
     clearAllAffiliateReferralCodes()
     appStore.showSuccess(t('auth.loginSuccess'))
     await router.replace(redirectTo.value)

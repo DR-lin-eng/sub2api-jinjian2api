@@ -4,16 +4,7 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type {
-  TotpStatus,
-  TotpSetupRequest,
-  TotpSetupResponse,
-  TotpEnableRequest,
-  TotpEnableResponse,
-  TotpDisableRequest,
-  TotpVerificationMethod
-} from '@/types'
-
+import type { TotpStatus, TotpSetupRequest, TotpSetupResponse, TotpEnableRequest, TotpEnableResponse, TotpDisableRequest, TotpVerificationMethod } from '@/features/auth/domain/models/totp'
 /**
  * Get TOTP status for current user
  * @returns TOTP status including enabled state and feature availability

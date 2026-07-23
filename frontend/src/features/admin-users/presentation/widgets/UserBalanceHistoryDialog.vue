@@ -13,7 +13,7 @@
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
               <p class="truncate font-medium text-gray-900 dark:text-white">{{ user.email }}</p>
-              <span v-if="user.deleted_at" class="flex-shrink-0 inline-flex items-center rounded px-1 py-px text-[10px] font-medium leading-tight bg-rose-100 text-rose-600 ring-1 ring-inset ring-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:ring-rose-500/30">
+              <span v-if="user.deletedAt" class="flex-shrink-0 inline-flex items-center rounded px-1 py-px text-[10px] font-medium leading-tight bg-rose-100 text-rose-600 ring-1 ring-inset ring-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:ring-rose-500/30">
                 {{ t('admin.usage.userDeletedBadge') }}
               </span>
               <span
@@ -24,7 +24,7 @@
               </span>
             </div>
             <p class="text-xs text-gray-400 dark:text-dark-500">
-              {{ t('admin.users.createdAt') }}: {{ formatDateTime(user.created_at) }}
+              {{ t('admin.users.createdAt') }}: {{ formatDateTime(user.createdAt) }}
             </p>
           </div>
           <!-- Current balance: prominent display on the right -->
@@ -176,10 +176,10 @@ import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { adminAPI, type BalanceHistoryItem } from '@/api/admin'
 import { formatDateTime } from '@/core/utils/format'
-import type { AdminUser } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
 
 const props = defineProps<{ show: boolean; user: AdminUser | null; hideActions?: boolean }>()
 const emit = defineEmits(['close', 'deposit', 'withdraw'])

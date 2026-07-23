@@ -10,23 +10,23 @@
       <tbody>
         <tr
           v-for="user in items"
-          :key="user.user_id"
+          :key="user.userId"
           class="border-t border-gray-100/50 dark:border-dark-700/50"
         >
           <td class="max-w-[120px] truncate py-1 pl-6 text-gray-600 dark:text-gray-300" :title="user.email">
-            {{ user.email || `User #${user.user_id}` }}
+            {{ user.email || `User #${user.userId}` }}
           </td>
           <td class="py-1 text-right text-gray-500 dark:text-gray-400">
             {{ user.requests.toLocaleString() }}
           </td>
           <td class="py-1 text-right text-gray-500 dark:text-gray-400">
-            {{ formatTokens(user.total_tokens) }}
+            {{ formatTokens(user.totalTokens) }}
           </td>
           <td class="py-1 text-right text-green-600 dark:text-green-400">
-            ${{ formatCost(user.actual_cost) }}
+            ${{ formatCost(user.actualCost) }}
           </td>
           <td v-if="showAccountCost" class="py-1 text-right text-orange-500 dark:text-orange-400">
-            ${{ formatCost(user.account_cost) }}
+            ${{ formatCost(user.accountCost) }}
           </td>
           <td class="py-1 pr-1 text-right text-gray-400 dark:text-gray-500">
             ${{ formatCost(user.cost) }}
@@ -41,8 +41,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
-import type { UserBreakdownItem } from '@/types'
-
+import type { UserBreakdownItem } from '@/features/admin-dashboard/domain/models/userBreakdownItem'
 const { t } = useI18n()
 
 const props = withDefaults(defineProps<{

@@ -49,8 +49,8 @@
                 <tr v-for="model in models" :key="model.model" class="border-t border-gray-100 dark:border-dark-700">
                   <td class="max-w-[100px] truncate py-1.5 font-medium text-gray-900 dark:text-white" :title="model.model">{{ model.model }}</td>
                   <td class="py-1.5 text-right text-gray-600 dark:text-gray-400">{{ formatNumber(model.requests) }}</td>
-                  <td class="py-1.5 text-right text-gray-600 dark:text-gray-400">{{ formatTokens(model.total_tokens) }}</td>
-                  <td class="py-1.5 text-right text-green-600 dark:text-green-400">${{ formatCost(model.actual_cost) }}</td>
+                  <td class="py-1.5 text-right text-gray-600 dark:text-gray-400">{{ formatTokens(model.totalTokens) }}</td>
+                  <td class="py-1.5 text-right text-green-600 dark:text-green-400">${{ formatCost(model.actualCost) }}</td>
                   <td class="py-1.5 text-right text-gray-400 dark:text-gray-500">${{ formatCost(model.cost) }}</td>
                 </tr>
               </tbody>
@@ -73,9 +73,10 @@ import DateRangePicker from '@/common/widgets/forms/DateRangePicker.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import { Doughnut } from 'vue-chartjs'
 import TokenUsageTrend from '@/features/admin-dashboard/presentation/widgets/TokenUsageTrend.vue'
-import type { TrendDataPoint, ModelStat } from '@/types'
 import { formatCostFixed as formatCost, formatNumberLocaleString as formatNumber, formatTokensK as formatTokens } from '@/core/utils/format'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler } from 'chart.js'
+import type { TrendDataPoint } from '@/features/admin-dashboard/domain/models/trendDataPoint'
+import type { ModelStat } from '@/features/admin-dashboard/domain/models/modelStat'
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler)
 
 const props = defineProps<{ loading: boolean, startDate: string, endDate: string, granularity: string, trend: TrendDataPoint[], models: ModelStat[] }>()
@@ -85,7 +86,7 @@ const { t } = useI18n()
 const modelData = computed(() => !props.models?.length ? null : {
   labels: props.models.map((m: ModelStat) => m.model),
   datasets: [{
-    data: props.models.map((m: ModelStat) => m.total_tokens),
+    data: props.models.map((m: ModelStat) => m.totalTokens),
     backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
   }]
 })

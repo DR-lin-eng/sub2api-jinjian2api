@@ -14,7 +14,7 @@ export interface BasePaginationResponse<T> {
   items: T[]
   total: number
   page: number
-  page_size: number
+  pageSize: number
   pages: number
 }
 
@@ -38,20 +38,20 @@ export type UserAuthProvider = 'email' | 'linuxdo' | 'oidc' | 'wechat' | 'github
 
 export interface UserAuthBindingStatus {
   bound?: boolean
-  bound_count?: number
+  boundCount?: number
   provider?: UserAuthProvider | string
-  provider_key?: string | null
-  provider_subject?: string | null
+  providerKey?: string | null
+  providerSubject?: string | null
   issuer?: string | null
   label?: string | null
-  provider_label?: string | null
-  display_name?: string | null
-  subject_hint?: string | null
-  verified_at?: string | null
-  bind_start_path?: string | null
-  can_bind?: boolean
-  can_unbind?: boolean
-  note_key?: string | null
+  providerLabel?: string | null
+  displayName?: string | null
+  subjectHint?: string | null
+  verifiedAt?: string | null
+  bindStartPath?: string | null
+  canBind?: boolean
+  canUnbind?: boolean
+  noteKey?: string | null
   note?: string | null
   metadata?: Record<string, unknown>
 }
@@ -60,70 +60,70 @@ export interface UserProfileSourceContext {
   provider?: UserAuthProvider | string
   source?: string | null
   label?: string | null
-  provider_label?: string | null
+  providerLabel?: string | null
 }
 
 export interface User {
   id: number
   username: string
   email: string
-  avatar_url?: string | null
-  avatar_source?: string | UserProfileSourceContext | null
-  username_source?: string | UserProfileSourceContext | null
-  display_name_source?: string | UserProfileSourceContext | null
-  nickname_source?: string | UserProfileSourceContext | null
-  profile_sources?: {
+  avatarUrl?: string | null
+  avatarSource?: string | UserProfileSourceContext | null
+  usernameSource?: string | UserProfileSourceContext | null
+  displayNameSource?: string | UserProfileSourceContext | null
+  nicknameSource?: string | UserProfileSourceContext | null
+  profileSources?: {
     avatar?: string | UserProfileSourceContext | null
     username?: string | UserProfileSourceContext | null
-    display_name?: string | UserProfileSourceContext | null
+    displayName?: string | UserProfileSourceContext | null
     nickname?: string | UserProfileSourceContext | null
   }
-  auth_bindings?: Partial<Record<UserAuthProvider, boolean | UserAuthBindingStatus>>
-  identity_bindings?: Partial<Record<UserAuthProvider, boolean | UserAuthBindingStatus>>
-  email_bound?: boolean
-  linuxdo_bound?: boolean
-  oidc_bound?: boolean
-  wechat_bound?: boolean
+  authBindings?: Partial<Record<UserAuthProvider, boolean | UserAuthBindingStatus>>
+  identityBindings?: Partial<Record<UserAuthProvider, boolean | UserAuthBindingStatus>>
+  emailBound?: boolean
+  linuxdoBound?: boolean
+  oidcBound?: boolean
+  wechatBound?: boolean
   role: 'admin' | 'user' // User role for authorization
   balance: number // User balance for API usage
-  frozen_balance?: number // Balance currently held by async batch jobs
+  frozenBalance?: number // Balance currently held by async batch jobs
   concurrency: number // Allowed concurrent requests
-  rpm_limit?: number // User-level RPM cap (0 = unlimited); effective as fallback when group has no rpm_limit
+  rpmLimit?: number // User-level RPM cap (0 = unlimited); effective as fallback when group has no rpm_limit
   status: 'active' | 'disabled' // Account status
-  allowed_groups: number[] | null // Allowed group IDs (null = all non-exclusive groups)
-  balance_notify_enabled: boolean
-  balance_notify_threshold: number | null
-  balance_notify_extra_emails: NotifyEmailEntry[]
+  allowedGroups: number[] | null // Allowed group IDs (null = all non-exclusive groups)
+  balanceNotifyEnabled: boolean
+  balanceNotifyThreshold: number | null
+  balanceNotifyExtraEmails: NotifyEmailEntry[]
   subscriptions?: UserSubscription[] // User's active subscriptions
-  last_active_at?: string | null
-  created_at: string
-  updated_at: string
-  deleted_at?: string | null
+  lastActiveAt?: string | null
+  createdAt: string
+  updatedAt: string
+  deletedAt?: string | null
 }
 
 export interface AdminUser extends User {
   // 管理员备注（普通用户接口不返回）
   notes: string
-  last_used_at?: string | null
+  lastUsedAt?: string | null
   // 用户专属分组倍率配置 (group_id -> rate_multiplier)
-  group_rates?: Record<number, number>
+  groupRates?: Record<number, number>
   // 当前并发数（仅管理员列表接口返回）
-  current_concurrency?: number
+  currentConcurrency?: number
 }
 
 export interface LoginRequest {
   email: string
   password: string
-  turnstile_token?: string
-  captcha_token?: string
-  captcha_id?: string
-  captcha_code?: string
+  turnstileToken?: string
+  captchaToken?: string
+  captchaId?: string
+  captchaCode?: string
 }
 
 export interface CredentialEnvelope {
   algorithm: 'RSA-OAEP-256+A256GCM'
-  key_id: string
-  encrypted_key: string
+  keyId: string
+  encryptedKey: string
   iv: string
   ciphertext: string
 }
@@ -131,54 +131,54 @@ export interface CredentialEnvelope {
 export interface RegisterRequest {
   email: string
   password: string
-  verify_code?: string
-  turnstile_token?: string
-  captcha_token?: string
-  captcha_id?: string
-  captcha_code?: string
-  promo_code?: string
-  invitation_code?: string
-  aff_code?: string
+  verifyCode?: string
+  turnstileToken?: string
+  captchaToken?: string
+  captchaId?: string
+  captchaCode?: string
+  promoCode?: string
+  invitationCode?: string
+  affCode?: string
 }
 
 export interface EncryptedRegisterRequest extends Omit<RegisterRequest, 'email' | 'password'> {
-  credential_envelope: CredentialEnvelope
+  credentialEnvelope: CredentialEnvelope
 }
 
 export interface AffiliateInvitee {
-  user_id: number
+  userId: number
   email: string
   username: string
-  created_at?: string
-  total_rebate: number
+  createdAt?: string
+  totalRebate: number
 }
 
 export interface UserAffiliateDetail {
-  user_id: number
-  aff_code: string
-  inviter_id?: number | null
-  aff_count: number
-  aff_quota: number
-  aff_frozen_quota: number
-  aff_history_quota: number
+  userId: number
+  affCode: string
+  inviterId?: number | null
+  affCount: number
+  affQuota: number
+  affFrozenQuota: number
+  affHistoryQuota: number
   /** 当前用户作为邀请人时实际生效的返利比例（专属覆盖全局）。0-100。 */
-  effective_rebate_rate_percent: number
+  effectiveRebateRatePercent: number
   invitees: AffiliateInvitee[]
 }
 
 export interface AffiliateTransferResponse {
-  transferred_quota: number
+  transferredQuota: number
   balance: number
 }
 
 export interface SendVerifyCodeRequest {
   email: string
-  turnstile_token?: string
-  captcha_token?: string
-  captcha_id?: string
-  captcha_code?: string
-  pending_auth_token?: string
-  pending_oauth_token?: string
+  turnstileToken?: string
+  captchaToken?: string
+  captchaId?: string
+  captchaCode?: string
+  pendingAuthToken?: string
+  pendingOauthToken?: string
 }
 
 export interface SendVerifyCodeResponse {
@@ -189,11 +189,11 @@ export interface SendVerifyCodeResponse {
 export interface CustomMenuItem {
   id: string
   label: string
-  icon_svg: string
+  iconSvg: string
   url: string
-  page_slug?: string
+  pageSlug?: string
   visibility: 'user' | 'admin'
-  sort_order: number
+  sortOrder: number
 }
 
 export interface CustomEndpoint {
@@ -205,112 +205,112 @@ export interface CustomEndpoint {
 export interface LoginAgreementDocument {
   id: string
   title: string
-  content_md: string
+  contentMd: string
 }
 
 export interface PublicSettings {
-  registration_enabled: boolean
-  email_verify_enabled: boolean
-  force_email_on_third_party_signup: boolean
-  registration_email_suffix_whitelist: string[]
-  promo_code_enabled: boolean
-  password_reset_enabled: boolean
-  invitation_code_enabled: boolean
-  login_agreement_enabled?: boolean
-  login_agreement_mode?: 'modal' | 'checkbox' | string
-  login_agreement_updated_at?: string
-  login_agreement_revision?: string
-  login_agreement_documents?: LoginAgreementDocument[]
-  turnstile_enabled: boolean
-  turnstile_site_key: string
-  recaptcha_enabled: boolean
-  recaptcha_site_key: string
-  cap_enabled: boolean
-  cap_api_endpoint: string
-  local_captcha_enabled?: boolean
-  site_name: string
-  site_logo: string
-  site_subtitle: string
-  api_base_url: string
-  contact_info: string
-  doc_url: string
-  home_content: string
-  hide_ccs_import_button: boolean
-  payment_enabled: boolean
-  risk_control_enabled: boolean
-  table_default_page_size: number
-  table_page_size_options: number[]
-  custom_menu_items: CustomMenuItem[]
-  custom_endpoints: CustomEndpoint[]
-  linuxdo_oauth_enabled: boolean
-  dingtalk_oauth_enabled?: boolean
-  wechat_oauth_enabled: boolean
-  wechat_oauth_open_enabled?: boolean
-  wechat_oauth_mp_enabled?: boolean
-  wechat_oauth_mobile_enabled?: boolean
-  oidc_oauth_enabled: boolean
-  oidc_oauth_provider_name: string
-  github_oauth_enabled: boolean
-  google_oauth_enabled: boolean
-  backend_mode_enabled: boolean
+  registrationEnabled: boolean
+  emailVerifyEnabled: boolean
+  forceEmailOnThirdPartySignup: boolean
+  registrationEmailSuffixWhitelist: string[]
+  promoCodeEnabled: boolean
+  passwordResetEnabled: boolean
+  invitationCodeEnabled: boolean
+  loginAgreementEnabled?: boolean
+  loginAgreementMode?: 'modal' | 'checkbox' | string
+  loginAgreementUpdatedAt?: string
+  loginAgreementRevision?: string
+  loginAgreementDocuments?: LoginAgreementDocument[]
+  turnstileEnabled: boolean
+  turnstileSiteKey: string
+  recaptchaEnabled: boolean
+  recaptchaSiteKey: string
+  capEnabled: boolean
+  capApiEndpoint: string
+  localCaptchaEnabled?: boolean
+  siteName: string
+  siteLogo: string
+  siteSubtitle: string
+  apiBaseUrl: string
+  contactInfo: string
+  docUrl: string
+  homeContent: string
+  hideCcsImportButton: boolean
+  paymentEnabled: boolean
+  riskControlEnabled: boolean
+  tableDefaultPageSize: number
+  tablePageSizeOptions: number[]
+  customMenuItems: CustomMenuItem[]
+  customEndpoints: CustomEndpoint[]
+  linuxdoOauthEnabled: boolean
+  dingtalkOauthEnabled?: boolean
+  wechatOauthEnabled: boolean
+  wechatOauthOpenEnabled?: boolean
+  wechatOauthMpEnabled?: boolean
+  wechatOauthMobileEnabled?: boolean
+  oidcOauthEnabled: boolean
+  oidcOauthProviderName: string
+  githubOauthEnabled: boolean
+  googleOauthEnabled: boolean
+  backendModeEnabled: boolean
   version: string
   // 服务器全局时区（IANA 名称与当前 UTC 偏移），高峰时段等服务端本地时间窗口的展示标注用；
   // 可选：注入的 __APP_CONFIG__ 旧缓存可能缺失
-  server_timezone?: string
-  server_utc_offset?: string
-  balance_low_notify_enabled: boolean
-  account_quota_notify_enabled: boolean
-  balance_low_notify_threshold: number
-  channel_monitor_enabled: boolean
-  channel_monitor_default_interval_seconds: number
-  available_channels_enabled: boolean
-  service_quota_enabled: boolean
-  affiliate_enabled: boolean
-  allow_user_view_error_requests?: boolean
-  allow_user_view_usage_details?: boolean
+  serverTimezone?: string
+  serverUtcOffset?: string
+  balanceLowNotifyEnabled: boolean
+  accountQuotaNotifyEnabled: boolean
+  balanceLowNotifyThreshold: number
+  channelMonitorEnabled: boolean
+  channelMonitorDefaultIntervalSeconds: number
+  availableChannelsEnabled: boolean
+  serviceQuotaEnabled: boolean
+  affiliateEnabled: boolean
+  allowUserViewErrorRequests?: boolean
+  allowUserViewUsageDetails?: boolean
 }
 
 export interface AuthResponse {
-  access_token: string
-  refresh_token?: string  // New: Refresh Token for token renewal
-  expires_in?: number     // New: Access Token expiry time in seconds
-  token_type: string
+  accessToken: string
+  refreshToken?: string  // New: Refresh Token for token renewal
+  expiresIn?: number     // New: Access Token expiry time in seconds
+  tokenType: string
   user: User & { run_mode?: 'standard' | 'simple' }
 }
 
 export interface CurrentUserResponse extends User {
-  run_mode?: 'standard' | 'simple'
+  runMode?: 'standard' | 'simple'
 }
 
 // ==================== Subscription Types ====================
 
 export interface Subscription {
   id: number
-  user_id: number
+  userId: number
   name: string
   url: string
   type: 'clash' | 'v2ray' | 'surge' | 'quantumult' | 'shadowrocket'
-  update_interval: number // in hours
-  last_updated: string | null
-  node_count: number
-  is_active: boolean
-  created_at: string
-  updated_at: string
+  updateInterval: number // in hours
+  lastUpdated: string | null
+  nodeCount: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export interface CreateSubscriptionRequest {
   name: string
   url: string
   type: Subscription['type']
-  update_interval?: number
+  updateInterval?: number
 }
 
 export interface UpdateSubscriptionRequest {
   name?: string
   url?: string
   type?: Subscription['type']
-  update_interval?: number
-  is_active?: boolean
+  updateInterval?: number
+  isActive?: boolean
 }
 
 // ==================== Announcement Types ====================
@@ -325,16 +325,16 @@ export type AnnouncementOperator = 'in' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq'
 export interface AnnouncementCondition {
   type: AnnouncementConditionType
   operator: AnnouncementOperator
-  group_ids?: number[]
+  groupIds?: number[]
   value?: number
 }
 
 export interface AnnouncementConditionGroup {
-  all_of?: AnnouncementCondition[]
+  allOf?: AnnouncementCondition[]
 }
 
 export interface AnnouncementTargeting {
-  any_of?: AnnouncementConditionGroup[]
+  anyOf?: AnnouncementConditionGroup[]
 }
 
 export interface Announcement {
@@ -342,85 +342,85 @@ export interface Announcement {
   title: string
   content: string
   status: AnnouncementStatus
-  notify_mode: AnnouncementNotifyMode
+  notifyMode: AnnouncementNotifyMode
   targeting: AnnouncementTargeting
-  starts_at?: string
-  ends_at?: string
-  created_by?: number
-  updated_by?: number
-  created_at: string
-  updated_at: string
+  startsAt?: string
+  endsAt?: string
+  createdBy?: number
+  updatedBy?: number
+  createdAt: string
+  updatedAt: string
 }
 
 export interface UserAnnouncement {
   id: number
   title: string
   content: string
-  notify_mode: AnnouncementNotifyMode
-  starts_at?: string
-  ends_at?: string
-  read_at?: string
-  created_at: string
-  updated_at: string
+  notifyMode: AnnouncementNotifyMode
+  startsAt?: string
+  endsAt?: string
+  readAt?: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface CreateAnnouncementRequest {
   title: string
   content: string
   status?: AnnouncementStatus
-  notify_mode?: AnnouncementNotifyMode
+  notifyMode?: AnnouncementNotifyMode
   targeting: AnnouncementTargeting
-  starts_at?: number
-  ends_at?: number
+  startsAt?: number
+  endsAt?: number
 }
 
 export interface UpdateAnnouncementRequest {
   title?: string
   content?: string
   status?: AnnouncementStatus
-  notify_mode?: AnnouncementNotifyMode
+  notifyMode?: AnnouncementNotifyMode
   targeting?: AnnouncementTargeting
-  starts_at?: number
-  ends_at?: number
+  startsAt?: number
+  endsAt?: number
 }
 
 export interface AnnouncementUserReadStatus {
-  user_id: number
+  userId: number
   email: string
   username: string
   balance: number
   eligible: boolean
-  read_at?: string
+  readAt?: string
 }
 
 // ==================== Proxy Node Types ====================
 
 export interface ProxyNode {
   id: number
-  subscription_id: number
+  subscriptionId: number
   name: string
   type: 'ss' | 'ssr' | 'vmess' | 'vless' | 'trojan' | 'hysteria' | 'hysteria2'
   server: string
   port: number
   config: Record<string, unknown> // JSON configuration specific to proxy type
   latency: number | null // in milliseconds
-  last_checked: string | null
-  is_available: boolean
-  created_at: string
-  updated_at: string
+  lastChecked: string | null
+  isAvailable: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 // ==================== Conversion Types ====================
 
 export interface ConversionRequest {
-  subscription_ids: number[]
-  target_type: 'clash' | 'v2ray' | 'surge' | 'quantumult' | 'shadowrocket'
+  subscriptionIds: number[]
+  targetType: 'clash' | 'v2ray' | 'surge' | 'quantumult' | 'shadowrocket'
   filter?: {
-    name_pattern?: string
+    namePattern?: string
     types?: ProxyNode['type'][]
-    min_latency?: number
-    max_latency?: number
-    available_only?: boolean
+    minLatency?: number
+    maxLatency?: number
+    availableOnly?: boolean
   }
   sort?: {
     by: 'name' | 'latency' | 'type'
@@ -430,27 +430,27 @@ export interface ConversionRequest {
 
 export interface ConversionResult {
   url: string // URL to download the converted subscription
-  expires_at: string
-  node_count: number
+  expiresAt: string
+  nodeCount: number
 }
 
 // ==================== Statistics Types ====================
 
 export interface SubscriptionStats {
-  subscription_id: number
-  total_nodes: number
-  available_nodes: number
-  avg_latency: number | null
-  by_type: Record<ProxyNode['type'], number>
-  last_update: string
+  subscriptionId: number
+  totalNodes: number
+  availableNodes: number
+  avgLatency: number | null
+  byType: Record<ProxyNode['type'], number>
+  lastUpdate: string
 }
 
 export interface UserStats {
-  total_subscriptions: number
-  total_nodes: number
-  active_subscriptions: number
-  total_conversions: number
-  last_conversion: string | null
+  totalSubscriptions: number
+  totalNodes: number
+  activeSubscriptions: number
+  totalConversions: number
+  lastConversion: string | null
 }
 
 // ==================== API Response Types ====================
@@ -471,7 +471,7 @@ export interface PaginatedResponse<T> {
   items: T[]
   total: number
   page: number
-  page_size: number
+  pageSize: number
   pages: number
 }
 
@@ -514,7 +514,7 @@ export interface FilterConfig {
 
 export interface PaginationConfig {
   page: number
-  page_size: number
+  pageSize: number
 }
 
 // ==================== API Key & Group Types ====================
@@ -524,10 +524,10 @@ export type GroupPlatform = 'anthropic' | 'openai' | 'gemini' | 'antigravity' | 
 export type SubscriptionType = 'standard' | 'subscription'
 
 export interface OpenAIMessagesDispatchModelConfig {
-  opus_mapped_model?: string
-  sonnet_mapped_model?: string
-  haiku_mapped_model?: string
-  exact_model_mappings?: Record<string, string>
+  opusMappedModel?: string
+  sonnetMappedModel?: string
+  haikuMappedModel?: string
+  exactModelMappings?: Record<string, string>
 }
 
 export interface Group {
@@ -535,74 +535,74 @@ export interface Group {
   name: string
   description: string | null
   platform: GroupPlatform
-  rate_multiplier: number
-  rpm_limit?: number // Group-level RPM cap (0 = unlimited); overrides user-level rpm_limit when set
-  is_exclusive: boolean
+  rateMultiplier: number
+  rpmLimit?: number // Group-level RPM cap (0 = unlimited); overrides user-level rpm_limit when set
+  isExclusive: boolean
   status: 'active' | 'inactive'
-  subscription_type: SubscriptionType
-  daily_limit_usd: number | null
-  weekly_limit_usd: number | null
-  monthly_limit_usd: number | null
+  subscriptionType: SubscriptionType
+  dailyLimitUsd: number | null
+  weeklyLimitUsd: number | null
+  monthlyLimitUsd: number | null
   // 图片生成计费配置
-  allow_image_generation: boolean
-  openai_force_image_tool: boolean
-  allow_batch_image_generation: boolean
-  image_rate_independent: boolean
-  image_rate_multiplier: number
-  batch_image_discount_multiplier: number
-  batch_image_hold_multiplier: number
-  image_price_1k: number | null
-  image_price_2k: number | null
-  image_price_4k: number | null
-  video_rate_independent: boolean
-  video_rate_multiplier: number
-  video_price_480p: number | null
-  video_price_720p: number | null
-  video_price_1080p: number | null
+  allowImageGeneration: boolean
+  openaiForceImageTool: boolean
+  allowBatchImageGeneration: boolean
+  imageRateIndependent: boolean
+  imageRateMultiplier: number
+  batchImageDiscountMultiplier: number
+  batchImageHoldMultiplier: number
+  imagePrice1k: number | null
+  imagePrice2k: number | null
+  imagePrice4k: number | null
+  videoRateIndependent: boolean
+  videoRateMultiplier: number
+  videoPrice480p: number | null
+  videoPrice720p: number | null
+  videoPrice1080p: number | null
   // Codex 网页搜索单次价格（USD/次）；null 表示使用默认价 0.01
-  web_search_price_per_call: number | null
+  webSearchPricePerCall: number | null
   // 高峰时段倍率配置
-  peak_rate_enabled: boolean
-  peak_start: string
-  peak_end: string
-  peak_rate_multiplier: number
+  peakRateEnabled: boolean
+  peakStart: string
+  peakEnd: string
+  peakRateMultiplier: number
   // Claude Code 客户端限制
-  claude_code_only: boolean
-  fallback_group_id: number | null
-  fallback_group_id_on_invalid_request: number | null
+  claudeCodeOnly: boolean
+  fallbackGroupId: number | null
+  fallbackGroupIdOnInvalidRequest: number | null
   // OpenAI Messages 调度开关（用户侧需要此字段判断是否展示 Claude Code 教程）
-  allow_messages_dispatch?: boolean
-  default_mapped_model?: string
-  messages_dispatch_model_config?: OpenAIMessagesDispatchModelConfig
-  require_oauth_only: boolean
-  require_privacy_set: boolean
-  created_at: string
-  updated_at: string
+  allowMessagesDispatch?: boolean
+  defaultMappedModel?: string
+  messagesDispatchModelConfig?: OpenAIMessagesDispatchModelConfig
+  requireOauthOnly: boolean
+  requirePrivacySet: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export interface AdminGroup extends Group {
   // 模型路由配置（仅管理员可见，内部信息）
-  model_routing: Record<string, number[]> | null
-  model_routing_enabled: boolean
+  modelRouting: Record<string, number[]> | null
+  modelRoutingEnabled: boolean
 
   // MCP XML 协议注入（仅 antigravity 平台使用）
-  mcp_xml_inject: boolean
+  mcpXmlInject: boolean
 
   // 支持的模型系列（仅 antigravity 平台使用）
-  supported_model_scopes?: string[]
+  supportedModelScopes?: string[]
 
   // 分组下账号数量（仅管理员可见）
-  account_count?: number
-  active_account_count?: number
-  rate_limited_account_count?: number
+  accountCount?: number
+  activeAccountCount?: number
+  rateLimitedAccountCount?: number
 
   // OpenAI Messages 调度配置（仅 openai 平台使用）
-  default_mapped_model?: string
-  messages_dispatch_model_config?: OpenAIMessagesDispatchModelConfig
-  models_list_config?: ModelsListConfig
+  defaultMappedModel?: string
+  messagesDispatchModelConfig?: OpenAIMessagesDispatchModelConfig
+  modelsListConfig?: ModelsListConfig
 
   // 分组排序
-  sort_order: number
+  sortOrder: number
 }
 
 export interface ModelsListConfig {
@@ -626,24 +626,24 @@ export type CompositeRouteSource = 'route' | 'detector' | string
 
 export interface CompositeModelRoute {
   id: number
-  group_id: number
-  public_model: string
-  match_type: CompositeRouteMatchType
-  target_platform: Exclude<GroupPlatform, 'composite'>
-  upstream_model: string
+  groupId: number
+  publicModel: string
+  matchType: CompositeRouteMatchType
+  targetPlatform: Exclude<GroupPlatform, 'composite'>
+  upstreamModel: string
   endpoint: CompositeRouteEndpoint
   priority: number
   enabled: boolean
   notes: string
-  created_at?: string
-  updated_at?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface CompositeModelRouteInput {
-  public_model: string
-  match_type: CompositeRouteMatchType
-  target_platform: Exclude<GroupPlatform, 'composite'>
-  upstream_model?: string
+  publicModel: string
+  matchType: CompositeRouteMatchType
+  targetPlatform: Exclude<GroupPlatform, 'composite'>
+  upstreamModel?: string
   endpoint: CompositeRouteEndpoint
   priority?: number
   enabled?: boolean
@@ -658,10 +658,10 @@ export interface CompositeRoutePreviewRequest {
 export interface CompositeRouteDecision {
   matched: boolean
   source: CompositeRouteSource
-  group_id: number
-  public_model: string
-  target_platform: Exclude<GroupPlatform, 'composite'> | ''
-  upstream_model: string
+  groupId: number
+  publicModel: string
+  targetPlatform: Exclude<GroupPlatform, 'composite'> | ''
+  upstreamModel: string
   endpoint: CompositeRouteEndpoint
   route?: CompositeModelRoute
   reason?: string
@@ -669,160 +669,160 @@ export interface CompositeRouteDecision {
 
 export interface ApiKey {
   id: number
-  user_id: number
+  userId: number
   key: string
   name: string
-  group_id: number | null
+  groupId: number | null
   status: 'active' | 'inactive' | 'quota_exhausted' | 'expired'
-  ip_whitelist: string[]
-  ip_blacklist: string[]
-  last_used_at: string | null
-  last_used_ip: string | null
+  ipWhitelist: string[]
+  ipBlacklist: string[]
+  lastUsedAt: string | null
+  lastUsedIp: string | null
   quota: number // Quota limit in USD (0 = unlimited)
-  quota_used: number // Used quota amount in USD
-  expires_at: string | null // Expiration time (null = never expires)
-  created_at: string
-  updated_at: string
-  concurrency_limit: number // Maximum concurrent requests (0 = unlimited)
-  current_concurrency: number
+  quotaUsed: number // Used quota amount in USD
+  expiresAt: string | null // Expiration time (null = never expires)
+  createdAt: string
+  updatedAt: string
+  concurrencyLimit: number // Maximum concurrent requests (0 = unlimited)
+  currentConcurrency: number
   group?: Group
-  rate_limit_5h: number
-  rate_limit_1d: number
-  rate_limit_7d: number
-  usage_5h: number
-  usage_1d: number
-  usage_7d: number
-  window_5h_start: string | null
-  window_1d_start: string | null
-  window_7d_start: string | null
-  reset_5h_at: string | null
-  reset_1d_at: string | null
-  reset_7d_at: string | null
+  rateLimit5h: number
+  rateLimit1d: number
+  rateLimit7d: number
+  usage5h: number
+  usage1d: number
+  usage7d: number
+  window5hStart: string | null
+  window1dStart: string | null
+  window7dStart: string | null
+  reset5hAt: string | null
+  reset1dAt: string | null
+  reset7dAt: string | null
 }
 
 export interface CreateApiKeyRequest {
   name: string
-  group_id?: number | null
-  custom_key?: string // Optional custom API Key
-  ip_whitelist?: string[]
-  ip_blacklist?: string[]
+  groupId?: number | null
+  customKey?: string // Optional custom API Key
+  ipWhitelist?: string[]
+  ipBlacklist?: string[]
   quota?: number // Quota limit in USD (0 = unlimited)
-  expires_in_days?: number // Days until expiry (null = never expires)
-  rate_limit_5h?: number
-  rate_limit_1d?: number
-  rate_limit_7d?: number
+  expiresInDays?: number // Days until expiry (null = never expires)
+  rateLimit5h?: number
+  rateLimit1d?: number
+  rateLimit7d?: number
 }
 
 export interface UpdateApiKeyRequest {
   name?: string
-  group_id?: number | null
+  groupId?: number | null
   status?: 'active' | 'inactive'
-  ip_whitelist?: string[]
-  ip_blacklist?: string[]
+  ipWhitelist?: string[]
+  ipBlacklist?: string[]
   quota?: number // Quota limit in USD (null = no change, 0 = unlimited)
-  expires_at?: string | null // Expiration time (null = no change)
-  reset_quota?: boolean // Reset quota_used to 0
-  concurrency_limit?: number // Maximum concurrent requests (0 = unlimited)
-  rate_limit_5h?: number
-  rate_limit_1d?: number
-  rate_limit_7d?: number
-  reset_rate_limit_usage?: boolean
+  expiresAt?: string | null // Expiration time (null = no change)
+  resetQuota?: boolean // Reset quota_used to 0
+  concurrencyLimit?: number // Maximum concurrent requests (0 = unlimited)
+  rateLimit5h?: number
+  rateLimit1d?: number
+  rateLimit7d?: number
+  resetRateLimitUsage?: boolean
 }
 
 export interface CreateGroupRequest {
   name: string
   description?: string | null
   platform?: GroupPlatform
-  rate_multiplier?: number
-  is_exclusive?: boolean
-  subscription_type?: SubscriptionType
-  daily_limit_usd?: number | null
-  weekly_limit_usd?: number | null
-  monthly_limit_usd?: number | null
-  allow_image_generation?: boolean
-  openai_force_image_tool?: boolean
-  allow_batch_image_generation?: boolean
-  image_rate_independent?: boolean
-  image_rate_multiplier?: number
-  batch_image_discount_multiplier?: number
-  batch_image_hold_multiplier?: number
-  image_price_1k?: number | null
-  image_price_2k?: number | null
-  image_price_4k?: number | null
-  video_rate_independent?: boolean
-  video_rate_multiplier?: number
-  video_price_480p?: number | null
-  video_price_720p?: number | null
-  video_price_1080p?: number | null
-  web_search_price_per_call?: number | null
-  peak_rate_enabled?: boolean
-  peak_start?: string
-  peak_end?: string
-  peak_rate_multiplier?: number
-  claude_code_only?: boolean
-  fallback_group_id?: number | null
-  fallback_group_id_on_invalid_request?: number | null
-  mcp_xml_inject?: boolean
-  supported_model_scopes?: string[]
-  models_list_config?: ModelsListConfig
-  allow_messages_dispatch?: boolean
-  default_mapped_model?: string
-  messages_dispatch_model_config?: OpenAIMessagesDispatchModelConfig
-  model_routing?: Record<string, number[]> | null
-  model_routing_enabled?: boolean
-  rpm_limit?: number
-  require_oauth_only?: boolean
-  require_privacy_set?: boolean
+  rateMultiplier?: number
+  isExclusive?: boolean
+  subscriptionType?: SubscriptionType
+  dailyLimitUsd?: number | null
+  weeklyLimitUsd?: number | null
+  monthlyLimitUsd?: number | null
+  allowImageGeneration?: boolean
+  openaiForceImageTool?: boolean
+  allowBatchImageGeneration?: boolean
+  imageRateIndependent?: boolean
+  imageRateMultiplier?: number
+  batchImageDiscountMultiplier?: number
+  batchImageHoldMultiplier?: number
+  imagePrice1k?: number | null
+  imagePrice2k?: number | null
+  imagePrice4k?: number | null
+  videoRateIndependent?: boolean
+  videoRateMultiplier?: number
+  videoPrice480p?: number | null
+  videoPrice720p?: number | null
+  videoPrice1080p?: number | null
+  webSearchPricePerCall?: number | null
+  peakRateEnabled?: boolean
+  peakStart?: string
+  peakEnd?: string
+  peakRateMultiplier?: number
+  claudeCodeOnly?: boolean
+  fallbackGroupId?: number | null
+  fallbackGroupIdOnInvalidRequest?: number | null
+  mcpXmlInject?: boolean
+  supportedModelScopes?: string[]
+  modelsListConfig?: ModelsListConfig
+  allowMessagesDispatch?: boolean
+  defaultMappedModel?: string
+  messagesDispatchModelConfig?: OpenAIMessagesDispatchModelConfig
+  modelRouting?: Record<string, number[]> | null
+  modelRoutingEnabled?: boolean
+  rpmLimit?: number
+  requireOauthOnly?: boolean
+  requirePrivacySet?: boolean
   // 从指定分组复制账号
-  copy_accounts_from_group_ids?: number[]
+  copyAccountsFromGroupIds?: number[]
 }
 
 export interface UpdateGroupRequest {
   name?: string
   description?: string | null
   platform?: GroupPlatform
-  rate_multiplier?: number
-  is_exclusive?: boolean
+  rateMultiplier?: number
+  isExclusive?: boolean
   status?: 'active' | 'inactive'
-  subscription_type?: SubscriptionType
-  daily_limit_usd?: number | null
-  weekly_limit_usd?: number | null
-  monthly_limit_usd?: number | null
-  allow_image_generation?: boolean
-  openai_force_image_tool?: boolean
-  allow_batch_image_generation?: boolean
-  image_rate_independent?: boolean
-  image_rate_multiplier?: number
-  batch_image_discount_multiplier?: number
-  batch_image_hold_multiplier?: number
-  image_price_1k?: number | null
-  image_price_2k?: number | null
-  image_price_4k?: number | null
-  video_rate_independent?: boolean
-  video_rate_multiplier?: number
-  video_price_480p?: number | null
-  video_price_720p?: number | null
-  video_price_1080p?: number | null
-  web_search_price_per_call?: number | null
-  peak_rate_enabled?: boolean
-  peak_start?: string
-  peak_end?: string
-  peak_rate_multiplier?: number
-  claude_code_only?: boolean
-  fallback_group_id?: number | null
-  fallback_group_id_on_invalid_request?: number | null
-  mcp_xml_inject?: boolean
-  supported_model_scopes?: string[]
-  models_list_config?: ModelsListConfig
-  allow_messages_dispatch?: boolean
-  default_mapped_model?: string
-  messages_dispatch_model_config?: OpenAIMessagesDispatchModelConfig
-  model_routing?: Record<string, number[]> | null
-  model_routing_enabled?: boolean
-  rpm_limit?: number
-  require_oauth_only?: boolean
-  require_privacy_set?: boolean
-  copy_accounts_from_group_ids?: number[]
+  subscriptionType?: SubscriptionType
+  dailyLimitUsd?: number | null
+  weeklyLimitUsd?: number | null
+  monthlyLimitUsd?: number | null
+  allowImageGeneration?: boolean
+  openaiForceImageTool?: boolean
+  allowBatchImageGeneration?: boolean
+  imageRateIndependent?: boolean
+  imageRateMultiplier?: number
+  batchImageDiscountMultiplier?: number
+  batchImageHoldMultiplier?: number
+  imagePrice1k?: number | null
+  imagePrice2k?: number | null
+  imagePrice4k?: number | null
+  videoRateIndependent?: boolean
+  videoRateMultiplier?: number
+  videoPrice480p?: number | null
+  videoPrice720p?: number | null
+  videoPrice1080p?: number | null
+  webSearchPricePerCall?: number | null
+  peakRateEnabled?: boolean
+  peakStart?: string
+  peakEnd?: string
+  peakRateMultiplier?: number
+  claudeCodeOnly?: boolean
+  fallbackGroupId?: number | null
+  fallbackGroupIdOnInvalidRequest?: number | null
+  mcpXmlInject?: boolean
+  supportedModelScopes?: string[]
+  modelsListConfig?: ModelsListConfig
+  allowMessagesDispatch?: boolean
+  defaultMappedModel?: string
+  messagesDispatchModelConfig?: OpenAIMessagesDispatchModelConfig
+  modelRouting?: Record<string, number[]> | null
+  modelRoutingEnabled?: boolean
+  rpmLimit?: number
+  requireOauthOnly?: boolean
+  requirePrivacySet?: boolean
+  copyAccountsFromGroupIds?: number[]
 }
 
 // ==================== Account & Proxy Types ====================
@@ -836,8 +836,8 @@ export type ProxyProtocol = 'http' | 'https' | 'socks5' | 'socks5h'
 export interface ClaudeModel {
   id: string
   type: string
-  display_name: string
-  created_at: string
+  displayName: string
+  createdAt: string
 }
 
 export interface Proxy {
@@ -849,26 +849,26 @@ export interface Proxy {
   username: string | null
   password?: string | null
   status: 'active' | 'inactive' | 'expired'
-  account_count?: number // Number of accounts using this proxy
-  latency_ms?: number
-  latency_status?: 'success' | 'failed'
-  latency_message?: string
-  ip_address?: string
+  accountCount?: number // Number of accounts using this proxy
+  latencyMs?: number
+  latencyStatus?: 'success' | 'failed'
+  latencyMessage?: string
+  ipAddress?: string
   country?: string
-  country_code?: string
+  countryCode?: string
   region?: string
   city?: string
-  quality_status?: 'healthy' | 'warn' | 'challenge' | 'failed'
-  quality_score?: number
-  quality_grade?: string
-  quality_summary?: string
-  quality_checked?: number
-  expires_at: string | null
-  fallback_mode: 'none' | 'proxy' | 'direct'
-  backup_proxy_id?: number | null
-  expiry_warn_days: number
-  created_at: string
-  updated_at: string
+  qualityStatus?: 'healthy' | 'warn' | 'challenge' | 'failed'
+  qualityScore?: number
+  qualityGrade?: string
+  qualitySummary?: string
+  qualityChecked?: number
+  expiresAt: string | null
+  fallbackMode: 'none' | 'proxy' | 'direct'
+  backupProxyId?: number | null
+  expiryWarnDays: number
+  createdAt: string
+  updatedAt: string
 }
 
 export interface ProxyAccountSummary {
@@ -882,39 +882,39 @@ export interface ProxyAccountSummary {
 export interface ProxyQualityCheckItem {
   target: string
   status: 'pass' | 'warn' | 'fail' | 'challenge'
-  http_status?: number
-  latency_ms?: number
+  httpStatus?: number
+  latencyMs?: number
   message?: string
-  cf_ray?: string
+  cfRay?: string
 }
 
 export interface ProxyQualityCheckResult {
-  proxy_id: number
+  proxyId: number
   score: number
   grade: string
   summary: string
-  exit_ip?: string
+  exitIp?: string
   country?: string
-  country_code?: string
-  base_latency_ms?: number
-  passed_count: number
-  warn_count: number
-  failed_count: number
-  challenge_count: number
-  checked_at: number
+  countryCode?: string
+  baseLatencyMs?: number
+  passedCount: number
+  warnCount: number
+  failedCount: number
+  challengeCount: number
+  checkedAt: number
   items: ProxyQualityCheckItem[]
 }
 
 // Gemini credentials structure for OAuth and API Key authentication
 export interface GeminiCredentials {
   // API Key authentication
-  api_key?: string
+  apiKey?: string
 
   // OAuth authentication
-  access_token?: string
-  refresh_token?: string
-  oauth_type?: 'code_assist' | 'google_one' | 'ai_studio' | string
-  tier_id?:
+  accessToken?: string
+  refreshToken?: string
+  oauthType?: 'code_assist' | 'google_one' | 'ai_studio' | string
+  tierId?:
     | 'google_one_free'
     | 'google_ai_pro'
     | 'google_ai_ultra'
@@ -926,49 +926,32 @@ export interface GeminiCredentials {
     | 'PRO'
     | 'ULTRA'
     | string
-  project_id?: string
-  token_type?: string
+  projectId?: string
+  tokenType?: string
   scope?: string
-  expires_at?: string
-  model_mapping?: Record<string, string>
+  expiresAt?: string
+  modelMapping?: Record<string, string>
 }
 
-export interface TempUnschedulableRule {
-  error_code: number
-  keywords: string[]
-  duration_minutes: number
-  description: string
-}
-
-export interface TempUnschedulableState {
-  until_unix: number
-  triggered_at_unix: number
-  status_code: number
-  matched_keyword: string
-  rule_index: number
-  error_message: string
-}
-
-export interface TempUnschedulableStatus {
-  active: boolean
-  state?: TempUnschedulableState
-}
+export type { TempUnschedulableRule } from '@/features/admin-accounts/domain/models/tempUnschedulableRule'
+export type { TempUnschedulableState } from '@/features/admin-accounts/domain/models/tempUnschedulableState'
+export type { TempUnschedulableStatus } from '@/features/admin-accounts/domain/models/tempUnschedulableStatus'
 
 export interface UpstreamBillingData {
   object: 'sub2api.key_billing'
-  schema_version: 1
-  billing_scope: 'token'
-  group_rate_multiplier: number
-  user_rate_multiplier?: number
-  resolved_rate_multiplier: number
-  peak_rate_enabled: boolean
-  peak_start?: string
-  peak_end?: string
-  peak_rate_multiplier?: number
-  applied_peak_multiplier?: number
-  effective_rate_multiplier: number
+  schemaVersion: 1
+  billingScope: 'token'
+  groupRateMultiplier: number
+  userRateMultiplier?: number
+  resolvedRateMultiplier: number
+  peakRateEnabled: boolean
+  peakStart?: string
+  peakEnd?: string
+  peakRateMultiplier?: number
+  appliedPeakMultiplier?: number
+  effectiveRateMultiplier: number
   timezone?: string
-  observed_at: string
+  observedAt: string
 }
 
 export type UpstreamBillingProbeStatus = 'ok' | 'unsupported' | 'failed'
@@ -976,302 +959,98 @@ export type UpstreamBillingProbeStatus = 'ok' | 'unsupported' | 'failed'
 export interface UpstreamBillingProbeSnapshot {
   status: UpstreamBillingProbeStatus
   data?: UpstreamBillingData
-  received_at?: string
-  fresh_until?: string
-  last_attempt_at: string
-  next_probe_at: string
-  failure_count?: number
-  http_status?: number
-  last_error?: string
+  receivedAt?: string
+  freshUntil?: string
+  lastAttemptAt: string
+  nextProbeAt: string
+  failureCount?: number
+  httpStatus?: number
+  lastError?: string
 }
 
 export interface UpstreamBillingProbeSettings {
   enabled: boolean
-  interval_minutes: number
+  intervalMinutes: number
 }
 
 export interface UpstreamBillingProbeResult {
-  account_id: number
+  accountId: number
   snapshot?: UpstreamBillingProbeSnapshot
   error?: string
 }
 
-export interface AccountHourlyUsageStats {
-  total_requests: number
-  successful_requests: number
-  success_rate: number
-  avg_first_token_ms: number | null
-  error_4xx: number
-  error_5xx: number
-}
+export type { AccountHourlyUsageStats } from '@/features/admin-accounts/domain/models/accountHourlyUsageStats'
 
-export interface Account {
-  id: number
-  name: string
-  notes?: string | null
-  platform: AccountPlatform
-  type: AccountType
-  // 后端响应里 credentials 已脱敏：access_token / refresh_token / id_token /
-  // api_key / session_key / cookie / aws_secret_access_key / aws_session_token /
-  // service_account_json / service_account / private_key 不会出现，
-  // 改为通过 credentials_status.has_<key> 暴露存在性。
-  credentials?: Record<string, unknown>
-  credentials_status?: Record<string, boolean>
-  // Extra fields including Codex usage, OpenAI compact capability, and model-level rate limits.
-  extra?: (CodexUsageSnapshot & OpenAICompactState & {
-    model_rate_limits?: Record<string, { rate_limited_at: string; rate_limit_reset_at: string }>
-    antigravity_credits_overages?: Record<string, { activated_at: string; active_until: string }>
-    upstream_billing_probe_enabled?: boolean
-    upstream_billing_probe?: UpstreamBillingProbeSnapshot
-  } & Record<string, unknown>)
-  proxy_id: number | null
-  proxy_fallback_origin_id?: number | null
-  proxy_fallback_origin_name?: string | null
-  concurrency: number
-  load_factor?: number | null
-  current_concurrency?: number // Real-time concurrency count from Redis
-  scheduler_score?: {
-    base_score: number
-    sticky_score?: number
-    sticky_score_infinity?: boolean
-    sticky_weighted_enabled: boolean
-  } | null
-  scheduler_scores?: AccountSchedulerGroupScore[] | null
-  priority: number
-  rate_multiplier?: number // Account billing multiplier (>=0, 0 means free)
-  status: 'active' | 'inactive' | 'error'
-  error_message: string | null
-  last_used_at: string | null
-  expires_at: number | null
-  auto_pause_on_expired: boolean
-  created_at: string
-  updated_at: string
-  proxy?: Proxy
-  group_ids?: number[] // Groups this account belongs to
-  groups?: Group[] // Preloaded group objects
+export { Account } from '@/features/admin-accounts/domain/models/account'
 
-  // Rate limit & scheduling fields
-  schedulable: boolean
-  rate_limited_at: string | null
-  rate_limit_reset_at: string | null
-  overload_until: string | null
-  temp_unschedulable_until: string | null
-  temp_unschedulable_reason: string | null
+export type { AccountSchedulerGroupScore } from '@/features/admin-accounts/domain/models/accountSchedulerGroupScore'
 
-  // Session window fields (5-hour window)
-  session_window_start: string | null
-  session_window_end: string | null
-  session_window_status: 'allowed' | 'allowed_warning' | 'rejected' | null
+export type { WindowStats } from '@/features/admin-accounts/domain/models/windowStats'
 
-  // 5h窗口费用控制（仅 Anthropic OAuth/SetupToken 账号有效）
-  window_cost_limit?: number | null
-  window_cost_sticky_reserve?: number | null
+export type { UsageProgress } from '@/features/admin-accounts/domain/models/usageProgress'
 
-  // 会话数量控制（仅 Anthropic OAuth/SetupToken 账号有效）
-  max_sessions?: number | null
-  session_idle_timeout_minutes?: number | null
-
-  // RPM 限制（仅 Anthropic OAuth/SetupToken 账号有效）
-  base_rpm?: number | null
-  rpm_strategy?: string | null
-  rpm_sticky_buffer?: number | null
-  user_msg_queue_mode?: string | null  // "serialize" | "throttle" | null
-
-  // TLS指纹伪装（仅 Anthropic OAuth/SetupToken 账号有效）
-  enable_tls_fingerprint?: boolean | null
-  tls_fingerprint_profile_id?: number | null
-
-  // 会话ID伪装（仅 Anthropic OAuth/SetupToken 账号有效）
-  // 启用后将在15分钟内固定 metadata.user_id 中的 session ID
-  session_id_masking_enabled?: boolean | null
-
-  // 缓存 TTL 强制替换（仅 Anthropic OAuth/SetupToken 账号有效）
-  cache_ttl_override_enabled?: boolean | null
-  cache_ttl_override_target?: string | null
-
-  // 自定义 Base URL 中继转发（仅 Anthropic OAuth/SetupToken 账号有效）
-  custom_base_url_enabled?: boolean | null
-  custom_base_url?: string | null
-
-  // API Key 账号配额限制
-  quota_limit?: number | null
-  quota_used?: number | null
-  quota_daily_limit?: number | null
-  quota_daily_used?: number | null
-  quota_weekly_limit?: number | null
-  quota_weekly_used?: number | null
-
-  // 配额固定时间重置配置
-  quota_daily_reset_mode?: 'rolling' | 'fixed' | null
-  quota_daily_reset_hour?: number | null
-  quota_weekly_reset_mode?: 'rolling' | 'fixed' | null
-  quota_weekly_reset_day?: number | null
-  quota_weekly_reset_hour?: number | null
-  quota_reset_timezone?: string | null
-  quota_daily_reset_at?: string | null
-  quota_weekly_reset_at?: string | null
-
-  // 运行时状态（仅当启用对应限制时返回）
-  current_window_cost?: number | null // 当前窗口费用
-  active_sessions?: number | null // 当前活跃会话数
-  current_rpm?: number | null // 当前分钟 RPM 计数
-  hourly_usage?: AccountHourlyUsageStats | null // 最近一小时滚动使用情况（按需返回）
-
-  // 影子账号关系（spark 维度影子）
-  parent_account_id?: number | null
-  quota_dimension?: string
-  // 影子账号回填的母账号信息（仅影子非空）
-  parent_email?: string
-  parent_plan_type?: string
-  parent_privacy_mode?: string
-  parent_subscription_expires_at?: string
-  parent_chatgpt_account_id?: string
-}
-
-export interface AccountSchedulerGroupScore {
-  group_id?: number | null
-  group_name?: string
-  group_priority?: number | null
-  base_score: number
-  sticky_score?: number
-  sticky_score_infinity?: boolean
-  sticky_weighted_enabled: boolean
-}
-
-// Account Usage types
-export interface WindowStats {
-  requests: number
-  tokens: number
-  cost: number // Account cost (account multiplier)
-  standard_cost?: number
-  user_cost?: number
-}
-
-export interface UsageProgress {
-  utilization: number // Percentage (0-100+, 100 = 100%)
-  resets_at: string | null
-  remaining_seconds: number
-  window_stats?: WindowStats | null // 窗口期统计（从窗口开始到当前的使用量）
-  used_requests?: number
-  limit_requests?: number
-}
-
-// Antigravity 单个模型的配额信息
-export interface AntigravityModelQuota {
-  utilization: number // 使用率 0-100
-  reset_time: string  // 重置时间 ISO8601
-}
+export type { AntigravityModelQuota } from '@/features/admin-accounts/domain/models/antigravityModelQuota'
 
 export interface GrokQuotaWindow {
   limit?: number | null
   remaining?: number | null
-  reset_unix?: number | null
-  reset_at?: string | null
+  resetUnix?: number | null
+  resetAt?: string | null
 }
 
 export interface GrokBillingProductUsage {
   product: string
-  usage_percent?: number | null
+  usagePercent?: number | null
 }
 
 export interface GrokBillingSummary {
-  period_type?: string
-  usage_percent?: number | null
-  period_start?: string
-  period_end?: string
-  product_usage?: GrokBillingProductUsage[]
-  monthly_limit_cents?: number | null
-  used_cents?: number | null
-  included_used_cents?: number | null
-  billing_period_start?: string
-  billing_period_end?: string
-  used_percent?: number | null
+  periodType?: string
+  usagePercent?: number | null
+  periodStart?: string
+  periodEnd?: string
+  productUsage?: GrokBillingProductUsage[]
+  monthlyLimitCents?: number | null
+  usedCents?: number | null
+  includedUsedCents?: number | null
+  billingPeriodStart?: string
+  billingPeriodEnd?: string
+  usedPercent?: number | null
   plan?: string
-  status_code?: number
+  statusCode?: number
   source?: string
-  fetched_at?: string
-  updated_at?: string
-  weekly_updated_at?: string
-  monthly_updated_at?: string
+  fetchedAt?: string
+  updatedAt?: string
+  weeklyUpdatedAt?: string
+  monthlyUpdatedAt?: string
   partial?: boolean
-  failed_windows?: string[]
+  failedWindows?: string[]
 }
 
-export interface AccountUsageInfo {
-  source?: 'passive' | 'active'
-  updated_at: string | null
-  five_hour: UsageProgress | null
-  seven_day: UsageProgress | null
-  seven_day_sonnet: UsageProgress | null
-  seven_day_fable?: UsageProgress | null
-  gemini_shared_daily?: UsageProgress | null
-  gemini_pro_daily?: UsageProgress | null
-  gemini_flash_daily?: UsageProgress | null
-  gemini_shared_minute?: UsageProgress | null
-  gemini_pro_minute?: UsageProgress | null
-  gemini_flash_minute?: UsageProgress | null
-  antigravity_quota?: Record<string, AntigravityModelQuota> | null
-  grok_request_quota?: GrokQuotaWindow | null
-  grok_token_quota?: GrokQuotaWindow | null
-  grok_retry_after_seconds?: number | null
-  grok_entitlement_status?: string
-  grok_quota_snapshot_state?: string
-  grok_last_quota_probe_at?: string
-  grok_last_headers_seen_at?: string
-  grok_last_status_code?: number
-  grok_free_token_limit?: number
-  grok_local_usage?: WindowStats | null
-  grok_local_usage_24h?: WindowStats | null
-  grok_local_usage_7d?: WindowStats | null
-  grok_local_usage_monthly?: WindowStats | null
-  grok_billing?: GrokBillingSummary | null
-  subscription_tier?: string
-  subscription_tier_raw?: string
-  ai_credits?: Array<{
-    credit_type?: string
-    amount?: number
-    minimum_balance?: number
-  }> | null
-  // Antigravity 403 forbidden 状态
-  is_forbidden?: boolean
-  forbidden_reason?: string
-  forbidden_type?: string   // "validation" | "violation" | "forbidden"
-  validation_url?: string   // 验证/申诉链接
-
-  // 状态标记（后端自动推导）
-  needs_verify?: boolean    // 需要人工验证（forbidden_type=validation）
-  is_banned?: boolean       // 账号被封（forbidden_type=violation）
-  needs_reauth?: boolean    // token 失效需重新授权（401）
-
-  // 机器可读错误码：forbidden / unauthenticated / rate_limited / network_error
-  error_code?: string
-
-  error?: string            // usage 获取失败时的错误信息
-}
+export type { AccountUsageInfo } from '@/features/admin-accounts/domain/models/accountUsageInfo'
 
 // OpenAI Codex usage snapshot (from response headers)
 export interface CodexUsageSnapshot {
   // Legacy fields (kept for backwards compatibility)
   // NOTE: The naming is ambiguous - actual window type is determined by window_minutes value
-  codex_primary_used_percent?: number // Usage percentage (check window_minutes for actual window type)
-  codex_primary_reset_after_seconds?: number // Seconds until reset
-  codex_primary_window_minutes?: number // Window in minutes
-  codex_secondary_used_percent?: number // Usage percentage (check window_minutes for actual window type)
-  codex_secondary_reset_after_seconds?: number // Seconds until reset
-  codex_secondary_window_minutes?: number // Window in minutes
-  codex_primary_over_secondary_percent?: number // Overflow ratio
+  codexPrimaryUsedPercent?: number // Usage percentage (check window_minutes for actual window type)
+  codexPrimaryResetAfterSeconds?: number // Seconds until reset
+  codexPrimaryWindowMinutes?: number // Window in minutes
+  codexSecondaryUsedPercent?: number // Usage percentage (check window_minutes for actual window type)
+  codexSecondaryResetAfterSeconds?: number // Seconds until reset
+  codexSecondaryWindowMinutes?: number // Window in minutes
+  codexPrimaryOverSecondaryPercent?: number // Overflow ratio
 
   // Canonical fields (normalized by backend, use these preferentially)
-  codex_5h_used_percent?: number // 5-hour window usage percentage
-  codex_5h_reset_after_seconds?: number // Seconds until 5h window reset
-  codex_5h_reset_at?: string // 5-hour window absolute reset time (RFC3339)
-  codex_5h_window_minutes?: number // 5h window in minutes (should be ~300)
-  codex_7d_used_percent?: number // 7-day window usage percentage
-  codex_7d_reset_after_seconds?: number // Seconds until 7d window reset
-  codex_7d_reset_at?: string // 7-day window absolute reset time (RFC3339)
-  codex_7d_window_minutes?: number // 7d window in minutes (should be ~10080)
+  codex5hUsedPercent?: number // 5-hour window usage percentage
+  codex5hResetAfterSeconds?: number // Seconds until 5h window reset
+  codex5hResetAt?: string // 5-hour window absolute reset time (RFC3339)
+  codex5hWindowMinutes?: number // 5h window in minutes (should be ~300)
+  codex7dUsedPercent?: number // 7-day window usage percentage
+  codex7dResetAfterSeconds?: number // Seconds until 7d window reset
+  codex7dResetAt?: string // 7-day window absolute reset time (RFC3339)
+  codex7dWindowMinutes?: number // 7d window in minutes (should be ~10080)
 
-  codex_usage_updated_at?: string // Last update timestamp
+  codexUsageUpdatedAt?: string // Last update timestamp
 }
 
 export type OpenAICompactMode = 'auto' | 'force_on' | 'force_off'
@@ -1279,75 +1058,32 @@ export type OpenAIResponsesMode = 'auto' | 'force_responses' | 'force_chat_compl
 export type OpenAIEndpointCapability = 'chat_completions' | 'embeddings' | 'alpha_search'
 
 export interface OpenAICompactState {
-  openai_compact_mode?: OpenAICompactMode
-  openai_compact_supported?: boolean
-  openai_compact_checked_at?: string
-  openai_compact_last_status?: number
-  openai_compact_last_error?: string
+  openaiCompactMode?: OpenAICompactMode
+  openaiCompactSupported?: boolean
+  openaiCompactCheckedAt?: string
+  openaiCompactLastStatus?: number
+  openaiCompactLastError?: string
 }
 
 export interface OpenAIResponsesState {
-  openai_responses_mode?: OpenAIResponsesMode
-  openai_responses_supported?: boolean
+  openaiResponsesMode?: OpenAIResponsesMode
+  openaiResponsesSupported?: boolean
 }
 
-export interface CreateAccountRequest {
-  name: string
-  notes?: string | null
-  platform: AccountPlatform
-  type: AccountType
-  credentials: Record<string, unknown>
-  extra?: Record<string, unknown>
-  proxy_id?: number | null
-  concurrency?: number
-  load_factor?: number | null
-  priority?: number
-  rate_multiplier?: number // Account billing multiplier (>=0, 0 means free)
-  group_ids?: number[]
-  expires_at?: number | null
-  auto_pause_on_expired?: boolean
-  upstream_billing_probe_enabled?: boolean
-  confirm_mixed_channel_risk?: boolean
-}
+export type { CreateAccountRequest } from '@/features/admin-accounts/data/requests_models/createAccountRequest'
 
-export interface UpdateAccountRequest {
-  name?: string
-  notes?: string | null
-  type?: AccountType
-  credentials?: Record<string, unknown>
-  extra?: Record<string, unknown>
-  proxy_id?: number | null
-  concurrency?: number
-  load_factor?: number | null
-  priority?: number
-  rate_multiplier?: number // Account billing multiplier (>=0, 0 means free)
-  schedulable?: boolean
-  status?: 'active' | 'inactive' | 'error'
-  group_ids?: number[]
-  expires_at?: number | null
-  auto_pause_on_expired?: boolean
-  confirm_mixed_channel_risk?: boolean
-}
+export type { UpdateAccountRequest } from '@/features/admin-accounts/data/requests_models/updateAccountRequest'
 
-export interface CheckMixedChannelRequest {
-  platform: AccountPlatform
-  group_ids: number[]
-  account_id?: number
-}
+export type { CheckMixedChannelRequest } from '@/features/admin-accounts/data/requests_models/checkMixedChannelRequest'
 
 export interface MixedChannelWarningDetails {
-  group_id: number
-  group_name: string
-  current_platform: string
-  other_platform: string
+  groupId: number
+  groupName: string
+  currentPlatform: string
+  otherPlatform: string
 }
 
-export interface CheckMixedChannelResponse {
-  has_risk: boolean
-  error?: string
-  message?: string
-  details?: MixedChannelWarningDetails
-}
+export type { CheckMixedChannelResponse } from '@/features/admin-accounts/domain/models/checkMixedChannelResponse'
 
 export interface CreateProxyRequest {
   name: string
@@ -1356,10 +1092,10 @@ export interface CreateProxyRequest {
   port: number
   username?: string | null
   password?: string | null
-  expires_at?: number | null   // unix 秒；null/0 = 永不过期
-  fallback_mode?: 'none' | 'proxy' | 'direct'
-  backup_proxy_id?: number | null
-  expiry_warn_days?: number
+  expiresAt?: number | null   // unix 秒；null/0 = 永不过期
+  fallbackMode?: 'none' | 'proxy' | 'direct'
+  backupProxyId?: number | null
+  expiryWarnDays?: number
 }
 
 export interface UpdateProxyRequest {
@@ -1370,100 +1106,55 @@ export interface UpdateProxyRequest {
   username?: string | null
   password?: string | null
   status?: 'active' | 'inactive'
-  expires_at?: number | null   // unix 秒；null/0 = 永不过期
-  fallback_mode?: 'none' | 'proxy' | 'direct'
-  backup_proxy_id?: number | null
-  expiry_warn_days?: number
+  expiresAt?: number | null   // unix 秒；null/0 = 永不过期
+  fallbackMode?: 'none' | 'proxy' | 'direct'
+  backupProxyId?: number | null
+  expiryWarnDays?: number
 }
 
-export interface AdminDataPayload {
-  type?: string
-  version?: number
-  exported_at: string
-  proxies: AdminDataProxy[]
-  accounts: AdminDataAccount[]
-  // 导出时被排除的 spark 影子账号数量(影子不持凭据、其调度配置不在备份范围)。
-  skipped_shadows?: number
-}
+export type { AdminDataPayload } from '@/features/admin-accounts/domain/models/adminDataPayload'
+export type { AdminDataProxy } from '@/features/admin-accounts/domain/models/adminDataProxy'
+export type { AdminDataAccount } from '@/features/admin-accounts/domain/models/adminDataAccount'
 
-export interface AdminDataProxy {
-  proxy_key: string
-  name: string
-  protocol: ProxyProtocol
-  host: string
-  port: number
-  username?: string | null
-  password?: string | null
-  status: 'active' | 'inactive'
-}
-
-export interface AdminDataAccount {
-  name: string
-  notes?: string | null
-  platform: AccountPlatform
-  type: AccountType
-  credentials: Record<string, unknown>
-  extra?: Record<string, unknown>
-  proxy_key?: string | null
-  concurrency: number
-  priority: number
-  rate_multiplier?: number | null
-  expires_at?: number | null
-  auto_pause_on_expired?: boolean
-}
-
-export interface AdminDataImportError {
-  kind: 'proxy' | 'account'
-  name?: string
-  proxy_key?: string
-  message: string
-}
-
-export interface AdminDataImportResult {
-  proxy_created: number
-  proxy_reused: number
-  proxy_failed: number
-  account_created: number
-  account_failed: number
-  errors?: AdminDataImportError[]
-}
+export type { AdminDataImportError } from '@/features/admin-accounts/domain/models/adminDataImportError'
+export type { AdminDataImportResult } from '@/features/admin-accounts/domain/models/adminDataImportResult'
 
 export interface CodexSessionImportRequest {
   content?: string
   contents?: string[]
   name?: string
   notes?: string | null
-  group_ids?: number[]
-  proxy_id?: number | null
+  groupIds?: number[]
+  proxyId?: number | null
   concurrency?: number
   priority?: number
-  rate_multiplier?: number
-  load_factor?: number | null
-  expires_at?: number | null
-  auto_pause_on_expired?: boolean
-  credential_extras?: Record<string, unknown>
+  rateMultiplier?: number
+  loadFactor?: number | null
+  expiresAt?: number | null
+  autoPauseOnExpired?: boolean
+  credentialExtras?: Record<string, unknown>
   extra?: Record<string, unknown>
-  update_existing?: boolean
-  skip_default_group_bind?: boolean
-  confirm_mixed_channel_risk?: boolean
+  updateExisting?: boolean
+  skipDefaultGroupBind?: boolean
+  confirmMixedChannelRisk?: boolean
 }
 
 export interface OpenAICodexPATCreateRequest {
-  access_token: string
+  accessToken: string
   name?: string
   notes?: string | null
-  group_ids?: number[]
-  proxy_id?: number | null
+  groupIds?: number[]
+  proxyId?: number | null
   concurrency?: number
   priority?: number
-  rate_multiplier?: number
-  load_factor?: number | null
-  expires_at?: number | null
-  auto_pause_on_expired?: boolean
-  credential_extras?: Record<string, unknown>
+  rateMultiplier?: number
+  loadFactor?: number | null
+  expiresAt?: number | null
+  autoPauseOnExpired?: boolean
+  credentialExtras?: Record<string, unknown>
   extra?: Record<string, unknown>
-  skip_default_group_bind?: boolean
-  confirm_mixed_channel_risk?: boolean
+  skipDefaultGroupBind?: boolean
+  confirmMixedChannelRisk?: boolean
 }
 
 export interface CodexSessionImportMessage {
@@ -1476,20 +1167,11 @@ export interface CodexSessionImportItem {
   index: number
   name?: string
   action: 'created' | 'updated' | 'skipped' | 'failed'
-  account_id?: number
+  accountId?: number
   message?: string
 }
 
-export interface CodexSessionImportResult {
-  total: number
-  created: number
-  updated: number
-  skipped: number
-  failed: number
-  items?: CodexSessionImportItem[]
-  warnings?: CodexSessionImportMessage[]
-  errors?: CodexSessionImportMessage[]
-}
+export type { CodexSessionImportResult } from '@/features/admin-accounts/domain/models/codexSessionImportResult'
 
 // ==================== Usage & Redeem Types ====================
 
@@ -1500,73 +1182,73 @@ export type ImageSizeBreakdown = Record<string, number>
 
 export interface UsageLog {
   id: number
-  user_id: number
-  api_key_id: number
-  account_id: number | null
-  request_id: string
+  userId: number
+  apiKeyId: number
+  accountId: number | null
+  requestId: string
   model: string
-  service_tier?: string | null
-  reasoning_effort?: string | null
-  inbound_endpoint?: string | null
-  upstream_endpoint?: string | null
+  serviceTier?: string | null
+  reasoningEffort?: string | null
+  inboundEndpoint?: string | null
+  upstreamEndpoint?: string | null
 
-  group_id: number | null
-  subscription_id: number | null
+  groupId: number | null
+  subscriptionId: number | null
 
-  input_tokens: number
-  output_tokens: number
-  cache_creation_tokens: number
-  cache_read_tokens: number
-  cache_creation_5m_tokens: number
-  cache_creation_1h_tokens: number
+  inputTokens: number
+  outputTokens: number
+  cacheCreationTokens: number
+  cacheReadTokens: number
+  cacheCreation5mTokens: number
+  cacheCreation1hTokens: number
 
-  input_cost: number
-  output_cost: number
-  cache_creation_cost: number
-  cache_read_cost: number
-  total_cost: number
-  actual_cost: number
-  rate_multiplier: number
-  long_context_billing_applied: boolean
-  billing_type: number
+  inputCost: number
+  outputCost: number
+  cacheCreationCost: number
+  cacheReadCost: number
+  totalCost: number
+  actualCost: number
+  rateMultiplier: number
+  longContextBillingApplied: boolean
+  billingType: number
 
-  request_type?: UsageRequestType
+  requestType?: UsageRequestType
   stream: boolean
-  openai_ws_mode?: boolean
-  duration_ms: number | null
-  first_token_ms: number | null
+  openaiWsMode?: boolean
+  durationMs: number | null
+  firstTokenMs: number | null
 
   // 图片生成字段
-  image_count: number
-  image_size: string | null
-  image_input_size: string | null
-  image_output_size: string | null
-  image_size_source: ImageSizeSource | null
-  image_size_breakdown: ImageSizeBreakdown | null
-  image_input_tokens: number
-  image_input_cost: number
-  image_output_tokens: number
-  image_output_cost: number
+  imageCount: number
+  imageSize: string | null
+  imageInputSize: string | null
+  imageOutputSize: string | null
+  imageSizeSource: ImageSizeSource | null
+  imageSizeBreakdown: ImageSizeBreakdown | null
+  imageInputTokens: number
+  imageInputCost: number
+  imageOutputTokens: number
+  imageOutputCost: number
 
   // 视频生成字段
-  video_count?: number
-  video_resolution?: string | null
-  video_duration_seconds?: number | null
+  videoCount?: number
+  videoResolution?: string | null
+  videoDurationSeconds?: number | null
 
   // User-Agent
-  user_agent: string | null
-  ip_address?: string | null
+  userAgent: string | null
+  ipAddress?: string | null
 
   // Cache TTL Override
-  cache_ttl_overridden: boolean
+  cacheTtlOverridden: boolean
 
   // 计费模式
-  billing_mode?: string | null
+  billingMode?: string | null
 
-  created_at: string
+  createdAt: string
 
   user?: User
-  api_key?: ApiKey
+  apiKey?: ApiKey
   group?: Group
   subscription?: UserSubscription
 }
@@ -1577,48 +1259,48 @@ export interface UsageLogAccountSummary {
 }
 
 export interface AdminUsageLog extends UsageLog {
-  upstream_model?: string | null
-  model_mapping_chain?: string | null
+  upstreamModel?: string | null
+  modelMappingChain?: string | null
 
   // 账号计费倍率（仅管理员可见）
-  account_rate_multiplier?: number | null
+  accountRateMultiplier?: number | null
   // 自定义定价规则计算的账号统计费用（nil 时使用 total_cost * multiplier）
-  account_stats_cost?: number | null
+  accountStatsCost?: number | null
 
   // 渠道 ID 和计费等级（仅管理员可见）
-  channel_id?: number | null
-  billing_tier?: string | null
+  channelId?: number | null
+  billingTier?: string | null
 
   // 最小账号信息（仅管理员接口返回）
   account?: UsageLogAccountSummary
 }
 
 export interface UsageCleanupFilters {
-  start_time: string
-  end_time: string
-  user_id?: number
-  api_key_id?: number
-  account_id?: number
-  group_id?: number
+  startTime: string
+  endTime: string
+  userId?: number
+  apiKeyId?: number
+  accountId?: number
+  groupId?: number
   model?: string | null
-  request_type?: UsageRequestType | null
+  requestType?: UsageRequestType | null
   stream?: boolean | null
-  billing_type?: number | null
+  billingType?: number | null
 }
 
 export interface UsageCleanupTask {
   id: number
   status: string
   filters: UsageCleanupFilters
-  created_by: number
-  deleted_rows: number
-  error_message?: string | null
-  canceled_by?: number | null
-  canceled_at?: string | null
-  started_at?: string | null
-  finished_at?: string | null
-  created_at: string
-  updated_at: string
+  createdBy: number
+  deletedRows: number
+  errorMessage?: string | null
+  canceledBy?: number | null
+  canceledAt?: string | null
+  startedAt?: string | null
+  finishedAt?: string | null
+  createdAt: string
+  updatedAt: string
 }
 
 export interface RedeemCode {
@@ -1627,17 +1309,17 @@ export interface RedeemCode {
   type: RedeemCodeType
   value: number
   status: 'active' | 'used' | 'expired' | 'unused' | 'disabled'
-  max_uses: number
-  used_count: number
-  max_uses_per_user: number
-  used_by: number | null
-  used_at: string | null
-  created_at: string
-  expires_at?: string | null
-  updated_at?: string
+  maxUses: number
+  usedCount: number
+  maxUsesPerUser: number
+  usedBy: number | null
+  usedAt: string | null
+  createdAt: string
+  expiresAt?: string | null
+  updatedAt?: string
   notes?: string
-  group_id?: number | null // 订阅类型专用
-  validity_days?: number // 订阅类型专用
+  groupId?: number | null // 订阅类型专用
+  validityDays?: number // 订阅类型专用
   user?: User
   group?: Group // 关联的分组
 }
@@ -1646,19 +1328,19 @@ export interface GenerateRedeemCodesRequest {
   count: number
   type: RedeemCodeType
   value: number
-  group_id?: number | null // 订阅类型专用
-  validity_days?: number // 订阅类型专用
-  expires_at?: string | null
-  expires_in_days?: number
-  max_uses?: number
-  max_uses_per_user?: number
+  groupId?: number | null // 订阅类型专用
+  validityDays?: number // 订阅类型专用
+  expiresAt?: string | null
+  expiresInDays?: number
+  maxUses?: number
+  maxUsesPerUser?: number
 }
 
 export interface BatchUpdateRedeemCodeFields {
   status?: 'unused' | 'disabled'
-  expires_at?: string | null
+  expiresAt?: string | null
   notes?: string
-  group_id?: number | null
+  groupId?: number | null
 }
 
 export interface BatchUpdateRedeemCodesRequest {
@@ -1674,48 +1356,48 @@ export interface RedeemCodeRequest {
 
 export interface DashboardStats {
   // 用户统计
-  total_users: number
-  today_new_users: number // 今日新增用户数
-  active_users: number // 今日有请求的用户数
-  hourly_active_users: number // 当前小时活跃用户数（UTC）
-  stats_updated_at: string // 统计更新时间（UTC RFC3339）
-  stats_stale: boolean // 统计是否过期
+  totalUsers: number
+  todayNewUsers: number // 今日新增用户数
+  activeUsers: number // 今日有请求的用户数
+  hourlyActiveUsers: number // 当前小时活跃用户数（UTC）
+  statsUpdatedAt: string // 统计更新时间（UTC RFC3339）
+  statsStale: boolean // 统计是否过期
 
   // API Key 统计
-  total_api_keys: number
-  active_api_keys: number // 状态为 active 的 API Key 数
+  totalApiKeys: number
+  activeApiKeys: number // 状态为 active 的 API Key 数
 
   // 账户统计
-  total_accounts: number
-  normal_accounts: number // 正常账户数
-  error_accounts: number // 异常账户数
-  ratelimit_accounts: number // 限流账户数
-  overload_accounts: number // 过载账户数
+  totalAccounts: number
+  normalAccounts: number // 正常账户数
+  errorAccounts: number // 异常账户数
+  ratelimitAccounts: number // 限流账户数
+  overloadAccounts: number // 过载账户数
 
   // 累计 Token 使用统计
-  total_requests: number
-  total_input_tokens: number
-  total_output_tokens: number
-  total_cache_creation_tokens: number
-  total_cache_read_tokens: number
-  total_tokens: number
-  total_cost: number // 累计标准计费
-  total_actual_cost: number // 累计实际扣除
-  total_account_cost: number // 累计账号成本
+  totalRequests: number
+  totalInputTokens: number
+  totalOutputTokens: number
+  totalCacheCreationTokens: number
+  totalCacheReadTokens: number
+  totalTokens: number
+  totalCost: number // 累计标准计费
+  totalActualCost: number // 累计实际扣除
+  totalAccountCost: number // 累计账号成本
 
   // 今日 Token 使用统计
-  today_requests: number
-  today_input_tokens: number
-  today_output_tokens: number
-  today_cache_creation_tokens: number
-  today_cache_read_tokens: number
-  today_tokens: number
-  today_cost: number // 今日标准计费
-  today_actual_cost: number // 今日实际扣除
-  today_account_cost: number // 今日账号成本
+  todayRequests: number
+  todayInputTokens: number
+  todayOutputTokens: number
+  todayCacheCreationTokens: number
+  todayCacheReadTokens: number
+  todayTokens: number
+  todayCost: number // 今日标准计费
+  todayActualCost: number // 今日实际扣除
+  todayAccountCost: number // 今日账号成本
 
   // 系统运行统计
-  average_duration_ms: number // 平均响应时间
+  averageDurationMs: number // 平均响应时间
   uptime: number // 系统运行时间(秒)
 
   // 性能指标
@@ -1725,20 +1407,20 @@ export interface DashboardStats {
 
 export interface UsageStatsResponse {
   period?: string
-  total_requests: number
-  total_input_tokens: number
-  total_output_tokens: number
-  total_cache_tokens: number
-  total_cache_read_tokens: number
-  total_cache_creation_tokens: number
-  total_tokens: number
-  total_cost: number // 标准计费
-  total_actual_cost: number // 实际扣除
-  average_duration_ms: number
+  totalRequests: number
+  totalInputTokens: number
+  totalOutputTokens: number
+  totalCacheTokens: number
+  totalCacheReadTokens: number
+  totalCacheCreationTokens: number
+  totalTokens: number
+  totalCost: number // 标准计费
+  totalActualCost: number // 实际扣除
+  averageDurationMs: number
   models?: Record<string, number>
   endpoints?: EndpointStat[]
-  upstream_endpoints?: EndpointStat[]
-  endpoint_paths?: EndpointStat[]
+  upstreamEndpoints?: EndpointStat[]
+  endpointPaths?: EndpointStat[]
 }
 
 // ==================== Trend & Chart Types ====================
@@ -1746,91 +1428,91 @@ export interface UsageStatsResponse {
 export interface TrendDataPoint {
   date: string
   requests: number
-  input_tokens: number
-  output_tokens: number
-  cache_creation_tokens: number
-  cache_read_tokens: number
-  total_tokens: number
+  inputTokens: number
+  outputTokens: number
+  cacheCreationTokens: number
+  cacheReadTokens: number
+  totalTokens: number
   cost: number // 标准计费
-  actual_cost: number // 实际扣除
+  actualCost: number // 实际扣除
 }
 
 export interface ModelStat {
   model: string
   requests: number
-  input_tokens: number
-  output_tokens: number
-  cache_creation_tokens: number
-  cache_read_tokens: number
-  total_tokens: number
+  inputTokens: number
+  outputTokens: number
+  cacheCreationTokens: number
+  cacheReadTokens: number
+  totalTokens: number
   cost: number // 标准计费
-  actual_cost: number // 实际扣除
-  account_cost?: number // 账号成本（仅管理员接口返回）
+  actualCost: number // 实际扣除
+  accountCost?: number // 账号成本（仅管理员接口返回）
 }
 
 export interface EndpointStat {
   endpoint: string
   requests: number
-  total_tokens: number
+  totalTokens: number
   cost: number
-  actual_cost: number
+  actualCost: number
 }
 
 export interface GroupStat {
-  group_id: number
-  group_name: string
+  groupId: number
+  groupName: string
   requests: number
-  total_tokens: number
+  totalTokens: number
   cost: number // 标准计费
-  actual_cost: number // 实际扣除
-  account_cost?: number // 账号成本（仅管理员接口返回）
+  actualCost: number // 实际扣除
+  accountCost?: number // 账号成本（仅管理员接口返回）
 }
 
 export interface UserBreakdownItem {
-  user_id: number
+  userId: number
   email: string
   requests: number
-  input_tokens: number
-  output_tokens: number
-  cache_tokens: number
-  total_tokens: number
+  inputTokens: number
+  outputTokens: number
+  cacheTokens: number
+  totalTokens: number
   cost: number
-  actual_cost: number
-  account_cost: number
+  actualCost: number
+  accountCost: number
 }
 
 export interface UserUsageTrendPoint {
   date: string
-  user_id: number
+  userId: number
   email: string
   username: string
   requests: number
   tokens: number
   cost: number // 标准计费
-  actual_cost: number // 实际扣除
+  actualCost: number // 实际扣除
 }
 
 export interface UserSpendingRankingItem {
-  user_id: number
+  userId: number
   email: string
-  actual_cost: number
+  actualCost: number
   requests: number
   tokens: number
 }
 
 export interface UserSpendingRankingResponse {
   ranking: UserSpendingRankingItem[]
-  total_actual_cost: number
-  total_requests: number
-  total_tokens: number
-  start_date: string
-  end_date: string
+  totalActualCost: number
+  totalRequests: number
+  totalTokens: number
+  startDate: string
+  endDate: string
 }
 
 export interface ApiKeyUsageTrendPoint {
   date: string
-  api_key_id: number
-  key_name: string
+  apiKeyId: number
+  keyName: string
   requests: number
   tokens: number
 }
@@ -1845,75 +1527,75 @@ export interface UpdateUserRequest {
   role?: 'admin' | 'user'
   balance?: number
   concurrency?: number
-  rpm_limit?: number
+  rpmLimit?: number
   status?: 'active' | 'disabled'
-  allowed_groups?: number[] | null
+  allowedGroups?: number[] | null
   // 用户专属分组倍率配置 (group_id -> rate_multiplier | null)
   // null 表示删除该分组的专属倍率
-  group_rates?: Record<number, number | null>
+  groupRates?: Record<number, number | null>
 }
 
 export interface ChangePasswordRequest {
-  old_password: string
-  new_password: string
+  oldPassword: string
+  newPassword: string
 }
 
 // ==================== User Subscription Types ====================
 
 export interface UserSubscription {
   id: number
-  user_id: number
-  group_id: number
+  userId: number
+  groupId: number
   status: 'active' | 'expired' | 'revoked' | 'suspended'
-  starts_at: string
-  daily_usage_usd: number
-  weekly_usage_usd: number
-  monthly_usage_usd: number
-  daily_window_start: string | null
-  weekly_window_start: string | null
-  monthly_window_start: string | null
-  created_at: string
-  updated_at: string
-  revoked_at?: string | null
-  expires_at: string | null
+  startsAt: string
+  dailyUsageUsd: number
+  weeklyUsageUsd: number
+  monthlyUsageUsd: number
+  dailyWindowStart: string | null
+  weeklyWindowStart: string | null
+  monthlyWindowStart: string | null
+  createdAt: string
+  updatedAt: string
+  revokedAt?: string | null
+  expiresAt: string | null
   user?: User
   group?: Group
 }
 
 export interface SubscriptionProgress {
-  subscription_id: number
+  subscriptionId: number
   daily: {
     used: number
     limit: number | null
     percentage: number
-    reset_in_seconds: number | null
+    resetInSeconds: number | null
   } | null
   weekly: {
     used: number
     limit: number | null
     percentage: number
-    reset_in_seconds: number | null
+    resetInSeconds: number | null
   } | null
   monthly: {
     used: number
     limit: number | null
     percentage: number
-    reset_in_seconds: number | null
+    resetInSeconds: number | null
   } | null
-  expires_at: string | null
-  days_remaining: number | null
+  expiresAt: string | null
+  daysRemaining: number | null
 }
 
 export interface AssignSubscriptionRequest {
-  user_id: number
-  group_id: number
-  validity_days?: number
+  userId: number
+  groupId: number
+  validityDays?: number
 }
 
 export interface BulkAssignSubscriptionRequest {
-  user_ids: number[]
-  group_id: number
-  validity_days?: number
+  userIds: number[]
+  groupId: number
+  validityDays?: number
 }
 
 export interface ExtendSubscriptionRequest {
@@ -1924,117 +1606,68 @@ export interface ExtendSubscriptionRequest {
 
 export interface UserErrorRequest {
   id: number
-  created_at: string
+  createdAt: string
   model: string
-  inbound_endpoint: string
-  status_code: number
+  inboundEndpoint: string
+  statusCode: number
   category: string
   platform: string
   message: string
-  key_name: string
-  key_deleted: boolean
-  client_ip?: string
-  group_name?: string
-  request_type?: number
+  keyName: string
+  keyDeleted: boolean
+  clientIp?: string
+  groupName?: string
+  requestType?: number
   stream?: boolean
-  user_agent?: string
+  userAgent?: string
 }
 
 export interface UserErrorRequestDetail extends UserErrorRequest {
-  error_body: string
-  upstream_status_code?: number
+  errorBody: string
+  upstreamStatusCode?: number
 }
 
 export interface UserErrorListParams {
   page?: number
-  page_size?: number
-  start_date?: string
-  end_date?: string
+  pageSize?: number
+  startDate?: string
+  endDate?: string
   timezone?: string
   model?: string
-  status_code?: number
+  statusCode?: number
   category?: string
-  api_key_id?: number
+  apiKeyId?: number
   // 服务端排序,列白名单见后端 opsErrorLogsOrderBy(created_at/model/status_code)
-  sort_by?: string
-  sort_order?: 'asc' | 'desc'
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }
 
 export interface UsageQueryParams {
   page?: number
-  page_size?: number
-  api_key_id?: number
-  user_id?: number
-  account_id?: number
-  group_id?: number
+  pageSize?: number
+  apiKeyId?: number
+  userId?: number
+  accountId?: number
+  groupId?: number
   model?: string
-  request_type?: UsageRequestType
+  requestType?: UsageRequestType
   stream?: boolean
-  billing_type?: number | null
-  billing_mode?: string | null
-  start_date?: string
-  end_date?: string
+  billingType?: number | null
+  billingMode?: string | null
+  startDate?: string
+  endDate?: string
   timezone?: string
-  sort_by?: string
-  sort_order?: 'asc' | 'desc'
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }
 
 // ==================== Account Usage Statistics ====================
 
-export interface AccountUsageHistory {
-  date: string
-  label: string
-  requests: number
-  tokens: number
-  cost: number
-  actual_cost: number // Account cost (account multiplier)
-  user_cost: number // User/API key billed cost (group multiplier)
-}
+export type { AccountUsageHistory } from '@/features/admin-accounts/domain/models/accountUsageHistory'
 
-export interface AccountUsageSummary {
-  days: number
-  actual_days_used: number
-  total_cost: number // Account cost (account multiplier)
-  total_user_cost: number
-  total_standard_cost: number
-  total_requests: number
-  total_tokens: number
-  avg_daily_cost: number // Account cost
-  avg_daily_user_cost: number
-  avg_daily_requests: number
-  avg_daily_tokens: number
-  avg_duration_ms: number
-  avg_first_token_ms: number | null
-  today: {
-    date: string
-    cost: number
-    user_cost: number
-    requests: number
-    tokens: number
-  } | null
-  highest_cost_day: {
-    date: string
-    label: string
-    cost: number
-    user_cost: number
-    requests: number
-  } | null
-  highest_request_day: {
-    date: string
-    label: string
-    requests: number
-    cost: number
-    user_cost: number
-  } | null
-}
+export type { AccountUsageSummary } from '@/features/admin-accounts/domain/models/accountUsageSummary'
 
-export interface AccountUsageStatsResponse {
-  history: AccountUsageHistory[]
-  summary: AccountUsageSummary
-  models: ModelStat[]
-  endpoints: EndpointStat[]
-  upstream_endpoints: EndpointStat[]
-}
+export type { AccountUsageStatsResponse } from '@/features/admin-accounts/domain/models/accountUsageStatsResponse'
 
 // ==================== User Attribute Types ====================
 
@@ -2047,8 +1680,8 @@ export interface UserAttributeOption {
 }
 
 export interface UserAttributeValidation {
-  min_length?: number
-  max_length?: number
+  minLength?: number
+  maxLength?: number
   min?: number
   max?: number
   pattern?: string
@@ -2065,19 +1698,19 @@ export interface UserAttributeDefinition {
   required: boolean
   validation: UserAttributeValidation
   placeholder: string
-  display_order: number
+  displayOrder: number
   enabled: boolean
-  created_at: string
-  updated_at: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface UserAttributeValue {
   id: number
-  user_id: number
-  attribute_id: number
+  userId: number
+  attributeId: number
   value: string
-  created_at: string
-  updated_at: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface CreateUserAttributeRequest {
@@ -2089,7 +1722,7 @@ export interface CreateUserAttributeRequest {
   required?: boolean
   validation?: UserAttributeValidation
   placeholder?: string
-  display_order?: number
+  displayOrder?: number
   enabled?: boolean
 }
 
@@ -2102,7 +1735,7 @@ export interface UpdateUserAttributeRequest {
   required?: boolean
   validation?: UserAttributeValidation
   placeholder?: string
-  display_order?: number
+  displayOrder?: number
   enabled?: boolean
 }
 
@@ -2115,39 +1748,39 @@ export interface UserAttributeValuesMap {
 export interface PromoCode {
   id: number
   code: string
-  bonus_amount: number
-  max_uses: number
-  used_count: number
+  bonusAmount: number
+  maxUses: number
+  usedCount: number
   status: 'active' | 'disabled'
-  expires_at: string | null
+  expiresAt: string | null
   notes: string | null
-  created_at: string
-  updated_at: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface PromoCodeUsage {
   id: number
-  promo_code_id: number
-  user_id: number
-  bonus_amount: number
-  used_at: string
+  promoCodeId: number
+  userId: number
+  bonusAmount: number
+  usedAt: string
   user?: User
 }
 
 export interface CreatePromoCodeRequest {
   code?: string
-  bonus_amount: number
-  max_uses?: number
-  expires_at?: number | null
+  bonusAmount: number
+  maxUses?: number
+  expiresAt?: number | null
   notes?: string
 }
 
 export interface UpdatePromoCodeRequest {
   code?: string
-  bonus_amount?: number
-  max_uses?: number
+  bonusAmount?: number
+  maxUses?: number
   status?: 'active' | 'disabled'
-  expires_at?: number | null
+  expiresAt?: number | null
   notes?: string
 }
 
@@ -2155,25 +1788,25 @@ export interface UpdatePromoCodeRequest {
 
 export interface TotpStatus {
   enabled: boolean
-  enabled_at: number | null  // Unix timestamp in seconds
-  feature_enabled: boolean
+  enabledAt: number | null  // Unix timestamp in seconds
+  featureEnabled: boolean
 }
 
 export interface TotpSetupRequest {
-  email_code?: string
+  emailCode?: string
   password?: string
 }
 
 export interface TotpSetupResponse {
   secret: string
-  qr_code_url: string
-  setup_token: string
+  qrCodeUrl: string
+  setupToken: string
   countdown: number
 }
 
 export interface TotpEnableRequest {
-  totp_code: string
-  setup_token: string
+  totpCode: string
+  setupToken: string
 }
 
 export interface TotpEnableResponse {
@@ -2181,7 +1814,7 @@ export interface TotpEnableResponse {
 }
 
 export interface TotpDisableRequest {
-  email_code?: string
+  emailCode?: string
   password?: string
 }
 
@@ -2190,60 +1823,22 @@ export interface TotpVerificationMethod {
 }
 
 export interface TotpLoginResponse {
-  requires_2fa: boolean
-  temp_token?: string
-  user_email_masked?: string
+  requires2fa: boolean
+  tempToken?: string
+  userEmailMasked?: string
 }
 
 export interface TotpLogin2FARequest {
-  temp_token: string
-  totp_code: string
+  tempToken: string
+  totpCode: string
 }
 
 // ==================== Scheduled Test Types ====================
 
-export interface ScheduledTestPlan {
-  id: number
-  account_id: number
-  model_id: string
-  cron_expression: string
-  enabled: boolean
-  max_results: number
-  auto_recover: boolean
-  last_run_at: string | null
-  next_run_at: string | null
-  created_at: string
-  updated_at: string
-}
-
-export interface ScheduledTestResult {
-  id: number
-  plan_id: number
-  status: string
-  response_text: string
-  error_message: string
-  latency_ms: number
-  started_at: string
-  finished_at: string
-  created_at: string
-}
-
-export interface CreateScheduledTestPlanRequest {
-  account_id: number
-  model_id: string
-  cron_expression: string
-  enabled?: boolean
-  max_results?: number
-  auto_recover?: boolean
-}
-
-export interface UpdateScheduledTestPlanRequest {
-  model_id?: string
-  cron_expression?: string
-  enabled?: boolean
-  max_results?: number
-  auto_recover?: boolean
-}
+export type { ScheduledTestPlan } from '@/features/admin-accounts/domain/models/scheduledTestPlan'
+export type { ScheduledTestResult } from '@/features/admin-accounts/domain/models/scheduledTestResult'
+export type { CreateScheduledTestPlanRequest } from '@/features/admin-accounts/data/requests_models/createScheduledTestPlanRequest'
+export type { UpdateScheduledTestPlanRequest } from '@/features/admin-accounts/data/requests_models/updateScheduledTestPlanRequest'
 
 // Payment types
 export type { SubscriptionPlan, PaymentOrder, CheckoutInfoResponse } from './payment'

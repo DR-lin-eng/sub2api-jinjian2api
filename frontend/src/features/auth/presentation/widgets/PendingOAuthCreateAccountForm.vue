@@ -290,8 +290,8 @@ function emitSwitchToBind() {
 onMounted(async () => {
   try {
     const settings = await getPublicSettings()
-    invitationCodeEnabled.value = settings.invitation_code_enabled === true
-    emailVerifyEnabled.value = settings.email_verify_enabled !== false
+    invitationCodeEnabled.value = settings.invitationCodeEnabled === true
+    emailVerifyEnabled.value = settings.emailVerifyEnabled !== false
     const verification = resolveHumanVerification(settings)
     turnstileEnabled.value = verification.external
     turnstileSiteKey.value = verification.siteKey

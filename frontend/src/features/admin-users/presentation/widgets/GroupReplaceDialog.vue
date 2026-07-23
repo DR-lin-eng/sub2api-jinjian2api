@@ -80,9 +80,10 @@ import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { adminAPI } from '@/api/admin'
-import type { AdminUser, AdminGroup } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
 
 interface Props {
   show: boolean
@@ -103,7 +104,7 @@ const submitting = ref(false)
 const availableGroups = computed(() => {
   if (!props.oldGroup) return []
   return props.allGroups.filter(
-    g => g.status === 'active' && g.is_exclusive && g.subscription_type === 'standard' && g.id !== props.oldGroup!.id
+    g => g.status === 'active' && g.isExclusive && g.subscriptionType === 'standard' && g.id !== props.oldGroup!.id
   )
 })
 

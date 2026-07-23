@@ -7,8 +7,8 @@
         :key="group.id"
         :name="group.name"
         :platform="group.platform"
-        :subscription-type="group.subscription_type"
-        :rate-multiplier="group.rate_multiplier"
+        :subscription-type="group.subscriptionType"
+        :rate-multiplier="group.rateMultiplier"
         :show-rate="false"
         class="max-w-24"
       />
@@ -58,8 +58,8 @@
               :key="group.id"
               :name="group.name"
               :platform="group.platform"
-              :subscription-type="group.subscription_type"
-              :rate-multiplier="group.rate_multiplier"
+              :subscription-type="group.subscriptionType"
+              :rate-multiplier="group.rateMultiplier"
               :show-rate="false"
             />
           </div>
@@ -81,8 +81,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
-import type { Group } from '@/types'
-
+import type { Group } from '@/features/admin-groups/domain/models/group'
 interface Props {
   groups: Group[] | null | undefined
   maxDisplay?: number

@@ -238,7 +238,7 @@
               <span
                 v-if="accountDisplayEmail(row)"
                 class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]"
-                :title="accountDisplayEmail(row) + (row.parent_chatgpt_account_id ? ' · ' + row.parent_chatgpt_account_id : '')"
+                :title="accountDisplayEmail(row) + (row.parentChatgptAccountId ? ' · ' + row.parentChatgptAccountId : '')"
               >
                 {{ accountDisplayEmail(row) }}
               </span>
@@ -254,8 +254,8 @@
                 <PlatformTypeBadge :platform="row.platform" :type="row.type"
                   :auth-mode="getOpenAIAuthMode(row)"
                   :plan-type="getAccountPlanType(row)"
-                  :privacy-mode="row.extra?.privacy_mode || row.parent_privacy_mode"
-                  :subscription-expires-at="row.credentials?.subscription_expires_at || row.parent_subscription_expires_at" />
+                  :privacy-mode="row.extra?.privacy_mode || row.parentPrivacyMode"
+                  :subscription-expires-at="row.credentials?.subscription_expires_at || row.parentSubscriptionExpiresAt" />
                 <span
                   v-if="getAntigravityTierLabel(row)"
                   :class="['inline-block rounded px-1.5 py-0.5 text-[10px] font-medium', getAntigravityTierClass(row)]"
@@ -303,7 +303,7 @@
             </div>
           </template>
           <template #cell-hourly_usage="{ row }">
-            <AccountHourlyUsageCell :stats="row.hourly_usage" />
+            <AccountHourlyUsageCell :stats="row.hourlyUsage" />
           </template>
           <template #cell-groups="{ row }">
             <AccountGroupsCell :groups="row.groups" :max-display="4" />
@@ -326,17 +326,17 @@
             <div class="flex flex-col gap-1">
               <div v-if="row.proxy" class="flex items-center gap-2">
                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ row.proxy.name }}</span>
-                <span v-if="row.proxy.country_code" class="text-xs text-gray-500 dark:text-gray-400">
-                  ({{ row.proxy.country_code }})
+                <span v-if="row.proxy.countryCode" class="text-xs text-gray-500 dark:text-gray-400">
+                  ({{ row.proxy.countryCode }})
                 </span>
               </div>
               <span v-else class="text-sm text-gray-400 dark:text-dark-500">-</span>
-              <div v-if="row.proxy && row.proxy.expires_at" class="flex items-center gap-2 text-xs">
-                <span class="text-gray-600 dark:text-gray-300">{{ formatDateTime(row.proxy.expires_at) }}</span>
+              <div v-if="row.proxy && row.proxy.expiresAt" class="flex items-center gap-2 text-xs">
+                <span class="text-gray-600 dark:text-gray-300">{{ formatDateTime(row.proxy.expiresAt) }}</span>
                 <span :class="proxyExpiryBadge(row.proxy)">{{ proxyExpiryText(row.proxy) }}</span>
               </div>
-              <div v-if="row.proxy_fallback_origin_id" class="flex items-center gap-1">
-                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" :title="t('admin.accounts.fallbackActiveTip', { origin: row.proxy_fallback_origin_name })">
+              <div v-if="row.proxyFallbackOriginId" class="flex items-center gap-1">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" :title="t('admin.accounts.fallbackActiveTip', { origin: row.proxyFallbackOriginName })">
                   {{ t('admin.accounts.fallbackActive') }}
                 </span>
                 <button class="text-xs px-1.5 py-0.5 rounded border border-gray-300 dark:border-dark-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700" @click="onRevertFallback(row)">{{ t('admin.accounts.revertProxy') }}</button>
@@ -345,7 +345,7 @@
           </template>
           <template #cell-rate_multiplier="{ row }">
             <span class="text-sm font-mono text-gray-700 dark:text-gray-300">
-              {{ (row.rate_multiplier ?? 1).toFixed(2) }}x
+              {{ (row.rateMultiplier ?? 1).toFixed(2) }}x
             </span>
           </template>
           <template #header-upstream_billing_rate="{ column }">
@@ -378,13 +378,13 @@
             <div v-if="getSchedulerScoreRows(row).length" class="flex min-w-[7rem] flex-col gap-0.5 font-mono text-[11px] leading-4">
               <div
                 v-for="score in getSchedulerScoreRows(row)"
-                :key="String(score.group_id)"
+                :key="String(score.groupId)"
                 class="flex items-center gap-1 whitespace-nowrap text-gray-700 dark:text-gray-300"
-                :title="`${formatSchedulerScoreGroup(score)} / ${formatSchedulerScore(score.base_score)} / ${formatStickySchedulerScore(score)}`"
+                :title="`${formatSchedulerScoreGroup(score)} / ${formatSchedulerScore(score.baseScore)} / ${formatStickySchedulerScore(score)}`"
               >
                 <span class="max-w-[4.75rem] truncate text-gray-500 dark:text-dark-400">{{ formatSchedulerScoreGroup(score) }}</span>
                 <span class="text-gray-300 dark:text-gray-600">/</span>
-                <span>{{ formatSchedulerScore(score.base_score) }}</span>
+                <span>{{ formatSchedulerScore(score.baseScore) }}</span>
                 <span class="text-gray-300 dark:text-gray-600">/</span>
                 <span class="text-primary-700 dark:text-primary-300">{{ formatStickySchedulerScore(score) }}</span>
               </div>
@@ -400,7 +400,7 @@
           <template #cell-expires_at="{ row, value }">
             <div class="flex flex-col items-start gap-1">
               <span class="text-sm text-gray-500 dark:text-dark-400">{{ formatExpiresAt(value) }}</span>
-              <div v-if="isExpired(value) || (row.auto_pause_on_expired && value)" class="flex items-center gap-1">
+              <div v-if="isExpired(value) || (row.autoPauseOnExpired && value)" class="flex items-center gap-1">
                 <span
                   v-if="isExpired(value)"
                   class="inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
@@ -408,7 +408,7 @@
                   {{ t('admin.accounts.expired') }}
                 </span>
                 <span
-                  v-if="row.auto_pause_on_expired && value"
+                  v-if="row.autoPauseOnExpired && value"
                   class="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
                 >
                   {{ t('admin.accounts.autoPauseOnExpired') }}
@@ -437,16 +437,16 @@
       </template>
       <template #pagination><Pagination v-if="pagination.total > 0" :page="pagination.page" :total="pagination.total" :page-size="pagination.page_size" @update:page="handlePageChange" @update:pageSize="handlePageSizeChange" /></template>
     </TablePageLayout>
-    <CreateAccountModal :show="showCreate" :proxies="proxies" :groups="groups" @close="showCreate = false" @created="reload" />
-    <EditAccountModal :show="showEdit" :account="edAcc" :proxies="proxies" :groups="groups" @close="showEdit = false" @updated="handleAccountUpdated" />
-    <ReAuthAccountModal :show="showReAuth" :account="reAuthAcc" @close="closeReAuthModal" @reauthorized="handleAccountUpdated" />
-    <AccountTestModal :show="showTest" :account="testingAcc" @close="closeTestModal" />
-    <AccountStatsModal :show="showStats" :account="statsAcc" @close="closeStatsModal" />
+    <CreateAccountDialog :show="showCreate" :proxies="proxies" :groups="groups" @close="showCreate = false" @created="reload" />
+    <EditAccountDialog :show="showEdit" :account="edAcc" :proxies="proxies" :groups="groups" @close="showEdit = false" @updated="handleAccountUpdated" />
+    <ReAuthAccountDialog :show="showReAuth" :account="reAuthAcc" @close="closeReAuthModal" @reauthorized="handleAccountUpdated" />
+    <AccountTestDialog :show="showTest" :account="testingAcc" @close="closeTestModal" />
+    <AccountStatsDialog :show="showStats" :account="statsAcc" @close="closeStatsModal" />
     <ScheduledTestsPanel :show="showSchedulePanel" :account-id="scheduleAcc?.id ?? null" :model-options="scheduleModelOptions" @close="closeSchedulePanel" />
     <AccountActionMenu :show="menu.show" :account="menu.acc" :position="menu.pos" @close="menu.show = false" @test="handleTest" @stats="handleViewStats" @schedule="handleSchedule" @duplicate="handleDuplicateAccount" @reauth="handleReAuth" @refresh-token="handleRefresh" @recover-state="handleRecoverState" @reset-quota="handleResetQuota" @set-privacy="handleSetPrivacy" @create-spark-shadow="handleCreateSparkShadow" />
-    <SyncFromCrsModal :show="showSync" @close="showSync = false" @synced="reload" />
-    <ImportDataModal :show="showImportData" @close="showImportData = false" @imported="handleDataImported" />
-    <BulkEditAccountModal
+    <SyncFromCrsDialog :show="showSync" @close="showSync = false" @synced="reload" />
+    <ImportDataDialog :show="showImportData" @close="showImportData = false" @imported="handleDataImported" />
+    <BulkEditAccountDialog
       :show="showBulkEdit"
       :account-ids="selIds"
       :selected-platforms="selPlatforms"
@@ -457,7 +457,7 @@
       @close="showBulkEdit = false"
       @updated="handleBulkUpdated"
     />
-    <TempUnschedStatusModal :show="showTempUnsched" :account="tempUnschedAcc" @close="showTempUnsched = false" @reset="handleTempUnschedReset" />
+    <TempUnschedStatusDialog :show="showTempUnsched" :account="tempUnschedAcc" @close="showTempUnsched = false" @reset="handleTempUnschedReset" />
     <ConfirmDialog :show="showDeleteDialog" :title="t('admin.accounts.deleteAccount')" :message="t('admin.accounts.deleteConfirm', { name: deletingAcc?.name })" :confirm-text="t('common.delete')" :cancel-text="t('common.cancel')" :danger="true" @confirm="confirmDelete" @cancel="showDeleteDialog = false" />
     <ConfirmDialog :show="showCreateShadowDialog" :title="t('admin.accounts.createSparkShadow')" :message="t('admin.accounts.createSparkShadowConfirm', { name: creatingShadowAcc?.name })" @confirm="confirmCreateSparkShadow" @cancel="showCreateShadowDialog = false" />
     <ConfirmDialog :show="showExportDataDialog" :title="t('admin.accounts.dataExport')" :message="t('admin.accounts.dataExportConfirmMessage')" :confirm-text="t('admin.accounts.dataExportConfirm')" :cancel-text="t('common.cancel')" @confirm="handleExportData" @cancel="showExportDataDialog = false">
@@ -466,8 +466,8 @@
         <span>{{ t('admin.accounts.dataExportIncludeProxies') }}</span>
       </label>
     </ConfirmDialog>
-    <ErrorPassthroughRulesModal :show="showErrorPassthrough" @close="showErrorPassthrough = false" />
-    <TLSFingerprintProfilesModal :show="showTLSFingerprintProfiles" @close="showTLSFingerprintProfiles = false" />
+    <ErrorPassthroughRulesDialog :show="showErrorPassthrough" @close="showErrorPassthrough = false" />
+    <TLSFingerprintProfilesDialog :show="showTLSFingerprintProfiles" @close="showTLSFingerprintProfiles = false" />
     <TotpStepUpDialog :controller="accountExportStepUp" />
   </AppLayout>
 </template>
@@ -478,7 +478,6 @@ import { useIntervalFn } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/core/stores/authStore'
-import { adminAPI } from '@/api/admin'
 import { useTableLoader } from '@/common/composables/useTableLoader'
 import { useSwipeSelect, type SwipeSelectVirtualContext } from '@/common/composables/useSwipeSelect'
 import { useTableSelection } from '@/common/composables/useTableSelection'
@@ -490,15 +489,19 @@ import DataTable from '@/common/widgets/data/DataTable.vue'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
-import { CreateAccountModal, EditAccountModal, BulkEditAccountModal, SyncFromCrsModal, TempUnschedStatusModal } from '@/features/admin-accounts/presentation/widgets'
+import CreateAccountDialog from '@/features/admin-accounts/presentation/widgets/CreateAccountDialog.vue'
+import EditAccountDialog from '@/features/admin-accounts/presentation/widgets/EditAccountDialog.vue'
+import BulkEditAccountDialog from '@/features/admin-accounts/presentation/widgets/BulkEditAccountDialog.vue'
+import SyncFromCrsDialog from '@/features/admin-accounts/presentation/widgets/SyncFromCrsDialog.vue'
+import TempUnschedStatusDialog from '@/features/admin-accounts/presentation/widgets/TempUnschedStatusDialog.vue'
 import AccountTableActions from '@/features/admin-accounts/presentation/widgets/AccountTableActions.vue'
 import AccountTableFilters from '@/features/admin-accounts/presentation/widgets/AccountTableFilters.vue'
 import AccountBulkActionsBar from '@/features/admin-accounts/presentation/widgets/AccountBulkActionsBar.vue'
 import AccountActionMenu from '@/features/admin-accounts/presentation/widgets/AccountActionMenu.vue'
-import ImportDataModal from '@/features/admin-accounts/presentation/widgets/ImportDataDialog.vue'
-import ReAuthAccountModal from '@/features/admin-accounts/presentation/widgets/AdminReAuthAccountDialog.vue'
-import AccountTestModal from '@/features/admin-accounts/presentation/widgets/AdminAccountTestDialog.vue'
-import AccountStatsModal from '@/features/admin-accounts/presentation/widgets/AdminAccountStatsDialog.vue'
+import ImportDataDialog from '@/features/admin-accounts/presentation/widgets/ImportDataDialog.vue'
+import ReAuthAccountDialog from '@/features/admin-accounts/presentation/widgets/AdminReAuthAccountDialog.vue'
+import AccountTestDialog from '@/features/admin-accounts/presentation/widgets/AdminAccountTestDialog.vue'
+import AccountStatsDialog from '@/features/admin-accounts/presentation/widgets/AdminAccountStatsDialog.vue'
 import ScheduledTestsPanel from '@/features/admin-accounts/presentation/widgets/ScheduledTestsPanel.vue'
 import type { SelectOption } from '@/common/widgets/forms/Select.vue'
 import AccountStatusIndicator from '@/features/admin-accounts/presentation/widgets/AccountStatusIndicator.vue'
@@ -510,14 +513,26 @@ import AccountCapacityCell from '@/features/admin-accounts/presentation/widgets/
 import UpstreamBillingRateCell from '@/features/admin-accounts/presentation/widgets/UpstreamBillingRateCell.vue'
 import PlatformTypeBadge from '@/common/widgets/icons/PlatformTypeBadge.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import ErrorPassthroughRulesModal from '@/features/admin-settings/presentation/widgets/ErrorPassthroughRulesDialog.vue'
-import TLSFingerprintProfilesModal from '@/features/admin-settings/presentation/widgets/TLSFingerprintProfilesDialog.vue'
+import ErrorPassthroughRulesDialog from '@/features/admin-settings/presentation/widgets/ErrorPassthroughRulesDialog.vue'
+import TLSFingerprintProfilesDialog from '@/features/admin-settings/presentation/widgets/TLSFingerprintProfilesDialog.vue'
 import { buildOpenAIUsageRefreshKey } from '@/core/utils/accountUsageRefresh'
 import { formatDateTime, formatRelativeTime } from '@/core/utils/format'
 import { proxyExpiryBadgeClass, proxyExpiryLabelKey } from '@/core/utils/proxyExpiry'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { sanitizeUrl } from '@/core/utils/url'
-import type { Account, AccountPlatform, AccountSchedulerGroupScore, AccountType, Proxy as AccountProxy, AdminGroup, WindowStats, ClaudeModel, UpstreamBillingProbeSnapshot } from '@/types'
+import { useAdminAccounts } from '@/features/admin-accounts/presentation/composables/useAdminAccounts'
+import { useAdminProxies } from '@/features/admin-proxies/presentation/composables/useAdminProxies'
+import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
+import type { AccountPlatform, AccountType, ClaudeModel } from '@/types'
+import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { AccountSchedulerGroupScore } from '@/features/admin-accounts/domain/models/accountSchedulerGroupScore'
+import type { WindowStats } from '@/features/admin-accounts/domain/models/windowStats'
+import type { UpstreamBillingProbeSnapshot } from '@/features/admin-accounts/domain/models/upstreamBillingProbeSnapshot'
+import type { Proxy as AccountProxy } from '@/features/admin-proxies/domain/models/proxy'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
+const $accounts = useAdminAccounts()
+const $proxies = useAdminProxies()
+const $groups = useAdminGroups()
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -675,8 +690,8 @@ const buildDefaultTodayStats = (): WindowStats => ({
   requests: 0,
   tokens: 0,
   cost: 0,
-  standard_cost: 0,
-  user_cost: 0
+  standardCost: 0,
+  userCost: 0
 })
 
 const refreshTodayStatsBatch = async () => {
@@ -703,7 +718,7 @@ const refreshTodayStatsBatch = async () => {
   todayStatsError.value = null
 
   try {
-    const result = await adminAPI.accounts.getBatchTodayStats(accountIDs)
+    const result = await $accounts.getBatchTodayStats(accountIDs)
     if (reqSeq !== todayStatsReqSeq.value) return
     const serverStats = result.stats ?? {}
     const nextStats: Record<string, WindowStats> = {}
@@ -739,25 +754,25 @@ const formatSchedulerScore = (value: unknown): string => {
 
 const formatStickySchedulerScore = (score: AccountSchedulerGroupScore): string => {
   if (!score) return '-'
-  if (score.sticky_score_infinity) return '+∞'
-  return formatSchedulerScore(score.sticky_score)
+  if (score.stickyScoreInfinity) return '+∞'
+  return formatSchedulerScore(score.stickyScore)
 }
 
 const getSchedulerScoreRows = (account: Account): AccountSchedulerGroupScore[] => {
-  const groupRows = Array.isArray(account.scheduler_scores)
-    ? account.scheduler_scores.filter(score => score.group_id != null)
+  const groupRows = Array.isArray(account.schedulerScores)
+    ? account.schedulerScores.filter(score => score.groupId != null)
     : []
   if (groupRows.length) return groupRows
   // 未分组账号没有分组维度分数，回退展示后端返回的基础分
-  if (account.scheduler_score) {
-    return [{ group_id: null, ...account.scheduler_score }]
+  if (account.schedulerScore) {
+    return [{ groupId: 0, groupName: '', groupPriority: 0, ...account.schedulerScore }]
   }
   return []
 }
 
 const formatSchedulerScoreGroup = (score: AccountSchedulerGroupScore): string => {
-  if ('group_name' in score && score.group_name) return score.group_name
-  if ('group_id' in score && score.group_id != null) return `#${score.group_id}`
+  if ('groupName' in score && score.groupName) return score.groupName
+  if ('groupId' in score && score.groupId != null) return `#${score.groupId}`
   return t('admin.accounts.schedulerScore.ungrouped')
 }
 
@@ -902,7 +917,7 @@ const {
   handlePageChange: baseHandlePageChange,
   handlePageSizeChange: baseHandlePageSizeChange
 } = useTableLoader<Account, any>({
-  fetchFn: adminAPI.accounts.list,
+  fetchFn: $accounts.list,
   initialParams: {
     platform: '',
     type: '',
@@ -1029,7 +1044,7 @@ const handleSort = (key: string, order: AccountSortOrder) => {
   sortState.sort_order = order
   const requestParams = params as any
   requestParams.sort_by = key
-  requestParams.sort_order = order
+  requestParams.sortOrder = order
   syncAccountListDerivedParams()
   pagination.page = 1
   hasPendingListSync.value = false
@@ -1086,20 +1101,20 @@ const inAutoRefreshSilentWindow = () => {
 
 const shouldReplaceAutoRefreshRow = (current: Account, next: Account) => {
   return (
-    current.updated_at !== next.updated_at ||
-    current.current_concurrency !== next.current_concurrency ||
-    current.current_window_cost !== next.current_window_cost ||
-    current.active_sessions !== next.active_sessions ||
-    current.hourly_usage?.total_requests !== next.hourly_usage?.total_requests ||
-    current.hourly_usage?.avg_first_token_ms !== next.hourly_usage?.avg_first_token_ms ||
-    current.hourly_usage?.success_rate !== next.hourly_usage?.success_rate ||
-    current.hourly_usage?.error_4xx !== next.hourly_usage?.error_4xx ||
-    current.hourly_usage?.error_5xx !== next.hourly_usage?.error_5xx ||
+    current.updatedAt !== next.updatedAt ||
+    current.currentConcurrency !== next.currentConcurrency ||
+    current.currentWindowCost !== next.currentWindowCost ||
+    current.activeSessions !== next.activeSessions ||
+    current.hourlyUsage?.totalRequests !== next.hourlyUsage?.totalRequests ||
+    current.hourlyUsage?.avgFirstTokenMs !== next.hourlyUsage?.avgFirstTokenMs ||
+    current.hourlyUsage?.successRate !== next.hourlyUsage?.successRate ||
+    current.hourlyUsage?.error4xx !== next.hourlyUsage?.error4xx ||
+    current.hourlyUsage?.error5xx !== next.hourlyUsage?.error5xx ||
     current.schedulable !== next.schedulable ||
     current.status !== next.status ||
-    current.rate_limit_reset_at !== next.rate_limit_reset_at ||
-    current.overload_until !== next.overload_until ||
-    current.temp_unschedulable_until !== next.temp_unschedulable_until ||
+    current.rateLimitResetAt !== next.rateLimitResetAt ||
+    current.overloadUntil !== next.overloadUntil ||
+    current.tempUnschedulableUntil !== next.tempUnschedulableUntil ||
     buildOpenAIUsageRefreshKey(current) !== buildOpenAIUsageRefreshKey(next)
   )
 }
@@ -1147,7 +1162,7 @@ const refreshAccountsIncrementally = async () => {
   syncAccountListDerivedParams()
   autoRefreshFetching.value = true
   try {
-    const result = await adminAPI.accounts.listWithEtag(
+    const result = await $accounts.listWithEtag(
       pagination.page,
       pagination.page_size,
       toRaw(params) as {
@@ -1193,7 +1208,7 @@ const handleManualRefresh = async () => {
 
 const loadUpstreamBillingProbeGlobalState = async () => {
   try {
-    const settings = await adminAPI.accounts.getUpstreamBillingProbeSettings()
+    const settings = await $accounts.getUpstreamBillingProbeSettings()
     upstreamBillingProbeGloballyEnabled.value = settings.enabled
   } catch (error) {
     console.error('Failed to load upstream billing probe settings:', error)
@@ -1277,11 +1292,11 @@ function getAccountPlanType(row: any): string | undefined {
       row.credentials?.subscription_tier ||
       extra.subscription_tier ||
       row.credentials?.plan_type ||
-      row.parent_plan_type ||
+      row.parentPlanType ||
       undefined
     )
   }
-  return row.credentials?.plan_type || row.parent_plan_type || undefined
+  return row.credentials?.plan_type || row.parentPlanType || undefined
 }
 
 function getOpenAIAuthMode(row: any): string | undefined {
@@ -1317,7 +1332,7 @@ function getAntigravityTierLabel(row: any): string | null {
 // 账号显示邮箱:优先账号自身(extra/credentials),影子账号回退母账号 parent_email。
 // 供名称单元格 v-if/标题/文本三处共用,避免同一回退链在模板里重复三次。
 function accountDisplayEmail(row: any): string {
-  return row.extra?.email_address || row.extra?.email || row.credentials?.email || row.parent_email || ''
+  return row.extra?.email_address || row.extra?.email || row.credentials?.email || row.parentEmail || ''
 }
 
 function accountHomepageUrl(row: Account): string {
@@ -1483,11 +1498,11 @@ const toggleSelectAllVisible = (event: Event) => {
   const target = event.target as HTMLInputElement
   toggleVisible(target.checked)
 }
-const handleBulkDelete = async () => { if(!confirm(t('common.confirm'))) return; try { await Promise.all(selIds.value.map(id => adminAPI.accounts.delete(id))); clearSelection(); reload() } catch (error) { console.error('Failed to bulk delete accounts:', error) } }
+const handleBulkDelete = async () => { if(!confirm(t('common.confirm'))) return; try { await Promise.all(selIds.value.map(id => $accounts.deleteAccount(id))); clearSelection(); reload() } catch (error) { console.error('Failed to bulk delete accounts:', error) } }
 const handleBulkResetStatus = async () => {
   if (!confirm(t('common.confirm'))) return
   try {
-    const result = await adminAPI.accounts.batchClearError(selIds.value)
+    const result = await $accounts.batchClearError(selIds.value)
     if (result.failed > 0) {
       appStore.showError(t('admin.accounts.bulkActions.partialSuccess', { success: result.success, failed: result.failed }))
     } else {
@@ -1503,7 +1518,7 @@ const handleBulkResetStatus = async () => {
 const handleBulkRefreshToken = async () => {
   if (!confirm(t('common.confirm'))) return
   try {
-    const result = await adminAPI.accounts.batchRefresh(selIds.value)
+    const result = await $accounts.batchRefresh(selIds.value)
     if (result.failed > 0) {
       appStore.showError(t('admin.accounts.bulkActions.partialSuccess', { success: result.success, failed: result.failed }))
     } else {
@@ -1528,11 +1543,11 @@ const handleBulkProbeUpstreamBilling = async () => {
   }
   accountIDs.forEach(id => probingUpstreamBilling.add(id))
   try {
-    const results = await adminAPI.accounts.probeUpstreamBillingBatch(accountIDs)
+    const results = await $accounts.probeUpstreamBillingBatch(accountIDs)
     let patched = false
     results.forEach((result: any) => {
       if (result.snapshot) {
-        patchUpstreamBillingSnapshot(result.account_id, result.snapshot)
+        patchUpstreamBillingSnapshot(result.accountId, result.snapshot)
         patched = true
       }
     })
@@ -1618,7 +1633,7 @@ const normalizeBulkSchedulableResult = (
 const handleBulkToggleSchedulable = async (schedulable: boolean) => {
   const accountIds = [...selIds.value]
   try {
-    const result = await adminAPI.accounts.bulkUpdate(accountIds, { schedulable })
+    const result = await $accounts.bulkUpdate(accountIds, { schedulable })
     const { successIds, failedIds, successCount, failedCount, hasIds, hasCounts } = normalizeBulkSchedulableResult(result, accountIds)
     if (!hasIds && !hasCounts) {
       appStore.showError(t('admin.accounts.bulkSchedulableResultUnknown'))
@@ -1654,7 +1669,7 @@ const handleBulkToggleSchedulable = async (schedulable: boolean) => {
 }
 const buildBulkEditFilterSnapshot = () => {
   const rawParams = toRaw(params) as Record<string, unknown>
-  const sortOrder: AccountSortOrder = rawParams.sort_order === 'desc' ? 'desc' : 'asc'
+  const sortOrder: AccountSortOrder = rawParams.sortOrder === 'desc' ? 'desc' : 'asc'
   return {
     platform: typeof rawParams.platform === 'string' ? rawParams.platform : '',
     type: typeof rawParams.type === 'string' ? rawParams.type : '',
@@ -1685,7 +1700,7 @@ const openBulkEditSelected = () => {
 
 const openBulkEditFiltered = async () => {
   const filters = buildBulkEditFilterSnapshot()
-  const preview = await adminAPI.accounts.list(1, 100, filters)
+  const preview = await $accounts.list(1, 100, filters)
   const { selectedPlatforms, selectedTypes } = collectSelectionMetadata(preview.items)
   bulkEditTarget.value = {
     mode: 'filtered',
@@ -1722,9 +1737,9 @@ const accountMatchesCurrentFilters = (account: Account) => {
   if (filters.type && account.type !== filters.type) return false
   if (filters.status) {
     const now = Date.now()
-    const rateLimitResetAt = account.rate_limit_reset_at ? new Date(account.rate_limit_reset_at).getTime() : Number.NaN
+    const rateLimitResetAt = account.rateLimitResetAt ? new Date(account.rateLimitResetAt).getTime() : Number.NaN
     const isRateLimited = Number.isFinite(rateLimitResetAt) && rateLimitResetAt > now
-    const tempUnschedUntil = account.temp_unschedulable_until ? new Date(account.temp_unschedulable_until).getTime() : Number.NaN
+    const tempUnschedUntil = account.tempUnschedulableUntil ? new Date(account.tempUnschedulableUntil).getTime() : Number.NaN
     const isTempUnschedulable = Number.isFinite(tempUnschedUntil) && tempUnschedUntil > now
 
     if (filters.status === 'active') {
@@ -1740,7 +1755,7 @@ const accountMatchesCurrentFilters = (account: Account) => {
     }
   }
   if (filters.group) {
-    const groupIds = account.group_ids ?? account.groups?.map((group) => group.id) ?? []
+    const groupIds = account.groupIds ?? []
     if (filters.group === ACCOUNT_UNGROUPED_GROUP_QUERY_VALUE) {
       if (groupIds.length > 0) return false
     } else if (!groupIds.includes(Number(filters.group))) {
@@ -1761,9 +1776,9 @@ const accountMatchesCurrentFilters = (account: Account) => {
 }
 const mergeRuntimeFields = (oldAccount: Account, updatedAccount: Account): Account => ({
   ...updatedAccount,
-  current_concurrency: updatedAccount.current_concurrency ?? oldAccount.current_concurrency,
-  current_window_cost: updatedAccount.current_window_cost ?? oldAccount.current_window_cost,
-  active_sessions: updatedAccount.active_sessions ?? oldAccount.active_sessions
+  currentConcurrency: updatedAccount.currentConcurrency ?? oldAccount.currentConcurrency,
+  currentWindowCost: updatedAccount.currentWindowCost ?? oldAccount.currentWindowCost,
+  activeSessions: updatedAccount.activeSessions ?? oldAccount.activeSessions
 })
 
 const syncPaginationAfterLocalRemoval = () => {
@@ -1813,7 +1828,7 @@ const handleProbeUpstreamBilling = async (account: Account) => {
   if (probingUpstreamBilling.has(account.id)) return
   probingUpstreamBilling.add(account.id)
   try {
-    const result = await adminAPI.accounts.probeUpstreamBilling(account.id)
+    const result = await $accounts.probeUpstreamBilling(account.id)
     if (result.snapshot) {
       patchUpstreamBillingSnapshot(account.id, result.snapshot)
       await refreshUpstreamBillingSortedList(true)
@@ -1842,7 +1857,7 @@ const handleExportData = async () => {
   if (exportingData.value) return
   exportingData.value = true
   try {
-    const dataPayload: any = await accountExportStepUp.run(() => adminAPI.accounts.exportData(
+    const dataPayload: any = await accountExportStepUp.run(() => $accounts.exportData(
       selIds.value.length > 0
         ? { ids: selIds.value, includeProxies: includeProxyOnExport.value }
         : {
@@ -1894,8 +1909,8 @@ const handleSchedule = async (a: Account) => {
   scheduleModelOptions.value = []
   showSchedulePanel.value = true
   try {
-    const models = await adminAPI.accounts.getAvailableModels(a.id)
-    scheduleModelOptions.value = models.map((m: ClaudeModel) => ({ value: m.id, label: m.display_name || m.id }))
+    const models = await $accounts.getAvailableModels(a.id)
+    scheduleModelOptions.value = models.map((m: ClaudeModel) => ({ value: m.id, label: m.displayName || m.id }))
   } catch {
     scheduleModelOptions.value = []
   }
@@ -1907,7 +1922,7 @@ const handleDuplicateAccount = async (a: Account) => {
   if (duplicatingAccountIDs.has(a.id)) return
   duplicatingAccountIDs.add(a.id)
   try {
-    const duplicate = await adminAPI.accounts.duplicate(a.id)
+    const duplicate = await $accounts.duplicate(a.id)
     appStore.showSuccess(t('admin.accounts.duplicateSuccess', { name: duplicate.name }))
     reload()
   } catch (error: any) {
@@ -1919,7 +1934,7 @@ const handleDuplicateAccount = async (a: Account) => {
 }
 const handleRefresh = async (a: Account) => {
   try {
-    const updated = await adminAPI.accounts.refreshCredentials(a.id)
+    const updated = await $accounts.refreshCredentials(a.id)
     patchAccountInList(updated)
     enterAutoRefreshSilentWindow()
   } catch (error) {
@@ -1928,7 +1943,7 @@ const handleRefresh = async (a: Account) => {
 }
 const handleRecoverState = async (a: Account) => {
   try {
-    const updated = await adminAPI.accounts.recoverState(a.id)
+    const updated = await $accounts.recoverState(a.id)
     patchAccountInList(updated)
     enterAutoRefreshSilentWindow()
     appStore.showSuccess(t('admin.accounts.recoverStateSuccess'))
@@ -1939,7 +1954,7 @@ const handleRecoverState = async (a: Account) => {
 }
 const handleResetQuota = async (a: Account) => {
   try {
-    const updated = await adminAPI.accounts.resetAccountQuota(a.id)
+    const updated = await $accounts.resetAccountQuota(a.id)
     patchAccountInList(updated)
     enterAutoRefreshSilentWindow()
     appStore.showSuccess(t('common.success'))
@@ -1971,7 +1986,7 @@ const privacyResultMessageKey = (account: Account): { type: 'success' | 'error';
 
 const handleSetPrivacy = async (a: Account) => {
   try {
-    const updated = await adminAPI.accounts.setPrivacy(a.id)
+    const updated = await $accounts.setPrivacy(a.id)
     patchAccountInList(updated)
     enterAutoRefreshSilentWindow()
     const result = privacyResultMessageKey(updated)
@@ -1987,7 +2002,7 @@ const handleSetPrivacy = async (a: Account) => {
 }
 const onRevertFallback = async (a: Account) => {
   try {
-    await adminAPI.accounts.revertProxyFallback(a.id)
+    await $accounts.revertProxyFallback(a.id)
     appStore.showSuccess(t('admin.accounts.revertProxySuccess'))
     reload()
   } catch (error: any) {
@@ -2003,7 +2018,7 @@ const confirmCreateSparkShadow = async () => {
   const a = creatingShadowAcc.value
   if (!a) return
   try {
-    await adminAPI.accounts.createSparkShadow(a.id, { name: `${a.name} (Spark)` })
+    await $accounts.createSparkShadow(a.id, { name: `${a.name} (Spark)` })
     showCreateShadowDialog.value = false
     creatingShadowAcc.value = null
     appStore.showSuccess(t('admin.accounts.createSparkShadowSuccess'))
@@ -2014,12 +2029,12 @@ const confirmCreateSparkShadow = async () => {
   }
 }
 const handleDelete = (a: Account) => { deletingAcc.value = a; showDeleteDialog.value = true }
-const confirmDelete = async () => { if(!deletingAcc.value) return; try { await adminAPI.accounts.delete(deletingAcc.value.id); showDeleteDialog.value = false; deletingAcc.value = null; reload() } catch (error) { console.error('Failed to delete account:', error) } }
+const confirmDelete = async () => { if(!deletingAcc.value) return; try { await $accounts.deleteAccount(deletingAcc.value.id); showDeleteDialog.value = false; deletingAcc.value = null; reload() } catch (error) { console.error('Failed to delete account:', error) } }
 const handleToggleSchedulable = async (a: Account) => {
   const nextSchedulable = !a.schedulable
   togglingSchedulable.value = a.id
   try {
-    const updated = await adminAPI.accounts.setSchedulable(a.id, nextSchedulable)
+    const updated = await $accounts.setSchedulable(a.id, nextSchedulable)
     updateSchedulableInList([a.id], updated?.schedulable ?? nextSchedulable)
     enterAutoRefreshSilentWindow()
   } catch (error) {
@@ -2056,9 +2071,9 @@ const isExpired = (value: number | null) => {
   return value * 1000 <= Date.now()
 }
 // 所绑定代理的有效期(逻辑同 /admin/proxies,见 utils/proxyExpiry)
-const proxyExpiryBadge = (p: AccountProxy): string => proxyExpiryBadgeClass(p.expires_at, p.status)
+const proxyExpiryBadge = (p: AccountProxy): string => proxyExpiryBadgeClass(p.expiresAt, p.status)
 const proxyExpiryText = (p: AccountProxy): string => {
-  const { key, params } = proxyExpiryLabelKey(p.expires_at, p.status)
+  const { key, params } = proxyExpiryLabelKey(p.expiresAt, p.status)
   return params ? t(key, params) : t(key)
 }
 
@@ -2082,7 +2097,7 @@ onMounted(async () => {
   load()
   loadUpstreamBillingProbeGlobalState()
   try {
-    const [p, g] = await Promise.all([adminAPI.proxies.getAll(), adminAPI.groups.getAll()])
+    const [p, g] = await Promise.all([$proxies.getAll(), $groups.getAll()])
     proxies.value = p
     groups.value = g
   } catch (error) {

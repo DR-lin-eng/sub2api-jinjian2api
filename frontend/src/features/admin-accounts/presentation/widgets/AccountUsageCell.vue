@@ -42,38 +42,38 @@
         </div>
         <!-- 5h Window -->
         <UsageProgressBar
-          v-if="usageInfo.five_hour"
+          v-if="usageInfo.fiveHour"
           label="5h"
-          :utilization="usageInfo.five_hour.utilization"
-          :resets-at="usageInfo.five_hour.resets_at"
-          :window-stats="usageInfo.five_hour.window_stats"
+          :utilization="usageInfo.fiveHour.utilization"
+          :resets-at="usageInfo.fiveHour.resetsAt"
+          :window-stats="usageInfo.fiveHour.windowStats"
           color="indigo"
         />
 
         <!-- 7d Window (OAuth only) -->
         <UsageProgressBar
-          v-if="usageInfo.seven_day"
+          v-if="usageInfo.sevenDay"
           label="7d"
-          :utilization="usageInfo.seven_day.utilization"
-          :resets-at="usageInfo.seven_day.resets_at"
+          :utilization="usageInfo.sevenDay.utilization"
+          :resets-at="usageInfo.sevenDay.resetsAt"
           color="emerald"
         />
 
         <!-- 7d Sonnet Window (OAuth only) -->
         <UsageProgressBar
-          v-if="usageInfo.seven_day_sonnet"
+          v-if="usageInfo.sevenDaySonnet"
           label="7d S"
-          :utilization="usageInfo.seven_day_sonnet.utilization"
-          :resets-at="usageInfo.seven_day_sonnet.resets_at"
+          :utilization="usageInfo.sevenDaySonnet.utilization"
+          :resets-at="usageInfo.sevenDaySonnet.resetsAt"
           color="purple"
         />
 
         <!-- 7d Fable Window (7d_oi) -->
         <UsageProgressBar
-          v-if="usageInfo.seven_day_fable"
+          v-if="usageInfo.sevenDayFable"
           label="7d F"
-          :utilization="usageInfo.seven_day_fable.utilization"
-          :resets-at="usageInfo.seven_day_fable.resets_at"
+          :utilization="usageInfo.sevenDayFable.utilization"
+          :resets-at="usageInfo.sevenDayFable.resetsAt"
           color="amber"
         />
 
@@ -122,20 +122,20 @@
     <template v-else-if="account.platform === 'openai' && account.type === 'oauth'">
       <div v-if="hasOpenAIUsageFallback" class="space-y-1">
         <UsageProgressBar
-          v-if="usageInfo?.five_hour"
+          v-if="usageInfo?.fiveHour"
           label="5h"
-          :utilization="usageInfo.five_hour.utilization"
-          :resets-at="usageInfo.five_hour.resets_at"
-          :window-stats="usageInfo.five_hour.window_stats"
+          :utilization="usageInfo.fiveHour.utilization"
+          :resets-at="usageInfo.fiveHour.resetsAt"
+          :window-stats="usageInfo.fiveHour.windowStats"
           :show-now-when-idle="true"
           color="indigo"
         />
         <UsageProgressBar
-          v-if="usageInfo?.seven_day"
+          v-if="usageInfo?.sevenDay"
           label="7d"
-          :utilization="usageInfo.seven_day.utilization"
-          :resets-at="usageInfo.seven_day.resets_at"
-          :window-stats="usageInfo.seven_day.window_stats"
+          :utilization="usageInfo.sevenDay.utilization"
+          :resets-at="usageInfo.sevenDay.resetsAt"
+          :window-stats="usageInfo.sevenDay.windowStats"
           :show-now-when-idle="true"
           color="emerald"
         />
@@ -373,7 +373,7 @@
               A ${{ formatWindowCost(grokLocalUsage) }}
             </span>
             <span
-              v-if="grokLocalUsage.user_cost != null"
+              v-if="grokLocalUsage.userCost != null"
               class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800"
               :title="t('usage.userBilled')"
             >
@@ -492,7 +492,7 @@
               A ${{ formatKeyCost }}
             </span>
             <span
-              v-if="todayStats.user_cost != null"
+              v-if="todayStats.userCost != null"
               class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800"
               :title="t('usage.userBilled')"
             >
@@ -568,7 +568,7 @@
             A ${{ formatKeyCost }}
           </span>
           <span
-            v-if="todayStats.user_cost != null"
+            v-if="todayStats.userCost != null"
             class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800"
             :title="t('usage.userBilled')"
           >
@@ -617,9 +617,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { adminAPI } from '@/api/admin'
-import type { GrokQuotaProbeResult } from '@/features/admin-accounts/data/datasources/grokDatasource'
-import type { Account, AccountUsageInfo, GeminiCredentials, WindowStats } from '@/types'
+import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
+
+const queryStore = useAdminAccountsQueryStore()
+import type { GrokQuotaProbeResult } from '@/features/admin-accounts/domain/models/grokQuotaProbeResult'
 import { buildOpenAIUsageRefreshKey } from '@/core/utils/accountUsageRefresh'
 import { enqueueUsageRequest } from '@/core/utils/usageLoadQueue'
 import { formatCompactNumber, formatRelativeTime } from '@/core/utils/format'
@@ -627,6 +628,10 @@ import UsageProgressBar from './UsageProgressBar.vue'
 import AccountQuotaInfo from './AccountQuotaInfo.vue'
 import OpenAIQuotaResetCell from './OpenAIQuotaResetCell.vue'
 import GrokQuotaProbeCell from './GrokQuotaProbeCell.vue'
+import type { GeminiCredentials } from '@/types'
+import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { AccountUsageInfo } from '@/features/admin-accounts/domain/models/accountUsageInfo'
+import type { WindowStats } from '@/features/admin-accounts/domain/models/windowStats'
 
 // Module-level cache shared across all AccountUsageCell instances
 const _usageCache = new Map<number, { data: AccountUsageInfo; ts: number }>()
@@ -700,18 +705,18 @@ const showGeminiTodayStats = computed(() => {
 
 const geminiUsageAvailable = computed(() => {
   return (
-    !!usageInfo.value?.gemini_shared_daily ||
-    !!usageInfo.value?.gemini_pro_daily ||
-    !!usageInfo.value?.gemini_flash_daily ||
-    !!usageInfo.value?.gemini_shared_minute ||
-    !!usageInfo.value?.gemini_pro_minute ||
-    !!usageInfo.value?.gemini_flash_minute
+    !!usageInfo.value?.geminiSharedDaily ||
+    !!usageInfo.value?.geminiProDaily ||
+    !!usageInfo.value?.geminiFlashDaily ||
+    !!usageInfo.value?.geminiSharedMinute ||
+    !!usageInfo.value?.geminiProMinute ||
+    !!usageInfo.value?.geminiFlashMinute
   )
 })
 
 const hasOpenAIUsageFallback = computed(() => {
   if (props.account.platform !== 'openai' || props.account.type !== 'oauth') return false
-  return !!usageInfo.value?.five_hour || !!usageInfo.value?.seven_day
+  return !!usageInfo.value?.fiveHour || !!usageInfo.value?.sevenDay
 })
 
 const openAIUsageRefreshKey = computed(() => buildOpenAIUsageRefreshKey(props.account))
@@ -734,14 +739,14 @@ interface AntigravityUsageResult {
 
 // 检查是否有从 API 获取的配额数据
 const hasAntigravityQuotaFromAPI = computed(() => {
-  return usageInfo.value?.antigravity_quota && Object.keys(usageInfo.value.antigravity_quota).length > 0
+  return usageInfo.value?.antigravityQuota && Object.keys(usageInfo.value.antigravityQuota).length > 0
 })
 
 // 从 API 配额数据中获取使用率（多模型取最高使用率）
 const getAntigravityUsageFromAPI = (
   modelNames: string[]
 ): AntigravityUsageResult | null => {
-  const quota = usageInfo.value?.antigravity_quota
+  const quota = usageInfo.value?.antigravityQuota
   if (!quota) return null
 
   let maxUtilization = 0
@@ -754,9 +759,9 @@ const getAntigravityUsageFromAPI = (
     if (modelQuota.utilization > maxUtilization) {
       maxUtilization = modelQuota.utilization
     }
-    if (modelQuota.reset_time) {
-      if (!earliestReset || modelQuota.reset_time < earliestReset) {
-        earliestReset = modelQuota.reset_time
+    if (modelQuota.resetTime) {
+      if (!earliestReset || modelQuota.resetTime < earliestReset) {
+        earliestReset = modelQuota.resetTime
       }
     }
   }
@@ -797,9 +802,9 @@ const antigravityClaudeUsageFromAPI = computed(() =>
 )
 
 const aiCreditsDisplay = computed(() => {
-  const credits = usageInfo.value?.ai_credits
+  const credits = usageInfo.value?.aiCredits
   if (!credits || credits.length === 0) return null
-  const total = credits.reduce((sum, credit) => sum + (credit.amount ?? 0), 0)
+  const total = credits.reduce((sum: number, credit) => sum + (credit.amount ?? 0), 0)
   if (total <= 0) return null
   return total.toFixed(0)
 })
@@ -830,20 +835,20 @@ const antigravityTier = computed(() => {
 const geminiTier = computed(() => {
   if (props.account.platform !== 'gemini') return null
   const creds = props.account.credentials as GeminiCredentials | undefined
-  return creds?.tier_id || null
+  return creds?.tierId || null
 })
 
 const geminiOAuthType = computed(() => {
   if (props.account.platform !== 'gemini') return null
   const creds = props.account.credentials as GeminiCredentials | undefined
-  return (creds?.oauth_type || '').trim() || null
+  return (creds?.oauthType || '').trim() || null
 })
 
 // Gemini 是否为 Code Assist OAuth
 const isGeminiCodeAssist = computed(() => {
   if (props.account.platform !== 'gemini') return false
   const creds = props.account.credentials as GeminiCredentials | undefined
-  return creds?.oauth_type === 'code_assist' || (!creds?.oauth_type && !!creds?.project_id)
+  return creds?.oauthType === 'code_assist' || (!creds?.oauthType && !!creds?.projectId)
 })
 
 const geminiChannelShort = computed((): 'ai studio' | 'gcp' | 'google one' | 'client' | null => {
@@ -986,8 +991,8 @@ const geminiUsesSharedDaily = computed(() => {
   if (props.account.platform !== 'gemini') return false
   // Per requirement: Google One & GCP are shared RPD pools (no per-model breakdown).
   return (
-    !!usageInfo.value?.gemini_shared_daily ||
-    !!usageInfo.value?.gemini_shared_minute ||
+    !!usageInfo.value?.geminiSharedDaily ||
+    !!usageInfo.value?.geminiSharedMinute ||
     geminiOAuthType.value === 'google_one' ||
     isGeminiCodeAssist.value
   )
@@ -1007,40 +1012,40 @@ const geminiUsageBars = computed(() => {
   }> = []
 
   if (geminiUsesSharedDaily.value) {
-    const sharedDaily = usageInfo.value.gemini_shared_daily
+    const sharedDaily = usageInfo.value.geminiSharedDaily
     if (sharedDaily) {
       bars.push({
         key: 'shared_daily',
         label: '1d',
         utilization: sharedDaily.utilization,
-        resetsAt: sharedDaily.resets_at,
-        windowStats: sharedDaily.window_stats,
+        resetsAt: sharedDaily.resetsAt,
+        windowStats: sharedDaily.windowStats,
         color: 'indigo'
       })
     }
     return bars
   }
 
-  const pro = usageInfo.value.gemini_pro_daily
+  const pro = usageInfo.value.geminiProDaily
   if (pro) {
     bars.push({
       key: 'pro_daily',
       label: 'pro',
       utilization: pro.utilization,
-      resetsAt: pro.resets_at,
-      windowStats: pro.window_stats,
+      resetsAt: pro.resetsAt,
+      windowStats: pro.windowStats,
       color: 'indigo'
       })
   }
 
-  const flash = usageInfo.value.gemini_flash_daily
+  const flash = usageInfo.value.geminiFlashDaily
   if (flash) {
     bars.push({
       key: 'flash_daily',
       label: 'flash',
       utilization: flash.utilization,
-      resetsAt: flash.resets_at,
-      windowStats: flash.window_stats,
+      resetsAt: flash.resetsAt,
+      windowStats: flash.windowStats,
       color: 'emerald'
     })
   }
@@ -1062,17 +1067,17 @@ const makeGrokQuotaBar = (quota?: { limit?: number | null; remaining?: number | 
   }
 }
 
-const grokRequestQuotaBar = computed(() => makeGrokQuotaBar(usageInfo.value?.grok_request_quota))
-const grokTokenQuotaBar = computed(() => makeGrokQuotaBar(usageInfo.value?.grok_token_quota))
-const grokBilling = computed(() => usageInfo.value?.grok_billing || null)
+const grokRequestQuotaBar = computed(() => makeGrokQuotaBar(usageInfo.value?.grokRequestQuota))
+const grokTokenQuotaBar = computed(() => makeGrokQuotaBar(usageInfo.value?.grokTokenQuota))
+const grokBilling = computed(() => usageInfo.value?.grokBilling || null)
 const grokWeeklyBillingBar = computed((): GrokQuotaBarInfo | null => {
   const billing = grokBilling.value
-  if (billing?.period_type?.toLowerCase() !== 'weekly' || billing.usage_percent == null) {
+  if (billing?.periodType?.toLowerCase() !== 'weekly' || billing.usagePercent == null) {
     return null
   }
   return {
-    utilization: Math.min(100, Math.max(0, billing.usage_percent)),
-    resetsAt: billing.period_end || null
+    utilization: Math.min(100, Math.max(0, billing.usagePercent)),
+    resetsAt: billing.periodEnd || null
   }
 })
 const grokPlanLabelIsFree = (value: string) => value.includes('free') || value.includes('basic')
@@ -1083,14 +1088,14 @@ const grokIsFree = computed(() => {
   if (props.account.platform !== 'grok' || props.account.type !== 'oauth') return false
   const billing = grokBilling.value
   if (
-    billing?.usage_percent != null ||
-    billing?.used_percent != null ||
-    (billing?.monthly_limit_cents != null && billing.monthly_limit_cents > 0)
+    billing?.usagePercent != null ||
+    billing?.usedPercent != null ||
+    (billing?.monthlyLimitCents != null && billing.monthlyLimitCents > 0)
   ) return false
 
   const plan = (billing?.plan || '').trim().toLowerCase()
-  const tier = (usageInfo.value?.subscription_tier || '').trim().toLowerCase()
-  const entitlement = (usageInfo.value?.grok_entitlement_status || '').toLowerCase()
+  const tier = (usageInfo.value?.subscriptionTier || '').trim().toLowerCase()
+  const entitlement = (usageInfo.value?.grokEntitlementStatus || '').toLowerCase()
   if (grokPlanLabelIsPaid(plan) || grokPlanLabelIsPaid(tier)) return false
   if (
     grokPlanLabelIsFree(plan) ||
@@ -1099,18 +1104,18 @@ const grokIsFree = computed(() => {
   ) return true
   return billing != null
 })
-const grokFreeQuotaUsage = computed(() => usageInfo.value?.grok_local_usage_24h || null)
+const grokFreeQuotaUsage = computed(() => usageInfo.value?.grokLocalUsage24h || null)
 const grokLocalUsage = computed(() => {
   if (grokIsFree.value) return grokFreeQuotaUsage.value
   return props.todayStats ||
-    usageInfo.value?.grok_local_usage ||
-    usageInfo.value?.grok_local_usage_7d ||
-    usageInfo.value?.grok_local_usage_monthly ||
+    usageInfo.value?.grokLocalUsage ||
+    usageInfo.value?.grokLocalUsage7d ||
+    usageInfo.value?.grokLocalUsageMonthly ||
     null
 })
 const grokFreeTokenBar = computed(() => {
   if (!grokIsFree.value || !grokFreeQuotaUsage.value) return null
-  const limit = usageInfo.value?.grok_free_token_limit
+  const limit = usageInfo.value?.grokFreeTokenLimit
   if (typeof limit !== 'number' || limit <= 0) return null
   const used = Math.max(0, grokFreeQuotaUsage.value.tokens || 0)
   return { utilization: Math.min(100, (used / limit) * 100), limit }
@@ -1118,42 +1123,42 @@ const grokFreeTokenBar = computed(() => {
 const grokQuotaUnknown = computed(() => {
   if (props.account.platform !== 'grok') return false
   if (grokBilling.value || grokFreeTokenBar.value || grokRequestQuotaBar.value || grokTokenQuotaBar.value) return false
-  return usageInfo.value?.grok_quota_snapshot_state !== 'observed'
+  return usageInfo.value?.grokQuotaSnapshotState !== 'observed'
 })
 const grokQuotaUnknownLabel = computed(() => {
-  return usageInfo.value?.grok_quota_snapshot_state === 'no_headers'
+  return usageInfo.value?.grokQuotaSnapshotState === 'no_headers'
     ? t('admin.accounts.usageWindow.grokNoHeaders')
     : t('admin.accounts.usageWindow.grokUnknown')
 })
 const grokQuotaStatusLine = computed(() => {
   if (props.account.platform !== 'grok') return null
   const parts: string[] = []
-  const status = usageInfo.value?.grok_last_status_code
+  const status = usageInfo.value?.grokLastStatusCode
   if (status) {
     parts.push(t('admin.accounts.usageWindow.grokLastStatus', { status }))
   }
-  if (usageInfo.value?.grok_last_quota_probe_at) {
+  if (usageInfo.value?.grokLastQuotaProbeAt) {
     parts.push(
       t('admin.accounts.usageWindow.grokLastProbe', {
-        time: formatRelativeTime(usageInfo.value.grok_last_quota_probe_at)
+        time: formatRelativeTime(usageInfo.value.grokLastQuotaProbeAt)
       })
     )
   }
-  if (usageInfo.value?.grok_last_headers_seen_at) {
+  if (usageInfo.value?.grokLastHeadersSeenAt) {
     parts.push(
       t('admin.accounts.usageWindow.grokLastHeadersSeen', {
-        time: formatRelativeTime(usageInfo.value.grok_last_headers_seen_at)
+        time: formatRelativeTime(usageInfo.value.grokLastHeadersSeenAt)
       })
     )
   }
   return parts.length > 0 ? parts.join(' | ') : null
 })
 const grokEntitlementLabel = computed(() => {
-  const status = (usageInfo.value?.grok_entitlement_status || '').trim()
+  const status = (usageInfo.value?.grokEntitlementStatus || '').trim()
   return status || null
 })
 const grokRetryAfterLabel = computed(() => {
-  const seconds = usageInfo.value?.grok_retry_after_seconds
+  const seconds = usageInfo.value?.grokRetryAfterSeconds
   if (seconds == null || seconds <= 0) return null
   if (seconds < 60) return `${seconds}s`
   const minutes = Math.ceil(seconds / 60)
@@ -1163,7 +1168,7 @@ const grokRetryAfterLabel = computed(() => {
 const formatWindowRequests = (stats: WindowStats) => formatCompactNumber(stats.requests, { allowBillions: false })
 const formatWindowTokens = (stats: WindowStats) => formatCompactNumber(stats.tokens)
 const formatWindowCost = (stats: WindowStats) => stats.cost.toFixed(2)
-const formatWindowUserCost = (stats: WindowStats) => (stats.user_cost ?? 0).toFixed(2)
+const formatWindowUserCost = (stats: WindowStats) => (stats.userCost ?? 0).toFixed(2)
 
 // 账户类型显示标签
 const antigravityTierLabel = computed(() => {
@@ -1206,16 +1211,16 @@ const hasIneligibleTiers = computed(() => {
 })
 
 // Antigravity 403 forbidden 状态
-const isForbidden = computed(() => !!usageInfo.value?.is_forbidden)
-const forbiddenType = computed(() => usageInfo.value?.forbidden_type || 'forbidden')
-const validationURL = computed(() => usageInfo.value?.validation_url || '')
+const isForbidden = computed(() => !!usageInfo.value?.isForbidden)
+const forbiddenType = computed(() => usageInfo.value?.forbiddenType || 'forbidden')
+const validationURL = computed(() => usageInfo.value?.validationUrl || '')
 
 // 需要重新授权（401）
-const needsReauth = computed(() => !!usageInfo.value?.needs_reauth)
+const needsReauth = computed(() => !!usageInfo.value?.needsReauth)
 
 // 降级错误标签（rate_limited / network_error）
 const usageErrorLabel = computed(() => {
-  const code = usageInfo.value?.error_code
+  const code = usageInfo.value?.errorCode
   if (code === 'rate_limited') return t('admin.accounts.rateLimited')
   return t('admin.accounts.usageError')
 })
@@ -1272,8 +1277,8 @@ const loadUsage = async (options?: { source?: 'passive' | 'active'; bypassCache?
 
   try {
     const fetchFn = () => options?.source
-      ? adminAPI.accounts.getUsage(props.account.id, options.source)
-      : adminAPI.accounts.getUsage(props.account.id)
+      ? queryStore.getUsage(props.account.id, options.source)
+      : queryStore.getUsage(props.account.id)
     const result = await enqueueUsageRequest(props.account, fetchFn)
     if (!unmounted.value) {
       usageInfo.value = result as any
@@ -1342,7 +1347,7 @@ const attachVisibilityObserver = () => {
 const loadActiveUsage = async () => {
   activeQueryLoading.value = true
   try {
-    usageInfo.value = await adminAPI.accounts.getUsage(props.account.id, 'active', true)
+    usageInfo.value = await queryStore.getUsage(props.account.id, 'active', true)
   } catch (e: any) {
     console.error('Failed to load active usage:', e)
   } finally {
@@ -1354,47 +1359,47 @@ const handleGrokProbed = (result: GrokQuotaProbeResult) => {
   const current = usageInfo.value
   if (!current) return
   const snapshot = result.snapshot
-  const statusCode = snapshot?.status_code ?? result.status_code
+  const statusCode = snapshot?.statusCode ?? result.statusCode
   const hasActiveProbeSnapshot = snapshot != null && (
     result.source === 'active_probe' ||
     result.source === 'hybrid_probe' ||
-    snapshot.observation_source === 'active_probe'
+    snapshot.observationSource === 'active_probe'
   )
   const probeSucceeded = hasActiveProbeSnapshot &&
     statusCode != null && statusCode >= 200 && statusCode < 300
-  const snapshotEntitlement = snapshot?.entitlement_status?.trim()
-  const currentEntitlement = current.grok_entitlement_status?.trim()
+  const snapshotEntitlement = snapshot?.entitlementStatus?.trim()
+  const currentEntitlement = current.grokEntitlementStatus?.trim()
   const entitlementStatus = snapshotEntitlement || (
     probeSucceeded && currentEntitlement?.toLowerCase() === 'forbidden'
       ? undefined
-      : current.grok_entitlement_status
+      : current.grokEntitlementStatus
   )
   const merged: AccountUsageInfo = {
     ...current,
-    grok_billing: result.billing ?? current.grok_billing,
-    grok_local_usage_24h: result.local_usage_24h ?? current.grok_local_usage_24h,
-    grok_local_usage_7d: result.local_usage_7d ?? current.grok_local_usage_7d,
-    grok_local_usage_monthly: result.local_usage_monthly ?? current.grok_local_usage_monthly,
-    grok_request_quota: snapshot?.requests ?? current.grok_request_quota,
-    grok_token_quota: snapshot?.tokens ?? current.grok_token_quota,
-    grok_retry_after_seconds: snapshot?.retry_after_seconds ?? current.grok_retry_after_seconds,
-    grok_entitlement_status: entitlementStatus,
-    grok_quota_snapshot_state: result.billing
+    grokBilling: result.billing ?? current.grokBilling,
+    grokLocalUsage24h: result.localUsage24h ?? current.grokLocalUsage24h,
+    grokLocalUsage7d: result.localUsage7d ?? current.grokLocalUsage7d,
+    grokLocalUsageMonthly: result.localUsageMonthly ?? current.grokLocalUsageMonthly,
+    grokRequestQuota: snapshot?.requests ?? current.grokRequestQuota,
+    grokTokenQuota: snapshot?.tokens ?? current.grokTokenQuota,
+    grokRetryAfterSeconds: snapshot?.retryAfterSeconds ?? current.grokRetryAfterSeconds,
+    grokEntitlementStatus: entitlementStatus ?? '',
+    grokQuotaSnapshotState: result.billing
       ? 'billing_observed'
-      : snapshot?.headers_observed
+      : snapshot?.headersObserved
         ? 'observed'
-        : current.grok_quota_snapshot_state,
-    grok_last_quota_probe_at: result.billing?.fetched_at ?? snapshot?.last_probe_at ?? current.grok_last_quota_probe_at,
-    grok_last_headers_seen_at: snapshot?.last_headers_seen_at ?? current.grok_last_headers_seen_at,
-    grok_last_status_code: result.status_code ?? snapshot?.status_code ?? current.grok_last_status_code,
-    is_forbidden: probeSucceeded ? false : current.is_forbidden,
-    forbidden_reason: probeSucceeded ? undefined : current.forbidden_reason,
-    forbidden_type: probeSucceeded ? undefined : current.forbidden_type,
-    validation_url: probeSucceeded ? undefined : current.validation_url,
-    needs_verify: probeSucceeded ? false : current.needs_verify,
-    is_banned: probeSucceeded ? false : current.is_banned,
-    error: result.billing || snapshot ? undefined : current.error,
-    error_code: result.billing || snapshot ? undefined : current.error_code
+        : current.grokQuotaSnapshotState,
+    grokLastQuotaProbeAt: result.billing?.fetchedAt ?? snapshot?.lastProbeAt ?? current.grokLastQuotaProbeAt,
+    grokLastHeadersSeenAt: snapshot?.lastHeadersSeenAt ?? current.grokLastHeadersSeenAt,
+    grokLastStatusCode: result.statusCode ?? snapshot?.statusCode ?? current.grokLastStatusCode,
+    isForbidden: probeSucceeded ? false : current.isForbidden,
+    forbiddenReason: probeSucceeded ? '' : current.forbiddenReason,
+    forbiddenType: probeSucceeded ? '' : current.forbiddenType,
+    validationUrl: probeSucceeded ? '' : current.validationUrl,
+    needsVerify: probeSucceeded ? false : current.needsVerify,
+    isBanned: probeSucceeded ? false : current.isBanned,
+    error: result.billing || snapshot ? '' : current.error,
+    errorCode: result.billing || snapshot ? '' : current.errorCode
   }
   usageInfo.value = merged
   _usageCache.set(props.account.id, { data: merged, ts: Date.now() })
@@ -1418,8 +1423,8 @@ const makeQuotaBar = (
     const extra = props.account.extra as Record<string, unknown> | undefined
     const isDaily = startKey.includes('daily')
     const mode = isDaily
-      ? (extra?.quota_daily_reset_mode as string) || 'rolling'
-      : (extra?.quota_weekly_reset_mode as string) || 'rolling'
+      ? (extra?.quotaDailyResetMode as string) || 'rolling'
+      : (extra?.quotaWeeklyResetMode as string) || 'rolling'
 
     if (mode === 'fixed') {
       // Use pre-computed next reset time for fixed mode
@@ -1441,28 +1446,28 @@ const makeQuotaBar = (
 const hasApiKeyQuota = computed(() => {
   if (props.account.type !== 'apikey' && props.account.type !== 'bedrock') return false
   return (
-    (props.account.quota_daily_limit ?? 0) > 0 ||
-    (props.account.quota_weekly_limit ?? 0) > 0 ||
-    (props.account.quota_limit ?? 0) > 0
+    (props.account.quotaDailyLimit ?? 0) > 0 ||
+    (props.account.quotaWeeklyLimit ?? 0) > 0 ||
+    (props.account.quotaLimit ?? 0) > 0
   )
 })
 
 const quotaDailyBar = computed((): QuotaBarInfo | null => {
-  const limit = props.account.quota_daily_limit ?? 0
+  const limit = props.account.quotaDailyLimit ?? 0
   if (limit <= 0) return null
-  return makeQuotaBar(props.account.quota_daily_used ?? 0, limit, 'quota_daily_start')
+  return makeQuotaBar(props.account.quotaDailyUsed ?? 0, limit, 'quota_daily_start')
 })
 
 const quotaWeeklyBar = computed((): QuotaBarInfo | null => {
-  const limit = props.account.quota_weekly_limit ?? 0
+  const limit = props.account.quotaWeeklyLimit ?? 0
   if (limit <= 0) return null
-  return makeQuotaBar(props.account.quota_weekly_used ?? 0, limit, 'quota_weekly_start')
+  return makeQuotaBar(props.account.quotaWeeklyUsed ?? 0, limit, 'quota_weekly_start')
 })
 
 const quotaTotalBar = computed((): QuotaBarInfo | null => {
-  const limit = props.account.quota_limit ?? 0
+  const limit = props.account.quotaLimit ?? 0
   if (limit <= 0) return null
-  return makeQuotaBar(props.account.quota_used ?? 0, limit)
+  return makeQuotaBar(props.account.quotaUsed ?? 0, limit)
 })
 
 // ===== Key account today stats formatters =====
@@ -1483,8 +1488,8 @@ const formatKeyCost = computed(() => {
 })
 
 const formatKeyUserCost = computed(() => {
-  if (!props.todayStats || props.todayStats.user_cost == null) return '0.00'
-  return props.todayStats.user_cost.toFixed(2)
+  if (!props.todayStats || props.todayStats.userCost == null) return '0.00'
+  return props.todayStats.userCost.toFixed(2)
 })
 
 onMounted(() => {

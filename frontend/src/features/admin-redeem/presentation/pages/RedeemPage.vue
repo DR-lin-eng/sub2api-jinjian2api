@@ -158,8 +158,8 @@
 
           <template #cell-usage="{ row }">
             <div class="text-sm text-gray-600 dark:text-gray-300">
-              {{ row.used_count }} /
-              {{ row.max_uses === 0 ? t('admin.redeem.unlimited') : row.max_uses }}
+              {{ row.usedCount }} /
+              {{ row.maxUses === 0 ? t('admin.redeem.unlimited') : row.maxUses }}
               <span class="block text-xs text-gray-400 dark:text-gray-500">
                 {{ row.max_uses_per_user === 0 ? t('admin.redeem.unlimitedPerUser') : t('admin.redeem.perUserLimit', { count: row.max_uses_per_user }) }}
               </span>
@@ -648,16 +648,7 @@ import { useAppStore } from '@/core/stores/appStore'
 import { useClipboard } from '@/common/composables/useClipboard'
 import { useTableSelection } from '@/common/composables/useTableSelection'
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
-import { adminAPI } from '@/api/admin'
 import { formatDateTime } from '@/core/utils/format'
-import type {
-  RedeemCode,
-  RedeemCodeType,
-  Group,
-  GroupPlatform,
-  SubscriptionType,
-  BatchUpdateRedeemCodeFields
-} from '@/types'
 import type { Column } from '@/common/types/uiTypes'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
@@ -668,6 +659,13 @@ import Select from '@/common/widgets/forms/Select.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import GroupOptionItem from '@/common/widgets/data/GroupOptionItem.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
+import { useAdminRedeem } from '@/features/admin-redeem/presentation/composables/useAdminRedeem'
+import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
+import type { RedeemCode, BatchUpdateRedeemCodeFields } from '@/features/admin-redeem/domain/models/redeem'
+import type { RedeemCodeType } from '@/features/admin-redeem/domain/models/redeem'
+import type { Group, GroupPlatform, SubscriptionType } from '@/features/admin-groups/domain/models/adminGroups'
+const $redeem = useAdminRedeem()
+const $groups = useAdminGroups()
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -690,14 +688,14 @@ const subscriptionGroups = ref<Group[]>([])
 // 订阅类型分组选项
 const subscriptionGroupOptions = computed(() => {
   return subscriptionGroups.value
-    .filter((g) => g.subscription_type === 'subscription')
+    .filter((g) => g.subscriptionType === 'subscription')
     .map((g) => ({
       value: g.id,
       label: g.name,
       description: g.description,
       platform: g.platform,
-      subscriptionType: g.subscription_type,
-      rate: g.rate_multiplier
+      subscriptionType: g.subscriptionType,
+      rate: g.rateMultiplier
     }))
 })
 
@@ -902,7 +900,7 @@ const loadCodes = async () => {
   abortController = currentController
   loading.value = true
   try {
-    const response = await adminAPI.redeem.list(
+    const response = await $redeem.list(
       pagination.page,
       pagination.page_size,
       buildRedeemQueryFilters(),
@@ -1033,21 +1031,21 @@ const buildBatchUpdateFields = (): BatchUpdateRedeemCodeFields | null => {
   }
   if (batchUpdateForm.update_expires_at) {
     if (batchUpdateForm.expires_mode === 'clear') {
-      fields.expires_at = null
+      fields.expiresAt = null
     } else {
       const expiresAt = new Date(batchUpdateForm.expires_at_local)
       if (!batchUpdateForm.expires_at_local || Number.isNaN(expiresAt.getTime())) {
         appStore.showError(t('admin.redeem.expiryDaysRequired'))
         return null
       }
-      fields.expires_at = expiresAt.toISOString()
+      fields.expiresAt = expiresAt.toISOString()
     }
   }
   if (batchUpdateForm.update_notes) {
     fields.notes = batchUpdateForm.notes
   }
   if (batchUpdateForm.update_group_id) {
-    fields.group_id =
+    fields.groupId =
       batchUpdateForm.group_id == null ? null : Number(batchUpdateForm.group_id)
   }
 
@@ -1069,7 +1067,7 @@ const handleGenerateCodes = async () => {
 
   generating.value = true
   try {
-    const result = await adminAPI.redeem.generate(
+    const result = await $redeem.generate(
       generateForm.count,
       generateForm.type,
       generateForm.value,
@@ -1110,7 +1108,7 @@ const copyToClipboard = async (text: string) => {
 
 const handleExportCodes = async () => {
   try {
-    const blob = await adminAPI.redeem.exportCodes(buildRedeemQueryFilters())
+    const blob = await $redeem.exportCodes(buildRedeemQueryFilters())
 
     // Create download link
     const url = window.URL.createObjectURL(blob)
@@ -1138,7 +1136,7 @@ const confirmDelete = async () => {
   if (!deletingCode.value) return
 
   try {
-    await adminAPI.redeem.delete(deletingCode.value.id)
+    await $redeem.deleteCode(deletingCode.value.id)
     appStore.showSuccess(t('admin.redeem.codeDeleted'))
     showDeleteDialog.value = false
     deletingCode.value = null
@@ -1152,7 +1150,7 @@ const confirmDelete = async () => {
 const confirmDeleteUnused = async () => {
   try {
     // Get all unused codes and delete them
-    const unusedCodesResponse = await adminAPI.redeem.list(1, 1000, { status: 'unused' })
+    const unusedCodesResponse = await $redeem.list(1, 1000, { status: 'unused' })
     const unusedCodeIds = unusedCodesResponse.items.map((code) => code.id)
 
     if (unusedCodeIds.length === 0) {
@@ -1161,7 +1159,7 @@ const confirmDeleteUnused = async () => {
       return
     }
 
-    const result = await adminAPI.redeem.batchDelete(unusedCodeIds)
+    const result = await $redeem.batchDelete(unusedCodeIds)
     appStore.showSuccess(t('admin.redeem.codesDeleted', { count: result.deleted }))
     showDeleteUnusedDialog.value = false
     loadCodes()
@@ -1195,7 +1193,7 @@ const handleBatchUpdate = async () => {
 
   batchUpdating.value = true
   try {
-    const result = await adminAPI.redeem.batchUpdate(ids, fields)
+    const result = await $redeem.batchUpdate(ids, fields)
     appStore.showSuccess(t('admin.redeem.batchUpdateSuccess', { count: result.updated }))
     showBatchUpdateDialog.value = false
     clearSelectedCodes()
@@ -1211,7 +1209,7 @@ const handleBatchUpdate = async () => {
 // 加载订阅类型分组
 const loadSubscriptionGroups = async () => {
   try {
-    const groups = await adminAPI.groups.getAll()
+    const groups = await $groups.getAll()
     subscriptionGroups.value = groups
   } catch (error) {
     console.error('Error loading subscription groups:', error)

@@ -186,9 +186,9 @@
           <template #cell-location="{ row }">
             <div class="flex items-center gap-2">
               <img
-                v-if="row.country_code"
-                :src="flagUrl(row.country_code)"
-                :alt="row.country || row.country_code"
+                v-if="row.countryCode"
+                :src="flagUrl(row.countryCode)"
+                :alt="row.country || row.countryCode"
                 class="h-4 w-6 rounded-sm"
               />
               <span v-if="formatLocation(row)" class="text-sm text-gray-700 dark:text-gray-200">
@@ -218,42 +218,42 @@
           <template #cell-latency="{ row }">
             <div class="flex flex-col gap-1">
               <span
-                v-if="row.latency_status === 'failed'"
+                v-if="row.latencyStatus === 'failed'"
                 class="badge badge-danger"
-                :title="row.latency_message || undefined"
+                :title="row.latencyMessage || undefined"
               >
                 {{ t('admin.proxies.latencyFailed') }}
               </span>
               <span
-                v-else-if="typeof row.latency_ms === 'number'"
-                :class="['badge', row.latency_ms < 200 ? 'badge-success' : 'badge-warning']"
+                v-else-if="typeof row.latencyMs === 'number'"
+                :class="['badge', row.latencyMs < 200 ? 'badge-success' : 'badge-warning']"
               >
-                {{ row.latency_ms }}ms
+                {{ row.latencyMs }}ms
               </span>
               <span v-else class="text-sm text-gray-400">-</span>
               <div
-                v-if="typeof row.quality_checked === 'number'"
+                v-if="typeof row.qualityChecked === 'number'"
                 class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400"
-                :title="row.quality_summary || undefined"
+                :title="row.qualitySummary || undefined"
               >
-                <span>{{ t('admin.proxies.qualityInline', { grade: row.quality_grade || '-', score: row.quality_score ?? '-' }) }}</span>
-                <span class="badge" :class="qualityOverallClass(row.quality_status)">
-                  {{ qualityOverallLabel(row.quality_status) }}
+                <span>{{ t('admin.proxies.qualityInline', { grade: row.qualityGrade || '-', score: row.qualityScore ?? '-' }) }}</span>
+                <span class="badge" :class="qualityOverallClass(row.qualityStatus)">
+                  {{ qualityOverallLabel(row.qualityStatus) }}
                 </span>
               </div>
             </div>
           </template>
 
           <template #cell-expiry="{ row }">
-            <span v-if="!row.expires_at" class="text-sm text-gray-400">{{ t('admin.proxies.neverExpires') }}</span>
+            <span v-if="!row.expiresAt" class="text-sm text-gray-400">{{ t('admin.proxies.neverExpires') }}</span>
             <div v-else class="flex flex-col text-xs">
-              <span class="text-gray-700 dark:text-gray-200">{{ formatDateTime(row.expires_at) }}</span>
+              <span class="text-gray-700 dark:text-gray-200">{{ formatDateTime(row.expiresAt) }}</span>
               <span :class="expiryBadgeClass(row)">{{ expiryLabel(row) }}</span>
             </div>
           </template>
 
           <template #cell-created_at="{ row }">
-            <span class="text-xs text-gray-600 dark:text-gray-300">{{ formatDateTime(row.created_at) }}</span>
+            <span class="text-xs text-gray-600 dark:text-gray-300">{{ formatDateTime(row.createdAt) }}</span>
           </template>
 
           <template #cell-status="{ value }">
@@ -867,13 +867,13 @@
             </div>
           </div>
           <div class="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-600 dark:text-gray-300">
-            <div>{{ t('admin.proxies.qualityExitIP') }}: {{ qualityReport.exit_ip || '-' }}</div>
+            <div>{{ t('admin.proxies.qualityExitIP') }}: {{ qualityReport.exitIp || '-' }}</div>
             <div>{{ t('admin.proxies.qualityCountry') }}: {{ qualityReport.country || '-' }}</div>
             <div>
               {{ t('admin.proxies.qualityBaseLatency') }}:
-              {{ typeof qualityReport.base_latency_ms === 'number' ? `${qualityReport.base_latency_ms}ms` : '-' }}
+              {{ typeof qualityReport.baseLatencyMs === 'number' ? `${qualityReport.baseLatencyMs}ms` : '-' }}
             </div>
-            <div>{{ t('admin.proxies.qualityCheckedAt') }}: {{ new Date(qualityReport.checked_at * 1000).toLocaleString() }}</div>
+            <div>{{ t('admin.proxies.qualityCheckedAt') }}: {{ new Date(qualityReport.checkedAt * 1000).toLocaleString() }}</div>
           </div>
         </div>
 
@@ -894,13 +894,13 @@
                 <td class="whitespace-nowrap px-3 py-2">
                   <span class="badge whitespace-nowrap" :class="qualityStatusClass(item.status)">{{ qualityStatusLabel(item.status) }}</span>
                 </td>
-                <td class="whitespace-nowrap px-3 py-2 text-gray-600 dark:text-gray-300">{{ item.http_status ?? '-' }}</td>
+                <td class="whitespace-nowrap px-3 py-2 text-gray-600 dark:text-gray-300">{{ item.httpStatus ?? '-' }}</td>
                 <td class="whitespace-nowrap px-3 py-2 text-gray-600 dark:text-gray-300">
-                  {{ typeof item.latency_ms === 'number' ? `${item.latency_ms}ms` : '-' }}
+                  {{ typeof item.latencyMs === 'number' ? `${item.latencyMs}ms` : '-' }}
                 </td>
                 <td class="px-3 py-2 text-gray-600 dark:text-gray-300">
                   <span>{{ item.message || '-' }}</span>
-                  <span v-if="item.cf_ray" class="ml-1 text-xs text-gray-400">(cf-ray: {{ item.cf_ray }})</span>
+                  <span v-if="item.cfRay" class="ml-1 text-xs text-gray-400">(cf-ray: {{ item.cfRay }})</span>
                 </td>
               </tr>
             </tbody>
@@ -967,8 +967,6 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { Proxy, ProxyAccountSummary, ProxyProtocol, ProxyQualityCheckResult } from '@/types'
 import type { Column } from '@/common/types/uiTypes'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
@@ -988,6 +986,9 @@ import { useTableSelection } from '@/common/composables/useTableSelection'
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 import { formatDateTime } from '@/core/utils/format'
 import { proxyExpiryBadgeClass, proxyExpiryLabelKey } from '@/core/utils/proxyExpiry'
+import { useAdminProxies } from '@/features/admin-proxies/presentation/composables/useAdminProxies'
+import type { Proxy, ProxyAccountSummary, ProxyProtocol, ProxyQualityCheckResult } from '@/features/admin-proxies/domain/models/proxy'
+const $proxies = useAdminProxies()
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -1150,7 +1151,7 @@ const editForm = reactive({
 
 const allProxiesForBackup = ref<Proxy[]>([])
 const loadBackupProxyOptions = async () => {
-  allProxiesForBackup.value = await adminAPI.proxies.getAllWithCount()
+  allProxiesForBackup.value = await $proxies.getAllWithCount()
 }
 const backupProxyOptions = (excludeId?: number) =>
   allProxiesForBackup.value
@@ -1195,7 +1196,7 @@ const loadProxies = async () => {
   abortController = currentAbortController
   loading.value = true
   try {
-    const response = await adminAPI.proxies.list(
+    const response = await $proxies.list(
       pagination.page,
       pagination.page_size,
       buildProxyQueryFilters(),
@@ -1344,7 +1345,7 @@ const handleBatchCreate = async () => {
 
   submitting.value = true
   try {
-    const result = await adminAPI.proxies.batchCreate(batchParseResult.proxies)
+    const result = await $proxies.batchCreate(batchParseResult.proxies)
     const created = result.created || 0
     const skipped = result.skipped || 0
 
@@ -1379,17 +1380,17 @@ const handleCreateProxy = async () => {
   }
   submitting.value = true
   try {
-    await adminAPI.proxies.create({
+    await $proxies.create({
       name: createForm.name.trim(),
       protocol: createForm.protocol,
       host: createForm.host.trim(),
       port: createForm.port,
       username: createForm.username.trim() || null,
       password: createForm.password.trim() || null,
-      expires_at: createForm.expires_at ? Math.floor(new Date(createForm.expires_at).getTime() / 1000) : null,
-      fallback_mode: createForm.fallback_mode,
-      backup_proxy_id: createForm.fallback_mode === 'proxy' ? createForm.backup_proxy_id : null,
-      expiry_warn_days: createForm.expiry_warn_days,
+      expiresAt: createForm.expires_at ? Math.floor(new Date(createForm.expires_at).getTime() / 1000) : null,
+      fallbackMode: createForm.fallback_mode,
+      backupProxyId: createForm.fallback_mode === 'proxy' ? createForm.backup_proxy_id : null,
+      expiryWarnDays: createForm.expiry_warn_days,
     })
     appStore.showSuccess(t('admin.proxies.proxyCreated'))
     closeCreateModal()
@@ -1411,10 +1412,10 @@ const handleEdit = (proxy: Proxy) => {
   editForm.username = proxy.username || ''
   editForm.password = proxy.password || ''
   editForm.status = proxy.status === 'expired' ? 'inactive' : proxy.status
-  editForm.expires_at = proxy.expires_at ? proxy.expires_at.slice(0, 10) : ''
-  editForm.fallback_mode = proxy.fallback_mode || 'none'
-  editForm.backup_proxy_id = proxy.backup_proxy_id ?? null
-  editForm.expiry_warn_days = proxy.expiry_warn_days ?? 7
+  editForm.expires_at = proxy.expiresAt ? proxy.expiresAt.slice(0, 10) : ''
+  editForm.fallback_mode = proxy.fallbackMode || 'none'
+  editForm.backup_proxy_id = proxy.backupProxyId ?? null
+  editForm.expiry_warn_days = proxy.expiryWarnDays ?? 7
   editPasswordVisible.value = false
   editPasswordDirty.value = false
   showEditModal.value = true
@@ -1462,7 +1463,7 @@ const handleUpdateProxy = async () => {
       updateData.password = editForm.password.trim() || null
     }
 
-    await adminAPI.proxies.update(editingProxy.value.id, updateData)
+    await $proxies.update(editingProxy.value.id, updateData)
     appStore.showSuccess(t('admin.proxies.proxyUpdated'))
     closeEditModal()
     loadProxies()
@@ -1490,40 +1491,40 @@ const applyLatencyResult = (
   const target = proxies.value.find((proxy) => proxy.id === proxyId)
   if (!target) return
   if (result.success) {
-    target.latency_status = 'success'
-    target.latency_ms = result.latency_ms
-    target.ip_address = result.ip_address
+    target.latencyStatus = 'success'
+    target.latencyMs = result.latency_ms
+    target.ipAddress = result.ip_address
     target.country = result.country
-    target.country_code = result.country_code
+    target.countryCode = result.country_code
     target.region = result.region
     target.city = result.city
   } else {
-    target.latency_status = 'failed'
-    target.latency_ms = undefined
-    target.ip_address = undefined
+    target.latencyStatus = 'failed'
+    target.latencyMs = undefined
+    target.ipAddress = undefined
     target.country = undefined
-    target.country_code = undefined
+    target.countryCode = undefined
     target.region = undefined
     target.city = undefined
   }
-  target.latency_message = result.message
+  target.latencyMessage = result.message
 }
 
-const summarizeQualityStatus = (result: ProxyQualityCheckResult): Proxy['quality_status'] => {
-  if (result.challenge_count > 0) return 'challenge'
-  if (result.failed_count > 0) return 'failed'
-  if (result.warn_count > 0) return 'warn'
+const summarizeQualityStatus = (result: ProxyQualityCheckResult): Proxy['qualityStatus'] => {
+  if (result.challengeCount > 0) return 'challenge'
+  if (result.failedCount > 0) return 'failed'
+  if (result.warnCount > 0) return 'warn'
   return 'healthy'
 }
 
 const applyQualityResult = (proxyId: number, result: ProxyQualityCheckResult) => {
   const target = proxies.value.find((proxy) => proxy.id === proxyId)
   if (!target) return
-  target.quality_status = summarizeQualityStatus(result)
-  target.quality_score = result.score
-  target.quality_grade = result.grade
-  target.quality_summary = result.summary
-  target.quality_checked = result.checked_at
+  target.qualityStatus = summarizeQualityStatus(result)
+  target.qualityScore = result.score
+  target.qualityGrade = result.grade
+  target.qualitySummary = result.summary
+  target.qualityChecked = result.checkedAt
 }
 
 const formatLocation = (proxy: Proxy) => {
@@ -1557,7 +1558,7 @@ const stopQualityCheckingProxy = (proxyId: number) => {
 const runProxyTest = async (proxyId: number, notify: boolean) => {
   startTestingProxy(proxyId)
   try {
-    const result = await adminAPI.proxies.testProxy(proxyId)
+    const result = await $proxies.testProxy(proxyId)
     applyLatencyResult(proxyId, result)
     if (notify) {
       if (result.success) {
@@ -1590,7 +1591,7 @@ const handleTestConnection = async (proxy: Proxy) => {
 const handleQualityCheck = async (proxy: Proxy) => {
   startQualityCheckingProxy(proxy.id)
   try {
-    const result = await adminAPI.proxies.checkProxyQuality(proxy.id)
+    const result = await $proxies.checkProxyQuality(proxy.id)
     qualityReportProxy.value = proxy
     qualityReport.value = result
     showQualityReportDialog.value = true
@@ -1599,11 +1600,11 @@ const handleQualityCheck = async (proxy: Proxy) => {
     if (baseStep && baseStep.status === 'pass') {
       applyLatencyResult(proxy.id, {
         success: true,
-        latency_ms: result.base_latency_ms,
+        latency_ms: result.baseLatencyMs,
         message: result.summary,
-        ip_address: result.exit_ip,
+        ip_address: result.exitIp,
         country: result.country,
-        country_code: result.country_code
+        country_code: result.countryCode
       })
     }
     applyQualityResult(proxy.id, result)
@@ -1636,27 +1637,27 @@ const runBatchProxyQualityChecks = async (ids: number[]) => {
       index++
       startQualityCheckingProxy(current)
       try {
-        const result = await adminAPI.proxies.checkProxyQuality(current)
+        const result = await $proxies.checkProxyQuality(current)
         const target = proxies.value.find((proxy) => proxy.id === current)
         if (target) {
           const baseStep = result.items.find((item: any) => item.target === 'base_connectivity')
           if (baseStep && baseStep.status === 'pass') {
             applyLatencyResult(current, {
               success: true,
-              latency_ms: result.base_latency_ms,
+              latency_ms: result.baseLatencyMs,
               message: result.summary,
-              ip_address: result.exit_ip,
+              ip_address: result.exitIp,
               country: result.country,
-              country_code: result.country_code
+              country_code: result.countryCode
             })
           }
         }
         applyQualityResult(current, result)
-        if (result.challenge_count > 0) {
+        if (result.challengeCount > 0) {
           challenge++
-        } else if (result.failed_count > 0) {
+        } else if (result.failedCount > 0) {
           failed++
-        } else if (result.warn_count > 0) {
+        } else if (result.warnCount > 0) {
           warn++
         } else {
           healthy++
@@ -1730,7 +1731,7 @@ const daysFromBase = (baseDateStr: string, targetDateStr: string): number | null
 }
 // 编辑时有效期自「代理创建日」起算;创建时无 created_at → base='' 用今天
 const editBaseDate = computed(() =>
-  editingProxy.value?.created_at ? editingProxy.value.created_at.slice(0, 10) : '',
+  editingProxy.value?.createdAt ? editingProxy.value.createdAt.slice(0, 10) : '',
 )
 const createExpiresDays = computed<number | null>({
   get: () => daysFromBase('', createForm.expires_at),
@@ -1746,12 +1747,12 @@ const editExpiresDays = computed<number | null>({
 })
 
 const expiryLabel = (row: Proxy): string => {
-  const { key, params } = proxyExpiryLabelKey(row.expires_at, row.status)
+  const { key, params } = proxyExpiryLabelKey(row.expiresAt, row.status)
   return params ? t(key, params) : t(key)
 }
 
 const expiryBadgeClass = (row: Proxy): string =>
-  proxyExpiryBadgeClass(row.expires_at, row.status)
+  proxyExpiryBadgeClass(row.expiresAt, row.status)
 
 const qualityOverallClass = (status?: string) => {
   if (status === 'healthy') return 'badge-success'
@@ -1791,7 +1792,7 @@ const fetchAllProxiesForBatch = async (): Promise<Proxy[]> => {
   let totalPages = 1
 
   while (page <= totalPages) {
-    const response = await adminAPI.proxies.list(
+    const response = await $proxies.list(
       page,
       pageSize,
       {
@@ -1903,7 +1904,7 @@ const handleExportData = async () => {
   if (exportingData.value) return
   exportingData.value = true
   try {
-    const dataPayload = await adminAPI.proxies.exportData(
+    const dataPayload = await $proxies.exportData(
       selectedCount.value > 0
         ? { ids: Array.from(selectedProxyIds.value) }
         : {
@@ -1929,7 +1930,7 @@ const handleExportData = async () => {
 }
 
 const handleDelete = (proxy: Proxy) => {
-  if ((proxy.account_count || 0) > 0) {
+  if ((proxy.accountCount || 0) > 0) {
     appStore.showError(t('admin.proxies.deleteBlockedInUse'))
     return
   }
@@ -1948,7 +1949,7 @@ const confirmDelete = async () => {
   if (!deletingProxy.value) return
 
   try {
-    await adminAPI.proxies.delete(deletingProxy.value.id)
+    await $proxies.deleteProxy(deletingProxy.value.id)
     appStore.showSuccess(t('admin.proxies.proxyDeleted'))
     showDeleteDialog.value = false
     removeSelectedProxies([deletingProxy.value.id])
@@ -1968,7 +1969,7 @@ const confirmBatchDelete = async () => {
   }
 
   try {
-    const result = await adminAPI.proxies.batchDelete(ids)
+    const result = await $proxies.batchDelete(ids)
     const deleted = result.deleted_ids?.length || 0
     const skipped = result.skipped?.length || 0
 
@@ -1994,7 +1995,7 @@ const openAccountsModal = async (proxy: Proxy) => {
   showAccountsModal.value = true
 
   try {
-    proxyAccounts.value = await adminAPI.proxies.getProxyAccounts(proxy.id)
+    proxyAccounts.value = await $proxies.getProxyAccounts(proxy.id)
   } catch (error: any) {
     appStore.showError(error.response?.data?.detail || t('admin.proxies.accountsFailed'))
     console.error('Error loading proxy accounts:', error)

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import UpstreamBillingRateCell from '@/features/admin-accounts/presentation/widgets/UpstreamBillingRateCell.vue'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
-import type { Account } from '@/types'
+import { Account } from '@/types'
 
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
@@ -15,30 +15,30 @@ vi.mock('vue-i18n', async () => {
   }
 })
 
-const makeAccount = (overrides: Partial<Account> = {}): Account => ({
+const makeAccount = (overrides: Partial<Account> = {}): Account => Object.assign(new Account(), {
   id: 1,
   name: 'upstream',
   platform: 'openai',
   type: 'apikey',
-  proxy_id: null,
+  proxyId: 0,
   concurrency: 1,
   priority: 1,
   status: 'active',
-  error_message: null,
-  last_used_at: null,
-  expires_at: null,
-  auto_pause_on_expired: false,
-  created_at: '2026-07-13T00:00:00Z',
-  updated_at: '2026-07-13T00:00:00Z',
+  errorMessage: '',
+  lastUsedAt: '',
+  expiresAt: '',
+  autoPauseOnExpired: false,
+  createdAt: '2026-07-13T00:00:00Z',
+  updatedAt: '2026-07-13T00:00:00Z',
   schedulable: true,
-  rate_limited_at: null,
-  rate_limit_reset_at: null,
-  overload_until: null,
-  temp_unschedulable_until: null,
-  temp_unschedulable_reason: null,
-  session_window_start: null,
-  session_window_end: null,
-  session_window_status: null,
+  rateLimitedAt: '',
+  rateLimitResetAt: '',
+  overloadUntil: '',
+  tempUnschedulableUntil: '',
+  tempUnschedulableReason: '',
+  sessionWindowStart: '',
+  sessionWindowEnd: '',
+  sessionWindowStatus: '',
   ...overrides
 })
 

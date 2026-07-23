@@ -70,8 +70,7 @@
  */
 
 import { useAppStore } from '@/core/stores/appStore'
-import type { PublicSettings } from '@/types'
-
+import type { PublicSettings } from '@/features/auth/domain/models/auth'
 export type FeatureFlagMode = 'opt-in' | 'opt-out'
 
 export interface FeatureFlagDefinition {
@@ -95,27 +94,27 @@ function defineFlag<K extends keyof PublicSettings>(
  */
 export const FeatureFlags = {
   channelMonitor: defineFlag({
-    key: 'channel_monitor_enabled',
+    key: 'channelMonitorEnabled',
     mode: 'opt-out',
     label: 'Channel Monitor',
   }),
   availableChannels: defineFlag({
-    key: 'available_channels_enabled',
+    key: 'availableChannelsEnabled',
     mode: 'opt-in',
     label: 'Available Channels',
   }),
   payment: defineFlag({
-    key: 'payment_enabled',
+    key: 'paymentEnabled',
     mode: 'opt-out',
     label: 'Payment',
   }),
   riskControl: defineFlag({
-    key: 'risk_control_enabled',
+    key: 'riskControlEnabled',
     mode: 'opt-in',
     label: 'Risk Control',
   }),
   affiliate: defineFlag({
-    key: 'affiliate_enabled',
+    key: 'affiliateEnabled',
     mode: 'opt-in',
     label: 'Affiliate',
   }),

@@ -1,8 +1,12 @@
+// TODO(spec-exception): This file violates spec §3 R2 (core/** MUST NOT import features/**).
+// Logic spans keys + batch-image features and has no legal home under current spec.
+// Remove this file once backend exposes canUseBatchImage on /auth/me or /settings;
+// consumers should then read the flag from authStore.
+// Corresponding eslint override lives in .eslintrc.cjs.
 import { computed, ref } from 'vue'
-import { keysAPI } from '@/api'
 import { useAuthStore } from '@/core/stores/authStore'
-import type { ApiKey } from '@/types'
-
+import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
+import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 const loaded = ref(false)
 const loading = ref(false)
 const hasAllowedBatchImageKey = ref(false)
@@ -13,7 +17,7 @@ function keyAllowsBatchImage(key: ApiKey): boolean {
   return (
     key.status === 'active' &&
     key.group?.platform === 'gemini' &&
-    key.group?.allow_batch_image_generation === true
+    key.group?.allowBatchImageGeneration === true
   )
 }
 
@@ -33,11 +37,12 @@ async function loadBatchImageAccess(force = false): Promise<boolean> {
     return pendingLoad
   }
 
+  const keysQuery = useKeysQueryStore()
   loading.value = true
   pendingLoad = (async () => {
     let page = 1
     while (true) {
-      const response = await keysAPI.list(page, pageSize, {
+      const response = await keysQuery.list(page, pageSize, {
         status: 'active',
         sort_by: 'created_at',
         sort_order: 'desc'

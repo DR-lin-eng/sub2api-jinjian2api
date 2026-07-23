@@ -9,7 +9,7 @@ import {
   selectAllModelsListItems,
   setModelsListCandidates,
   toggleModelsListItem,
-} from "@/features/admin-groups/presentation/groupsModelsListResolver";
+} from "@/features/admin-groups/presentation/utils/groupsModelsListResolver";
 
 describe("groupsModelsList", () => {
   it("selects all default candidates for a new disabled config", () => {

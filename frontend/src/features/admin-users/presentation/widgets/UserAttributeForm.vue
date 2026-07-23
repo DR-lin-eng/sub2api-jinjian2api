@@ -94,8 +94,8 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { adminAPI } from '@/api/admin'
-import type { UserAttributeDefinition, UserAttributeValuesMap } from '@/types'
 import Select from '@/common/widgets/forms/Select.vue'
+import type { UserAttributeDefinition, UserAttributeValuesMap } from '@/features/admin-users/domain/models/userAttributes'
 
 interface Props {
   userId?: number
@@ -131,7 +131,7 @@ const loadUserValues = async () => {
     const values = await adminAPI.userAttributes.getUserAttributeValues(props.userId)
     const valuesMap: UserAttributeValuesMap = {}
     values.forEach(v => {
-      valuesMap[v.attribute_id] = v.value
+      valuesMap[v.attributeId] = v.value
     })
     localValues.value = { ...valuesMap }
     emit('update:modelValue', localValues.value)

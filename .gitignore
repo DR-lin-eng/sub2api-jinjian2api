@@ -81,6 +81,7 @@ tmp/
 temp/
 *.tmp
 *.temp
+.tmp_*.mjs
 *.log
 *.bak
 .cache/
@@ -145,4 +146,5 @@ docs/*
 frontend/coverage/
 aicodex
 output/
-.bin
+.bin/
+

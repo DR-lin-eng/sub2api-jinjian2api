@@ -4,9 +4,9 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type { Provider, MonitorMode, MonitorStatus } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
+import type { Provider, MonitorMode, MonitorStatus } from '@/core/constants/channelMonitor'
 
-export type { Provider, MonitorMode, MonitorStatus } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
+export type { Provider, MonitorMode, MonitorStatus } from '@/core/constants/channelMonitor'
 
 export interface UserMonitorExtraModel {
   model: string

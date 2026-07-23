@@ -191,14 +191,14 @@ describe('channel monitor Grok provider', () => {
 
     expect(createMonitor).toHaveBeenCalledWith(expect.objectContaining({
       name: 'Passive request monitor',
-      monitor_mode: 'passive',
-      channel_id: 7,
-      primary_model: 'gpt-5.4',
-      jitter_seconds: 0,
+      monitorMode: 'passive',
+      channelId: 7,
+      primaryModel: 'gpt-5.4',
+      jitterSeconds: 0,
     }))
     const payload = createMonitor.mock.calls[0][0]
     expect(payload).not.toHaveProperty('endpoint')
-    expect(payload).not.toHaveProperty('api_key')
+    expect(payload).not.toHaveProperty('apiKey')
   })
 
   it('submits a group-targeted passive monitor without selecting a channel', async () => {
@@ -218,10 +218,10 @@ describe('channel monitor Grok provider', () => {
 
     expect(createMonitor).toHaveBeenCalledWith(expect.objectContaining({
       name: 'Group request monitor',
-      monitor_mode: 'passive',
-      channel_id: null,
-      group_id: 12,
-      primary_model: 'claude-sonnet-4-6',
+      monitorMode: 'passive',
+      channelId: null,
+      groupId: 12,
+      primaryModel: 'claude-sonnet-4-6',
     }))
   })
 })

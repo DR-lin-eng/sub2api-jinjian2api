@@ -14,6 +14,7 @@ export type Provider = 'openai' | 'anthropic' | 'gemini' | 'grok'
 export type MonitorMode = 'active' | 'passive'
 export type MonitorStatus = 'operational' | 'degraded' | 'failed' | 'error' | 'unknown'
 export type APIMode = 'chat_completions' | 'responses'
+export type BodyOverrideMode = 'off' | 'merge' | 'replace'
 
 export const PROVIDER_OPENAI: Provider = 'openai'
 export const PROVIDER_ANTHROPIC: Provider = 'anthropic'

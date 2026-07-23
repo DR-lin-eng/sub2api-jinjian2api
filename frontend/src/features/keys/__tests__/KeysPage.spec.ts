@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 
-import type { ApiKey } from '@/types'
+import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 import KeysView from '@/features/keys/presentation/pages/KeysPage.vue'
 
 const {
@@ -59,13 +59,6 @@ const messages: Record<string, string> = {
 }
 
 vi.mock('@/api', () => ({
-  keysAPI: {
-    list: listKeys,
-    create: vi.fn(),
-    update: updateKey,
-    delete: vi.fn(),
-    toggleStatus: vi.fn(),
-  },
   authAPI: {
     getPublicSettings,
   },
@@ -76,6 +69,25 @@ vi.mock('@/api', () => ({
     getAvailable: getAvailableGroups,
     getUserGroupRates,
   },
+}))
+
+vi.mock('@/features/keys/presentation/stores/keysQueryStore', () => ({
+  useKeysQueryStore: () => ({
+    loading: { list: false, getById: false },
+    errors: { list: null, getById: null },
+    list: listKeys,
+    getById: vi.fn(),
+  }),
+}))
+vi.mock('@/features/keys/presentation/stores/keysActionStore', () => ({
+  useKeysActionStore: () => ({
+    loading: { create: false, update: false, deleteKey: false, toggleStatus: false },
+    errors: { create: null, update: null, deleteKey: null, toggleStatus: null },
+    create: vi.fn(),
+    update: updateKey,
+    deleteKey: vi.fn(),
+    toggleStatus: vi.fn(),
+  }),
 }))
 
 vi.mock('@/core/stores/appStore', () => ({
@@ -110,34 +122,34 @@ vi.mock('vue-i18n', async () => {
 
 const createApiKey = (): ApiKey => ({
   id: 1,
-  user_id: 1,
+  userId: 1,
   key: 'sk-test-key',
   name: 'test-key',
-  group_id: null,
+  groupId: null,
   status: 'active',
-  ip_whitelist: [],
-  ip_blacklist: [],
-  last_used_at: null,
-  last_used_ip: null,
+  ipWhitelist: [],
+  ipBlacklist: [],
+  lastUsedAt: null,
+  lastUsedIp: null,
   quota: 0,
-  quota_used: 0,
-  expires_at: null,
-  created_at: '2026-06-27T00:00:00Z',
-  updated_at: '2026-06-27T00:00:00Z',
-  concurrency_limit: 0,
-  current_concurrency: 3,
-  rate_limit_5h: 0,
-  rate_limit_1d: 0,
-  rate_limit_7d: 0,
-  usage_5h: 0,
-  usage_1d: 0,
-  usage_7d: 0,
-  window_5h_start: null,
-  window_1d_start: null,
-  window_7d_start: null,
-  reset_5h_at: null,
-  reset_1d_at: null,
-  reset_7d_at: null,
+  quotaUsed: 0,
+  expiresAt: null,
+  createdAt: '2026-06-27T00:00:00Z',
+  updatedAt: '2026-06-27T00:00:00Z',
+  concurrencyLimit: 0,
+  currentConcurrency: 3,
+  rateLimit5h: 0,
+  rateLimit1d: 0,
+  rateLimit7d: 0,
+  usage5h: 0,
+  usage1d: 0,
+  usage7d: 0,
+  window5hStart: null,
+  window1dStart: null,
+  window7dStart: null,
+  reset5hAt: null,
+  reset1dAt: null,
+  reset7dAt: null,
 })
 
 const AppLayoutStub = {
@@ -175,13 +187,13 @@ const DataTableStub = {
         </div>
         <slot name="cell-name" :value="row.name" :row="row" />
         <div data-test="current-concurrency">
-          <slot name="cell-current_concurrency" :value="row.current_concurrency" :row="row" />
+          <slot name="cell-current_concurrency" :value="row.currentConcurrency" :row="row" />
         </div>
         <div
           v-if="columns.some((col) => col.key === 'last_used_ip')"
           data-test="last-used-ip"
         >
-          <slot name="cell-last_used_ip" :value="row.last_used_ip" :row="row" />
+          <slot name="cell-last_used_ip" :value="row.lastUsedIp" :row="row" />
         </div>
         <div data-test="actions">
           <slot name="cell-actions" :row="row" />
@@ -347,7 +359,7 @@ describe('user KeysView column settings', () => {
 
   it('shows the last used IP column when toggled', async () => {
     listKeys.mockResolvedValueOnce({
-      items: [{ ...createApiKey(), last_used_ip: '203.0.113.10' }],
+      items: [{ ...createApiKey(), lastUsedIp: '203.0.113.10' }],
       total: 1,
       page: 1,
       page_size: 20,
@@ -419,7 +431,7 @@ describe('user KeysView column settings', () => {
 
   it('submits the per-key concurrency limit from edit mode', async () => {
     listKeys.mockResolvedValueOnce({
-      items: [{ ...createApiKey(), group_id: 42 }],
+      items: [{ ...createApiKey(), groupId: 42 }],
       total: 1,
       page: 1,
       page_size: 20,
@@ -437,7 +449,7 @@ describe('user KeysView column settings', () => {
 
     expect(updateKey).toHaveBeenCalledWith(
       1,
-      expect.objectContaining({ concurrency_limit: 5 })
+      expect.objectContaining({ concurrencyLimit: 5 })
     )
   })
 

@@ -9,16 +9,8 @@ import {
   prepareOAuthBindAccessTokenCookie,
   type WeChatOAuthPublicSettings,
 } from '@/features/auth/data/datasources/authDatasource'
-import type {
-  User,
-  ChangePasswordRequest,
-  NotifyEmailEntry,
-  UserAuthProvider,
-  UserAffiliateDetail,
-  AffiliateTransferResponse,
-  PlatformQuotasResponse,
-} from '@/types'
-
+import type { UserAffiliateDetail, AffiliateTransferResponse, PlatformQuotasResponse } from '@/types'
+import type { User, ChangePasswordRequest, NotifyEmailEntry, UserAuthProvider } from '@/features/auth/domain/models/auth'
 /**
  * Get current user profile
  * @returns User profile data
@@ -54,8 +46,8 @@ export async function changePassword(
   newPassword: string
 ): Promise<{ message: string }> {
   const payload: ChangePasswordRequest = {
-    old_password: oldPassword,
-    new_password: newPassword
+    oldPassword: oldPassword,
+    newPassword: newPassword
   }
 
   const { data } = await apiClient.put<{ message: string }>('/user/password', payload)

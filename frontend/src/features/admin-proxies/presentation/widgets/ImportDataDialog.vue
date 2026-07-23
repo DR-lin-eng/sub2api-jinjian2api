@@ -59,7 +59,7 @@
             class="mt-2 max-h-48 overflow-auto rounded-lg bg-gray-50 p-3 font-mono text-xs dark:bg-dark-800"
           >
             <div v-for="(item, idx) in errorItems" :key="idx" class="whitespace-pre-wrap">
-              {{ item.kind }} {{ item.name || item.proxy_key || '-' }} — {{ item.message }}
+              {{ item.kind }} {{ item.name || item.proxyKey || '-' }} — {{ item.message }}
             </div>
           </div>
         </div>
@@ -90,8 +90,7 @@ import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import { adminAPI } from '@/api/admin'
 import { useAppStore } from '@/core/stores/appStore'
-import type { AdminDataImportResult } from '@/types'
-
+import type { AdminDataImportResult } from '@/features/admin-accounts/domain/models/adminDataPayload'
 interface Props {
   show: boolean
 }
@@ -177,12 +176,12 @@ const handleImport = async () => {
     result.value = res
 
     const msgParams: Record<string, unknown> = {
-      proxy_created: res.proxy_created,
-      proxy_reused: res.proxy_reused,
-      proxy_failed: res.proxy_failed
+      proxyCreated: res.proxyCreated,
+      proxyReused: res.proxyReused,
+      proxyFailed: res.proxyFailed
     }
 
-    if (res.proxy_failed > 0) {
+    if (res.proxyFailed > 0) {
       appStore.showError(t('admin.proxies.dataImportCompletedWithErrors', msgParams))
     } else {
       appStore.showSuccess(t('admin.proxies.dataImportSuccess', msgParams))

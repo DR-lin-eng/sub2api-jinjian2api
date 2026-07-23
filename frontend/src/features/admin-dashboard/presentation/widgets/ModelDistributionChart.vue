@@ -140,13 +140,13 @@
                   {{ formatNumber(model.requests) }}
                 </td>
                 <td class="py-1.5 text-right text-gray-600 dark:text-gray-400">
-                  {{ formatTokens(model.total_tokens) }}
+                  {{ formatTokens(model.totalTokens) }}
                 </td>
                 <td class="py-1.5 text-right text-green-600 dark:text-green-400">
-                  ${{ formatCost(model.actual_cost) }}
+                  ${{ formatCost(model.actualCost) }}
                 </td>
                 <td v-if="showAccountCost" class="py-1.5 text-right text-orange-500 dark:text-orange-400">
-                  ${{ formatCost(model.account_cost) }}
+                  ${{ formatCost(model.accountCost) }}
                 </td>
                 <td class="py-1.5 text-right text-gray-400 dark:text-gray-500">
                   ${{ formatCost(model.cost) }}
@@ -199,7 +199,7 @@
           <tbody>
             <tr
               v-for="(item, index) in rankingDisplayItems"
-              :key="item.isOther ? 'others' : `${item.user_id}-${index}`"
+              :key="item.isOther ? 'others' : `${item.userId}-${index}`"
               class="border-t border-gray-100 transition-colors dark:border-dark-700"
               :class="item.isOther
                 ? 'bg-gray-50/70 dark:bg-dark-700/20'
@@ -226,7 +226,7 @@
                 {{ formatTokens(item.tokens) }}
               </td>
               <td class="py-1.5 text-right text-green-600 dark:text-green-400">
-                ${{ formatCost(item.actual_cost) }}
+                ${{ formatCost(item.actualCost) }}
               </td>
             </tr>
           </tbody>
@@ -249,12 +249,15 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import UserBreakdownSubTable from './UserBreakdownSubTable.vue'
-import type { ModelStat, UserSpendingRankingItem, UserBreakdownItem } from '@/types'
-import { getUserBreakdown } from '@/features/admin-dashboard/data/datasources/adminDashboardDatasource'
+import { useAdminDashboardQueryStore } from '@/features/admin-dashboard/presentation/stores/adminDashboardQueryStore'
+import type { ModelStat } from '@/features/admin-dashboard/domain/models/modelStat'
+import type { UserSpendingRankingItem } from '@/features/admin-dashboard/domain/models/userSpendingRankingItem'
+import type { UserBreakdownItem } from '@/features/admin-dashboard/domain/models/userBreakdownItem'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
 const { t } = useI18n()
+const dashboardStore = useAdminDashboardQueryStore()
 
 type DistributionMetric = 'tokens' | 'actual_cost'
 type ModelSource = 'requested' | 'upstream' | 'mapping'
@@ -313,7 +316,7 @@ const toggleBreakdown = async (type: string, id: string) => {
   breakdownLoading.value = true
   breakdownItems.value = []
   try {
-    const res = await getUserBreakdown({
+    const res = await dashboardStore.getUserBreakdown({
       ...props.filters,
       start_date: props.startDate,
       end_date: props.endDate,
@@ -362,7 +365,7 @@ const displayModelStats = computed(() => {
       : props.modelStats
   if (!sourceStats?.length) return []
 
-  const metricKey = props.metric === 'actual_cost' ? 'actual_cost' : 'total_tokens'
+  const metricKey = props.metric === 'actual_cost' ? 'actualCost' : 'totalTokens'
   return [...sourceStats].sort((a, b) => toFiniteNumber(b[metricKey]) - toFiniteNumber(a[metricKey]))
 })
 
@@ -373,7 +376,7 @@ const chartData = computed(() => {
     labels: displayModelStats.value.map((m) => m.model),
     datasets: [
       {
-        data: displayModelStats.value.map((m) => toFiniteNumber(props.metric === 'actual_cost' ? m.actual_cost : m.total_tokens)),
+        data: displayModelStats.value.map((m) => toFiniteNumber(props.metric === 'actual_cost' ? m.actualCost : m.totalTokens)),
         backgroundColor: chartColors.slice(0, displayModelStats.value.length),
         borderWidth: 0
       }
@@ -385,12 +388,12 @@ const rankingChartData = computed(() => {
   if (!props.rankingItems?.length) return null
 
   const labels = props.rankingItems.map((item, index) => `#${index + 1} ${getRankingUserLabel(item)}`)
-  const data = props.rankingItems.map((item) => toFiniteNumber(item.actual_cost))
+  const data = props.rankingItems.map((item) => toFiniteNumber(item.actualCost))
   const backgroundColor = chartColors.slice(0, props.rankingItems.length)
 
   if (otherRankingItem.value) {
     labels.push(t('admin.dashboard.spendingRankingOther'))
-    data.push(otherRankingItem.value.actual_cost)
+    data.push(otherRankingItem.value.actualCost)
     backgroundColor.push('#94a3b8')
   }
 
@@ -409,7 +412,7 @@ const rankingChartData = computed(() => {
 const otherRankingItem = computed<RankingDisplayItem | null>(() => {
   if (!props.rankingItems?.length) return null
 
-  const rankedActualCost = props.rankingItems.reduce((sum, item) => sum + toFiniteNumber(item.actual_cost), 0)
+  const rankedActualCost = props.rankingItems.reduce((sum, item) => sum + toFiniteNumber(item.actualCost), 0)
   const rankedRequests = props.rankingItems.reduce((sum, item) => sum + toFiniteNumber(item.requests), 0)
   const rankedTokens = props.rankingItems.reduce((sum, item) => sum + toFiniteNumber(item.tokens), 0)
 
@@ -420,9 +423,9 @@ const otherRankingItem = computed<RankingDisplayItem | null>(() => {
   if (otherActualCost <= 0.000001 && otherRequests <= 0 && otherTokens <= 0) return null
 
   return {
-    user_id: 0,
+    userId: 0,
     email: '',
-    actual_cost: otherActualCost,
+    actualCost: otherActualCost,
     requests: otherRequests,
     tokens: otherTokens,
     isOther: true
@@ -496,7 +499,7 @@ const formatNumber = (value: number): string => {
 
 const getRankingUserLabel = (item: UserSpendingRankingItem): string => {
   if (item.email) return item.email
-  return t('admin.redeem.userPrefix', { id: item.user_id })
+  return t('admin.redeem.userPrefix', { id: item.userId })
 }
 
 const getRankingRowLabel = (item: RankingDisplayItem): string => {

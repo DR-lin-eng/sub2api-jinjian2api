@@ -16,7 +16,7 @@
             @focus="showUserDropdown = true"
           />
           <button
-            v-if="filters.user_id"
+            v-if="filters.userId"
             type="button"
             @click="clearUser"
             class="absolute right-2 top-9 text-gray-400"
@@ -53,7 +53,7 @@
             @focus="onApiKeyFocus"
           />
           <button
-            v-if="filters.api_key_id"
+            v-if="filters.apiKeyId"
             type="button"
             @click="onClearApiKey"
             class="absolute right-2 top-9 text-gray-400"
@@ -96,7 +96,7 @@
             @focus="showAccountDropdown = true"
           />
           <button
-            v-if="filters.account_id"
+            v-if="filters.accountId"
             type="button"
             @click="clearAccount"
             class="absolute right-2 top-9 text-gray-400"
@@ -124,19 +124,19 @@
         <!-- Request Type Filter (usage only) -->
         <div v-if="mode !== 'errors'" class="w-full sm:w-auto sm:min-w-[180px]">
           <label class="input-label">{{ t('usage.type') }}</label>
-          <Select v-model="filters.request_type" :options="requestTypeOptions" @change="emitChange" />
+          <Select v-model="filters.requestType" :options="requestTypeOptions" @change="emitChange" />
         </div>
 
         <!-- Billing Type Filter (usage only) -->
         <div v-if="mode !== 'errors'" class="w-full sm:w-auto sm:min-w-[200px]">
           <label class="input-label">{{ t('admin.usage.billingType') }}</label>
-          <Select v-model="filters.billing_type" :options="billingTypeOptions" @change="emitChange" />
+          <Select v-model="filters.billingType" :options="billingTypeOptions" @change="emitChange" />
         </div>
 
         <!-- Billing Mode Filter (usage only；用户排行的 user-breakdown 接口不支持该维度) -->
         <div v-if="mode === 'usage'" class="w-full sm:w-auto sm:min-w-[200px]">
           <label class="input-label">{{ t('admin.usage.billingMode') }}</label>
-          <Select v-model="filters.billing_mode" :options="billingModeOptions" @change="emitChange" />
+          <Select v-model="filters.billingMode" :options="billingModeOptions" @change="emitChange" />
         </div>
 
         <!-- Error Phase Filter (errors only) -->
@@ -154,13 +154,13 @@
         <!-- Status Code Filter (errors only) -->
         <div v-if="mode === 'errors'" class="w-full sm:w-auto sm:min-w-[180px]">
           <label class="input-label">{{ t('admin.ops.errorLog.status') }}</label>
-          <Select v-model="filters.status_code" :options="statusCodeOptions" @change="emitChange" />
+          <Select v-model="filters.statusCode" :options="statusCodeOptions" @change="emitChange" />
         </div>
 
         <!-- Group Filter -->
         <div class="w-full sm:w-auto sm:min-w-[200px]">
           <label class="input-label">{{ t('admin.usage.group') }}</label>
-          <Select v-model="filters.group_id" :options="groupOptions" searchable @change="emitChange" />
+          <Select v-model="filters.groupId" :options="groupOptions" searchable @change="emitChange" />
         </div>
 
       </div>
@@ -191,6 +191,9 @@
 import { ref, onMounted, onUnmounted, toRef, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { adminAPI } from '@/api/admin'
+import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
+
+const adminAccountsQueryStore = useAdminAccountsQueryStore()
 import Select, { type SelectOption } from '@/common/widgets/forms/Select.vue'
 import { COMMON_ERROR_STATUS_CODES } from '@/core/utils/errorBadges'
 import type { SimpleApiKey, SimpleUser } from '@/features/admin-usage/data/datasources/adminUsageDatasource'
@@ -328,7 +331,7 @@ const debounceApiKeySearch = () => {
   apiKeySearchTimeout = setTimeout(async () => {
     try {
       apiKeyResults.value = await adminAPI.usage.searchApiKeys(
-        filters.value.user_id,
+        filters.value.userId,
         apiKeyKeyword.value || ''
       )
     } catch {
@@ -340,7 +343,7 @@ const debounceApiKeySearch = () => {
 const selectUser = async (u: SimpleUser) => {
   userKeyword.value = u.email
   showUserDropdown.value = false
-  filters.value.user_id = u.id
+  filters.value.userId = u.id
   clearApiKey()
 
   // Auto-load API keys for this user
@@ -357,7 +360,7 @@ const clearUser = () => {
   userKeyword.value = ''
   userResults.value = []
   showUserDropdown.value = false
-  filters.value.user_id = undefined
+  filters.value.userId = undefined
   clearApiKey()
   emitChange()
 }
@@ -365,7 +368,7 @@ const clearUser = () => {
 const selectApiKey = (k: SimpleApiKey) => {
   apiKeyKeyword.value = k.name || String(k.id)
   showApiKeyDropdown.value = false
-  filters.value.api_key_id = k.id
+  filters.value.apiKeyId = k.id
   emitChange()
 }
 
@@ -373,7 +376,7 @@ const clearApiKey = () => {
   apiKeyKeyword.value = ''
   apiKeyResults.value = []
   showApiKeyDropdown.value = false
-  filters.value.api_key_id = undefined
+  filters.value.apiKeyId = undefined
 }
 
 const onClearApiKey = () => {
@@ -389,7 +392,7 @@ const debounceAccountSearch = () => {
       return
     }
     try {
-      const res = await adminAPI.accounts.list(1, 20, { search: accountKeyword.value })
+      const res = await adminAccountsQueryStore.list(1, 20, { search: accountKeyword.value })
       accountResults.value = res.items.map((a: any) => ({ id: a.id, name: a.name }))
     } catch {
       accountResults.value = []
@@ -400,7 +403,7 @@ const debounceAccountSearch = () => {
 const selectAccount = (a: SimpleAccount) => {
   accountKeyword.value = a.name
   showAccountDropdown.value = false
-  filters.value.account_id = a.id
+  filters.value.accountId = a.id
   emitChange()
 }
 
@@ -408,7 +411,7 @@ const clearAccount = () => {
   accountKeyword.value = ''
   accountResults.value = []
   showAccountDropdown.value = false
-  filters.value.account_id = undefined
+  filters.value.accountId = undefined
   emitChange()
 }
 
@@ -450,7 +453,7 @@ watch(
 )
 
 watch(
-  () => filters.value.user_id,
+  () => filters.value.userId,
   (userId) => {
     if (!userId) {
       userKeyword.value = ''
@@ -460,7 +463,7 @@ watch(
 )
 
 watch(
-  () => filters.value.api_key_id,
+  () => filters.value.apiKeyId,
   (apiKeyId) => {
     if (!apiKeyId) {
       apiKeyKeyword.value = ''
@@ -470,7 +473,7 @@ watch(
 )
 
 watch(
-  () => filters.value.account_id,
+  () => filters.value.accountId,
   (accountId) => {
     if (!accountId) {
       accountKeyword.value = ''

@@ -172,8 +172,8 @@ import {
 // admin 侧 ChannelModelPricing 字段更多，但结构上是用户 DTO 的超集，admin 视图传入可直接通过结构化子类型检查。
 import type { UserPricingInterval, UserSupportedModel } from '@/features/channels-user/data/datasources/channelsUserDatasource'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
-import type { GroupPlatform } from '@/types'
 import { platformBadgeClass, platformBorderClass, platformBadgeLightClass } from '@/core/utils/platformColors'
+import type { GroupPlatform } from '@/features/admin-groups/domain/models/adminGroups'
 
 const props = withDefaults(
   defineProps<{

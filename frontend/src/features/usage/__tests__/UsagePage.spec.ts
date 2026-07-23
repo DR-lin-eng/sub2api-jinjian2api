@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 
 import UsagePage from '@/features/usage/presentation/pages/UsagePage.vue'
 
@@ -75,12 +76,18 @@ vi.mock('@/api', () => ({
     getDashboardModels,
     getDashboardSnapshotV2,
   },
-  keysAPI: {
-    list,
-  },
   userGroupsAPI: {
     getAvailable,
   },
+}))
+
+vi.mock('@/features/keys/presentation/stores/keysQueryStore', () => ({
+  useKeysQueryStore: () => ({
+    loading: { list: false, getById: false },
+    errors: { list: null, getById: null },
+    list,
+    getById: vi.fn(),
+  }),
 }))
 
 vi.mock('@/core/stores/appStore', () => ({
@@ -164,6 +171,7 @@ function mountUsagePage() {
 
 describe('user UsagePage', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
     query.mockReset()
     getStats.mockReset()
     getDashboardModels.mockReset()

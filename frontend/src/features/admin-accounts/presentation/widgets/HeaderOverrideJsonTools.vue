@@ -54,7 +54,7 @@ import {
   parseHeaderOverridesJson,
   serializeHeaderOverrideRows,
   type HeaderOverrideRow
-} from '@/features/admin-accounts/presentation/credentialsBuilder'
+} from '@/features/admin-accounts/presentation/utils/credentialsBuilder'
 
 const props = defineProps<{
   rows: HeaderOverrideRow[]

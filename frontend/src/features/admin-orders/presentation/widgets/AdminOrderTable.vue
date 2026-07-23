@@ -136,7 +136,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { PaymentOrder } from '@/types/payment'
+import type { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
 import type { Column } from '@/common/types/uiTypes'
 import DataTable from '@/common/widgets/data/DataTable.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'

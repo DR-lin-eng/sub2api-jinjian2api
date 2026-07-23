@@ -21,13 +21,13 @@
               <span class="font-medium text-gray-900 dark:text-white">{{ value }}</span>
               <span
                 class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium"
-                :class="row.monitor_mode === 'passive'
+                :class="row.monitorMode === 'passive'
                   ? 'bg-cyan-100 text-cyan-700 dark:bg-cyan-500/15 dark:text-cyan-300'
                   : 'bg-gray-100 text-gray-600 dark:bg-dark-700 dark:text-gray-300'"
               >
-                {{ t(`monitorCommon.modes.${row.monitor_mode || 'active'}`) }}
+                {{ t(`monitorCommon.modes.${row.monitorMode || 'active'}`) }}
               </span>
-              <HelpTooltip v-if="row.api_key_decrypt_failed" :content="t('admin.channelMonitor.apiKeyDecryptFailed')">
+              <HelpTooltip v-if="row.apiKeyDecryptFailed" :content="t('admin.channelMonitor.apiKeyDecryptFailed')">
                 <Icon name="exclamationTriangle" size="sm" class="text-red-500" />
               </HelpTooltip>
             </div>
@@ -48,7 +48,7 @@
           </template>
 
           <template #cell-latency="{ row }">
-            <span class="text-sm text-gray-900 dark:text-gray-100">{{ formatLatency(row.primary_latency_ms) }}</span>
+            <span class="text-sm text-gray-900 dark:text-gray-100">{{ formatLatency(row.primaryLatencyMs) }}</span>
           </template>
 
           <template #cell-enabled="{ row }">
@@ -83,7 +83,7 @@
           v-if="pagination.total > 0"
           :page="pagination.page"
           :total="pagination.total"
-          :page-size="pagination.page_size"
+          :page-size="pagination.pageSize"
           @update:page="onPageChange"
           @update:pageSize="onPageSizeChange"
         />
@@ -127,13 +127,11 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
-import { adminAPI } from '@/api/admin'
-import type {
-  ChannelMonitor,
-  CheckResult,
-  ListParams,
-  Provider,
-} from '@/features/admin-channel-monitor/presentation/api'
+import { useAdminChannelMonitor } from '@/features/admin-channel-monitor/presentation/composables/useAdminChannelMonitor'
+import type { Provider } from '@/core/constants/channelMonitor'
+import type { ChannelMonitor } from '@/features/admin-channel-monitor/domain/models/channelMonitor'
+import type { ChannelMonitorListParams } from '@/features/admin-channel-monitor/domain/models/channelMonitorListParams'
+import type { CheckResult } from '@/features/admin-channel-monitor/domain/models/checkResult'
 import type { Column } from '@/common/types/uiTypes'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
@@ -161,6 +159,7 @@ const {
   formatLatency,
   formatAvailability,
 } = useChannelMonitorFormat()
+const channelMonitor = useAdminChannelMonitor()
 
 const monitors = ref<ChannelMonitor[]>([])
 const loading = ref(false)
@@ -168,7 +167,7 @@ const runningId = ref<number | null>(null)
 const searchQuery = ref('')
 const providerFilter = ref<Provider | ''>('')
 const enabledFilter = ref<'' | 'true' | 'false'>('')
-const pagination = reactive({ page: 1, page_size: getPersistedPageSize(), total: 0 })
+const pagination = reactive({ page: 1, pageSize: getPersistedPageSize(), total: 0 })
 
 const showDialog = ref(false)
 const showTemplateManager = ref(false)
@@ -203,16 +202,16 @@ async function reload() {
   abortController = ctrl
   loading.value = true
   try {
-    const params: ListParams = {
+    const params: ChannelMonitorListParams = {
       page: pagination.page,
-      page_size: pagination.page_size,
+      pageSize: pagination.pageSize,
     }
     if (providerFilter.value) params.provider = providerFilter.value
     if (enabledFilter.value === 'true') params.enabled = true
     if (enabledFilter.value === 'false') params.enabled = false
     if (searchQuery.value.trim()) params.search = searchQuery.value.trim()
 
-    const res = await adminAPI.channelMonitor.list(params, { signal: ctrl.signal })
+    const res = await channelMonitor.list(params, { signal: ctrl.signal })
     if (ctrl.signal.aborted || abortController !== ctrl) return
     monitors.value = res.items || []
     pagination.total = res.total
@@ -242,7 +241,7 @@ function onPageChange(page: number) {
 }
 
 function onPageSizeChange(size: number) {
-  pagination.page_size = size
+  pagination.pageSize = size
   pagination.page = 1
   reload()
 }
@@ -265,7 +264,7 @@ function closeDialog() {
 async function toggleEnabled(row: ChannelMonitor) {
   const next = !row.enabled
   try {
-    await adminAPI.channelMonitor.update(row.id, { enabled: next })
+    await channelMonitor.update(row.id, { enabled: next })
     row.enabled = next
   } catch (err: unknown) {
     appStore.showError(extractApiErrorMessage(err, t('common.error')))
@@ -276,7 +275,7 @@ async function handleRunNow(row: ChannelMonitor) {
   if (runningId.value != null) return
   runningId.value = row.id
   try {
-    const res = await adminAPI.channelMonitor.runNow(row.id)
+    const res = await channelMonitor.runNow(row.id)
     runResults.value = res.results || []
     showRunResult.value = true
     appStore.showSuccess(t('admin.channelMonitor.runSuccess'))
@@ -290,7 +289,7 @@ async function handleRunNow(row: ChannelMonitor) {
 }
 
 async function handleDuplicate(row: ChannelMonitor) {
-  if ((row.monitor_mode || 'active') === 'active' && row.api_key_decrypt_failed) {
+  if ((row.monitorMode || 'active') === 'active' && row.apiKeyDecryptFailed) {
     appStore.showError(t('admin.channelMonitor.duplicateKeyUnavailable'))
     return
   }
@@ -298,7 +297,7 @@ async function handleDuplicate(row: ChannelMonitor) {
 
   duplicatingIds.add(row.id)
   try {
-    const duplicate = await adminAPI.channelMonitor.duplicate(row.id)
+    const duplicate = await channelMonitor.duplicate(row.id)
     appStore.showSuccess(t('admin.channelMonitor.duplicateSuccess', { name: duplicate.name }))
     await reload()
   } catch (err: unknown) {
@@ -316,7 +315,7 @@ function handleDelete(row: ChannelMonitor) {
 async function confirmDelete() {
   if (!deleting.value) return
   try {
-    await adminAPI.channelMonitor.del(deleting.value.id)
+    await channelMonitor.deleteMonitor(deleting.value.id)
     appStore.showSuccess(t('admin.channelMonitor.deleteSuccess'))
     showDeleteDialog.value = false
     deleting.value = null

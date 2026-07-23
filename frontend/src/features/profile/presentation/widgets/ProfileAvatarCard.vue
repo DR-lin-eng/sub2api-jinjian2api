@@ -84,8 +84,8 @@ import { useI18n } from 'vue-i18n'
 import { userAPI } from '@/api'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/core/stores/authStore'
-import type { User } from '@/types'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
+import type { User } from '@/features/auth/domain/models/auth'
 
 const props = withDefaults(defineProps<{
   user: User | null
@@ -106,10 +106,10 @@ const avatarSaving = ref(false)
 
 const displayName = computed(() => props.user?.username?.trim() || props.user?.email?.trim() || t('profile.user'))
 const avatarInitial = computed(() => displayName.value.charAt(0).toUpperCase() || 'U')
-const avatarPreviewUrl = computed(() => avatarDraft.value.trim() || props.user?.avatar_url?.trim() || '')
+const avatarPreviewUrl = computed(() => avatarDraft.value.trim() || props.user?.avatarUrl?.trim() || '')
 
 watch(
-  () => props.user?.avatar_url,
+  () => props.user?.avatarUrl,
   () => {
     avatarDraft.value = ''
   }
@@ -237,7 +237,7 @@ async function handleAvatarSave() {
   try {
     const updated = await userAPI.updateProfile({ avatar_url: normalized })
     authStore.user = updated
-    avatarDraft.value = updated.avatar_url?.trim() || ''
+    avatarDraft.value = updated.avatarUrl?.trim() || ''
     appStore.showSuccess(t('profile.avatar.saveSuccess'))
   } catch (error: unknown) {
     appStore.showError(extractApiErrorMessage(error, t('common.error')))
@@ -250,7 +250,7 @@ async function handleAvatarDelete() {
   if (avatarSaving.value) {
     return
   }
-  if (!avatarDraft.value.trim() && !props.user?.avatar_url?.trim()) {
+  if (!avatarDraft.value.trim() && !props.user?.avatarUrl?.trim()) {
     appStore.showError(t('profile.avatar.emptyDeleteHint'))
     return
   }

@@ -4,8 +4,7 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type { UserSubscription, SubscriptionProgress } from '@/types'
-
+import type { UserSubscription, SubscriptionProgress } from '@/features/admin-subscriptions/domain/models/subscription'
 /**
  * Subscription summary for user dashboard
  */

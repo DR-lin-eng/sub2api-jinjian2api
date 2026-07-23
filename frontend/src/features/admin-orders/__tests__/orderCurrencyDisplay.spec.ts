@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import type { PaymentOrder } from '@/types/payment'
+import type { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
 import AdminOrderDetail from '@/features/admin-orders/presentation/widgets/AdminOrderDetail.vue'
 import AdminOrderTable from '@/features/admin-orders/presentation/widgets/AdminOrderTable.vue'
 import AdminRefundDialog from '@/features/admin-orders/presentation/widgets/AdminRefundDialog.vue'

@@ -3,14 +3,8 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type {
-  Announcement,
-  AnnouncementUserReadStatus,
-  BasePaginationResponse,
-  CreateAnnouncementRequest,
-  UpdateAnnouncementRequest
-} from '@/types'
-
+import type { BasePaginationResponse } from '@/types'
+import type { Announcement, AnnouncementUserReadStatus, CreateAnnouncementRequest, UpdateAnnouncementRequest } from '@/features/announcements/domain/models/announcement'
 export async function list(
   page: number = 1,
   pageSize: number = 20,

@@ -19,15 +19,15 @@
             </div>
             <div>
               <p class="text-sm font-medium text-gray-900 dark:text-white">{{ log.model }}</p>
-              <p class="text-xs text-gray-500 dark:text-dark-400">{{ formatDateTime(log.created_at) }}</p>
+              <p class="text-xs text-gray-500 dark:text-dark-400">{{ formatDateTime(log.createdAt) }}</p>
             </div>
           </div>
           <div class="text-right">
             <p class="text-sm font-semibold">
-              <span class="text-green-600 dark:text-green-400" :title="t('dashboard.actual')">${{ formatCost(log.actual_cost) }}</span>
-              <span class="font-normal text-gray-400 dark:text-gray-500" :title="t('dashboard.standard')"> / ${{ formatCost(log.total_cost) }}</span>
+              <span class="text-green-600 dark:text-green-400" :title="t('dashboard.actual')">${{ formatCost(log.actualCost) }}</span>
+              <span class="font-normal text-gray-400 dark:text-gray-500" :title="t('dashboard.standard')"> / ${{ formatCost(log.totalCost) }}</span>
             </p>
-            <p class="text-xs text-gray-500 dark:text-dark-400">{{ (log.input_tokens + log.output_tokens).toLocaleString() }} tokens</p>
+            <p class="text-xs text-gray-500 dark:text-dark-400">{{ (log.inputTokens + log.outputTokens).toLocaleString() }} tokens</p>
           </div>
         </div>
 
@@ -46,8 +46,7 @@ import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { formatDateTime } from '@/core/utils/format'
-import type { UsageLog } from '@/types'
-
+import type { UsageLog } from '@/features/admin-usage/domain/models/adminUsage'
 defineProps<{
   data: UsageLog[]
   loading: boolean

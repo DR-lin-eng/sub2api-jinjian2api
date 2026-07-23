@@ -18,7 +18,7 @@ import {
   serializeHeaderOverrideRows,
   splitHeaderOverridesObject,
   validateHeaderOverrideRows
-} from '@/features/admin-accounts/presentation/credentialsBuilder'
+} from '@/features/admin-accounts/presentation/utils/credentialsBuilder'
 
 describe('applyInterceptWarmup', () => {
   it('create + enabled=true: should set intercept_warmup_requests to true', () => {

@@ -106,7 +106,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { APIMode, BodyOverrideMode, Provider } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
+import type { APIMode, BodyOverrideMode, Provider } from '@/core/constants/channelMonitor'
 import {
   API_MODE_RESPONSES,
   DEFAULT_GROK_MODEL,

@@ -28,7 +28,7 @@
         v-for="group in filteredGroups"
         :key="group.id"
         class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 transition-colors hover:bg-white dark:hover:bg-dark-700"
-        :title="t('admin.groups.rateAndAccounts', { rate: group.rate_multiplier, count: group.account_count || 0 })"
+        :title="t('admin.groups.rateAndAccounts', { rate: group.rateMultiplier, count: group.accountCount || 0 })"
       >
         <input
           type="checkbox"
@@ -40,11 +40,11 @@
         <GroupBadge
           :name="group.name"
           :platform="group.platform"
-          :subscription-type="group.subscription_type"
-          :rate-multiplier="group.rate_multiplier"
+          :subscription-type="group.subscriptionType"
+          :rate-multiplier="group.rateMultiplier"
           class="min-w-0 flex-1"
         />
-        <span class="shrink-0 text-xs text-gray-400">{{ group.account_count || 0 }}</span>
+        <span class="shrink-0 text-xs text-gray-400">{{ group.accountCount || 0 }}</span>
       </label>
       <div
         v-if="filteredGroups.length === 0"
@@ -61,8 +61,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import GroupBadge from './GroupBadge.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import type { AdminGroup, GroupPlatform } from '@/types'
-
+import type { AdminGroup, GroupPlatform } from '@/features/admin-groups/domain/models/adminGroups'
 const { t } = useI18n()
 
 interface Props {

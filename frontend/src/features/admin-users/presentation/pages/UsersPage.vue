@@ -102,10 +102,10 @@
                   <div class="w-full">
                     <Select
                       :model-value="value"
-                      :options="[
+                      :options="([
                         { value: '', label: getAttributeDefinitionName(Number(attrId)) },
                         ...(getAttributeDefinition(Number(attrId))?.options || [])
-                      ]"
+                      ] as SelectOption[])"
                       @update:model-value="(val) => { updateAttributeFilter(Number(attrId), String(val ?? '')); applyFilter() }"
                     />
                   </div>
@@ -406,10 +406,10 @@
                 :key="sub.id"
                 :name="sub.group?.name || ''"
                 :platform="sub.group?.platform"
-                :subscription-type="sub.group?.subscription_type"
-                :rate-multiplier="sub.group?.rate_multiplier"
-                :days-remaining="sub.expires_at ? getDaysRemaining(sub.expires_at) : null"
-                :title="sub.expires_at ? formatDateTime(sub.expires_at) : ''"
+                :subscription-type="sub.group?.subscriptionType"
+                :rate-multiplier="sub.group?.rateMultiplier"
+                :days-remaining="sub.expiresAt ? getDaysRemaining(sub.expiresAt) : null"
+                :title="sub.expiresAt ? formatDateTime(sub.expiresAt) : ''"
               />
             </div>
             <span
@@ -564,7 +564,7 @@
 
           <template #cell-concurrency="{ row }">
             <UserConcurrencyCell
-              :current="row.current_concurrency ?? 0"
+              :current="row.currentConcurrency ?? 0"
               :max="row.concurrency"
             />
           </template>
@@ -781,8 +781,6 @@ import { formatDateTime } from '@/core/utils/format'
 import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()
-import { adminAPI } from '@/api/admin'
-import type { AdminUser, AdminGroup, UserAttributeDefinition } from '@/types'
 import type { BatchUserUsageStats } from '@/features/admin-dashboard/presentation/api'
 import type { PlatformQuotaItem } from '@/features/admin-users/presentation/api'
 import type { Column } from '@/common/types/uiTypes'
@@ -795,7 +793,7 @@ import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import Select from '@/common/widgets/forms/Select.vue'
-import { buildApiKeyGroupFilterOptions } from '@/features/admin-groups/presentation/apiKeyGroupFilterOptionsSignals'
+import { buildApiKeyGroupFilterOptions } from '@/features/admin-groups/presentation/utils/apiKeyGroupFilterOptionsSignals'
 import UserAttributesConfigModal from '@/features/admin-users/presentation/widgets/UserAttributesConfigDialog.vue'
 import UserConcurrencyCell from '@/features/admin-users/presentation/widgets/UserConcurrencyCell.vue'
 import PlatformUsageBreakdown from '@/features/subscriptions/presentation/widgets/PlatformUsageBreakdown.vue'
@@ -810,6 +808,16 @@ import UserAllowedGroupsModal from '@/features/admin-users/presentation/widgets/
 import UserBalanceModal from '@/features/admin-users/presentation/widgets/UserBalanceDialog.vue'
 import UserBalanceHistoryModal from '@/features/admin-users/presentation/widgets/UserBalanceHistoryDialog.vue'
 import GroupReplaceModal from '@/features/admin-users/presentation/widgets/GroupReplaceDialog.vue'
+import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
+import { useAdminDashboard } from '@/features/admin-dashboard/presentation/composables/useAdminDashboard'
+import { useAdminUsers } from '@/features/admin-users/presentation/composables/useAdminUsers'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
+import type { UserAttributeDefinition } from '@/features/admin-users/domain/models/userAttributes'
+const $groups = useAdminGroups()
+const $dashboard = useAdminDashboard()
+const $userAttributes = useAdminUsers()
+const $users = useAdminUsers()
 
 const appStore = useAppStore()
 
@@ -1047,7 +1055,7 @@ const allGroups = ref<AdminGroup[]>([])
 const loadAllGroups = async () => {
   if (allGroups.value.length > 0) return
   try {
-    allGroups.value = await adminAPI.groups.getAll()
+    allGroups.value = await $groups.getAll()
   } catch (e) {
     console.error('Failed to load groups:', e)
   }
@@ -1059,7 +1067,7 @@ const allGroupsForApiKeyFilter = ref<AdminGroup[]>([])
 const loadAllGroupsForApiKeyFilter = async () => {
   if (allGroupsForApiKeyFilter.value.length > 0) return
   try {
-    allGroupsForApiKeyFilter.value = await adminAPI.groups.getAllIncludingInactive()
+    allGroupsForApiKeyFilter.value = await $groups.getAllIncludingInactive()
   } catch (e) {
     console.error('Failed to load groups for API key filter:', e)
   }
@@ -1069,9 +1077,9 @@ const getUserGroups = (user: AdminUser) => {
   const exclusive: AdminGroup[] = []
   const publicGroups: AdminGroup[] = []
   for (const g of allGroups.value) {
-    if (g.status !== 'active' || g.subscription_type !== 'standard') continue
-    if (g.is_exclusive) {
-      if (user.allowed_groups?.includes(g.id)) {
+    if (g.status !== 'active' || g.subscriptionType !== 'standard') continue
+    if (g.isExclusive) {
+      if (user.allowedGroups?.includes(g.id)) {
         exclusive.push(g)
       }
     } else {
@@ -1087,7 +1095,7 @@ const groupFilterOptions = computed(() => {
     { value: '', label: t('admin.users.allAuthorizedGroups') }
   ]
   for (const g of allGroups.value) {
-    if (g.status !== 'active' || !g.is_exclusive || g.subscription_type !== 'standard') continue
+    if (g.status !== 'active' || !g.isExclusive || g.subscriptionType !== 'standard') continue
     options.push({ value: g.name, label: g.name })
   }
   return options
@@ -1355,7 +1363,7 @@ const loadUsersSecondaryData = async (
     tasks.push(
       (async () => {
         try {
-          const usageResponse = await adminAPI.dashboard.getBatchUsersUsage(userIds)
+          const usageResponse = await $dashboard.getBatchUsersUsage(userIds)
           if (signal?.aborted) return
           if (typeof expectedSeq === 'number' && expectedSeq !== secondaryDataSeq) return
           usageStats.value = usageResponse.stats
@@ -1371,7 +1379,7 @@ const loadUsersSecondaryData = async (
     tasks.push(
       (async () => {
         try {
-          const attrResponse = await adminAPI.userAttributes.getBatchUserAttributes(userIds)
+          const attrResponse = await $userAttributes.getBatchUserAttributes(userIds)
           if (signal?.aborted) return
           if (typeof expectedSeq === 'number' && expectedSeq !== secondaryDataSeq) return
           userAttributeValues.value = attrResponse.attributes
@@ -1387,7 +1395,7 @@ const loadUsersSecondaryData = async (
     tasks.push(
       (async () => {
         try {
-          const response = await adminAPI.users.getBatchPlatformQuotas(userIds)
+          const response = await $users.getBatchPlatformQuotas(userIds)
           if (signal?.aborted) return
           if (typeof expectedSeq === 'number' && expectedSeq !== secondaryDataSeq) return
           platformQuotaStats.value = {
@@ -1534,7 +1542,7 @@ const getDaysRemaining = (expiresAt: string): number => {
 
 const loadAttributeDefinitions = async () => {
   try {
-    attributeDefinitions.value = await adminAPI.userAttributes.listEnabledDefinitions()
+    attributeDefinitions.value = await $userAttributes.listEnabledDefinitions()
   } catch (e) {
     console.error('Failed to load attribute definitions:', e)
   }
@@ -1562,7 +1570,7 @@ const loadUsers = async () => {
       }
     }
 
-    const response = await adminAPI.users.list(
+    const response = await $users.list(
       pagination.page,
       pagination.page_size,
       {
@@ -1710,7 +1718,7 @@ const closeEditModal = () => {
 const handleToggleStatus = async (user: AdminUser) => {
   const newStatus = user.status === 'active' ? 'disabled' : 'active'
   try {
-    await adminAPI.users.toggleStatus(user.id, newStatus)
+    await $users.toggleStatus(user.id, newStatus)
     appStore.showSuccess(
       newStatus === 'active' ? t('admin.users.userEnabled') : t('admin.users.userDisabled')
     )
@@ -1762,7 +1770,7 @@ const handleDelete = (user: AdminUser) => {
 const confirmDelete = async () => {
   if (!deletingUser.value) return
   try {
-    await adminAPI.users.delete(deletingUser.value.id)
+    await $users.deleteUser(deletingUser.value.id)
     appStore.showSuccess(t('common.success'))
     showDeleteDialog.value = false
     deletingUser.value = null

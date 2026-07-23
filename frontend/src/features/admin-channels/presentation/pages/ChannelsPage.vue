@@ -85,14 +85,14 @@
             <span
               class="inline-flex items-center rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800 dark:bg-dark-600 dark:text-gray-300"
             >
-              {{ (row.model_pricing || []).length }}
+              {{ (row.modelPricing || []).length }}
               {{ t('admin.channels.pricingUnit', 'pricing rules') }}
             </span>
           </template>
 
-          <template #cell-created_at="{ value }">
+          <template #cell-created_at="{ row }">
             <span class="text-sm text-gray-600 dark:text-gray-400">
-              {{ formatDate(value) }}
+              {{ formatDate(row.createdAt) }}
             </span>
           </template>
 
@@ -313,8 +313,8 @@
                     <span :class="['font-medium', platformTextClass(group.platform)]">{{ group.name }}</span>
                     <span
                       :class="['rounded-full px-1 py-0 text-[10px]', platformBadgeLightClass(group.platform)]"
-                    >{{ group.rate_multiplier }}x</span>
-                    <span class="text-[10px] text-gray-400">{{ group.account_count || 0 }}</span>
+                    >{{ group.rateMultiplier }}x</span>
+                    <span class="text-[10px] text-gray-400">{{ group.accountCount || 0 }}</span>
                     <span
                       v-if="isGroupInOtherChannel(group.id, section.platform)"
                       class="text-[10px] text-gray-400"
@@ -629,11 +629,18 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
-import { adminAPI } from '@/api/admin'
-import type { Channel, ChannelModelPricing, CreateChannelRequest, UpdateChannelRequest, AccountStatsPricingRule } from '@/features/admin-channels/presentation/api'
-import type { PricingFormEntry } from '@/features/admin-channels/presentation/adminChannelSignals'
-import { mTokToPerToken, perTokenToMTok, apiIntervalsToForm, formIntervalsToAPI, findModelConflict, validateIntervals } from '@/features/admin-channels/presentation/adminChannelSignals'
-import type { AdminGroup, GroupPlatform } from '@/types'
+import type { Channel } from '@/features/admin-channels/domain/models/channel'
+import type { CreateChannelRequest } from '@/features/admin-channels/data/requests_models/createChannelRequest'
+import type { UpdateChannelRequest } from '@/features/admin-channels/data/requests_models/updateChannelRequest'
+import type { PricingFormEntry } from '@/features/admin-channels/presentation/composables/useChannelPricingForm'
+import { mTokToPerToken, perTokenToMTok, apiIntervalsToForm, formIntervalsToAPI, findModelConflict, validateIntervals } from '@/features/admin-channels/presentation/composables/useChannelPricingForm'
+import { useAdminChannels } from '@/features/admin-channels/presentation/composables/useAdminChannels'
+import { useAdminAccounts } from '@/features/admin-accounts/presentation/composables/useAdminAccounts'
+import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
+import { useAdminSettings } from '@/features/admin-settings/presentation/composables/useAdminSettings'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
+import type { GroupPlatform } from '@/features/admin-groups/domain/models/groupPlatform'
+import type { ChannelStatus, BillingModelSource } from '@/core/constants/channel'
 import type { Column } from '@/common/types/uiTypes'
 import { platformTextClass, platformBadgeLightClass } from '@/core/utils/platformColors'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
@@ -654,11 +661,16 @@ import { useKeyedDebouncedSearch } from '@/common/composables/useKeyedDebouncedS
 const { t } = useI18n()
 const appStore = useAppStore()
 
+const $settings = useAdminSettings()
+const $channels = useAdminChannels()
+const $accounts = useAdminAccounts()
+const $groups = useAdminGroups()
+
 // Web Search global enabled state (loaded once on mount)
 const webSearchGlobalEnabled = ref(false)
 async function loadWebSearchGlobalState() {
   try {
-    const cfg = await adminAPI.settings.getWebSearchEmulationConfig()
+    const cfg = await $settings.getWebSearchEmulationConfig()
     webSearchGlobalEnabled.value = cfg?.enabled === true && (cfg?.providers?.length ?? 0) > 0
   } catch (err: unknown) {
     console.warn('Failed to load web search global state:', err)
@@ -750,9 +762,9 @@ const allChannelsForConflict = ref<Channel[]>([])
 const form = reactive({
   name: '',
   description: '',
-  status: 'active',
+  status: 'active' as ChannelStatus,
   restrict_models: false,
-  billing_model_source: 'channel_mapped' as string,
+  billing_model_source: 'channel_mapped' as BillingModelSource,
   platforms: [] as PlatformSection[],
   apply_pricing_to_account_stats: false,
 })
@@ -807,7 +819,7 @@ const groupToChannelMap = computed(() => {
   const map = new Map<number, Channel>()
   for (const ch of allChannelsForConflict.value) {
     if (editingChannel.value && ch.id === editingChannel.value.id) continue
-    for (const gid of ch.group_ids || []) {
+    for (const gid of ch.groupIds || []) {
       map.set(gid, ch)
     }
   }
@@ -869,7 +881,7 @@ async function syncLatestModels(sectionIdx: number) {
   if (syncingPlatform.value) return
   syncingPlatform.value = platform
   try {
-    const result = await adminAPI.channels.syncPricingModels(platform)
+    const result = await $channels.syncPricingModels(platform)
     // Collect all model names already present in this platform's pricing entries
     const existingModels = new Set<string>()
     for (const entry of form.platforms[sectionIdx].model_pricing) {
@@ -989,7 +1001,7 @@ const ruleAccountSearchRunner = useKeyedDebouncedSearch<SimpleAccount[]>({
   delay: 300,
   search: async (keyword, { key, signal }) => {
     const platform = key.split('-')[0]
-    const res = await adminAPI.accounts.list(1, 20, { platform, search: keyword }, { signal })
+    const res = await $accounts.list(1, 20, { platform, search: keyword }, { signal })
     return res.items.map((a: any) => ({ id: a.id, name: a.name, platform: a.platform }))
   },
   onSuccess: (key, result) => { ruleAccountSearchResults.value[key] = result },
@@ -1050,8 +1062,8 @@ function clearAllRuleAccountSearchState() {
   showRuleAccountDropdown.value = {}
 }
 
-function accountStatsRulesToAPI(): AccountStatsPricingRule[] {
-  const rules: AccountStatsPricingRule[] = []
+function accountStatsRulesToAPI() {
+  const rules = []
   for (const section of form.platforms) {
     if (!section.enabled) continue
     for (const rule of section.account_stats_pricing_rules) {
@@ -1072,7 +1084,18 @@ function accountStatsRulesToAPI(): AccountStatsPricingRule[] {
             image_input_price: mTokToPerToken(p.image_input_price),
             image_output_price: mTokToPerToken(p.image_output_price),
             per_request_price: p.per_request_price != null && p.per_request_price !== '' ? Number(p.per_request_price) : null,
-            intervals: formIntervalsToAPI(p.intervals || [])
+            intervals: formIntervalsToAPI(p.intervals || []).map(iv => ({
+              id: iv.id,
+              min_tokens: iv.minTokens,
+              max_tokens: iv.maxTokens,
+              tier_label: iv.tierLabel,
+              input_price: iv.inputPrice,
+              output_price: iv.outputPrice,
+              cache_write_price: iv.cacheWritePrice,
+              cache_read_price: iv.cacheReadPrice,
+              per_request_price: iv.perRequestPrice,
+              sort_order: iv.sortOrder,
+            })),
           }))
       })
     }
@@ -1081,28 +1104,28 @@ function accountStatsRulesToAPI(): AccountStatsPricingRule[] {
 }
 
 // ── Form ↔ API conversion ──
-function formToAPI(): { group_ids: number[], model_pricing: ChannelModelPricing[], model_mapping: Record<string, Record<string, string>>, features_config: Record<string, unknown> } {
-  const group_ids: number[] = []
-  const model_pricing: ChannelModelPricing[] = []
-  const model_mapping: Record<string, Record<string, string>> = {}
+function formToAPI() {
+  const groupIds: number[] = []
+  const modelPricing = []
+  const modelMapping: Record<string, Record<string, string>> = {}
   // Preserve existing features_config fields not managed by the form
-  const featuresConfig: Record<string, unknown> = editingChannel.value?.features_config
-    ? { ...editingChannel.value.features_config }
+  const featuresConfig: Record<string, unknown> = editingChannel.value?.featuresConfig
+    ? { ...editingChannel.value.featuresConfig }
     : {}
 
   for (const section of form.platforms) {
     if (!section.enabled) continue
-    group_ids.push(...section.group_ids)
+    groupIds.push(...section.group_ids)
 
     // Model mapping per platform
     if (Object.keys(section.model_mapping).length > 0) {
-      model_mapping[section.platform] = { ...section.model_mapping }
+      modelMapping[section.platform] = { ...section.model_mapping }
     }
 
-    // Model pricing with platform tag
+    // Model pricing with platform tag (snake_case for Request)
     for (const entry of section.model_pricing) {
       if (entry.models.length === 0) continue
-      model_pricing.push({
+      modelPricing.push({
         platform: section.platform,
         models: entry.models,
         billing_mode: entry.billing_mode,
@@ -1113,11 +1136,22 @@ function formToAPI(): { group_ids: number[], model_pricing: ChannelModelPricing[
         image_input_price: mTokToPerToken(entry.image_input_price),
         image_output_price: mTokToPerToken(entry.image_output_price),
         per_request_price: entry.per_request_price != null && entry.per_request_price !== '' ? Number(entry.per_request_price) : null,
-        intervals: formIntervalsToAPI(entry.intervals || [])
+        intervals: formIntervalsToAPI(entry.intervals || []).map(iv => ({
+          id: iv.id,
+          min_tokens: iv.minTokens,
+          max_tokens: iv.maxTokens,
+          tier_label: iv.tierLabel,
+          input_price: iv.inputPrice,
+          output_price: iv.outputPrice,
+          cache_write_price: iv.cacheWritePrice,
+          cache_read_price: iv.cacheReadPrice,
+          per_request_price: iv.perRequestPrice,
+          sort_order: iv.sortOrder,
+        })),
       })
     }
   }
-  const uniqueGroupIds = Array.from(new Set(group_ids))
+  const uniqueGroupIds = Array.from(new Set(groupIds))
 
   // Collect web_search_emulation (only anthropic platform supports it)
   // Always write the key so that disabling in the UI correctly sets platform to false,
@@ -1161,7 +1195,7 @@ function formToAPI(): { group_ids: number[], model_pricing: ChannelModelPricing[
     delete featuresConfig.bedrock_cc_compat
   }
 
-  return { group_ids: uniqueGroupIds, model_pricing, model_mapping, features_config: featuresConfig }
+  return { group_ids: uniqueGroupIds, model_pricing: modelPricing, model_mapping: modelMapping, features_config: featuresConfig }
 }
 
 function apiToForm(channel: Channel): PlatformSection[] {
@@ -1173,7 +1207,7 @@ function apiToForm(channel: Channel): PlatformSection[] {
 
   // Determine which platforms are active (from groups + pricing + mapping)
   const activePlatforms = new Set<GroupPlatform>()
-  for (const gid of channel.group_ids || []) {
+  for (const gid of channel.groupIds || []) {
     const p = groupPlatformMap.get(gid)
     if (p === 'composite') {
       platformOrder.forEach(platform => activePlatforms.add(platform))
@@ -1181,10 +1215,10 @@ function apiToForm(channel: Channel): PlatformSection[] {
       activePlatforms.add(p)
     }
   }
-  for (const p of channel.model_pricing || []) {
+  for (const p of channel.modelPricing || []) {
     if (p.platform) activePlatforms.add(p.platform as GroupPlatform)
   }
-  for (const p of Object.keys(channel.model_mapping || {})) {
+  for (const p of Object.keys(channel.modelMapping || {})) {
     if (platformOrder.includes(p as GroupPlatform)) activePlatforms.add(p as GroupPlatform)
   }
 
@@ -1193,28 +1227,28 @@ function apiToForm(channel: Channel): PlatformSection[] {
   for (const platform of platformOrder) {
     if (!activePlatforms.has(platform)) continue
 
-    const groupIds = (channel.group_ids || []).filter(gid => {
+    const groupIds = (channel.groupIds || []).filter(gid => {
       const groupPlatform = groupPlatformMap.get(gid)
       return groupPlatform === platform || groupPlatform === 'composite'
     })
-    const mapping = (channel.model_mapping || {})[platform] || {}
-    const pricing = (channel.model_pricing || [])
+    const mapping = (channel.modelMapping || {})[platform] || {}
+    const pricing = (channel.modelPricing || [])
       .filter(p => (p.platform || 'anthropic') === platform)
       .map(p => ({
         models: p.models || [],
-        billing_mode: p.billing_mode,
-        input_price: perTokenToMTok(p.input_price),
-        output_price: perTokenToMTok(p.output_price),
-        cache_write_price: perTokenToMTok(p.cache_write_price),
-        cache_read_price: perTokenToMTok(p.cache_read_price),
-        image_input_price: perTokenToMTok(p.image_input_price),
-        image_output_price: perTokenToMTok(p.image_output_price),
-        per_request_price: p.per_request_price,
+        billing_mode: p.billingMode,
+        input_price: perTokenToMTok(p.inputPrice),
+        output_price: perTokenToMTok(p.outputPrice),
+        cache_write_price: perTokenToMTok(p.cacheWritePrice),
+        cache_read_price: perTokenToMTok(p.cacheReadPrice),
+        image_input_price: perTokenToMTok(p.imageInputPrice),
+        image_output_price: perTokenToMTok(p.imageOutputPrice),
+        per_request_price: p.perRequestPrice,
         intervals: apiIntervalsToForm(p.intervals || [])
       } as PricingFormEntry))
 
     // Read web_search_emulation from features_config
-    const fc = channel.features_config
+    const fc = channel.featuresConfig
     const wsEmulation = fc?.web_search_emulation as Record<string, boolean> | undefined
     const webSearchEnabled = wsEmulation?.[platform] === true
     const codexImageGenerationBridge = fc?.codex_image_generation_bridge as Record<string, boolean> | undefined
@@ -1246,7 +1280,7 @@ async function loadChannels() {
   loading.value = true
 
   try {
-    const response = await adminAPI.channels.list(pagination.page, pagination.page_size, {
+    const response = await $channels.list(pagination.page, pagination.page_size, {
       status: filters.status || undefined,
       search: searchQuery.value || undefined,
       sort_by: sortState.sort_by,
@@ -1271,7 +1305,7 @@ async function loadChannels() {
 async function loadGroups() {
   groupsLoading.value = true
   try {
-    allGroups.value = await adminAPI.groups.getAll()
+    allGroups.value = await $groups.getAll()
   } catch (error) {
     console.error('Error loading groups:', error)
   } finally {
@@ -1281,10 +1315,9 @@ async function loadGroups() {
 
 async function loadAllChannelsForConflict() {
   try {
-    const response = await adminAPI.channels.list(1, 1000)
+    const response = await $channels.list(1, 1000)
     allChannelsForConflict.value = response.items || []
-  } catch (error) {
-    // Fallback to current page data
+  } catch {
     allChannelsForConflict.value = channels.value
   }
 }
@@ -1343,15 +1376,15 @@ async function openEditDialog(channel: Channel) {
   form.name = channel.name
   form.description = channel.description || ''
   form.status = channel.status
-  form.restrict_models = channel.restrict_models || false
-  form.billing_model_source = channel.billing_model_source || 'channel_mapped'
-  form.apply_pricing_to_account_stats = channel.apply_pricing_to_account_stats || false
+  form.restrict_models = channel.restrictModels || false
+  form.billing_model_source = channel.billingModelSource || 'channel_mapped'
+  form.apply_pricing_to_account_stats = channel.applyPricingToAccountStats || false
   // Must load groups first so apiToForm can map groupID → platform
   await Promise.all([loadGroups(), loadAllChannelsForConflict()])
   form.platforms = apiToForm(channel)
 
   // Distribute channel-level rules into per-platform sections
-  distributeRulesToPlatforms(channel.account_stats_pricing_rules || [])
+  distributeRulesToPlatforms(channel.accountStatsPricingRules || [])
 
   // Populate ruleAccountNameCache for existing rule accounts
   await populateRuleAccountNameCache()
@@ -1368,9 +1401,9 @@ function distributeRulesToPlatforms(apiRules: AccountStatsPricingRule[]) {
   }
 
   for (const apiRule of apiRules) {
-    // Infer platform from group_ids
+    // Infer platform from groupIds
     const platforms = new Set<GroupPlatform>()
-    for (const gid of apiRule.group_ids || []) {
+    for (const gid of apiRule.groupIds || []) {
       const p = groupPlatformMap.get(gid)
       if (p && p !== 'composite') platforms.add(p)
     }
@@ -1387,18 +1420,18 @@ function distributeRulesToPlatforms(apiRules: AccountStatsPricingRule[]) {
 
     const formRule: FormPricingRule = {
       name: apiRule.name || '',
-      group_ids: [...(apiRule.group_ids || [])],
-      account_ids: [...(apiRule.account_ids || [])],
+      group_ids: [...(apiRule.groupIds || [])],
+      account_ids: [...(apiRule.accountIds || [])],
       pricing: (apiRule.pricing || []).map(p => ({
         models: [...(p.models || [])],
-        billing_mode: p.billing_mode,
-        input_price: perTokenToMTok(p.input_price),
-        output_price: perTokenToMTok(p.output_price),
-        cache_write_price: perTokenToMTok(p.cache_write_price),
-        cache_read_price: perTokenToMTok(p.cache_read_price),
-        image_input_price: perTokenToMTok(p.image_input_price),
-        image_output_price: perTokenToMTok(p.image_output_price),
-        per_request_price: p.per_request_price,
+        billing_mode: p.billingMode,
+        input_price: perTokenToMTok(p.inputPrice),
+        output_price: perTokenToMTok(p.outputPrice),
+        cache_write_price: perTokenToMTok(p.cacheWritePrice),
+        cache_read_price: perTokenToMTok(p.cacheReadPrice),
+        image_input_price: perTokenToMTok(p.imageInputPrice),
+        image_output_price: perTokenToMTok(p.imageOutputPrice),
+        per_request_price: p.perRequestPrice,
         intervals: apiIntervalsToForm(p.intervals || [])
       } as PricingFormEntry))
     }
@@ -1419,7 +1452,7 @@ async function populateRuleAccountNameCache() {
   if (allAccountIds.size === 0) return
 
   const ids = [...allAccountIds]
-  const accounts = await adminAPI.accounts.getBatchSummaries(ids)
+  const accounts = await $accounts.getBatchSummaries(ids)
   for (const account of accounts) {
     ruleAccountNameCache.value[account.id] = account.name
   }
@@ -1533,7 +1566,7 @@ async function handleSubmit() {
         apply_pricing_to_account_stats: form.apply_pricing_to_account_stats,
         account_stats_pricing_rules: accountStatsRulesToAPI()
       }
-      await adminAPI.channels.update(editingChannel.value.id, req)
+      await $channels.update(editingChannel.value.id, req)
       appStore.showSuccess(t('admin.channels.updateSuccess', 'Channel updated'))
     } else {
       const req: CreateChannelRequest = {
@@ -1548,7 +1581,7 @@ async function handleSubmit() {
         apply_pricing_to_account_stats: form.apply_pricing_to_account_stats,
         account_stats_pricing_rules: accountStatsRulesToAPI()
       }
-      await adminAPI.channels.create(req)
+      await $channels.create(req)
       appStore.showSuccess(t('admin.channels.createSuccess', 'Channel created'))
     }
     closeDialog()
@@ -1566,7 +1599,7 @@ async function handleSubmit() {
 async function toggleChannelStatus(channel: Channel) {
   const newStatus = channel.status === 'active' ? 'disabled' : 'active'
   try {
-    await adminAPI.channels.update(channel.id, { status: newStatus })
+    await $channels.update(channel.id, { status: newStatus } satisfies UpdateChannelRequest)
     if (filters.status && filters.status !== newStatus) {
       // Item no longer matches the active filter — reload list
       await loadChannels()
@@ -1589,7 +1622,7 @@ async function confirmDelete() {
   if (!deletingChannel.value) return
 
   try {
-    await adminAPI.channels.remove(deletingChannel.value.id)
+    await $channels.remove(deletingChannel.value.id)
     appStore.showSuccess(t('admin.channels.deleteSuccess', 'Channel deleted'))
     showDeleteDialog.value = false
     deletingChannel.value = null

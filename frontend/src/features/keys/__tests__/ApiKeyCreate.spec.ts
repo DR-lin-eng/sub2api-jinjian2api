@@ -9,13 +9,8 @@ import { defineComponent, ref, reactive } from 'vue'
 
 // Mock keysAPI
 const mockCreate = vi.fn()
-const mockList = vi.fn()
 
 vi.mock('@/api', () => ({
-  keysAPI: {
-    create: (...args: any[]) => mockCreate(...args),
-    list: (...args: any[]) => mockList(...args),
-  },
   authAPI: {
     getCurrentUser: vi.fn().mockResolvedValue({ data: {} }),
     logout: vi.fn(),

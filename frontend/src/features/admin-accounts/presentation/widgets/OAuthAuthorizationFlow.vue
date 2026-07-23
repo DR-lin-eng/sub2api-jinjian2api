@@ -816,7 +816,6 @@ import { useClipboard } from '@/common/composables/useClipboard'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import type { AddMethod, AuthInputMethod } from '@/features/admin-accounts/presentation/composables/useAccountOAuth'
 import type { AccountPlatform } from '@/types'
-
 interface Props {
   addMethod: AddMethod
   authUrl?: string

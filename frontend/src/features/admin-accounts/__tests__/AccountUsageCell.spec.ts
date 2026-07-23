@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import AccountUsageCell from '@/features/admin-accounts/presentation/widgets/AccountUsageCell.vue'
-import type { Account } from '@/types'
+import { Account } from '@/types'
 
 const { getUsage } = vi.hoisted(() => ({
   getUsage: vi.fn()
@@ -26,32 +26,32 @@ vi.mock('vue-i18n', async () => {
 })
 
 function makeAccount(overrides: Partial<Account>): Account {
-  return {
+  return Object.assign(new Account(), {
     id: 1,
     name: 'account',
     platform: 'antigravity',
     type: 'oauth',
-    proxy_id: null,
+    proxyId: 0,
     concurrency: 1,
     priority: 1,
     status: 'active',
-    error_message: null,
-    last_used_at: null,
-    expires_at: null,
-    auto_pause_on_expired: true,
-    created_at: '2026-03-15T00:00:00Z',
-    updated_at: '2026-03-15T00:00:00Z',
+    errorMessage: '',
+    lastUsedAt: '',
+    expiresAt: '',
+    autoPauseOnExpired: true,
+    createdAt: '2026-03-15T00:00:00Z',
+    updatedAt: '2026-03-15T00:00:00Z',
     schedulable: true,
-    rate_limited_at: null,
-    rate_limit_reset_at: null,
-    overload_until: null,
-    temp_unschedulable_until: null,
-    temp_unschedulable_reason: null,
-    session_window_start: null,
-    session_window_end: null,
-    session_window_status: null,
+    rateLimitedAt: '',
+    rateLimitResetAt: '',
+    overloadUntil: '',
+    tempUnschedulableUntil: '',
+    tempUnschedulableReason: '',
+    sessionWindowStart: '',
+    sessionWindowEnd: '',
+    sessionWindowStatus: '',
     ...overrides,
-  }
+  })
 }
 
 describe('AccountUsageCell', () => {
@@ -314,7 +314,7 @@ describe('AccountUsageCell', () => {
             codex_7d_used_percent: 34,
             codex_7d_reset_at: '2099-03-13T12:00:00Z'
           },
-          rate_limit_reset_at: null
+          rateLimitResetAt: ''
         }),
         manualRefreshToken: 0
       },
@@ -437,7 +437,7 @@ describe('AccountUsageCell', () => {
 		      id: 2003,
 		      platform: 'openai',
 		      type: 'oauth',
-		      updated_at: '2026-03-07T10:00:00Z',
+		      updatedAt: '2026-03-07T10:00:00Z',
 		      extra: {}
 		    })
 		  },
@@ -461,7 +461,7 @@ describe('AccountUsageCell', () => {
 	    id: 2003,
 	    platform: 'openai',
 	    type: 'oauth',
-	    updated_at: '2026-03-07T10:01:00Z',
+	    updatedAt: '2026-03-07T10:01:00Z',
 	    extra: {}
 	  }
 	})
@@ -505,7 +505,7 @@ describe('AccountUsageCell', () => {
 		      id: 2004,
 		      platform: 'openai',
 		      type: 'oauth',
-		      rate_limit_reset_at: '2099-03-07T12:00:00Z',
+		      rateLimitResetAt: '2099-03-07T12:00:00Z',
 		      extra: {
 		        codex_5h_used_percent: 0,
 		        codex_7d_used_percent: 0

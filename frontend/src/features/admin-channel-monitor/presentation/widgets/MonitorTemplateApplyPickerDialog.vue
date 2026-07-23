@@ -56,7 +56,7 @@
           />
           <span class="font-medium text-gray-900 dark:text-white">{{ m.name }}</span>
           <span class="text-xs text-gray-400">{{ m.provider }}</span>
-          <span v-if="m.provider === 'openai'" class="text-xs text-gray-400">{{ m.api_mode }}</span>
+          <span v-if="m.provider === 'openai'" class="text-xs text-gray-400">{{ m.apiMode }}</span>
           <span
             v-if="!m.enabled"
             class="ml-auto rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-500 dark:bg-dark-700 dark:text-gray-400"
@@ -91,8 +91,8 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
-import { adminAPI } from '@/api/admin'
-import type { AssociatedMonitorBrief } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorTemplateDatasource'
+import { useAdminChannelMonitor } from '@/features/admin-channel-monitor/presentation/composables/useAdminChannelMonitor'
+import type { AssociatedMonitorBrief } from '@/features/admin-channel-monitor/domain/models/associatedMonitorBrief'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 
 const props = defineProps<{
@@ -108,6 +108,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const channelMonitor = useAdminChannelMonitor()
 
 const loading = ref(false)
 const submitting = ref(false)
@@ -130,7 +131,7 @@ async function fetchMonitors(id: number) {
   monitors.value = []
   selectedIds.value = []
   try {
-    const { items } = await adminAPI.channelMonitorTemplate.listAssociatedMonitors(id)
+    const { items } = await channelMonitor.listAssociatedMonitors(id)
     monitors.value = items
     // 默认全选
     selectedIds.value = items.map((m: any) => m.id)
@@ -159,7 +160,7 @@ async function handleApply() {
   if (props.templateId == null || selectedIds.value.length === 0 || submitting.value) return
   submitting.value = true
   try {
-    const { affected } = await adminAPI.channelMonitorTemplate.apply(
+    const { affected } = await channelMonitor.applyTemplate(
       props.templateId,
       [...selectedIds.value],
     )

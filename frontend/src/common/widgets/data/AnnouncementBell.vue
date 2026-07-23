@@ -85,14 +85,14 @@
                   v-for="item in announcements"
                   :key="item.id"
                   class="group relative flex items-center gap-4 border-b border-gray-100 px-6 py-4 transition-all hover:bg-gray-50 dark:border-dark-700 dark:hover:bg-dark-700/30"
-                  :class="{ 'bg-blue-50/30 dark:bg-blue-900/5': !item.read_at }"
+                  :class="{ 'bg-blue-50/30 dark:bg-blue-900/5': !item.readAt }"
                   style="min-height: 72px"
                   @click="openDetail(item)"
                 >
                   <!-- Status Indicator -->
                   <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center">
                     <div
-                      v-if="!item.read_at"
+                      v-if="!item.readAt"
                       class="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
                     >
                       <!-- Pulse ring -->
@@ -120,10 +120,10 @@
                       </h3>
                       <div class="mt-1 flex items-center gap-2">
                         <time class="text-xs text-gray-500 dark:text-gray-400">
-                          {{ formatRelativeTime(item.created_at) }}
+                          {{ formatRelativeTime(item.createdAt) }}
                         </time>
                         <span
-                          v-if="!item.read_at"
+                          v-if="!item.readAt"
                           class="inline-flex items-center gap-1 rounded-md bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
                         >
                           <span class="relative flex h-1.5 w-1.5">
@@ -151,7 +151,7 @@
 
                   <!-- Unread indicator bar -->
                   <div
-                    v-if="!item.read_at"
+                    v-if="!item.readAt"
                     class="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-blue-500 to-indigo-600"
                   ></div>
                 </div>
@@ -211,7 +211,7 @@
                         {{ t('announcements.title') }}
                       </span>
                       <span
-                        v-if="!selectedAnnouncement.read_at"
+                        v-if="!selectedAnnouncement.readAt"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-indigo-600 px-2.5 py-1 text-xs font-medium text-white shadow-lg shadow-blue-500/30"
                       >
                         <span class="relative flex h-2 w-2">
@@ -234,14 +234,14 @@
                       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <time>{{ formatRelativeWithDateTime(selectedAnnouncement.created_at) }}</time>
+                      <time>{{ formatRelativeWithDateTime(selectedAnnouncement.createdAt) }}</time>
                     </div>
                     <div class="flex items-center gap-1.5">
                       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
-                      <span>{{ selectedAnnouncement.read_at ? t('announcements.read') : t('announcements.unread') }}</span>
+                      <span>{{ selectedAnnouncement.readAt ? t('announcements.read') : t('announcements.unread') }}</span>
                     </div>
                   </div>
                 </div>
@@ -280,7 +280,7 @@
                   <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>{{ selectedAnnouncement.read_at ? t('announcements.readStatus') : t('announcements.markReadHint') }}</span>
+                  <span>{{ selectedAnnouncement.readAt ? t('announcements.readStatus') : t('announcements.markReadHint') }}</span>
                 </div>
                 <div class="flex items-center gap-3">
                   <button
@@ -290,7 +290,7 @@
                     {{ t('common.close') }}
                   </button>
                   <button
-                    v-if="!selectedAnnouncement.read_at"
+                    v-if="!selectedAnnouncement.readAt"
                     @click="markAsReadAndClose(selectedAnnouncement.id)"
                     class="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:shadow-xl hover:scale-105"
                   >
@@ -320,8 +320,8 @@ import DOMPurify from 'dompurify'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAnnouncementStore } from '@/core/stores/announcementsStore'
 import { formatRelativeTime, formatRelativeWithDateTime } from '@/core/utils/format'
-import type { UserAnnouncement } from '@/types'
 import Icon from '@/common/widgets/icons/Icon.vue'
+import type { UserAnnouncement } from '@/features/announcements/domain/models/announcement'
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -360,7 +360,7 @@ function closeModal() {
 function openDetail(announcement: UserAnnouncement) {
   selectedAnnouncement.value = announcement
   detailModalOpen.value = true
-  if (!announcement.read_at) {
+  if (!announcement.readAt) {
     markAsRead(announcement.id)
   }
 }

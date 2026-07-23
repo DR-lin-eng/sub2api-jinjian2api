@@ -11,7 +11,7 @@
         <span class="font-medium text-gray-900 dark:text-white">{{ group.name }}</span>
         <span class="text-gray-400">|</span>
         <span class="text-gray-600 dark:text-gray-400">
-          {{ t('admin.groups.groupRpmDefault') }}: {{ group.rpm_limit || 0 }}
+          {{ t('admin.groups.groupRpmDefault') }}: {{ group.rpmLimit || 0 }}
         </span>
       </div>
 
@@ -211,11 +211,12 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { adminAPI } from '@/api/admin'
 import type { GroupRPMOverrideEntry } from '@/features/admin-groups/data/datasources/adminGroupsDatasource'
-import type { AdminGroup, AdminUser } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
 
 interface LocalEntry extends GroupRPMOverrideEntry {}
 

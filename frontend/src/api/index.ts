@@ -44,7 +44,6 @@ export {
 export { getSetupStatus } from '@/features/setup/data/datasources/setupDatasource'
 
 // User APIs
-export { keysAPI } from '@/features/keys/data/datasources/keysDatasource'
 export { usageAPI } from '@/features/usage/data/datasources/usageDatasource'
 export { userAPI } from '@/features/profile/data/datasources/profileDatasource'
 export { redeemAPI, type RedeemHistoryItem } from '@/features/billing/data/datasources/redeemDatasource'

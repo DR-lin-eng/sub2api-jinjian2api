@@ -241,12 +241,12 @@ import { ref, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { adminAPI } from '@/api/admin'
-import type { UserAttributeDefinition, UserAttributeType, UserAttributeOption } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import { createStableObjectKeyResolver } from '@/core/utils/stableObjectKey'
+import type { UserAttributeDefinition, UserAttributeType, UserAttributeOption } from '@/features/admin-users/domain/models/userAttributes'
 
 const { t } = useI18n()
 const appStore = useAppStore()

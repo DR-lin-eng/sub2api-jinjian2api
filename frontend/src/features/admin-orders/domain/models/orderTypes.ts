@@ -1,0 +1,25 @@
+export type OrderStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'RECHARGING'
+  | 'COMPLETED'
+  | 'EXPIRED'
+  | 'CANCELLED'
+  | 'FAILED'
+  | 'REFUND_REQUESTED'
+  | 'REFUNDING'
+  | 'REFUND_PENDING'
+  | 'PARTIALLY_REFUNDED'
+  | 'REFUNDED'
+  | 'REFUND_FAILED'
+
+export type PaymentType =
+  | 'alipay'
+  | 'wxpay'
+  | 'alipay_direct'
+  | 'wxpay_direct'
+  | 'stripe'
+  | 'easypay'
+  | 'airwallex'
+
+export type OrderType = 'balance' | 'subscription'

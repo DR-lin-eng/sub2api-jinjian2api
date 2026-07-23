@@ -186,7 +186,7 @@ async function hydrateSelectedUsers(userIds: number[]): Promise<void> {
         return {
           id: user.id,
           email: user.email,
-          deleted: Boolean(user.deleted_at),
+          deleted: Boolean(user.deletedAt),
         } satisfies SimpleUser;
       } catch {
         return null;

@@ -171,8 +171,8 @@ import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { totpAPI } from '@/api'
-import type { TotpSetupResponse } from '@/types'
 import QRCode from 'qrcode'
+import type { TotpSetupResponse } from '@/features/auth/domain/models/totp'
 
 const emit = defineEmits<{
   close: []
@@ -222,7 +222,7 @@ const canProceedFromVerify = computed(() => {
 
 // Generate QR code as base64 when setupData changes
 watch(
-  () => setupData.value?.qr_code_url,
+  () => setupData.value?.qrCodeUrl,
   async (url) => {
     if (url) {
       try {
@@ -374,8 +374,8 @@ const handleVerify = async () => {
 
   try {
     await totpAPI.enable({
-      totp_code: totpCode,
-      setup_token: setupData.value.setup_token
+      totpCode: totpCode,
+      setupToken: setupData.value.setupToken
     })
     appStore.showSuccess(t('profile.totp.enableSuccess'))
     emit('success')

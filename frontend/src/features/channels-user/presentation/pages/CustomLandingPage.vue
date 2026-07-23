@@ -154,7 +154,7 @@ const menuItemId = computed(() => route.params.id as string)
 
 const menuItem = computed(() => {
   const id = menuItemId.value
-  const publicItems = appStore.cachedPublicSettings?.custom_menu_items ?? []
+  const publicItems = appStore.cachedPublicSettings?.customMenuItems ?? []
   const found = publicItems.find((item: any) => item.id === id) ?? null
   if (found) return found
   if (authStore.isAdmin) {
@@ -166,7 +166,7 @@ const menuItem = computed(() => {
 const markdownSlug = computed(() => {
   const item = menuItem.value
   if (!item) return ''
-  if (item.page_slug) return item.page_slug
+  if (item.pageSlug) return item.pageSlug
   if (item.url?.startsWith('md:')) return item.url.slice(3)
   return ''
 })

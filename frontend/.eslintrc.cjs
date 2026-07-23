@@ -97,9 +97,23 @@ module.exports = {
       },
     },
 
+    // core/routes 只能 import feature barrel（spec §10.2），禁止内部路径
+    {
+      files: ["src/core/routes/**/*.{ts,vue}"],
+      rules: {
+        "no-restricted-imports": ["error", {
+          patterns: [
+            { group: ["@/common/**"], message: "core/** MUST NOT import common/**（spec §3 R2）" },
+            { group: ["@/features/*/**"], message: "core/routes MUST 只 import feature barrel（@/features/<name>），禁止 feature 内部路径（spec §10.2）" },
+          ],
+        }],
+      },
+    },
+
     // 兜底：所有 core/** 都禁止引用 common/ 与 features/
     {
       files: ["src/core/**/*.{ts,vue}"],
+      excludedFiles: ["src/core/routes/**/*.{ts,vue}"],
       rules: {
         "no-restricted-imports": ["error", {
           patterns: [
@@ -238,5 +252,21 @@ module.exports = {
 
     // 跨 feature 引用禁止：features/A/** MUST NOT import features/B/**
     // (无法在单个 override 里表达"排除自身"，交给 CI grep 兜底或 codemod 时排查)
+
+    // --- SPEC EXCEPTION (temporary): useBatchImageAccess ---
+    // 逻辑跨 keys + batch-image 两个 feature，spec 无合法归属地。
+    // 计划：待后端在 /auth/me 或 /settings 返回 canUseBatchImage 字段后消除此文件与所有豁免。
+    {
+      files: ["src/core/services/useBatchImageAccess.ts"],
+      rules: { "no-restricted-imports": "off" },
+    },
+    {
+      files: [
+        "src/common/widgets/layout/AppSidebar.vue",
+        "src/features/dashboard-user/presentation/widgets/UserDashboardQuickActions.vue",
+        "src/features/admin-dashboard/presentation/pages/DashboardPage.vue",
+      ],
+      rules: { "no-restricted-imports": "off" },
+    },
   ],
 };

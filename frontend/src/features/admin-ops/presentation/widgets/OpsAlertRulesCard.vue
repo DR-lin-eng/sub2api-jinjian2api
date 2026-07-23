@@ -88,20 +88,20 @@ const isGroupMetricSelected = computed(() => {
 
 const draftGroupId = computed<number | null>({
   get() {
-    return parsePositiveInt(draft.value?.filters?.group_id)
+    return parsePositiveInt(draft.value?.filters?.groupId)
   },
   set(value) {
     if (!draft.value) return
     if (value == null) {
       if (!draft.value.filters) return
-      delete draft.value.filters.group_id
+      delete draft.value.filters.groupId
       if (Object.keys(draft.value.filters).length === 0) {
         delete draft.value.filters
       }
       return
     }
     if (!draft.value.filters) draft.value.filters = {}
-    draft.value.filters.group_id = value
+    draft.value.filters.groupId = value
   }
 })
 
@@ -314,7 +314,7 @@ const editorValidation = computed(() => {
   if (!r) return { valid: true, errors }
   if (!r.name || !r.name.trim()) errors.push(t('admin.ops.alertRules.validation.nameRequired'))
   if (!r.metric_type) errors.push(t('admin.ops.alertRules.validation.metricRequired'))
-  if (groupMetricTypes.has(r.metric_type) && !parsePositiveInt(r.filters?.group_id)) {
+  if (groupMetricTypes.has(r.metric_type) && !parsePositiveInt(r.filters?.groupId)) {
     errors.push(t('admin.ops.alertRules.validation.groupIdRequired'))
   }
   if (!r.operator) errors.push(t('admin.ops.alertRules.validation.operatorRequired'))

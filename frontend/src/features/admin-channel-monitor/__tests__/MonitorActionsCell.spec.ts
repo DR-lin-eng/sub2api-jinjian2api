@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 
-import type { ChannelMonitor } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
+import type { ChannelMonitor } from '@/features/admin-channel-monitor/domain/models/channelMonitor'
 import MonitorActionsCell from '@/features/admin-channel-monitor/presentation/widgets/MonitorActionsCell.vue'
 
 vi.mock('vue-i18n', () => ({
@@ -13,27 +13,31 @@ function makeMonitor(overrides: Partial<ChannelMonitor> = {}): ChannelMonitor {
     id: 42,
     name: 'primary',
     provider: 'openai',
-    api_mode: 'chat_completions',
+    monitorMode: 'active',
+    channelId: null,
+    groupId: null,
+    apiMode: 'chat_completions',
     endpoint: 'https://api.example.com',
-    api_key_masked: 'sk-t***',
-    primary_model: 'gpt-4o-mini',
-    extra_models: [],
-    group_name: '',
+    apiKeyMasked: 'sk-t***',
+    apiKeyDecryptFailed: false,
+    primaryModel: 'gpt-4o-mini',
+    extraModels: [],
+    groupName: '',
     enabled: true,
-    interval_seconds: 60,
-    jitter_seconds: 0,
-    last_checked_at: null,
-    created_by: 1,
-    created_at: '2026-07-16T00:00:00Z',
-    updated_at: '2026-07-16T00:00:00Z',
-    primary_status: '',
-    primary_latency_ms: null,
-    availability_7d: 0,
-    extra_models_status: [],
-    template_id: null,
-    extra_headers: {},
-    body_override_mode: 'off',
-    body_override: null,
+    intervalSeconds: 60,
+    jitterSeconds: 0,
+    lastCheckedAt: null,
+    createdBy: 1,
+    createdAt: '2026-07-16T00:00:00Z',
+    updatedAt: '2026-07-16T00:00:00Z',
+    primaryStatus: '',
+    primaryLatencyMs: null,
+    availability7d: 0,
+    extraModelsStatus: [],
+    templateId: null,
+    extraHeaders: {},
+    bodyOverrideMode: 'off',
+    bodyOverride: null,
     ...overrides,
   }
 }
@@ -64,7 +68,7 @@ describe('MonitorActionsCell duplicate action', () => {
   it('disables the action when the stored API key cannot be decrypted', () => {
     const wrapper = mount(MonitorActionsCell, {
       props: {
-        row: makeMonitor({ api_key_decrypt_failed: true }),
+        row: makeMonitor({ apiKeyDecryptFailed: true }),
         running: false,
         duplicating: false,
       },

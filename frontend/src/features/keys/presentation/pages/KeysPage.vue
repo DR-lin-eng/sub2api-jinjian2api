@@ -24,9 +24,9 @@
             />
           </div>
           <EndpointPopover
-            v-if="publicSettings?.api_base_url || (publicSettings?.custom_endpoints?.length ?? 0) > 0"
-            :api-base-url="publicSettings?.api_base_url || ''"
-            :custom-endpoints="publicSettings?.custom_endpoints || []"
+            v-if="publicSettings?.apiBaseUrl || (publicSettings?.customEndpoints?.length ?? 0) > 0"
+            :api-base-url="publicSettings?.apiBaseUrl || ''"
+            :custom-endpoints="publicSettings?.customEndpoints || []"
           />
         </div>
       </template>
@@ -124,7 +124,7 @@
             <div class="flex items-center gap-1.5">
               <span class="font-medium text-gray-900 dark:text-white">{{ value }}</span>
               <Icon
-                v-if="row.ip_whitelist?.length > 0 || row.ip_blacklist?.length > 0"
+                v-if="row.ipWhitelist?.length > 0 || row.ipBlacklist?.length > 0"
                 name="shield"
                 size="sm"
                 class="text-blue-500"
@@ -145,13 +145,13 @@
                   v-if="row.group"
                   :name="row.group.name"
                   :platform="row.group.platform"
-                  :subscription-type="row.group.subscription_type"
-                  :rate-multiplier="row.group.rate_multiplier"
+                  :subscription-type="row.group.subscriptionType"
+                  :rate-multiplier="row.group.rateMultiplier"
                   :user-rate-multiplier="userGroupRates[row.group.id]"
-                  :peak-rate-enabled="row.group.peak_rate_enabled"
-                  :peak-start="row.group.peak_start"
-                  :peak-end="row.group.peak_end"
-                  :peak-rate-multiplier="row.group.peak_rate_multiplier"
+                  :peak-rate-enabled="row.group.peakRateEnabled"
+                  :peak-start="row.group.peakStart"
+                  :peak-end="row.group.peakEnd"
+                  :peak-rate-multiplier="row.group.peakRateMultiplier"
                 />
                 <span v-else class="text-sm text-gray-400 dark:text-dark-500">{{
                   t('keys.noGroup')
@@ -207,22 +207,22 @@
                   <span class="text-gray-500 dark:text-gray-400">{{ t('keys.quota') }}:</span>
                   <span :class="[
                     'font-medium',
-                    row.quota_used >= row.quota ? 'text-red-500' :
-                    row.quota_used >= row.quota * 0.8 ? 'text-yellow-500' :
+                    row.quotaUsed >= row.quota ? 'text-red-500' :
+                    row.quotaUsed >= row.quota * 0.8 ? 'text-yellow-500' :
                     'text-gray-900 dark:text-white'
                   ]">
-                    ${{ row.quota_used?.toFixed(2) || '0.00' }} / ${{ row.quota?.toFixed(2) }}
+                    ${{ row.quotaUsed?.toFixed(2) || '0.00' }} / ${{ row.quota?.toFixed(2) }}
                   </span>
                 </div>
                 <div class="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-dark-600">
                   <div
                     :class="[
                       'h-full rounded-full transition-all',
-                      row.quota_used >= row.quota ? 'bg-red-500' :
-                      row.quota_used >= row.quota * 0.8 ? 'bg-yellow-500' :
+                      row.quotaUsed >= row.quota ? 'bg-red-500' :
+                      row.quotaUsed >= row.quota * 0.8 ? 'bg-yellow-500' :
                       'bg-primary-500'
                     ]"
-                    :style="{ width: Math.min((row.quota_used / row.quota) * 100, 100) + '%' }"
+                    :style="{ width: Math.min((row.quotaUsed / row.quota) * 100, 100) + '%' }"
                   />
                 </div>
               </div>
@@ -230,94 +230,94 @@
           </template>
 
           <template #cell-rate_limit="{ row }">
-            <div v-if="row.rate_limit_5h > 0 || row.rate_limit_1d > 0 || row.rate_limit_7d > 0" class="space-y-1.5 min-w-[140px]">
+            <div v-if="row.rateLimit5h > 0 || row.rateLimit1d > 0 || row.rateLimit7d > 0" class="space-y-1.5 min-w-[140px]">
               <!-- 5h window -->
-              <div v-if="row.rate_limit_5h > 0">
+              <div v-if="row.rateLimit5h > 0">
                 <div class="flex items-center justify-between text-xs">
                   <span class="text-gray-500 dark:text-gray-400">5h</span>
                   <span :class="[
                     'font-medium tabular-nums',
-                    row.usage_5h >= row.rate_limit_5h ? 'text-red-500' :
-                    row.usage_5h >= row.rate_limit_5h * 0.8 ? 'text-yellow-500' :
+                    row.usage5h >= row.rateLimit5h ? 'text-red-500' :
+                    row.usage5h >= row.rateLimit5h * 0.8 ? 'text-yellow-500' :
                     'text-gray-700 dark:text-gray-300'
                   ]">
-                    ${{ row.usage_5h?.toFixed(2) || '0.00' }}/${{ row.rate_limit_5h?.toFixed(2) }}
+                    ${{ row.usage5h?.toFixed(2) || '0.00' }}/${{ row.rateLimit5h?.toFixed(2) }}
                   </span>
                 </div>
                 <div class="h-1 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-dark-600">
                   <div
                     :class="[
                       'h-full rounded-full transition-all',
-                      row.usage_5h >= row.rate_limit_5h ? 'bg-red-500' :
-                      row.usage_5h >= row.rate_limit_5h * 0.8 ? 'bg-yellow-500' :
+                      row.usage5h >= row.rateLimit5h ? 'bg-red-500' :
+                      row.usage5h >= row.rateLimit5h * 0.8 ? 'bg-yellow-500' :
                       'bg-emerald-500'
                     ]"
-                    :style="{ width: Math.min((row.usage_5h / row.rate_limit_5h) * 100, 100) + '%' }"
+                    :style="{ width: Math.min((row.usage5h / row.rateLimit5h) * 100, 100) + '%' }"
                   />
                 </div>
-                <div v-if="row.reset_5h_at && formatResetTime(row.reset_5h_at)" class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
-                  ⟳ {{ formatResetTime(row.reset_5h_at) }}
+                <div v-if="row.reset5hAt && formatResetTime(row.reset5hAt)" class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
+                  ⟳ {{ formatResetTime(row.reset5hAt) }}
                 </div>
               </div>
               <!-- 1d window -->
-              <div v-if="row.rate_limit_1d > 0">
+              <div v-if="row.rateLimit1d > 0">
                 <div class="flex items-center justify-between text-xs">
                   <span class="text-gray-500 dark:text-gray-400">1d</span>
                   <span :class="[
                     'font-medium tabular-nums',
-                    row.usage_1d >= row.rate_limit_1d ? 'text-red-500' :
-                    row.usage_1d >= row.rate_limit_1d * 0.8 ? 'text-yellow-500' :
+                    row.usage1d >= row.rateLimit1d ? 'text-red-500' :
+                    row.usage1d >= row.rateLimit1d * 0.8 ? 'text-yellow-500' :
                     'text-gray-700 dark:text-gray-300'
                   ]">
-                    ${{ row.usage_1d?.toFixed(2) || '0.00' }}/${{ row.rate_limit_1d?.toFixed(2) }}
+                    ${{ row.usage1d?.toFixed(2) || '0.00' }}/${{ row.rateLimit1d?.toFixed(2) }}
                   </span>
                 </div>
                 <div class="h-1 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-dark-600">
                   <div
                     :class="[
                       'h-full rounded-full transition-all',
-                      row.usage_1d >= row.rate_limit_1d ? 'bg-red-500' :
-                      row.usage_1d >= row.rate_limit_1d * 0.8 ? 'bg-yellow-500' :
+                      row.usage1d >= row.rateLimit1d ? 'bg-red-500' :
+                      row.usage1d >= row.rateLimit1d * 0.8 ? 'bg-yellow-500' :
                       'bg-emerald-500'
                     ]"
-                    :style="{ width: Math.min((row.usage_1d / row.rate_limit_1d) * 100, 100) + '%' }"
+                    :style="{ width: Math.min((row.usage1d / row.rateLimit1d) * 100, 100) + '%' }"
                   />
                 </div>
-                <div v-if="row.reset_1d_at && formatResetTime(row.reset_1d_at)" class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
-                  ⟳ {{ formatResetTime(row.reset_1d_at) }}
+                <div v-if="row.reset1dAt && formatResetTime(row.reset1dAt)" class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
+                  ⟳ {{ formatResetTime(row.reset1dAt) }}
                 </div>
               </div>
               <!-- 7d window -->
-              <div v-if="row.rate_limit_7d > 0">
+              <div v-if="row.rateLimit7d > 0">
                 <div class="flex items-center justify-between text-xs">
                   <span class="text-gray-500 dark:text-gray-400">7d</span>
                   <span :class="[
                     'font-medium tabular-nums',
-                    row.usage_7d >= row.rate_limit_7d ? 'text-red-500' :
-                    row.usage_7d >= row.rate_limit_7d * 0.8 ? 'text-yellow-500' :
+                    row.usage7d >= row.rateLimit7d ? 'text-red-500' :
+                    row.usage7d >= row.rateLimit7d * 0.8 ? 'text-yellow-500' :
                     'text-gray-700 dark:text-gray-300'
                   ]">
-                    ${{ row.usage_7d?.toFixed(2) || '0.00' }}/${{ row.rate_limit_7d?.toFixed(2) }}
+                    ${{ row.usage7d?.toFixed(2) || '0.00' }}/${{ row.rateLimit7d?.toFixed(2) }}
                   </span>
                 </div>
                 <div class="h-1 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-dark-600">
                   <div
                     :class="[
                       'h-full rounded-full transition-all',
-                      row.usage_7d >= row.rate_limit_7d ? 'bg-red-500' :
-                      row.usage_7d >= row.rate_limit_7d * 0.8 ? 'bg-yellow-500' :
+                      row.usage7d >= row.rateLimit7d ? 'bg-red-500' :
+                      row.usage7d >= row.rateLimit7d * 0.8 ? 'bg-yellow-500' :
                       'bg-emerald-500'
                     ]"
-                    :style="{ width: Math.min((row.usage_7d / row.rate_limit_7d) * 100, 100) + '%' }"
+                    :style="{ width: Math.min((row.usage7d / row.rateLimit7d) * 100, 100) + '%' }"
                   />
                 </div>
-                <div v-if="row.reset_7d_at && formatResetTime(row.reset_7d_at)" class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
-                  ⟳ {{ formatResetTime(row.reset_7d_at) }}
+                <div v-if="row.reset7dAt && formatResetTime(row.reset7dAt)" class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
+                  ⟳ {{ formatResetTime(row.reset7dAt) }}
                 </div>
               </div>
               <!-- Reset button -->
               <button
-                v-if="row.usage_5h > 0 || row.usage_1d > 0 || row.usage_7d > 0"
+                v-if="row.usage5h > 0 || row.usage1d > 0 || row.usage7d > 0"
                 @click.stop="confirmResetRateLimitFromTable(row)"
                 class="mt-0.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary-600 dark:hover:bg-dark-700 dark:hover:text-primary-400"
                 :title="t('keys.resetRateLimitUsage')"
@@ -381,7 +381,7 @@
               </button>
               <!-- Import to CC Switch Button -->
               <button
-                v-if="!publicSettings?.hide_ccs_import_button"
+                v-if="!publicSettings?.hideCcsImportButton"
                 @click="importToCcswitch(row)"
                 class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
               >
@@ -655,7 +655,7 @@
               <div class="flex items-center gap-2">
                 <div class="flex-1 rounded-lg bg-gray-100 px-3 py-2 dark:bg-dark-700">
                   <span class="font-medium text-gray-900 dark:text-white">
-                    ${{ selectedKey.quota_used?.toFixed(4) || '0.0000' }}
+                    ${{ selectedKey.quotaUsed?.toFixed(4) || '0.0000' }}
                   </span>
                   <span class="mx-2 text-gray-400">/</span>
                   <span class="text-gray-500 dark:text-gray-400">
@@ -713,20 +713,20 @@
                 />
               </div>
               <!-- Usage info (edit mode only) -->
-              <div v-if="showEditModal && selectedKey && selectedKey.rate_limit_5h > 0" class="mt-2">
+              <div v-if="showEditModal && selectedKey && selectedKey.rateLimit5h > 0" class="mt-2">
                 <div class="flex items-center gap-2">
                   <div class="flex-1 rounded-lg bg-gray-100 px-3 py-2 dark:bg-dark-700 text-sm">
                     <span :class="[
                       'font-medium',
-                      selectedKey.usage_5h >= selectedKey.rate_limit_5h ? 'text-red-500' :
-                      selectedKey.usage_5h >= selectedKey.rate_limit_5h * 0.8 ? 'text-yellow-500' :
+                      selectedKey.usage5h >= selectedKey.rateLimit5h ? 'text-red-500' :
+                      selectedKey.usage5h >= selectedKey.rateLimit5h * 0.8 ? 'text-yellow-500' :
                       'text-gray-900 dark:text-white'
                     ]">
-                      ${{ selectedKey.usage_5h?.toFixed(4) || '0.0000' }}
+                      ${{ selectedKey.usage5h?.toFixed(4) || '0.0000' }}
                     </span>
                     <span class="mx-2 text-gray-400">/</span>
                     <span class="text-gray-500 dark:text-gray-400">
-                      ${{ selectedKey.rate_limit_5h?.toFixed(2) || '0.00' }}
+                      ${{ selectedKey.rateLimit5h?.toFixed(2) || '0.00' }}
                     </span>
                   </div>
                 </div>
@@ -734,11 +734,11 @@
                   <div
                     :class="[
                       'h-full rounded-full transition-all',
-                      selectedKey.usage_5h >= selectedKey.rate_limit_5h ? 'bg-red-500' :
-                      selectedKey.usage_5h >= selectedKey.rate_limit_5h * 0.8 ? 'bg-yellow-500' :
+                      selectedKey.usage5h >= selectedKey.rateLimit5h ? 'bg-red-500' :
+                      selectedKey.usage5h >= selectedKey.rateLimit5h * 0.8 ? 'bg-yellow-500' :
                       'bg-green-500'
                     ]"
-                    :style="{ width: Math.min((selectedKey.usage_5h / selectedKey.rate_limit_5h) * 100, 100) + '%' }"
+                    :style="{ width: Math.min((selectedKey.usage5h / selectedKey.rateLimit5h) * 100, 100) + '%' }"
                   />
                 </div>
               </div>
@@ -759,20 +759,20 @@
                 />
               </div>
               <!-- Usage info (edit mode only) -->
-              <div v-if="showEditModal && selectedKey && selectedKey.rate_limit_1d > 0" class="mt-2">
+              <div v-if="showEditModal && selectedKey && selectedKey.rateLimit1d > 0" class="mt-2">
                 <div class="flex items-center gap-2">
                   <div class="flex-1 rounded-lg bg-gray-100 px-3 py-2 dark:bg-dark-700 text-sm">
                     <span :class="[
                       'font-medium',
-                      selectedKey.usage_1d >= selectedKey.rate_limit_1d ? 'text-red-500' :
-                      selectedKey.usage_1d >= selectedKey.rate_limit_1d * 0.8 ? 'text-yellow-500' :
+                      selectedKey.usage1d >= selectedKey.rateLimit1d ? 'text-red-500' :
+                      selectedKey.usage1d >= selectedKey.rateLimit1d * 0.8 ? 'text-yellow-500' :
                       'text-gray-900 dark:text-white'
                     ]">
-                      ${{ selectedKey.usage_1d?.toFixed(4) || '0.0000' }}
+                      ${{ selectedKey.usage1d?.toFixed(4) || '0.0000' }}
                     </span>
                     <span class="mx-2 text-gray-400">/</span>
                     <span class="text-gray-500 dark:text-gray-400">
-                      ${{ selectedKey.rate_limit_1d?.toFixed(2) || '0.00' }}
+                      ${{ selectedKey.rateLimit1d?.toFixed(2) || '0.00' }}
                     </span>
                   </div>
                 </div>
@@ -780,11 +780,11 @@
                   <div
                     :class="[
                       'h-full rounded-full transition-all',
-                      selectedKey.usage_1d >= selectedKey.rate_limit_1d ? 'bg-red-500' :
-                      selectedKey.usage_1d >= selectedKey.rate_limit_1d * 0.8 ? 'bg-yellow-500' :
+                      selectedKey.usage1d >= selectedKey.rateLimit1d ? 'bg-red-500' :
+                      selectedKey.usage1d >= selectedKey.rateLimit1d * 0.8 ? 'bg-yellow-500' :
                       'bg-green-500'
                     ]"
-                    :style="{ width: Math.min((selectedKey.usage_1d / selectedKey.rate_limit_1d) * 100, 100) + '%' }"
+                    :style="{ width: Math.min((selectedKey.usage1d / selectedKey.rateLimit1d) * 100, 100) + '%' }"
                   />
                 </div>
               </div>
@@ -805,20 +805,20 @@
                 />
               </div>
               <!-- Usage info (edit mode only) -->
-              <div v-if="showEditModal && selectedKey && selectedKey.rate_limit_7d > 0" class="mt-2">
+              <div v-if="showEditModal && selectedKey && selectedKey.rateLimit7d > 0" class="mt-2">
                 <div class="flex items-center gap-2">
                   <div class="flex-1 rounded-lg bg-gray-100 px-3 py-2 dark:bg-dark-700 text-sm">
                     <span :class="[
                       'font-medium',
-                      selectedKey.usage_7d >= selectedKey.rate_limit_7d ? 'text-red-500' :
-                      selectedKey.usage_7d >= selectedKey.rate_limit_7d * 0.8 ? 'text-yellow-500' :
+                      selectedKey.usage7d >= selectedKey.rateLimit7d ? 'text-red-500' :
+                      selectedKey.usage7d >= selectedKey.rateLimit7d * 0.8 ? 'text-yellow-500' :
                       'text-gray-900 dark:text-white'
                     ]">
-                      ${{ selectedKey.usage_7d?.toFixed(4) || '0.0000' }}
+                      ${{ selectedKey.usage7d?.toFixed(4) || '0.0000' }}
                     </span>
                     <span class="mx-2 text-gray-400">/</span>
                     <span class="text-gray-500 dark:text-gray-400">
-                      ${{ selectedKey.rate_limit_7d?.toFixed(2) || '0.00' }}
+                      ${{ selectedKey.rateLimit7d?.toFixed(2) || '0.00' }}
                     </span>
                   </div>
                 </div>
@@ -826,18 +826,18 @@
                   <div
                     :class="[
                       'h-full rounded-full transition-all',
-                      selectedKey.usage_7d >= selectedKey.rate_limit_7d ? 'bg-red-500' :
-                      selectedKey.usage_7d >= selectedKey.rate_limit_7d * 0.8 ? 'bg-yellow-500' :
+                      selectedKey.usage7d >= selectedKey.rateLimit7d ? 'bg-red-500' :
+                      selectedKey.usage7d >= selectedKey.rateLimit7d * 0.8 ? 'bg-yellow-500' :
                       'bg-green-500'
                     ]"
-                    :style="{ width: Math.min((selectedKey.usage_7d / selectedKey.rate_limit_7d) * 100, 100) + '%' }"
+                    :style="{ width: Math.min((selectedKey.usage7d / selectedKey.rateLimit7d) * 100, 100) + '%' }"
                   />
                 </div>
               </div>
             </div>
 
             <!-- Reset Rate Limit button (edit mode only) -->
-            <div v-if="showEditModal && selectedKey && (selectedKey.rate_limit_5h > 0 || selectedKey.rate_limit_1d > 0 || selectedKey.rate_limit_7d > 0)">
+            <div v-if="showEditModal && selectedKey && (selectedKey.rateLimit5h > 0 || selectedKey.rateLimit1d > 0 || selectedKey.rateLimit7d > 0)">
               <button
                 type="button"
                 @click="confirmResetRateLimit"
@@ -913,10 +913,10 @@
             </div>
 
             <!-- Current expiration display (only in edit mode) -->
-            <div v-if="showEditModal && selectedKey?.expires_at" class="text-sm">
+            <div v-if="showEditModal && selectedKey?.expiresAt" class="text-sm">
               <span class="text-gray-500 dark:text-gray-400">{{ t('keys.currentExpiration') }}: </span>
               <span class="font-medium text-gray-900 dark:text-white">
-                {{ formatDateTime(selectedKey.expires_at) }}
+                {{ formatDateTime(selectedKey.expiresAt) }}
               </span>
             </div>
           </div>
@@ -982,7 +982,7 @@
     <ConfirmDialog
       :show="showResetQuotaDialog"
       :title="t('keys.resetQuotaTitle')"
-      :message="t('keys.resetQuotaConfirmMessage', { name: selectedKey?.name, used: selectedKey?.quota_used?.toFixed(4) })"
+      :message="t('keys.resetQuotaConfirmMessage', { name: selectedKey?.name, used: selectedKey?.quotaUsed?.toFixed(4) })"
       :confirm-text="t('keys.reset')"
       :cancel-text="t('common.cancel')"
       :danger="true"
@@ -1006,9 +1006,9 @@
     <UseKeyModal
       :show="showUseKeyModal"
       :api-key="selectedKey?.key || ''"
-      :base-url="publicSettings?.api_base_url || ''"
+      :base-url="publicSettings?.apiBaseUrl || ''"
       :platform="selectedKey?.group?.platform || null"
-      :allow-messages-dispatch="selectedKey?.group?.allow_messages_dispatch || false"
+      :allow-messages-dispatch="selectedKey?.group?.allowMessagesDispatch || false"
       @close="closeUseKeyModal"
     />
 
@@ -1096,8 +1096,8 @@
             :class="[
               'flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm transition-colors',
               'border-b border-gray-100 last:border-0 dark:border-dark-700',
-              selectedKeyForGroup?.group_id === option.value ||
-              (!selectedKeyForGroup?.group_id && option.value === null)
+              selectedKeyForGroup?.groupId === option.value ||
+              (!selectedKeyForGroup?.groupId && option.value === null)
                 ? 'bg-primary-50 dark:bg-primary-900/20'
                 : 'hover:bg-gray-100 dark:hover:bg-dark-700'
             ]"
@@ -1115,8 +1115,8 @@
               :peak-rate-multiplier="option.peakRateMultiplier"
               :description="option.description"
               :selected="
-                selectedKeyForGroup?.group_id === option.value ||
-                (!selectedKeyForGroup?.group_id && option.value === null)
+                selectedKeyForGroup?.groupId === option.value ||
+                (!selectedKeyForGroup?.groupId && option.value === null)
               "
             />
           </button>
@@ -1139,7 +1139,9 @@
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 
 const { t } = useI18n()
-import { keysAPI, authAPI, usageAPI, userGroupsAPI } from '@/api'
+import { authAPI, usageAPI, userGroupsAPI } from '@/api'
+import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
+import { useKeysActionStore } from '@/features/keys/presentation/stores/keysActionStore'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
 	import DataTable from '@/common/widgets/data/DataTable.vue'
@@ -1154,8 +1156,7 @@ import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
 	import EndpointPopover from '@/features/keys/presentation/widgets/EndpointPopover.vue'
 	import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 	import GroupOptionItem from '@/common/widgets/data/GroupOptionItem.vue'
-	import type { ApiKey, Group, PublicSettings, SubscriptionType, GroupPlatform, UpdateApiKeyRequest } from '@/types'
-import type { Column } from '@/common/types/uiTypes'
+	import type { Column } from '@/common/types/uiTypes'
 import type { BatchApiKeyUsageStats } from '@/features/usage/presentation/api'
 import { formatDateTime } from '@/core/utils/format'
 import { maskApiKey } from '@/core/utils/maskApiKey'
@@ -1163,6 +1164,10 @@ import {
   buildCcSwitchImportDeeplink,
   type CcSwitchClientType
 } from '@/core/utils/ccswitchImport'
+import type { ApiKey } from '@/features/keys/domain/models/apiKey'
+import type { UpdateApiKeyRequest } from '@/features/keys/data/requests_models/updateApiKeyRequest'
+import type { Group, SubscriptionType, GroupPlatform } from '@/features/admin-groups/domain/models/adminGroups'
+import type { PublicSettings } from '@/features/auth/domain/models/auth'
 
 // Helper to format date for datetime-local input
 const formatDateTimeLocal = (isoDate: string): string => {
@@ -1187,6 +1192,8 @@ interface GroupOption {
 
 const appStore = useAppStore()
 const onboardingStore = useOnboardingStore()
+const keysQuery = useKeysQueryStore()
+const keysAction = useKeysActionStore()
 const { copyToClipboard: clipboardCopy } = useClipboard()
 
 const allColumns = computed<Column[]>(() => [
@@ -1428,13 +1435,13 @@ const groupOptions = computed(() =>
     value: group.id,
     label: group.name,
     description: group.description,
-    rate: group.rate_multiplier,
+    rate: group.rateMultiplier,
     userRate: userGroupRates.value[group.id] ?? null,
-    peakRateEnabled: group.peak_rate_enabled,
-    peakStart: group.peak_start,
-    peakEnd: group.peak_end,
-    peakRateMultiplier: group.peak_rate_multiplier,
-    subscriptionType: group.subscription_type,
+    peakRateEnabled: group.peakRateEnabled,
+    peakStart: group.peakStart,
+    peakEnd: group.peakEnd,
+    peakRateMultiplier: group.peakRateMultiplier,
+    subscriptionType: group.subscriptionType,
     platform: group.platform
   }))
 )
@@ -1487,7 +1494,7 @@ const loadApiKeys = async () => {
     filters.sort_by = sortState.value.sort_by
     filters.sort_order = sortState.value.sort_order
 
-    const response = await keysAPI.list(pagination.value.page, pagination.value.page_size, filters, {
+    const response = await keysQuery.list(pagination.value.page, pagination.value.page_size, filters, {
       signal
     })
     if (signal.aborted) return
@@ -1574,27 +1581,27 @@ const handleSort = (key: string, order: 'asc' | 'desc') => {
 
 const editKey = (key: ApiKey) => {
   selectedKey.value = key
-  const hasIPRestriction = (key.ip_whitelist?.length > 0) || (key.ip_blacklist?.length > 0)
-  const hasExpiration = !!key.expires_at
+  const hasIPRestriction = (key.ipWhitelist?.length > 0) || (key.ipBlacklist?.length > 0)
+  const hasExpiration = !!key.expiresAt
   formData.value = {
     name: key.name,
-    group_id: key.group_id,
+    group_id: key.groupId,
     status: key.status === 'quota_exhausted' || key.status === 'expired' ? 'inactive' : key.status,
     use_custom_key: false,
     custom_key: '',
     enable_ip_restriction: hasIPRestriction,
-    ip_whitelist: (key.ip_whitelist || []).join('\n'),
-    ip_blacklist: (key.ip_blacklist || []).join('\n'),
+    ip_whitelist: (key.ipWhitelist || []).join('\n'),
+    ip_blacklist: (key.ipBlacklist || []).join('\n'),
     enable_quota: key.quota > 0,
     quota: key.quota > 0 ? key.quota : null,
-    concurrency_limit: key.concurrency_limit ?? 0,
-    enable_rate_limit: (key.rate_limit_5h > 0) || (key.rate_limit_1d > 0) || (key.rate_limit_7d > 0),
-    rate_limit_5h: key.rate_limit_5h || null,
-    rate_limit_1d: key.rate_limit_1d || null,
-    rate_limit_7d: key.rate_limit_7d || null,
+    concurrency_limit: key.concurrencyLimit ?? 0,
+    enable_rate_limit: (key.rateLimit5h > 0) || (key.rateLimit1d > 0) || (key.rateLimit7d > 0),
+    rate_limit_5h: key.rateLimit5h || null,
+    rate_limit_1d: key.rateLimit1d || null,
+    rate_limit_7d: key.rateLimit7d || null,
     enable_expiration: hasExpiration,
     expiration_preset: 'custom',
-    expiration_date: key.expires_at ? formatDateTimeLocal(key.expires_at) : ''
+    expiration_date: key.expiresAt ? formatDateTimeLocal(key.expiresAt) : ''
   }
   showEditModal.value = true
 }
@@ -1602,7 +1609,7 @@ const editKey = (key: ApiKey) => {
 const toggleKeyStatus = async (key: ApiKey) => {
   const newStatus = key.status === 'active' ? 'inactive' : 'active'
   try {
-    await keysAPI.toggleStatus(key.id, newStatus)
+    await keysAction.toggleStatus(key.id, newStatus)
     appStore.showSuccess(
       newStatus === 'active' ? t('keys.keyEnabledSuccess') : t('keys.keyDisabledSuccess')
     )
@@ -1646,10 +1653,10 @@ const openGroupSelector = (key: ApiKey) => {
 const changeGroup = async (key: ApiKey, newGroupId: number | null) => {
   groupSelectorKeyId.value = null
   dropdownPosition.value = null
-  if (key.group_id === newGroupId) return
+  if (key.groupId === newGroupId) return
 
   try {
-    await keysAPI.update(key.id, { group_id: newGroupId })
+    await keysAction.update(key.id, { group_id: newGroupId })
     appStore.showSuccess(t('keys.groupChangedSuccess'))
     loadApiKeys()
   } catch (error) {
@@ -1746,20 +1753,22 @@ const handleSubmit = async () => {
       if (shouldSubmitEditStatus(selectedKey.value, formData.value.status)) {
         updates.status = formData.value.status
       }
-      await keysAPI.update(selectedKey.value.id, updates)
+      await keysAction.update(selectedKey.value.id, updates)
       appStore.showSuccess(t('keys.keyUpdatedSuccess'))
     } else {
       const customKey = formData.value.use_custom_key ? formData.value.custom_key : undefined
-      await keysAPI.create(
-        formData.value.name,
-        formData.value.group_id,
-        customKey,
-        ipWhitelist,
-        ipBlacklist,
+      await keysAction.create({
+        name: formData.value.name,
+        group_id: formData.value.group_id ?? null,
+        custom_key: customKey,
+        ip_whitelist: ipWhitelist,
+        ip_blacklist: ipBlacklist,
         quota,
-        expiresInDays,
-        rateLimitData
-      )
+        expires_in_days: expiresInDays,
+        rate_limit_5h: rateLimitData.rate_limit_5h,
+        rate_limit_1d: rateLimitData.rate_limit_1d,
+        rate_limit_7d: rateLimitData.rate_limit_7d,
+      })
       appStore.showSuccess(t('keys.keyCreatedSuccess'))
       // Only advance tour if active, on submit step, and creation succeeded
       if (onboardingStore.isCurrentStep('[data-tour="key-form-submit"]')) {
@@ -1786,7 +1795,7 @@ const handleDelete = async () => {
   if (!selectedKey.value) return
 
   try {
-    await keysAPI.delete(selectedKey.value.id)
+    await keysAction.deleteKey(selectedKey.value.id)
     appStore.showSuccess(t('keys.keyDeletedSuccess'))
     showDeleteDialog.value = false
     loadApiKeys()
@@ -1841,11 +1850,11 @@ const resetQuotaUsed = async () => {
   if (!selectedKey.value) return
   showResetQuotaDialog.value = false
   try {
-    await keysAPI.update(selectedKey.value.id, { reset_quota: true })
+    await keysAction.update(selectedKey.value.id, { reset_quota: true })
     appStore.showSuccess(t('keys.quotaResetSuccess'))
     // Update local state
     if (selectedKey.value) {
-      selectedKey.value.quota_used = 0
+      selectedKey.value.quotaUsed = 0
     }
   } catch (error: any) {
     const errorMsg = error.response?.data?.detail || t('keys.failedToResetQuota')
@@ -1869,7 +1878,7 @@ const resetRateLimitUsage = async () => {
   if (!selectedKey.value) return
   showResetRateLimitDialog.value = false
   try {
-    await keysAPI.update(selectedKey.value.id, { reset_rate_limit_usage: true })
+    await keysAction.update(selectedKey.value.id, { reset_rate_limit_usage: true })
     appStore.showSuccess(t('keys.rateLimitResetSuccess'))
     // Refresh key data
     await loadApiKeys()
@@ -1899,7 +1908,7 @@ const importToCcswitch = (row: ApiKey) => {
 }
 
 const executeCcsImport = (row: ApiKey, clientType: CcSwitchClientType) => {
-  const baseUrl = publicSettings.value?.api_base_url || window.location.origin
+  const baseUrl = publicSettings.value?.apiBaseUrl || window.location.origin
   const platform = row.group?.platform || 'anthropic'
 
   const usageScript = `({
@@ -1918,7 +1927,7 @@ const executeCcsImport = (row: ApiKey, clientType: CcSwitchClientType) => {
       };
     }
   })`
-  const providerName = (publicSettings.value?.site_name || 'sub2api').trim() || 'sub2api'
+  const providerName = (publicSettings.value?.siteName || 'sub2api').trim() || 'sub2api'
   const deeplink = buildCcSwitchImportDeeplink({
     baseUrl,
     platform,

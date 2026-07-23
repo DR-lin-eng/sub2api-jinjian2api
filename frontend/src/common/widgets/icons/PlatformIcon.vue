@@ -42,8 +42,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { GroupPlatform } from '@/types'
-
+import type { GroupPlatform } from '@/features/admin-groups/domain/models/adminGroups'
 interface Props {
   platform?: GroupPlatform
   size?: 'xs' | 'sm' | 'md' | 'lg'

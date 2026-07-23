@@ -159,10 +159,10 @@
               <!-- Model -->
               <div class="min-w-0">
                 <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                  {{ plan.model_id }}
+                  {{ plan.modelId }}
                 </div>
                 <div class="mt-0.5 font-mono text-xs text-gray-500 dark:text-gray-400">
-                  {{ plan.cron_expression }}
+                  {{ plan.cronExpression }}
                 </div>
               </div>
 
@@ -179,7 +179,7 @@
 
               <!-- Auto Recover Badge -->
               <span
-                v-if="plan.auto_recover"
+                v-if="plan.autoRecover"
                 class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400"
               >
                 {{ t('admin.scheduledTests.autoRecover') }}
@@ -188,15 +188,15 @@
 
             <div class="flex items-center gap-3">
               <!-- Last Run -->
-              <div v-if="plan.last_run_at" class="hidden text-right text-xs text-gray-500 dark:text-gray-400 sm:block">
+              <div v-if="plan.lastRunAt" class="hidden text-right text-xs text-gray-500 dark:text-gray-400 sm:block">
                 <div>{{ t('admin.scheduledTests.lastRun') }}</div>
-                <div>{{ formatDateTime(plan.last_run_at) }}</div>
+                <div>{{ formatDateTime(plan.lastRunAt) }}</div>
               </div>
 
               <!-- Next Run -->
-              <div v-if="plan.next_run_at" class="hidden text-right text-xs text-gray-500 dark:text-gray-400 sm:block">
+              <div v-if="plan.nextRunAt" class="hidden text-right text-xs text-gray-500 dark:text-gray-400 sm:block">
                 <div>{{ t('admin.scheduledTests.nextRun') }}</div>
-                <div>{{ formatDateTime(plan.next_run_at) }}</div>
+                <div>{{ formatDateTime(plan.nextRunAt) }}</div>
               </div>
 
               <!-- Actions -->
@@ -389,19 +389,19 @@
                     </span>
 
                     <!-- Latency -->
-                    <span v-if="result.latency_ms > 0" class="text-xs text-gray-500 dark:text-gray-400">
-                      {{ result.latency_ms }}ms
+                    <span v-if="result.latencyMs > 0" class="text-xs text-gray-500 dark:text-gray-400">
+                      {{ result.latencyMs }}ms
                     </span>
                   </div>
 
                   <!-- Started At -->
                   <span class="text-xs text-gray-400">
-                    {{ formatDateTime(result.started_at) }}
+                    {{ formatDateTime(result.startedAt) }}
                   </span>
                 </div>
 
                 <!-- Response / Error (collapsible) -->
-                <div v-if="result.error_message" class="mt-2">
+                <div v-if="result.errorMessage" class="mt-2">
                   <div
                     class="cursor-pointer text-xs font-medium text-red-600 dark:text-red-400"
                     @click="toggleResultDetail(result.id)"
@@ -419,9 +419,9 @@
                   <pre
                     v-if="expandedResultIds.has(result.id)"
                     class="mt-1 max-h-32 overflow-auto whitespace-pre-wrap rounded bg-red-50 p-2 text-xs text-red-700 dark:bg-red-900/20 dark:text-red-300"
-                  >{{ result.error_message }}</pre>
+                  >{{ result.errorMessage }}</pre>
                 </div>
-                <div v-else-if="result.response_text" class="mt-2">
+                <div v-else-if="result.responseText" class="mt-2">
                   <div
                     class="cursor-pointer text-xs font-medium text-gray-600 dark:text-gray-400"
                     @click="toggleResultDetail(result.id)"
@@ -439,7 +439,7 @@
                   <pre
                     v-if="expandedResultIds.has(result.id)"
                     class="mt-1 max-h-32 overflow-auto whitespace-pre-wrap rounded bg-gray-100 p-2 text-xs text-gray-700 dark:bg-dark-800 dark:text-gray-300"
-                  >{{ result.response_text }}</pre>
+                  >{{ result.responseText }}</pre>
                 </div>
               </div>
             </div>
@@ -472,11 +472,15 @@ import Select, { type SelectOption } from '@/common/widgets/forms/Select.vue'
 import Input from '@/common/widgets/forms/Input.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
 import { Icon } from '@/common/widgets/icons'
-import { adminAPI } from '@/api/admin'
+import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
+
+const queryStore = useAdminAccountsQueryStore()
+const actionStore = useAdminAccountsActionStore()
 import { useAppStore } from '@/core/stores/appStore'
 import { formatDateTime } from '@/core/utils/format'
-import type { ScheduledTestPlan, ScheduledTestResult } from '@/types'
-
+import type { ScheduledTestPlan } from '@/features/admin-accounts/domain/models/scheduledTestPlan'
+import type { ScheduledTestResult } from '@/features/admin-accounts/domain/models/scheduledTestResult'
 const { t } = useI18n()
 const appStore = useAppStore()
 
@@ -548,7 +552,7 @@ const loadPlans = async () => {
   if (!props.accountId) return
   loading.value = true
   try {
-    plans.value = await adminAPI.scheduledTests.listByAccount(props.accountId)
+    plans.value = await queryStore.listByAccount(props.accountId)
   } catch (error: any) {
     appStore.showError(error?.message || 'Failed to load plans')
   } finally {
@@ -561,7 +565,7 @@ const handleCreate = async () => {
   creating.value = true
   try {
     const maxResults = Number(newPlan.max_results) || 100
-    await adminAPI.scheduledTests.create({
+    await actionStore.scheduledTests_create({
       account_id: props.accountId,
       model_id: newPlan.model_id,
       cron_expression: newPlan.cron_expression,
@@ -582,7 +586,7 @@ const handleCreate = async () => {
 
 const handleToggleEnabled = async (plan: ScheduledTestPlan, enabled: boolean) => {
   try {
-    const updated = await adminAPI.scheduledTests.update(plan.id, { enabled })
+    const updated = await actionStore.scheduledTests_update(plan.id, { enabled })
     const index = plans.value.findIndex((p) => p.id === plan.id)
     if (index !== -1) {
       plans.value[index] = updated
@@ -595,11 +599,11 @@ const handleToggleEnabled = async (plan: ScheduledTestPlan, enabled: boolean) =>
 
 const startEdit = (plan: ScheduledTestPlan) => {
   editingPlanId.value = plan.id
-  editForm.model_id = plan.model_id
-  editForm.cron_expression = plan.cron_expression
-  editForm.max_results = String(plan.max_results)
+  editForm.model_id = plan.modelId
+  editForm.cron_expression = plan.cronExpression
+  editForm.max_results = String(plan.maxResults)
   editForm.enabled = plan.enabled
-  editForm.auto_recover = plan.auto_recover
+  editForm.auto_recover = plan.autoRecover
 }
 
 const cancelEdit = () => {
@@ -610,7 +614,7 @@ const handleEdit = async () => {
   if (!editingPlanId.value || !editForm.model_id || !editForm.cron_expression) return
   updating.value = true
   try {
-    const updated = await adminAPI.scheduledTests.update(editingPlanId.value, {
+    const updated = await actionStore.scheduledTests_update(editingPlanId.value, {
       model_id: editForm.model_id,
       cron_expression: editForm.cron_expression,
       max_results: Number(editForm.max_results) || 100,
@@ -638,7 +642,7 @@ const confirmDeletePlan = (plan: ScheduledTestPlan) => {
 const handleDelete = async () => {
   if (!deletingPlan.value) return
   try {
-    await adminAPI.scheduledTests.delete(deletingPlan.value.id)
+    await actionStore.deletePlan(deletingPlan.value.id)
     appStore.showSuccess(t('admin.scheduledTests.deleteSuccess'))
     plans.value = plans.value.filter((p) => p.id !== deletingPlan.value!.id)
     if (expandedPlanId.value === deletingPlan.value.id) {
@@ -665,7 +669,7 @@ const toggleExpand = async (planId: number) => {
   expandedResultIds.clear()
   loadingResults.value = true
   try {
-    results.value = await adminAPI.scheduledTests.listResults(planId, 20)
+    results.value = await queryStore.listResults(planId, 20)
   } catch (error: any) {
     appStore.showError(error?.message || 'Failed to load results')
     results.value = []

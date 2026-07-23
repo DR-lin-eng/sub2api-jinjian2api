@@ -29,8 +29,8 @@ import { reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { adminAPI } from '@/api/admin'
-import type { AdminUser } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
 
 const props = defineProps<{ show: boolean, user: AdminUser | null, operation: 'add' | 'subtract' }>()
 const emit = defineEmits(['close', 'success']); const { t } = useI18n(); const appStore = useAppStore()

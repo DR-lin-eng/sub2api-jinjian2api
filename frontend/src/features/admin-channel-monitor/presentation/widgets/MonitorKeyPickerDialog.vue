@@ -51,8 +51,8 @@
                   v-if="k.group"
                   :name="k.group.name"
                   :platform="k.group.platform"
-                  :subscription-type="k.group.subscription_type"
-                  :rate-multiplier="k.group.rate_multiplier"
+                  :subscription-type="k.group.subscriptionType"
+                  :rate-multiplier="k.group.rateMultiplier"
                   :user-rate-multiplier="userGroupRates[k.group.id]"
                 />
                 <span v-else class="text-xs text-gray-400">—</span>
@@ -75,8 +75,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { ApiKey } from '@/types'
-import type { Provider } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
+import type { ApiKey } from '@/features/keys/domain/models/apiKey'
+import type { Provider } from '@/core/constants/channelMonitor'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import { maskApiKey } from '@/core/utils/maskApiKey'

@@ -1,8 +1,9 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { GeminiOAuthCapabilities } from '@/features/admin-accounts/data/datasources/geminiDatasource'
+import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
+import type { GeminiOAuthCapabilities } from '@/features/admin-accounts/domain/models/geminiOAuthCapabilities'
 
 export interface GeminiTokenInfo {
   access_token?: string
@@ -19,6 +20,8 @@ export interface GeminiTokenInfo {
 
 export function useGeminiOAuth() {
   const appStore = useAppStore()
+  const queryStore = useAdminAccountsQueryStore()
+  const actionStore = useAdminAccountsActionStore()
   const { t } = useI18n()
 
   const authUrl = ref('')
@@ -49,16 +52,16 @@ export function useGeminiOAuth() {
 
     try {
       const payload: Record<string, unknown> = {}
-      if (proxyId) payload.proxy_id = proxyId
+      if (proxyId) payload.proxyId = proxyId
       const trimmedProjectID = projectId?.trim()
       if (trimmedProjectID) payload.project_id = trimmedProjectID
       if (oauthType) payload.oauth_type = oauthType
       const trimmedTierID = tierId?.trim()
       if (trimmedTierID) payload.tier_id = trimmedTierID
 
-      const response = await adminAPI.gemini.generateAuthUrl(payload as any)
-      authUrl.value = response.auth_url
-      sessionId.value = response.session_id
+      const response = await actionStore.gemini_generateAuthUrl(payload as any)
+      authUrl.value = response.authUrl
+      sessionId.value = response.sessionId
       state.value = response.state
       return true
     } catch (err: any) {
@@ -93,12 +96,12 @@ export function useGeminiOAuth() {
         state: params.state,
         code
       }
-      if (params.proxyId) payload.proxy_id = params.proxyId
+      if (params.proxyId) payload.proxyId = params.proxyId
       if (params.oauthType) payload.oauth_type = params.oauthType
       const trimmedTierID = params.tierId?.trim()
       if (trimmedTierID) payload.tier_id = trimmedTierID
 
-      const tokenInfo = await adminAPI.gemini.exchangeCode(payload as any)
+      const tokenInfo = await actionStore.gemini_exchangeCode(payload as any)
       return tokenInfo as GeminiTokenInfo
     } catch (err: any) {
       // Check for specific missing project_id error
@@ -117,10 +120,10 @@ export function useGeminiOAuth() {
 
   const buildCredentials = (tokenInfo: GeminiTokenInfo): Record<string, unknown> => {
     let expiresAt: string | undefined
-    if (typeof tokenInfo.expires_at === 'number' && Number.isFinite(tokenInfo.expires_at)) {
-      expiresAt = Math.floor(tokenInfo.expires_at).toString()
-    } else if (typeof tokenInfo.expires_at === 'string' && tokenInfo.expires_at.trim()) {
-      expiresAt = tokenInfo.expires_at.trim()
+    if (typeof tokenInfo.expiresAt === 'number' && Number.isFinite(tokenInfo.expiresAt)) {
+      expiresAt = Math.floor(tokenInfo.expiresAt).toString()
+    } else if (typeof tokenInfo.expiresAt === 'string' && tokenInfo.expiresAt.trim()) {
+      expiresAt = tokenInfo.expiresAt.trim()
     }
 
     return {
@@ -142,7 +145,7 @@ export function useGeminiOAuth() {
 
   const getCapabilities = async (): Promise<GeminiOAuthCapabilities | null> => {
     try {
-      return await adminAPI.gemini.getCapabilities()
+      return await queryStore.getCapabilities()
     } catch (err: any) {
       // Capabilities are optional for older servers; don't block the UI.
       return null

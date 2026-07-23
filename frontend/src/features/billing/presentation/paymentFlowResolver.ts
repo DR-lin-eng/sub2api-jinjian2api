@@ -122,19 +122,19 @@ export function buildCreateOrderPayload(input: BuildCreateOrderPayloadInput): Cr
     : input.isMobile
   const payload: CreateOrderRequest = {
     amount: input.amount,
-    payment_type: visibleMethod,
-    order_type: input.orderType,
-    is_mobile: effectiveMobile,
-    payment_source: visibleMethod === 'wxpay' && input.isWechatBrowser
+    paymentType: visibleMethod,
+    orderType: input.orderType,
+    isMobile: effectiveMobile,
+    paymentSource: visibleMethod === 'wxpay' && input.isWechatBrowser
       ? 'wechat_in_app_resume'
       : 'hosted_redirect',
   }
 
   if (input.planId) {
-    payload.plan_id = input.planId
+    payload.planId = input.planId
   }
   if (normalizedOrigin) {
-    payload.return_url = `${normalizedOrigin}/payment/result`
+    payload.returnUrl = `${normalizedOrigin}/payment/result`
   }
 
   return payload
@@ -146,21 +146,21 @@ export function decidePaymentLaunch(
 ): PaymentLaunchDecision {
   const visibleMethod = normalizeVisibleMethod(context.visibleMethod) || context.visibleMethod
   const baseState = createPaymentRecoverySnapshot({
-    orderId: result.order_id,
+    orderId: result.orderId,
     amount: result.amount,
-    qrCode: result.qr_code || '',
-    expiresAt: result.expires_at || '',
+    qrCode: result.qrCode || '',
+    expiresAt: result.expiresAt || '',
     paymentType: visibleMethod,
-    payUrl: result.pay_url || '',
-    outTradeNo: result.out_trade_no || '',
-    clientSecret: result.client_secret || '',
-    intentId: result.intent_id || '',
+    payUrl: result.payUrl || '',
+    outTradeNo: result.outTradeNo || '',
+    clientSecret: result.clientSecret || '',
+    intentId: result.intentId || '',
     currency: result.currency || '',
-    countryCode: result.country_code || '',
-    paymentEnv: result.payment_env || '',
-    payAmount: result.pay_amount,
+    countryCode: result.countryCode || '',
+    paymentEnv: result.paymentEnv || '',
+    payAmount: result.payAmount,
     orderType: context.orderType,
-    paymentMode: (result.payment_mode || '').trim(),
+    paymentMode: (result.paymentMode || '').trim(),
     resumeToken: result.resume_token || '',
   }, context.now)
 
@@ -189,12 +189,12 @@ export function decidePaymentLaunch(
     return { kind, paymentState, recovery: paymentState, stripeMethod }
   }
 
-  if (result.result_type === 'oauth_required' && result.oauth?.authorize_url) {
+  if (result.resultType === 'oauth_required' && result.oauth?.authorizeUrl) {
     return { kind: 'wechat_oauth', paymentState: baseState, recovery: baseState, oauth: result.oauth }
   }
 
-  const jsapiPayload = result.jsapi ?? result.jsapi_payload
-  if (result.result_type === 'jsapi_ready' && jsapiPayload) {
+  const jsapiPayload = result.jsapi ?? result.jsapiPayload
+  if (result.resultType === 'jsapi_ready' && jsapiPayload) {
     return { kind: 'wechat_jsapi', paymentState: baseState, recovery: baseState, jsapi: jsapiPayload }
   }
 

@@ -97,14 +97,14 @@
                 <!-- Header: platform badge + plan name -->
                 <div class="mb-3 flex flex-wrap items-center gap-2">
                   <span :class="['rounded-md border px-2 py-0.5 text-xs font-medium', planBadgeClass]">
-                    {{ platformLabel(selectedPlan.group_platform || '') }}
+                    {{ platformLabel(selectedPlan.groupPlatform || '') }}
                   </span>
                   <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ selectedPlan.name }}</h3>
                 </div>
                 <!-- Price -->
                 <div class="flex items-baseline gap-2">
-                  <span v-if="selectedPlan.original_price" class="text-sm text-gray-400 line-through dark:text-gray-500">
-                    {{ formatSelectedSubscriptionPaymentAmount(selectedPlan.original_price) }}
+                  <span v-if="selectedPlan.originalPrice" class="text-sm text-gray-400 line-through dark:text-gray-500">
+                    {{ formatSelectedSubscriptionPaymentAmount(selectedPlan.originalPrice) }}
                   </span>
                   <span :class="['text-3xl font-bold', planTextClass]">{{ formatSelectedSubscriptionPaymentAmount(selectedPlan.price) }}</span>
                   <span class="text-sm text-gray-500 dark:text-gray-400">/ {{ planValiditySuffix }}</span>
@@ -118,7 +118,7 @@
                   <div>
                     <span class="text-xs text-gray-400 dark:text-gray-500">{{ t('payment.planCard.rate') }}</span>
                     <div class="flex items-baseline">
-                      <span :class="['text-lg font-bold', planTextClass]">×{{ selectedPlan.rate_multiplier ?? 1 }}</span>
+                      <span :class="['text-lg font-bold', planTextClass]">×{{ selectedPlan.rateMultiplier ?? 1 }}</span>
                     </div>
                   </div>
                   <div v-if="planHasPeakRate(selectedPlan)">
@@ -127,19 +127,19 @@
                       {{ planPeakRateLabel(selectedPlan) }}
                     </div>
                   </div>
-                  <div v-if="selectedPlan.daily_limit_usd != null">
+                  <div v-if="selectedPlan.dailyLimitUsd != null">
                     <span class="text-xs text-gray-400 dark:text-gray-500">{{ t('payment.planCard.dailyLimit') }}</span>
-                    <div class="text-lg font-semibold text-gray-800 dark:text-gray-200">${{ selectedPlan.daily_limit_usd }}</div>
+                    <div class="text-lg font-semibold text-gray-800 dark:text-gray-200">${{ selectedPlan.dailyLimitUsd }}</div>
                   </div>
-                  <div v-if="selectedPlan.weekly_limit_usd != null">
+                  <div v-if="selectedPlan.weeklyLimitUsd != null">
                     <span class="text-xs text-gray-400 dark:text-gray-500">{{ t('payment.planCard.weeklyLimit') }}</span>
-                    <div class="text-lg font-semibold text-gray-800 dark:text-gray-200">${{ selectedPlan.weekly_limit_usd }}</div>
+                    <div class="text-lg font-semibold text-gray-800 dark:text-gray-200">${{ selectedPlan.weeklyLimitUsd }}</div>
                   </div>
-                  <div v-if="selectedPlan.monthly_limit_usd != null">
+                  <div v-if="selectedPlan.monthlyLimitUsd != null">
                     <span class="text-xs text-gray-400 dark:text-gray-500">{{ t('payment.planCard.monthlyLimit') }}</span>
-                    <div class="text-lg font-semibold text-gray-800 dark:text-gray-200">${{ selectedPlan.monthly_limit_usd }}</div>
+                    <div class="text-lg font-semibold text-gray-800 dark:text-gray-200">${{ selectedPlan.monthlyLimitUsd }}</div>
                   </div>
-                  <div v-if="selectedPlan.daily_limit_usd == null && selectedPlan.weekly_limit_usd == null && selectedPlan.monthly_limit_usd == null">
+                  <div v-if="selectedPlan.dailyLimitUsd == null && selectedPlan.weeklyLimitUsd == null && selectedPlan.monthlyLimitUsd == null">
                     <span class="text-xs text-gray-400 dark:text-gray-500">{{ t('payment.planCard.quota') }}</span>
                     <div class="text-lg font-semibold text-gray-800 dark:text-gray-200">{{ t('payment.planCard.unlimited') }}</div>
                   </div>
@@ -195,14 +195,14 @@
                     <div :class="['h-6 w-1 shrink-0 rounded-full', platformAccentBarClass(sub.group?.platform || '')]" />
                     <div class="min-w-0 flex-1">
                       <div class="flex items-center gap-1.5">
-                        <span class="truncate text-xs font-semibold text-gray-900 dark:text-white">{{ sub.group?.name || t('payment.groupFallback', { id: sub.group_id }) }}</span>
+                        <span class="truncate text-xs font-semibold text-gray-900 dark:text-white">{{ sub.group?.name || t('payment.groupFallback', { id: sub.groupId }) }}</span>
                         <span :class="['shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium', platformBadgeLightClass(sub.group?.platform || '')]">{{ platformLabel(sub.group?.platform || '') }}</span>
                       </div>
                       <div class="flex flex-wrap gap-x-3 text-[11px] text-gray-400 dark:text-gray-500">
-                        <span>{{ t('payment.planCard.rate') }}: ×{{ sub.group?.rate_multiplier ?? 1 }}</span>
+                        <span>{{ t('payment.planCard.rate') }}: ×{{ sub.group?.rateMultiplier ?? 1 }}</span>
                         <span v-if="subscriptionHasPeakRate(sub)">{{ t('payment.planCard.peakRate') }}: {{ subscriptionPeakRateLabel(sub) }}</span>
-                        <span v-if="sub.group?.daily_limit_usd == null && sub.group?.weekly_limit_usd == null && sub.group?.monthly_limit_usd == null">{{ t('payment.planCard.quota') }}: {{ t('payment.planCard.unlimited') }}</span>
-                        <span v-if="sub.expires_at">{{ t('userSubscriptions.daysRemaining', { days: getDaysRemaining(sub.expires_at) }) }}</span>
+                        <span v-if="sub.group?.dailyLimitUsd == null && sub.group?.weeklyLimitUsd == null && sub.group?.monthlyLimitUsd == null">{{ t('payment.planCard.quota') }}: {{ t('payment.planCard.unlimited') }}</span>
+                        <span v-if="sub.expiresAt">{{ t('userSubscriptions.daysRemaining', { days: getDaysRemaining(sub.expiresAt) }) }}</span>
                         <span v-else>{{ t('userSubscriptions.noExpiration') }}</span>
                       </div>
                     </div>
@@ -213,12 +213,12 @@
             </template>
           </template>
         </template>
-        <div v-if="(checkout.help_text || checkout.help_image_url) && paymentPhase === 'select' && !selectedPlan" class="card p-4">
+        <div v-if="(checkout.helpText || checkout.helpImageUrl) && paymentPhase === 'select' && !selectedPlan" class="card p-4">
           <div class="flex flex-col items-center gap-3">
-            <img v-if="checkout.help_image_url" :src="checkout.help_image_url" alt=""
+            <img v-if="checkout.helpImageUrl" :src="checkout.helpImageUrl" alt=""
               class="h-40 max-w-full cursor-pointer rounded-lg object-contain transition-opacity hover:opacity-80"
-              @click="previewImage = checkout.help_image_url" />
-            <p v-if="checkout.help_text" class="text-center text-sm text-gray-500 dark:text-gray-400">{{ checkout.help_text }}</p>
+              @click="previewImage = checkout.helpImageUrl" />
+            <p v-if="checkout.helpText" class="text-center text-sm text-gray-500 dark:text-gray-400">{{ checkout.helpText }}</p>
           </div>
         </div>
       </template>
@@ -310,7 +310,7 @@ function subscriptionHasPeakRate(sub: { group?: PeakRateFields | null }): boolea
 }
 
 function subscriptionPeakRateLabel(sub: { group?: PeakRateFields | null }): string {
-  return formatPeakRateWindow(sub.group, serverTimezoneLabel(appStore.cachedPublicSettings?.server_utc_offset))
+  return formatPeakRateWindow(sub.group, serverTimezoneLabel(appStore.cachedPublicSettings?.serverUtcOffset))
 }
 
 const loading = ref(true)
@@ -493,13 +493,13 @@ function onPaymentSettled() {
 
 // All checkout data from single API call
 const checkout = ref<CheckoutInfoResponse>({
-  methods: {}, global_min: 0, global_max: 0,
-  plans: [], balance_disabled: false, balance_recharge_multiplier: 1, subscription_usd_to_cny_rate: 0, recharge_fee_rate: 0, help_text: '', help_image_url: '', stripe_publishable_key: '',
+  methods: {}, globalMin: 0, globalMax: 0,
+  plans: [], balanceDisabled: false, balanceRechargeMultiplier: 1, subscriptionUsdToCnyRate: 0, rechargeFeeRate: 0, helpText: '', helpImageUrl: '', stripePublishableKey: '',
 })
 
 const tabs = computed(() => {
   const result: { key: 'recharge' | 'subscription'; label: string }[] = []
-  if (!checkout.value.balance_disabled) result.push({ key: 'recharge', label: t('payment.tabTopUp') })
+  if (!checkout.value.balanceDisabled) result.push({ key: 'recharge', label: t('payment.tabTopUp') })
   result.push({ key: 'subscription', label: t('payment.tabSubscribe') })
   return result
 })
@@ -508,12 +508,12 @@ const visibleMethods = computed(() => getVisibleMethods(checkout.value.methods))
 const enabledMethods = computed(() => Object.keys(visibleMethods.value))
 const validAmount = computed(() => amount.value ?? 0)
 const balanceRechargeMultiplier = computed(() => {
-  const multiplier = checkout.value.balance_recharge_multiplier
+  const multiplier = checkout.value.balanceRechargeMultiplier
   return Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1
 })
 // 订阅 CNY 换算汇率（1 USD = X CNY）。0 = 未配置，订阅保持 price 直付（与后端 opt-in 条件严格镜像）。
 const subscriptionUsdToCnyRate = computed(() => {
-  const rate = checkout.value.subscription_usd_to_cny_rate
+  const rate = checkout.value.subscriptionUsdToCnyRate
   return Number.isFinite(rate) && rate > 0 ? rate : 0
 })
 const creditedAmount = computed(() => Math.round((validAmount.value * balanceRechargeMultiplier.value) * 100) / 100)
@@ -530,8 +530,8 @@ function amountFitsMethod(amt: number, methodType: string): boolean {
   if (amt <= 0) return true
   const ml = visibleMethods.value[methodType]
   if (!ml) return false
-  if (ml.single_min > 0 && amt < ml.single_min) return false
-  if (ml.single_max > 0 && amt > ml.single_max) return false
+  if (ml.singleMin > 0 && amt < ml.singleMin) return false
+  if (ml.singleMax > 0 && amt > ml.singleMax) return false
   return true
 }
 
@@ -539,14 +539,14 @@ function amountFitsMethod(amt: number, methodType: string): boolean {
 const globalMinAmount = computed(() => {
   const limits = Object.values(visibleMethods.value)
   if (limits.length === 0) return 0
-  if (limits.some(limit => limit.single_min <= 0)) return 0
-  return Math.min(...limits.map(limit => limit.single_min))
+  if (limits.some(limit => limit.singleMin <= 0)) return 0
+  return Math.min(...limits.map(limit => limit.singleMin))
 })
 const globalMaxAmount = computed(() => {
   const limits = Object.values(visibleMethods.value)
   if (limits.length === 0) return 0
-  if (limits.some(limit => limit.single_max <= 0)) return 0
-  return Math.max(...limits.map(limit => limit.single_max))
+  if (limits.some(limit => limit.singleMax <= 0)) return 0
+  return Math.max(...limits.map(limit => limit.singleMax))
 })
 
 // Selected method's limits (for validation and error messages)
@@ -603,14 +603,14 @@ const methodOptions = computed<PaymentMethodOption[]>(() =>
     const ml = visibleMethods.value[type]
     return {
       type,
-      display_name: ml?.display_name,
-      fee_rate: ml?.fee_rate ?? 0,
+      displayName: ml?.displayName,
+      feeRate: ml?.feeRate ?? 0,
       available: ml?.available !== false && amountFitsMethod(validAmount.value, type),
     }
   })
 )
 
-const feeRate = computed(() => checkout.value?.recharge_fee_rate ?? 0)
+const feeRate = computed(() => checkout.value?.rechargeFeeRate ?? 0)
 const feeAmount = computed(() =>
   feeRate.value > 0 && validAmount.value > 0
     ? Math.ceil(((validAmount.value * feeRate.value) / 100) * 100) / 100
@@ -631,8 +631,8 @@ const amountError = computed(() => {
   // Selected method can't handle this amount (but others can)
   const ml = selectedLimit.value
   if (ml) {
-    if (ml.single_min > 0 && validAmount.value < ml.single_min) return t('payment.amountTooLow', { min: formatSelectedPaymentAmount(ml.single_min) })
-    if (ml.single_max > 0 && validAmount.value > ml.single_max) return t('payment.amountTooHigh', { max: formatSelectedPaymentAmount(ml.single_max) })
+    if (ml.singleMin > 0 && validAmount.value < ml.singleMin) return t('payment.amountTooLow', { min: formatSelectedPaymentAmount(ml.singleMin) })
+    if (ml.singleMax > 0 && validAmount.value > ml.singleMax) return t('payment.amountTooHigh', { max: formatSelectedPaymentAmount(ml.singleMax) })
   }
   return ''
 })
@@ -673,8 +673,8 @@ const subMethodOptions = computed<PaymentMethodOption[]>(() => {
     const currency = normalizePaymentCurrency(ml?.currency)
     return {
       type,
-      display_name: ml?.display_name,
-      fee_rate: ml?.fee_rate ?? 0,
+      displayName: ml?.displayName,
+      feeRate: ml?.feeRate ?? 0,
       available: ml?.available !== false && amountFitsMethod(subscriptionTotalAmountForCurrency(price, currency), type),
     }
   })
@@ -705,23 +705,23 @@ const paymentButtonClass = computed(() => {
 })
 
 // Subscription confirm: platform accent colors (clean card, no gradient)
-const planBadgeClass = computed(() => platformBadgeClass(selectedPlan.value?.group_platform || ''))
-const planTextClass = computed(() => platformTextClass(selectedPlan.value?.group_platform || ''))
+const planBadgeClass = computed(() => platformBadgeClass(selectedPlan.value?.groupPlatform || ''))
+const planTextClass = computed(() => platformTextClass(selectedPlan.value?.groupPlatform || ''))
 
 // Renewal modal state
 const showRenewalModal = ref(false)
 const renewGroupId = ref<number | null>(null)
 const renewalPlans = computed(() => {
   if (renewGroupId.value == null) return []
-  return checkout.value.plans.filter(p => p.group_id === renewGroupId.value)
+  return checkout.value.plans.filter(p => p.groupId === renewGroupId.value)
 })
 
 const planValiditySuffix = computed(() => {
   if (!selectedPlan.value) return ''
-  const u = selectedPlan.value.validity_unit || 'day'
+  const u = selectedPlan.value.validityUnit || 'day'
   if (u === 'month') return t('payment.perMonth')
   if (u === 'year') return t('payment.perYear')
-  return `${selectedPlan.value.validity_days}${t('payment.days')}`
+  return `${selectedPlan.value.validityDays}${t('payment.days')}`
 })
 
 function planHasPeakRate(plan: SubscriptionPlan): boolean {
@@ -729,7 +729,7 @@ function planHasPeakRate(plan: SubscriptionPlan): boolean {
 }
 
 function planPeakRateLabel(plan: SubscriptionPlan): string {
-  return formatPeakRateWindow(plan, serverTimezoneLabel(appStore.cachedPublicSettings?.server_utc_offset))
+  return formatPeakRateWindow(plan, serverTimezoneLabel(appStore.cachedPublicSettings?.serverUtcOffset))
 }
 
 function selectPlan(plan: SubscriptionPlan) {
@@ -773,13 +773,13 @@ async function createOrder(orderAmount: number, orderType: OrderType, planId?: n
       origin: typeof window !== 'undefined' ? window.location.origin : '',
       isMobile: isMobileDevice(),
       isWechatBrowser: typeof window !== 'undefined' && /MicroMessenger/i.test(window.navigator.userAgent),
-      forceQRCode: !!(checkout.value.alipay_force_qrcode && normalizeVisibleMethod(requestType) === 'alipay'),
+      forceQRCode: !!(checkout.value.alipayForceQrcode && normalizeVisibleMethod(requestType) === 'alipay'),
     })
     if (options.openid) {
       payload.openid = options.openid
     }
     if (options.wechatResumeToken) {
-      payload.wechat_resume_token = options.wechatResumeToken
+      payload.wechatResumeToken = options.wechatResumeToken
     }
 
     const result = await paymentStore.createOrder(payload) as CreateOrderResult & { resume_token?: string }
@@ -795,23 +795,23 @@ async function createOrder(orderAmount: number, orderType: OrderType, planId?: n
     const stripeMethod = visibleMethod === 'stripe'
       ? ''
       : visibleMethod === 'wxpay' ? 'wechat_pay' : 'alipay'
-    const stripeRouteUrl = result.client_secret && visibleMethod !== 'airwallex'
+    const stripeRouteUrl = result.clientSecret && visibleMethod !== 'airwallex'
       ? router.resolve({
         path: '/payment/stripe',
         query: {
-          order_id: String(result.order_id),
-          client_secret: result.client_secret,
+          orderId: String(result.orderId),
+          clientSecret: result.clientSecret,
           method: stripeMethod || undefined,
           resume_token: result.resume_token || undefined,
         },
       }).href
       : ''
-    const airwallexRouteUrl = result.client_secret && result.intent_id
+    const airwallexRouteUrl = result.clientSecret && result.intentId
       ? router.resolve({
         path: '/payment/airwallex',
         query: {
-          order_id: String(result.order_id),
-          out_trade_no: result.out_trade_no || undefined,
+          orderId: String(result.orderId),
+          outTradeNo: result.outTradeNo || undefined,
           resume_token: result.resume_token || undefined,
         },
       }).href
@@ -821,14 +821,14 @@ async function createOrder(orderAmount: number, orderType: OrderType, planId?: n
       orderType,
       isMobile: isMobileDevice(),
       isWechatBrowser: typeof window !== 'undefined' && /MicroMessenger/i.test(window.navigator.userAgent),
-      forceQRCode: !!(checkout.value.alipay_force_qrcode && visibleMethod === 'alipay'),
+      forceQRCode: !!(checkout.value.alipayForceQrcode && visibleMethod === 'alipay'),
       stripePopupUrl: stripeRouteUrl,
       stripeRouteUrl,
       airwallexRouteUrl,
     })
 
-    if (decision.kind === 'wechat_oauth' && decision.oauth?.authorize_url) {
-      window.location.href = buildWechatOAuthAuthorizeUrl(decision.oauth.authorize_url, {
+    if (decision.kind === 'wechat_oauth' && decision.oauth?.authorizeUrl) {
+      window.location.href = buildWechatOAuthAuthorizeUrl(decision.oauth.authorizeUrl, {
         paymentType: visibleMethod,
         orderType,
         planId,
@@ -1002,12 +1002,12 @@ async function attemptMobileQrFallback(err: unknown, context: MobileQrFallbackCo
     })
     const result = await paymentStore.createOrder(payload) as CreateOrderResult & { resume_token?: string }
     const stripeMethod = visibleMethod === 'wxpay' ? 'wechat_pay' : 'alipay'
-    const stripeRouteUrl = result.client_secret
+    const stripeRouteUrl = result.clientSecret
       ? router.resolve({
         path: '/payment/stripe',
         query: {
-          order_id: String(result.order_id),
-          client_secret: result.client_secret,
+          orderId: String(result.orderId),
+          clientSecret: result.clientSecret,
           method: stripeMethod,
           resume_token: result.resume_token || undefined,
         },
@@ -1128,7 +1128,7 @@ onMounted(async () => {
       }
     }
     await resumeWechatPaymentFromQuery()
-    if (checkout.value.balance_disabled) {
+    if (checkout.value.balanceDisabled) {
       activeTab.value = 'subscription'
     }
     // Handle renewal navigation: ?tab=subscription&group=123
@@ -1136,7 +1136,7 @@ onMounted(async () => {
       activeTab.value = 'subscription'
       if (route.query.group) {
         const groupId = Number(route.query.group)
-        const groupPlans = checkout.value.plans.filter(p => p.group_id === groupId)
+        const groupPlans = checkout.value.plans.filter(p => p.groupId === groupId)
         if (groupPlans.length === 1) {
           selectedPlan.value = groupPlans[0]
         } else if (groupPlans.length > 1) {

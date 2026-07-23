@@ -178,10 +178,10 @@ import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import SupportedModelChip from './SupportedModelChip.vue'
 import type { UserAvailableChannel, UserAvailableGroup, UserChannelPlatformSection } from '@/features/channels-user/data/datasources/channelsUserDatasource'
-import type { GroupPlatform, SubscriptionType } from '@/types'
 import { platformBadgeClass } from '@/core/utils/platformColors'
 import { useAppStore } from '@/core/stores/appStore'
 import { hasPeakRate as groupHasPeakRate, formatPeakRateWindow, serverTimezoneLabel } from '@/core/utils/peak-rate'
+import type { GroupPlatform, SubscriptionType } from '@/features/admin-groups/domain/models/adminGroups'
 
 const props = defineProps<{
   columns: {
@@ -217,12 +217,21 @@ function publicGroups(section: UserChannelPlatformSection): UserAvailableGroup[]
 
 const appStore = useAppStore()
 
+function toPeakRateFields(group: UserAvailableGroup) {
+  return {
+    peakRateEnabled: group.peak_rate_enabled,
+    peakStart: group.peak_start,
+    peakEnd: group.peak_end,
+    peakRateMultiplier: group.peak_rate_multiplier,
+  }
+}
+
 function hasPeakRate(group: UserAvailableGroup): boolean {
-  return groupHasPeakRate(group)
+  return groupHasPeakRate(toPeakRateFields(group))
 }
 
 function peakRateLabel(group: UserAvailableGroup): string {
-  return formatPeakRateWindow(group, serverTimezoneLabel(appStore.cachedPublicSettings?.server_utc_offset))
+  return formatPeakRateWindow(toPeakRateFields(group), serverTimezoneLabel(appStore.cachedPublicSettings?.serverUtcOffset))
 }
 
 function peakRateTitle(group: UserAvailableGroup): string {

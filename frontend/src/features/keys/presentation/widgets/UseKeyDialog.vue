@@ -201,8 +201,7 @@ import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { useClipboard } from '@/common/composables/useClipboard'
-import type { GroupPlatform } from '@/types'
-
+import type { GroupPlatform } from '@/features/admin-groups/domain/models/adminGroups'
 interface Props {
   show: boolean
   apiKey: string

@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
 
 export type AddMethod = 'oauth' | 'setup-token'
 export type AuthInputMethod = 'manual' | 'cookie' | 'refresh_token' | 'mobile_refresh_token' | 'session_token' | 'access_token' | 'codex_session' | 'agent_identity' | 'codex_pat' | 'sso_cookie'
@@ -23,6 +23,7 @@ export interface TokenInfo {
 
 export function useAccountOAuth() {
   const appStore = useAppStore()
+  const actionStore = useAdminAccountsActionStore()
 
   // State
   const authUrl = ref('')
@@ -59,7 +60,7 @@ export function useAccountOAuth() {
           ? '/admin/accounts/generate-auth-url'
           : '/admin/accounts/generate-setup-token-url'
 
-      const response = await adminAPI.accounts.generateAuthUrl(endpoint, proxyConfig)
+      const response = await actionStore.generateAuthUrl(endpoint, proxyConfig)
       authUrl.value = response.auth_url
       sessionId.value = response.session_id
       return true
@@ -92,7 +93,7 @@ export function useAccountOAuth() {
           ? '/admin/accounts/exchange-code'
           : '/admin/accounts/exchange-setup-token-code'
 
-      const tokenInfo = await adminAPI.accounts.exchangeCode(endpoint, {
+      const tokenInfo = await actionStore.exchangeCode(endpoint, {
         session_id: sessionId.value,
         code: authCode.value.trim(),
         ...proxyConfig
@@ -129,7 +130,7 @@ export function useAccountOAuth() {
           ? '/admin/accounts/cookie-auth'
           : '/admin/accounts/setup-token-cookie-auth'
 
-      const tokenInfo = await adminAPI.accounts.exchangeCode(endpoint, {
+      const tokenInfo = await actionStore.exchangeCode(endpoint, {
         session_id: '',
         code: sessionKeyValue.trim(),
         ...proxyConfig

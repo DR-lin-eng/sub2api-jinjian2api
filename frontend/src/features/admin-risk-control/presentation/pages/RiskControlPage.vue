@@ -1123,7 +1123,6 @@ import Select from '@/common/widgets/forms/Select.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import ModelWhitelistSelector from '@/features/admin-accounts/presentation/widgets/ModelWhitelistSelector.vue'
-import { adminAPI } from '@/api/admin'
 import type {
   ContentModerationAPIKeyLoad,
   ContentModerationAPIKeyStatus,
@@ -1137,10 +1136,15 @@ import type {
   ModerationMode,
   UpdateContentModerationConfig,
 } from '@/features/admin-risk-control/presentation/api'
-import type { AdminGroup, SelectOption } from '@/types'
+import type { SelectOption } from '@/types'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { formatDateTime as formatDateTimeValue } from '@/core/utils/format'
+import { useAdminRiskControl } from '@/features/admin-risk-control/presentation/composables/useAdminRiskControl'
+import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
+const $riskControl = useAdminRiskControl()
+const $groups = useAdminGroups()
 
 type SettingsTab = 'basic' | 'scope' | 'runtime' | 'response' | 'riskThresholds' | 'retention' | 'keywords'
 type WorkerSlotState = 'active' | 'idle' | 'disabled'
@@ -1736,9 +1740,9 @@ async function loadAll() {
   loading.value = true
   try {
     const [config, groupItems, runtimeStatus] = await Promise.all([
-      adminAPI.riskControl.getConfig(),
-      adminAPI.groups.getAll(),
-      adminAPI.riskControl.getStatus(),
+      $riskControl.getConfig(),
+      $groups.getAll(),
+      $riskControl.getStatus(),
     ])
     applyConfig(config)
     groups.value = groupItems
@@ -1758,7 +1762,7 @@ async function loadAll() {
 async function loadStatus(silent = true) {
   statusLoading.value = true
   try {
-    const runtimeStatus = await adminAPI.riskControl.getStatus()
+    const runtimeStatus = await $riskControl.getStatus()
     status.value = runtimeStatus
     if (Array.isArray(runtimeStatus.api_key_statuses)) {
       configForm.api_key_statuses = [...runtimeStatus.api_key_statuses]
@@ -1824,7 +1828,7 @@ async function saveConfig() {
       payload.delete_api_key_hashes = [...pendingDeleteApiKeyHashes.value]
     }
 
-    const updated = await adminAPI.riskControl.updateConfig(payload)
+    const updated = await $riskControl.updateConfig(payload)
     applyConfig(updated)
     settingsOpen.value = false
     appStore.showSuccess(t('admin.riskControl.saved'))
@@ -1849,7 +1853,7 @@ async function loadLogs() {
       from: normalizeDateTimeLocal(filters.from),
       to: normalizeDateTimeLocal(filters.to),
     }
-    const result = await adminAPI.riskControl.listLogs(params)
+    const result = await $riskControl.listLogs(params)
     logs.value = result.items
     pagination.total = result.total
     pagination.page = result.page
@@ -1882,7 +1886,7 @@ async function unbanUser(row: ContentModerationLog) {
   if (!row.user_id || unbanningUserID.value !== null) return
   unbanningUserID.value = row.user_id
   try {
-    const result = await adminAPI.riskControl.unbanUser(row.user_id)
+    const result = await $riskControl.unbanUser(row.user_id)
     logs.value = logs.value.map((item) => {
       if (item.user_id !== row.user_id) return item
       return { ...item, user_status: result.status }
@@ -1899,7 +1903,7 @@ async function deleteFlaggedHash() {
   if (!isFlaggedHashInputValid.value || hashActionLoading.value) return
   hashActionLoading.value = true
   try {
-    const result = await adminAPI.riskControl.deleteFlaggedHash(flaggedHashInput.value)
+    const result = await $riskControl.deleteFlaggedHash(flaggedHashInput.value)
     flaggedHashInput.value = ''
     await loadStatus(true)
     appStore.showSuccess(result.deleted ? t('admin.riskControl.flaggedHashDeleted') : t('admin.riskControl.flaggedHashNotFound'))
@@ -1916,7 +1920,7 @@ async function clearFlaggedHashes() {
   if (!confirmed) return
   hashActionLoading.value = true
   try {
-    const result = await adminAPI.riskControl.clearFlaggedHashes()
+    const result = await $riskControl.clearFlaggedHashes()
     await loadStatus(true)
     appStore.showSuccess(t('admin.riskControl.flaggedHashesCleared', { count: result.deleted }))
   } catch (err: unknown) {
@@ -1979,7 +1983,7 @@ async function testApiKeys(useInputKeys: boolean) {
   }
   apiKeyTesting.value = true
   try {
-    const result = await adminAPI.riskControl.testAPIKeys({
+    const result = await $riskControl.testAPIKeys({
       api_keys: keys,
       base_url: configForm.base_url,
       model: configForm.model,

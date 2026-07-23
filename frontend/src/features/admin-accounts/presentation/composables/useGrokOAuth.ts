@@ -1,12 +1,13 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { GrokTokenInfo } from '@/features/admin-accounts/data/datasources/grokDatasource'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
+import type { GrokTokenInfo } from '@/features/admin-accounts/domain/models/grokTokenInfo'
 import { extractApiErrorMessage, extractI18nErrorMessage } from '@/core/utils/apiError'
 
 export function useGrokOAuth() {
   const appStore = useAppStore()
+  const actionStore = useAdminAccountsActionStore()
   const { t } = useI18n()
 
   const authUrl = ref('')
@@ -32,11 +33,11 @@ export function useGrokOAuth() {
 
     try {
       const payload: Record<string, unknown> = {}
-      if (proxyId) payload.proxy_id = proxyId
+      if (proxyId) payload.proxyId = proxyId
 
-      const response = await adminAPI.grok.generateAuthUrl(payload)
-      authUrl.value = response.auth_url
-      sessionId.value = response.session_id
+      const response = await actionStore.grok_generateAuthUrl(payload as any)
+      authUrl.value = response.authUrl
+      sessionId.value = response.sessionId
       state.value = response.state
       return true
     } catch (err: any) {
@@ -69,9 +70,9 @@ export function useGrokOAuth() {
         state: params.state,
         code
       }
-      if (params.proxyId) payload.proxy_id = params.proxyId
+      if (params.proxyId) payload.proxyId = params.proxyId
 
-      return await adminAPI.grok.exchangeCode(payload as any)
+      return await actionStore.grok_exchangeCode(payload as any)
     } catch (err: any) {
       error.value = extractI18nErrorMessage(
         err,
@@ -99,7 +100,7 @@ export function useGrokOAuth() {
     error.value = ''
 
     try {
-      return await adminAPI.grok.refreshGrokToken(refreshToken.trim(), proxyId)
+      return await actionStore.refreshGrokToken(refreshToken.trim(), proxyId)
     } catch (err: any) {
       error.value = extractI18nErrorMessage(
         err,
@@ -117,7 +118,7 @@ export function useGrokOAuth() {
     const credentials: Record<string, unknown> = {
       access_token: tokenInfo.access_token,
       token_type: tokenInfo.token_type,
-      expires_at: tokenInfo.expires_at,
+      expires_at: tokenInfo.expiresAt,
       client_id: tokenInfo.client_id,
       scope: tokenInfo.scope,
       email: tokenInfo.email,

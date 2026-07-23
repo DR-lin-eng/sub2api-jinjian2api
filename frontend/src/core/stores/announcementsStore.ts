@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { announcementsAPI } from '@/api'
-import type { UserAnnouncement } from '@/types'
-
+import type { UserAnnouncement } from '@/features/announcements/domain/models/announcement'
 const THROTTLE_MS = 20 * 60 * 1000 // 20 minutes
 
 export const useAnnouncementStore = defineStore('announcements', () => {
@@ -18,7 +17,7 @@ export const useAnnouncementStore = defineStore('announcements', () => {
 
   // Getters
   const unreadCount = computed(() =>
-    announcements.value.filter((a) => !a.read_at).length
+    announcements.value.filter((a) => !a.readAt).length
   )
 
   // Actions
@@ -47,7 +46,7 @@ export const useAnnouncementStore = defineStore('announcements', () => {
 
   function enqueueNewPopups() {
     const newPopups = announcements.value.filter(
-      (a) => a.notify_mode === 'popup' && !a.read_at && !shownPopupIds.has(a.id)
+      (a) => a.notifyMode === 'popup' && !a.readAt && !shownPopupIds.has(a.id)
     )
     if (newPopups.length === 0) return
 
@@ -90,7 +89,7 @@ export const useAnnouncementStore = defineStore('announcements', () => {
       await announcementsAPI.markRead(id)
       const ann = announcements.value.find((a) => a.id === id)
       if (ann) {
-        ann.read_at = new Date().toISOString()
+        ann.readAt = new Date().toISOString()
       }
     } catch (err: any) {
       console.error('Failed to mark announcement as read:', err)
@@ -98,15 +97,15 @@ export const useAnnouncementStore = defineStore('announcements', () => {
   }
 
   async function markAllAsRead() {
-    const unread = announcements.value.filter((a) => !a.read_at)
+    const unread = announcements.value.filter((a) => !a.readAt)
     if (unread.length === 0) return
 
     try {
       loading.value = true
       await Promise.all(unread.map((a) => announcementsAPI.markRead(a.id)))
       announcements.value.forEach((a) => {
-        if (!a.read_at) {
-          a.read_at = new Date().toISOString()
+        if (!a.readAt) {
+          a.readAt = new Date().toISOString()
         }
       })
     } catch (err: any) {

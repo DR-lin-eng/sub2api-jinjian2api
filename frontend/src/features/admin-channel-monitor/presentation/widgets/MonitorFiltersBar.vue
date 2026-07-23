@@ -63,7 +63,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { Provider } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
+import type { Provider } from '@/core/constants/channelMonitor'
 import Select from '@/common/widgets/forms/Select.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import {

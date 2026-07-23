@@ -17,7 +17,7 @@
         <div v-if="order" class="card overflow-hidden">
           <div class="bg-gradient-to-br from-[#635bff] to-[#4f46e5] px-6 py-6 text-center">
             <p class="text-sm font-medium text-indigo-200">{{ t('payment.actualPay') }}</p>
-            <p class="mt-1 text-3xl font-bold text-white">{{ formatGatewayAmount(order.pay_amount) }}</p>
+            <p class="mt-1 text-3xl font-bold text-white">{{ formatGatewayAmount(order.payAmount) }}</p>
           </div>
         </div>
 
@@ -162,7 +162,7 @@ onMounted(async () => {
     }
 
     await paymentStore.fetchConfig()
-    const publishableKey = paymentStore.config?.stripe_publishable_key
+    const publishableKey = paymentStore.config?.stripePublishableKey
     if (!publishableKey) { initError.value = t('payment.stripeNotConfigured'); return }
 
     const { loadStripe } = await import('@stripe/stripe-js/pure')

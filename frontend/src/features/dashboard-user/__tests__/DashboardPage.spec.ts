@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import { ref } from 'vue'
 
 import DashboardPage from '@/features/dashboard-user/presentation/pages/DashboardPage.vue'
@@ -17,7 +18,16 @@ vi.mock('@/core/stores/authStore', () => ({
   })
 }))
 
-vi.mock('@/features/keys/data/datasources/keysDatasource', () => ({ keysAPI: { list: keysList } }))
+vi.mock('@/features/keys/data/datasources/keysQueryDatasource', () => ({
+  list: keysList,
+  getById: vi.fn(),
+}))
+vi.mock('@/features/keys/data/datasources/keysActionDatasource', () => ({
+  create: vi.fn(),
+  update: vi.fn(),
+  deleteKey: vi.fn(),
+  toggleStatus: vi.fn(),
+}))
 vi.mock('@/features/usage/data/datasources/usageDatasource', () => ({
   usageAPI: {
     getDashboardStats: vi.fn().mockResolvedValue({}),
@@ -66,6 +76,7 @@ const mountDashboard = () => mount(DashboardPage, {
 
 describe('user DashboardPage API key usage orchestration', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
     keysList.mockReset()
     getDashboardApiKeysUsage.mockReset()
     keysList.mockResolvedValue(page([], 1, 1))

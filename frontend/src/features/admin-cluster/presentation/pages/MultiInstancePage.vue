@@ -5,7 +5,7 @@
         <div class="min-w-0 text-sm text-gray-500 dark:text-gray-400">
           <span>{{ t('admin.cluster.lastUpdated') }}</span>
           <span class="ml-2 font-medium text-gray-800 dark:text-gray-200">
-            {{ status ? formatDateTime(status.observed_at) : '-' }}
+            {{ status ? formatDateTime(status.observedAt) : '-' }}
           </span>
         </div>
         <div class="flex items-center gap-3">
@@ -74,39 +74,39 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-              <tr v-for="instance in instances" :key="instance.runner_id" class="align-top">
+              <tr v-for="instance in instances" :key="instance.runnerId" class="align-top">
                 <td class="px-4 py-3">
                   <div class="flex min-w-0 items-center gap-2">
                     <span class="h-2 w-2 flex-none rounded-full" :class="instanceDotClass(instance.status)" />
                     <div class="min-w-0">
                       <div class="flex items-center gap-2">
-                        <span class="truncate font-medium text-gray-900 dark:text-white">{{ instance.node_name }}</span>
+                        <span class="truncate font-medium text-gray-900 dark:text-white">{{ instance.nodeName }}</span>
                         <span v-if="instance.current" class="rounded bg-primary-50 px-1.5 py-0.5 text-[11px] font-medium text-primary-700 dark:bg-primary-950/50 dark:text-primary-300">
                           {{ t('admin.cluster.nodes.current') }}
                         </span>
                       </div>
-                      <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400" :title="instance.runner_id">
-                        {{ instance.hostname }} · PID {{ instance.process_id }}
+                      <p class="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400" :title="instance.runnerId">
+                        {{ instance.hostname }} · PID {{ instance.processId }}
                       </p>
                     </div>
                   </div>
                 </td>
                 <td class="px-4 py-3">
                   <p class="font-medium text-gray-800 dark:text-gray-200">{{ t('admin.cluster.nodes.apiFrontend') }}</p>
-                  <p class="mt-1 text-xs" :class="instance.worker_enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'">
-                    {{ instance.worker_enabled ? t('admin.cluster.nodes.worker') : workerModeLabel(instance.worker_mode) }}
+                  <p class="mt-1 text-xs" :class="instance.workerEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'">
+                    {{ instance.workerEnabled ? t('admin.cluster.nodes.worker') : workerModeLabel(instance.workerMode) }}
                   </p>
                 </td>
                 <td class="px-4 py-3">
                   <div class="space-y-1.5">
-                    <HealthLine :healthy="instance.database_ok" :label="t('admin.cluster.nodes.database')" />
-                    <HealthLine :healthy="instance.redis_ok" :label="t('admin.cluster.nodes.redis')" />
+                    <HealthLine :healthy="instance.databaseOk" :label="t('admin.cluster.nodes.database')" />
+                    <HealthLine :healthy="instance.redisOk" :label="t('admin.cluster.nodes.redis')" />
                   </div>
                 </td>
                 <td class="px-4 py-3 text-gray-700 dark:text-gray-300">{{ instance.version || '-' }}</td>
-                <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ formatDateTime(instance.started_at) }}</td>
+                <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ formatDateTime(instance.startedAt) }}</td>
                 <td class="px-4 py-3">
-                  <p class="text-gray-700 dark:text-gray-200">{{ formatRelativeTime(instance.last_seen_at) }}</p>
+                  <p class="text-gray-700 dark:text-gray-200">{{ formatRelativeTime(instance.lastSeenAt) }}</p>
                   <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ statusLabel(instance.status) }}</p>
                 </td>
               </tr>
@@ -140,10 +140,10 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
-              <tr v-for="task in tasks" :key="task.run_id" class="align-top">
+              <tr v-for="task in tasks" :key="task.runId" class="align-top">
                 <td class="px-4 py-3">
-                  <p class="truncate font-mono text-xs font-medium text-gray-900 dark:text-white" :title="task.task_key">{{ task.task_key }}</p>
-                  <p class="mt-1 truncate font-mono text-[11px] text-gray-400" :title="task.run_id">{{ task.run_id }}</p>
+                  <p class="truncate font-mono text-xs font-medium text-gray-900 dark:text-white" :title="task.taskKey">{{ task.taskKey }}</p>
+                  <p class="mt-1 truncate font-mono text-[11px] text-gray-400" :title="task.runId">{{ task.runId }}</p>
                 </td>
                 <td class="px-4 py-3">
                   <span class="inline-flex rounded-md px-2 py-1 text-xs font-medium" :class="taskStatusClass(task.status)">
@@ -151,13 +151,13 @@
                   </span>
                 </td>
                 <td class="px-4 py-3">
-                  <p class="truncate text-gray-800 dark:text-gray-200" :title="task.node_name">{{ task.node_name }}</p>
-                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ formatRelativeTime(task.heartbeat_at) }}</p>
+                  <p class="truncate text-gray-800 dark:text-gray-200" :title="task.nodeName">{{ task.nodeName }}</p>
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ formatRelativeTime(task.heartbeatAt) }}</p>
                 </td>
-                <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ formatDateTime(task.started_at) }}</td>
+                <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ formatDateTime(task.startedAt) }}</td>
                 <td class="px-4 py-3 text-gray-600 dark:text-gray-300">{{ taskDuration(task) }}</td>
                 <td class="px-4 py-3">
-                  <p class="line-clamp-2 break-words text-xs text-red-600 dark:text-red-400" :title="task.error_message">{{ task.error_message || '-' }}</p>
+                  <p class="line-clamp-2 break-words text-xs text-red-600 dark:text-red-400" :title="task.errorMessage">{{ task.errorMessage || '-' }}</p>
                 </td>
               </tr>
               <tr v-if="!loading && tasks.length === 0">
@@ -179,38 +179,45 @@ import { useI18n } from 'vue-i18n'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
-import { adminAPI } from '@/api/admin'
-import type { ClusterInstanceStatus, ClusterStatusResponse, ClusterTaskRun, ClusterTaskStatus } from '@/features/admin-cluster/presentation/api'
+import type { ClusterInstanceStatus } from '@/features/admin-cluster/domain/models/clusterInstanceStatus'
+import type { ClusterTaskRun } from '@/features/admin-cluster/domain/models/clusterTaskRun'
+import type { ClusterTaskStatus } from '@/features/admin-cluster/domain/models/clusterTaskStatus'
+import type { ClusterStatusResponse } from '@/features/admin-cluster/domain/models/clusterStatusResponse'
 import { formatDateTime, formatRelativeTime } from '@/core/utils/format'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
+import { useAdminCluster } from '@/features/admin-cluster/presentation/composables/useAdminCluster'
 
+const cluster = useAdminCluster()
 const { t } = useI18n()
 const status = ref<ClusterStatusResponse | null>(null)
-const loading = ref(false)
-const errorMessage = ref('')
 const autoRefresh = ref(true)
+const loading = computed(() => cluster.loading.getStatus)
+const errorMessage = computed(() => {
+  const err = cluster.errors.getStatus
+  return err ? extractApiErrorMessage(err, t('admin.cluster.loadFailed')) : ''
+})
 let refreshTimer: ReturnType<typeof setInterval> | null = null
 
 const instances = computed(() => status.value?.instances ?? [])
 const tasks = computed(() => status.value?.tasks ?? [])
 const summaryMetrics = computed(() => [
-  { label: t('admin.cluster.summary.online'), value: status.value?.summary.online_nodes ?? 0, icon: 'server' as const, iconClass: 'text-emerald-500' },
-  { label: t('admin.cluster.summary.workers'), value: status.value?.summary.worker_nodes ?? 0, icon: 'cpu' as const, iconClass: 'text-primary-500' },
-  { label: t('admin.cluster.summary.activeTasks'), value: status.value?.summary.active_tasks ?? 0, icon: 'clock' as const, iconClass: 'text-amber-500' },
-  { label: t('admin.cluster.summary.unhealthy'), value: status.value?.summary.unhealthy_nodes ?? 0, icon: 'exclamationTriangle' as const, iconClass: 'text-red-500' },
+  { label: t('admin.cluster.summary.online'), value: status.value?.summary.onlineNodes ?? 0, icon: 'server' as const, iconClass: 'text-emerald-500' },
+  { label: t('admin.cluster.summary.workers'), value: status.value?.summary.workerNodes ?? 0, icon: 'cpu' as const, iconClass: 'text-primary-500' },
+  { label: t('admin.cluster.summary.active_tasks'), value: status.value?.summary.activeTasks ?? 0, icon: 'clock' as const, iconClass: 'text-amber-500' },
+  { label: t('admin.cluster.summary.unhealthy'), value: status.value?.summary.unhealthyNodes ?? 0, icon: 'exclamationTriangle' as const, iconClass: 'text-red-500' },
 ])
 const deploymentItems = computed(() => {
   const deployment = status.value?.deployment
   if (!deployment) return []
   return [
     { label: t('admin.cluster.deployment.mode'), value: deployment.mode === 'multi_instance' ? t('admin.cluster.deployment.multiInstance') : t('admin.cluster.deployment.standalone') },
-    { label: t('admin.cluster.deployment.nodeName'), value: deployment.node_name },
-    { label: t('admin.cluster.deployment.workerMode'), value: workerModeLabel(deployment.worker_mode) },
-    { label: t('admin.cluster.deployment.workerResolved'), value: deployment.worker_enabled ? t('admin.cluster.deployment.enabled') : t('admin.cluster.deployment.disabled') },
-    { label: t('admin.cluster.deployment.frontend'), value: deployment.frontend_enabled ? t('admin.cluster.deployment.enabled') : t('admin.cluster.deployment.disabled') },
-    { label: t('admin.cluster.deployment.heartbeat'), value: t('admin.cluster.deployment.seconds', { value: deployment.heartbeat_interval_seconds }) },
-    { label: t('admin.cluster.deployment.staleAfter'), value: t('admin.cluster.deployment.seconds', { value: deployment.stale_after_seconds }) },
-    { label: t('admin.cluster.deployment.lease'), value: t('admin.cluster.deployment.seconds', { value: deployment.task_lease_seconds }) },
+    { label: t('admin.cluster.deployment.node_name'), value: deployment.nodeName },
+    { label: t('admin.cluster.deployment.worker_mode'), value: workerModeLabel(deployment.workerMode) },
+    { label: t('admin.cluster.deployment.workerResolved'), value: deployment.workerEnabled ? t('admin.cluster.deployment.enabled') : t('admin.cluster.deployment.disabled') },
+    { label: t('admin.cluster.deployment.frontend'), value: deployment.frontendEnabled ? t('admin.cluster.deployment.enabled') : t('admin.cluster.deployment.disabled') },
+    { label: t('admin.cluster.deployment.heartbeat'), value: t('admin.cluster.deployment.seconds', { value: deployment.heartbeatIntervalSeconds }) },
+    { label: t('admin.cluster.deployment.staleAfter'), value: t('admin.cluster.deployment.seconds', { value: deployment.staleAfterSeconds }) },
+    { label: t('admin.cluster.deployment.lease'), value: t('admin.cluster.deployment.seconds', { value: deployment.taskLeaseSeconds }) },
   ]
 })
 
@@ -248,8 +255,8 @@ function taskStatusClass(value: ClusterTaskStatus): string {
 }
 
 function taskDuration(task: ClusterTaskRun): string {
-  const start = new Date(task.started_at).getTime()
-  const end = task.finished_at ? new Date(task.finished_at).getTime() : Date.now()
+  const start = new Date(task.startedAt).getTime()
+  const end = task.finishedAt ? new Date(task.finishedAt).getTime() : Date.now()
   const seconds = Math.max(0, Math.floor((end - start) / 1000))
   if (seconds < 60) return `${seconds}s`
   const minutes = Math.floor(seconds / 60)
@@ -259,14 +266,10 @@ function taskDuration(task: ClusterTaskRun): string {
 
 async function fetchStatus(): Promise<void> {
   if (loading.value) return
-  loading.value = true
-  errorMessage.value = ''
   try {
-    status.value = await adminAPI.cluster.getStatus()
-  } catch (error) {
-    errorMessage.value = extractApiErrorMessage(error, t('admin.cluster.loadFailed'))
-  } finally {
-    loading.value = false
+    status.value = await cluster.getStatus()
+  } catch {
+    // errorMessage 已由 store.errors.getStatus 派生,无需在 Page 再处理
   }
 }
 
@@ -286,4 +289,3 @@ onBeforeUnmount(() => {
   if (refreshTimer) clearInterval(refreshTimer)
 })
 </script>
-

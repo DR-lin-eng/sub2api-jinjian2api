@@ -219,15 +219,15 @@
                       : t(`admin.backup.status.${record.status}`) }}
                   </span>
                 </td>
-                <td class="py-3 pr-4 text-xs">{{ record.file_name }}</td>
-                <td class="py-3 pr-4 text-xs">{{ formatSize(record.size_bytes) }}</td>
+                <td class="py-3 pr-4 text-xs">{{ record.fileName }}</td>
+                <td class="py-3 pr-4 text-xs">{{ formatSize(record.sizeBytes) }}</td>
                 <td class="py-3 pr-4 text-xs">
-                  {{ record.expires_at ? formatDate(record.expires_at) : t('admin.backup.neverExpire') }}
+                  {{ record.expiresAt ? formatDate(record.expiresAt) : t('admin.backup.neverExpire') }}
                 </td>
                 <td class="py-3 pr-4 text-xs">
-                  {{ record.triggered_by === 'scheduled' ? t('admin.backup.trigger.scheduled') : t('admin.backup.trigger.manual') }}
+                  {{ record.triggeredBy === 'scheduled' ? t('admin.backup.trigger.scheduled') : t('admin.backup.trigger.manual') }}
                 </td>
-                <td class="py-3 pr-4 text-xs">{{ formatDate(record.started_at) }}</td>
+                <td class="py-3 pr-4 text-xs">{{ formatDate(record.startedAt) }}</td>
                 <td class="py-3 text-xs">
                   <div class="flex flex-wrap gap-1">
                     <button
@@ -357,16 +357,15 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { adminAPI } from '@/api'
 import { useAppStore } from '@/stores'
-import type {
-  BackupS3Config,
-  BackupScheduleConfig,
-  BackupRecord,
-  ImageStorageConfig,
-} from '@/features/admin-backup/presentation/api'
+import type { BackupRecord } from '@/features/admin-backup/domain/models/backupRecord'
+import type { UpdateBackupS3ConfigRequest } from '@/features/admin-backup/data/requests_models/updateBackupS3ConfigRequest'
+import type { UpdateBackupScheduleConfigRequest } from '@/features/admin-backup/data/requests_models/updateBackupScheduleConfigRequest'
+import type { UpdateImageStorageConfigRequest } from '@/features/admin-backup/data/requests_models/updateImageStorageConfigRequest'
 import { useStepUp, isStepUpBlocked, isStepUpCancelled, stepUpBlockReason } from '@/common/composables/useStepUp'
 import TotpStepUpDialog from '@/features/auth/presentation/widgets/TotpStepUpDialog.vue'
+import { useAdminBackup } from '@/features/admin-backup/presentation/composables/useAdminBackup'
+const $backup = useAdminBackup()
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -384,7 +383,7 @@ function reportStepUpBlocked(error: unknown): boolean {
 }
 
 // S3 config
-const s3Form = ref<BackupS3Config>({
+const s3Form = ref<UpdateBackupS3ConfigRequest>({
   endpoint: '',
   region: 'auto',
   bucket: '',
@@ -399,7 +398,7 @@ const testingS3 = ref(false)
 
 // Async image object storage. Shares the S3 client with backups, so the default is
 // to reuse the credentials configured above and only differ by prefix.
-const imageStorageForm = ref<ImageStorageConfig>({
+const imageStorageForm = ref<UpdateImageStorageConfigRequest>({
   enabled: false,
   reuse_backup_s3: true,
   bucket: '',
@@ -418,7 +417,7 @@ const savingImageStorage = ref(false)
 const testingImageStorage = ref(false)
 
 // Schedule config
-const scheduleForm = ref<BackupScheduleConfig>({
+const scheduleForm = ref<UpdateBackupScheduleConfigRequest>({
   enabled: false,
   cron_expr: '0 2 * * *',
   retain_days: 14,
@@ -456,7 +455,7 @@ function startPolling(backupId: string) {
       return
     }
     try {
-      const record = await adminAPI.backup.getBackup(backupId)
+      const record = await $backup.getBackup(backupId)
       updateRecordInList(record)
       if (record.status === 'completed' || record.status === 'failed') {
         stopPolling()
@@ -464,7 +463,7 @@ function startPolling(backupId: string) {
         if (record.status === 'completed') {
           appStore.showSuccess(t('admin.backup.operations.backupCreated'))
         } else {
-          appStore.showError(record.error_message || t('admin.backup.operations.backupFailed'))
+          appStore.showError(record.errorMessage || t('admin.backup.operations.backupFailed'))
         }
         await loadBackups()
       }
@@ -492,15 +491,15 @@ function startRestorePolling(backupId: string) {
       return
     }
     try {
-      const record = await adminAPI.backup.getBackup(backupId)
+      const record = await $backup.getBackup(backupId)
       updateRecordInList(record)
-      if (record.restore_status === 'completed' || record.restore_status === 'failed') {
+      if (record.restoreStatus === 'completed' || record.restoreStatus === 'failed') {
         stopRestorePolling()
         restoringId.value = ''
-        if (record.restore_status === 'completed') {
+        if (record.restoreStatus === 'completed') {
           appStore.showSuccess(t('admin.backup.actions.restoreSuccess'))
         } else {
-          appStore.showError(record.restore_error || t('admin.backup.operations.restoreFailed'))
+          appStore.showError(record.restoreError || t('admin.backup.operations.restoreFailed'))
         }
         await loadBackups()
       }
@@ -529,7 +528,7 @@ function handleVisibilityChange() {
         creatingBackup.value = true
         startPolling(running.id)
       }
-      const restoring = backups.value.find(r => r.restore_status === 'running')
+      const restoring = backups.value.find(r => r.restoreStatus === 'running')
       if (restoring) {
         restoringId.value = restoring.id
         startRestorePolling(restoring.id)
@@ -552,17 +551,17 @@ const r2ConfigRows = computed(() => [
 
 async function loadS3Config() {
   try {
-    const cfg = await adminAPI.backup.getS3Config()
+    const cfg = await $backup.getS3Config()
     s3Form.value = {
       endpoint: cfg.endpoint || '',
       region: cfg.region || 'auto',
       bucket: cfg.bucket || '',
-      access_key_id: cfg.access_key_id || '',
+      access_key_id: cfg.accessKeyId || '',
       secret_access_key: '',
       prefix: cfg.prefix || 'backups/',
-      force_path_style: cfg.force_path_style,
+      force_path_style: cfg.forcePathStyle,
     }
-    s3SecretConfigured.value = Boolean(cfg.access_key_id)
+    s3SecretConfigured.value = Boolean(cfg.accessKeyId)
   } catch (error) {
     appStore.showError((error as { message?: string })?.message || t('errors.networkError'))
   }
@@ -571,7 +570,7 @@ async function loadS3Config() {
 async function saveS3Config() {
   savingS3.value = true
   try {
-    await backupStepUp.run(() => adminAPI.backup.updateS3Config(s3Form.value))
+    await backupStepUp.run(() => $backup.updateS3Config(s3Form.value))
     appStore.showSuccess(t('admin.backup.s3.saved'))
     await loadS3Config()
   } catch (error) {
@@ -587,14 +586,22 @@ async function saveS3Config() {
 
 async function loadImageStorageConfig() {
   try {
-    const { config, secret_configured } = await adminAPI.backup.getImageStorageConfig()
+    const { config, secretConfigured } = await $backup.getImageStorageConfig()
     imageStorageForm.value = {
-      ...config,
+      enabled: config.enabled,
+      reuse_backup_s3: config.reuseBackupS3,
+      bucket: config.bucket || '',
       prefix: config.prefix || 'images/',
+      public_base_url: config.publicBaseUrl || '',
+      presign_expiry_hours: config.presignExpiryHours || 24,
+      max_download_bytes: config.maxDownloadBytes || 33554432,
+      endpoint: config.endpoint || '',
       region: config.region || 'auto',
+      access_key_id: config.accessKeyId || '',
       secret_access_key: '',
+      force_path_style: config.forcePathStyle,
     }
-    imageStorageSecretConfigured.value = secret_configured
+    imageStorageSecretConfigured.value = secretConfigured
   } catch (error) {
     appStore.showError((error as { message?: string })?.message || t('errors.networkError'))
   }
@@ -603,7 +610,7 @@ async function loadImageStorageConfig() {
 async function saveImageStorageConfig() {
   savingImageStorage.value = true
   try {
-    await backupStepUp.run(() => adminAPI.backup.updateImageStorageConfig(imageStorageForm.value))
+    await backupStepUp.run(() => $backup.updateImageStorageConfig(imageStorageForm.value))
     appStore.showSuccess(t('admin.backup.imageStorage.saved'))
     await loadImageStorageConfig()
   } catch (error) {
@@ -620,7 +627,7 @@ async function saveImageStorageConfig() {
 async function testImageStorage() {
   testingImageStorage.value = true
   try {
-    const result = await adminAPI.backup.testImageStorageConnection(imageStorageForm.value)
+    const result = await $backup.testImageStorageConnection(imageStorageForm.value)
     if (result.ok) {
       appStore.showSuccess(result.message || t('admin.backup.s3.testSuccess'))
     } else {
@@ -636,7 +643,7 @@ async function testImageStorage() {
 async function testS3() {
   testingS3.value = true
   try {
-    const result = await adminAPI.backup.testS3Connection(s3Form.value)
+    const result = await $backup.testS3Connection(s3Form.value)
     if (result.ok) {
       appStore.showSuccess(result.message || t('admin.backup.s3.testSuccess'))
     } else {
@@ -651,12 +658,12 @@ async function testS3() {
 
 async function loadSchedule() {
   try {
-    const cfg = await adminAPI.backup.getSchedule()
+    const cfg = await $backup.getSchedule()
     scheduleForm.value = {
       enabled: cfg.enabled,
-      cron_expr: cfg.cron_expr || '0 2 * * *',
-      retain_days: cfg.retain_days || 14,
-      retain_count: cfg.retain_count || 10,
+      cron_expr: cfg.cronExpr || '0 2 * * *',
+      retain_days: cfg.retainDays || 14,
+      retain_count: cfg.retainCount || 10,
     }
   } catch (error) {
     appStore.showError((error as { message?: string })?.message || t('errors.networkError'))
@@ -666,7 +673,7 @@ async function loadSchedule() {
 async function saveSchedule() {
   savingSchedule.value = true
   try {
-    await adminAPI.backup.updateSchedule(scheduleForm.value)
+    await $backup.updateSchedule(scheduleForm.value)
     appStore.showSuccess(t('admin.backup.schedule.saved'))
   } catch (error) {
     appStore.showError((error as { message?: string })?.message || t('errors.networkError'))
@@ -678,7 +685,7 @@ async function saveSchedule() {
 async function loadBackups() {
   loadingBackups.value = true
   try {
-    const result = await adminAPI.backup.listBackups()
+    const result = await $backup.listBackups()
     backups.value = result.items || []
   } catch (error) {
     appStore.showError((error as { message?: string })?.message || t('errors.networkError'))
@@ -690,7 +697,7 @@ async function loadBackups() {
 async function createBackup() {
   creatingBackup.value = true
   try {
-    const record = await backupStepUp.run(() => adminAPI.backup.createBackup({ expire_days: manualExpireDays.value }))
+    const record = await backupStepUp.run(() => $backup.createBackup({ expire_days: manualExpireDays.value }))
     // 插入到列表顶部
     backups.value.unshift(record)
     startPolling(record.id)
@@ -714,7 +721,7 @@ async function createBackup() {
 
 async function downloadBackup(id: string) {
   try {
-    const result = await backupStepUp.run(() => adminAPI.backup.getDownloadURL(id))
+    const result = await backupStepUp.run(() => $backup.getDownloadURL(id))
     // 预签名 URL 带 attachment disposition，同页 anchor 导航直接触发下载；
     // 不用 window.open：step-up 弹窗 await 会耗尽瞬态用户激活，新标签页会被浏览器拦截。
     const link = document.createElement('a')
@@ -734,7 +741,7 @@ async function restoreBackup(id: string) {
   if (!password) return
   restoringId.value = id
   try {
-    const record = await backupStepUp.run(() => adminAPI.backup.restoreBackup(id, password))
+    const record = await backupStepUp.run(() => $backup.restoreBackup(id, password))
     updateRecordInList(record)
     startRestorePolling(id)
   } catch (error: any) {
@@ -753,7 +760,7 @@ async function restoreBackup(id: string) {
 async function removeBackup(id: string) {
   if (!window.confirm(t('admin.backup.actions.deleteConfirm'))) return
   try {
-    await adminAPI.backup.deleteBackup(id)
+    await $backup.deleteBackup(id)
     appStore.showSuccess(t('admin.backup.actions.deleted'))
     await loadBackups()
   } catch (error) {
@@ -798,7 +805,7 @@ onMounted(async () => {
     creatingBackup.value = true
     startPolling(runningBackup.id)
   }
-  const restoringBackup = backups.value.find(r => r.restore_status === 'running')
+  const restoringBackup = backups.value.find(r => r.restoreStatus === 'running')
   if (restoringBackup) {
     restoringId.value = restoringBackup.id
     startRestorePolling(restoringBackup.id)

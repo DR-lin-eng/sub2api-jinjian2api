@@ -4,8 +4,7 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type { Group } from '@/types'
-
+import type { Group } from '@/features/admin-groups/domain/models/group'
 /**
  * Get available groups that the current user can bind to API keys
  * This returns groups based on user's permissions:

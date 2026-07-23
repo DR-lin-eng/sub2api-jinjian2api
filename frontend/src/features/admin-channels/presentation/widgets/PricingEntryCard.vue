@@ -238,10 +238,12 @@ import Select from '@/common/widgets/forms/Select.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import IntervalRow from './IntervalRow.vue'
 import ModelTagInput from './ModelTagInput.vue'
-import type { PricingFormEntry, IntervalFormEntry } from '@/features/admin-channels/presentation/adminChannelSignals'
-import { perTokenToMTok, getPlatformTagClass } from '@/features/admin-channels/presentation/adminChannelSignals'
-import type { BillingMode } from '@/features/admin-channels/data/datasources/adminChannelsDatasource'
-import channelsAPI from '@/features/admin-channels/data/datasources/adminChannelsDatasource'
+import type { PricingFormEntry, IntervalFormEntry } from '@/features/admin-channels/presentation/composables/useChannelPricingForm'
+import { perTokenToMTok, getPlatformTagClass } from '@/features/admin-channels/presentation/composables/useChannelPricingForm'
+import type { BillingMode } from '@/core/constants/channel'
+import { useAdminChannels } from '@/features/admin-channels/presentation/composables/useAdminChannels'
+
+const $channels = useAdminChannels()
 
 const { t } = useI18n()
 
@@ -324,17 +326,17 @@ async function onModelsUpdate(newModels: string[]) {
 
   // 查询第一个新增模型的默认价格
   try {
-    const result = await channelsAPI.getModelDefaultPricing(addedModels[0])
+    const result = await $channels.getModelDefaultPricing(addedModels[0])
     if (result.found) {
       emit('update', {
         ...props.entry,
         models: newModels,
-        input_price: perTokenToMTok(result.input_price ?? null),
-        output_price: perTokenToMTok(result.output_price ?? null),
-        cache_write_price: perTokenToMTok(result.cache_write_price ?? null),
-        cache_read_price: perTokenToMTok(result.cache_read_price ?? null),
-        image_input_price: perTokenToMTok(result.image_input_price ?? null),
-        image_output_price: perTokenToMTok(result.image_output_price ?? null),
+        input_price: perTokenToMTok(result.inputPrice ?? null),
+        output_price: perTokenToMTok(result.outputPrice ?? null),
+        cache_write_price: perTokenToMTok(result.cacheWritePrice ?? null),
+        cache_read_price: perTokenToMTok(result.cacheReadPrice ?? null),
+        image_input_price: perTokenToMTok(result.imageInputPrice ?? null),
+        image_output_price: perTokenToMTok(result.imageOutputPrice ?? null),
       })
     }
   } catch {

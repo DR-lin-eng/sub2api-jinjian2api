@@ -61,22 +61,22 @@
               <span class="font-medium text-gray-900 dark:text-white">{{ tpl.name }}</span>
               <span
                 class="inline-flex items-center rounded-md px-1.5 py-0.5 text-xs"
-                :class="modeBadgeClass(tpl.body_override_mode)"
+                :class="modeBadgeClass(tpl.bodyOverrideMode)"
               >
-                {{ modeLabel(tpl.body_override_mode) }}
+                {{ modeLabel(tpl.bodyOverrideMode) }}
               </span>
               <span
                 v-if="tpl.provider === PROVIDER_OPENAI"
                 class="inline-flex items-center rounded-md px-1.5 py-0.5 text-xs"
-                :class="apiModeBadgeClass(tpl.api_mode)"
+                :class="apiModeBadgeClass(tpl.apiMode)"
               >
-                {{ apiModeLabel(tpl.api_mode) }}
+                {{ apiModeLabel(tpl.apiMode) }}
               </span>
               <span
-                v-if="tpl.associated_monitors > 0"
+                v-if="tpl.associatedMonitors > 0"
                 class="text-xs text-gray-500 dark:text-gray-400"
               >
-                {{ t('admin.channelMonitor.template.associatedCount', { n: tpl.associated_monitors }) }}
+                {{ t('admin.channelMonitor.template.associatedCount', { n: tpl.associatedMonitors }) }}
               </span>
             </div>
             <p v-if="tpl.description" class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
@@ -84,14 +84,14 @@
             </p>
             <p class="mt-1 text-xs text-gray-400">
               {{ t('admin.channelMonitor.template.headersSummary', {
-                n: Object.keys(tpl.extra_headers || {}).length,
+                n: Object.keys(tpl.extraHeaders || {}).length,
               }) }}
             </p>
           </div>
           <div class="flex flex-shrink-0 gap-2">
             <button
               class="btn btn-secondary btn-sm"
-              :disabled="tpl.associated_monitors === 0"
+              :disabled="tpl.associatedMonitors === 0"
               :title="t('admin.channelMonitor.template.applyTooltip')"
               @click="confirmApply(tpl)"
             >
@@ -231,13 +231,9 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
-import { adminAPI } from '@/api/admin'
-import type {
-  APIMode,
-  BodyOverrideMode,
-  Provider,
-} from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
-import type { ChannelMonitorTemplate } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorTemplateDatasource'
+import { useAdminChannelMonitor } from '@/features/admin-channel-monitor/presentation/composables/useAdminChannelMonitor'
+import type { APIMode, BodyOverrideMode, Provider } from '@/core/constants/channelMonitor'
+import type { ChannelMonitorTemplate } from '@/features/admin-channel-monitor/domain/models/channelMonitorTemplate'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
@@ -263,6 +259,7 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const appStore = useAppStore()
 const { providerPickerClass } = useChannelMonitorFormat()
+const channelMonitor = useAdminChannelMonitor()
 
 const providerTabs = computed<{ value: Provider; label: string }[]>(() => [
   { value: PROVIDER_ANTHROPIC, label: t('monitorCommon.providers.anthropic') },
@@ -323,11 +320,11 @@ function loadForm(tpl: ChannelMonitorTemplate) {
   form.id = tpl.id
   form.name = tpl.name
   form.provider = tpl.provider
-  form.api_mode = normalizeAPIMode(tpl.api_mode)
+  form.api_mode = normalizeAPIMode(tpl.apiMode)
   form.description = tpl.description
-  form.extra_headers = { ...(tpl.extra_headers || {}) }
-  form.body_override_mode = tpl.body_override_mode
-  form.body_override = tpl.body_override ? { ...tpl.body_override } : null
+  form.extra_headers = { ...(tpl.extraHeaders || {}) }
+  form.body_override_mode = tpl.bodyOverrideMode
+  form.body_override = tpl.bodyOverride ? { ...tpl.bodyOverride } : null
 }
 
 function openCreateForm() {
@@ -348,7 +345,7 @@ function backToList() {
 async function fetchTemplates() {
   loading.value = true
   try {
-    const { items } = await adminAPI.channelMonitorTemplate.list()
+    const { items } = await channelMonitor.listTemplates()
     templates.value = items
   } catch (err: unknown) {
     appStore.showError(extractApiErrorMessage(err, t('common.error')))
@@ -378,7 +375,7 @@ async function handleSubmit() {
   submitting.value = true
   try {
     if (editing.value === 'new') {
-      await adminAPI.channelMonitorTemplate.create({
+      await channelMonitor.createTemplate({
         name: form.name.trim(),
         provider: form.provider,
         api_mode: form.provider === PROVIDER_OPENAI ? form.api_mode : API_MODE_CHAT_COMPLETIONS,
@@ -389,7 +386,7 @@ async function handleSubmit() {
       })
       appStore.showSuccess(t('admin.channelMonitor.template.createSuccess'))
     } else if (typeof editing.value === 'number') {
-      await adminAPI.channelMonitorTemplate.update(editing.value, {
+      await channelMonitor.updateTemplate(editing.value, {
         name: form.name.trim(),
         api_mode: form.provider === PROVIDER_OPENAI ? form.api_mode : API_MODE_CHAT_COMPLETIONS,
         description: form.description.trim(),
@@ -442,7 +439,7 @@ const confirmDeleteMessage = computed(() => {
   if (!tpl) return ''
   return t('admin.channelMonitor.template.deleteConfirm', {
     name: tpl.name,
-    n: tpl.associated_monitors,
+    n: tpl.associatedMonitors,
   })
 })
 
@@ -451,7 +448,7 @@ async function doDelete() {
   confirmDelete.show = false
   if (!tpl) return
   try {
-    await adminAPI.channelMonitorTemplate.del(tpl.id)
+    await channelMonitor.deleteTemplate(tpl.id)
     appStore.showSuccess(t('admin.channelMonitor.template.deleteSuccess'))
     await fetchTemplates()
     emit('updated')

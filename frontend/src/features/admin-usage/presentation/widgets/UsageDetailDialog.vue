@@ -13,16 +13,16 @@
             <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium" :class="getBillingModeBadgeClass(calculation.mode)">
               {{ getBillingModeLabel(calculation.mode, t) }}
             </span>
-            <span v-if="usage.long_context_billing_applied" class="inline-flex items-center rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+            <span v-if="usage.longContextBillingApplied" class="inline-flex items-center rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
               {{ t('usage.detail.longContextPricing') }}
             </span>
           </div>
           <div class="mt-2 break-all text-base font-semibold text-gray-900 dark:text-white">{{ usage.model }}</div>
-          <div class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ formatDateTime(usage.created_at) }}</div>
+          <div class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ formatDateTime(usage.createdAt) }}</div>
         </div>
         <div class="shrink-0 sm:text-right">
           <div class="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">{{ t('usage.detail.actualCharge') }}</div>
-          <div class="mt-1 text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">{{ formatCost(usage.actual_cost) }}</div>
+          <div class="mt-1 text-xl font-semibold tabular-nums text-emerald-600 dark:text-emerald-400">{{ formatCost(usage.actualCost) }}</div>
           <div class="mt-1 inline-flex items-center gap-1 text-xs font-medium" :class="calculation.reconciled ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'">
             <Icon :name="calculation.reconciled ? 'checkCircle' : 'exclamationTriangle'" size="sm" />
             {{ calculation.reconciled ? t('usage.detail.reconciled') : t('usage.detail.needsReview') }}
@@ -157,8 +157,7 @@ import {
   buildUsageBillingCalculation,
   type UsageBillingCostLine,
 } from '@/core/utils/usageBillingCalculation'
-import type { AdminUsageLog } from '@/types'
-
+import type { AdminUsageLog } from '@/features/admin-usage/domain/models/adminUsage'
 const props = defineProps<{
   show: boolean
   usage: AdminUsageLog | null
@@ -189,26 +188,26 @@ const requestDetails = computed(() => {
   const usage = props.usage
   if (!usage) return []
   const adminDetails = [
-    usage.upstream_model ? { key: 'upstream_model', label: t('usage.upstreamModel'), value: usage.upstream_model } : null,
-    usage.model_mapping_chain ? { key: 'model_mapping_chain', label: t('usage.detail.modelMappingChain'), value: usage.model_mapping_chain } : null,
-    usage.account ? { key: 'account', label: t('admin.usage.account'), value: `${usage.account.name} (#${usage.account.id})` } : null,
-    usage.channel_id != null ? { key: 'channel_id', label: t('usage.detail.channelId'), value: `#${usage.channel_id}` } : null,
-    usage.billing_tier ? { key: 'billing_tier', label: t('usage.detail.billingTier'), value: usage.billing_tier } : null,
+    usage.upstreamModel ? { key: 'upstream_model', label: t('usage.upstreamModel'), value: usage.upstreamModel } : null,
+    usage.modelMappingChain ? { key: 'model_mapping_chain', label: t('usage.detail.modelMappingChain'), value: usage.modelMappingChain } : null,
+    usage.account ? { key: 'account', label: t('admin.usage.accountId'), value: `${usage.account.name} (#${usage.account.id})` } : null,
+    usage.channelId != null ? { key: 'channel_id', label: t('usage.detail.channelId'), value: `#${usage.channelId}` } : null,
+    usage.billingTier ? { key: 'billing_tier', label: t('usage.detail.billingTier'), value: usage.billingTier } : null,
   ].filter((item): item is NonNullable<typeof item> => item != null)
 
   return [
-    { key: 'request_id', label: t('usage.detail.requestId'), value: usage.request_id, copyValue: usage.request_id, mono: true },
-    { key: 'api_key', label: t('usage.detail.apiKey'), value: usage.api_key?.name || `#${usage.api_key_id}` },
+    { key: 'request_id', label: t('usage.detail.requestId'), value: usage.requestId, copyValue: usage.requestId, mono: true },
+    { key: 'api_key', label: t('usage.detail.apiKey'), value: usage.apiKey?.name || `#${usage.apiKeyId}` },
     { key: 'model', label: t('usage.model'), value: usage.model },
     { key: 'request_type', label: t('usage.type'), value: requestTypeLabel.value },
-    { key: 'endpoint', label: t('usage.inboundEndpoint'), value: displayValue(usage.inbound_endpoint), mono: true },
-    ...(usage.upstream_endpoint ? [{ key: 'upstream_endpoint', label: t('usage.upstreamEndpoint'), value: usage.upstream_endpoint, mono: true }] : []),
-    { key: 'group', label: t('admin.usage.group'), value: usage.group?.name || (usage.group_id ? `#${usage.group_id}` : '-') },
-    { key: 'billing_type', label: t('usage.detail.billingType'), value: usage.billing_type === 1 ? t('usage.detail.subscriptionBilling') : t('usage.detail.balanceBilling') },
-    { key: 'service_tier', label: t('usage.serviceTier'), value: displayValue(usage.service_tier) },
-    { key: 'reasoning_effort', label: t('usage.reasoningEffort'), value: formatReasoningEffort(usage.reasoning_effort) },
-    { key: 'ip_address', label: 'IP', value: displayValue(usage.ip_address), mono: true },
-    { key: 'user_agent', label: t('usage.userAgent'), value: displayValue(usage.user_agent) },
+    { key: 'endpoint', label: t('usage.inboundEndpoint'), value: displayValue(usage.inboundEndpoint), mono: true },
+    ...(usage.upstreamEndpoint ? [{ key: 'upstream_endpoint', label: t('usage.upstreamEndpoint'), value: usage.upstreamEndpoint, mono: true }] : []),
+    { key: 'group', label: t('admin.usage.groupId'), value: usage.group?.name || (usage.groupId ? `#${usage.groupId}` : '-') },
+    { key: 'billing_type', label: t('usage.detail.billingType'), value: usage.billingType === 1 ? t('usage.detail.subscriptionBilling') : t('usage.detail.balanceBilling') },
+    { key: 'service_tier', label: t('usage.serviceTier'), value: displayValue(usage.serviceTier) },
+    { key: 'reasoning_effort', label: t('usage.reasoningEffort'), value: formatReasoningEffort(usage.reasoningEffort) },
+    { key: 'ip_address', label: 'IP', value: displayValue(usage.ipAddress), mono: true },
+    { key: 'user_agent', label: t('usage.userAgent'), value: displayValue(usage.userAgent) },
     ...adminDetails,
   ]
 })
@@ -220,38 +219,38 @@ const usageDetails = computed(() => {
 
   if (calc.mode === BILLING_MODE_IMAGE) {
     return [
-      { key: 'image_count', label: t('usage.imageCount'), value: usage.image_count.toLocaleString() },
-      { key: 'image_size', label: t('usage.imageBillingSize'), value: displayValue(usage.image_size) },
-      { key: 'duration', label: t('usage.duration'), value: formatDuration(usage.duration_ms) },
-      { key: 'rate', label: t('usage.detail.rateSnapshot'), value: formatRate(usage.rate_multiplier) },
+      { key: 'image_count', label: t('usage.imageCount'), value: usage.imageCount.toLocaleString() },
+      { key: 'image_size', label: t('usage.imageBillingSize'), value: displayValue(usage.imageSize) },
+      { key: 'duration', label: t('usage.duration'), value: formatDuration(usage.durationMs) },
+      { key: 'rate', label: t('usage.detail.rateSnapshot'), value: formatRate(usage.rateMultiplier) },
     ]
   }
   if (calc.mode === BILLING_MODE_VIDEO) {
     return [
-      { key: 'video_count', label: t('usage.detail.videoCount'), value: (usage.video_count ?? 0).toLocaleString() },
-      { key: 'video_resolution', label: t('usage.detail.videoResolution'), value: displayValue(usage.video_resolution) },
-      { key: 'video_duration', label: t('usage.detail.videoDuration'), value: `${usage.video_duration_seconds ?? 0}s` },
-      { key: 'duration', label: t('usage.duration'), value: formatDuration(usage.duration_ms) },
+      { key: 'video_count', label: t('usage.detail.videoCount'), value: (usage.videoCount ?? 0).toLocaleString() },
+      { key: 'video_resolution', label: t('usage.detail.videoResolution'), value: displayValue(usage.videoResolution) },
+      { key: 'video_duration', label: t('usage.detail.videoDuration'), value: `${usage.videoDurationSeconds ?? 0}s` },
+      { key: 'duration', label: t('usage.duration'), value: formatDuration(usage.durationMs) },
     ]
   }
 
   const speed = calculateOutputTokensPerSecond(usage)
   return [
-    { key: 'input', label: t('admin.usage.inputTokens'), value: usage.input_tokens.toLocaleString() },
-    { key: 'output', label: t('admin.usage.outputTokens'), value: usage.output_tokens.toLocaleString() },
-    { key: 'cache_creation', label: t('admin.usage.cacheCreationTokens'), value: usage.cache_creation_tokens.toLocaleString() },
-    ...(usage.cache_creation_5m_tokens > 0 ? [{ key: 'cache_creation_5m', label: t('admin.usage.cacheCreation5mTokens'), value: usage.cache_creation_5m_tokens.toLocaleString() }] : []),
-    ...(usage.cache_creation_1h_tokens > 0 ? [{ key: 'cache_creation_1h', label: t('admin.usage.cacheCreation1hTokens'), value: usage.cache_creation_1h_tokens.toLocaleString() }] : []),
-    { key: 'cache_read', label: t('admin.usage.cacheReadTokens'), value: usage.cache_read_tokens.toLocaleString() },
-    { key: 'first_token', label: t('usage.firstToken'), value: formatDuration(usage.first_token_ms) },
-    { key: 'duration', label: t('usage.duration'), value: formatDuration(usage.duration_ms) },
+    { key: 'input', label: t('admin.usage.inputTokens'), value: usage.inputTokens.toLocaleString() },
+    { key: 'output', label: t('admin.usage.outputTokens'), value: usage.outputTokens.toLocaleString() },
+    { key: 'cache_creation', label: t('admin.usage.cacheCreationTokens'), value: usage.cacheCreationTokens.toLocaleString() },
+    ...(usage.cacheCreation5mTokens > 0 ? [{ key: 'cache_creation_5m', label: t('admin.usage.cacheCreation5mTokens'), value: usage.cacheCreation5mTokens.toLocaleString() }] : []),
+    ...(usage.cacheCreation1hTokens > 0 ? [{ key: 'cache_creation_1h', label: t('admin.usage.cacheCreation1hTokens'), value: usage.cacheCreation1hTokens.toLocaleString() }] : []),
+    { key: 'cache_read', label: t('admin.usage.cacheReadTokens'), value: usage.cacheReadTokens.toLocaleString() },
+    { key: 'first_token', label: t('usage.firstToken'), value: formatDuration(usage.firstTokenMs) },
+    { key: 'duration', label: t('usage.duration'), value: formatDuration(usage.durationMs) },
     { key: 'speed', label: t('usage.outputSpeed'), value: speed == null ? '-' : `${speed.toFixed(2)} ${t('usage.tokensPerSecondUnit')}` },
-    { key: 'rate', label: t('usage.detail.rateSnapshot'), value: formatRate(usage.rate_multiplier) },
+    { key: 'rate', label: t('usage.detail.rateSnapshot'), value: formatRate(usage.rateMultiplier) },
   ]
 })
 
 const hasCacheTierBreakdown = computed(() =>
-  (props.usage?.cache_creation_5m_tokens ?? 0) > 0 || (props.usage?.cache_creation_1h_tokens ?? 0) > 0
+  (props.usage?.cacheCreation5mTokens ?? 0) > 0 || (props.usage?.cacheCreation1hTokens ?? 0) > 0
 )
 
 const formatCost = (value: number | null | undefined): string => `$${(value ?? 0).toFixed(10)}`

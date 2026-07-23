@@ -36,9 +36,9 @@
 
       <ProfileBalanceNotifyCard
         v-if="user && balanceLowNotifyEnabled"
-        :enabled="user.balance_notify_enabled ?? true"
-        :threshold="user.balance_notify_threshold"
-        :extra-emails="user.balance_notify_extra_emails ?? []"
+        :enabled="user.balanceNotifyEnabled ?? true"
+        :threshold="user.balanceNotifyThreshold"
+        :extra-emails="user.balanceNotifyExtraEmails ?? []"
         :system-default-threshold="systemDefaultThreshold"
         :user-email="user.email"
       />
@@ -87,20 +87,20 @@ onMounted(async () => {
       if (!settings) {
         return
       }
-      contactInfo.value = settings.contact_info || ''
-      balanceLowNotifyEnabled.value = settings.balance_low_notify_enabled ?? false
-      systemDefaultThreshold.value = settings.balance_low_notify_threshold ?? 0
-      linuxdoOAuthEnabled.value = settings.linuxdo_oauth_enabled ?? false
-      dingtalkOAuthEnabled.value = settings.dingtalk_oauth_enabled ?? false
+      contactInfo.value = settings.contactInfo || ''
+      balanceLowNotifyEnabled.value = settings.balanceLowNotifyEnabled ?? false
+      systemDefaultThreshold.value = settings.balanceLowNotifyThreshold ?? 0
+      linuxdoOAuthEnabled.value = settings.linuxdoOauthEnabled ?? false
+      dingtalkOAuthEnabled.value = settings.dingtalkOauthEnabled ?? false
       wechatOAuthEnabled.value = isWeChatWebOAuthEnabled(settings)
-      wechatOAuthOpenEnabled.value = typeof settings.wechat_oauth_open_enabled === 'boolean'
-        ? settings.wechat_oauth_open_enabled
+      wechatOAuthOpenEnabled.value = typeof settings.wechatOauthOpenEnabled === 'boolean'
+        ? settings.wechatOauthOpenEnabled
         : undefined
-      wechatOAuthMPEnabled.value = typeof settings.wechat_oauth_mp_enabled === 'boolean'
-        ? settings.wechat_oauth_mp_enabled
+      wechatOAuthMPEnabled.value = typeof settings.wechatOauthMpEnabled === 'boolean'
+        ? settings.wechatOauthMpEnabled
         : undefined
-      oidcOAuthEnabled.value = settings.oidc_oauth_enabled ?? false
-      oidcOAuthProviderName.value = settings.oidc_oauth_provider_name || 'OIDC'
+      oidcOAuthEnabled.value = settings.oidcOauthEnabled ?? false
+      oidcOAuthProviderName.value = settings.oidcOauthProviderName || 'OIDC'
     })
     .catch((error) => {
       console.error('Failed to load settings:', error)

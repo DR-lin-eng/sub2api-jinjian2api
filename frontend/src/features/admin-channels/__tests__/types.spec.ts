@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { validateIntervals, type IntervalFormEntry } from '@/features/admin-channels/presentation/adminChannelSignals'
+import { validateIntervals, type IntervalFormEntry } from '@/features/admin-channels/presentation/composables/useChannelPricingForm'
 
 function makeInterval(over: Partial<IntervalFormEntry>): IntervalFormEntry {
   return {

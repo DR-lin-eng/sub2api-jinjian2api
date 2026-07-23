@@ -72,7 +72,7 @@
               {{ t('admin.accounts.tempUnschedulable.errorCode') }}
             </p>
             <p class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
-              {{ state?.status_code || '-' }}
+              {{ state?.statusCode || '-' }}
             </p>
           </div>
           <div class="rounded-lg border border-gray-200 p-3 dark:border-dark-600">
@@ -80,7 +80,7 @@
               {{ t('admin.accounts.tempUnschedulable.matchedKeyword') }}
             </p>
             <p class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
-              {{ state?.matched_keyword || '-' }}
+              {{ state?.matchedKeyword || '-' }}
             </p>
           </div>
           <div class="rounded-lg border border-gray-200 p-3 dark:border-dark-600">
@@ -98,7 +98,7 @@
             {{ t('admin.accounts.tempUnschedulable.errorMessage') }}
           </p>
           <div class="mt-2 rounded bg-gray-50 p-2 text-xs text-gray-700 dark:bg-dark-700 dark:text-gray-300">
-            {{ state?.error_message || '-' }}
+            {{ state?.errorMessage || '-' }}
           </div>
         </div>
       </div>
@@ -146,10 +146,15 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { Account, TempUnschedulableStatus } from '@/types'
+import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
+
+const queryStore = useAdminAccountsQueryStore()
+const actionStore = useAdminAccountsActionStore()
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import { formatDateTime } from '@/core/utils/format'
+import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { TempUnschedulableStatus } from '@/features/admin-accounts/domain/models/tempUnschedulableStatus'
 
 const props = defineProps<{
   show: boolean
@@ -172,27 +177,27 @@ const state = computed(() => status.value?.state || null)
 
 const isActive = computed(() => {
   if (!status.value?.active || !state.value) return false
-  return state.value.until_unix * 1000 > Date.now()
+  return state.value.untilUnix * 1000 > Date.now()
 })
 
 const ruleIndexDisplay = computed(() => {
   if (!state.value) return '-'
-  return state.value.rule_index + 1
+  return state.value.ruleIndex + 1
 })
 
 const triggeredAtText = computed(() => {
-  if (!state.value?.triggered_at_unix) return '-'
-  return formatDateTime(new Date(state.value.triggered_at_unix * 1000))
+  if (!state.value?.triggeredAtUnix) return '-'
+  return formatDateTime(new Date(state.value.triggeredAtUnix * 1000))
 })
 
 const untilText = computed(() => {
-  if (!state.value?.until_unix) return '-'
-  return formatDateTime(new Date(state.value.until_unix * 1000))
+  if (!state.value?.untilUnix) return '-'
+  return formatDateTime(new Date(state.value.untilUnix * 1000))
 })
 
 const remainingText = computed(() => {
   if (!state.value) return '-'
-  const remainingMs = state.value.until_unix * 1000 - Date.now()
+  const remainingMs = state.value.untilUnix * 1000 - Date.now()
   if (remainingMs <= 0) {
     return t('admin.accounts.tempUnschedulable.expired')
   }
@@ -212,7 +217,7 @@ const loadStatus = async () => {
   if (!props.account) return
   loading.value = true
   try {
-    status.value = await adminAPI.accounts.getTempUnschedulableStatus(props.account.id)
+    status.value = await queryStore.getTempUnschedulableStatus(props.account.id)
   } catch (error: any) {
     appStore.showError(error?.message || t('admin.accounts.tempUnschedulable.failedToLoad'))
     status.value = null
@@ -229,7 +234,7 @@ const handleReset = async () => {
   if (!props.account) return
   resetting.value = true
   try {
-    const updated = await adminAPI.accounts.recoverState(props.account.id)
+    const updated = await actionStore.recoverState(props.account.id)
     appStore.showSuccess(t('admin.accounts.recoverStateSuccess'))
     emit('reset', updated)
     handleClose()

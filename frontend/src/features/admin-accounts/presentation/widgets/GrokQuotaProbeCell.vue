@@ -47,10 +47,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { adminAPI } from '@/api/admin'
-import type { GrokQuotaProbeResult, GrokQuotaWindow } from '@/features/admin-accounts/data/datasources/grokDatasource'
-import type { Account } from '@/types'
+import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
 
+const queryStore = useAdminAccountsQueryStore()
+import type { GrokQuotaWindow } from '@/types'
+import type { GrokQuotaProbeResult } from '@/features/admin-accounts/domain/models/grokQuotaProbeResult'
+import type { Account } from '@/features/admin-accounts/domain/models/account'
 const props = defineProps<{
   account: Account
 }>()
@@ -85,7 +87,7 @@ const formatWindow = (label: string, window?: GrokQuotaWindow | null): string | 
 }
 
 const retryAfterLabel = computed(() => {
-  const seconds = data.value?.snapshot?.retry_after_seconds
+  const seconds = data.value?.snapshot?.retryAfterSeconds
   if (seconds == null || seconds <= 0) return null
   if (seconds < 60) return `${seconds}s`
   return `${Math.ceil(seconds / 60)}m`
@@ -96,9 +98,9 @@ const summary = computed(() => {
   if (!data.value) return ''
   const billing = data.value.billing
   const parts: Array<string | null> = []
-  if (billing?.period_type?.toLowerCase() === 'weekly' && billing.usage_percent != null) {
+  if (billing?.periodType?.toLowerCase() === 'weekly' && billing.usagePercent != null) {
     parts.push(t('admin.accounts.usageWindow.grokWeeklyUsage', {
-      percent: Math.round(Math.min(100, Math.max(0, billing.usage_percent)))
+      percent: Math.round(Math.min(100, Math.max(0, billing.usagePercent)))
     }))
   }
   if (snapshot) {
@@ -110,8 +112,8 @@ const summary = computed(() => {
   if (retryAfterLabel.value) {
     parts.push(t('admin.accounts.usageWindow.grokRetryAfter', { time: retryAfterLabel.value }))
   }
-  if (snapshot?.entitlement_status) {
-    parts.push(snapshot.entitlement_status)
+  if (snapshot?.entitlementStatus) {
+    parts.push(snapshot.entitlementStatus)
   }
   const visibleParts = parts.filter((part): part is string => Boolean(part))
   return visibleParts.length > 0 ? visibleParts.join(' | ') : t('admin.accounts.usageWindow.grokNoHeaders')
@@ -127,7 +129,7 @@ const handleProbe = async () => {
   loading.value = true
   error.value = null
   try {
-    data.value = await adminAPI.grok.queryQuota(props.account.id)
+    data.value = await queryStore.queryQuota(props.account.id)
     error.value = (data.value as any)?.probe_error || null
     emit('probed', data.value as any)
   } catch (e) {

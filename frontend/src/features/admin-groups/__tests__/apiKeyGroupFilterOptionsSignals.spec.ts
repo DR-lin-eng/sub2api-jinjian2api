@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildApiKeyGroupFilterOptions } from '@/features/admin-groups/presentation/apiKeyGroupFilterOptionsSignals'
+import { buildApiKeyGroupFilterOptions } from '@/features/admin-groups/presentation/utils/apiKeyGroupFilterOptionsSignals'
 import type { AdminGroup } from '@/types'
 
 const labels = {

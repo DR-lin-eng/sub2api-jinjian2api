@@ -3526,7 +3526,11 @@ import {
   isValidWildcardPattern
 } from '@/features/admin-accounts/presentation/composables/useModelWhitelist'
 import { useAuthStore } from '@/core/stores/authStore'
-import { adminAPI } from '@/api/admin'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
+import { useAdminSettingsQueryStore } from '@/features/admin-settings/presentation/stores/adminSettingsQueryStore'
+
+const actionStore = useAdminAccountsActionStore()
+const adminSettingsQueryStore = useAdminSettingsQueryStore()
 import { useQuotaNotifyState } from '@/features/admin-accounts/presentation/composables/useQuotaNotifyState'
 import {
   useAccountOAuth,
@@ -3537,18 +3541,6 @@ import { useOpenAIOAuth } from '@/features/admin-accounts/presentation/composabl
 import { useGeminiOAuth } from '@/features/admin-accounts/presentation/composables/useGeminiOAuth'
 import { useAntigravityOAuth } from '@/features/admin-accounts/presentation/composables/useAntigravityOAuth'
 import { useGrokOAuth } from '@/features/admin-accounts/presentation/composables/useGrokOAuth'
-import type {
-  Proxy,
-  AdminGroup,
-  AccountPlatform,
-  AccountType,
-  CheckMixedChannelResponse,
-  CreateAccountRequest,
-  CodexSessionImportMessage,
-  OpenAICompactMode,
-  OpenAIResponsesMode,
-  OpenAIEndpointCapability
-} from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
@@ -3569,7 +3561,7 @@ import {
   isHeaderOverrideCapable,
   validateHeaderOverrideRows,
   type HeaderOverrideRow
-} from '@/features/admin-accounts/presentation/credentialsBuilder'
+} from '@/features/admin-accounts/presentation/utils/credentialsBuilder'
 import { formatDateTimeLocalInput, parseDateTimeLocalInput } from '@/core/utils/format'
 import { createStableObjectKeyResolver } from '@/core/utils/stableObjectKey'
 import { VERTEX_LOCATION_OPTIONS } from '@/core/constants/account'
@@ -3583,6 +3575,11 @@ import {
   type OpenAIWSMode
 } from '@/core/utils/openaiWsMode'
 import OAuthAuthorizationFlow from './OAuthAuthorizationFlow.vue'
+import type { Proxy } from '@/features/admin-proxies/domain/models/proxy'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
+import type { AccountPlatform, AccountType, CodexSessionImportMessage, OpenAICompactMode, OpenAIResponsesMode, OpenAIEndpointCapability } from '@/types'
+import type { CheckMixedChannelResponse } from '@/features/admin-accounts/domain/models/checkMixedChannelResponse'
+import type { CreateAccountRequest } from '@/features/admin-accounts/data/requests_models/createAccountRequest'
 
 // Type for exposed OAuthAuthorizationFlow component
 // Note: defineExpose automatically unwraps refs, so we use the unwrapped types
@@ -3823,7 +3820,7 @@ const {
 } = useQuotaNotifyState()
 
 // Load global feature states once
-adminAPI.settings.getWebSearchEmulationConfig().then((cfg: any) => {
+adminSettingsQueryStore.getWebSearchEmulationConfig().then((cfg: any) => {
   webSearchGlobalEnabled.value = cfg?.enabled === true && (cfg?.providers?.length ?? 0) > 0
 }).catch(() => { webSearchGlobalEnabled.value = false })
 
@@ -4138,7 +4135,7 @@ watch(
   (newVal) => {
     if (newVal) {
       // Load TLS fingerprint profiles
-      adminAPI.tlsFingerprintProfiles.list()
+      adminSettingsQueryStore.tlsFingerprintProfile_list()
         .then((profiles: any) => { tlsFingerprintProfiles.value = profiles.map((p: any) => ({ id: p.id, name: p.name })) })
         .catch(() => { tlsFingerprintProfiles.value = [] })
       // Modal opened - fill related models
@@ -4301,7 +4298,7 @@ watch(
       return
     }
     const caps = await geminiOAuth.getCapabilities()
-    geminiAIStudioOAuthEnabled.value = !!caps?.ai_studio_oauth_enabled
+    geminiAIStudioOAuthEnabled.value = !!caps?.aiStudioOauthEnabled
     if (!geminiAIStudioOAuthEnabled.value && geminiOAuthType.value === 'ai_studio') {
       geminiOAuthType.value = 'code_assist'
     }
@@ -4521,9 +4518,9 @@ const buildMixedChannelDetails = (resp?: CheckMixedChannelResponse) => {
     return null
   }
   return {
-    groupName: details.group_name || 'Unknown',
-    currentPlatform: details.current_platform || 'Unknown',
-    otherPlatform: details.other_platform || 'Unknown'
+    groupName: details.groupName || 'Unknown',
+    currentPlatform: details.currentPlatform || 'Unknown',
+    otherPlatform: details.otherPlatform || 'Unknown'
   }
 }
 
@@ -4567,11 +4564,11 @@ const ensureAntigravityMixedChannelConfirmed = async (onConfirm: () => Promise<v
   }
 
   try {
-    const result = await adminAPI.accounts.checkMixedChannelRisk({
+    const result = await actionStore.checkMixedChannelRisk({
       platform: form.platform,
       group_ids: form.group_ids
     })
-    if (!result.has_risk) {
+    if (!result.hasRisk) {
       return true
     }
     openMixedChannelDialog({
@@ -4591,14 +4588,14 @@ const ensureAntigravityMixedChannelConfirmed = async (onConfirm: () => Promise<v
 const submitCreateAccount = async (payload: CreateAccountRequest) => {
   submitting.value = true
   try {
-    const account = await adminAPI.accounts.create(withAntigravityConfirmFlag(payload))
+    const account = await actionStore.create(withAntigravityConfirmFlag(payload))
     if (
       payload.platform === 'openai' &&
       payload.type === 'apikey' &&
       payload.upstream_billing_probe_enabled === true
     ) {
       try {
-        await adminAPI.accounts.probeUpstreamBilling(account.id)
+        await actionStore.probeUpstreamBilling(account.id)
       } catch {
         appStore.showWarning(t('admin.accounts.upstreamBilling.probeFailed'))
       }
@@ -5145,7 +5142,7 @@ const handleSubmit = async () => {
   const extra = buildAnthropicExtra(buildOpenAIExtra())
 
   await doCreateAccount({
-    ...form,
+    ...(form as unknown as CreateAccountRequest),
     group_ids: form.group_ids,
     extra,
     upstream_billing_probe_enabled:
@@ -5215,26 +5212,26 @@ const createAccountAndFinish = async (
   if (type === 'apikey' || type === 'bedrock') {
     const quotaExtra: Record<string, unknown> = { ...(extra || {}) }
     if (editQuotaLimit.value != null && editQuotaLimit.value > 0) {
-      quotaExtra.quota_limit = editQuotaLimit.value
+      quotaExtra.quotaLimit = editQuotaLimit.value
     }
     if (editQuotaDailyLimit.value != null && editQuotaDailyLimit.value > 0) {
-      quotaExtra.quota_daily_limit = editQuotaDailyLimit.value
+      quotaExtra.quotaDailyLimit = editQuotaDailyLimit.value
     }
     if (editQuotaWeeklyLimit.value != null && editQuotaWeeklyLimit.value > 0) {
-      quotaExtra.quota_weekly_limit = editQuotaWeeklyLimit.value
+      quotaExtra.quotaWeeklyLimit = editQuotaWeeklyLimit.value
     }
     // Quota reset mode config
     if (editDailyResetMode.value === 'fixed') {
-      quotaExtra.quota_daily_reset_mode = 'fixed'
-      quotaExtra.quota_daily_reset_hour = editDailyResetHour.value ?? 0
+      quotaExtra.quotaDailyResetMode = 'fixed'
+      quotaExtra.quotaDailyResetHour = editDailyResetHour.value ?? 0
     }
     if (editWeeklyResetMode.value === 'fixed') {
-      quotaExtra.quota_weekly_reset_mode = 'fixed'
-      quotaExtra.quota_weekly_reset_day = editWeeklyResetDay.value ?? 1
-      quotaExtra.quota_weekly_reset_hour = editWeeklyResetHour.value ?? 0
+      quotaExtra.quotaWeeklyResetMode = 'fixed'
+      quotaExtra.quotaWeeklyResetDay = editWeeklyResetDay.value ?? 1
+      quotaExtra.quotaWeeklyResetHour = editWeeklyResetHour.value ?? 0
     }
     if (editDailyResetMode.value === 'fixed' || editWeeklyResetMode.value === 'fixed') {
-      quotaExtra.quota_reset_timezone = editResetTimezone.value || 'UTC'
+      quotaExtra.quotaResetTimezone = editResetTimezone.value || 'UTC'
     }
     // Quota notify config
     writeQuotaNotifyToExtra(quotaExtra, 'create')
@@ -5271,13 +5268,13 @@ const createAccountAndFinish = async (
     type,
     credentials,
     extra: finalExtra,
-    proxy_id: form.proxy_id,
+    proxy_id: form.proxy_id ?? undefined,
     concurrency: form.concurrency,
     load_factor: form.load_factor ?? undefined,
     priority: form.priority,
     rate_multiplier: form.rate_multiplier,
     group_ids: form.group_ids,
-    expires_at: form.expires_at,
+    expires_at: form.expires_at ?? undefined,
     auto_pause_on_expired: autoPauseOnExpired.value
   })
 }
@@ -5328,20 +5325,20 @@ const handleGrokValidateRT = async (refreshTokenInput: string) => {
           return
         }
 
-        await adminAPI.accounts.create({
+        await actionStore.create({
           name: accountName,
           notes: form.notes,
           platform: 'grok',
           type: 'oauth',
           credentials,
           extra,
-          proxy_id: form.proxy_id,
+          proxy_id: form.proxy_id ?? undefined,
           concurrency: form.concurrency,
           load_factor: form.load_factor ?? undefined,
           priority: form.priority,
           rate_multiplier: form.rate_multiplier,
           group_ids: form.group_ids,
-          expires_at: form.expires_at,
+          expires_at: form.expires_at ?? undefined,
           auto_pause_on_expired: autoPauseOnExpired.value
         })
         successCount++
@@ -5397,19 +5394,19 @@ const handleGrokImportSSO = async (ssoInput: string) => {
   }
 
   try {
-    const result = await adminAPI.grok.createFromSSO({
+    const result = await actionStore.createFromSSO({
       sso_tokens: ssoTokens,
       name: form.name || undefined,
       notes: form.notes || undefined,
-      proxy_id: form.proxy_id,
+      proxy_id: form.proxy_id ?? undefined,
       group_ids: form.group_ids,
       credentials,
       concurrency: form.concurrency,
       load_factor: form.load_factor ?? undefined,
       priority: form.priority,
       rate_multiplier: form.rate_multiplier,
-      expires_at: form.expires_at,
-      auto_pause_on_expired: autoPauseOnExpired.value
+      expires_at: form.expires_at ?? undefined,
+      auto_pause_on_expired: autoPauseOnExpired.value,
     })
 
     const successCount = result.created?.length || 0
@@ -5494,20 +5491,20 @@ const handleOpenAIExchange = async (authCode: string) => {
     }
 
     if (shouldCreateOpenAI) {
-      await adminAPI.accounts.create({
+      await actionStore.create({
         name: form.name,
         notes: form.notes,
         platform: 'openai',
         type: 'oauth',
         credentials,
         extra,
-        proxy_id: form.proxy_id,
+        proxy_id: form.proxy_id ?? undefined,
         concurrency: form.concurrency,
         load_factor: form.load_factor ?? undefined,
         priority: form.priority,
         rate_multiplier: form.rate_multiplier,
         group_ids: form.group_ids,
-        expires_at: form.expires_at,
+        expires_at: form.expires_at ?? undefined,
         auto_pause_on_expired: autoPauseOnExpired.value
       })
       appStore.showSuccess(t('admin.accounts.accountCreated'))
@@ -5602,21 +5599,21 @@ const handleOpenAIImportCodexSession = async (content: string) => {
 
   try {
     const extra = buildOpenAICodexImportExtra()
-    const result = await adminAPI.accounts.importCodexSession({
+    const result = await actionStore.importCodexSession({
       content: trimmed,
       name: form.name,
       notes: form.notes || null,
-      proxy_id: form.proxy_id,
+      proxyId: form.proxy_id,
       concurrency: form.concurrency,
-      load_factor: form.load_factor ?? undefined,
+      loadFactor: form.load_factor ?? undefined,
       priority: form.priority,
-      rate_multiplier: form.rate_multiplier,
-      group_ids: form.group_ids,
-      expires_at: form.expires_at,
-      auto_pause_on_expired: autoPauseOnExpired.value,
-      credential_extras: Object.keys(credentialExtras).length > 0 ? credentialExtras : undefined,
+      rateMultiplier: form.rate_multiplier,
+      groupIds: form.group_ids,
+      expiresAt: form.expires_at,
+      autoPauseOnExpired: autoPauseOnExpired.value,
+      credentialExtras: Object.keys(credentialExtras).length > 0 ? credentialExtras : undefined,
       extra,
-      update_existing: true
+      updateExisting: true
     })
 
     const successCount = result.created + result.updated
@@ -5680,19 +5677,19 @@ const handleOpenAIImportCodexPAT = async (accessToken: string) => {
 
   try {
     const extra = buildOpenAICodexImportExtra()
-    await adminAPI.accounts.createOpenAICodexPAT({
-      access_token: trimmed,
+    await actionStore.createOpenAICodexPAT({
+      accessToken: trimmed,
       name: form.name,
       notes: form.notes || null,
-      proxy_id: form.proxy_id,
+      proxyId: form.proxy_id,
       concurrency: form.concurrency,
-      load_factor: form.load_factor ?? undefined,
+      loadFactor: form.load_factor ?? undefined,
       priority: form.priority,
-      rate_multiplier: form.rate_multiplier,
-      group_ids: form.group_ids,
-      expires_at: form.expires_at,
-      auto_pause_on_expired: autoPauseOnExpired.value,
-      credential_extras: Object.keys(credentialExtras).length > 0 ? credentialExtras : undefined,
+      rateMultiplier: form.rate_multiplier,
+      groupIds: form.group_ids,
+      expiresAt: form.expires_at,
+      autoPauseOnExpired: autoPauseOnExpired.value,
+      credentialExtras: Object.keys(credentialExtras).length > 0 ? credentialExtras : undefined,
       extra
     })
 
@@ -5775,20 +5772,20 @@ const handleOpenAIBatchRT = async (refreshTokenInput: string, clientId?: string)
         const accountName = refreshTokens.length > 1 ? `${baseName} #${i + 1}` : baseName
 
         if (shouldCreateOpenAI) {
-          await adminAPI.accounts.create({
+          await actionStore.create({
             name: accountName,
             notes: form.notes,
             platform: 'openai',
             type: 'oauth',
             credentials,
             extra,
-            proxy_id: form.proxy_id,
+            proxy_id: form.proxy_id ?? undefined,
             concurrency: form.concurrency,
             load_factor: form.load_factor ?? undefined,
             priority: form.priority,
             rate_multiplier: form.rate_multiplier,
             group_ids: form.group_ids,
-            expires_at: form.expires_at,
+            expires_at: form.expires_at ?? undefined,
             auto_pause_on_expired: autoPauseOnExpired.value
           })
         }
@@ -5881,16 +5878,16 @@ const handleAntigravityValidateRT = async (refreshTokenInput: string) => {
           type: 'oauth',
           credentials,
           extra: {},
-          proxy_id: form.proxy_id,
+          proxy_id: form.proxy_id ?? undefined,
           concurrency: form.concurrency,
           load_factor: form.load_factor ?? undefined,
           priority: form.priority,
           rate_multiplier: form.rate_multiplier,
           group_ids: form.group_ids,
-          expires_at: form.expires_at,
+          expires_at: form.expires_at ?? undefined,
           auto_pause_on_expired: autoPauseOnExpired.value
         })
-        await adminAPI.accounts.create(createPayload)
+        await actionStore.create(createPayload)
         successCount++
       } catch (error: any) {
         failedCount++
@@ -6057,7 +6054,7 @@ const handleAnthropicExchange = async (authCode: string) => {
         ? '/admin/accounts/exchange-code'
         : '/admin/accounts/exchange-setup-token-code'
 
-    const tokenInfo = await adminAPI.accounts.exchangeCode(endpoint, {
+    const tokenInfo = await actionStore.exchangeCode(endpoint, {
       session_id: oauth.sessionId.value,
       code: authCode.trim(),
       ...proxyConfig
@@ -6069,56 +6066,56 @@ const handleAnthropicExchange = async (authCode: string) => {
 
     // Add window cost limit settings
     if (windowCostEnabled.value && windowCostLimit.value != null && windowCostLimit.value > 0) {
-      extra.window_cost_limit = windowCostLimit.value
-      extra.window_cost_sticky_reserve = windowCostStickyReserve.value ?? 10
+      extra.windowCostLimit = windowCostLimit.value
+      extra.windowCostStickyReserve = windowCostStickyReserve.value ?? 10
     }
 
     // Add session limit settings
     if (sessionLimitEnabled.value && maxSessions.value != null && maxSessions.value > 0) {
-      extra.max_sessions = maxSessions.value
-      extra.session_idle_timeout_minutes = sessionIdleTimeout.value ?? 5
+      extra.maxSessions = maxSessions.value
+      extra.sessionIdleTimeoutMs = sessionIdleTimeout.value ?? 5
     }
 
     // Add RPM limit settings
     if (rpmLimitEnabled.value) {
       const DEFAULT_BASE_RPM = 15
-      extra.base_rpm = (baseRpm.value != null && baseRpm.value > 0)
+      extra.baseRpm = (baseRpm.value != null && baseRpm.value > 0)
         ? baseRpm.value
         : DEFAULT_BASE_RPM
-      extra.rpm_strategy = rpmStrategy.value
+      extra.rpmStrategy = rpmStrategy.value
       if (rpmStickyBuffer.value != null && rpmStickyBuffer.value > 0) {
-        extra.rpm_sticky_buffer = rpmStickyBuffer.value
+        extra.rpmStickyBuffer = rpmStickyBuffer.value
       }
     }
 
     // UMQ mode（独立于 RPM）
     if (userMsgQueueMode.value) {
-      extra.user_msg_queue_mode = userMsgQueueMode.value
+      extra.userMsgQueueMode = userMsgQueueMode.value
     }
 
     // Add TLS fingerprint settings
     if (tlsFingerprintEnabled.value) {
-      extra.enable_tls_fingerprint = true
+      extra.enableTlsFingerprint = true
       if (tlsFingerprintProfileId.value) {
-        extra.tls_fingerprint_profile_id = tlsFingerprintProfileId.value
+        extra.tlsFingerprintProfileId = tlsFingerprintProfileId.value
       }
     }
 
     // Add session ID masking settings
     if (sessionIdMaskingEnabled.value) {
-      extra.session_id_masking_enabled = true
+      extra.sessionIdMaskingEnabled = true
     }
 
     // Add cache TTL override settings
     if (cacheTTLOverrideEnabled.value) {
-      extra.cache_ttl_override_enabled = true
-      extra.cache_ttl_override_target = cacheTTLOverrideTarget.value
+      extra.cacheTtlOverrideEnabled = true
+      extra.cacheTtlOverrideTarget = cacheTTLOverrideTarget.value
     }
 
     // Add custom base URL settings
     if (customBaseUrlEnabled.value && customBaseUrl.value.trim()) {
-      extra.custom_base_url_enabled = true
-      extra.custom_base_url = customBaseUrl.value.trim()
+      extra.customBaseUrlEnabled = true
+      extra.customBaseUrl = customBaseUrl.value.trim()
     }
 
     const credentials: Record<string, unknown> = { ...tokenInfo }
@@ -6182,7 +6179,7 @@ const handleCookieAuth = async (sessionKey: string) => {
 
     for (let i = 0; i < keys.length; i++) {
       try {
-        const tokenInfo = await adminAPI.accounts.exchangeCode(endpoint, {
+        const tokenInfo = await actionStore.exchangeCode(endpoint, {
           session_id: '',
           code: keys[i],
           ...proxyConfig
@@ -6194,56 +6191,56 @@ const handleCookieAuth = async (sessionKey: string) => {
 
         // Add window cost limit settings
         if (windowCostEnabled.value && windowCostLimit.value != null && windowCostLimit.value > 0) {
-          extra.window_cost_limit = windowCostLimit.value
-          extra.window_cost_sticky_reserve = windowCostStickyReserve.value ?? 10
+          extra.windowCostLimit = windowCostLimit.value
+          extra.windowCostStickyReserve = windowCostStickyReserve.value ?? 10
         }
 
         // Add session limit settings
         if (sessionLimitEnabled.value && maxSessions.value != null && maxSessions.value > 0) {
-          extra.max_sessions = maxSessions.value
-          extra.session_idle_timeout_minutes = sessionIdleTimeout.value ?? 5
+          extra.maxSessions = maxSessions.value
+          extra.sessionIdleTimeoutMs = sessionIdleTimeout.value ?? 5
         }
 
         // Add RPM limit settings
         if (rpmLimitEnabled.value) {
           const DEFAULT_BASE_RPM = 15
-          extra.base_rpm = (baseRpm.value != null && baseRpm.value > 0)
+          extra.baseRpm = (baseRpm.value != null && baseRpm.value > 0)
             ? baseRpm.value
             : DEFAULT_BASE_RPM
-          extra.rpm_strategy = rpmStrategy.value
+          extra.rpmStrategy = rpmStrategy.value
           if (rpmStickyBuffer.value != null && rpmStickyBuffer.value > 0) {
-            extra.rpm_sticky_buffer = rpmStickyBuffer.value
+            extra.rpmStickyBuffer = rpmStickyBuffer.value
           }
         }
 
         // UMQ mode（独立于 RPM）
         if (userMsgQueueMode.value) {
-          extra.user_msg_queue_mode = userMsgQueueMode.value
+          extra.userMsgQueueMode = userMsgQueueMode.value
         }
 
         // Add TLS fingerprint settings
         if (tlsFingerprintEnabled.value) {
-          extra.enable_tls_fingerprint = true
+          extra.enableTlsFingerprint = true
           if (tlsFingerprintProfileId.value) {
-            extra.tls_fingerprint_profile_id = tlsFingerprintProfileId.value
+            extra.tlsFingerprintProfileId = tlsFingerprintProfileId.value
           }
         }
 
         // Add session ID masking settings
         if (sessionIdMaskingEnabled.value) {
-          extra.session_id_masking_enabled = true
+          extra.sessionIdMaskingEnabled = true
         }
 
         // Add cache TTL override settings
         if (cacheTTLOverrideEnabled.value) {
-          extra.cache_ttl_override_enabled = true
-          extra.cache_ttl_override_target = cacheTTLOverrideTarget.value
+          extra.cacheTtlOverrideEnabled = true
+          extra.cacheTtlOverrideTarget = cacheTTLOverrideTarget.value
         }
 
         // Add custom base URL settings
         if (customBaseUrlEnabled.value && customBaseUrl.value.trim()) {
-          extra.custom_base_url_enabled = true
-          extra.custom_base_url = customBaseUrl.value.trim()
+          extra.customBaseUrlEnabled = true
+          extra.customBaseUrl = customBaseUrl.value.trim()
         }
 
         const accountName = keys.length > 1 ? `${form.name} #${i + 1}` : form.name
@@ -6255,20 +6252,20 @@ const handleCookieAuth = async (sessionKey: string) => {
           credentials.temp_unschedulable_rules = tempUnschedPayload
         }
 
-        await adminAPI.accounts.create({
+        await actionStore.create({
           name: accountName,
           notes: form.notes,
           platform: form.platform,
           type: addMethod.value, // Use addMethod as type: 'oauth' or 'setup-token'
           credentials,
           extra,
-          proxy_id: form.proxy_id,
+          proxy_id: form.proxy_id ?? undefined,
           concurrency: form.concurrency,
           load_factor: form.load_factor ?? undefined,
           priority: form.priority,
           rate_multiplier: form.rate_multiplier,
           group_ids: form.group_ids,
-          expires_at: form.expires_at,
+          expires_at: form.expires_at ?? undefined,
           auto_pause_on_expired: autoPauseOnExpired.value
         })
 

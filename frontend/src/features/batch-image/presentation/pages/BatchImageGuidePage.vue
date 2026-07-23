@@ -119,7 +119,7 @@
 	                  class="flex min-w-0 items-center gap-2 text-sm font-medium"
 	                  :class="row.task_name ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
                 >
-                  <span class="min-w-0 truncate">{{ row.task_name || defaultTaskName(row.created_at) }}</span>
+                  <span class="min-w-0 truncate">{{ row.task_name || defaultTaskName(row.createdAt) }}</span>
                   <span v-if="row.child_count > 0 && !row.is_child" class="flex-shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-normal text-gray-600 dark:bg-dark-700 dark:text-gray-300">
                     {{ t('batchImage.list.childCount', { n: row.child_count }, row.child_count) }}
                   </span>
@@ -128,7 +128,7 @@
                   </span>
 	                </span>
 	                <span class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-	                  <span>{{ formatDate(row.created_at) }}</span>
+	                  <span>{{ formatDate(row.createdAt) }}</span>
 	                </span>
 	              </button>
 	            </div>
@@ -764,7 +764,7 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 import { useClipboard } from '@/common/composables/useClipboard'
 import { getPersistedPageSize, setPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 import { useAppStore } from '@/core/stores/appStore'
-import { keysAPI } from '@/api'
+import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
 import {
   cancelBatchImageJob,
   deleteBatchImageJobRecord,
@@ -783,8 +783,8 @@ import {
   type BatchImageStatus,
   type BatchImageSubmitItem,
 } from '@/features/batch-image/presentation/api'
-import type { ApiKey } from '@/types'
 import type { Column } from '@/common/types/uiTypes'
+import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 
 type BatchImageJobRow = Pick<BatchImageJob, 'id' | 'task_name' | 'parent_batch_id' | 'status' | 'model' | 'provider' | 'item_count' | 'success_count' | 'fail_count' | 'estimated_cost' | 'hold_amount' | 'actual_cost' | 'created_at' | 'downloaded_at'> & {
   api_key_id: number
@@ -941,7 +941,7 @@ const geminiApiKeys = computed(() =>
   apiKeys.value.filter((key) =>
     key.status === 'active' &&
     key.group?.platform === 'gemini' &&
-    key.group?.allow_batch_image_generation === true,
+    key.group?.allowBatchImageGeneration === true,
   ),
 )
 
@@ -1240,8 +1240,9 @@ function readFileAsBase64(file: File): Promise<string> {
 
 async function loadApiKeys() {
   loadingKeys.value = true
+  const keysQuery = useKeysQueryStore()
   try {
-    const response = await keysAPI.list(1, 100, { status: 'active', sort_by: 'created_at', sort_order: 'desc' })
+    const response = await keysQuery.list(1, 100, { status: 'active', sort_by: 'created_at', sort_order: 'desc' })
     apiKeys.value = response.items || []
     if (!selectedApiKey.value && geminiApiKeys.value.length > 0) {
       form.apiKeyId = geminiApiKeys.value[0].id

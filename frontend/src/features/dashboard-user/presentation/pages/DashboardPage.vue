@@ -21,10 +21,14 @@ import AppLayout from '@/common/widgets/layout/AppLayout.vue'; import LoadingSpi
 import UserDashboardStats from '@/features/dashboard-user/presentation/widgets/UserDashboardStats.vue'; import UserDashboardCharts from '@/features/dashboard-user/presentation/widgets/UserDashboardCharts.vue'
 import UserDashboardRecentUsage from '@/features/dashboard-user/presentation/widgets/UserDashboardRecentUsage.vue'; import UserDashboardQuickActions from '@/features/dashboard-user/presentation/widgets/UserDashboardQuickActions.vue'
 import UserDashboardApiKeyUsage from '@/features/dashboard-user/presentation/widgets/UserDashboardApiKeyUsage.vue'
-import type { UsageLog, TrendDataPoint, ModelStat, PlatformQuotaItem, ApiKey } from '@/types'
+import type { PlatformQuotaItem } from '@/types'
 import { getMyPlatformQuotas } from '@/features/profile/presentation/api'
-import { keysAPI } from '@/features/keys/presentation/api'
+import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
 import { formatDateLocalInput } from '@/core/utils/format'
+import type { UsageLog } from '@/features/admin-usage/domain/models/adminUsage'
+import type { TrendDataPoint } from '@/features/admin-dashboard/domain/models/trendDataPoint'
+import type { ModelStat } from '@/features/admin-dashboard/domain/models/modelStat'
+import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 
 const authStore = useAuthStore(); const user = computed(() => authStore.user)
 const stats = ref<UserStatsType | null>(null); const loading = ref(false); const loadingUsage = ref(false); const loadingCharts = ref(false)
@@ -58,15 +62,16 @@ const loadPlatformQuotas = async () => { try { const data = await getMyPlatformQ
 const loadApiKeyUsage = async () => {
   const generation = ++apiKeyUsageGeneration
   const range = { startDate: startDate.value, endDate: endDate.value }
+  const keysQuery = useKeysQueryStore()
   loadingApiKeys.value = true
   apiKeyUsageError.value = false
   try {
-    const firstPage = await keysAPI.list(1, 100)
+    const firstPage = await keysQuery.list(1, 100)
     const remainingPages = Array.from({ length: Math.max(0, firstPage.pages - 1) }, (_, index) => index + 2)
     const pageResponses = await mapWithConcurrency(
       remainingPages,
       apiKeyUsageRequestConcurrency,
-      page => keysAPI.list(page, 100)
+      page => keysQuery.list(page, 100)
     )
     const keys: ApiKey[] = [firstPage, ...pageResponses].flatMap(response => response.items)
     if (generation !== apiKeyUsageGeneration) return

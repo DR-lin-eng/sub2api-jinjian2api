@@ -1,5 +1,5 @@
 import { reactive, ref } from 'vue'
-import { adminAPI } from '@/api/admin'
+import { useAdminSettingsQueryStore } from '@/features/admin-settings/presentation/stores/adminSettingsQueryStore'
 import { QUOTA_THRESHOLD_TYPE_FIXED, type QuotaThresholdType } from '@/core/constants/account'
 
 export const QUOTA_NOTIFY_DIMS = ['daily', 'weekly', 'total'] as const
@@ -20,7 +20,8 @@ export function useQuotaNotifyState() {
   })
 
   function loadGlobalState() {
-    adminAPI.settings
+    const settingsStore = useAdminSettingsQueryStore()
+    settingsStore
       .getSettings()
       .then((settings: any) => {
         globalEnabled.value = settings.account_quota_notify_enabled === true

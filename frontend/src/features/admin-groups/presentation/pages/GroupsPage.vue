@@ -160,31 +160,31 @@
               <span
                 :class="[
                   'inline-block rounded-full px-2 py-0.5 text-xs font-medium',
-                  row.subscription_type === 'subscription'
+                  row.subscriptionType === 'subscription'
                     ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
                     : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
                 ]"
               >
                 {{
-                  row.subscription_type === "subscription"
+                  row.subscriptionType === "subscription"
                     ? t("admin.groups.subscription.subscription")
                     : t("admin.groups.subscription.standard")
                 }}
               </span>
               <!-- Subscription Limits - compact single line -->
               <div
-                v-if="row.subscription_type === 'subscription'"
+                v-if="row.subscriptionType === 'subscription'"
                 class="space-y-0.5 text-xs text-gray-500 dark:text-gray-400"
               >
                 <div
                   v-if="
-                    row.daily_limit_usd ||
-                    row.weekly_limit_usd ||
-                    row.monthly_limit_usd
+                    row.dailyLimitUsd ||
+                    row.weeklyLimitUsd ||
+                    row.monthlyLimitUsd
                   "
                   class="flex flex-wrap items-center gap-x-1 gap-y-0.5"
                 >
-                  <span v-if="row.daily_limit_usd" class="whitespace-nowrap">
+                  <span v-if="row.dailyLimitUsd" class="whitespace-nowrap">
                     <span
                       v-if="usageLoading"
                       class="font-medium text-gray-400 dark:text-gray-500"
@@ -195,7 +195,7 @@
                       :class="
                         getQuotaUsageClass(
                           usageMap.get(row.id)?.today_cost ?? 0,
-                          row.daily_limit_usd
+                          row.dailyLimitUsd
                         )
                       "
                       >{{
@@ -203,31 +203,31 @@
                       }}</span
                     >
                     <span class="text-gray-400 dark:text-gray-500">
-                      / {{ formatUsd(row.daily_limit_usd) }}/{{
+                      / {{ formatUsd(row.dailyLimitUsd) }}/{{
                         t("admin.groups.limitDay")
                       }}</span
                     >
                   </span>
                   <span
                     v-if="
-                      row.daily_limit_usd &&
-                      (row.weekly_limit_usd || row.monthly_limit_usd)
+                      row.dailyLimitUsd &&
+                      (row.weeklyLimitUsd || row.monthlyLimitUsd)
                     "
                     class="mx-1 text-gray-300 dark:text-gray-600"
                     >·</span
                   >
-                  <span v-if="row.weekly_limit_usd" class="whitespace-nowrap"
-                    >{{ formatUsd(row.weekly_limit_usd) }}/{{
+                  <span v-if="row.weeklyLimitUsd" class="whitespace-nowrap"
+                    >{{ formatUsd(row.weeklyLimitUsd) }}/{{
                       t("admin.groups.limitWeek")
                     }}</span
                   >
                   <span
-                    v-if="row.weekly_limit_usd && row.monthly_limit_usd"
+                    v-if="row.weeklyLimitUsd && row.monthlyLimitUsd"
                     class="mx-1 text-gray-300 dark:text-gray-600"
                     >·</span
                   >
-                  <span v-if="row.monthly_limit_usd" class="whitespace-nowrap"
-                    >{{ formatUsd(row.monthly_limit_usd) }}/{{
+                  <span v-if="row.monthlyLimitUsd" class="whitespace-nowrap"
+                    >{{ formatUsd(row.monthlyLimitUsd) }}/{{
                       t("admin.groups.limitMonth")
                     }}</span
                   >
@@ -297,7 +297,7 @@
                 }}</span>
                 <span
                   class="ml-1 font-medium text-gray-700 dark:text-gray-300"
-                  >{{ row.account_count || 0 }}</span
+                  >{{ row.accountCount || 0 }}</span
                 >
                 <span
                   class="ml-1 inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 font-medium text-gray-800 dark:bg-dark-600 dark:text-gray-300"
@@ -3670,11 +3670,11 @@
                   >
                     <td class="max-w-[15rem] px-3 py-2">
                       <div class="break-all font-medium text-gray-900 dark:text-white">
-                        {{ route.public_model }}
+                        {{ route.publicModel }}
                       </div>
                       <div class="mt-1 flex flex-wrap items-center gap-1.5">
                         <span class="badge badge-gray">{{
-                          compositeRouteMatchLabel(route.match_type)
+                          compositeRouteMatchLabel(route.matchType)
                         }}</span>
                         <span
                           v-if="!route.enabled"
@@ -3686,11 +3686,11 @@
                     </td>
                     <td class="px-3 py-2">
                       <div class="flex items-center gap-1.5 text-gray-900 dark:text-white">
-                        <PlatformIcon :platform="route.target_platform" size="xs" />
-                        <span>{{ formatCompositePlatform(route.target_platform) }}</span>
+                        <PlatformIcon :platform="route.targetPlatform" size="xs" />
+                        <span>{{ formatCompositePlatform(route.targetPlatform) }}</span>
                       </div>
                       <div class="mt-1 break-all text-xs text-gray-500 dark:text-gray-400">
-                        {{ route.upstream_model || route.public_model }}
+                        {{ route.upstreamModel || route.publicModel }}
                       </div>
                     </td>
                     <td class="px-3 py-2">
@@ -3918,13 +3918,13 @@
                     {{ t("admin.groups.compositeRoutes.targetPlatform") }}:
                     {{
                       formatCompositePlatform(
-                        compositePreviewDecision.target_platform,
+                        compositePreviewDecision.targetPlatform,
                       )
                     }}
                   </div>
                   <div class="break-all">
                     {{ t("admin.groups.compositeRoutes.upstreamModel") }}:
-                    {{ compositePreviewDecision.upstream_model }}
+                    {{ compositePreviewDecision.upstreamModel }}
                   </div>
                 </div>
                 <div
@@ -3975,7 +3975,6 @@ import { ref, reactive, computed, onMounted, onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAppStore } from "@/core/stores/appStore";
 import { useOnboardingStore } from "@/core/stores/onboardingStore";
-import { adminAPI } from "@/api/admin";
 import type {
   AdminGroup,
   CompositeModelRoute,
@@ -4011,7 +4010,7 @@ import {
   messagesDispatchFormStateToConfig,
   resetMessagesDispatchFormState,
   type MessagesDispatchMappingRow,
-} from "@/features/admin-groups/presentation/groupsMessagesDispatchResolver";
+} from "@/features/admin-groups/presentation/utils/groupsMessagesDispatchResolver";
 import {
   buildModelsListConfig,
   createModelsListState as createInitialModelsListState,
@@ -4019,9 +4018,9 @@ import {
   moveModelsListItem,
   selectAllModelsListItems,
   setModelsListCandidates,
-} from "@/features/admin-groups/presentation/groupsModelsListResolver";
-import { createModelsListCandidatesTracker } from "@/features/admin-groups/presentation/groupsModelsListCandidatesResolver";
-import { normalizeSupportedModelScopesForPlatform } from "@/features/admin-groups/presentation/groupsSupportedModelScopesResolver";
+} from "@/features/admin-groups/presentation/utils/groupsModelsListResolver";
+import { createModelsListCandidatesTracker } from "@/features/admin-groups/presentation/utils/groupsModelsListCandidatesResolver";
+import { normalizeSupportedModelScopesForPlatform } from "@/features/admin-groups/presentation/utils/groupsSupportedModelScopesResolver";
 import {
   getDefaultImagePreviewPrice,
   getDefaultVideoPreviewPrice,
@@ -4031,7 +4030,11 @@ import {
   supportsImagePricingPlatform,
   supportsVideoPricingPlatform,
   videoPricingI18nKey,
-} from "@/features/admin-groups/presentation/groupsImagePricingResolver";
+} from "@/features/admin-groups/presentation/utils/groupsImagePricingResolver";
+import { useAdminAccounts } from '@/features/admin-accounts/presentation/composables/useAdminAccounts'
+import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
+const $accounts = useAdminAccounts()
+const $groups = useAdminGroups()
 
 const { t } = useI18n();
 const appStore = useAppStore();
@@ -4287,7 +4290,7 @@ const fallbackGroupOptions = computed(() => {
   const eligibleGroups = groups.value.filter(
     (g) =>
       g.platform === "anthropic" &&
-      !g.claude_code_only &&
+      !g.claudeCodeOnly &&
       g.status === "active",
   );
   eligibleGroups.forEach((g) => {
@@ -4305,7 +4308,7 @@ const fallbackGroupOptionsForEdit = computed(() => {
   const eligibleGroups = groups.value.filter(
     (g) =>
       g.platform === "anthropic" &&
-      !g.claude_code_only &&
+      !g.claudeCodeOnly &&
       g.status === "active" &&
       g.id !== currentId,
   );
@@ -4324,8 +4327,8 @@ const invalidRequestFallbackOptions = computed(() => {
     (g) =>
       g.platform === "anthropic" &&
       g.status === "active" &&
-      g.subscription_type !== "subscription" &&
-      g.fallback_group_id_on_invalid_request === null,
+      g.subscriptionType !== "subscription" &&
+      g.fallbackGroupIdOnInvalidRequest === null,
   );
   eligibleGroups.forEach((g) => {
     options.push({ value: g.id, label: g.name });
@@ -4343,8 +4346,8 @@ const invalidRequestFallbackOptionsForEdit = computed(() => {
     (g) =>
       g.platform === "anthropic" &&
       g.status === "active" &&
-      g.subscription_type !== "subscription" &&
-      g.fallback_group_id_on_invalid_request === null &&
+      g.subscriptionType !== "subscription" &&
+      g.fallbackGroupIdOnInvalidRequest === null &&
       g.id !== currentId,
   );
   eligibleGroups.forEach((g) => {
@@ -4357,7 +4360,7 @@ const canCopyAccountsFromGroup = (targetPlatform: GroupPlatform, sourcePlatform:
   targetPlatform === "composite" || sourcePlatform === targetPlatform;
 
 const copyAccountsGroupLabel = (g: AdminGroup) => {
-  const count = g.account_count || 0;
+  const count = g.accountCount || 0;
   const platform = t("admin.groups.platforms." + g.platform);
   return `${g.name} - ${platform} (${t("admin.groups.accountsCount", { count })})`;
 };
@@ -4367,7 +4370,7 @@ const copyAccountsGroupOptions = computed(() => {
   const eligibleGroups = groups.value.filter(
     (g) =>
       canCopyAccountsFromGroup(createForm.platform, g.platform) &&
-      (g.account_count || 0) > 0,
+      (g.accountCount || 0) > 0,
   );
   return eligibleGroups.map((g) => ({
     value: g.id,
@@ -4381,7 +4384,7 @@ const copyAccountsGroupOptionsForEdit = computed(() => {
   const eligibleGroups = groups.value.filter(
     (g) =>
       canCopyAccountsFromGroup(editForm.platform, g.platform) &&
-      (g.account_count || 0) > 0 &&
+      (g.accountCount || 0) > 0 &&
       g.id !== currentId,
   );
   return eligibleGroups.map((g) => ({
@@ -4620,7 +4623,7 @@ const clearAllAccountSearchState = () => {
 const accountSearchRunner = useKeyedDebouncedSearch<SimpleAccount[]>({
   delay: 300,
   search: async (keyword, { signal }) => {
-    const res = await adminAPI.accounts.list(
+    const res = await $accounts.list(
       1,
       20,
       {
@@ -4767,7 +4770,7 @@ const loadModelsListCandidates = async (
   const loadingRef = mode === "create" ? createModelsListLoading : editModelsListLoading;
   loadingRef.value = true;
   try {
-    const models = await adminAPI.groups.getModelsListCandidates(groupID, platform);
+    const models = await $groups.getModelsListCandidates(groupID, platform);
     if (!modelsListCandidatesTracker.isCurrent(requestID, request)) {
       return;
     }
@@ -4826,7 +4829,7 @@ const convertApiFormatToRoutingRules = async (
     const accounts: SimpleAccount[] = [];
     for (const id of accountIds) {
       try {
-        const account = await adminAPI.accounts.getById(id);
+        const account = await $accounts.getById(id);
         accounts.push({ id: account.id, name: account.name });
       } catch {
         // 如果账号不存在，仍然显示 ID
@@ -5067,7 +5070,7 @@ const deleteConfirmMessage = computed(() => {
   if (!deletingGroup.value) {
     return "";
   }
-  if (deletingGroup.value.subscription_type === "subscription") {
+  if (deletingGroup.value.subscriptionType === "subscription") {
     return t("admin.groups.deleteConfirmSubscription", {
       name: deletingGroup.value.name,
     });
@@ -5084,7 +5087,7 @@ const loadGroups = async () => {
   const { signal } = currentController;
   loading.value = true;
   try {
-    const response = await adminAPI.groups.list(
+    const response = await $groups.list(
       pagination.page,
       pagination.page_size,
       {
@@ -5162,7 +5165,7 @@ const loadUsageSummary = async () => {
   usageLoading.value = true;
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const data = await adminAPI.groups.getUsageSummary(tz);
+    const data = await $groups.getUsageSummary(tz);
     const map = new Map<number, GroupUsageSummary>();
     for (const item of data) {
       map.set(item.group_id, {
@@ -5183,7 +5186,7 @@ const loadCapacitySummary = async () => {
     return;
   }
   try {
-    const data = await adminAPI.groups.getCapacitySummary();
+    const data = await $groups.getCapacitySummary();
     const map = new Map<
       number,
       {
@@ -5394,7 +5397,7 @@ const handleCreateGroup = async () => {
     requestData.peak_rate_multiplier = normalizeRateMultiplier(
       createForm.peak_rate_multiplier,
     );
-    await adminAPI.groups.create(requestData);
+    await $groups.create(requestData);
     appStore.showSuccess(t("admin.groups.groupCreated"));
     closeCreateModal();
     loadGroups();
@@ -5418,65 +5421,65 @@ const handleEdit = async (group: AdminGroup) => {
   editForm.name = group.name;
   editForm.description = group.description || "";
   editForm.platform = group.platform;
-  editForm.rate_multiplier = group.rate_multiplier;
-  editForm.is_exclusive = group.is_exclusive;
+  editForm.rate_multiplier = group.rateMultiplier;
+  editForm.is_exclusive = group.isExclusive;
   editForm.status = group.status;
-  editForm.subscription_type = group.subscription_type || "standard";
-  editForm.daily_limit_usd = group.daily_limit_usd;
-  editForm.weekly_limit_usd = group.weekly_limit_usd;
-  editForm.monthly_limit_usd = group.monthly_limit_usd;
-  editForm.allow_image_generation = group.allow_image_generation ?? false;
-  editForm.openai_force_image_tool = group.openai_force_image_tool ?? false;
+  editForm.subscription_type = group.subscriptionType || "standard";
+  editForm.daily_limit_usd = group.dailyLimitUsd;
+  editForm.weekly_limit_usd = group.weeklyLimitUsd;
+  editForm.monthly_limit_usd = group.monthlyLimitUsd;
+  editForm.allow_image_generation = group.allowImageGeneration ?? false;
+  editForm.openai_force_image_tool = group.openaiForceImageTool ?? false;
   editForm.allow_batch_image_generation =
-    group.allow_batch_image_generation ?? false;
-  editForm.image_rate_independent = group.image_rate_independent ?? false;
-  editForm.image_rate_multiplier = group.image_rate_multiplier ?? 1;
+    group.allowBatchImageGeneration ?? false;
+  editForm.image_rate_independent = group.imageRateIndependent ?? false;
+  editForm.image_rate_multiplier = group.imageRateMultiplier ?? 1;
   editForm.batch_image_discount_multiplier =
-    group.batch_image_discount_multiplier ?? 0.5;
-  editForm.batch_image_hold_multiplier = group.batch_image_hold_multiplier ?? 0.6;
-  editForm.image_price_1k = group.image_price_1k;
-  editForm.image_price_2k = group.image_price_2k;
-  editForm.image_price_4k = group.image_price_4k;
-  editForm.video_rate_independent = group.video_rate_independent ?? false;
-  editForm.video_rate_multiplier = group.video_rate_multiplier ?? 1;
-  editForm.video_price_480p = group.video_price_480p;
-  editForm.video_price_720p = group.video_price_720p;
-  editForm.video_price_1080p = group.video_price_1080p;
-  editForm.web_search_price_per_call = group.web_search_price_per_call ?? null;
-  editForm.peak_rate_enabled = group.peak_rate_enabled ?? false;
-  editForm.peak_start = group.peak_start ?? "";
-  editForm.peak_end = group.peak_end ?? "";
-  editForm.peak_rate_multiplier = group.peak_rate_multiplier ?? 1.0;
-  editForm.claude_code_only = group.claude_code_only || false;
-  editForm.fallback_group_id = group.fallback_group_id;
+    group.batchImageDiscountMultiplier ?? 0.5;
+  editForm.batch_image_hold_multiplier = group.batchImageHoldMultiplier ?? 0.6;
+  editForm.image_price_1k = group.imagePrice1k;
+  editForm.image_price_2k = group.imagePrice2k;
+  editForm.image_price_4k = group.imagePrice4k;
+  editForm.video_rate_independent = group.videoRateIndependent ?? false;
+  editForm.video_rate_multiplier = group.videoRateMultiplier ?? 1;
+  editForm.video_price_480p = group.videoPrice480p;
+  editForm.video_price_720p = group.videoPrice720p;
+  editForm.video_price_1080p = group.videoPrice1080p;
+  editForm.web_search_price_per_call = group.webSearchPricePerCall ?? null;
+  editForm.peak_rate_enabled = group.peakRateEnabled ?? false;
+  editForm.peak_start = group.peakStart ?? "";
+  editForm.peak_end = group.peakEnd ?? "";
+  editForm.peak_rate_multiplier = group.peakRateMultiplier ?? 1.0;
+  editForm.claude_code_only = group.claudeCodeOnly || false;
+  editForm.fallback_group_id = group.fallbackGroupId;
   editForm.fallback_group_id_on_invalid_request =
-    group.fallback_group_id_on_invalid_request;
+    group.fallbackGroupIdOnInvalidRequest;
   const messagesDispatchFormState = messagesDispatchConfigToFormState(
-    group.messages_dispatch_model_config,
+    group.messagesDispatchModelConfig,
   );
   editForm.allow_messages_dispatch =
-    group.allow_messages_dispatch ||
+    group.allowMessagesDispatch ||
     messagesDispatchFormState.allow_messages_dispatch;
   editForm.opus_mapped_model = messagesDispatchFormState.opus_mapped_model;
   editForm.sonnet_mapped_model = messagesDispatchFormState.sonnet_mapped_model;
   editForm.haiku_mapped_model = messagesDispatchFormState.haiku_mapped_model;
   editForm.exact_model_mappings =
     messagesDispatchFormState.exact_model_mappings;
-  editForm.require_oauth_only = group.require_oauth_only ?? false;
-  editForm.require_privacy_set = group.require_privacy_set ?? false;
-  editForm.model_routing_enabled = group.model_routing_enabled || false;
-  editForm.supported_model_scopes = group.supported_model_scopes || [
+  editForm.require_oauth_only = group.requireOauthOnly ?? false;
+  editForm.require_privacy_set = group.requirePrivacySet ?? false;
+  editForm.model_routing_enabled = group.modelRoutingEnabled || false;
+  editForm.supported_model_scopes = group.supportedModelScopes || [
     "claude",
     "gemini_text",
     "gemini_image",
   ];
-  editForm.mcp_xml_inject = group.mcp_xml_inject ?? true;
+  editForm.mcp_xml_inject = group.mcpXmlInject ?? true;
   editForm.copy_accounts_from_group_ids = []; // 复制账号字段每次编辑时重置为空
-  editForm.rpm_limit = group.rpm_limit ?? 0;
-  resetModelsListState(editModelsListState, group.models_list_config);
+  editForm.rpm_limit = group.rpmLimit ?? 0;
+  resetModelsListState(editModelsListState, group.modelsListConfig);
   // 加载模型路由规则（异步加载账号名称）
   editModelRoutingRules.value = await convertApiFormatToRoutingRules(
-    group.model_routing,
+    group.modelRouting,
   );
   loadModelsListCandidates("edit", group.id, group.platform);
   showEditModal.value = true;
@@ -5588,7 +5591,7 @@ const handleUpdateGroup = async () => {
     payload.peak_rate_multiplier = normalizeRateMultiplier(
       editForm.peak_rate_multiplier,
     );
-    await adminAPI.groups.update(editingGroup.value.id, payload);
+    await $groups.update(editingGroup.value.id, payload);
     appStore.showSuccess(t("admin.groups.groupUpdated"));
     closeEditModal();
     loadGroups();
@@ -5641,7 +5644,7 @@ const handleDuplicate = async (group: AdminGroup) => {
 
   duplicatingGroupIds.add(group.id);
   try {
-    const duplicate = await adminAPI.groups.duplicate(group.id);
+    const duplicate = await $groups.duplicate(group.id);
     appStore.showSuccess(
       t("admin.groups.duplicateSuccess", { name: duplicate.name }),
     );
@@ -5689,10 +5692,10 @@ const resetCompositeRouteForm = () => {
 };
 
 const toCompositeRouteInput = (): CompositeModelRouteInput => ({
-  public_model: compositeRouteForm.public_model.trim(),
-  match_type: compositeRouteForm.match_type,
-  target_platform: compositeRouteForm.target_platform,
-  upstream_model: compositeRouteForm.upstream_model.trim(),
+  publicModel: compositeRouteForm.public_model.trim(),
+  matchType: compositeRouteForm.match_type,
+  targetPlatform: compositeRouteForm.target_platform,
+  upstreamModel: compositeRouteForm.upstream_model.trim(),
   endpoint: compositeRouteForm.endpoint,
   priority: Number(compositeRouteForm.priority) || 100,
   enabled: compositeRouteForm.enabled,
@@ -5703,7 +5706,7 @@ const loadCompositeRoutes = async () => {
   if (!compositeRoutesGroup.value) return;
   compositeRoutesLoading.value = true;
   try {
-    const routes = await adminAPI.groups.listCompositeRoutes(
+    const routes = await $groups.listCompositeRoutes(
       compositeRoutesGroup.value.id,
     );
     compositeRoutes.value = routes.sort((a: any, b: any) => {
@@ -5742,10 +5745,10 @@ const closeCompositeRoutesModal = () => {
 
 const editCompositeRoute = (route: CompositeModelRoute) => {
   compositeRouteEditingId.value = route.id;
-  compositeRouteForm.public_model = route.public_model;
-  compositeRouteForm.match_type = route.match_type;
-  compositeRouteForm.target_platform = route.target_platform;
-  compositeRouteForm.upstream_model = route.upstream_model;
+  compositeRouteForm.public_model = route.publicModel;
+  compositeRouteForm.match_type = route.matchType;
+  compositeRouteForm.target_platform = route.targetPlatform;
+  compositeRouteForm.upstream_model = route.upstreamModel;
   compositeRouteForm.endpoint = route.endpoint;
   compositeRouteForm.priority = route.priority || 100;
   compositeRouteForm.enabled = route.enabled;
@@ -5762,14 +5765,14 @@ const saveCompositeRoute = async () => {
   try {
     const payload = toCompositeRouteInput();
     if (compositeRouteEditingId.value) {
-      await adminAPI.groups.updateCompositeRoute(
+      await $groups.updateCompositeRoute(
         compositeRoutesGroup.value.id,
         compositeRouteEditingId.value,
         payload,
       );
       appStore.showSuccess(t("admin.groups.compositeRoutes.routeUpdated"));
     } else {
-      await adminAPI.groups.createCompositeRoute(
+      await $groups.createCompositeRoute(
         compositeRoutesGroup.value.id,
         payload,
       );
@@ -5793,7 +5796,7 @@ const deleteCompositeRoute = async (route: CompositeModelRoute) => {
   if (!compositeRoutesGroup.value) return;
   if (!window.confirm(t("admin.groups.compositeRoutes.deleteConfirm"))) return;
   try {
-    await adminAPI.groups.deleteCompositeRoute(
+    await $groups.deleteCompositeRoute(
       compositeRoutesGroup.value.id,
       route.id,
     );
@@ -5818,7 +5821,7 @@ const previewCompositeRoute = async () => {
   }
   compositePreviewLoading.value = true;
   try {
-    compositePreviewDecision.value = await adminAPI.groups.previewCompositeRoute(
+    compositePreviewDecision.value = await $groups.previewCompositeRoute(
       compositeRoutesGroup.value.id,
       {
         model: compositePreviewModel.value.trim(),
@@ -5846,7 +5849,7 @@ const confirmDelete = async () => {
   if (!deletingGroup.value) return;
 
   try {
-    await adminAPI.groups.delete(deletingGroup.value.id);
+    await $groups.deleteGroup(deletingGroup.value.id);
     appStore.showSuccess(t("admin.groups.groupDeleted"));
     showDeleteDialog.value = false;
     deletingGroup.value = null;
@@ -5954,7 +5957,7 @@ watch(
     }
     resetDisabledBatchImagePricing(editForm);
     if (editingGroup.value) {
-      resetModelsListState(editModelsListState, editForm.platform === editingGroup.value.platform ? editingGroup.value.models_list_config : undefined);
+      resetModelsListState(editModelsListState, editForm.platform === editingGroup.value.platform ? editingGroup.value.modelsListConfig : undefined);
       loadModelsListCandidates("edit", editingGroup.value.id, newVal);
     }
   },
@@ -6017,10 +6020,10 @@ const handleClickOutside = (event: MouseEvent) => {
 const openSortModal = async () => {
   try {
     // 获取所有分组（不分页）
-    const allGroups = await adminAPI.groups.getAll();
+    const allGroups = await $groups.getAll();
     // 按 sort_order 排序
     sortableGroups.value = [...allGroups].sort(
-      (a, b) => a.sort_order - b.sort_order,
+      (a, b) => a.sortOrder - b.sortOrder,
     );
     showSortModal.value = true;
   } catch (error) {
@@ -6043,7 +6046,7 @@ const saveSortOrder = async () => {
       id: g.id,
       sort_order: index * 10,
     }));
-    await adminAPI.groups.updateSortOrder(updates);
+    await $groups.updateSortOrder(updates);
     appStore.showSuccess(t("admin.groups.sortOrderUpdated"));
     closeSortModal();
     loadGroups();

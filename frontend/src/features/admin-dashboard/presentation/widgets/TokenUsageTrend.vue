@@ -34,8 +34,7 @@ import {
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
-import type { TrendDataPoint } from '@/types'
-
+import type { TrendDataPoint } from '@/features/admin-dashboard/domain/models/trendDataPoint'
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -76,7 +75,7 @@ const chartData = computed(() => {
     datasets: [
       {
         label: 'Input',
-        data: props.trendData.map((d) => d.input_tokens),
+        data: props.trendData.map((d) => d.inputTokens),
         borderColor: chartColors.value.input,
         backgroundColor: `${chartColors.value.input}20`,
         fill: true,
@@ -84,7 +83,7 @@ const chartData = computed(() => {
       },
       {
         label: 'Output',
-        data: props.trendData.map((d) => d.output_tokens),
+        data: props.trendData.map((d) => d.outputTokens),
         borderColor: chartColors.value.output,
         backgroundColor: `${chartColors.value.output}20`,
         fill: true,
@@ -92,7 +91,7 @@ const chartData = computed(() => {
       },
       {
         label: 'Cache Creation',
-        data: props.trendData.map((d) => d.cache_creation_tokens),
+        data: props.trendData.map((d) => d.cacheCreationTokens),
         borderColor: chartColors.value.cacheCreation,
         backgroundColor: `${chartColors.value.cacheCreation}20`,
         fill: true,
@@ -100,7 +99,7 @@ const chartData = computed(() => {
       },
       {
         label: 'Cache Read',
-        data: props.trendData.map((d) => d.cache_read_tokens),
+        data: props.trendData.map((d) => d.cacheReadTokens),
         borderColor: chartColors.value.cacheRead,
         backgroundColor: `${chartColors.value.cacheRead}20`,
         fill: true,
@@ -109,8 +108,8 @@ const chartData = computed(() => {
       {
         label: 'Cache Hit Rate',
         data: props.trendData.map((d) => {
-          const totalPromptTokens = d.input_tokens + d.cache_read_tokens + d.cache_creation_tokens
-          return totalPromptTokens > 0 ? (d.cache_read_tokens / totalPromptTokens) * 100 : 0
+          const totalPromptTokens = d.inputTokens + d.cacheReadTokens + d.cacheCreationTokens
+          return totalPromptTokens > 0 ? (d.cacheReadTokens / totalPromptTokens) * 100 : 0
         }),
         borderColor: chartColors.value.cacheHitRate,
         backgroundColor: `${chartColors.value.cacheHitRate}20`,
@@ -155,7 +154,7 @@ const lineOptions = computed(() => ({
           const dataIndex = tooltipItems[0]?.dataIndex
           if (dataIndex !== undefined && props.trendData[dataIndex]) {
             const data = props.trendData[dataIndex]
-            return `Actual: $${formatCost(data.actual_cost)} | Standard: $${formatCost(data.cost)}`
+            return `Actual: $${formatCost(data.actualCost)} | Standard: $${formatCost(data.cost)}`
           }
           return ''
         }

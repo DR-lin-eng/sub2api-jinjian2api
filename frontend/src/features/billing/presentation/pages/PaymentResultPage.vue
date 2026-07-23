@@ -39,29 +39,29 @@
               <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.orderId') }}</span>
               <span class="font-medium text-gray-900 dark:text-white">#{{ order.id }}</span>
             </div>
-            <div v-if="order.out_trade_no" class="flex justify-between">
+            <div v-if="orderNo(order)" class="flex justify-between">
               <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.orderNo') }}</span>
-              <span class="font-medium text-gray-900 dark:text-white">{{ order.out_trade_no }}</span>
+              <span class="font-medium text-gray-900 dark:text-white">{{ orderNo(order) }}</span>
             </div>
             <div v-if="hasAmountFields(order)" class="flex justify-between">
               <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.baseAmount') }}</span>
               <span class="font-medium text-gray-900 dark:text-white">{{ formatGatewayAmount(baseAmount) }}</span>
             </div>
-            <div v-if="hasAmountFields(order) && order.fee_rate > 0" class="flex justify-between">
-              <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.fee') }} ({{ order.fee_rate }}%)</span>
+            <div v-if="hasAmountFields(order) && order.feeRate > 0" class="flex justify-between">
+              <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.fee') }} ({{ order.feeRate }}%)</span>
               <span class="font-medium text-gray-900 dark:text-white">{{ formatGatewayAmount(feeAmount) }}</span>
             </div>
             <div v-if="hasAmountFields(order)" class="flex justify-between">
               <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.payAmount') }}</span>
-              <span class="font-bold text-primary-600 dark:text-primary-400">{{ formatGatewayAmount(order.pay_amount) }}</span>
+              <span class="font-bold text-primary-600 dark:text-primary-400">{{ formatGatewayAmount(order.payAmount) }}</span>
             </div>
-            <div v-if="hasAmountFields(order) && order.amount !== order.pay_amount" class="flex justify-between">
+            <div v-if="hasAmountFields(order) && order.amount !== order.payAmount" class="flex justify-between">
               <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.creditedAmount') }}</span>
-              <span class="font-medium text-gray-900 dark:text-white">{{ order.order_type === 'balance' ? '$' + order.amount.toFixed(2) : formatGatewayAmount(order.amount) }}</span>
+              <span class="font-medium text-gray-900 dark:text-white">{{ order.orderType === 'balance' ? '$' + order.amount.toFixed(2) : formatGatewayAmount(order.amount) }}</span>
             </div>
             <div v-if="hasPaymentType(order)" class="flex justify-between">
               <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.paymentMethod') }}</span>
-              <span class="font-medium text-gray-900 dark:text-white">{{ t(paymentMethodI18nKey(order.payment_type), normalizedOrderPaymentType(order.payment_type)) }}</span>
+              <span class="font-medium text-gray-900 dark:text-white">{{ t(paymentMethodI18nKey(order.paymentType), normalizedOrderPaymentType(order.paymentType)) }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.status') }}</span>
@@ -144,17 +144,17 @@ const refreshAttempts = ref(0)
 /** 充值金额 = pay_amount / (1 + fee_rate/100)，fee_rate=0 时等于 pay_amount */
 const baseAmount = computed(() => {
   if (!hasAmountFields(order.value)) return 0
-  const feeRate = Number(order.value.fee_rate) || 0
-  if (feeRate <= 0) return order.value.pay_amount ?? 0
-  return Math.round((order.value.pay_amount / (1 + feeRate / 100)) * 100) / 100
+  const feeRate = Number(order.value.feeRate) || 0
+  if (feeRate <= 0) return order.value.payAmount ?? 0
+  return Math.round((order.value.payAmount / (1 + feeRate / 100)) * 100) / 100
 })
 
 /** 手续费 = pay_amount - baseAmount */
 const feeAmount = computed(() => {
   if (!hasAmountFields(order.value)) return 0
-  const feeRate = Number(order.value.fee_rate) || 0
+  const feeRate = Number(order.value.feeRate) || 0
   if (feeRate <= 0) return 0
-  return Math.round((order.value.pay_amount - baseAmount.value) * 100) / 100
+  return Math.round((order.value.payAmount - baseAmount.value) * 100) / 100
 })
 
 const localeCode = computed(() => {
@@ -201,6 +201,13 @@ function setResolvedOrder(nextOrder: ResolvedOrder | null): void {
 
 function hasOrderId(nextOrder: ResolvedOrder | null): nextOrder is PaymentOrder {
   return !!nextOrder && 'id' in nextOrder && typeof nextOrder.id === 'number'
+}
+
+function orderNo(nextOrder: ResolvedOrder | null): string {
+  if (!nextOrder) return ''
+  if ('outTradeNo' in nextOrder) return nextOrder.outTradeNo || ''
+  if ('out_trade_no' in nextOrder) return nextOrder.out_trade_no || ''
+  return ''
 }
 
 function hasAmountFields(nextOrder: ResolvedOrder | null): nextOrder is PaymentOrder {

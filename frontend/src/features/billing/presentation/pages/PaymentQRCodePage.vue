@@ -198,7 +198,7 @@ onMounted(() => {
   paymentType.value = String(route.query.payment_type || '')
 
   // Calculate countdown from expiresAt
-  const expiresAtStr = String(route.query.expires_at || '')
+  const expiresAtStr = String(route.query.expiresAt || '')
   let seconds = 30 * 60 // fallback: 30 minutes
   if (expiresAtStr) {
     const expiresAt = new Date(expiresAtStr)

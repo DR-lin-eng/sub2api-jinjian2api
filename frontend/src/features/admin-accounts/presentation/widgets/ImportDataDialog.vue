@@ -70,7 +70,7 @@
             class="mt-2 max-h-48 overflow-auto rounded-lg bg-gray-50 p-3 font-mono text-xs dark:bg-dark-800"
           >
             <div v-for="(item, idx) in errorItems" :key="idx" class="whitespace-pre-wrap">
-              {{ item.kind }} {{ item.name || item.proxy_key || '-' }} — {{ item.message }}
+              {{ item.kind }} {{ item.name || item.proxyKey || '-' }} — {{ item.message }}
             </div>
           </div>
         </div>
@@ -99,10 +99,12 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import { adminAPI } from '@/api/admin'
-import { useAppStore } from '@/core/stores/appStore'
-import type { AdminDataImportResult, AdminDataPayload } from '@/types'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
 
+const actionStore = useAdminAccountsActionStore()
+import { useAppStore } from '@/core/stores/appStore'
+import type { AdminDataImportResult } from '@/features/admin-accounts/domain/models/adminDataImportResult'
+import type { AdminDataPayload } from '@/features/admin-accounts/domain/models/adminDataPayload'
 interface Props {
   show: boolean
 }
@@ -254,13 +256,13 @@ const mergeDataPayloads = (payloads: AdminDataPayload[]): AdminDataPayload => {
   if (payloads.length === 1 && firstPayload) return firstPayload
 
   return {
-    type: payloads.find((item) => typeof item.type === 'string')?.type,
-    version: payloads.find((item) => typeof item.version === 'number')?.version,
-    exported_at: new Date().toISOString(),
+    type: payloads.find((item) => typeof item.type === 'string')?.type ?? '',
+    version: payloads.find((item) => typeof item.version === 'number')?.version ?? 0,
+    exportedAt: new Date().toISOString(),
     proxies: payloads.flatMap((item) => item.proxies),
     accounts: payloads.flatMap((item) => item.accounts),
-    skipped_shadows: payloads.reduce((sum, item) => {
-      const count = Number(item.skipped_shadows || 0)
+    skippedShadows: payloads.reduce((sum, item) => {
+      const count = Number(item.skippedShadows || 0)
       return Number.isFinite(count) ? sum + count : sum
     }, 0)
   }
@@ -293,7 +295,7 @@ const handleImport = async () => {
     }
     const dataPayload = mergeDataPayloads(dataPayloads)
 
-    const res = await adminAPI.accounts.importData({
+    const res = await actionStore.importData({
       data: dataPayload,
       skip_default_group_bind: true
     })
@@ -301,15 +303,15 @@ const handleImport = async () => {
     result.value = res
 
     const msgParams: Record<string, unknown> = {
-      account_created: res.account_created,
-      account_failed: res.account_failed,
-      proxy_created: res.proxy_created,
-      proxy_reused: res.proxy_reused,
-      proxy_failed: res.proxy_failed,
+      accountCreated: res.accountCreated,
+      accountFailed: res.accountFailed,
+      proxyCreated: res.proxyCreated,
+      proxyReused: res.proxyReused,
+      proxyFailed: res.proxyFailed,
     }
-    if (res.account_failed > 0 || res.proxy_failed > 0) {
+    if (res.accountFailed > 0 || res.proxyFailed > 0) {
       // 部分成功也创建了数据;弹窗关闭时通过 imported 通知父组件刷新列表
-      if (res.account_created > 0 || res.proxy_created > 0) {
+      if (res.accountCreated > 0 || res.proxyCreated > 0) {
         hasCreatedData.value = true
       }
       appStore.showError(t('admin.accounts.dataImportCompletedWithErrors', msgParams))

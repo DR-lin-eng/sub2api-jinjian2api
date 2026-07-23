@@ -82,7 +82,7 @@
 
           <template #cell-usage="{ row }">
             <span class="text-sm text-gray-600 dark:text-gray-300">
-              {{ row.used_count }} / {{ row.max_uses === 0 ? '∞' : row.max_uses }}
+              {{ row.usedCount }} / {{ row.maxUses === 0 ? '∞' : row.maxUses }}
             </span>
           </template>
 
@@ -338,16 +338,16 @@
             </div>
             <div>
               <p class="text-sm font-medium text-gray-900 dark:text-white">
-                {{ usage.user?.email || t('admin.promo.userPrefix', { id: usage.user_id }) }}
+                {{ t('admin.promo.userPrefix', { id: usage.userId }) }}
               </p>
               <p class="text-xs text-gray-500 dark:text-gray-400">
-                {{ formatDateTime(usage.used_at) }}
+                {{ formatDateTime(usage.usedAt) }}
               </p>
             </div>
           </div>
           <div class="text-right">
             <span class="text-sm font-medium text-green-600 dark:text-green-400">
-              +${{ usage.bonus_amount.toFixed(2) }}
+              +${{ usage.bonusAmount.toFixed(2) }}
             </span>
           </div>
         </div>
@@ -391,9 +391,7 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { useClipboard } from '@/common/composables/useClipboard'
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
-import { adminAPI } from '@/api/admin'
 import { formatDateTime } from '@/core/utils/format'
-import type { PromoCode, PromoCodeUsage } from '@/types'
 import type { Column } from '@/common/types/uiTypes'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
@@ -403,6 +401,10 @@ import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
+import { useAdminPromo } from '@/features/admin-promo/presentation/composables/useAdminPromo'
+import type { PromoCode } from '@/features/admin-promo/domain/models/promoCode'
+import type { PromoCodeUsage } from '@/features/admin-promo/domain/models/promoCodeUsage'
+const $promo = useAdminPromo()
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -489,20 +491,20 @@ const columns = computed<Column[]>(() => [
 
 // Helpers
 const getStatusClass = (status: string, row: PromoCode) => {
-  if (row.expires_at && new Date(row.expires_at) < new Date()) {
+  if (row.expiresAt && new Date(row.expiresAt) < new Date()) {
     return 'badge-danger'
   }
-  if (row.max_uses > 0 && row.used_count >= row.max_uses) {
+  if (row.maxUses > 0 && row.usedCount >= row.maxUses) {
     return 'badge-gray'
   }
   return status === 'active' ? 'badge-success' : 'badge-gray'
 }
 
 const getStatusLabel = (status: string, row: PromoCode) => {
-  if (row.expires_at && new Date(row.expires_at) < new Date()) {
+  if (row.expiresAt && new Date(row.expiresAt) < new Date()) {
     return t('admin.promo.statusExpired')
   }
-  if (row.max_uses > 0 && row.used_count >= row.max_uses) {
+  if (row.maxUses > 0 && row.usedCount >= row.maxUses) {
     return t('admin.promo.statusMaxUsed')
   }
   return status === 'active' ? t('admin.promo.statusActive') : t('admin.promo.statusDisabled')
@@ -520,7 +522,7 @@ const loadCodes = async () => {
   loading.value = true
 
   try {
-    const response = await adminAPI.promo.list(
+    const response = await $promo.list(
       pagination.page,
       pagination.page_size,
       {
@@ -595,7 +597,7 @@ const copyToClipboard = async (text: string) => {
 const handleCreate = async () => {
   creating.value = true
   try {
-    await adminAPI.promo.create({
+    await $promo.create({
       code: createForm.code || undefined,
       bonus_amount: createForm.bonus_amount,
       max_uses: createForm.max_uses,
@@ -625,10 +627,10 @@ const resetCreateForm = () => {
 const handleEdit = (code: PromoCode) => {
   editingCode.value = code
   editForm.code = code.code
-  editForm.bonus_amount = code.bonus_amount
-  editForm.max_uses = code.max_uses
+  editForm.bonus_amount = code.bonusAmount
+  editForm.max_uses = code.maxUses
   editForm.status = code.status
-  editForm.expires_at_str = code.expires_at ? new Date(code.expires_at).toISOString().slice(0, 16) : ''
+  editForm.expires_at_str = code.expiresAt ? new Date(code.expiresAt).toISOString().slice(0, 16) : ''
   editForm.notes = code.notes || ''
   showEditDialog.value = true
 }
@@ -643,7 +645,7 @@ const handleUpdate = async () => {
 
   updating.value = true
   try {
-    await adminAPI.promo.update(editingCode.value.id, {
+    await $promo.update(editingCode.value.id, {
       code: editForm.code,
       bonus_amount: editForm.bonus_amount,
       max_uses: editForm.max_uses,
@@ -691,7 +693,7 @@ const confirmDelete = async () => {
   if (!deletingCode.value) return
 
   try {
-    await adminAPI.promo.delete(deletingCode.value.id)
+    await $promo.deleteCode(deletingCode.value.id)
     appStore.showSuccess(t('admin.promo.codeDeleted'))
     showDeleteDialog.value = false
     deletingCode.value = null
@@ -715,7 +717,7 @@ const loadUsages = async () => {
   usages.value = []
 
   try {
-    const response = await adminAPI.promo.getUsages(
+    const response = await $promo.getUsages(
       currentViewingCode.value.id,
       usagesPage.value,
       usagesPageSize.value

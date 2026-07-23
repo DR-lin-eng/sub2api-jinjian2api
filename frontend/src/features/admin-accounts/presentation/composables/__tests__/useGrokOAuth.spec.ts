@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { setActivePinia, createPinia } from 'pinia'
 
 vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
@@ -19,22 +20,38 @@ vi.mock('vue-i18n', () => ({
   })
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    grok: {
-      generateAuthUrl: vi.fn(),
-      exchangeCode: vi.fn(),
-      refreshGrokToken: vi.fn()
-    }
-  }
+// Mock the action-store singleton so useGrokOAuth (which calls
+// useAdminAccountsActionStore() at composable entry) receives our stubs.
+const {
+  grokGenerateAuthUrl,
+  grokExchangeCode,
+  refreshGrokToken,
+} = vi.hoisted(() => ({
+  grokGenerateAuthUrl: vi.fn(),
+  grokExchangeCode: vi.fn(),
+  refreshGrokToken: vi.fn(),
+}))
+
+vi.mock('@/features/admin-accounts/presentation/stores/adminAccountsActionStore', () => ({
+  useAdminAccountsActionStore: () => ({
+    grok_generateAuthUrl: grokGenerateAuthUrl,
+    grok_exchangeCode: grokExchangeCode,
+    refreshGrokToken,
+  }),
 }))
 
 import { useGrokOAuth } from '@/features/admin-accounts/presentation/composables/useGrokOAuth'
-import { adminAPI } from '@/api/admin'
+
+beforeEach(() => {
+  setActivePinia(createPinia())
+  grokGenerateAuthUrl.mockReset()
+  grokExchangeCode.mockReset()
+  refreshGrokToken.mockReset()
+})
 
 describe('useGrokOAuth.exchangeAuthCode', () => {
   it('shows a state mismatch recovery hint from structured backend errors', async () => {
-    vi.mocked(adminAPI.grok.exchangeCode).mockRejectedValueOnce({
+    grokExchangeCode.mockRejectedValueOnce({
       status: 400,
       reason: 'GROK_OAUTH_INVALID_STATE',
       message: 'invalid oauth state'

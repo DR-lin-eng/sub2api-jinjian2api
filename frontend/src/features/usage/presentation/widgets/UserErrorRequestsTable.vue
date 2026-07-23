@@ -1,7 +1,7 @@
 <template>
   <div class="flex min-h-0 flex-1 flex-col">
     <div class="card flex min-h-0 flex-1 flex-col overflow-hidden">
-      <IpGeoBatchToolbar :ips="rows.map((r) => r.client_ip)" @failed="emit('ipGeoBatchFailed')" />
+      <IpGeoBatchToolbar :ips="rows.map((r) => r.clientIp)" @failed="emit('ipGeoBatchFailed')" />
 
       <DataTable
         :columns="columns"
@@ -33,14 +33,14 @@
           <div class="max-w-[320px] text-xs">
             <div class="break-all text-gray-700 dark:text-gray-300">
               <span class="font-medium text-gray-500 dark:text-gray-400">{{ t('usage.inbound') }}:</span>
-              <span class="ml-1">{{ row.inbound_endpoint?.trim() || '-' }}</span>
+              <span class="ml-1">{{ row.inboundEndpoint?.trim() || '-' }}</span>
             </div>
           </div>
         </template>
 
         <template #cell-status="{ row }">
-          <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium" :class="statusClass(row.status_code)">
-            {{ row.status_code || '-' }}
+          <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium" :class="statusClass(row.statusCode)">
+            {{ row.statusCode || '-' }}
           </span>
         </template>
 
@@ -89,15 +89,15 @@
         </template>
 
         <template #cell-created_at="{ row }">
-          <span class="text-sm text-gray-600 dark:text-gray-400">{{ formatDateTime(row.created_at) }}</span>
+          <span class="text-sm text-gray-600 dark:text-gray-400">{{ formatDateTime(row.createdAt) }}</span>
         </template>
 
         <template #cell-user_agent="{ row }">
           <span
-            v-if="row.user_agent"
+            v-if="row.userAgent"
             class="block max-w-[320px] truncate text-sm text-gray-600 dark:text-gray-400"
-            :title="row.user_agent"
-          >{{ row.user_agent }}</span>
+            :title="row.userAgent"
+          >{{ row.userAgent }}</span>
           <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
         </template>
 
@@ -187,7 +187,7 @@ const columns = computed<Column[]>(() =>
 )
 
 function requestTypeBadge(row: UserErrorRequest): { label: string; className: string } | null {
-  const kind = numericRequestTypeKind(row.request_type, row.stream)
+  const kind = numericRequestTypeKind(row.requestType, row.stream)
   if (!kind) return null
   return { label: t(requestTypeLabelKey(kind)), className: requestTypeBadgeClass(kind) }
 }

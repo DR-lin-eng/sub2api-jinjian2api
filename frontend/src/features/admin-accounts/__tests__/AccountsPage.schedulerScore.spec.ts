@@ -93,15 +93,15 @@ function mountView() {
         AccountTableFilters: { template: '<div></div>' },
         AccountBulkActionsBar: true,
         AccountActionMenu: true,
-        ImportDataModal: true,
+        ImportDataDialog: true,
         ReAuthAccountDialog: true,
         AccountTestDialog: true,
         AccountStatsDialog: true,
         ScheduledTestsPanel: true,
         SyncFromCrsDialog: true,
         TempUnschedStatusDialog: true,
-        ErrorPassthroughRulesModal: true,
-        TLSFingerprintProfilesModal: true,
+        ErrorPassthroughRulesDialog: true,
+        TLSFingerprintProfilesDialog: true,
         CreateAccountDialog: true,
         EditAccountDialog: true,
         BulkEditAccountDialog: true,
@@ -124,12 +124,12 @@ const baseAccount = {
   schedulable: true,
   concurrency: 1,
   priority: 0,
-  error_message: null,
-  last_used_at: null,
-  expires_at: null,
-  auto_pause_on_expired: false,
-  created_at: '2026-01-01T00:00:00Z',
-  updated_at: '2026-01-01T00:00:00Z'
+  errorMessage: '',
+  lastUsedAt: '',
+  expiresAt: '',
+  autoPauseOnExpired: false,
+  createdAt: '2026-01-01T00:00:00Z',
+  updatedAt: '2026-01-01T00:00:00Z'
 }
 
 describe('admin AccountsPage scheduler score column', () => {
@@ -164,7 +164,7 @@ describe('admin AccountsPage scheduler score column', () => {
             sticky_score: 3,
             sticky_weighted_enabled: true
           },
-          scheduler_scores: [
+          schedulerScores: [
             {
               group_id: 5,
               group_name: 'group-five',

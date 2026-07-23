@@ -1243,8 +1243,9 @@
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { Proxy as ProxyConfig, AdminGroup, AccountPlatform, AccountType, OpenAICompactMode } from '@/types'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
+
+const actionStore = useAdminAccountsActionStore()
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
@@ -1264,7 +1265,7 @@ import {
   HEADER_OVERRIDE_ENABLED_CREDENTIAL_KEY,
   HEADER_OVERRIDES_CREDENTIAL_KEY,
   type HeaderOverrideRow
-} from '@/features/admin-accounts/presentation/credentialsBuilder'
+} from '@/features/admin-accounts/presentation/utils/credentialsBuilder'
 import GrokBaseUrlPresets from '@/features/admin-accounts/presentation/widgets/GrokBaseUrlPresets.vue'
 import {
   OPENAI_WS_MODE_CTX_POOL,
@@ -1275,6 +1276,9 @@ import {
   resolveOpenAIWSModeConcurrencyHintKey
 } from '@/core/utils/openaiWsMode'
 import type { OpenAIWSMode } from '@/core/utils/openaiWsMode'
+import type { Proxy as ProxyConfig } from '@/features/admin-proxies/domain/models/proxy'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
+import type { AccountPlatform, AccountType, OpenAICompactMode } from '@/types'
 interface Props {
   show: boolean
   accountIds: number[]
@@ -1593,7 +1597,7 @@ const buildUpdatePayload = (): Record<string, unknown> | null => {
 
   if (enableProxy.value) {
     // 后端期望 proxy_id: 0 表示清除代理，而不是 null
-    updates.proxy_id = proxyId.value === null ? 0 : proxyId.value
+    updates.proxyId = proxyId.value === null ? 0 : proxyId.value
   }
 
   if (enableConcurrency.value) {
@@ -1603,7 +1607,7 @@ const buildUpdatePayload = (): Record<string, unknown> | null => {
   if (enableLoadFactor.value) {
     // 空值/NaN/0 时发送 0（后端约定 <= 0 表示清除）
     const lf = loadFactor.value
-    updates.load_factor = (lf != null && !Number.isNaN(lf) && lf > 0) ? lf : 0
+    updates.loadFactor = (lf != null && !Number.isNaN(lf) && lf > 0) ? lf : 0
   }
 
   if (enablePriority.value) {
@@ -1611,7 +1615,7 @@ const buildUpdatePayload = (): Record<string, unknown> | null => {
   }
 
   if (enableRateMultiplier.value) {
-    updates.rate_multiplier = rateMultiplier.value
+    updates.rateMultiplier = rateMultiplier.value
   }
 
   if (enableStatus.value) {
@@ -1619,7 +1623,7 @@ const buildUpdatePayload = (): Record<string, unknown> | null => {
   }
 
   if (enableGroups.value) {
-    updates.group_ids = groupIds.value
+    updates.groupIds = groupIds.value
   }
 
   if (enableBaseUrl.value) {
@@ -1727,18 +1731,18 @@ const buildUpdatePayload = (): Record<string, unknown> | null => {
   if (enableRpmLimit.value) {
     const extra = ensureExtra()
     if (rpmLimitEnabled.value && bulkBaseRpm.value != null && bulkBaseRpm.value > 0) {
-      extra.base_rpm = bulkBaseRpm.value
-      extra.rpm_strategy = bulkRpmStrategy.value
+      extra.baseRpm = bulkBaseRpm.value
+      extra.rpmStrategy = bulkRpmStrategy.value
       if (bulkRpmStickyBuffer.value != null && bulkRpmStickyBuffer.value > 0) {
-        extra.rpm_sticky_buffer = bulkRpmStickyBuffer.value
+        extra.rpmStickyBuffer = bulkRpmStickyBuffer.value
       }
     } else {
       // 关闭 RPM 限制 - 设置 base_rpm 为 0，并用空值覆盖关联字段
       // 后端使用 JSONB || merge 语义，不会删除已有 key，
       // 所以必须显式发送空值来重置（后端读取时会 fallback 到默认值）
-      extra.base_rpm = 0
-      extra.rpm_strategy = ''
-      extra.rpm_sticky_buffer = 0
+      extra.baseRpm = 0
+      extra.rpmStrategy = ''
+      extra.rpmStickyBuffer = 0
     }
     updates.extra = extra
   }
@@ -1746,7 +1750,7 @@ const buildUpdatePayload = (): Record<string, unknown> | null => {
   // UMQ mode（独立于 RPM 保存）
   if (userMsgQueueMode.value !== null) {
     const umqExtra = ensureExtra()
-    umqExtra.user_msg_queue_mode = userMsgQueueMode.value  // '' = 清除账号级覆盖
+    umqExtra.userMsgQueueMode = userMsgQueueMode.value  // '' = 清除账号级覆盖
     umqExtra.user_msg_queue_enabled = false  // 清理旧字段（JSONB merge）
   }
 
@@ -1781,11 +1785,11 @@ const preCheckMixedChannelRisk = async (built: Record<string, unknown>): Promise
   if (mixedChannelConfirmed.value) return true
 
   try {
-    const result = await adminAPI.accounts.checkMixedChannelRisk({
+    const result = await actionStore.checkMixedChannelRisk({
       platform: targetSelectedPlatforms.value[0],
       group_ids: groupIds.value
     })
-    if (!result.has_risk) return true
+    if (!result.hasRisk) return true
 
     pendingUpdatesForConfirm.value = built
     mixedChannelWarningMessage.value = result.message || t('admin.accounts.bulkEdit.failed')
@@ -1878,11 +1882,11 @@ const submitBulkUpdate = async (baseUpdates: Record<string, unknown>) => {
 
   try {
     const res = targetMode.value === 'filtered' && props.target?.filters
-      ? await adminAPI.accounts.bulkUpdate({
+      ? await actionStore.bulkUpdate({
         filters: props.target.filters,
         ...updates
       })
-      : await adminAPI.accounts.bulkUpdate(props.accountIds, updates)
+      : await actionStore.bulkUpdate(props.accountIds, updates)
     const success = res.success || 0
     const failed = res.failed || 0
 

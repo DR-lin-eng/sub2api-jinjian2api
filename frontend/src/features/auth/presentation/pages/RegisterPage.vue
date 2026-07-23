@@ -353,8 +353,7 @@ import {
   clearPendingRegistrationCredentials,
   setPendingRegistrationCredentials
 } from '@/core/utils/pendingRegistrationCredentials'
-import type { LoginAgreementDocument } from '@/types'
-
+import type { LoginAgreementDocument } from '@/features/auth/domain/models/auth'
 const { t, locale } = useI18n()
 const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'
 
@@ -496,25 +495,25 @@ onMounted(async () => {
 
   try {
     const settings = await getPublicSettings()
-    registrationEnabled.value = settings.registration_enabled
-    emailVerifyEnabled.value = settings.email_verify_enabled
-    promoCodeEnabled.value = settings.promo_code_enabled
-    invitationCodeEnabled.value = settings.invitation_code_enabled
+    registrationEnabled.value = settings.registrationEnabled
+    emailVerifyEnabled.value = settings.emailVerifyEnabled
+    promoCodeEnabled.value = settings.promoCodeEnabled
+    invitationCodeEnabled.value = settings.invitationCodeEnabled
     const verification = resolveHumanVerification(settings)
     turnstileEnabled.value = verification.external
     turnstileSiteKey.value = verification.siteKey
     humanVerificationAPIEndpoint.value = verification.apiEndpoint
     humanVerificationProvider.value = verification.externalProvider
     localCaptchaEnabled.value = verification.provider === 'local'
-    siteName.value = settings.site_name || 'Sub2API'
-    linuxdoOAuthEnabled.value = settings.linuxdo_oauth_enabled
+    siteName.value = settings.siteName || 'Sub2API'
+    linuxdoOAuthEnabled.value = settings.linuxdoOauthEnabled
     wechatOAuthEnabled.value = isWeChatWebOAuthEnabled(settings)
-    oidcOAuthEnabled.value = settings.oidc_oauth_enabled
-    oidcOAuthProviderName.value = settings.oidc_oauth_provider_name || 'OIDC'
-    githubOAuthEnabled.value = settings.github_oauth_enabled
-    googleOAuthEnabled.value = settings.google_oauth_enabled
+    oidcOAuthEnabled.value = settings.oidcOauthEnabled
+    oidcOAuthProviderName.value = settings.oidcOauthProviderName || 'OIDC'
+    githubOAuthEnabled.value = settings.githubOauthEnabled
+    googleOAuthEnabled.value = settings.googleOauthEnabled
     registrationEmailSuffixWhitelist.value = normalizeRegistrationEmailSuffixWhitelist(
-      settings.registration_email_suffix_whitelist || []
+      settings.registrationEmailSuffixWhitelist || []
     )
     applyLoginAgreementSettings(settings)
 
@@ -556,21 +555,21 @@ onUnmounted(() => {
 // ==================== Login Agreement ====================
 
 function applyLoginAgreementSettings(settings: {
-  login_agreement_enabled?: boolean
-  login_agreement_mode?: string
-  login_agreement_updated_at?: string
-  login_agreement_revision?: string
-  login_agreement_documents?: LoginAgreementDocument[]
+  loginAgreementEnabled?: boolean
+  loginAgreementMode?: string
+  loginAgreementUpdatedAt?: string
+  loginAgreementRevision?: string
+  loginAgreementDocuments?: LoginAgreementDocument[]
 }): void {
-  const documents = Array.isArray(settings.login_agreement_documents)
-    ? settings.login_agreement_documents.filter((doc) => doc.title?.trim())
+  const documents = Array.isArray(settings.loginAgreementDocuments)
+    ? settings.loginAgreementDocuments.filter((doc) => doc.title?.trim())
     : []
   loginAgreementDocuments.value = documents
-  loginAgreementEnabled.value = settings.login_agreement_enabled === true && documents.length > 0
-  loginAgreementMode.value = settings.login_agreement_mode === 'checkbox' ? 'checkbox' : 'modal'
-  loginAgreementUpdatedAt.value = settings.login_agreement_updated_at || ''
+  loginAgreementEnabled.value = settings.loginAgreementEnabled === true && documents.length > 0
+  loginAgreementMode.value = settings.loginAgreementMode === 'checkbox' ? 'checkbox' : 'modal'
+  loginAgreementUpdatedAt.value = settings.loginAgreementUpdatedAt || ''
   loginAgreementRevision.value =
-    settings.login_agreement_revision ||
+    settings.loginAgreementRevision ||
     `${loginAgreementUpdatedAt.value}:${documents.map((doc) => `${doc.id}:${doc.title}`).join('|')}`
 
   agreementAccepted.value = !loginAgreementEnabled.value || hasAcceptedLoginAgreement(loginAgreementRevision.value)
@@ -652,14 +651,14 @@ async function validatePromoCodeDebounced(code: string): Promise<void> {
     if (result.valid) {
       promoValidation.valid = true
       promoValidation.invalid = false
-      promoValidation.bonusAmount = result.bonus_amount || 0
+      promoValidation.bonusAmount = result.bonusAmount || 0
       promoValidation.message = ''
     } else {
       promoValidation.valid = false
       promoValidation.invalid = true
       promoValidation.bonusAmount = null
       // 根据错误码显示对应的翻译
-      promoValidation.message = getPromoErrorMessage(result.error_code)
+      promoValidation.message = getPromoErrorMessage(result.errorCode)
     }
   } catch (error) {
     console.error('Failed to validate promo code:', error)
@@ -726,7 +725,7 @@ async function validateInvitationCodeDebounced(code: string): Promise<void> {
     } else {
       invitationValidation.valid = false
       invitationValidation.invalid = true
-      invitationValidation.message = getInvitationErrorMessage(result.error_code)
+      invitationValidation.message = getInvitationErrorMessage(result.errorCode)
     }
   } catch {
     invitationValidation.valid = false
@@ -939,12 +938,12 @@ async function handleRegister(): Promise<void> {
     await authStore.register({
       email: formData.email,
       password: formData.password,
-      captcha_token: turnstileEnabled.value ? turnstileToken.value : undefined,
-      captcha_id: localCaptchaRequired.value ? localCaptchaId.value : undefined,
-      captcha_code: localCaptchaRequired.value ? localCaptchaCode.value : undefined,
-      promo_code: formData.promo_code || undefined,
-      invitation_code: formData.invitation_code || undefined,
-      ...(affCode ? { aff_code: affCode } : {})
+      captchaToken: turnstileEnabled.value ? turnstileToken.value : undefined,
+      captchaId: localCaptchaRequired.value ? localCaptchaId.value : undefined,
+      captchaCode: localCaptchaRequired.value ? localCaptchaCode.value : undefined,
+      promoCode: formData.promo_code || undefined,
+      invitationCode: formData.invitation_code || undefined,
+      ...(affCode ? { affCode } : {})
     })
     clearAffiliateReferralCode()
 

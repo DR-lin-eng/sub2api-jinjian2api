@@ -66,11 +66,11 @@
           </label>
           <label class="text-xs text-gray-600 dark:text-dark-200">
             <span>{{ t('admin.promptAudit.events.groupId') }}</span>
-            <input v-model="local.group_id" type="number" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.groupId')" @input="criteriaChanged" />
+            <input v-model="local.group_id" type="number" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.group_id')" @input="criteriaChanged" />
           </label>
           <label class="text-xs text-gray-600 dark:text-dark-200">
             <span>{{ t('admin.promptAudit.events.userId') }}</span>
-            <input v-model="local.user_id" type="number" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.userId')" @input="criteriaChanged" />
+            <input v-model="local.user_id" type="number" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.user_id')" @input="criteriaChanged" />
           </label>
         </div>
       </details>

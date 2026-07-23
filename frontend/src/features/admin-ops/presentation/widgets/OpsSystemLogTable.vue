@@ -192,15 +192,15 @@ const buildQuery = () => {
   if (filters.client_request_id.trim()) query.client_request_id = filters.client_request_id.trim()
   if (filters.user_id.trim()) {
     const v = Number.parseInt(filters.user_id.trim(), 10)
-    if (Number.isFinite(v) && v > 0) query.user_id = v
+    if (Number.isFinite(v) && v > 0) query.userId = v
   }
   if (filters.api_key_id.trim()) {
     const v = Number.parseInt(filters.api_key_id.trim(), 10)
-    if (Number.isFinite(v) && v > 0) query.api_key_id = v
+    if (Number.isFinite(v) && v > 0) query.apiKeyId = v
   }
   if (filters.account_id.trim()) {
     const v = Number.parseInt(filters.account_id.trim(), 10)
-    if (Number.isFinite(v) && v > 0) query.account_id = v
+    if (Number.isFinite(v) && v > 0) query.accountId = v
   }
   if (filters.platform.trim()) query.platform = filters.platform.trim()
   if (filters.model.trim()) query.model = filters.model.trim()

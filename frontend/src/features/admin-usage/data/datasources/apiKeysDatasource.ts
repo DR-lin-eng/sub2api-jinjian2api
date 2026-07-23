@@ -4,8 +4,7 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type { ApiKey } from '@/types'
-
+import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 export interface UpdateApiKeyGroupResult {
   api_key: ApiKey
   auto_granted_group_access: boolean

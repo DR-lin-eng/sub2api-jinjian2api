@@ -13,6 +13,9 @@ import { useRoutePrefetch } from '@/core/routes/composables/useRoutePrefetch'
 import { getSetupStatus } from '@/api'
 import { resolveCompletedSetupRedirectPath } from './setupRedirect'
 import { resolveRouteDocumentTitle } from './title'
+import { adminChannelsRoutes } from '@/features/admin-channels'
+import { adminChannelMonitorRoutes } from '@/features/admin-channel-monitor'
+import { adminClusterRoutes } from '@/features/admin-cluster'
 
 /**
  * Route definitions with lazy loading
@@ -427,18 +430,7 @@ const routes: RouteRecordRaw[] = [
       descriptionKey: 'admin.audit.description'
     }
   },
-  {
-    path: '/admin/multi-instance',
-    name: 'AdminMultiInstance',
-    component: () => import('@/features/admin-cluster/presentation/pages/MultiInstancePage.vue'),
-    meta: {
-      requiresAuth: true,
-      requiresAdmin: true,
-      title: 'Multi-instance Deployment',
-      titleKey: 'admin.cluster.title',
-      descriptionKey: 'admin.cluster.description'
-    }
-  },
+  ...adminClusterRoutes,
   {
     path: '/admin/users',
     name: 'AdminUsers',
@@ -463,34 +455,8 @@ const routes: RouteRecordRaw[] = [
       descriptionKey: 'admin.groups.description'
     }
   },
-  {
-    path: '/admin/channels',
-    redirect: '/admin/channels/pricing'
-  },
-  {
-    path: '/admin/channels/pricing',
-    name: 'AdminChannels',
-    component: () => import('@/features/admin-channels/presentation/pages/ChannelsPage.vue'),
-    meta: {
-      requiresAuth: true,
-      requiresAdmin: true,
-      title: 'Channel Management',
-      titleKey: 'admin.channels.title',
-      descriptionKey: 'admin.channels.description'
-    }
-  },
-  {
-    path: '/admin/channels/monitor',
-    name: 'AdminChannelMonitor',
-    component: () => import('@/features/admin-channel-monitor/presentation/pages/ChannelMonitorPage.vue'),
-    meta: {
-      requiresAuth: true,
-      requiresAdmin: true,
-      title: 'Channel Monitor',
-      titleKey: 'admin.channelMonitor.title',
-      descriptionKey: 'admin.channelMonitor.description'
-    }
-  },
+  ...adminChannelsRoutes,
+  ...adminChannelMonitorRoutes,
   {
     path: '/monitor',
     name: 'ChannelStatus',

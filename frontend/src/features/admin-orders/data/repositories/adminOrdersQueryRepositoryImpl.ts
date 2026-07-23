@@ -1,0 +1,43 @@
+import type { AdminOrdersQueryRepository } from '@/features/admin-orders/domain/repositories/adminOrdersQueryRepository'
+import type { AdminPaymentConfig } from '@/features/admin-orders/domain/models/adminPaymentConfig'
+import type { DashboardStats } from '@/features/admin-orders/domain/models/dashboardStats'
+import type { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
+import type { SubscriptionPlan } from '@/features/admin-orders/domain/models/subscriptionPlan'
+import type { ProviderInstance } from '@/features/admin-orders/domain/models/providerInstance'
+import type { GetOrdersRequest } from '@/features/admin-orders/data/requests_models/getOrdersRequest'
+import type { BasePaginationResponse } from '@/types'
+import { adminOrdersQueryDatasource } from '@/features/admin-orders/data/datasources/adminOrdersQueryDatasource'
+
+export class AdminOrdersQueryRepositoryImpl implements AdminOrdersQueryRepository {
+  private readonly ds = adminOrdersQueryDatasource
+
+  async getConfig(): Promise<AdminPaymentConfig> {
+    return (await this.ds.getConfig()).toEntity()
+  }
+
+  async getDashboard(days?: number): Promise<DashboardStats> {
+    return (await this.ds.getDashboard(days)).toEntity()
+  }
+
+  async getOrders(req?: GetOrdersRequest): Promise<BasePaginationResponse<PaymentOrder>> {
+    const result = await this.ds.getOrders(req)
+    return {
+      ...result,
+      items: result.items.map(dto => dto.toEntity()),
+    }
+  }
+
+  async getOrder(id: number): Promise<unknown> {
+    return this.ds.getOrder(id)
+  }
+
+  async getPlans(): Promise<SubscriptionPlan[]> {
+    return (await this.ds.getPlans()).map(dto => dto.toEntity())
+  }
+
+  async getProviders(): Promise<ProviderInstance[]> {
+    return (await this.ds.getProviders()).map(dto => dto.toEntity())
+  }
+}
+
+export const adminOrdersQueryRepository: AdminOrdersQueryRepository = new AdminOrdersQueryRepositoryImpl()

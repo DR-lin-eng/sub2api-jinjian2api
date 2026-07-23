@@ -18,14 +18,7 @@ import {
   setRefreshTokenMemory,
   setTokenExpiresAtMemory,
 } from '@/core/networks/tokenStore'
-import type {
-  User,
-  LoginRequest,
-  RegisterRequest,
-  EncryptedRegisterRequest,
-  AuthResponse
-} from '@/types'
-
+import type { User, LoginRequest, RegisterRequest, EncryptedRegisterRequest, AuthResponse } from '@/features/auth/domain/models/auth'
 const clearAuthToken = clearTokenMemory
 const getTokenExpiresAt = getTokenExpiresAtMemory
 const setAuthToken = setAccessToken
@@ -294,7 +287,7 @@ export const useAuthStore = defineStore('auth', () => {
    */
   async function login2FA(tempToken: string, totpCode: string): Promise<User> {
     try {
-      const response = await authAPI.login2FA({ temp_token: tempToken, totp_code: totpCode })
+      const response = await authAPI.login2FA({ tempToken: tempToken, totpCode: totpCode })
       setAuthFromResponse(response)
       return user.value!
     } catch (error) {
@@ -308,12 +301,16 @@ export const useAuthStore = defineStore('auth', () => {
    * Internal helper function
    */
   function setAuthFromResponse(response: AuthResponse | RefreshTokenResponse): void {
+    const accessToken = 'accessToken' in response ? response.accessToken : response.access_token
+    const refreshTokenValue = 'accessToken' in response ? response.refreshToken : response.refresh_token
+    const expiresIn = 'accessToken' in response ? response.expiresIn : response.expires_in
+
     // Store token and user
-    token.value = response.access_token
+    token.value = accessToken
 
     // Store refresh token if present
-    if (response.refresh_token) {
-      setRefreshToken(response.refresh_token)
+    if (refreshTokenValue) {
+      setRefreshToken(refreshTokenValue)
     }
 
     // Extract run_mode if present
@@ -327,7 +324,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     // Persist to localStorage
-    setAuthToken(response.access_token)
+    setAuthToken(accessToken)
     clearPendingAuthSession()
 
     // Start auto-refresh interval for user data
@@ -335,8 +332,8 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Start proactive token refresh if we have refresh token and expiry info
     // scheduleTokenRefresh will also store the expiry timestamp
-    if (response.refresh_token && response.expires_in) {
-      scheduleTokenRefresh(response.expires_in)
+    if (refreshTokenValue && expiresIn) {
+      scheduleTokenRefresh(expiresIn)
     }
   }
 
@@ -442,10 +439,10 @@ export const useAuthStore = defineStore('auth', () => {
 
     try {
       const response = await authAPI.getCurrentUser()
-      if (response.data.run_mode) {
-        runMode.value = response.data.run_mode
+      if (response.data.runMode) {
+        runMode.value = response.data.runMode
       }
-      const { run_mode: _run_mode, ...userData } = response.data
+      const { runMode: _runMode, ...userData } = response.data
       user.value = userData
 
       // Update localStorage

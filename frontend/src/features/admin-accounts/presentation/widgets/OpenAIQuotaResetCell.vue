@@ -134,14 +134,15 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { Account } from '@/types'
-import {
-  queryOpenAIQuota,
-  resetOpenAIQuota,
-  type OpenAIQuotaUsage,
-  type OpenAIQuotaResetResult
-} from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
+import type { OpenAIQuotaUsage } from '@/features/admin-accounts/data/datasources/adminAccountsQueryDatasource'
+import type { OpenAIQuotaResetResult } from '@/features/admin-accounts/domain/models/openAIQuotaResetResult'
+import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
+import type { Account } from '@/features/admin-accounts/domain/models/account'
+
+const queryStore = useAdminAccountsQueryStore()
+const actionStore = useAdminAccountsActionStore()
 
 const props = defineProps<{
   account: Account
@@ -162,7 +163,7 @@ const showResetCreditDetails = ref(false)
 
 // 影子账号的额度查询会 resolve 到母账号,但影子本身不支持重置(后端返回 409);
 // 重置必须在母账号上进行。前端据此禁用影子的重置入口(外审 F6)。
-const isShadow = computed(() => props.account.parent_account_id != null)
+const isShadow = computed(() => props.account.parentAccountId > 0)
 
 const availableResetCount = computed(() => data.value?.rate_limit_reset_credits?.available_count ?? 0)
 const resetCreditExpirations = computed(() =>
@@ -267,7 +268,7 @@ const handleQuery = async () => {
   resetMessage.value = null
   showResetCreditDetails.value = false
   try {
-    data.value = await queryOpenAIQuota(props.account.id)
+    data.value = await queryStore.queryOpenAIQuota(props.account.id)
   } catch (e) {
     error.value = extractErrorMessage(e)
   } finally {
@@ -295,13 +296,13 @@ const confirmReset = async () => {
   error.value = null
   resetMessage.value = null
   try {
-    const result: OpenAIQuotaResetResult = await resetOpenAIQuota(props.account.id)
+    const result: OpenAIQuotaResetResult = await actionStore.resetOpenAIQuota(props.account.id)
     // Refresh the reset-credit count so the badge reflects the consumed credit.
     // handleQuery clears resetMessage on entry, so the success toast is set
     // AFTER it resolves.
     await handleQuery()
     resetMessage.value = t('admin.accounts.openaiQuotaReset.resetSuccess', {
-      windows: result.windows_reset
+      windows: result.windowsReset
     })
   } catch (e) {
     error.value = extractErrorMessage(e)

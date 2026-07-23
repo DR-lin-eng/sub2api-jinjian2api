@@ -17,8 +17,8 @@
         <template #cell-created_at="{ row }">
           <span
             class="text-sm text-gray-600 dark:text-gray-400"
-            :title="row.request_id || row.client_request_id"
-          >{{ formatDateTime(row.created_at) }}</span>
+            :title="row.requestId || row.client_request_id"
+          >{{ formatDateTime(row.createdAt) }}</span>
         </template>
 
         <template #cell-type="{ row }">
@@ -31,11 +31,11 @@
           <div class="max-w-[320px] space-y-1 text-xs">
             <div class="break-all text-gray-700 dark:text-gray-300">
               <span class="font-medium text-gray-500 dark:text-gray-400">{{ t('usage.inbound') }}:</span>
-              <span class="ml-1">{{ row.inbound_endpoint?.trim() || '-' }}</span>
+              <span class="ml-1">{{ row.inboundEndpoint?.trim() || '-' }}</span>
             </div>
-            <div v-if="row.upstream_endpoint" class="break-all text-gray-700 dark:text-gray-300">
+            <div v-if="row.upstreamEndpoint" class="break-all text-gray-700 dark:text-gray-300">
               <span class="font-medium text-gray-500 dark:text-gray-400">{{ t('usage.upstream') }}:</span>
-              <span class="ml-1">{{ row.upstream_endpoint?.trim() || '-' }}</span>
+              <span class="ml-1">{{ row.upstreamEndpoint?.trim() || '-' }}</span>
             </div>
           </div>
         </template>
@@ -55,34 +55,34 @@
 
         <template #cell-group="{ row }">
           <span
-            v-if="row.group_id"
+            v-if="row.groupId"
             class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200"
-            :title="t('admin.ops.errorLog.id') + ' ' + row.group_id"
+            :title="t('admin.ops.errorLog.id') + ' ' + row.groupId"
           >
-            {{ row.group_name || '#' + row.group_id }}
+            {{ row.group_name || '#' + row.groupId }}
           </span>
           <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
         </template>
 
         <template #cell-user="{ row }">
-          <div v-if="row.user_id" class="text-sm">
+          <div v-if="row.userId" class="text-sm">
             <button
               v-if="userClickable && row.user_email"
               class="font-medium text-primary-600 underline decoration-dashed underline-offset-2 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
               :title="t('admin.usage.clickToViewBalance')"
-              @click.stop="emit('userClick', row.user_id, row.user_email)"
+              @click.stop="emit('userClick', row.userId, row.user_email)"
             >
               {{ row.user_email }}
             </button>
             <span v-else class="font-medium text-gray-900 dark:text-white">{{ row.user_email || '-' }}</span>
-            <span class="ml-1 text-gray-500 dark:text-gray-400">#{{ row.user_id }}</span>
+            <span class="ml-1 text-gray-500 dark:text-gray-400">#{{ row.userId }}</span>
           </div>
           <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
         </template>
 
         <template #cell-api_key="{ row }">
-          <div v-if="row.api_key_id || row.api_key_name" class="text-sm">
-            <span class="text-gray-900 dark:text-white">{{ row.api_key_name || '#' + row.api_key_id }}</span>
+          <div v-if="row.apiKeyId || row.api_key_name" class="text-sm">
+            <span class="text-gray-900 dark:text-white">{{ row.api_key_name || '#' + row.apiKeyId }}</span>
             <span
               v-if="row.api_key_deleted"
               class="ml-1 inline-flex items-center rounded px-1 py-px text-[10px] font-medium leading-tight bg-rose-100 text-rose-600 ring-1 ring-inset ring-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:ring-rose-500/30"
@@ -93,10 +93,10 @@
 
         <template #cell-account="{ row }">
           <span
-            v-if="row.account_id"
+            v-if="row.accountId"
             class="text-sm text-gray-900 dark:text-white"
-            :title="t('admin.ops.errorLog.accountId') + ' ' + row.account_id"
-          >{{ row.account_name || '#' + row.account_id }}</span>
+            :title="t('admin.ops.errorLog.accountId') + ' ' + row.accountId"
+          >{{ row.account_name || '#' + row.accountId }}</span>
           <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
         </template>
 
@@ -108,17 +108,17 @@
 
         <template #cell-status="{ row }">
           <div class="flex items-center gap-1.5">
-            <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium" :class="getStatusClass(row.status_code)">
-              {{ row.status_code }}
+            <span class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium" :class="getStatusClass(row.statusCode)">
+              {{ row.statusCode }}
             </span>
             <span
               v-if="row.severity"
               :class="['rounded px-1.5 py-0.5 text-[10px] font-medium', getSeverityClass(row.severity)]"
             >{{ row.severity }}</span>
             <span
-              v-if="row.request_type != null && row.request_type > 0"
+              v-if="row.requestType != null && row.requestType > 0"
               class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-800 dark:bg-dark-700 dark:text-gray-200"
-            >{{ formatRequestType(row.request_type) }}</span>
+            >{{ formatRequestType(row.requestType) }}</span>
           </div>
         </template>
 
@@ -133,10 +133,10 @@
 
         <template #cell-user_agent="{ row }">
           <span
-            v-if="row.user_agent"
+            v-if="row.userAgent"
             class="block max-w-[320px] truncate text-sm text-gray-600 dark:text-gray-400"
-            :title="row.user_agent"
-          >{{ row.user_agent }}</span>
+            :title="row.userAgent"
+          >{{ row.userAgent }}</span>
           <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
         </template>
 

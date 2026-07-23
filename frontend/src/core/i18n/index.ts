@@ -80,7 +80,7 @@ export async function setLocale(locale: string): Promise<void> {
   const authStore = useAuthStore()
   const adminSettingsStore = useAdminSettingsStore()
   const customMenuItems = [
-    ...(appStore.cachedPublicSettings?.custom_menu_items ?? []),
+    ...(appStore.cachedPublicSettings?.customMenuItems ?? []),
     ...(authStore.isAdmin ? adminSettingsStore.customMenuItems : []),
   ]
   document.title = resolveRouteDocumentTitle(route, appStore.siteName, customMenuItems)

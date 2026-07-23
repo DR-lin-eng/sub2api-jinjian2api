@@ -4,14 +4,8 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type {
-  RedeemCode,
-  GenerateRedeemCodesRequest,
-  BatchUpdateRedeemCodeFields,
-  RedeemCodeType,
-  PaginatedResponse
-} from '@/types'
-
+import type { PaginatedResponse } from '@/types'
+import type { RedeemCode, GenerateRedeemCodesRequest, BatchUpdateRedeemCodeFields, RedeemCodeType } from '@/features/admin-redeem/domain/models/redeem'
 /**
  * List all redeem codes with pagination
  * @param page - Page number (default: 1)
@@ -84,19 +78,19 @@ export async function generate(
 
   // 订阅类型专用字段
   if (type === 'subscription') {
-    payload.group_id = groupId
+    payload.groupId = groupId
     if (validityDays && validityDays > 0) {
-      payload.validity_days = validityDays
+      payload.validityDays = validityDays
     }
   }
   if (expiresInDays && expiresInDays > 0) {
-    payload.expires_in_days = expiresInDays
+    payload.expiresInDays = expiresInDays
   }
   if (maxUses !== undefined) {
-    payload.max_uses = maxUses
+    payload.maxUses = maxUses
   }
   if (maxUsesPerUser !== undefined) {
-    payload.max_uses_per_user = maxUsesPerUser
+    payload.maxUsesPerUser = maxUsesPerUser
   }
 
   const { data } = await apiClient.post<RedeemCode[]>('/admin/redeem-codes/generate', payload)

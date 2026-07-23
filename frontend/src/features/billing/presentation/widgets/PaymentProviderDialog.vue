@@ -797,19 +797,19 @@ function reset(defaultKey: string) {
 
 function loadProvider(provider: ProviderInstance) {
   form.name = provider.name
-  form.provider_key = provider.provider_key
-  form.supported_types = Array.isArray(provider.supported_types)
-    ? [...provider.supported_types]
+  form.provider_key = provider.providerKey
+  form.supported_types = Array.isArray(provider.supportedTypes)
+    ? [...provider.supportedTypes]
     : []
   form.enabled = provider.enabled
   // Coerce to a valid value for this provider. Guards against stale data
   // (e.g. "popup" written by an older client) showing up as an unselected
   // button in the dialog.
-  form.payment_mode = isValidPaymentMode(provider.provider_key, provider.payment_mode || '')
-    ? (provider.payment_mode || '')
-    : defaultPaymentMode(provider.provider_key)
-  form.refund_enabled = provider.refund_enabled
-  form.allow_user_refund = provider.allow_user_refund
+  form.payment_mode = isValidPaymentMode(provider.providerKey, provider.paymentMode || '')
+    ? (provider.paymentMode || '')
+    : defaultPaymentMode(provider.providerKey)
+  form.refund_enabled = provider.refundEnabled
+  form.allow_user_refund = provider.allowUserRefund
   clearConfig()
   // Pre-fill config from API response. Backend omits sensitive fields entirely,
   // so those inputs stay blank — submitting blank preserves the stored secret.
@@ -817,14 +817,14 @@ function loadProvider(provider: ProviderInstance) {
     for (const [k, v] of Object.entries(provider.config)) {
       // Skip notifyUrl/returnUrl — they are derived from callbackBaseUrl
       if (k === 'notifyUrl' || k === 'returnUrl') continue
-      if (k === 'customMethods' && provider.provider_key === 'easypay') {
+      if (k === 'customMethods' && provider.providerKey === 'easypay') {
         easyPayCustomMethods.push(...parseEasyPayCustomMethods(v))
         continue
       }
       config[k] = v
     }
     // Extract base URLs from existing callback URLs
-    const paths = PROVIDER_CALLBACK_PATHS[provider.provider_key]
+    const paths = PROVIDER_CALLBACK_PATHS[provider.providerKey]
     if (paths?.notifyUrl && provider.config['notifyUrl']) {
       notifyBaseUrl.value = extractBaseUrl(provider.config['notifyUrl'], paths.notifyUrl)
     }

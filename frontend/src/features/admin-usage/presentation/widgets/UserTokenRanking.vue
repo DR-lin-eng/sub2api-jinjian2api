@@ -49,10 +49,10 @@
           <tr
             v-for="(item, index) in items"
             v-else
-            :key="item.user_id"
+            :key="item.userId"
             class="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-dark-700/40"
             :title="t('admin.usage.tokenRanking.rowHint')"
-            @click="$emit('select-user', item.user_id, item.email)"
+            @click="$emit('select-user', item.userId, item.email)"
           >
             <td class="px-4 py-3 sm:px-6">
               <span
@@ -63,15 +63,15 @@
               <span v-else class="inline-block w-6 text-center text-sm tabular-nums text-gray-400">{{ index + 1 }}</span>
             </td>
             <td class="max-w-[260px] truncate px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-200" :title="item.email">
-              {{ item.email || `User #${item.user_id}` }}
-              <span class="ml-1 font-normal text-gray-400 dark:text-gray-500">#{{ item.user_id }}</span>
+              {{ item.email || `User #${item.userId}` }}
+              <span class="ml-1 font-normal text-gray-400 dark:text-gray-500">#{{ item.userId }}</span>
             </td>
             <td class="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-gray-500 dark:text-gray-400">{{ item.requests.toLocaleString() }}</td>
-            <td class="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-gray-500 dark:text-gray-400">{{ fmtTokens(item.input_tokens) }}</td>
-            <td class="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-gray-500 dark:text-gray-400">{{ fmtTokens(item.output_tokens) }}</td>
-            <td class="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-gray-500 dark:text-gray-400">{{ fmtTokens(item.cache_tokens) }}</td>
-            <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-medium tabular-nums text-gray-900 dark:text-gray-100">{{ fmtTokens(item.total_tokens) }}</td>
-            <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-medium tabular-nums text-green-600 dark:text-green-400">${{ fmtCost(item.actual_cost) }}</td>
+            <td class="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-gray-500 dark:text-gray-400">{{ fmtTokens(item.inputTokens) }}</td>
+            <td class="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-gray-500 dark:text-gray-400">{{ fmtTokens(item.outputTokens) }}</td>
+            <td class="whitespace-nowrap px-4 py-3 text-right text-sm tabular-nums text-gray-500 dark:text-gray-400">{{ fmtTokens(item.cacheTokens) }}</td>
+            <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-medium tabular-nums text-gray-900 dark:text-gray-100">{{ fmtTokens(item.totalTokens) }}</td>
+            <td class="whitespace-nowrap px-4 py-3 text-right text-sm font-medium tabular-nums text-green-600 dark:text-green-400">${{ fmtCost(item.actualCost) }}</td>
           </tr>
         </tbody>
       </table>
@@ -84,9 +84,9 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getUserBreakdown, type UserBreakdownParams } from '@/features/admin-dashboard/data/datasources/adminDashboardDatasource'
 import { formatCompactNumber, formatCostFixed } from '@/core/utils/format'
-import type { UserBreakdownItem } from '@/types'
 import Select from '@/common/widgets/forms/Select.vue'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
+import type { UserBreakdownItem } from '@/features/admin-dashboard/domain/models/userBreakdownItem'
 
 const props = defineProps<{
   startDate: string

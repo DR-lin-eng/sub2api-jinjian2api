@@ -112,7 +112,7 @@ async function fetchErrorLogs() {
 
     const platform = String(props.platform || '').trim()
     if (platform) params.platform = platform
-    if (typeof props.groupId === 'number' && props.groupId > 0) params.group_id = props.groupId
+    if (typeof props.groupId === 'number' && props.groupId > 0) params.groupId = props.groupId
 
     if (q.value.trim()) params.q = q.value.trim()
     if (statusCode.value === 'other') params.status_codes_other = '1'

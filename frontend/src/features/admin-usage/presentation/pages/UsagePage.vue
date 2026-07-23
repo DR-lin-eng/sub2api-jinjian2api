@@ -186,7 +186,8 @@ import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { saveAs } from 'file-saver'
 import { useRoute } from 'vue-router'
-import { useAppStore } from '@/core/stores/appStore'; import { adminAPI } from '@/api/admin'; import { adminUsageAPI } from '@/features/admin-usage/presentation/api'
+import { useAppStore } from '@/core/stores/appStore'
+import { adminUsageAPI } from '@/features/admin-usage/presentation/api'
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 import { formatReasoningEffort } from '@/core/utils/format'
 import { calculateOutputTokensPerSecond } from '@/core/utils/usageMetrics'
@@ -205,7 +206,19 @@ import type { OpsErrorLog } from '@/features/admin-ops/presentation/api'
 import ModelDistributionChart from '@/features/admin-dashboard/presentation/widgets/ModelDistributionChart.vue'; import GroupDistributionChart from '@/features/admin-dashboard/presentation/widgets/GroupDistributionChart.vue'; import TokenUsageTrend from '@/features/admin-dashboard/presentation/widgets/TokenUsageTrend.vue'
 import EndpointDistributionChart from '@/features/admin-dashboard/presentation/widgets/EndpointDistributionChart.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import type { AdminUsageLog, TrendDataPoint, ModelStat, GroupStat, EndpointStat, AdminUser } from '@/types'; import type { AdminUsageStatsResponse, AdminUsageQueryParams } from '@/features/admin-usage/presentation/api'
+; import type { AdminUsageStatsResponse, AdminUsageQueryParams } from '@/features/admin-usage/presentation/api'
+import { useAdminUsers } from '@/features/admin-users/presentation/composables/useAdminUsers'
+import { useAdminUsage } from '@/features/admin-usage/presentation/composables/useAdminUsage'
+import { useAdminDashboard } from '@/features/admin-dashboard/presentation/composables/useAdminDashboard'
+import type { AdminUsageLog } from '@/features/admin-usage/domain/models/adminUsage'
+import type { TrendDataPoint } from '@/features/admin-dashboard/domain/models/trendDataPoint'
+import type { ModelStat } from '@/features/admin-dashboard/domain/models/modelStat'
+import type { GroupStat } from '@/features/admin-dashboard/domain/models/groupStat'
+import type { EndpointStat } from '@/features/admin-dashboard/domain/models/endpointStat'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
+const $users = useAdminUsers()
+const $usage = useAdminUsage()
+const $dashboard = useAdminDashboard()
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -241,12 +254,12 @@ const balanceHistoryUser = ref<AdminUser | null>(null)
 
 const breakdownFilters = computed(() => {
   const f: Record<string, any> = {}
-  if (filters.value.user_id) f.user_id = filters.value.user_id
-  if (filters.value.api_key_id) f.api_key_id = filters.value.api_key_id
-  if (filters.value.account_id) f.account_id = filters.value.account_id
-  if (filters.value.group_id) f.group_id = filters.value.group_id
-  if (filters.value.request_type != null) f.request_type = filters.value.request_type
-  if (filters.value.billing_type != null) f.billing_type = filters.value.billing_type
+  if (filters.value.userId) f.userId = filters.value.userId
+  if (filters.value.apiKeyId) f.apiKeyId = filters.value.apiKeyId
+  if (filters.value.accountId) f.accountId = filters.value.accountId
+  if (filters.value.groupId) f.groupId = filters.value.groupId
+  if (filters.value.requestType != null) f.requestType = filters.value.requestType
+  if (filters.value.billingType != null) f.billingType = filters.value.billingType
   return f
 })
 
@@ -256,7 +269,7 @@ const modelNameOptions = computed(() =>
 
 const handleUserClick = async (userId: number) => {
   try {
-    const user = await adminAPI.users.getById(userId, true)
+    const user = await $users.getById(userId, true)
     balanceHistoryUser.value = user
     showBalanceHistoryModal.value = true
   } catch {
@@ -267,7 +280,7 @@ const handleUserClick = async (userId: number) => {
 // Drill down from the per-user token ranking: scope the whole usage view to
 // that user and jump to the usage-detail tab so the drill-down is visible.
 const handleRankingSelectUser = (userId: number, email: string) => {
-  filters.value = { ...filters.value, user_id: userId }
+  filters.value = { ...filters.value, userId }
   usageFiltersRef.value?.setUserKeyword?.(email || '')
   activeTab.value = 'usage'
   applyFilters()
@@ -283,7 +296,7 @@ const getGranularityForRange = (start: string, end: string): 'day' | 'hour' => {
 }
 const defaultRange = getLast24HourRange()
 const startDate = ref(defaultRange.start); const endDate = ref(defaultRange.end)
-const filters = ref<AdminUsageQueryParams>({ user_id: undefined, model: undefined, group_id: undefined, request_type: undefined, billing_type: null, start_date: startDate.value, end_date: endDate.value })
+const filters = ref<AdminUsageQueryParams>({ userId: undefined, model: undefined, groupId: undefined, requestType: undefined, billingType: null, startDate: startDate.value, endDate: endDate.value })
 const pagination = reactive({ page: 1, page_size: getPersistedPageSize(), total: 0 })
 const sortState = reactive({
   sort_by: 'created_at',
@@ -305,7 +318,7 @@ const getNumericQueryValue = (value: string | null | Array<string | null> | unde
 const applyRouteQueryFilters = () => {
   const queryStartDate = getSingleQueryValue(route.query.start_date)
   const queryEndDate = getSingleQueryValue(route.query.end_date)
-  const queryUserId = getNumericQueryValue(route.query.user_id)
+  const queryUserId = getNumericQueryValue(route.query.userId)
 
   if (queryStartDate) {
     startDate.value = queryStartDate
@@ -316,9 +329,9 @@ const applyRouteQueryFilters = () => {
 
   filters.value = {
     ...filters.value,
-    user_id: queryUserId,
-    start_date: startDate.value,
-    end_date: endDate.value
+    userId: queryUserId,
+    startDate: startDate.value,
+    endDate: endDate.value
   }
   granularity.value = getGranularityForRange(startDate.value, endDate.value)
 }
@@ -328,8 +341,8 @@ const onDateRangeChange = (range: { startDate: string; endDate: string; preset: 
   endDate.value = range.endDate
   filters.value = {
     ...filters.value,
-    start_date: range.startDate,
-    end_date: range.endDate
+    startDate: range.startDate,
+    endDate: range.endDate
   }
   granularity.value = getGranularityForRange(range.startDate, range.endDate)
   applyFilters()
@@ -340,23 +353,23 @@ const buildUsageListParams = (
   pageSize: number,
   exactTotal: boolean
 ): AdminUsageQueryParams => {
-  const requestType = filters.value.request_type
+  const requestType = filters.value.requestType
   const legacyStream = requestType ? requestTypeToLegacyStream(requestType) : filters.value.stream
   return {
     page,
-    page_size: pageSize,
-    exact_total: exactTotal,
+    pageSize: pageSize,
+    exactTotal: exactTotal,
     ...filters.value,
     stream: legacyStream === null ? undefined : legacyStream,
-    sort_by: sortState.sort_by,
-    sort_order: sortState.sort_order
+    sortBy: sortState.sort_by,
+    sortOrder: sortState.sort_order
   }
 }
 
 const loadLogs = async () => {
   abortController?.abort(); const c = new AbortController(); abortController = c; loading.value = true
   try {
-    const res = await adminAPI.usage.list(
+    const res = await $usage.list(
       buildUsageListParams(pagination.page, pagination.page_size, false),
       { signal: c.signal }
     )
@@ -367,9 +380,9 @@ const loadStats = async (force = false) => {
   const seq = ++statsReqSeq
   endpointStatsLoading.value = true
   try {
-    const requestType = filters.value.request_type
+    const requestType = filters.value.requestType
     const legacyStream = requestType ? requestTypeToLegacyStream(requestType) : filters.value.stream
-    const s = await adminAPI.usage.getStats({
+    const s = await $usage.getStats({
       ...filters.value,
       stream: legacyStream === null ? undefined : legacyStream,
       ...(force ? { nocache: 1 } : {}),
@@ -377,8 +390,8 @@ const loadStats = async (force = false) => {
     if (seq !== statsReqSeq) return
     usageStats.value = s
     inboundEndpointStats.value = s.endpoints || []
-    upstreamEndpointStats.value = s.upstream_endpoints || []
-    endpointPathStats.value = s.endpoint_paths || []
+    upstreamEndpointStats.value = s.upstreamEndpoints || []
+    endpointPathStats.value = s.endpointPaths || []
   } catch (error) {
     if (seq !== statsReqSeq) return
     console.error('Failed to load usage stats:', error)
@@ -405,22 +418,22 @@ const loadModelStats = async (source: ModelDistributionSource, force = false) =>
   const seq = ++modelStatsReqSeq
   modelStatsLoading.value = true
   try {
-    const requestType = filters.value.request_type
+    const requestType = filters.value.requestType
     const legacyStream = requestType ? requestTypeToLegacyStream(requestType) : filters.value.stream
     const baseParams = {
-      start_date: filters.value.start_date || startDate.value,
-      end_date: filters.value.end_date || endDate.value,
-      user_id: filters.value.user_id,
+      start_date: filters.value.startDate || startDate.value,
+      end_date: filters.value.endDate || endDate.value,
+      user_id: filters.value.userId,
       model: filters.value.model,
-      api_key_id: filters.value.api_key_id,
-      account_id: filters.value.account_id,
-      group_id: filters.value.group_id,
+      api_key_id: filters.value.apiKeyId,
+      account_id: filters.value.accountId,
+      group_id: filters.value.groupId,
       request_type: requestType,
       stream: legacyStream === null ? undefined : legacyStream,
-      billing_type: filters.value.billing_type,
+      billing_type: filters.value.billingType,
     }
 
-    const response = await adminAPI.dashboard.getModelStats({ ...baseParams, model_source: source })
+    const response = await $dashboard.getModelStats({ ...baseParams, model_source: source })
 
     if (seq !== modelStatsReqSeq) return
 
@@ -453,20 +466,20 @@ const loadChartData = async () => {
   const seq = ++chartReqSeq
   chartsLoading.value = true
   try {
-    const requestType = filters.value.request_type
+    const requestType = filters.value.requestType
     const legacyStream = requestType ? requestTypeToLegacyStream(requestType) : filters.value.stream
-    const snapshot = await adminAPI.dashboard.getSnapshotV2({
-      start_date: filters.value.start_date || startDate.value,
-      end_date: filters.value.end_date || endDate.value,
+    const snapshot = await $dashboard.getSnapshotV2({
+      start_date: filters.value.startDate || startDate.value,
+      end_date: filters.value.endDate || endDate.value,
       granularity: granularity.value,
-      user_id: filters.value.user_id,
+      user_id: filters.value.userId,
       model: filters.value.model,
-      api_key_id: filters.value.api_key_id,
-      account_id: filters.value.account_id,
-      group_id: filters.value.group_id,
+      api_key_id: filters.value.apiKeyId,
+      account_id: filters.value.accountId,
+      group_id: filters.value.groupId,
       request_type: requestType,
       stream: legacyStream === null ? undefined : legacyStream,
-      billing_type: filters.value.billing_type,
+      billing_type: filters.value.billingType,
       include_stats: false,
       include_trend: true,
       include_model_stats: false,
@@ -505,7 +518,7 @@ const resetFilters = () => {
   const range = getLast24HourRange()
   startDate.value = range.start
   endDate.value = range.end
-  filters.value = { start_date: startDate.value, end_date: endDate.value, request_type: undefined, billing_type: null, billing_mode: undefined }
+  filters.value = { startDate: startDate.value, endDate: endDate.value, requestType: undefined, billingType: null, billingMode: undefined }
   granularity.value = getGranularityForRange(startDate.value, endDate.value)
   applyFilters()
 }
@@ -559,17 +572,17 @@ const exportToExcel = async () => {
       )
       if (c.signal.aborted) break; if (p === 1) { total = res.total; exportProgress.total = total }
       const rows = (res.items || []).map((log: AdminUsageLog) => [
-        log.created_at, log.user?.email || '', log.api_key?.name || '', log.account?.name || '', log.model,
-        log.upstream_model || '', formatReasoningEffort(log.reasoning_effort), log.group?.name || '',
-        log.inbound_endpoint || '', log.upstream_endpoint || '', getRequestTypeLabel(log),
-        log.input_tokens, log.output_tokens, log.cache_read_tokens, log.cache_creation_tokens,
-        log.input_cost?.toFixed(6) || '0.000000', log.output_cost?.toFixed(6) || '0.000000',
-        log.cache_read_cost?.toFixed(6) || '0.000000', log.cache_creation_cost?.toFixed(6) || '0.000000',
-        log.rate_multiplier?.toPrecision(4) || '1.00', (log.account_rate_multiplier ?? 1).toPrecision(4),
-        log.total_cost?.toFixed(6) || '0.000000', log.actual_cost?.toFixed(6) || '0.000000',
-        ((log.account_stats_cost ?? log.total_cost) * (log.account_rate_multiplier ?? 1)).toFixed(6), log.first_token_ms ?? '', log.duration_ms,
+        log.createdAt, log.user?.email || '', log.apiKey?.name || '', log.account?.name || '', log.model,
+        log.upstreamModel || '', formatReasoningEffort(log.reasoningEffort), log.group?.name || '',
+        log.inboundEndpoint || '', log.upstreamEndpoint || '', getRequestTypeLabel(log),
+        log.inputTokens, log.outputTokens, log.cacheReadTokens, log.cacheCreationTokens,
+        log.inputCost?.toFixed(6) || '0.000000', log.outputCost?.toFixed(6) || '0.000000',
+        log.cacheReadCost?.toFixed(6) || '0.000000', log.cacheCreationCost?.toFixed(6) || '0.000000',
+        log.rateMultiplier?.toPrecision(4) || '1.00', (log.accountRateMultiplier ?? 1).toPrecision(4),
+        log.totalCost?.toFixed(6) || '0.000000', log.actualCost?.toFixed(6) || '0.000000',
+        ((log.accountStatsCost ?? log.totalCost) * (log.accountRateMultiplier ?? 1)).toFixed(6), log.firstTokenMs ?? '', log.durationMs,
         calculateOutputTokensPerSecond(log)?.toFixed(0) ?? '',
-        log.request_id || '', log.user_agent || '', log.ip_address || ''
+        log.requestId || '', log.userAgent || '', log.ipAddress || ''
       ])
       if (rows.length) {
         XLSX.utils.sheet_add_aoa(ws, rows, { origin: -1 })
@@ -582,7 +595,7 @@ const exportToExcel = async () => {
     if(!c.signal.aborted) {
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, 'Usage')
-      saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `usage_${toDateInputValue(filters.value.start_date ?? '')}_to_${toDateInputValue(filters.value.end_date ?? '')}.xlsx`)
+      saveAs(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `usage_${toDateInputValue(filters.value.startDate ?? '')}_to_${toDateInputValue(filters.value.endDate ?? '')}.xlsx`)
       appStore.showSuccess(t('usage.exportSuccess'))
     }
   } catch (error) { console.error('Failed to export:', error); appStore.showError('Export Failed') }
@@ -770,16 +783,16 @@ const loadAdminErrors = async () => {
       page: errPage.value,
       page_size: errPageSize.value,
       view: 'all',
-      start_time: toRFC3339(filters.value.start_date),
-      end_time: toRFC3339(filters.value.end_date, true),
-      user_id: filters.value.user_id ?? undefined,
-      api_key_id: filters.value.api_key_id ?? undefined,
-      account_id: filters.value.account_id ?? undefined,
-      group_id: filters.value.group_id ?? undefined,
+      start_time: toRFC3339(filters.value.startDate),
+      end_time: toRFC3339(filters.value.endDate, true),
+      user_id: filters.value.userId ?? undefined,
+      api_key_id: filters.value.apiKeyId ?? undefined,
+      account_id: filters.value.accountId ?? undefined,
+      group_id: filters.value.groupId ?? undefined,
       model: filters.value.model || undefined,
-      phase: filters.value.error_phase || undefined,
-      category: filters.value.error_category || undefined,
-      status_codes: filters.value.status_code != null ? String(filters.value.status_code) : undefined,
+      phase: filters.value.errorPhase || undefined,
+      category: filters.value.errorCategory || undefined,
+      status_codes: filters.value.statusCode != null ? String(filters.value.statusCode) : undefined,
       sort_by: errSortBy.value,
       sort_order: errSortOrder.value,
     })

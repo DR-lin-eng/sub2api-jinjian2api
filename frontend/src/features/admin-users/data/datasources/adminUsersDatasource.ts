@@ -4,8 +4,9 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type { AdminUser, UpdateUserRequest, PaginatedResponse, ApiKey } from '@/types'
-
+import type { PaginatedResponse } from '@/types'
+import type { AdminUser, UpdateUserRequest } from '@/features/admin-users/domain/models/adminUsers'
+import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 export interface AdminBindAuthIdentityChannelRequest {
   channel: string
   channel_app_id: string

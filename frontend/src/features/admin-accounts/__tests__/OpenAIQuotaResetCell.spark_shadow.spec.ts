@@ -1,12 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import OpenAIQuotaResetCell from '@/features/admin-accounts/presentation/widgets/OpenAIQuotaResetCell.vue'
-import type { Account } from '@/types'
-import { queryOpenAIQuota } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
-
-vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', () => ({
+import { Account } from '@/types'
+const { queryOpenAIQuota, resetOpenAIQuota } = vi.hoisted(() => ({
   queryOpenAIQuota: vi.fn(),
   resetOpenAIQuota: vi.fn(),
+}))
+
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountsQueryDatasource', () => ({
+  adminAccountsQueryDatasource: { queryOpenAIQuota },
+  AdminAccountsQueryDatasource: class {},
+}))
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountsActionDatasource', () => ({
+  adminAccountsActionDatasource: { resetOpenAIQuota },
+  AdminAccountsActionDatasource: class {},
 }))
 
 vi.mock('vue-i18n', async () => {
@@ -21,32 +28,32 @@ vi.mock('vue-i18n', async () => {
 })
 
 function makeAccount(overrides: Partial<Account>): Account {
-  return {
+  return Object.assign(new Account(), {
     id: 1,
     name: 'acc',
     platform: 'openai',
     type: 'oauth',
-    proxy_id: null,
+    proxyId: 0,
     concurrency: 3,
     priority: 50,
     status: 'active',
-    error_message: null,
-    last_used_at: null,
-    expires_at: null,
-    auto_pause_on_expired: false,
-    created_at: '2026-01-01T00:00:00Z',
-    updated_at: '2026-01-01T00:00:00Z',
+    errorMessage: '',
+    lastUsedAt: '',
+    expiresAt: '',
+    autoPauseOnExpired: false,
+    createdAt: '2026-01-01T00:00:00Z',
+    updatedAt: '2026-01-01T00:00:00Z',
     schedulable: true,
-    rate_limited_at: null,
-    rate_limit_reset_at: null,
-    overload_until: null,
-    temp_unschedulable_until: null,
-    temp_unschedulable_reason: null,
-    session_window_start: null,
-    session_window_end: null,
-    session_window_status: null,
+    rateLimitedAt: '',
+    rateLimitResetAt: '',
+    overloadUntil: '',
+    tempUnschedulableUntil: '',
+    tempUnschedulableReason: '',
+    sessionWindowStart: '',
+    sessionWindowEnd: '',
+    sessionWindowStatus: '',
     ...overrides,
-  }
+  })
 }
 
 // 第二个按钮(橙色)是 reset 按钮::disabled="resetting||loading||!canReset" :title="resetButtonTitle"
@@ -54,12 +61,12 @@ const resetButton = (wrapper: ReturnType<typeof mount>) =>
   wrapper.findAll('button')[1]
 
 beforeEach(() => {
-  vi.mocked(queryOpenAIQuota).mockReset()
+  queryOpenAIQuota.mockReset()
 })
 
 describe('OpenAIQuotaResetCell — 外审 F6:影子禁用重置', () => {
   it('影子账号(parent_account_id 非空)的 reset 按钮被禁用且提示在母账号重置', () => {
-    const account = makeAccount({ parent_account_id: 100 })
+    const account = makeAccount({ parentAccountId: 100 })
     const wrapper = mount(OpenAIQuotaResetCell, { props: { account } })
 
     const btn = resetButton(wrapper)
@@ -69,7 +76,7 @@ describe('OpenAIQuotaResetCell — 外审 F6:影子禁用重置', () => {
   })
 
   it('普通账号(无 parent_account_id)未查询时禁用原因是「需先查询」而非影子提示', () => {
-    const account = makeAccount({ parent_account_id: null })
+    const account = makeAccount({ parentAccountId: 0 })
     const wrapper = mount(OpenAIQuotaResetCell, { props: { account } })
 
     const btn = resetButton(wrapper)
@@ -79,7 +86,7 @@ describe('OpenAIQuotaResetCell — 外审 F6:影子禁用重置', () => {
   })
 
   it('查询后默认折叠为最早到期时间,点击 +N 展开完整列表', async () => {
-    vi.mocked(queryOpenAIQuota).mockResolvedValue({
+    queryOpenAIQuota.mockResolvedValue({
       rate_limit_reset_credits: {
         available_count: 3,
         credits: [
@@ -91,7 +98,7 @@ describe('OpenAIQuotaResetCell — 外审 F6:影子禁用重置', () => {
       fetched_at: 1770000000,
     })
 
-    const account = makeAccount({ parent_account_id: null })
+    const account = makeAccount({ parentAccountId: 0 })
     const wrapper = mount(OpenAIQuotaResetCell, { props: { account } })
 
     await wrapper.findAll('button')[0].trigger('click')
@@ -115,7 +122,7 @@ describe('OpenAIQuotaResetCell — 外审 F6:影子禁用重置', () => {
   })
 
   it('只有一张重置卡时不显示展开按钮', async () => {
-    vi.mocked(queryOpenAIQuota).mockResolvedValue({
+    queryOpenAIQuota.mockResolvedValue({
       rate_limit_reset_credits: {
         available_count: 1,
         credits: [
@@ -125,7 +132,7 @@ describe('OpenAIQuotaResetCell — 外审 F6:影子禁用重置', () => {
       fetched_at: 1770000000,
     })
 
-    const account = makeAccount({ parent_account_id: null })
+    const account = makeAccount({ parentAccountId: 0 })
     const wrapper = mount(OpenAIQuotaResetCell, { props: { account } })
 
     await wrapper.findAll('button')[0].trigger('click')

@@ -29,14 +29,14 @@
             }}
           </p>
           <p>{{ t('admin.accounts.upstreamBilling.effectiveRate', { value: currentEffectiveRate ?? '-' }) }}</p>
-          <p>{{ t('admin.accounts.upstreamBilling.updatedAt', { value: formatDate(snapshot?.received_at) }) }}</p>
+          <p>{{ t('admin.accounts.upstreamBilling.updatedAt', { value: formatDate(snapshot?.receivedAt) }) }}</p>
         </template>
         <template v-else-if="stale && lastDetectedRate != null">
           <p data-testid="upstream-billing-last-rate">
             {{ t('admin.accounts.upstreamBilling.lastDetectedRate', { value: lastDetectedRate }) }}
           </p>
           <p data-testid="upstream-billing-last-time">
-            {{ t('admin.accounts.upstreamBilling.lastDetectedAt', { value: formatDate(snapshot?.received_at) }) }}
+            {{ t('admin.accounts.upstreamBilling.lastDetectedAt', { value: formatDate(snapshot?.receivedAt) }) }}
           </p>
           <p data-testid="upstream-billing-elapsed">
             {{ t('admin.accounts.upstreamBilling.elapsedSince', { value: elapsedSinceLastSuccess }) }}
@@ -88,8 +88,8 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import type { Account, UpstreamBillingProbeSnapshot } from '@/types'
-
+import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { UpstreamBillingProbeSnapshot } from '@/features/admin-accounts/domain/models/upstreamBillingProbeResult'
 const props = withDefaults(defineProps<{
   account: Account
   now: number
@@ -106,18 +106,18 @@ defineEmits<{
 const { t } = useI18n()
 const CLOCK_SKEW_TOLERANCE_MS = 5 * 60 * 1000
 const eligible = computed(() => props.account.platform === 'openai' && props.account.type === 'apikey')
-const snapshot = computed<UpstreamBillingProbeSnapshot | undefined>(() => props.account.extra?.upstream_billing_probe)
+const snapshot = computed<UpstreamBillingProbeSnapshot | undefined>(() => props.account.extra?.upstream_billing_probe as UpstreamBillingProbeSnapshot | undefined)
 const data = computed(() => snapshot.value?.data)
 const probeEnabled = computed(() => props.account.extra?.upstream_billing_probe_enabled === true)
 const nextProbeAt = computed(() => {
-  const value = snapshot.value?.next_probe_at
+  const value = snapshot.value?.nextProbeAt
   return typeof value === 'string' && Number.isFinite(Date.parse(value)) ? value : ''
 })
-const receivedAt = computed(() => typeof snapshot.value?.received_at === 'string' ? Date.parse(snapshot.value.received_at) : Number.NaN)
+const receivedAt = computed(() => typeof snapshot.value?.receivedAt === 'string' ? Date.parse(snapshot.value.receivedAt) : Number.NaN)
 const freshUntil = computed(() => {
-  if (typeof snapshot.value?.fresh_until === 'string') return Date.parse(snapshot.value.fresh_until)
-  if (snapshot.value?.status !== 'ok' || typeof snapshot.value.next_probe_at !== 'string') return Number.NaN
-  const nextProbeAt = Date.parse(snapshot.value.next_probe_at)
+  if (typeof snapshot.value?.freshUntil === 'string') return Date.parse(snapshot.value.freshUntil)
+  if (snapshot.value?.status !== 'ok' || typeof snapshot.value.nextProbeAt !== 'string') return Number.NaN
+  const nextProbeAt = Date.parse(snapshot.value.nextProbeAt)
   return Number.isFinite(nextProbeAt) && nextProbeAt > receivedAt.value
     ? receivedAt.value + 2 * (nextProbeAt - receivedAt.value)
     : Number.NaN
@@ -164,9 +164,9 @@ const currentEffectiveRate = computed(() => {
   if (typeof base !== 'number' || !Number.isFinite(base) || base < 0) return null
   if (typeof billing.peak_rate_enabled !== 'boolean') return null
   if (!billing.peak_rate_enabled) return base
-  const start = parseMinute(billing.peak_start)
-  const end = parseMinute(billing.peak_end)
-  const minute = minuteInTimeZone(props.now, billing.timezone)
+  const start = parseMinute(billing.peak_start as string | undefined)
+  const end = parseMinute(billing.peak_end as string | undefined)
+  const minute = minuteInTimeZone(props.now, billing.timezone as string | undefined)
   const peak = billing.peak_rate_multiplier
   if (start == null || end == null || minute == null || start >= end || typeof peak !== 'number' || !Number.isFinite(peak) || peak < 0) return null
   const value = minute >= start && minute < end ? base * peak : base
