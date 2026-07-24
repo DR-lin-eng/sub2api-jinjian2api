@@ -9,7 +9,7 @@ import type { BindableOAuthProvider } from '@/features/profile/data/datasources/
 
 class ProfileActionRepositoryImpl implements ProfileActionRepository {
   async updateProfile(req: UpdateProfileRequest): Promise<User> {
-    return profileActionDatasource.updateProfile(req)
+    return (await profileActionDatasource.updateProfile(req)).toEntity()
   }
 
   async changePassword(req: ChangePasswordRequest): Promise<{ message: string }> {
@@ -29,7 +29,7 @@ class ProfileActionRepositoryImpl implements ProfileActionRepository {
   }
 
   async toggleNotifyEmail(email: string, disabled: boolean): Promise<User> {
-    return profileActionDatasource.toggleNotifyEmail(email, disabled)
+    return (await profileActionDatasource.toggleNotifyEmail(email, disabled)).toEntity()
   }
 
   async sendEmailBindingCode(email: string): Promise<void> {
@@ -37,11 +37,11 @@ class ProfileActionRepositoryImpl implements ProfileActionRepository {
   }
 
   async bindEmailIdentity(req: BindEmailRequest): Promise<User> {
-    return profileActionDatasource.bindEmailIdentity(req)
+    return (await profileActionDatasource.bindEmailIdentity(req)).toEntity()
   }
 
   async unbindAuthIdentity(provider: BindableOAuthProvider): Promise<User> {
-    return profileActionDatasource.unbindAuthIdentity(provider)
+    return (await profileActionDatasource.unbindAuthIdentity(provider)).toEntity()
   }
 
   async startOAuthBinding(provider: BindableOAuthProvider, options?: { redirectTo?: string; wechatOAuthSettings?: unknown }): Promise<void> {
@@ -52,7 +52,7 @@ class ProfileActionRepositoryImpl implements ProfileActionRepository {
   }
 
   async transferAffiliateQuota(): Promise<AffiliateTransferResponse> {
-    return profileActionDatasource.transferAffiliateQuota()
+    return (await profileActionDatasource.transferAffiliateQuota()).toEntity()
   }
 }
 

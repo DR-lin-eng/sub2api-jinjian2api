@@ -1,20 +1,20 @@
 import { apiClient } from '@/core/networks/client'
-import type { User } from '@/core/models/domain/user'
-import type { UserAffiliateDetail } from '@/features/affiliate/domain/models/userAffiliateDetail'
-import type { PlatformQuotasResponse } from '@/features/profile/domain/models/platformQuotasResponse'
+import { UserDto } from '@/core/models/data/userDto'
+import { UserAffiliateDetailDto } from '@/features/affiliate/data/models/userAffiliateDetailDto'
+
 export class ProfileQueryDatasource {
-  async getProfile(): Promise<User> {
-    const { data } = await apiClient.get<User>('/user/profile')
-    return data
+  async getProfile(): Promise<UserDto> {
+    const { data } = await apiClient.get<unknown>('/user/profile')
+    return UserDto.fromJson(data)
   }
 
-  async getAffiliateDetail(): Promise<UserAffiliateDetail> {
-    const { data } = await apiClient.get<UserAffiliateDetail>('/user/aff')
-    return data
+  async getAffiliateDetail(): Promise<UserAffiliateDetailDto> {
+    const { data } = await apiClient.get<unknown>('/user/aff')
+    return UserAffiliateDetailDto.fromJson(data)
   }
 
-  async getMyPlatformQuotas(): Promise<PlatformQuotasResponse> {
-    const { data } = await apiClient.get<PlatformQuotasResponse>('/user/platform-quotas')
+  async getMyPlatformQuotas(): Promise<unknown> {
+    const { data } = await apiClient.get<unknown>('/user/platform-quotas')
     return data
   }
 }

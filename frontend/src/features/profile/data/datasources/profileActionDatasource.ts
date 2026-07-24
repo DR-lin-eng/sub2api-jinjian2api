@@ -1,6 +1,6 @@
 import { apiClient } from '@/core/networks/client'
-import type { User } from '@/core/models/domain/user'
-import type { AffiliateTransferResponse } from '@/features/affiliate/domain/models/affiliateTransferResponse'
+import { UserDto } from '@/core/models/data/userDto'
+import { AffiliateTransferResponseDto } from '@/features/affiliate/data/models/affiliateTransferResponseDto'
 import type { UpdateProfileRequest } from '@/features/profile/data/requests_models/updateProfileRequest'
 import type { ChangePasswordRequest } from '@/features/profile/data/requests_models/changePasswordRequest'
 import type { BindEmailRequest } from '@/features/profile/data/requests_models/bindEmailRequest'
@@ -47,9 +47,9 @@ export function buildOAuthBindingStartURL(
 }
 
 export class ProfileActionDatasource {
-  async updateProfile(req: UpdateProfileRequest): Promise<User> {
-    const { data } = await apiClient.put<User>('/user', req)
-    return data
+  async updateProfile(req: UpdateProfileRequest): Promise<UserDto> {
+    const { data } = await apiClient.put<unknown>('/user', req)
+    return UserDto.fromJson(data)
   }
 
   async changePassword(req: ChangePasswordRequest): Promise<{ message: string }> {
@@ -69,23 +69,23 @@ export class ProfileActionDatasource {
     await apiClient.delete('/user/notify-email', { data: { email } })
   }
 
-  async toggleNotifyEmail(email: string, disabled: boolean): Promise<User> {
-    const { data } = await apiClient.put<User>('/user/notify-email/toggle', { email, disabled })
-    return data
+  async toggleNotifyEmail(email: string, disabled: boolean): Promise<UserDto> {
+    const { data } = await apiClient.put<unknown>('/user/notify-email/toggle', { email, disabled })
+    return UserDto.fromJson(data)
   }
 
   async sendEmailBindingCode(email: string): Promise<void> {
     await apiClient.post('/user/account-bindings/email/send-code', { email })
   }
 
-  async bindEmailIdentity(req: BindEmailRequest): Promise<User> {
-    const { data } = await apiClient.post<User>('/user/account-bindings/email', req)
-    return data
+  async bindEmailIdentity(req: BindEmailRequest): Promise<UserDto> {
+    const { data } = await apiClient.post<unknown>('/user/account-bindings/email', req)
+    return UserDto.fromJson(data)
   }
 
-  async unbindAuthIdentity(provider: BindableOAuthProvider): Promise<User> {
-    const { data } = await apiClient.delete<User>(`/user/account-bindings/${provider}`)
-    return data
+  async unbindAuthIdentity(provider: BindableOAuthProvider): Promise<UserDto> {
+    const { data } = await apiClient.delete<unknown>(`/user/account-bindings/${provider}`)
+    return UserDto.fromJson(data)
   }
 
   async startOAuthBinding(
@@ -99,9 +99,9 @@ export class ProfileActionDatasource {
     window.location.href = startURL
   }
 
-  async transferAffiliateQuota(): Promise<AffiliateTransferResponse> {
-    const { data } = await apiClient.post<AffiliateTransferResponse>('/user/aff/transfer')
-    return data
+  async transferAffiliateQuota(): Promise<AffiliateTransferResponseDto> {
+    const { data } = await apiClient.post<unknown>('/user/aff/transfer')
+    return AffiliateTransferResponseDto.fromJson(data)
   }
 }
 

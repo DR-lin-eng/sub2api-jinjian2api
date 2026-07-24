@@ -8,11 +8,11 @@ class AuthQueryRepositoryImpl implements AuthQueryRepository {
   private readonly ds = authQueryDatasource
 
   async getCurrentUser(): Promise<CurrentUserResponse> {
-    return this.ds.getCurrentUser()
+    return (await this.ds.getCurrentUser()).toEntity()
   }
 
   async getPublicSettings(): Promise<PublicSettings> {
-    return this.ds.getPublicSettings()
+    return (await this.ds.getPublicSettings()).toEntity()
   }
 
   async getLocalCaptcha(): Promise<LocalCaptchaChallenge> {

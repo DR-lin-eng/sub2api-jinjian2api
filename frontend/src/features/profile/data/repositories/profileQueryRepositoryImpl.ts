@@ -5,15 +5,15 @@ import type { UserAffiliateDetail } from '@/features/affiliate/domain/models/use
 import type { PlatformQuotasResponse } from '@/features/profile/domain/models/platformQuotasResponse'
 class ProfileQueryRepositoryImpl implements ProfileQueryRepository {
   async getProfile(): Promise<User> {
-    return profileQueryDatasource.getProfile()
+    return (await profileQueryDatasource.getProfile()).toEntity()
   }
 
   async getAffiliateDetail(): Promise<UserAffiliateDetail> {
-    return profileQueryDatasource.getAffiliateDetail()
+    return (await profileQueryDatasource.getAffiliateDetail()).toEntity()
   }
 
   async getMyPlatformQuotas(): Promise<PlatformQuotasResponse> {
-    return profileQueryDatasource.getMyPlatformQuotas()
+    return profileQueryDatasource.getMyPlatformQuotas() as Promise<PlatformQuotasResponse>
   }
 }
 

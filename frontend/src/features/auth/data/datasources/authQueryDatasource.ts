@@ -1,17 +1,17 @@
 import { apiClient } from '@/core/networks/client'
 import { LocalCaptchaChallengeDto } from '@/features/auth/data/models/localCaptchaChallengeDto'
-import type { CurrentUserResponse } from '@/features/auth/domain/models/currentUserResponse'
-import type { PublicSettings } from '@/features/auth/domain/models/publicSettings'
+import { CurrentUserResponseDto } from '@/features/auth/data/models/currentUserResponseDto'
+import { PublicSettingsDto } from '@/features/auth/data/models/publicSettingsDto'
 
 export class AuthQueryDatasource {
-  async getCurrentUser(): Promise<CurrentUserResponse> {
-    const { data } = await apiClient.get<CurrentUserResponse>('/auth/me')
-    return data
+  async getCurrentUser(): Promise<CurrentUserResponseDto> {
+    const { data } = await apiClient.get<unknown>('/auth/me')
+    return CurrentUserResponseDto.fromJson(data)
   }
 
-  async getPublicSettings(): Promise<PublicSettings> {
-    const { data } = await apiClient.get<PublicSettings>('/settings/public')
-    return data
+  async getPublicSettings(): Promise<PublicSettingsDto> {
+    const { data } = await apiClient.get<unknown>('/settings/public')
+    return PublicSettingsDto.fromJson(data)
   }
 
   async getLocalCaptcha(): Promise<LocalCaptchaChallengeDto> {
