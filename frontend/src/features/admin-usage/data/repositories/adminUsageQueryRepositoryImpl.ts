@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { adminUsageQueryDatasource } from '@/features/admin-usage/data/datasources/adminUsageQueryDatasource'
 import type { AdminUsageQueryRepository } from '@/features/admin-usage/domain/repositories/adminUsageQueryRepository'
 import type { AdminUsageLog } from '@/features/admin-usage/domain/models/adminUsageLog'

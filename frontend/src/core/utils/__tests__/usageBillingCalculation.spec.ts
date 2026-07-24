@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { UsageLog } from '@/types'
+import { UsageLog } from '@/core/models/domain/usageLog'
 import { buildUsageBillingCalculation } from '../usageBillingCalculation'
 
 const usage = (overrides: Partial<UsageLog>): UsageLog => ({

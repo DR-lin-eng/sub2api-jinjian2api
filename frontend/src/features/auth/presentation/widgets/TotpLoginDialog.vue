@@ -77,8 +77,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores'
-
+import { useAppStore } from '@/core/stores/appStore'
 defineProps<{
   tempToken: string
   userEmailMasked?: string

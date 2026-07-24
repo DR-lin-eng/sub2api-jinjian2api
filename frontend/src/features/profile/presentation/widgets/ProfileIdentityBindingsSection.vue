@@ -208,7 +208,8 @@ import {
   unbindAuthIdentity,
 } from '@/features/profile/data/datasources/profileDatasource'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import { useAppStore, useAuthStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/core/stores/authStore'
 import type { User, UserAuthBindingStatus, UserAuthProvider } from '@/features/auth/domain/models/auth'
 type BindableProvider = Exclude<UserAuthProvider, 'email'>
 

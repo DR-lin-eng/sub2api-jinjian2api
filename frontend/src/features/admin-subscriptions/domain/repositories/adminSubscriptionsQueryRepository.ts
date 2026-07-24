@@ -1,5 +1,5 @@
-import type { PaginatedResponse } from '@/types'
-import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/userSubscription'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
+import type { UserSubscription } from '@/core/models/domain/userSubscription'
 import type { SubscriptionProgress } from '@/features/admin-subscriptions/domain/models/subscriptionProgress'
 
 export interface AdminSubscriptionsQueryRepository {

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { ApiResponse } from '@/types'
+import type { ApiResponse } from '@/core/networks/apiResponse'
 import { getAPIBaseURL } from './url'
 import {
   setAccessToken,

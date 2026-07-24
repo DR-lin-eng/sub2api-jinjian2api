@@ -1,6 +1,7 @@
 import { apiClient } from '@/core/networks/client'
 import { LocalCaptchaChallengeDto } from '@/features/auth/data/models/localCaptchaChallengeDto'
-import type { CurrentUserResponse, PublicSettings } from '@/types'
+import type { CurrentUserResponse } from '@/features/auth/domain/models/currentUserResponse'
+import type { PublicSettings } from '@/features/auth/domain/models/publicSettings'
 
 export class AuthQueryDatasource {
   async getCurrentUser(): Promise<CurrentUserResponse> {

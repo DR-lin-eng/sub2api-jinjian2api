@@ -42,8 +42,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { useAppStore } from '@/stores'
-
+import { useAppStore } from '@/core/stores/appStore'
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()

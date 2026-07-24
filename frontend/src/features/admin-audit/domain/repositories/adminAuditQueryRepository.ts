@@ -1,7 +1,7 @@
 /**
  * AdminAuditQueryRepository (interface). Per spec §6.
  */
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import type { AuditLog } from '@/features/admin-audit/domain/models/auditLog'
 import type { AuditLogQuery } from '@/features/admin-audit/domain/models/auditLogQuery'
 

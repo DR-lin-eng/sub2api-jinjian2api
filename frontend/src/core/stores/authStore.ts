@@ -18,7 +18,9 @@ import {
   setRefreshTokenMemory,
   setTokenExpiresAtMemory,
 } from '@/core/networks/tokenStore'
-import type { User, LoginRequest, AuthResponse } from '@/types'
+import type { User } from '@/core/models/domain/user'
+import type { LoginRequest } from '@/features/auth/data/requests_models/loginRequest'
+import type { AuthResponse } from '@/features/auth/domain/models/authResponse'
 import type { RegisterRequest } from '@/features/auth/data/requests_models/registerRequest'
 import type { EncryptedRegisterRequest } from '@/features/auth/data/requests_models/encryptedRegisterRequest'
 const clearAuthToken = clearTokenMemory

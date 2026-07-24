@@ -419,7 +419,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
 import LocaleSwitcher from '@/common/widgets/data/LocaleSwitcher.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { buildGatewayUrl } from '@/core/networks/client'

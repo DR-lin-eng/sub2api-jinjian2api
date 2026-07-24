@@ -254,7 +254,7 @@ import { getAccessToken } from '@/core/networks/tokenStore'
 import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
 
 const queryStore = useAdminAccountsQueryStore()
-import type { ClaudeModel } from '@/types'
+import type { ClaudeModel } from '@/features/admin-accounts/domain/models/claudeModel'
 import type { Account } from '@/features/admin-accounts/domain/models/account'
 const { t } = useI18n()
 const { copyToClipboard } = useClipboard()

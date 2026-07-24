@@ -1,5 +1,5 @@
 import { apiClient } from '@/core/networks/client'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { PromoCodeDto } from '@/features/admin-promo/data/models/promoCodeDto'
 import { PromoCodeUsageDto } from '@/features/admin-promo/data/models/promoCodeUsageDto'
 

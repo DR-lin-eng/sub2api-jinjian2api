@@ -101,7 +101,9 @@ const PAYMENT_VISIBLE_METHOD_SOURCE_OPTIONS: Record<PaymentVisibleMethod, Array<
 
 export function getPaymentVisibleMethodSourceOptions(method: PaymentVisibleMethod) {
   return PAYMENT_VISIBLE_METHOD_SOURCE_OPTIONS[method]
-}: Record<PaymentVisibleMethod, Record<string, PaymentVisibleMethodSource>> = {
+}
+
+const PAYMENT_VISIBLE_METHOD_SOURCE_ALIASES: Record<PaymentVisibleMethod, Record<string, PaymentVisibleMethodSource>> = {
   alipay: { official_alipay: 'official_alipay', alipay: 'official_alipay', alipay_direct: 'official_alipay', official: 'official_alipay', easypay_alipay: 'easypay_alipay', easypay: 'easypay_alipay' },
   wxpay: { official_wxpay: 'official_wxpay', wxpay: 'official_wxpay', wxpay_direct: 'official_wxpay', wechat: 'official_wxpay', official: 'official_wxpay', easypay_wxpay: 'easypay_wxpay', easypay: 'easypay_wxpay' },
 }

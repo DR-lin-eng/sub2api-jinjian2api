@@ -226,7 +226,8 @@ import TotpLoginModal from '@/features/auth/presentation/widgets/TotpLoginDialog
 import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptchaWidget.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
-import { useAuthStore, useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/core/stores/authStore'
 import {
   clearCredentialKeyPrefetch,
   prefetchCredentialKey,
@@ -241,8 +242,8 @@ import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
 } from '@/core/services/humanVerification'
-import type { LoginAgreementDocument } from '@/types'
-import type { TotpLoginResponse } from '@/types'
+import type { LoginAgreementDocument } from '@/features/auth/domain/models/loginAgreementDocument'
+import type { TotpLoginResponse } from '@/features/auth/domain/models/totpLoginResponse'
 
 const { t } = useI18n()
 const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'

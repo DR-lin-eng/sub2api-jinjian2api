@@ -407,7 +407,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore, useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/core/stores/authStore'
 import LocaleSwitcher from '@/common/widgets/data/LocaleSwitcher.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { sanitizeUrl } from '@/core/utils/url'

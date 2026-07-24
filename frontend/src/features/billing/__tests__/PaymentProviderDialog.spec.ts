@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import PaymentProviderDialog from '@/features/billing/presentation/widgets/PaymentProviderDialog.vue'
 import { STRIPE_SDK_API_VERSION } from '@/features/billing/presentation/utils/providerConfigSignals'
-import type { ProviderInstance } from '@/types/payment'
+import type { ProviderInstance } from '@/features/admin-orders/domain/models/providerInstance'
 
 const messages: Record<string, string> = {
   'admin.settings.payment.providerConfig': 'Credentials',

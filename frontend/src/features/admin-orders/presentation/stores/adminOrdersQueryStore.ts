@@ -8,7 +8,7 @@ import type { PaymentOrder } from '@/features/admin-orders/domain/models/payment
 import type { SubscriptionPlan } from '@/features/admin-orders/domain/models/subscriptionPlan'
 import type { ProviderInstance } from '@/features/admin-orders/domain/models/providerInstance'
 import type { GetOrdersRequest } from '@/features/admin-orders/data/requests_models/getOrdersRequest'
-import type { BasePaginationResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 
 export function createAdminOrdersQueryStore(repo: AdminOrdersQueryRepository = adminOrdersQueryRepository) {
   return defineStore('admin-orders/query', () => {
@@ -17,7 +17,7 @@ export function createAdminOrdersQueryStore(repo: AdminOrdersQueryRepository = a
 
     const config = ref<AdminPaymentConfig | null>(null)
     const dashboard = ref<DashboardStats | null>(null)
-    const orders = ref<BasePaginationResponse<PaymentOrder> | null>(null)
+    const orders = ref<PaginatedResponse<PaymentOrder> | null>(null)
     const plans = ref<SubscriptionPlan[]>([])
     const providers = ref<ProviderInstance[]>([])
 

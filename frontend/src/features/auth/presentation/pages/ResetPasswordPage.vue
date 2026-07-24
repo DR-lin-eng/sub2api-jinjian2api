@@ -205,7 +205,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { AuthLayout } from '@/common/widgets/layout'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import { useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
 import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
 const authAction = useAuthActionStore()
 const resetPassword = authAction.resetPassword.bind(authAction)

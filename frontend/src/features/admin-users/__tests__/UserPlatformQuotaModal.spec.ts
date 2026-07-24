@@ -49,7 +49,7 @@ vi.mock('@/common/widgets/feedback/BaseDialog.vue', () => ({
 }))
 
 import UserPlatformQuotaModal from '@/features/admin-users/presentation/widgets/UserPlatformQuotaDialog.vue'
-import type { UserSubscription } from '@/types'
+import type { UserSubscription } from '@/core/models/domain/userSubscription'
 
 function makeUser(overrides: { subscriptions?: UserSubscription[] } = {}) {
   return { id: 99, email: 'u@example.com', ...overrides } as any

@@ -4,7 +4,7 @@
  */
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
-import type { ApiResponse } from '@/types'
+import type { ApiResponse } from '@/core/networks/apiResponse'
 import { getLocale } from '@/core/i18n'
 import {
   ADMIN_UI_REQUEST_HEADER,

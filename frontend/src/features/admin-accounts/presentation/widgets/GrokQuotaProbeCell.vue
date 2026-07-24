@@ -50,7 +50,7 @@ import { useI18n } from 'vue-i18n'
 import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
 
 const queryStore = useAdminAccountsQueryStore()
-import type { GrokQuotaWindow } from '@/types'
+import type { GrokQuotaWindow } from '@/features/admin-accounts/domain/models/grokQuotaWindow'
 import type { GrokQuotaProbeResult } from '@/features/admin-accounts/domain/models/grokQuotaProbeResult'
 import type { Account } from '@/features/admin-accounts/domain/models/account'
 const props = defineProps<{

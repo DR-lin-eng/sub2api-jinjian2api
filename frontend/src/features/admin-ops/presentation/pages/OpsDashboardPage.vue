@@ -180,7 +180,8 @@ import {
   type OpsMetricThresholds
 } from '@/features/admin-ops/domain/models/opsMetricThresholds'
 import type { OpsAdvancedSettings } from '@/features/admin-ops/domain/models/opsAdvancedSettings'
-import { useAdminSettingsStore, useAppStore } from '@/stores'
+import { useAdminSettingsStore } from '@/core/stores/adminSettingsStore'
+import { useAppStore } from '@/core/stores/appStore'
 import OpsDashboardHeader from '@/features/admin-ops/presentation/widgets/OpsDashboardHeader.vue'
 import OpsDashboardSkeleton from '@/features/admin-ops/presentation/widgets/OpsDashboardSkeleton.vue'
 import OpsConcurrencyCard from '@/features/admin-ops/presentation/widgets/OpsConcurrencyCard.vue'

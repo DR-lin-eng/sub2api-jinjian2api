@@ -1,7 +1,7 @@
 import { adminSubscriptionsQueryDatasource } from '@/features/admin-subscriptions/data/datasources/adminSubscriptionsQueryDatasource'
 import type { AdminSubscriptionsQueryRepository } from '@/features/admin-subscriptions/domain/repositories/adminSubscriptionsQueryRepository'
-import type { PaginatedResponse } from '@/types'
-import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/userSubscription'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
+import type { UserSubscription } from '@/core/models/domain/userSubscription'
 import type { SubscriptionProgress } from '@/features/admin-subscriptions/domain/models/subscriptionProgress'
 
 class AdminSubscriptionsQueryRepositoryImpl implements AdminSubscriptionsQueryRepository {

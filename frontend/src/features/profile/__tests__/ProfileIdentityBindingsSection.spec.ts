@@ -2,8 +2,9 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ProfileIdentityBindingsSection from '@/features/profile/presentation/widgets/ProfileIdentityBindingsSection.vue'
-import { useAppStore, useAuthStore } from '@/stores'
-import type { User } from '@/types'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/core/stores/authStore'
+import { User } from '@/core/models/domain/user'
 
 const routeState = vi.hoisted(() => ({
   fullPath: '/profile',

@@ -4,7 +4,7 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { AccountDto } from '@/features/admin-accounts/data/models/accountDto'
 import { AccountUsageInfoDto } from '@/features/admin-accounts/data/models/accountUsageInfoDto'
 import { WindowStatsDto } from '@/features/admin-accounts/data/models/windowStatsDto'
@@ -12,8 +12,7 @@ import { TempUnschedulableStatusDto } from '@/features/admin-accounts/data/model
 import { UpstreamBillingProbeSettingsDto } from '@/features/admin-accounts/data/models/upstreamBillingProbeSettingsDto'
 import { AccountUsageStatsResponseDto } from '@/features/admin-accounts/data/models/accountUsageStatsResponseDto'
 import { AdminDataPayloadDto } from '@/features/admin-accounts/data/models/adminDataPayloadDto'
-import type { ClaudeModel } from '@/types'
-
+import type { ClaudeModel } from '@/features/admin-accounts/domain/models/claudeModel'
 // ==================== Query-side response types ====================
 
 export interface AccountListWithEtagResultDto {

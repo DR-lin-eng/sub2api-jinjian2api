@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import type { Channel } from '@/features/admin-channels/domain/models/channel'
 import type { ModelDefaultPricing } from '@/features/admin-channels/domain/models/modelDefaultPricing'
 

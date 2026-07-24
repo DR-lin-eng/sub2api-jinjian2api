@@ -3,8 +3,9 @@ import { flushPromises, shallowMount } from '@vue/test-utils'
 import PaymentView from '@/features/billing/presentation/pages/PaymentPage.vue'
 import { PAYMENT_RECOVERY_STORAGE_KEY } from '@/features/billing/presentation/utils/paymentFlowResolver'
 import { formatPaymentAmount } from '@/features/billing/presentation/utils/currencyFormatter'
-import type { CheckoutInfoResponse, MethodLimit, SubscriptionPlan } from '@/types/payment'
-
+import { SubscriptionPlan } from '@/features/admin-orders/domain/models/subscriptionPlan'
+import type { CheckoutInfoResponse } from '@/features/billing/domain/models/checkoutInfoResponse'
+import type { MethodLimit } from '@/features/billing/domain/models/methodLimit'
 const routeState = vi.hoisted(() => ({
   path: '/purchase',
   query: {} as Record<string, unknown>,

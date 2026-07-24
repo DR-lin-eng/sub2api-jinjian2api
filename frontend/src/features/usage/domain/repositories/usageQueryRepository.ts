@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import type { UsageLog } from '@/core/models/domain/usageLog'
 import type { UsageQueryParams } from '@/features/admin-usage/domain/models/adminUsageQueryParams'
 import type { UsageStatsResponse } from '@/core/models/domain/usageStatsResponse'

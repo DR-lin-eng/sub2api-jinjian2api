@@ -1167,7 +1167,7 @@ import {
 import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 import type { UpdateApiKeyRequest } from '@/features/keys/data/requests_models/updateApiKeyRequest'
 import type { Group, SubscriptionType, GroupPlatform } from '@/features/admin-groups/domain/models/adminGroups'
-import type { PublicSettings } from '@/types'
+import type { PublicSettings } from '@/features/auth/domain/models/publicSettings'
 
 // Helper to format date for datetime-local input
 const formatDateTimeLocal = (isoDate: string): string => {

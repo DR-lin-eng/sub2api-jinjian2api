@@ -1,5 +1,5 @@
 import type { LocationQuery, LocationQueryRaw } from 'vue-router'
-import type { SubscriptionPlan } from '@/types/payment'
+import type { SubscriptionPlan } from '@/features/admin-orders/domain/models/subscriptionPlan'
 import { normalizeVisibleMethod } from '@/features/billing/presentation/utils/paymentFlowResolver'
 
 export interface ParsedWechatResumeRoute {

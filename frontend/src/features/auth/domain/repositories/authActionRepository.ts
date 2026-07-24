@@ -7,7 +7,7 @@ import type { SendVerifyCodeRequest } from '@/features/auth/data/requests_models
 import type { ForgotPasswordRequest } from '@/features/auth/data/requests_models/forgotPasswordRequest'
 import type { ResetPasswordRequest } from '@/features/auth/data/requests_models/resetPasswordRequest'
 import type { TotpLogin2FARequest } from '@/features/auth/data/requests_models/totpLogin2faRequest'
-import type { SendVerifyCodeResponse } from '@/types'
+import type { SendVerifyCodeResponse } from '@/features/auth/domain/models/sendVerifyCodeResponse'
 import type { SessionRefreshResult } from '@/core/networks/sessionRefresh'
 
 export type LoginResponse = AuthResult | TotpLoginResult

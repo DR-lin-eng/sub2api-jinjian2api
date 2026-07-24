@@ -6,7 +6,7 @@
  * request bodies.
  */
 import { apiClient } from '@/core/networks/client'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { AuditLogDto } from '@/features/admin-audit/data/models/auditLogDto'
 import type { ListAuditLogRequest } from '@/features/admin-audit/data/requests_models/listAuditLogRequest'
 

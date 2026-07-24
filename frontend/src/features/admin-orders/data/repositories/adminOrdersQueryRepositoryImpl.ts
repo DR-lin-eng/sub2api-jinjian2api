@@ -5,7 +5,7 @@ import type { PaymentOrder } from '@/features/admin-orders/domain/models/payment
 import type { SubscriptionPlan } from '@/features/admin-orders/domain/models/subscriptionPlan'
 import type { ProviderInstance } from '@/features/admin-orders/domain/models/providerInstance'
 import type { GetOrdersRequest } from '@/features/admin-orders/data/requests_models/getOrdersRequest'
-import type { BasePaginationResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { adminOrdersQueryDatasource } from '@/features/admin-orders/data/datasources/adminOrdersQueryDatasource'
 
 export class AdminOrdersQueryRepositoryImpl implements AdminOrdersQueryRepository {
@@ -19,7 +19,7 @@ export class AdminOrdersQueryRepositoryImpl implements AdminOrdersQueryRepositor
     return (await this.ds.getDashboard(days)).toEntity()
   }
 
-  async getOrders(req?: GetOrdersRequest): Promise<BasePaginationResponse<PaymentOrder>> {
+  async getOrders(req?: GetOrdersRequest): Promise<PaginatedResponse<PaymentOrder>> {
     const result = await this.ds.getOrders(req)
     return {
       ...result,

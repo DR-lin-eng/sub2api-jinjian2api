@@ -1,5 +1,5 @@
 import type { Proxy } from '@/features/admin-proxies/domain/models/proxy'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import type { AdminDataPayload } from '@/features/admin-accounts/domain/models/adminDataPayload'
 import type { ProxyQualityCheckResult } from '@/features/admin-proxies/domain/models/proxyQualityCheckResult'
 import type { ProxyAccountSummary } from '@/features/admin-proxies/domain/models/proxyAccountSummary'

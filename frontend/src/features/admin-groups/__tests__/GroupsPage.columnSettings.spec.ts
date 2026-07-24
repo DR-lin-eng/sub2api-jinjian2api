@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 
-import type { AdminGroup } from '@/types'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
 import GroupsPage from '@/features/admin-groups/presentation/pages/GroupsPage.vue'
 
 const {

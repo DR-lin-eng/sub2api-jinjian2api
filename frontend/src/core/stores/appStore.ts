@@ -5,7 +5,6 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Toast, ToastType } from '@/types'
 import { i18n } from '@/core/i18n'
 import {
   checkUpdates as checkUpdatesAPI,
@@ -13,7 +12,18 @@ import {
   type VersionInfo,
   type ReleaseInfo,
 } from '@/api'
-import type { PublicSettings } from '@/types'
+import type { PublicSettings } from '@/features/auth/domain/models/publicSettings'
+
+type ToastType = 'success' | 'error' | 'info' | 'warning'
+
+interface Toast {
+  id: string
+  type: ToastType
+  message: string
+  title?: string
+  duration?: number
+  startTime?: number
+}
 
 export const useAppStore = defineStore('app', () => {
   // ==================== State ====================

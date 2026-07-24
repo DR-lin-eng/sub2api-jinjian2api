@@ -70,8 +70,8 @@ import { useI18n } from 'vue-i18n'
 import GrokFreeIcon from './GrokFreeIcon.vue'
 import PlatformIcon from './PlatformIcon.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import type { AccountPlatform, AccountType } from '@/types'
-
+import type { AccountPlatform } from '@/features/admin-accounts/domain/models/accountPlatform'
+import type { AccountType } from '@/features/admin-accounts/domain/models/accountType'
 const { t } = useI18n()
 
 interface Props {

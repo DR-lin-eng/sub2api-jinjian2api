@@ -2,8 +2,8 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import WechatOAuthSection from '@/features/auth/presentation/widgets/WechatOAuthSection.vue'
-import { useAppStore } from '@/stores'
-import type { PublicSettings } from '@/types'
+import { useAppStore } from '@/core/stores/appStore'
+import type { PublicSettings } from '@/features/auth/domain/models/publicSettings'
 
 const routeState = vi.hoisted(() => ({
   query: {} as Record<string, unknown>,

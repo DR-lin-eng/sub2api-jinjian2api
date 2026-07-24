@@ -1,6 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import type { GrokQuotaWindow, GrokBillingSummary } from '@/types'
+import type { GrokBillingSummary } from '@/features/admin-accounts/domain/models/grokBillingSummary'
+import type { GrokQuotaWindow } from '@/features/admin-accounts/domain/models/grokQuotaWindow'
 import { AccountUsageInfo } from '@/features/admin-accounts/domain/models/accountUsageInfo'
 import { AccountAiCreditDto } from '@/features/admin-accounts/data/models/accountAiCreditDto'
 import { UsageProgressDto } from '@/features/admin-accounts/data/models/usageProgressDto'

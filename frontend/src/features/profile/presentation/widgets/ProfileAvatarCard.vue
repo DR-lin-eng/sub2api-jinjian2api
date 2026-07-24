@@ -85,7 +85,7 @@ import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/core/stores/authStore'
 import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
-import type { User } from '@/types'
+import { User } from '@/core/models/domain/user'
 
 const props = withDefaults(defineProps<{
   user: User | null

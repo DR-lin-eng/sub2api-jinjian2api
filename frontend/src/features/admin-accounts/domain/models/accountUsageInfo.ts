@@ -2,8 +2,8 @@ import { UsageProgress } from '@/features/admin-accounts/domain/models/usageProg
 import { AntigravityModelQuota } from '@/features/admin-accounts/domain/models/antigravityModelQuota'
 import { WindowStats } from '@/features/admin-accounts/domain/models/windowStats'
 import { AccountAiCredit } from '@/features/admin-accounts/domain/models/accountAiCredit'
-import type { GrokQuotaWindow, GrokBillingSummary } from '@/types'
-
+import type { GrokBillingSummary } from '@/features/admin-accounts/domain/models/grokBillingSummary'
+import type { GrokQuotaWindow } from '@/features/admin-accounts/domain/models/grokQuotaWindow'
 export class AccountUsageInfo {
   source!: 'passive' | 'active' | ''
   updatedAt!: string

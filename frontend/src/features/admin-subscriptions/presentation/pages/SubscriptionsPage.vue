@@ -779,7 +779,7 @@ import { getRemainingDurationParts, isOneTimeDailyQuota, type RemainingDurationP
 import { useAdminSubscriptions } from '@/features/admin-subscriptions/presentation/composables/useAdminSubscriptions'
 import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
 import { useAdminUsage } from '@/features/admin-usage/presentation/composables/useAdminUsage'
-import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/userSubscription'
+import type { UserSubscription } from '@/core/models/domain/userSubscription'
 import type { Group, GroupPlatform, SubscriptionType } from '@/features/admin-groups/domain/models/adminGroups'
 const $subscriptions = useAdminSubscriptions()
 const $groups = useAdminGroups()

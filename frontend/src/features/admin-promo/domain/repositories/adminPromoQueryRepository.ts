@@ -1,6 +1,6 @@
 import type { PromoCode } from '@/features/admin-promo/domain/models/promoCode'
 import type { PromoCodeUsage } from '@/features/admin-promo/domain/models/promoCodeUsage'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 
 export interface AdminPromoQueryRepository {
   list(

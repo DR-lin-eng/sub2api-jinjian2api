@@ -324,7 +324,8 @@ import LoginAgreementPrompt from '@/features/auth/presentation/widgets/LoginAgre
 import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptchaWidget.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
-import { useAuthStore, useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/core/stores/authStore'
 import {
   clearCredentialKeyPrefetch,
   prefetchCredentialKey,

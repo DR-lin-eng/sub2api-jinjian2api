@@ -1,5 +1,5 @@
-import type { PaginatedResponse } from '@/types'
-import type { ClaudeModel } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
+import type { ClaudeModel } from '@/features/admin-accounts/domain/models/claudeModel'
 import type { Account } from '@/features/admin-accounts/domain/models/account'
 import type { AccountUsageInfo } from '@/features/admin-accounts/domain/models/accountUsageInfo'
 import type { WindowStats } from '@/features/admin-accounts/domain/models/windowStats'

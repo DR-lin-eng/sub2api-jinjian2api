@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import type { AdminUsageLog } from '@/features/admin-usage/domain/models/adminUsageLog'
 import type { AdminUsageStatsResponse } from '@/features/admin-usage/domain/models/adminUsageStatsResponse'
 import type { SimpleUser } from '@/features/admin-usage/domain/models/simpleUser'

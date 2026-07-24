@@ -259,7 +259,7 @@ import { formatDateTimeToMinute } from '@/core/utils/format'
 import { hasPeakRate, formatPeakRateWindow, serverTimezoneLabel } from '@/core/utils/peak-rate'
 import { platformBorderClass, platformBadgeClass, platformButtonClass, platformLabel } from '@/core/utils/platformColors'
 import { getRemainingDurationParts, isOneTimeDailyQuota, type RemainingDurationParts } from '@/core/utils/subscriptionQuota'
-import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/userSubscription'
+import type { UserSubscription } from '@/core/models/domain/userSubscription'
 
 function platformAccentDotClass(p: string): string {
   switch (p) {

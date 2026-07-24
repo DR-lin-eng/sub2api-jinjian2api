@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 
-import type { AdminUser } from '@/types'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 import UsersPage from '@/features/admin-users/presentation/pages/UsersPage.vue'
 
 const {

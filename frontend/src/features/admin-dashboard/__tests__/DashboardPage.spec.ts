@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 
-import type { DashboardStats } from '@/types'
+import { DashboardStats } from '@/features/admin-dashboard/domain/models/dashboardStats'
 import DashboardPage from '@/features/admin-dashboard/presentation/pages/DashboardPage.vue'
 
 const { getSnapshotV2 } = vi.hoisted(() => ({

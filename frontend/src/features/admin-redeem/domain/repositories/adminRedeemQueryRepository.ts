@@ -1,5 +1,5 @@
 import type { RedeemCode, RedeemCodeType } from '@/features/admin-redeem/domain/models/redeemCode'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 
 export interface AdminRedeemQueryRepository {
   list(

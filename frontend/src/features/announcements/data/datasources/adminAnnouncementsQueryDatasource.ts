@@ -1,5 +1,5 @@
 import { apiClient } from '@/core/networks/client'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { AnnouncementDto } from '@/features/announcements/data/models/announcementDto'
 import { AnnouncementUserReadStatusDto } from '@/features/announcements/data/models/announcementUserReadStatusDto'
 

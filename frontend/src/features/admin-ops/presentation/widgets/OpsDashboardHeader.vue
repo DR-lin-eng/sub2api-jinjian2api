@@ -12,7 +12,7 @@ import type { OpsRealtimeTrafficSummaryResponse } from '@/features/admin-ops/dom
 import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
 const queryStore = useAdminOpsQueryStore()
 import type { OpsRequestDetailsPreset } from '@/features/admin-ops/presentation/widgets/OpsRequestDetailsDialog.vue'
-import { useAdminSettingsStore } from '@/stores'
+import { useAdminSettingsStore } from '@/core/stores/adminSettingsStore'
 import { formatBytes } from '@/core/utils/format'
 import {
   formatCompactNumber,

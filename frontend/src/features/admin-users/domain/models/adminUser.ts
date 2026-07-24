@@ -1,4 +1,4 @@
-import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/userSubscription'
+import type { UserSubscription } from '@/core/models/domain/userSubscription'
 
 export class AdminUser {
   id!: number

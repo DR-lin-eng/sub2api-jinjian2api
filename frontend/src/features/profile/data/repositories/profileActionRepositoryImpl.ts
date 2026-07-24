@@ -1,6 +1,7 @@
 import { profileActionDatasource } from '@/features/profile/data/datasources/profileActionDatasource'
 import type { ProfileActionRepository } from '@/features/profile/domain/repositories/profileActionRepository'
-import type { User, AffiliateTransferResponse } from '@/types'
+import type { User } from '@/core/models/domain/user'
+import type { AffiliateTransferResponse } from '@/features/affiliate/domain/models/affiliateTransferResponse'
 import type { UpdateProfileRequest } from '@/features/profile/data/requests_models/updateProfileRequest'
 import type { ChangePasswordRequest } from '@/features/profile/data/requests_models/changePasswordRequest'
 import type { BindEmailRequest } from '@/features/profile/data/requests_models/bindEmailRequest'

@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import type { AffiliateAdminEntry } from '@/features/affiliate/domain/models/affiliateAdminEntry'
 import type { AffiliateInviteRecord } from '@/features/affiliate/domain/models/affiliateInviteRecord'
 import type { AffiliateRebateRecord } from '@/features/affiliate/domain/models/affiliateRebateRecord'

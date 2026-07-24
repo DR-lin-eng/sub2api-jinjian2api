@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { adminAPI } from '@/api'
-import type { CustomMenuItem } from '@/types'
+import type { CustomMenuItem } from '@/features/auth/domain/models/customMenuItem'
 
 export const useAdminSettingsStore = defineStore('adminSettings', () => {
   const loaded = ref(false)

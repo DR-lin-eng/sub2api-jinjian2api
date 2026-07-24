@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import type { Announcement } from '@/features/announcements/domain/models/announcement'
 import type { AnnouncementUserReadStatus } from '@/features/announcements/domain/models/announcementUserReadStatus'
 

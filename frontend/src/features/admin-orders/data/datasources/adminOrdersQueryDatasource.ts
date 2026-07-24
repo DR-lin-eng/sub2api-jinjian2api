@@ -1,5 +1,5 @@
 import { apiClient } from '@/core/networks/client'
-import type { BasePaginationResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { PaymentOrderDto } from '@/features/admin-orders/data/models/paymentOrderDto'
 import { DashboardStatsDto } from '@/features/admin-orders/data/models/dashboardStatsDto'
 import { AdminPaymentConfigDto } from '@/features/admin-orders/data/models/adminPaymentConfigDto'
@@ -20,8 +20,8 @@ export class AdminOrdersQueryDatasource {
     return DashboardStatsDto.fromJson(data)
   }
 
-  async getOrders(req?: GetOrdersRequest): Promise<BasePaginationResponse<PaymentOrderDto>> {
-    const { data } = await apiClient.get<BasePaginationResponse<unknown>>('/admin/payment/orders', {
+  async getOrders(req?: GetOrdersRequest): Promise<PaginatedResponse<PaymentOrderDto>> {
+    const { data } = await apiClient.get<PaginatedResponse<unknown>>('/admin/payment/orders', {
       params: req,
     })
     return {

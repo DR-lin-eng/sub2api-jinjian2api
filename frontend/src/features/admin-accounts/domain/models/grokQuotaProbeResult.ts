@@ -1,4 +1,4 @@
-import type { GrokBillingSummary } from '@/types'
+import type { GrokBillingSummary } from '@/features/admin-accounts/domain/models/grokBillingSummary'
 import { WindowStats } from '@/features/admin-accounts/domain/models/windowStats'
 import { GrokQuotaSnapshot } from '@/features/admin-accounts/domain/models/grokQuotaSnapshot'
 

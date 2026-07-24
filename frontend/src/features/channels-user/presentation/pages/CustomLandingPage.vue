@@ -119,7 +119,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/core/stores/authStore'
 import { useAdminSettingsStore } from '@/core/stores/adminSettingsStore'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'

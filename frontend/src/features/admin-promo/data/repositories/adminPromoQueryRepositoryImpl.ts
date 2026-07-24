@@ -2,7 +2,7 @@ import { adminPromoQueryDatasource } from '@/features/admin-promo/data/datasourc
 import type { AdminPromoQueryRepository } from '@/features/admin-promo/domain/repositories/adminPromoQueryRepository'
 import type { PromoCode } from '@/features/admin-promo/domain/models/promoCode'
 import type { PromoCodeUsage } from '@/features/admin-promo/domain/models/promoCodeUsage'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 
 class AdminPromoQueryRepositoryImpl implements AdminPromoQueryRepository {
   private readonly ds = adminPromoQueryDatasource

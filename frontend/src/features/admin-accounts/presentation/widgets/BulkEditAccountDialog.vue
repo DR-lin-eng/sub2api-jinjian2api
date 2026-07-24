@@ -1278,7 +1278,9 @@ import {
 import type { OpenAIWSMode } from '@/core/utils/openaiWsMode'
 import type { Proxy as ProxyConfig } from '@/features/admin-proxies/domain/models/proxy'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
-import type { AccountPlatform, AccountType, OpenAICompactMode } from '@/types'
+import type { AccountPlatform } from '@/features/admin-accounts/domain/models/accountPlatform'
+import type { AccountType } from '@/features/admin-accounts/domain/models/accountType'
+import type { OpenAICompactMode } from '@/features/admin-accounts/domain/models/openAICompactMode'
 interface Props {
   show: boolean
   accountIds: number[]

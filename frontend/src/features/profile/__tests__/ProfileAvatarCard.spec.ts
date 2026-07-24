@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ProfileAvatarCard from '@/features/profile/presentation/widgets/ProfileAvatarCard.vue'
-import type { User } from '@/types'
+import { User } from '@/core/models/domain/user'
 
 const {
   updateProfileMock,

@@ -70,7 +70,7 @@
  */
 
 import { useAppStore } from '@/core/stores/appStore'
-import type { PublicSettings } from '@/types'
+import type { PublicSettings } from '@/features/auth/domain/models/publicSettings'
 export type FeatureFlagMode = 'opt-in' | 'opt-out'
 
 export interface FeatureFlagDefinition {

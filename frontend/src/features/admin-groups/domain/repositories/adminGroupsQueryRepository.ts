@@ -4,7 +4,7 @@ import type { CompositeRouteDecision } from '@/features/admin-groups/domain/mode
 import type { GroupPlatform } from '@/features/admin-groups/domain/models/groupPlatform'
 import type { GroupRateMultiplierEntry, GroupRPMOverrideEntry } from '@/features/admin-groups/data/datasources/adminGroupsQueryDatasource'
 import type { PreviewCompositeRouteRequest } from '@/features/admin-groups/data/requests_models/previewCompositeRouteRequest'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 
 export interface AdminGroupsQueryRepository {
   list(

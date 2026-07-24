@@ -1,5 +1,6 @@
 import { apiClient } from '@/core/networks/client'
-import type { CreateOrderRequest, CreateOrderResult } from '@/types/payment'
+import type { CreateOrderRequest } from '@/features/billing/data/requests_models/createOrderRequest'
+import type { CreateOrderResult } from '@/features/billing/domain/models/createOrderResult'
 import { PublicOrderVerifyResultDto } from '@/features/billing/data/models/publicOrderVerifyResultDto'
 import { RedeemCodeResultDto } from '@/features/billing/data/models/redeemCodeResultDto'
 import type { PublicOrderVerifyResult } from '@/features/billing/domain/models/publicOrderVerifyResult'

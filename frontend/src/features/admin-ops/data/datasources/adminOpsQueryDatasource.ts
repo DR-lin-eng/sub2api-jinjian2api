@@ -1,5 +1,5 @@
 import { apiClient, buildGatewayUrl } from '@/core/networks/client'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import type { OpsDashboardQueryParams, OpsDashboardSnapshotV2Params } from '@/features/admin-ops/data/requests_models/opsDashboardQueryParams'
 import type { OpsErrorListQueryParams } from '@/features/admin-ops/data/requests_models/opsErrorListQueryParams'
 import type { OpsRequestDetailsParams } from '@/features/admin-ops/data/requests_models/opsRequestDetailsParams'

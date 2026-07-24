@@ -1,6 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
-import type { AccountPlatform, AccountType } from '@/types'
+import type { AccountPlatform } from '@/features/admin-accounts/domain/models/accountPlatform'
+import type { AccountType } from '@/features/admin-accounts/domain/models/accountType'
 import { AdminDataAccount } from '@/features/admin-accounts/domain/models/adminDataAccount'
 
 export class AdminDataAccountDto {

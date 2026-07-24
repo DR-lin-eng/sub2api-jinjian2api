@@ -324,7 +324,8 @@ import PendingOAuthCreateAccountForm, {
   type PendingOAuthCreateAccountPayload
 } from '@/features/auth/presentation/widgets/PendingOAuthCreateAccountForm.vue'
 import { apiClient } from '@/core/networks/client'
-import { useAuthStore, useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/core/stores/authStore'
 import {
   getOAuthCompletionKind,
   isOAuthLoginCompletion,

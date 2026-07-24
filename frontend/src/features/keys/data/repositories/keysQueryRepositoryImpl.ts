@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { keysQueryDatasource } from '@/features/keys/data/datasources/keysQueryDatasource'
 import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 import type { KeysQueryRepository } from '@/features/keys/domain/repositories/keysQueryRepository'

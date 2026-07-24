@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import OpenAIQuotaResetCell from '@/features/admin-accounts/presentation/widgets/OpenAIQuotaResetCell.vue'
-import { Account } from '@/types'
+import { Account } from '@/features/admin-accounts/domain/models/account'
 const { queryOpenAIQuota, resetOpenAIQuota } = vi.hoisted(() => ({
   queryOpenAIQuota: vi.fn(),
   resetOpenAIQuota: vi.fn(),

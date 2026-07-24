@@ -67,7 +67,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import ToggleSwitch from './ToggleSwitch.vue'
-import type { ProviderInstance } from '@/types/payment'
+import type { ProviderInstance } from '@/features/admin-orders/domain/models/providerInstance'
 import type { TypeOption } from '@/features/billing/presentation/utils/providerConfigSignals'
 import { PAYMENT_MODE_QRCODE, PAYMENT_MODE_POPUP, PAYMENT_MODE_REDIRECT } from '@/features/billing/presentation/utils/providerConfigSignals'
 

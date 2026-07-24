@@ -1,4 +1,4 @@
-import type { NotifyEmailEntry } from '@/types'
+import type { NotifyEmailEntry } from '@/core/models/domain/notifyEmailEntry'
 
 export interface UpdateProfileRequest {
   username?: string

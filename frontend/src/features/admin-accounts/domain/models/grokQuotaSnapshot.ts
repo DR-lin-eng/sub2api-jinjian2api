@@ -1,5 +1,4 @@
-import type { GrokQuotaWindow } from '@/types'
-
+import type { GrokQuotaWindow } from '@/features/admin-accounts/domain/models/grokQuotaWindow'
 export class GrokQuotaSnapshot {
   requests?: GrokQuotaWindow
   tokens?: GrokQuotaWindow

@@ -1,4 +1,4 @@
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import type { OpsErrorLog } from '@/features/admin-ops/domain/models/opsErrorLog'
 import type { OpsErrorDetail } from '@/features/admin-ops/domain/models/opsErrorDetail'
 import type { AlertRule } from '@/features/admin-ops/domain/models/alertRule'

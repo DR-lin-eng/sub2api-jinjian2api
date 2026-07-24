@@ -1,5 +1,5 @@
 import { apiClient } from '@/core/networks/client'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { AdminGroupDto } from '@/features/admin-groups/data/models/adminGroupDto'
 import { CompositeModelRouteDto } from '@/features/admin-groups/data/models/compositeModelRouteDto'
 import { CompositeRouteDecisionDto } from '@/features/admin-groups/data/models/compositeRouteDecisionDto'

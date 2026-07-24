@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { GeminiCredentials } from '@/types'
+import type { GeminiCredentials } from '@/features/admin-accounts/domain/models/geminiCredentials'
 import type { Account } from '@/features/admin-accounts/domain/models/account'
 const props = defineProps<{
   account: Account

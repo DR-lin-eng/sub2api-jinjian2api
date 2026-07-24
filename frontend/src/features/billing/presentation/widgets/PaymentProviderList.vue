@@ -97,7 +97,7 @@ import { useI18n } from 'vue-i18n'
 import { VueDraggable } from 'vue-draggable-plus'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import ProviderCard from './ProviderCard.vue'
-import type { ProviderInstance } from '@/types/payment'
+import type { ProviderInstance } from '@/features/admin-orders/domain/models/providerInstance'
 import type { TypeOption } from '@/features/billing/presentation/utils/providerConfigSignals'
 import { getAvailableTypes } from '@/features/billing/presentation/utils/providerConfigSignals'
 

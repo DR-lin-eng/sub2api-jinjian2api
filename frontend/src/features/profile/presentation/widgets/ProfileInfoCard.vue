@@ -186,7 +186,10 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 import ProfileAvatarCard from '@/features/profile/presentation/widgets/ProfileAvatarCard.vue'
 import ProfileEditForm from '@/features/profile/presentation/widgets/ProfileEditForm.vue'
 import ProfileIdentityBindingsSection from '@/features/profile/presentation/widgets/ProfileIdentityBindingsSection.vue'
-import type { User, UserAuthBindingStatus, UserAuthProvider, UserProfileSourceContext } from '@/types'
+import { User } from '@/core/models/domain/user'
+import type { UserAuthBindingStatus } from '@/core/models/domain/userAuthBindingStatus'
+import type { UserAuthProvider } from '@/core/models/domain/userAuthProvider'
+import type { UserProfileSourceContext } from '@/core/models/domain/userProfileSourceContext'
 const props = withDefaults(defineProps<{
   user: User | null
   linuxdoEnabled?: boolean

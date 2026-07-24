@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildApiKeyGroupFilterOptions } from '@/features/admin-groups/presentation/utils/apiKeyGroupFilterOptionsSignals'
-import type { AdminGroup } from '@/types'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
 
 const labels = {
   all: 'All',

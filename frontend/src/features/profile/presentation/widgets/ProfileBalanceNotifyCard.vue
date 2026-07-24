@@ -164,7 +164,7 @@ import { useAppStore } from '@/core/stores/appStore'
 import { useProfileQueryStore } from '@/features/profile/presentation/stores/profileQueryStore'
 import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
-import type { NotifyEmailEntry } from '@/types'
+import type { NotifyEmailEntry } from '@/core/models/domain/notifyEmailEntry'
 const maxTotalEmails = 3
 
 interface PendingEmail {

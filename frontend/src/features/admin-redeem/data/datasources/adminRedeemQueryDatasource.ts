@@ -1,5 +1,5 @@
 import { apiClient } from '@/core/networks/client'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { RedeemCodeDto } from '@/features/admin-redeem/data/models/redeemCodeDto'
 import type { RedeemCodeType } from '@/features/admin-redeem/domain/models/redeemCode'
 

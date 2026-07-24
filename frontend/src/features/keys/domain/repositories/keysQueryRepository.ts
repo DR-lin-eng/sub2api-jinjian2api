@@ -1,7 +1,7 @@
 /**
  * KeysQueryRepository (interface). Per spec §5.2 R4.
  */
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 
 export interface KeysQueryRepository {

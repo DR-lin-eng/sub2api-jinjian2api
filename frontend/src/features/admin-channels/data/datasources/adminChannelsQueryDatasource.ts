@@ -1,5 +1,5 @@
 import { apiClient } from '@/core/networks/client'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { ChannelDto } from '@/features/admin-channels/data/models/channelDto'
 import { ModelDefaultPricingDto } from '@/features/admin-channels/data/models/modelDefaultPricingDto'
 

@@ -1136,7 +1136,6 @@ import type {
   ModerationMode,
   UpdateContentModerationConfig,
 } from '@/features/admin-risk-control/presentation/api'
-import type { SelectOption } from '@/types'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { formatDateTime as formatDateTimeValue } from '@/core/utils/format'
@@ -1149,6 +1148,7 @@ const $groups = useAdminGroups()
 type SettingsTab = 'basic' | 'scope' | 'runtime' | 'response' | 'riskThresholds' | 'retention' | 'keywords'
 type WorkerSlotState = 'active' | 'idle' | 'disabled'
 type APIKeysWriteMode = 'append' | 'replace'
+type SelectOption = { value: string | number | boolean | null; label: string; [key: string]: unknown }
 type OverviewIcon = 'shield' | 'key' | 'users' | 'document'
 type OverviewItem = {
   key: string

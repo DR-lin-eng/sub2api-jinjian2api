@@ -1,6 +1,6 @@
 import { ref, reactive, onUnmounted, toRaw } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
-import type { BasePaginationResponse, FetchOptions } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { getPersistedPageSize, setPersistedPageSize } from './usePersistedPageSize'
 
 interface PaginationState {
@@ -11,7 +11,7 @@ interface PaginationState {
 }
 
 interface TableLoaderOptions<T, P> {
-  fetchFn: (page: number, pageSize: number, params: P, options?: FetchOptions) => Promise<BasePaginationResponse<T>>
+  fetchFn: (page: number, pageSize: number, params: P, options?: { signal?: AbortSignal }) => Promise<PaginatedResponse<T>>
   initialParams?: P
   pageSize?: number
   debounceMs?: number
@@ -53,7 +53,7 @@ export function useTableLoader<T, P extends Record<string, any>>(options: TableL
         pagination.page,
         pagination.page_size,
         toRaw(params) as P,
-        { signal: currentController.signal }
+        { signal: currentController.signal },
       )
 
       items.value = response.items || []

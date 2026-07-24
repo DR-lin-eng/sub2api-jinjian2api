@@ -2,8 +2,10 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { billingQueryRepository } from '@/features/billing/data/repositories/billingQueryRepositoryImpl'
 import { billingActionRepository } from '@/features/billing/data/repositories/billingActionRepositoryImpl'
-import type { PaymentConfig, PaymentOrder, SubscriptionPlan, CreateOrderRequest } from '@/types/payment'
-
+import { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
+import { SubscriptionPlan } from '@/features/admin-orders/domain/models/subscriptionPlan'
+import type { CreateOrderRequest } from '@/features/billing/data/requests_models/createOrderRequest'
+import type { PaymentConfig } from '@/features/billing/domain/models/paymentConfig'
 export const usePaymentStore = defineStore('payment', () => {
   const config = ref<PaymentConfig | null>(null)
   const currentOrder = ref<PaymentOrder | null>(null)

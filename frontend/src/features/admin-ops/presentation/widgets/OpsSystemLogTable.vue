@@ -14,7 +14,7 @@ import type { CleanupSystemLogsRequest } from '@/features/admin-ops/data/request
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
-import { useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
 import { formatCompactNumber, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 const appStore = useAppStore()

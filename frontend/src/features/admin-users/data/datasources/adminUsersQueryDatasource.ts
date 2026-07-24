@@ -1,5 +1,5 @@
 import { apiClient } from '@/core/networks/client'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { AdminUserDto } from '@/features/admin-users/data/models/adminUserDto'
 import { AdminUserUsageStatsDto } from '@/features/admin-users/data/models/adminUserUsageStatsDto'
 import { BalanceHistoryItemDto } from '@/features/admin-users/data/models/balanceHistoryItemDto'

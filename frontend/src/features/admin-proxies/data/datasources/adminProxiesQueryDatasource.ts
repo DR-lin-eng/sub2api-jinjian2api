@@ -1,5 +1,5 @@
 import { apiClient } from '@/core/networks/client'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { ProxyDto } from '@/features/admin-proxies/data/models/proxyDto'
 import { ProxyAccountSummaryDto } from '@/features/admin-proxies/data/models/proxyAccountSummaryDto'
 import { ProxyQualityCheckResultDto } from '@/features/admin-proxies/data/models/proxyQualityCheckResultDto'

@@ -1,4 +1,4 @@
-import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/userSubscription'
+import type { UserSubscription } from '@/core/models/domain/userSubscription'
 import type { AssignSubscriptionRequest } from '@/features/admin-subscriptions/data/requests_models/assignSubscriptionRequest'
 import type { BulkAssignSubscriptionRequest } from '@/features/admin-subscriptions/data/requests_models/bulkAssignSubscriptionRequest'
 import type { ExtendSubscriptionRequest } from '@/features/admin-subscriptions/data/requests_models/extendSubscriptionRequest'

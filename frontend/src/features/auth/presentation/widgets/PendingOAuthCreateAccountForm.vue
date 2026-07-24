@@ -107,7 +107,7 @@ import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanV
 import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptchaWidget.vue'
 import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
 import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
-import { useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
 import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider

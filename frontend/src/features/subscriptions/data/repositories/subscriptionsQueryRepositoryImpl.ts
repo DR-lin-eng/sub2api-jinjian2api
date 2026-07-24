@@ -1,6 +1,6 @@
 import { subscriptionsQueryDatasource } from '@/features/subscriptions/data/datasources/subscriptionsQueryDatasource'
 import type { SubscriptionsQueryRepository } from '@/features/subscriptions/domain/repositories/subscriptionsQueryRepository'
-import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/userSubscription'
+import type { UserSubscription } from '@/core/models/domain/userSubscription'
 import type { SubscriptionProgress } from '@/features/admin-subscriptions/domain/models/subscriptionProgress'
 import type { SubscriptionSummary } from '@/features/subscriptions/domain/models/subscriptionSummary'
 

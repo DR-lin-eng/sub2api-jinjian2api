@@ -1,4 +1,5 @@
-import type { AccountPlatform, AccountType } from '@/types'
+import type { AccountPlatform } from '@/features/admin-accounts/domain/models/accountPlatform'
+import type { AccountType } from '@/features/admin-accounts/domain/models/accountType'
 import { AccountSchedulerScore } from '@/features/admin-accounts/domain/models/accountSchedulerScore'
 import { AccountSchedulerGroupScore } from '@/features/admin-accounts/domain/models/accountSchedulerGroupScore'
 import { AccountHourlyUsageStats } from '@/features/admin-accounts/domain/models/accountHourlyUsageStats'

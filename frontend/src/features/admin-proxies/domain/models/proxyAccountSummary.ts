@@ -1,5 +1,5 @@
-import type { AccountPlatform, AccountType } from '@/types'
-
+import type { AccountPlatform } from '@/features/admin-accounts/domain/models/accountPlatform'
+import type { AccountType } from '@/features/admin-accounts/domain/models/accountType'
 export class ProxyAccountSummary {
   id!: number
   name!: string

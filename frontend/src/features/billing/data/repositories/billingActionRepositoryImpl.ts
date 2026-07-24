@@ -3,7 +3,8 @@ import type { BillingActionRepository } from '@/features/billing/domain/reposito
 import type { PublicOrderVerifyResult } from '@/features/billing/domain/models/publicOrderVerifyResult'
 import type { RedeemCodeResult } from '@/features/billing/domain/models/redeemCodeResult'
 import type { RedeemCodeRequest } from '@/features/billing/data/requests_models/redeemCodeRequest'
-import type { CreateOrderRequest, CreateOrderResult } from '@/types/payment'
+import type { CreateOrderRequest } from '@/features/billing/data/requests_models/createOrderRequest'
+import type { CreateOrderResult } from '@/features/billing/domain/models/createOrderResult'
 import type { AxiosResponse } from 'axios'
 
 class BillingActionRepositoryImpl implements BillingActionRepository {

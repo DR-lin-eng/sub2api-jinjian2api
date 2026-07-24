@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { reactive, ref } from 'vue'
 import type { SubscriptionsQueryRepository } from '@/features/subscriptions/domain/repositories/subscriptionsQueryRepository'
 import { subscriptionsQueryRepository as defaultRepo } from '@/features/subscriptions/data/repositories/subscriptionsQueryRepositoryImpl'
-import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/userSubscription'
+import type { UserSubscription } from '@/core/models/domain/userSubscription'
 import type { SubscriptionProgress } from '@/features/admin-subscriptions/domain/models/subscriptionProgress'
 import type { SubscriptionSummary } from '@/features/subscriptions/domain/models/subscriptionSummary'
 

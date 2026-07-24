@@ -1,6 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import type { AccountPlatform, AccountType } from '@/types'
+import type { AccountPlatform } from '@/features/admin-accounts/domain/models/accountPlatform'
+import type { AccountType } from '@/features/admin-accounts/domain/models/accountType'
 import { Account } from '@/features/admin-accounts/domain/models/account'
 import { AccountSchedulerScoreDto } from '@/features/admin-accounts/data/models/accountSchedulerScoreDto'
 import { AccountSchedulerGroupScoreDto } from '@/features/admin-accounts/data/models/accountSchedulerGroupScoreDto'

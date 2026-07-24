@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import UpstreamBillingRateCell from '@/features/admin-accounts/presentation/widgets/UpstreamBillingRateCell.vue'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
-import { Account } from '@/types'
+import { Account } from '@/features/admin-accounts/domain/models/account'
 
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')

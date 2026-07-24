@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import '@/core/themes/onboarding.css'
 import { computed, onMounted } from 'vue'
-import { useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/core/stores/authStore'
 import { useOnboardingTour } from '@/core/services/useOnboardingTour'
 import { useOnboardingStore } from '@/core/stores/onboardingStore'

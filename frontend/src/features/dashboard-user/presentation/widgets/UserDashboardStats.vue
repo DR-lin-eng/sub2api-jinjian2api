@@ -227,7 +227,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import type { UserDashboardStats as UserStatsType } from '@/features/usage/domain/models/userDashboardStats'
-import type { PlatformQuotaItem } from '@/types'
+import type { PlatformQuotaItem } from '@/features/admin-users/domain/models/platformQuotaItem'
 
 interface FusedPlatformCard {
   platform: string

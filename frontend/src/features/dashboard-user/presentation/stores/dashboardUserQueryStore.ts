@@ -10,7 +10,7 @@ import type { UserDashboardStats } from '@/features/usage/domain/models/userDash
 import type { TrendDataPoint } from '@/features/admin-dashboard/domain/models/trendDataPoint'
 import type { ModelStat } from '@/features/admin-dashboard/domain/models/modelStat'
 import type { UsageLog } from '@/core/models/domain/usageLog'
-import type { PlatformQuotaItem } from '@/types'
+import type { PlatformQuotaItem } from '@/features/admin-users/domain/models/platformQuotaItem'
 import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 
 export interface ApiKeyUsageRow {

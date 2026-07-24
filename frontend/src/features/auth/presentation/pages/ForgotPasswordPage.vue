@@ -140,7 +140,7 @@ import { AuthLayout } from '@/common/widgets/layout'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
 import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptchaWidget.vue'
-import { useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
 import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
 import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
 import {

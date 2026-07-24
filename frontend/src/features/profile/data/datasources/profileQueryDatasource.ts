@@ -1,6 +1,7 @@
 import { apiClient } from '@/core/networks/client'
-import type { User, UserAffiliateDetail, PlatformQuotasResponse } from '@/types'
-
+import type { User } from '@/core/models/domain/user'
+import type { UserAffiliateDetail } from '@/features/affiliate/domain/models/userAffiliateDetail'
+import type { PlatformQuotasResponse } from '@/features/profile/domain/models/platformQuotasResponse'
 export class ProfileQueryDatasource {
   async getProfile(): Promise<User> {
     const { data } = await apiClient.get<User>('/user/profile')

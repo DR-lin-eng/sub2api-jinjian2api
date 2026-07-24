@@ -3,7 +3,7 @@ import type { AdminProxiesQueryRepository } from '@/features/admin-proxies/domai
 import type { Proxy } from '@/features/admin-proxies/domain/models/proxy'
 import type { ProxyQualityCheckResult } from '@/features/admin-proxies/domain/models/proxyQualityCheckResult'
 import type { ProxyAccountSummary } from '@/features/admin-proxies/domain/models/proxyAccountSummary'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import type { AdminDataPayload } from '@/features/admin-accounts/domain/models/adminDataPayload'
 
 class AdminProxiesQueryRepositoryImpl implements AdminProxiesQueryRepository {

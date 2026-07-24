@@ -1,7 +1,7 @@
 import { adminRedeemQueryDatasource } from '@/features/admin-redeem/data/datasources/adminRedeemQueryDatasource'
 import type { AdminRedeemQueryRepository } from '@/features/admin-redeem/domain/repositories/adminRedeemQueryRepository'
 import type { RedeemCode, RedeemCodeType } from '@/features/admin-redeem/domain/models/redeemCode'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 
 class AdminRedeemQueryRepositoryImpl implements AdminRedeemQueryRepository {
   private readonly ds = adminRedeemQueryDatasource

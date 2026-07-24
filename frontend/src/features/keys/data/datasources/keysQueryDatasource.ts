@@ -3,7 +3,7 @@
  * Returns Dto instances (via Dto.fromJson) to Impl. No transformation beyond that.
  */
 import { apiClient } from '@/core/networks/client'
-import type { PaginatedResponse } from '@/types'
+import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { ApiKeyDto } from '@/features/keys/data/models/apiKeyDto'
 
 export class KeysQueryDatasource {

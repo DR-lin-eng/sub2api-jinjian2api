@@ -1,9 +1,10 @@
 import { apiClient } from '@/core/networks/client'
-import type { User, AffiliateTransferResponse } from '@/types'
+import type { User } from '@/core/models/domain/user'
+import type { AffiliateTransferResponse } from '@/features/affiliate/domain/models/affiliateTransferResponse'
 import type { UpdateProfileRequest } from '@/features/profile/data/requests_models/updateProfileRequest'
 import type { ChangePasswordRequest } from '@/features/profile/data/requests_models/changePasswordRequest'
 import type { BindEmailRequest } from '@/features/profile/data/requests_models/bindEmailRequest'
-import type { UserAuthProvider } from '@/types'
+import type { UserAuthProvider } from '@/core/models/domain/userAuthProvider'
 import {
   resolveWeChatOAuthStartStrict,
   type WeChatOAuthPublicSettings,

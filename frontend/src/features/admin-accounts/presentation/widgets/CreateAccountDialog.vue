@@ -3577,7 +3577,12 @@ import {
 import OAuthAuthorizationFlow from './OAuthAuthorizationFlow.vue'
 import type { Proxy } from '@/features/admin-proxies/domain/models/proxy'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
-import type { AccountPlatform, AccountType, CodexSessionImportMessage, OpenAICompactMode, OpenAIResponsesMode, OpenAIEndpointCapability } from '@/types'
+import type { AccountPlatform } from '@/features/admin-accounts/domain/models/accountPlatform'
+import type { AccountType } from '@/features/admin-accounts/domain/models/accountType'
+import type { CodexSessionImportMessage } from '@/features/admin-accounts/domain/models/codexSessionImportMessage'
+import type { OpenAICompactMode } from '@/features/admin-accounts/domain/models/openAICompactMode'
+import type { OpenAIEndpointCapability } from '@/features/admin-accounts/domain/models/openAIEndpointCapability'
+import type { OpenAIResponsesMode } from '@/features/admin-accounts/domain/models/openAIResponsesMode'
 import type { CheckMixedChannelResponse } from '@/features/admin-accounts/domain/models/checkMixedChannelResponse'
 import type { CreateAccountRequest } from '@/features/admin-accounts/data/requests_models/createAccountRequest'
 

@@ -14,7 +14,7 @@ import type { ForgotPasswordRequest } from '@/features/auth/data/requests_models
 import type { ResetPasswordRequest } from '@/features/auth/data/requests_models/resetPasswordRequest'
 import type { TotpLogin2FARequest } from '@/features/auth/data/requests_models/totpLogin2faRequest'
 import type { AuthResult } from '@/features/auth/domain/models/authResult'
-import type { SendVerifyCodeResponse } from '@/types'
+import type { SendVerifyCodeResponse } from '@/features/auth/domain/models/sendVerifyCodeResponse'
 import type { AuthResultDto } from '@/features/auth/data/models/authResultDto'
 
 function persistTokens(dto: AuthResultDto): void {

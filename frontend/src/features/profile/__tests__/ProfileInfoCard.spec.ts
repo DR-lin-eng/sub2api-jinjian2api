@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 import ProfileInfoCard from '@/features/profile/presentation/widgets/ProfileInfoCard.vue'
-import type { User } from '@/types'
+import { User } from '@/core/models/domain/user'
 
 vi.mock('vue-router', () => ({
   useRoute: () => ({
