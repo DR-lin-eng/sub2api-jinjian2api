@@ -1,4 +1,4 @@
-import type { UsageRequestType } from '@/features/admin-usage/domain/models/adminUsage'
+import type { UsageRequestType } from '@/core/models/domain/usageLog'
 
 export interface AdminDashboardUserBreakdownRequest {
   start_date?: string

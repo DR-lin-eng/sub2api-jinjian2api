@@ -93,7 +93,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { adminAPI } from '@/api/admin'
-import type { BatchUpdateUserLimitsRequest } from '@/features/admin-users/data/datasources/adminUsersDatasource'
+import type { BatchUpdateUserLimitsRequest } from '@/features/admin-users/data/requests_models/batchUpdateUserLimitsRequest'
 import { useAppStore } from '@/core/stores/appStore'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'

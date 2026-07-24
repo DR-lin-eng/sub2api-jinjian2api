@@ -83,8 +83,8 @@ import UserAttributeForm from '@/features/admin-users/presentation/widgets/UserA
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { useStepUp, isStepUpBlocked, isStepUpCancelled, stepUpBlockReason } from '@/common/composables/useStepUp'
 import TotpStepUpDialog from '@/features/auth/presentation/widgets/TotpStepUpDialog.vue'
-import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
-import type { UserAttributeValuesMap } from '@/features/admin-users/domain/models/userAttributes'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
+import type { UserAttributeValuesMap } from '@/features/admin-users/domain/models/userAttributeValue'
 
 const props = defineProps<{ show: boolean, user: AdminUser | null }>()
 const emit = defineEmits(['close', 'success'])
@@ -129,7 +129,7 @@ const handleUpdateUser = async () => {
     if (form.password.trim()) data.password = form.password.trim()
     // 提升为管理员属敏感操作：后端返回 STEP_UP_REQUIRED 时弹 TOTP 验证并重试
     await stepUp.run(() => adminAPI.users.update(userId, data))
-    if (Object.keys(form.customAttributes).length > 0) await adminAPI.userAttributes.updateUserAttributeValues(userId, form.customAttributes)
+    if (Object.keys(form.customAttributes).length > 0) await adminAPI.userAttributes.updateUserAttributeValues(userId, { values: form.customAttributes })
     appStore.showSuccess(t('admin.users.userUpdated'))
     emit('success'); emit('close')
   } catch (e: any) {

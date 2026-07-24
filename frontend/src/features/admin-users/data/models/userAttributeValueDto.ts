@@ -1,21 +1,44 @@
-import type { UserAttributeValue } from '@/features/admin-users/domain/models/userAttributes'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { UserAttributeValue } from '@/features/admin-users/domain/models/userAttributeValue'
 
-export interface UserAttributeValueDto {
-  id: number
-  user_id: number
-  attribute_id: number
-  value: string
-  created_at: string
-  updated_at: string
-}
+export class UserAttributeValueDto {
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  id!: number
 
-export function toEntity(dto: UserAttributeValueDto): UserAttributeValue {
-  return {
-    id: dto.id ?? 0,
-    userId: dto.user_id ?? 0,
-    attributeId: dto.attribute_id ?? 0,
-    value: dto.value ?? '',
-    createdAt: dto.created_at ?? '',
-    updatedAt: dto.updated_at ?? '',
+  @Expose({ name: 'user_id' })
+  @Transform(({ value }) => value ?? 0)
+  userId!: number
+
+  @Expose({ name: 'attribute_id' })
+  @Transform(({ value }) => value ?? 0)
+  attributeId!: number
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  value!: string
+
+  @Expose({ name: 'created_at' })
+  @Transform(({ value }) => value ?? '')
+  createdAt!: string
+
+  @Expose({ name: 'updated_at' })
+  @Transform(({ value }) => value ?? '')
+  updatedAt!: string
+
+  static fromJson(json: unknown): UserAttributeValueDto {
+    return plainToInstance(UserAttributeValueDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): UserAttributeValue {
+    const entity = new UserAttributeValue()
+    entity.id = this.id
+    entity.userId = this.userId
+    entity.attributeId = this.attributeId
+    entity.value = this.value
+    entity.createdAt = this.createdAt
+    entity.updatedAt = this.updatedAt
+    return entity
   }
 }

@@ -2,14 +2,24 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { opsAPI } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
+import { useAdminOpsActionStore } from '@/features/admin-ops/presentation/stores/adminOpsActionStore'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
-import type { OpsAlertRuntimeSettings, EmailNotificationConfig, AlertSeverity, OpsAdvancedSettings, OpsMetricThresholds } from '@/features/admin-ops/presentation/opsTypeSignals'
+import type { OpsAdvancedSettings } from '@/features/admin-ops/domain/models/opsAdvancedSettings'
+import type { OpsAlertRuntimeSettings } from '@/features/admin-ops/domain/models/opsAlertRuntimeSettings'
+import type { EmailNotificationConfig } from '@/features/admin-ops/domain/models/emailNotificationConfig'
+import type { OpsMetricThresholds } from '@/features/admin-ops/domain/models/opsMetricThresholds'
+import type { AlertSeverity } from '@/features/admin-ops/domain/models/alertRule'
+import type { UpdateAlertRuntimeSettingsRequest } from '@/features/admin-ops/data/requests_models/updateAlertRuntimeSettingsRequest'
+import type { UpdateEmailNotificationConfigRequest } from '@/features/admin-ops/data/requests_models/updateEmailNotificationConfigRequest'
+import type { UpdateAdvancedSettingsRequest } from '@/features/admin-ops/data/requests_models/updateAdvancedSettingsRequest'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const actionStore = useAdminOpsActionStore()
 
 const props = defineProps<{
   show: boolean
@@ -31,47 +41,46 @@ const emailConfig = ref<EmailNotificationConfig | null>(null)
 const advancedSettings = ref<OpsAdvancedSettings | null>(null)
 // 指标阈值配置
 const metricThresholds = ref<OpsMetricThresholds>({
-  sla_percent_min: 99.5,
-  ttft_p99_ms_max: 500,
-  request_error_rate_percent_max: 5,
-  upstream_error_rate_percent_max: 5
+  slaPercentMin: 99.5,
+  ttftP99MsMax: 500,
+  requestErrorRatePercentMax: 5,
+  upstreamErrorRatePercentMax: 5
 })
 
 // 加载所有配置
 async function loadAllSettings() {
   loading.value = true
   try {
-    const settings = await opsAPI.getSettingsSnapshot().catch(async () => {
-      const [runtime, email, advanced, metricThresholds] = await Promise.all([
-        opsAPI.getAlertRuntimeSettings(),
-        opsAPI.getEmailNotificationConfig(),
-        opsAPI.getAdvancedSettings(),
-        opsAPI.getMetricThresholds()
+    const settings = await getSettingsSnapshot().catch(async () => {
+      const [runtime, email, advanced] = await Promise.all([
+        queryStore.getAlertRuntimeSettings(),
+        queryStore.getEmailNotificationConfig(),
+        queryStore.getAdvancedSettings(),
       ])
-      return { runtime, email, advanced, metric_thresholds: metricThresholds }
+      return { runtime, email, advanced, metric_thresholds: null }
     })
-    runtimeSettings.value = settings.runtime
-    emailConfig.value = settings.email
-    advancedSettings.value = settings.advanced
-    // 兼容旧 payload：后端未返回该字段时补默认值，保证表单可绑定
-    if (advancedSettings.value && !advancedSettings.value.openai_account_quota_auto_pause) {
-      advancedSettings.value.openai_account_quota_auto_pause = { default_threshold_5h: 0, default_threshold_7d: 0 }
+    const s = settings as Record<string, unknown>
+    runtimeSettings.value = s.runtime as OpsAlertRuntimeSettings
+    emailConfig.value = s.email as EmailNotificationConfig
+    advancedSettings.value = s.advanced as OpsAdvancedSettings
+    if (advancedSettings.value && !advancedSettings.value.openaiAccountQuotaAutoPause) {
+      advancedSettings.value.openaiAccountQuotaAutoPause = { defaultThreshold5h: 0, defaultThreshold7d: 0 }
     }
-    if (advancedSettings.value && typeof advancedSettings.value.display_image_generation_stats !== 'boolean') {
-      advancedSettings.value.display_image_generation_stats = true
+    if (advancedSettings.value && typeof advancedSettings.value.displayImageGenerationStats !== 'boolean') {
+      advancedSettings.value.displayImageGenerationStats = true
     }
-    // 如果后端返回了阈值，使用后端的值；否则保持默认值
-    if (settings.metric_thresholds && Object.keys(settings.metric_thresholds).length > 0) {
-        metricThresholds.value = {
-          sla_percent_min: settings.metric_thresholds.sla_percent_min ?? 99.5,
-          ttft_p99_ms_max: settings.metric_thresholds.ttft_p99_ms_max ?? 500,
-          request_error_rate_percent_max: settings.metric_thresholds.request_error_rate_percent_max ?? 5,
-          upstream_error_rate_percent_max: settings.metric_thresholds.upstream_error_rate_percent_max ?? 5
-        }
+    const mt = s.metric_thresholds as OpsMetricThresholds | null
+    if (mt && Object.keys(mt).length > 0) {
+      metricThresholds.value = {
+        slaPercentMin: mt.slaPercentMin ?? 99.5,
+        ttftP99MsMax: mt.ttftP99MsMax ?? 500,
+        requestErrorRatePercentMax: mt.requestErrorRatePercentMax ?? 5,
+        upstreamErrorRatePercentMax: mt.upstreamErrorRatePercentMax ?? 5,
+      }
     }
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[OpsSettingsDialog] Failed to load settings', err)
-    appStore.showError(err?.response?.data?.detail || t('admin.ops.settings.loadFailed'))
+    appStore.showError((err as Record<string, unknown>)?.message as string || t('admin.ops.settings.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -132,22 +141,22 @@ function removeRecipient(target: 'alert' | 'report', email: string) {
 // OpenAI 账号配额自动暂停：后端按 0~1 分数存储，UI 按百分比(0~100)展示
 const quotaAutoPause5hPercent = computed<number | null>({
   get() {
-    const v = advancedSettings.value?.openai_account_quota_auto_pause?.default_threshold_5h
+    const v = advancedSettings.value?.openaiAccountQuotaAutoPause?.defaultThreshold5h
     return v && v > 0 ? Math.round(v * 1000) / 10 : null
   },
   set(val) {
-    if (!advancedSettings.value?.openai_account_quota_auto_pause) return
-    advancedSettings.value.openai_account_quota_auto_pause.default_threshold_5h = val != null && val > 0 ? val / 100 : 0
+    if (!advancedSettings.value?.openaiAccountQuotaAutoPause) return
+    advancedSettings.value.openaiAccountQuotaAutoPause.defaultThreshold5h = val != null && val > 0 ? val / 100 : 0
   }
 })
 const quotaAutoPause7dPercent = computed<number | null>({
   get() {
-    const v = advancedSettings.value?.openai_account_quota_auto_pause?.default_threshold_7d
+    const v = advancedSettings.value?.openaiAccountQuotaAutoPause?.defaultThreshold7d
     return v && v > 0 ? Math.round(v * 1000) / 10 : null
   },
   set(val) {
-    if (!advancedSettings.value?.openai_account_quota_auto_pause) return
-    advancedSettings.value.openai_account_quota_auto_pause.default_threshold_7d = val != null && val > 0 ? val / 100 : 0
+    if (!advancedSettings.value?.openaiAccountQuotaAutoPause) return
+    advancedSettings.value.openaiAccountQuotaAutoPause.defaultThreshold7d = val != null && val > 0 ? val / 100 : 0
   }
 })
 
@@ -157,7 +166,7 @@ const validation = computed(() => {
 
   // 验证运行时设置
   if (runtimeSettings.value) {
-    const evalSeconds = runtimeSettings.value.evaluation_interval_seconds
+    const evalSeconds = runtimeSettings.value.evaluationIntervalSeconds
     if (!Number.isFinite(evalSeconds) || evalSeconds < 1 || evalSeconds > 86400) {
       errors.push(t('admin.ops.runtime.validation.evalIntervalRange'))
     }
@@ -168,41 +177,41 @@ const validation = computed(() => {
   // 验证高级设置
   if (advancedSettings.value) {
     const {
-      user_request_log_retention_days,
-      error_log_retention_days,
-      minute_metrics_retention_days,
-      hourly_metrics_retention_days
-    } = advancedSettings.value.data_retention
-    if (user_request_log_retention_days < 1 || user_request_log_retention_days > 3650) {
+      userRequestLogRetentionDays,
+      errorLogRetentionDays,
+      minuteMetricsRetentionDays,
+      hourlyMetricsRetentionDays
+    } = advancedSettings.value.dataRetention
+    if (userRequestLogRetentionDays < 1 || userRequestLogRetentionDays > 3650) {
       errors.push(t('admin.ops.settings.validation.userRequestLogRetentionDaysRange'))
     }
-    if (error_log_retention_days < 0 || error_log_retention_days > 365) {
+    if (errorLogRetentionDays < 0 || errorLogRetentionDays > 365) {
       errors.push(t('admin.ops.settings.validation.retentionDaysRange'))
     }
-    if (minute_metrics_retention_days < 0 || minute_metrics_retention_days > 365) {
+    if (minuteMetricsRetentionDays < 0 || minuteMetricsRetentionDays > 365) {
       errors.push(t('admin.ops.settings.validation.retentionDaysRange'))
     }
-    if (hourly_metrics_retention_days < 0 || hourly_metrics_retention_days > 365) {
+    if (hourlyMetricsRetentionDays < 0 || hourlyMetricsRetentionDays > 365) {
       errors.push(t('admin.ops.settings.validation.retentionDaysRange'))
     }
 
-    const { default_threshold_5h, default_threshold_7d } = advancedSettings.value.openai_account_quota_auto_pause
-    if (default_threshold_5h < 0 || default_threshold_5h > 1 || default_threshold_7d < 0 || default_threshold_7d > 1) {
+    const { defaultThreshold5h, defaultThreshold7d } = advancedSettings.value.openaiAccountQuotaAutoPause
+    if (defaultThreshold5h < 0 || defaultThreshold5h > 1 || defaultThreshold7d < 0 || defaultThreshold7d > 1) {
       errors.push(t('admin.ops.settings.validation.openaiQuotaAutoPauseRange'))
     }
   }
 
   // 验证指标阈值
-  if (metricThresholds.value.sla_percent_min != null && (metricThresholds.value.sla_percent_min < 0 || metricThresholds.value.sla_percent_min > 100)) {
+  if (metricThresholds.value.slaPercentMin != null && (metricThresholds.value.slaPercentMin < 0 || metricThresholds.value.slaPercentMin > 100)) {
     errors.push(t('admin.ops.settings.validation.slaMinPercentRange'))
   }
-  if (metricThresholds.value.ttft_p99_ms_max != null && metricThresholds.value.ttft_p99_ms_max < 0) {
+  if (metricThresholds.value.ttftP99MsMax != null && metricThresholds.value.ttftP99MsMax < 0) {
     errors.push(t('admin.ops.settings.validation.ttftP99MaxRange'))
   }
-  if (metricThresholds.value.request_error_rate_percent_max != null && (metricThresholds.value.request_error_rate_percent_max < 0 || metricThresholds.value.request_error_rate_percent_max > 100)) {
+  if (metricThresholds.value.requestErrorRatePercentMax != null && (metricThresholds.value.requestErrorRatePercentMax < 0 || metricThresholds.value.requestErrorRatePercentMax > 100)) {
     errors.push(t('admin.ops.settings.validation.requestErrorRateMaxRange'))
   }
-  if (metricThresholds.value.upstream_error_rate_percent_max != null && (metricThresholds.value.upstream_error_rate_percent_max < 0 || metricThresholds.value.upstream_error_rate_percent_max > 100)) {
+  if (metricThresholds.value.upstreamErrorRatePercentMax != null && (metricThresholds.value.upstreamErrorRatePercentMax < 0 || metricThresholds.value.upstreamErrorRatePercentMax > 100)) {
     errors.push(t('admin.ops.settings.validation.upstreamErrorRateMaxRange'))
   }
 
@@ -227,12 +236,63 @@ async function saveAllSettings() {
         emailConfig.value.report.enabled = false
       }
     }
-    await Promise.all([
-      runtimeSettings.value ? opsAPI.updateAlertRuntimeSettings(runtimeSettings.value) : Promise.resolve(),
-      emailConfig.value ? opsAPI.updateEmailNotificationConfig(emailConfig.value) : Promise.resolve(),
-      advancedSettings.value ? opsAPI.updateAdvancedSettings(advancedSettings.value) : Promise.resolve(),
-      opsAPI.updateMetricThresholds(metricThresholds.value)
-    ])
+    const promises: Promise<unknown>[] = []
+    if (runtimeSettings.value) {
+      const rs = runtimeSettings.value
+      const runtimeReq: UpdateAlertRuntimeSettingsRequest = {
+        evaluation_interval_seconds: rs.evaluationIntervalSeconds,
+        distributed_lock: { enabled: rs.distributedLock.enabled, key: rs.distributedLock.key, ttl_seconds: rs.distributedLock.ttlSeconds },
+        silencing: {
+          enabled: rs.silencing.enabled,
+          global_until_rfc3339: rs.silencing.globalUntilRfc3339,
+          global_reason: rs.silencing.globalReason,
+          entries: rs.silencing.entries?.map(e => ({ rule_id: e.ruleId, severities: e.severities, until_rfc3339: e.untilRfc3339, reason: e.reason })),
+        },
+        thresholds: {
+          sla_percent_min: rs.thresholds.slaPercentMin ?? null,
+          ttft_p99_ms_max: rs.thresholds.ttftP99MsMax ?? null,
+          request_error_rate_percent_max: rs.thresholds.requestErrorRatePercentMax ?? null,
+          upstream_error_rate_percent_max: rs.thresholds.upstreamErrorRatePercentMax ?? null,
+        },
+      }
+      promises.push(actionStore.updateAlertRuntimeSettings(runtimeReq))
+    }
+    if (emailConfig.value) {
+      const ec = emailConfig.value
+      const emailReq: UpdateEmailNotificationConfigRequest = {
+        alert: { enabled: ec.alert.enabled, recipients: ec.alert.recipients, min_severity: ec.alert.minSeverity, rate_limit_per_hour: ec.alert.rateLimitPerHour, batching_window_seconds: ec.alert.batchingWindowSeconds, include_resolved_alerts: ec.alert.includeResolvedAlerts },
+        report: { enabled: ec.report.enabled, recipients: ec.report.recipients, daily_summary_enabled: ec.report.dailySummaryEnabled, daily_summary_schedule: ec.report.dailySummarySchedule, weekly_summary_enabled: ec.report.weeklySummaryEnabled, weekly_summary_schedule: ec.report.weeklySummarySchedule, error_digest_enabled: ec.report.errorDigestEnabled, error_digest_schedule: ec.report.errorDigestSchedule, error_digest_min_count: ec.report.errorDigestMinCount, account_health_enabled: ec.report.accountHealthEnabled, account_health_schedule: ec.report.accountHealthSchedule, account_health_error_rate_threshold: ec.report.accountHealthErrorRateThreshold },
+      }
+      promises.push(actionStore.updateEmailNotificationConfig(emailReq))
+    }
+    if (advancedSettings.value) {
+      const as_ = advancedSettings.value
+      const advReq: UpdateAdvancedSettingsRequest = {
+        data_retention: { user_request_log_retention_days: as_.dataRetention.userRequestLogRetentionDays, cleanup_enabled: as_.dataRetention.cleanupEnabled, cleanup_schedule: as_.dataRetention.cleanupSchedule, error_log_retention_days: as_.dataRetention.errorLogRetentionDays, minute_metrics_retention_days: as_.dataRetention.minuteMetricsRetentionDays, hourly_metrics_retention_days: as_.dataRetention.hourlyMetricsRetentionDays },
+        aggregation: { aggregation_enabled: as_.aggregation.aggregationEnabled },
+        openai_account_quota_auto_pause: { default_threshold_5h: as_.openaiAccountQuotaAutoPause.defaultThreshold5h, default_threshold_7d: as_.openaiAccountQuotaAutoPause.defaultThreshold7d },
+        ignore_count_tokens_errors: as_.ignoreCountTokensErrors,
+        ignore_context_canceled: as_.ignoreContextCanceled,
+        ignore_no_available_accounts: as_.ignoreNoAvailableAccounts,
+        ignore_invalid_api_key_errors: as_.ignoreInvalidApiKeyErrors,
+        ignore_insufficient_balance_errors: as_.ignoreInsufficientBalanceErrors,
+        display_openai_token_stats: as_.displayOpenaiTokenStats,
+        display_user_usage_stats: as_.displayUserUsageStats,
+        display_alert_events: as_.displayAlertEvents,
+        display_system_logs: as_.displaySystemLogs,
+        display_concurrency: as_.displayConcurrency,
+        display_switch_rate_trend: as_.displaySwitchRateTrend,
+        display_throughput_trend: as_.displayThroughputTrend,
+        display_latency_histogram: as_.displayLatencyHistogram,
+        display_error_distribution: as_.displayErrorDistribution,
+        display_error_trend: as_.displayErrorTrend,
+        display_image_generation_stats: as_.displayImageGenerationStats,
+        auto_refresh_enabled: as_.autoRefreshEnabled,
+        auto_refresh_interval_seconds: as_.autoRefreshIntervalSeconds,
+      }
+      promises.push(actionStore.updateAdvancedSettings(advReq))
+    }
+    await Promise.all(promises)
     appStore.showSuccess(t('admin.ops.settings.saveSuccess'))
     emit('saved')
     emit('close')
@@ -266,7 +326,7 @@ async function saveAllSettings() {
         <div>
           <label class="input-label">{{ t('admin.ops.settings.evaluationInterval') }}</label>
           <input
-            v-model.number="runtimeSettings.evaluation_interval_seconds"
+            v-model.number="runtimeSettings.evaluationIntervalSeconds"
             type="number"
             min="1"
             max="86400"
@@ -319,7 +379,7 @@ async function saveAllSettings() {
 
           <div v-if="emailConfig.alert.enabled">
             <label class="input-label">{{ t('admin.ops.settings.minSeverity') }}</label>
-            <Select v-model="emailConfig.alert.min_severity" :options="severityOptions" />
+            <Select v-model="emailConfig.alert.minSeverity" :options="severityOptions" />
           </div>
         </div>
       </div>
@@ -368,17 +428,17 @@ async function saveAllSettings() {
           <div v-if="emailConfig.report.enabled" class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div class="flex items-center justify-between">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.ops.settings.dailySummary') }}</label>
-              <Toggle v-model="emailConfig.report.daily_summary_enabled" />
+              <Toggle v-model="emailConfig.report.dailySummaryEnabled" />
             </div>
-            <div v-if="emailConfig.report.daily_summary_enabled">
-              <input v-model="emailConfig.report.daily_summary_schedule" type="text" class="input" placeholder="0 9 * * *" />
+            <div v-if="emailConfig.report.dailySummaryEnabled">
+              <input v-model="emailConfig.report.dailySummarySchedule" type="text" class="input" placeholder="0 9 * * *" />
             </div>
             <div class="flex items-center justify-between">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.ops.settings.weeklySummary') }}</label>
-              <Toggle v-model="emailConfig.report.weekly_summary_enabled" />
+              <Toggle v-model="emailConfig.report.weeklySummaryEnabled" />
             </div>
-            <div v-if="emailConfig.report.weekly_summary_enabled">
-              <input v-model="emailConfig.report.weekly_summary_schedule" type="text" class="input" placeholder="0 9 * * 1" />
+            <div v-if="emailConfig.report.weeklySummaryEnabled">
+              <input v-model="emailConfig.report.weeklySummarySchedule" type="text" class="input" placeholder="0 9 * * 1" />
             </div>
           </div>
         </div>
@@ -393,7 +453,7 @@ async function saveAllSettings() {
           <div>
             <label class="input-label">{{ t('admin.ops.settings.slaMinPercent') }}</label>
             <input
-              v-model.number="metricThresholds.sla_percent_min"
+              v-model.number="metricThresholds.slaPercentMin"
               type="number"
               min="0"
               max="100"
@@ -407,7 +467,7 @@ async function saveAllSettings() {
           <div>
             <label class="input-label">{{ t('admin.ops.settings.ttftP99MaxMs') }}</label>
             <input
-              v-model.number="metricThresholds.ttft_p99_ms_max"
+              v-model.number="metricThresholds.ttftP99MsMax"
               type="number"
               min="0"
               step="50"
@@ -419,7 +479,7 @@ async function saveAllSettings() {
           <div>
             <label class="input-label">{{ t('admin.ops.settings.requestErrorRateMaxPercent') }}</label>
             <input
-              v-model.number="metricThresholds.request_error_rate_percent_max"
+              v-model.number="metricThresholds.requestErrorRatePercentMax"
               type="number"
               min="0"
               max="100"
@@ -432,7 +492,7 @@ async function saveAllSettings() {
           <div>
             <label class="input-label">{{ t('admin.ops.settings.upstreamErrorRateMaxPercent') }}</label>
             <input
-              v-model.number="metricThresholds.upstream_error_rate_percent_max"
+              v-model.number="metricThresholds.upstreamErrorRatePercentMax"
               type="number"
               min="0"
               max="100"
@@ -462,7 +522,7 @@ async function saveAllSettings() {
               <div class="max-w-xs">
                 <label class="input-label">{{ t('admin.ops.settings.userRequestLogRetentionDays') }}</label>
                 <input
-                  v-model.number="advancedSettings.data_retention.user_request_log_retention_days"
+                  v-model.number="advancedSettings.dataRetention.userRequestLogRetentionDays"
                   type="number"
                   min="1"
                   max="3650"
@@ -478,13 +538,13 @@ async function saveAllSettings() {
 
             <div class="flex items-center justify-between">
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.ops.settings.enableOpsCleanup') }}</label>
-              <Toggle v-model="advancedSettings.data_retention.cleanup_enabled" />
+              <Toggle v-model="advancedSettings.dataRetention.cleanupEnabled" />
             </div>
 
-            <div v-if="advancedSettings.data_retention.cleanup_enabled">
+            <div v-if="advancedSettings.dataRetention.cleanupEnabled">
               <label class="input-label">{{ t('admin.ops.settings.cleanupSchedule') }}</label>
               <input
-                v-model="advancedSettings.data_retention.cleanup_schedule"
+                v-model="advancedSettings.dataRetention.cleanupSchedule"
                 type="text"
                 class="input"
                 placeholder="0 2 * * *"
@@ -496,7 +556,7 @@ async function saveAllSettings() {
               <div>
                 <label class="input-label">{{ t('admin.ops.settings.errorLogRetentionDays') }}</label>
                 <input
-                  v-model.number="advancedSettings.data_retention.error_log_retention_days"
+                  v-model.number="advancedSettings.dataRetention.errorLogRetentionDays"
                   type="number"
                   min="0"
                   max="365"
@@ -506,7 +566,7 @@ async function saveAllSettings() {
               <div>
                 <label class="input-label">{{ t('admin.ops.settings.minuteMetricsRetentionDays') }}</label>
                 <input
-                  v-model.number="advancedSettings.data_retention.minute_metrics_retention_days"
+                  v-model.number="advancedSettings.dataRetention.minuteMetricsRetentionDays"
                   type="number"
                   min="0"
                   max="365"
@@ -516,7 +576,7 @@ async function saveAllSettings() {
               <div>
                 <label class="input-label">{{ t('admin.ops.settings.hourlyMetricsRetentionDays') }}</label>
                 <input
-                  v-model.number="advancedSettings.data_retention.hourly_metrics_retention_days"
+                  v-model.number="advancedSettings.dataRetention.hourlyMetricsRetentionDays"
                   type="number"
                   min="0"
                   max="365"
@@ -536,7 +596,7 @@ async function saveAllSettings() {
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('admin.ops.settings.enableAggregation') }}</label>
                 <p class="mt-1 text-xs text-gray-500">{{ t('admin.ops.settings.aggregationHint') }}</p>
               </div>
-              <Toggle v-model="advancedSettings.aggregation.aggregation_enabled" />
+              <Toggle v-model="advancedSettings.aggregation.aggregationEnabled" />
             </div>
           </div>
 
@@ -585,7 +645,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.ignoreCountTokensErrorsHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.ignore_count_tokens_errors" />
+              <Toggle v-model="advancedSettings.ignoreCountTokensErrors" />
             </div>
 
             <div class="flex items-center justify-between">
@@ -595,7 +655,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.ignoreContextCanceledHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.ignore_context_canceled" />
+              <Toggle v-model="advancedSettings.ignoreContextCanceled" />
             </div>
 
             <div class="flex items-center justify-between">
@@ -605,7 +665,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.ignoreNoAvailableAccountsHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.ignore_no_available_accounts" />
+              <Toggle v-model="advancedSettings.ignoreNoAvailableAccounts" />
             </div>
 
             <div class="flex items-center justify-between">
@@ -615,7 +675,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.ignoreInsufficientBalanceErrorsHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.ignore_insufficient_balance_errors" />
+              <Toggle v-model="advancedSettings.ignoreInsufficientBalanceErrors" />
             </div>
           </div>
 
@@ -630,13 +690,13 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.enableAutoRefreshHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.auto_refresh_enabled" />
+              <Toggle v-model="advancedSettings.autoRefreshEnabled" />
             </div>
 
-            <div v-if="advancedSettings.auto_refresh_enabled">
+            <div v-if="advancedSettings.autoRefreshEnabled">
               <label class="input-label">{{ t('admin.ops.settings.refreshInterval') }}</label>
               <Select
-                v-model="advancedSettings.auto_refresh_interval_seconds"
+                v-model="advancedSettings.autoRefreshIntervalSeconds"
                 :options="[
                   { value: 15, label: t('admin.ops.settings.refreshInterval15s') },
                   { value: 30, label: t('admin.ops.settings.refreshInterval30s') },
@@ -657,7 +717,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.displayConcurrencyHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.display_concurrency" />
+              <Toggle v-model="advancedSettings.displayConcurrency" />
             </div>
 
             <div class="flex items-center justify-between gap-4">
@@ -667,7 +727,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.displaySwitchRateTrendHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.display_switch_rate_trend" />
+              <Toggle v-model="advancedSettings.displaySwitchRateTrend" />
             </div>
 
             <div class="flex items-center justify-between gap-4">
@@ -677,7 +737,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.displayThroughputTrendHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.display_throughput_trend" />
+              <Toggle v-model="advancedSettings.displayThroughputTrend" />
             </div>
 
             <div class="flex items-center justify-between gap-4">
@@ -687,7 +747,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.displayLatencyHistogramHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.display_latency_histogram" />
+              <Toggle v-model="advancedSettings.displayLatencyHistogram" />
             </div>
 
             <div class="flex items-center justify-between gap-4">
@@ -697,7 +757,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.displayErrorDistributionHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.display_error_distribution" />
+              <Toggle v-model="advancedSettings.displayErrorDistribution" />
             </div>
 
             <div class="flex items-center justify-between gap-4">
@@ -707,7 +767,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.displayErrorTrendHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.display_error_trend" />
+              <Toggle v-model="advancedSettings.displayErrorTrend" />
             </div>
 
             <div class="flex items-center justify-between gap-4">
@@ -717,7 +777,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.displayImageGenerationStatsHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.display_image_generation_stats" />
+              <Toggle v-model="advancedSettings.displayImageGenerationStats" />
             </div>
 
             <div class="flex items-center justify-between">
@@ -727,7 +787,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.displayAlertEventsHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.display_alert_events" />
+              <Toggle v-model="advancedSettings.displayAlertEvents" />
             </div>
 
             <div class="flex items-center justify-between">
@@ -737,7 +797,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.displayOpenAITokenStatsHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.display_openai_token_stats" />
+              <Toggle v-model="advancedSettings.displayOpenaiTokenStats" />
             </div>
 
             <div class="flex items-center justify-between">
@@ -747,7 +807,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.displayUserUsageStatsHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.display_user_usage_stats" />
+              <Toggle v-model="advancedSettings.displayUserUsageStats" />
             </div>
 
             <div class="flex items-center justify-between">
@@ -757,7 +817,7 @@ async function saveAllSettings() {
                   {{ t('admin.ops.settings.displaySystemLogsHint') }}
                 </p>
               </div>
-              <Toggle v-model="advancedSettings.display_system_logs" />
+              <Toggle v-model="advancedSettings.displaySystemLogs" />
             </div>
           </div>
         </div>

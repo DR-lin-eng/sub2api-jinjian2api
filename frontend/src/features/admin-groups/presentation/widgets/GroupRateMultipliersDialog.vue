@@ -249,7 +249,7 @@ import Pagination from '@/common/widgets/data/Pagination.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
-import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 
 interface LocalEntry extends GroupRateMultiplierEntry {}
 

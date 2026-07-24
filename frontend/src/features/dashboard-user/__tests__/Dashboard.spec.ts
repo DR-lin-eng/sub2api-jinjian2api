@@ -21,12 +21,6 @@ vi.mock('@/api', () => ({
   isTotp2FARequired: () => false,
 }))
 
-vi.mock('@/features/usage/data/datasources/usageDatasource', () => ({
-  usageAPI: {
-    getDashboardStats: (...args: any[]) => mockGetDashboardStats(...args),
-  },
-}))
-
 vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
   checkUpdates: vi.fn(),
   systemAPI: {},

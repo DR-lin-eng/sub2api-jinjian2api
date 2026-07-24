@@ -1,13 +1,24 @@
-import type { SetupStatus } from '@/features/setup/domain/models/setupStatus'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { SetupStatus } from '@/features/setup/domain/models/setupStatus'
 
-export interface SetupStatusDto {
-  needs_setup: boolean
-  step: string
-}
+export class SetupStatusDto {
+  @Expose({ name: 'needs_setup' })
+  @Transform(({ value }) => value ?? false)
+  needsSetup!: boolean
 
-export function toEntity(dto: SetupStatusDto): SetupStatus {
-  return {
-    needsSetup: dto.needs_setup ?? false,
-    step: dto.step ?? '',
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  step!: string
+
+  static fromJson(json: unknown): SetupStatusDto {
+    return plainToInstance(SetupStatusDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): SetupStatus {
+    const entity = new SetupStatus()
+    entity.needsSetup = this.needsSetup
+    entity.step = this.step
+    return entity
   }
 }

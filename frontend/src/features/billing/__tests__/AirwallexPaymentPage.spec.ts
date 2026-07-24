@@ -4,7 +4,7 @@ import AirwallexPaymentView from '@/features/billing/presentation/pages/Airwalle
 import {
   PAYMENT_RECOVERY_STORAGE_KEY,
   type PaymentRecoverySnapshot,
-} from '@/features/billing/presentation/paymentFlowResolver'
+} from '@/features/billing/presentation/utils/paymentFlowResolver'
 
 const routeState = vi.hoisted(() => ({
   query: {} as Record<string, unknown>,

@@ -1,39 +1,50 @@
-import type { VersionInfo, ReleaseInfo } from '@/features/admin-settings/domain/models/system'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { ReleaseInfo } from '@/features/admin-settings/domain/models/releaseInfo'
+import { VersionInfo } from '@/features/admin-settings/domain/models/versionInfo'
 
-interface ReleaseInfoDto {
-  name: string
-  body: string
-  published_at: string
-  html_url: string
-}
+class ReleaseInfoDto {
+  @Expose() @Transform(({ value }) => value ?? '') name!: string
+  @Expose() @Transform(({ value }) => value ?? '') body!: string
+  @Expose({ name: 'published_at' }) @Transform(({ value }) => value ?? '') publishedAt!: string
+  @Expose({ name: 'html_url' }) @Transform(({ value }) => value ?? '') htmlUrl!: string
 
-export interface VersionInfoDto {
-  current_version: string
-  latest_version: string
-  has_update: boolean
-  release_info?: ReleaseInfoDto
-  cached: boolean
-  warning?: string
-  build_type: string
-}
+  static fromJson(json: unknown): ReleaseInfoDto {
+    return plainToInstance(ReleaseInfoDto, json, { excludeExtraneousValues: true })
+  }
 
-function toReleaseInfo(dto: ReleaseInfoDto): ReleaseInfo {
-  return {
-    name: dto.name ?? '',
-    body: dto.body ?? '',
-    publishedAt: dto.published_at ?? '',
-    htmlUrl: dto.html_url ?? '',
+  toEntity(): ReleaseInfo {
+    const e = new ReleaseInfo()
+    e.name = this.name
+    e.body = this.body
+    e.publishedAt = this.publishedAt
+    e.htmlUrl = this.htmlUrl
+    return e
   }
 }
 
-export function toEntity(dto: VersionInfoDto): VersionInfo {
-  return {
-    currentVersion: dto.current_version ?? '',
-    latestVersion: dto.latest_version ?? '',
-    hasUpdate: dto.has_update ?? false,
-    releaseInfo: dto.release_info ? toReleaseInfo(dto.release_info) : undefined,
-    cached: dto.cached ?? false,
-    warning: dto.warning,
-    buildType: dto.build_type ?? '',
+export class VersionInfoDto {
+  @Expose({ name: 'current_version' }) @Transform(({ value }) => value ?? '') currentVersion!: string
+  @Expose({ name: 'latest_version' }) @Transform(({ value }) => value ?? '') latestVersion!: string
+  @Expose({ name: 'has_update' }) @Transform(({ value }) => value ?? false) hasUpdate!: boolean
+  @Expose({ name: 'release_info' }) releaseInfo?: Record<string, unknown>
+  @Expose() @Transform(({ value }) => value ?? false) cached!: boolean
+  @Expose() warning?: string
+  @Expose({ name: 'build_type' }) @Transform(({ value }) => value ?? '') buildType!: string
+
+  static fromJson(json: unknown): VersionInfoDto {
+    return plainToInstance(VersionInfoDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): VersionInfo {
+    const e = new VersionInfo()
+    e.currentVersion = this.currentVersion
+    e.latestVersion = this.latestVersion
+    e.hasUpdate = this.hasUpdate
+    e.releaseInfo = this.releaseInfo ? ReleaseInfoDto.fromJson(this.releaseInfo).toEntity() : undefined
+    e.cached = this.cached
+    e.warning = this.warning
+    e.buildType = this.buildType
+    return e
   }
 }

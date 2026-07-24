@@ -65,42 +65,42 @@
               <span>{{ billingModeLabel }}</span>
             </div>
 
-            <template v-if="model.pricing.billing_mode === BILLING_MODE_TOKEN">
+            <template v-if="model.pricing.billingMode === BILLING_MODE_TOKEN">
               <PricingRow
                 :label="t(prefixKey('inputPrice'))"
-                :value="model.pricing.input_price"
+                :value="model.pricing.inputPrice"
                 :unit="t(prefixKey('unitPerMillion'))"
                 :scale="perMillionScale"
               />
               <PricingRow
                 :label="t(prefixKey('outputPrice'))"
-                :value="model.pricing.output_price"
+                :value="model.pricing.outputPrice"
                 :unit="t(prefixKey('unitPerMillion'))"
                 :scale="perMillionScale"
               />
               <PricingRow
                 :label="t(prefixKey('cacheWritePrice'))"
-                :value="model.pricing.cache_write_price"
+                :value="model.pricing.cacheWritePrice"
                 :unit="t(prefixKey('unitPerMillion'))"
                 :scale="perMillionScale"
               />
               <PricingRow
                 :label="t(prefixKey('cacheReadPrice'))"
-                :value="model.pricing.cache_read_price"
+                :value="model.pricing.cacheReadPrice"
                 :unit="t(prefixKey('unitPerMillion'))"
                 :scale="perMillionScale"
               />
               <PricingRow
-                v-if="model.pricing.image_input_price != null && model.pricing.image_input_price > 0"
+                v-if="model.pricing.imageInputPrice != null && model.pricing.imageInputPrice > 0"
                 :label="t(prefixKey('imageInputPrice'))"
-                :value="model.pricing.image_input_price"
+                :value="model.pricing.imageInputPrice"
                 :unit="t(prefixKey('unitPerMillion'))"
                 :scale="perMillionScale"
               />
               <PricingRow
-                v-if="model.pricing.image_output_price != null && model.pricing.image_output_price > 0"
+                v-if="model.pricing.imageOutputPrice != null && model.pricing.imageOutputPrice > 0"
                 :label="t(prefixKey('imageOutputPrice'))"
-                :value="model.pricing.image_output_price"
+                :value="model.pricing.imageOutputPrice"
                 :unit="t(prefixKey('unitPerMillion'))"
                 :scale="perMillionScale"
               />
@@ -108,22 +108,22 @@
 
             <PricingRow
               v-if="
-                model.pricing.billing_mode === BILLING_MODE_PER_REQUEST &&
-                model.pricing.per_request_price != null
+                model.pricing.billingMode === BILLING_MODE_PER_REQUEST &&
+                model.pricing.perRequestPrice != null
               "
               :label="t(prefixKey('perRequestPrice'))"
-              :value="model.pricing.per_request_price"
+              :value="model.pricing.perRequestPrice"
               :unit="t(prefixKey('unitPerRequest'))"
               :scale="1"
             />
 
             <PricingRow
               v-if="
-                model.pricing.billing_mode === BILLING_MODE_IMAGE &&
-                model.pricing.image_output_price != null
+                model.pricing.billingMode === BILLING_MODE_IMAGE &&
+                model.pricing.imageOutputPrice != null
               "
               :label="t(prefixKey('imageOutputPrice'))"
-              :value="model.pricing.image_output_price"
+              :value="model.pricing.imageOutputPrice"
               :unit="t(prefixKey('unitPerRequest'))"
               :scale="1"
             />
@@ -143,10 +143,10 @@
                   class="flex justify-between text-[11px]"
                 >
                   <span class="text-gray-500 dark:text-gray-400">
-                    <template v-if="iv.tier_label">{{ iv.tier_label }}</template>
-                    <template v-else>{{ formatRange(iv.min_tokens, iv.max_tokens) }}</template>
+                    <template v-if="iv.tierLabel">{{ iv.tierLabel }}</template>
+                    <template v-else>{{ formatRange(iv.minTokens, iv.maxTokens) }}</template>
                   </span>
-                  <span>{{ formatInterval(iv, model.pricing.billing_mode) }}</span>
+                  <span>{{ formatInterval(iv, model.pricing.billingMode) }}</span>
                 </div>
               </div>
             </div>
@@ -170,7 +170,8 @@ import {
 } from '@/core/constants/channel'
 // 复用 api/channels.ts 的用户侧最小形态 DTO。
 // admin 侧 ChannelModelPricing 字段更多，但结构上是用户 DTO 的超集，admin 视图传入可直接通过结构化子类型检查。
-import type { UserPricingInterval, UserSupportedModel } from '@/features/channels-user/data/datasources/channelsUserDatasource'
+import type { UserPricingInterval } from '@/features/channels-user/domain/models/userPricingInterval'
+import type { UserSupportedModel } from '@/features/channels-user/domain/models/userSupportedModel'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
 import { platformBadgeClass, platformBorderClass, platformBadgeLightClass } from '@/core/utils/platformColors'
 import type { GroupPlatform } from '@/features/admin-groups/domain/models/adminGroups'
@@ -221,7 +222,7 @@ function prefixKey(k: string): string {
 }
 
 const billingModeLabel = computed(() => {
-  const mode = props.model.pricing?.billing_mode
+  const mode = props.model.pricing?.billingMode
   switch (mode) {
     case BILLING_MODE_TOKEN:
       return t(prefixKey('billingModeToken'))
@@ -241,10 +242,10 @@ function formatRange(min: number, max: number | null): string {
 
 function formatInterval(iv: UserPricingInterval, mode: BillingMode): string {
   if (mode === BILLING_MODE_PER_REQUEST || mode === BILLING_MODE_IMAGE) {
-    return formatScaled(iv.per_request_price, 1)
+    return formatScaled(iv.perRequestPrice, 1)
   }
-  const input = formatScaled(iv.input_price, perMillionScale)
-  const output = formatScaled(iv.output_price, perMillionScale)
+  const input = formatScaled(iv.inputPrice, perMillionScale)
+  const output = formatScaled(iv.outputPrice, perMillionScale)
   return `${input} / ${output}`
 }
 

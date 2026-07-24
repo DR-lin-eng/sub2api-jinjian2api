@@ -24,24 +24,24 @@
             {{ providerLabel(item.provider) }}
           </span>
           <span class="inline-flex items-center rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-dark-700 dark:text-gray-300">
-            {{ t(`monitorCommon.modes.${item.monitor_mode || 'active'}`) }}
+            {{ t(`monitorCommon.modes.${item.monitorMode || 'active'}`) }}
           </span>
           <span class="font-mono text-xs truncate text-gray-500 dark:text-gray-400">
-            {{ item.primary_model }}
+            {{ item.primaryModel }}
           </span>
           <span
-            v-if="item.group_name"
+            v-if="item.groupName"
             class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-600 dark:bg-dark-700 dark:text-gray-300 flex-shrink-0"
           >
-            {{ item.group_name }}
+            {{ item.groupName }}
           </span>
         </div>
       </div>
       <span
         class="px-2.5 py-1 rounded-full text-xs font-semibold flex-shrink-0"
-        :class="statusBadgeClass(item.primary_status)"
+        :class="statusBadgeClass(item.primaryStatus)"
       >
-        {{ statusLabel(item.primary_status) }}
+        {{ statusLabel(item.primaryStatus) }}
       </span>
     </div>
 
@@ -49,12 +49,12 @@
     <MonitorMetricPair
       primary-icon="bolt"
       :primary-label="t('monitorCommon.dialogLatency')"
-      :primary-value="formatLatency(item.primary_latency_ms)"
+      :primary-value="formatLatency(item.primaryLatencyMs)"
       primary-unit="ms"
-      :secondary-icon="item.monitor_mode === 'passive' ? 'link' : 'globe'"
-      :secondary-label="item.monitor_mode === 'passive' ? t('monitorCommon.monitorSource') : t('monitorCommon.endpointPing')"
-      :secondary-value="item.monitor_mode === 'passive' ? t('monitorCommon.realRequests') : formatLatency(item.primary_ping_latency_ms)"
-      :secondary-unit="item.monitor_mode === 'passive' ? '' : 'ms'"
+      :secondary-icon="item.monitorMode === 'passive' ? 'link' : 'globe'"
+      :secondary-label="item.monitorMode === 'passive' ? t('monitorCommon.monitorSource') : t('monitorCommon.endpointPing')"
+      :secondary-value="item.monitorMode === 'passive' ? t('monitorCommon.realRequests') : formatLatency(item.primaryPingLatencyMs)"
+      :secondary-unit="item.monitorMode === 'passive' ? '' : 'ms'"
     />
 
     <!-- Divider -->
@@ -78,7 +78,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { UserMonitorView } from '@/features/channel-monitor-user/data/datasources/channelMonitorUserDatasource'
+import type { UserMonitorView } from '@/features/channel-monitor-user/domain/models/userMonitorView'
 import {
   useChannelMonitorFormat,
   providerGradient,
@@ -125,7 +125,7 @@ const availabilityLabel = computed(() => {
 })
 
 const extraModelsCountLabel = computed(() => {
-  const count = props.item.extra_models?.length ?? 0
+  const count = props.item.extraModels?.length ?? 0
   if (count === 0) return undefined
   return t('monitorCommon.extraModelsCount', { n: count })
 })

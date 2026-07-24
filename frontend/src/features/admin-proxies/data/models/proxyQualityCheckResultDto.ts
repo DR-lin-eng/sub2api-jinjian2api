@@ -1,57 +1,82 @@
-import type { ProxyQualityCheckResult, ProxyQualityCheckItem } from '@/features/admin-proxies/domain/models/proxy'
+import 'reflect-metadata'
+import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
+import { ProxyQualityCheckResult } from '@/features/admin-proxies/domain/models/proxyQualityCheckResult'
+import { ProxyQualityCheckItemDto } from '@/features/admin-proxies/data/models/proxyQualityCheckItemDto'
 
-interface ProxyQualityCheckItemDto {
-  target: string
-  status: 'pass' | 'warn' | 'fail' | 'challenge'
-  http_status?: number
-  latency_ms?: number
-  message?: string
-  cf_ray?: string
-}
+export class ProxyQualityCheckResultDto {
+  @Expose({ name: 'proxy_id' })
+  @Transform(({ value }) => value ?? 0)
+  proxyId!: number
 
-function itemToEntity(dto: ProxyQualityCheckItemDto): ProxyQualityCheckItem {
-  return {
-    target: dto.target ?? '',
-    status: dto.status ?? 'fail',
-    httpStatus: dto.http_status,
-    latencyMs: dto.latency_ms,
-    message: dto.message,
-    cfRay: dto.cf_ray,
-  }
-}
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  score!: number
 
-export interface ProxyQualityCheckResultDto {
-  proxy_id: number
-  score: number
-  grade: string
-  summary: string
-  exit_ip?: string
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  grade!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  summary!: string
+
+  @Expose({ name: 'exit_ip' })
+  exitIp?: string
+
+  @Expose()
   country?: string
-  country_code?: string
-  base_latency_ms?: number
-  passed_count: number
-  warn_count: number
-  failed_count: number
-  challenge_count: number
-  checked_at: number
-  items: ProxyQualityCheckItemDto[]
-}
 
-export function toEntity(dto: ProxyQualityCheckResultDto): ProxyQualityCheckResult {
-  return {
-    proxyId: dto.proxy_id ?? 0,
-    score: dto.score ?? 0,
-    grade: dto.grade ?? '',
-    summary: dto.summary ?? '',
-    exitIp: dto.exit_ip,
-    country: dto.country,
-    countryCode: dto.country_code,
-    baseLatencyMs: dto.base_latency_ms,
-    passedCount: dto.passed_count ?? 0,
-    warnCount: dto.warn_count ?? 0,
-    failedCount: dto.failed_count ?? 0,
-    challengeCount: dto.challenge_count ?? 0,
-    checkedAt: dto.checked_at ?? 0,
-    items: (dto.items ?? []).map(itemToEntity),
+  @Expose({ name: 'country_code' })
+  countryCode?: string
+
+  @Expose({ name: 'base_latency_ms' })
+  baseLatencyMs?: number
+
+  @Expose({ name: 'passed_count' })
+  @Transform(({ value }) => value ?? 0)
+  passedCount!: number
+
+  @Expose({ name: 'warn_count' })
+  @Transform(({ value }) => value ?? 0)
+  warnCount!: number
+
+  @Expose({ name: 'failed_count' })
+  @Transform(({ value }) => value ?? 0)
+  failedCount!: number
+
+  @Expose({ name: 'challenge_count' })
+  @Transform(({ value }) => value ?? 0)
+  challengeCount!: number
+
+  @Expose({ name: 'checked_at' })
+  @Transform(({ value }) => value ?? 0)
+  checkedAt!: number
+
+  @Expose()
+  @Transform(({ value }) => value ?? [])
+  @Type(() => ProxyQualityCheckItemDto)
+  items!: ProxyQualityCheckItemDto[]
+
+  static fromJson(json: unknown): ProxyQualityCheckResultDto {
+    return plainToInstance(ProxyQualityCheckResultDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): ProxyQualityCheckResult {
+    const entity = new ProxyQualityCheckResult()
+    entity.proxyId = this.proxyId
+    entity.score = this.score
+    entity.grade = this.grade
+    entity.summary = this.summary
+    entity.exitIp = this.exitIp
+    entity.country = this.country
+    entity.countryCode = this.countryCode
+    entity.baseLatencyMs = this.baseLatencyMs
+    entity.passedCount = this.passedCount
+    entity.warnCount = this.warnCount
+    entity.failedCount = this.failedCount
+    entity.challengeCount = this.challengeCount
+    entity.checkedAt = this.checkedAt
+    entity.items = (this.items ?? []).map(i => i.toEntity())
+    return entity
   }
 }

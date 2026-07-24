@@ -185,7 +185,7 @@ import { useAppStore } from '@/core/stores/appStore'
 import { adminAPI } from '@/api/admin'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
-import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 import type { Group, GroupPlatform } from '@/features/admin-groups/domain/models/adminGroups'
 
 interface GroupRateConfig {
@@ -301,8 +301,8 @@ const handleSave = async () => {
     }
 
     await adminAPI.users.update(props.user.id, {
-      allowedGroups: allowedGroups,
-      groupRates: Object.keys(groupRates).length > 0 ? groupRates : undefined,
+      allowed_groups: allowedGroups,
+      group_rates: Object.keys(groupRates).length > 0 ? groupRates : undefined,
     })
 
     appStore.showSuccess(t('admin.users.groupConfigUpdated'))

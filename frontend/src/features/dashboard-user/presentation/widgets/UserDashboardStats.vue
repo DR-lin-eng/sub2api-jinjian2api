@@ -39,8 +39,8 @@
         </div>
         <div>
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.todayRequests') }}</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ stats?.today_requests || 0 }}</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('common.total') }}: {{ formatNumber(stats?.total_requests || 0) }}</p>
+          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ stats?.todayRequests || 0 }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('common.total') }}: {{ formatNumber(stats?.totalRequests || 0) }}</p>
         </div>
       </div>
     </div>
@@ -54,13 +54,13 @@
         <div>
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.todayCost') }}</p>
           <p class="text-xl font-bold text-gray-900 dark:text-white">
-            <span class="text-purple-600 dark:text-purple-400" :title="t('dashboard.actual')">${{ formatCost(stats?.today_actual_cost || 0) }}</span>
-            <span class="text-sm font-normal text-gray-400 dark:text-gray-500" :title="t('dashboard.standard')"> / ${{ formatCost(stats?.today_cost || 0) }}</span>
+            <span class="text-purple-600 dark:text-purple-400" :title="t('dashboard.actual')">${{ formatCost(stats?.todayActualCost || 0) }}</span>
+            <span class="text-sm font-normal text-gray-400 dark:text-gray-500" :title="t('dashboard.standard')"> / ${{ formatCost(stats?.todayCost || 0) }}</span>
           </p>
           <p class="text-xs">
             <span class="text-gray-500 dark:text-gray-400">{{ t('common.total') }}: </span>
-            <span class="text-purple-600 dark:text-purple-400" :title="t('dashboard.actual')">${{ formatCost(stats?.total_actual_cost || 0) }}</span>
-            <span class="text-gray-400 dark:text-gray-500" :title="t('dashboard.standard')"> / ${{ formatCost(stats?.total_cost || 0) }}</span>
+            <span class="text-purple-600 dark:text-purple-400" :title="t('dashboard.actual')">${{ formatCost(stats?.totalActualCost || 0) }}</span>
+            <span class="text-gray-400 dark:text-gray-500" :title="t('dashboard.standard')"> / ${{ formatCost(stats?.totalCost || 0) }}</span>
           </p>
         </div>
       </div>
@@ -77,8 +77,8 @@
         </div>
         <div>
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.todayTokens') }}</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ formatTokens(stats?.today_tokens || 0) }}</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('dashboard.input') }}: {{ formatTokens(stats?.today_input_tokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.today_output_tokens || 0) }} / {{ t('dashboard.cache') }}: {{ formatTokens((stats?.today_cache_creation_tokens || 0) + (stats?.today_cache_read_tokens || 0)) }}</p>
+          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ formatTokens(stats?.todayTokens || 0) }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('dashboard.input') }}: {{ formatTokens(stats?.todayInputTokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.todayOutputTokens || 0) }} / {{ t('dashboard.cache') }}: {{ formatTokens((stats?.todayCacheCreationTokens || 0) + (stats?.todayCacheReadTokens || 0)) }}</p>
         </div>
       </div>
     </div>
@@ -91,8 +91,8 @@
         </div>
         <div>
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.totalTokens') }}</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ formatTokens(stats?.total_tokens || 0) }}</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('dashboard.input') }}: {{ formatTokens(stats?.total_input_tokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.total_output_tokens || 0) }} / {{ t('dashboard.cache') }}: {{ formatTokens((stats?.total_cache_creation_tokens || 0) + (stats?.total_cache_read_tokens || 0)) }}</p>
+          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ formatTokens(stats?.totalTokens || 0) }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('dashboard.input') }}: {{ formatTokens(stats?.totalInputTokens || 0) }} / {{ t('dashboard.output') }}: {{ formatTokens(stats?.totalOutputTokens || 0) }} / {{ t('dashboard.cache') }}: {{ formatTokens((stats?.totalCacheCreationTokens || 0) + (stats?.totalCacheReadTokens || 0)) }}</p>
         </div>
       </div>
     </div>
@@ -125,7 +125,7 @@
         </div>
         <div>
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.avgResponse') }}</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ formatDuration(stats?.average_duration_ms || 0) }}</p>
+          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ formatDuration(stats?.averageDurationMs || 0) }}</p>
           <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('dashboard.averageTime') }}</p>
         </div>
       </div>
@@ -156,24 +156,24 @@
             {{ item.isOther ? t('dashboard.platformOther') : platformLabel(item.platform) }}
           </span>
           <span class="font-mono text-sm text-purple-600 dark:text-purple-400" :title="t('dashboard.actual')">
-            ${{ formatCost(item.total_actual_cost) }}
+            ${{ formatCost(item.totalActualCost) }}
           </span>
         </div>
         <div class="mt-2 space-y-1 text-xs">
           <div class="flex items-center justify-between">
             <span class="text-gray-500 dark:text-gray-400">{{ t('dashboard.todayCost') }}</span>
-            <span class="font-mono text-gray-900 dark:text-white">${{ formatCost(item.today_actual_cost) }}</span>
+            <span class="font-mono text-gray-900 dark:text-white">${{ formatCost(item.todayActualCost) }}</span>
           </div>
           <div class="flex items-center justify-between">
             <span class="text-gray-500 dark:text-gray-400">{{ t('dashboard.requests') }}</span>
             <span class="font-mono text-gray-700 dark:text-gray-300">
-              {{ item.total_requests > 0 ? formatNumber(item.total_requests) : '-' }}
+              {{ item.totalRequests > 0 ? formatNumber(item.totalRequests) : '-' }}
             </span>
           </div>
           <div class="flex items-center justify-between">
             <span class="text-gray-500 dark:text-gray-400">{{ t('dashboard.tokens') }}</span>
             <span class="font-mono text-gray-700 dark:text-gray-300">
-              {{ item.total_tokens > 0 ? formatTokens(item.total_tokens) : '-' }}
+              {{ item.totalTokens > 0 ? formatTokens(item.totalTokens) : '-' }}
             </span>
           </div>
         </div>
@@ -226,15 +226,15 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import type { UserDashboardStats as UserStatsType } from '@/features/usage/data/datasources/usageDatasource'
+import type { UserDashboardStats as UserStatsType } from '@/features/usage/domain/models/userDashboardStats'
 import type { PlatformQuotaItem } from '@/types'
 
 interface FusedPlatformCard {
   platform: string
-  total_actual_cost: number
-  today_actual_cost: number
-  total_requests: number
-  total_tokens: number
+  totalActualCost: number
+  todayActualCost: number
+  totalRequests: number
+  totalTokens: number
   isOther?: boolean
   quota?: PlatformQuotaItem
 }
@@ -257,25 +257,18 @@ const PLATFORM_LABELS: Record<string, string> = {
 const platformLabel = (p: string) => PLATFORM_LABELS[p] ?? p
 
 const sortedPlatforms = computed(() => {
-  const list = props.stats?.by_platform ?? []
-  return [...list].sort((a, b) => b.total_actual_cost - a.total_actual_cost)
+  const list = props.stats?.byPlatform ?? []
+  return [...list].sort((a, b) => b.totalActualCost - a.totalActualCost)
 })
 
-// 处理"各平台之和 < 总值"的差值：后端按平台聚合时过滤了无法归属平台的行
-// （group 与 account 都缺 platform）。这里把差值作为"其他"卡片显式展示，
-// 避免 Row 1 总值与 Row 3 平台拆分加总对不上、用户困惑。
 const OTHER_THRESHOLD = 0.0001
 const platformCards = computed<FusedPlatformCard[]>(() => {
-  // 建立 by_platform Map
   const byPlat = new Map<string, (typeof sortedPlatforms.value)[number]>()
-  for (const item of props.stats?.by_platform ?? []) byPlat.set(item.platform, item)
+  for (const item of props.stats?.byPlatform ?? []) byPlat.set(item.platform, item)
 
-  // 建立 quota Map
   const byQuota = new Map<string, PlatformQuotaItem>()
   for (const q of props.platformQuotas ?? []) byQuota.set(q.platform, q)
 
-  // union 平台集合。后端 by_platform / quota 接口均不会返回 platform='__other__'，
-  // 无需显式排除；__other__ 由下方差值补差逻辑单独追加。
   const platforms = new Set<string>([...byPlat.keys(), ...byQuota.keys()])
 
   const PLATFORM_ORDER = ['anthropic', 'openai', 'gemini', 'antigravity', 'grok']
@@ -285,15 +278,14 @@ const platformCards = computed<FusedPlatformCard[]>(() => {
     const stat = byPlat.get(p)
     cards.push({
       platform: p,
-      total_actual_cost: stat?.total_actual_cost ?? 0,
-      today_actual_cost: stat?.today_actual_cost ?? 0,
-      total_requests: stat?.total_requests ?? 0,
-      total_tokens: stat?.total_tokens ?? 0,
+      totalActualCost: stat?.totalActualCost ?? 0,
+      todayActualCost: stat?.todayActualCost ?? 0,
+      totalRequests: stat?.totalRequests ?? 0,
+      totalTokens: stat?.totalTokens ?? 0,
       quota: byQuota.get(p),
     })
   }
 
-  // 排序：按 PLATFORM_ORDER，未知平台按名称排序
   cards.sort((a, b) => {
     const ai = PLATFORM_ORDER.indexOf(a.platform)
     const bi = PLATFORM_ORDER.indexOf(b.platform)
@@ -303,21 +295,20 @@ const platformCards = computed<FusedPlatformCard[]>(() => {
     return ai - bi
   })
 
-  // __other__ 补差逻辑：只对 by_platform 有 usage 数据的总和计算
-  const total = props.stats?.total_actual_cost ?? 0
-  const today = props.stats?.today_actual_cost ?? 0
-  const sumTotal = cards.reduce((s, c) => s + c.total_actual_cost, 0)
-  const sumToday = cards.reduce((s, c) => s + c.today_actual_cost, 0)
+  const total = props.stats?.totalActualCost ?? 0
+  const today = props.stats?.todayActualCost ?? 0
+  const sumTotal = cards.reduce((s, c) => s + c.totalActualCost, 0)
+  const sumToday = cards.reduce((s, c) => s + c.todayActualCost, 0)
   const diffTotal = Math.max(0, total - sumTotal)
   const diffToday = Math.max(0, today - sumToday)
 
   if (diffTotal > OTHER_THRESHOLD || diffToday > OTHER_THRESHOLD) {
     cards.push({
       platform: '__other__',
-      total_actual_cost: diffTotal,
-      today_actual_cost: diffToday,
-      total_requests: 0,
-      total_tokens: 0,
+      totalActualCost: diffTotal,
+      todayActualCost: diffToday,
+      totalRequests: 0,
+      totalTokens: 0,
       isOther: true,
     })
   }

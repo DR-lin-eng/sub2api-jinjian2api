@@ -13,7 +13,7 @@ import {
   type VersionInfo,
   type ReleaseInfo,
 } from '@/api'
-import type { PublicSettings } from '@/features/auth/domain/models/auth'
+import type { PublicSettings } from '@/types'
 
 export const useAppStore = defineStore('app', () => {
   // ==================== State ====================

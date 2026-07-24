@@ -5,9 +5,9 @@ import {
   buildAuthSourceDefaultsState,
   normalizePlatformQuotasMap,
   sanitizePlatformQuotasMap,
-  type UpdateSettingsRequest,
-  type DefaultPlatformQuotasMap,
-} from "@/features/admin-settings/data/datasources/adminSettingsDatasource";
+} from "@/features/admin-settings/presentation/utils/adminSettingsUtils";
+import type { UpdateSettingsRequest } from "@/features/admin-settings/data/requests_models/updateSettingsRequest";
+import type { DefaultPlatformQuotasMap } from "@/features/admin-settings/domain/models/adminSettings";
 
 /** 全 null 的 5 平台 map，用于断言归一化默认值 */
 const allNullQuotas: DefaultPlatformQuotasMap = {

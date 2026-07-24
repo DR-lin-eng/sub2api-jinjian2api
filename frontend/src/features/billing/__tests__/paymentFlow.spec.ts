@@ -6,7 +6,7 @@ import {
   getVisibleMethods,
   readPaymentRecoverySnapshot,
   type PaymentRecoverySnapshot,
-} from '@/features/billing/presentation/paymentFlowResolver'
+} from '@/features/billing/presentation/utils/paymentFlowResolver'
 
 function methodLimit(overrides: Partial<MethodLimit> = {}): MethodLimit {
   return {

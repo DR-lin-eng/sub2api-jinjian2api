@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { METHOD_ORDER, isBuiltInAlipayMethod, isBuiltInWxpayMethod } from '@/features/billing/presentation/providerConfigSignals'
+import { METHOD_ORDER, isBuiltInAlipayMethod, isBuiltInWxpayMethod } from '@/features/billing/presentation/utils/providerConfigSignals'
 import alipayIcon from '@/assets/icons/alipay.svg'
 import wxpayIcon from '@/assets/icons/wxpay.svg'
 import stripeIcon from '@/assets/icons/stripe.svg'

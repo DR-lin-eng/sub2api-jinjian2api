@@ -6,13 +6,18 @@ import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Select, { type SelectOption } from '@/common/widgets/forms/Select.vue'
 import { adminAPI } from '@/api'
-import { opsAPI } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import type { AlertRule, MetricType, Operator } from '@/features/admin-ops/presentation/opsTypeSignals'
-import type { OpsSeverity } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import { formatCompactNumber, formatDateTime, formatExactNumber } from '@/features/admin-ops/presentation/opsFormatter'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
+import { useAdminOpsActionStore } from '@/features/admin-ops/presentation/stores/adminOpsActionStore'
+import type { AlertRule, MetricType, Operator } from '@/features/admin-ops/domain/models/alertRule'
+import type { OpsSeverity } from '@/features/admin-ops/presentation/utils/opsFormatter'
+import type { CreateAlertRuleRequest } from '@/features/admin-ops/data/requests_models/createAlertRuleRequest'
+import type { UpdateAlertRuleRequest } from '@/features/admin-ops/data/requests_models/updateAlertRuleRequest'
+import { formatCompactNumber, formatDateTime, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const actionStore = useAdminOpsActionStore()
 
 const loading = ref(false)
 const rules = ref<AlertRule[]>([])
@@ -20,7 +25,7 @@ const rules = ref<AlertRule[]>([])
 async function load() {
   loading.value = true
   try {
-    rules.value = await opsAPI.listAlertRules()
+    rules.value = await queryStore.listAlertRules()
   } catch (err: any) {
     console.error('[OpsAlertRulesCard] Failed to load rules', err)
     appStore.showError(err?.response?.data?.detail || t('admin.ops.alertRules.loadFailed'))
@@ -82,7 +87,7 @@ async function loadGroups() {
 }
 
 const isGroupMetricSelected = computed(() => {
-  const metricType = draft.value?.metric_type
+  const metricType = draft.value?.metricType
   return metricType ? groupMetricTypes.has(metricType) : false
 })
 
@@ -241,7 +246,7 @@ const metricDefinitions = computed(() => {
 })
 
 const selectedMetricDefinition = computed(() => {
-  const metricType = draft.value?.metric_type
+  const metricType = draft.value?.metricType
   if (!metricType) return null
   return metricDefinitions.value.find((m) => m.type === metricType) ?? null
 })
@@ -313,20 +318,20 @@ const editorValidation = computed(() => {
   const r = draft.value
   if (!r) return { valid: true, errors }
   if (!r.name || !r.name.trim()) errors.push(t('admin.ops.alertRules.validation.nameRequired'))
-  if (!r.metric_type) errors.push(t('admin.ops.alertRules.validation.metricRequired'))
-  if (groupMetricTypes.has(r.metric_type) && !parsePositiveInt(r.filters?.groupId)) {
+  if (!r.metricType) errors.push(t('admin.ops.alertRules.validation.metricRequired'))
+  if (groupMetricTypes.has(r.metricType) && !parsePositiveInt(r.filters?.groupId)) {
     errors.push(t('admin.ops.alertRules.validation.groupIdRequired'))
   }
   if (!r.operator) errors.push(t('admin.ops.alertRules.validation.operatorRequired'))
   if (!(typeof r.threshold === 'number' && Number.isFinite(r.threshold)))
     errors.push(t('admin.ops.alertRules.validation.thresholdRequired'))
-  if (!(typeof r.window_minutes === 'number' && Number.isFinite(r.window_minutes) && [1, 5, 60].includes(r.window_minutes))) {
+  if (!(typeof r.windowMinutes === 'number' && Number.isFinite(r.windowMinutes) && [1, 5, 60].includes(r.windowMinutes))) {
     errors.push(t('admin.ops.alertRules.validation.windowRange'))
   }
-  if (!(typeof r.sustained_minutes === 'number' && Number.isFinite(r.sustained_minutes) && r.sustained_minutes >= 1 && r.sustained_minutes <= 1440)) {
+  if (!(typeof r.sustainedMinutes === 'number' && Number.isFinite(r.sustainedMinutes) && r.sustainedMinutes >= 1 && r.sustainedMinutes <= 1440)) {
     errors.push(t('admin.ops.alertRules.validation.sustainedRange'))
   }
-  if (!(typeof r.cooldown_minutes === 'number' && Number.isFinite(r.cooldown_minutes) && r.cooldown_minutes >= 0 && r.cooldown_minutes <= 1440)) {
+  if (!(typeof r.cooldownMinutes === 'number' && Number.isFinite(r.cooldownMinutes) && r.cooldownMinutes >= 0 && r.cooldownMinutes <= 1440)) {
     errors.push(t('admin.ops.alertRules.validation.cooldownRange'))
   }
   return { valid: errors.length === 0, errors }
@@ -340,10 +345,18 @@ async function save() {
   }
   saving.value = true
   try {
+    const d = draft.value
+    const ruleReq: CreateAlertRuleRequest = {
+      name: d.name, description: d.description, enabled: d.enabled,
+      metric_type: d.metricType, operator: d.operator, threshold: d.threshold,
+      window_minutes: d.windowMinutes, sustained_minutes: d.sustainedMinutes,
+      severity: d.severity, cooldown_minutes: d.cooldownMinutes, notify_email: d.notifyEmail,
+      filters: d.filters,
+    }
     if (editingId.value) {
-      await opsAPI.updateAlertRule(editingId.value, draft.value)
+      await actionStore.updateAlertRule(editingId.value, ruleReq as UpdateAlertRuleRequest)
     } else {
-      await opsAPI.createAlertRule(draft.value)
+      await actionStore.createAlertRule(ruleReq)
     }
     showEditor.value = false
     draft.value = null
@@ -369,7 +382,7 @@ function requestDelete(rule: AlertRule) {
 async function confirmDelete() {
   if (!pendingDelete.value?.id) return
   try {
-    await opsAPI.deleteAlertRule(pendingDelete.value.id)
+    await actionStore.deleteAlertRule(pendingDelete.value.id)
     showDeleteConfirm.value = false
     pendingDelete.value = null
     await load()
@@ -448,12 +461,12 @@ function cancelDelete() {
                 <div v-if="row.description" class="mt-0.5 line-clamp-2 text-[11px] text-gray-500 dark:text-gray-400">
                   {{ row.description }}
                 </div>
-                <div v-if="row.updated_at" class="mt-1 text-[10px] text-gray-400">
-                  {{ formatDateTime(row.updated_at) }}
+                <div v-if="row.updatedAt" class="mt-1 text-[10px] text-gray-400">
+                  {{ formatDateTime(row.updatedAt) }}
                 </div>
               </td>
               <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-700 dark:text-gray-200">
-                <span class="font-mono">{{ row.metric_type }}</span>
+                <span class="font-mono">{{ row.metricType }}</span>
                 <span class="mx-1 text-gray-400">{{ row.operator }}</span>
                 <span class="font-mono tabular-nums" :title="formatExactNumber(row.threshold)">{{ formatCompactNumber(row.threshold, 2) }}</span>
               </td>
@@ -500,7 +513,7 @@ function cancelDelete() {
 
           <div>
             <label class="input-label">{{ t('admin.ops.alertRules.form.metric') }}</label>
-            <Select v-model="draft!.metric_type" :options="metricOptions" />
+            <Select v-model="draft!.metricType" :options="metricOptions" />
             <div v-if="selectedMetricDefinition" class="mt-1 space-y-0.5 text-xs text-gray-500 dark:text-gray-400">
               <p>{{ selectedMetricDefinition.description }}</p>
               <p>
@@ -549,17 +562,17 @@ function cancelDelete() {
 
           <div>
             <label class="input-label">{{ t('admin.ops.alertRules.form.window') }}</label>
-            <Select v-model="draft!.window_minutes" :options="windowOptions" />
+            <Select v-model="draft!.windowMinutes" :options="windowOptions" />
           </div>
 
           <div>
             <label class="input-label">{{ t('admin.ops.alertRules.form.sustained') }}</label>
-            <input v-model.number="draft!.sustained_minutes" class="input" type="number" min="1" max="1440" />
+            <input v-model.number="draft!.sustainedMinutes" class="input" type="number" min="1" max="1440" />
           </div>
 
           <div>
             <label class="input-label">{{ t('admin.ops.alertRules.form.cooldown') }}</label>
-            <input v-model.number="draft!.cooldown_minutes" class="input" type="number" min="0" max="1440" />
+            <input v-model.number="draft!.cooldownMinutes" class="input" type="number" min="0" max="1440" />
           </div>
 
           <div class="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 dark:bg-dark-800/50 md:col-span-2">
@@ -569,7 +582,7 @@ function cancelDelete() {
 
           <div class="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 dark:bg-dark-800/50 md:col-span-2">
             <span class="text-xs font-bold text-gray-700 dark:text-gray-200">{{ t('admin.ops.alertRules.form.notifyEmail') }}</span>
-            <input v-model="draft!.notify_email" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+            <input v-model="draft!.notifyEmail" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
           </div>
         </div>
       </div>

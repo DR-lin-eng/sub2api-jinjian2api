@@ -1,4 +1,4 @@
-import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/subscription'
+import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/userSubscription'
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
 

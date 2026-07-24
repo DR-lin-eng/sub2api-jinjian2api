@@ -28,13 +28,13 @@ vi.mock('@/features/keys/data/datasources/keysActionDatasource', () => ({
   deleteKey: vi.fn(),
   toggleStatus: vi.fn(),
 }))
-vi.mock('@/features/usage/data/datasources/usageDatasource', () => ({
-  usageAPI: {
-    getDashboardStats: vi.fn().mockResolvedValue({}),
-    getDashboardTrend: vi.fn().mockResolvedValue({ trend: [] }),
-    getDashboardModels: vi.fn().mockResolvedValue({ models: [] }),
-    getByDateRange: vi.fn().mockResolvedValue({ items: [] }),
-    getDashboardApiKeysUsage
+vi.mock('@/features/usage/data/repositories/usageQueryRepositoryImpl', () => ({
+  usageQueryRepository: {
+    getDashboardStats: vi.fn().mockResolvedValue({ totalApiKeys: 0, activeApiKeys: 0, totalRequests: 0, totalInputTokens: 0, totalOutputTokens: 0, totalCacheCreationTokens: 0, totalCacheReadTokens: 0, totalTokens: 0, totalCost: 0, totalActualCost: 0, todayRequests: 0, todayInputTokens: 0, todayOutputTokens: 0, todayCacheCreationTokens: 0, todayCacheReadTokens: 0, todayTokens: 0, todayCost: 0, todayActualCost: 0, averageDurationMs: 0, rpm: 0, tpm: 0 }),
+    getDashboardTrend: vi.fn().mockResolvedValue({ trend: [], startDate: '', endDate: '', granularity: 'day' }),
+    getDashboardModels: vi.fn().mockResolvedValue({ models: [], startDate: '', endDate: '' }),
+    getByDateRange: vi.fn().mockResolvedValue({ items: [], total: 0, pages: 1 }),
+    getDashboardApiKeysUsage,
   }
 }))
 vi.mock('@/features/profile/data/datasources/profileDatasource', () => ({ getMyPlatformQuotas: vi.fn().mockResolvedValue({ platform_quotas: [] }) }))
@@ -94,8 +94,8 @@ describe('user DashboardPage API key usage orchestration', () => {
 
     expect(keysList.mock.calls).toEqual([[1, 100], [2, 100], [3, 100]])
     expect(getDashboardApiKeysUsage).toHaveBeenCalledTimes(3)
-    expect(getDashboardApiKeysUsage.mock.calls.map(call => call[0].length)).toEqual([100, 100, 1])
-    expect(getDashboardApiKeysUsage.mock.calls.flatMap(call => call[0])).toEqual(Array.from({ length: 201 }, (_, i) => i + 1))
+    expect(getDashboardApiKeysUsage.mock.calls.map(call => call[0].api_key_ids.length)).toEqual([100, 100, 1])
+    expect(getDashboardApiKeysUsage.mock.calls.flatMap(call => call[0].api_key_ids)).toEqual(Array.from({ length: 201 }, (_, i) => i + 1))
   })
 
   it('limits parallel API key page requests to four', async () => {
@@ -130,17 +130,17 @@ describe('user DashboardPage API key usage orchestration', () => {
     const wrapper = mountDashboard()
     await flushPromises()
 
-    const initialDates = getDashboardApiKeysUsage.mock.calls[0][1]
+    const initialDates = getDashboardApiKeysUsage.mock.calls[0][0]
     await wrapper.get('[data-test="range"]').trigger('click')
     await flushPromises()
-    expect(getDashboardApiKeysUsage.mock.calls[1][1]).toMatchObject({ startDate: '2026-03-07', endDate: '2026-03-08' })
-    expect(initialDates).not.toMatchObject({ startDate: '2026-03-07', endDate: '2026-03-08' })
+    expect(getDashboardApiKeysUsage.mock.calls[1][0]).toMatchObject({ start_date: '2026-03-07', end_date: '2026-03-08' })
+    expect(initialDates).not.toMatchObject({ start_date: '2026-03-07', end_date: '2026-03-08' })
 
-    first.resolve({ stats: { 1: { api_key_id: 1, total_tokens: 10, total_actual_cost: 1 } } })
+    first.resolve({ stats: { 1: { apiKeyId: 1, totalTokens: 10, totalActualCost: 1 } } })
     await flushPromises()
     expect(wrapper.findComponent({ name: 'UserDashboardApiKeyUsage' }).props('loading')).toBe(true)
 
-    second.resolve({ stats: { 1: { api_key_id: 1, total_tokens: 20, total_actual_cost: 2 } } })
+    second.resolve({ stats: { 1: { apiKeyId: 1, totalTokens: 20, totalActualCost: 2 } } })
     await flushPromises()
     const panel = wrapper.findComponent({ name: 'UserDashboardApiKeyUsage' })
     expect(panel.props('loading')).toBe(false)
@@ -150,7 +150,7 @@ describe('user DashboardPage API key usage orchestration', () => {
   it('retains prior valid rows and exposes an error when refresh fails', async () => {
     keysList.mockResolvedValue(page([key(1)], 1, 1))
     getDashboardApiKeysUsage
-      .mockResolvedValueOnce({ stats: { 1: { api_key_id: 1, total_tokens: 30, total_actual_cost: 3 } } })
+      .mockResolvedValueOnce({ stats: { 1: { apiKeyId: 1, totalTokens: 30, totalActualCost: 3 } } })
       .mockRejectedValueOnce(new Error('refresh failed'))
     const wrapper = mountDashboard()
     await flushPromises()

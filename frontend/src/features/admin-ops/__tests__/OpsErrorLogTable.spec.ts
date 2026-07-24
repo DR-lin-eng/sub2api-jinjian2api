@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils'
 import OpsErrorLogTable from '@/features/admin-ops/presentation/widgets/OpsErrorLogTable.vue'
 import zhLocale from '@/core/i18n/locales/zh'
 import enLocale from '@/core/i18n/locales/en'
-import type { OpsErrorLog } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
+import type { OpsErrorLog } from '@/features/admin-ops/domain/models/opsErrorLog'
 
 vi.mock('vue-i18n', async (importOriginal) => {
   const actual = await importOriginal<typeof import('vue-i18n')>()

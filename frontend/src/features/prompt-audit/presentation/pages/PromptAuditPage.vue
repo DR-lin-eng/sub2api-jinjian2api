@@ -8,8 +8,8 @@
           <p class="mt-2 max-w-3xl text-sm text-gray-500 dark:text-dark-300">{{ t('admin.promptAudit.description') }}</p>
         </div>
         <div v-if="actionStore.draft" class="text-right text-xs text-gray-500 dark:text-dark-400">
-          <p>{{ t('admin.promptAudit.configVersion', { version: actionStore.draft.config_version }) }}</p>
-          <p v-if="actionStore.draft.updated_at" class="mt-1">{{ formatDate(actionStore.draft.updated_at) }}</p>
+          <p>{{ t('admin.promptAudit.configVersion', { version: actionStore.draft.configVersion }) }}</p>
+          <p v-if="actionStore.draft.updatedAt" class="mt-1">{{ formatDate(actionStore.draft.updatedAt) }}</p>
         </div>
       </header>
 
@@ -56,7 +56,7 @@
 
           <div v-show="activeTab === 'events'" data-test="tab-panel-events">
             <div
-              v-if="actionStore.draft?.enabled && !actionStore.draft.store_pass_events"
+              v-if="actionStore.draft?.enabled && !actionStore.draft.storePassEvents"
               data-test="pass-events-disabled-notice"
               role="status"
               class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200"
@@ -70,7 +70,7 @@
               :events="queryStore.events.items"
               :total="queryStore.events.total"
               :page="queryStore.events.page"
-              :page-size="queryStore.events.page_size"
+              :page-size="queryStore.events.pageSize"
               :filters="filters"
               :selected-ids="selectedEventIds"
               :loading="queryStore.loading.events"
@@ -94,8 +94,8 @@
       <div class="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
           <SaveToggle :label="t('admin.promptAudit.saveBar.enabled')" :model-value="actionStore.draft.enabled" data-test="enabled-toggle" @update:model-value="setEnabled" />
-          <SaveToggle :label="t('admin.promptAudit.saveBar.blocking')" :model-value="actionStore.draft.blocking_enabled" :disabled="!actionStore.draft.enabled" data-test="blocking-toggle" @update:model-value="setBlocking" />
-          <SaveToggle :label="t('admin.promptAudit.saveBar.storePass')" :model-value="actionStore.draft.store_pass_events" data-test="store-pass-toggle" @update:model-value="replaceDraft({ ...actionStore.draft!, store_pass_events: $event })" />
+          <SaveToggle :label="t('admin.promptAudit.saveBar.blocking')" :model-value="actionStore.draft.blockingEnabled" :disabled="!actionStore.draft.enabled" data-test="blocking-toggle" @update:model-value="setBlocking" />
+          <SaveToggle :label="t('admin.promptAudit.saveBar.storePass')" :model-value="actionStore.draft.storePassEvents" data-test="store-pass-toggle" @update:model-value="replaceDraft({ ...actionStore.draft!, storePassEvents: $event })" />
         </div>
         <div class="flex items-center gap-3">
           <span class="text-sm" :class="dirty ? 'text-amber-700 dark:text-amber-300' : 'text-gray-500 dark:text-dark-400'">

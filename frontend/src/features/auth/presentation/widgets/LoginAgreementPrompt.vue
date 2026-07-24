@@ -146,7 +146,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import type { LoginAgreementDocument } from '@/features/auth/domain/models/auth'
+import type { LoginAgreementDocument } from '@/types'
 const { t } = useI18n()
 
 const props = withDefaults(defineProps<{

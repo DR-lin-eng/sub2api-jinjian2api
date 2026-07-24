@@ -82,7 +82,7 @@ import { useAppStore } from '@/core/stores/appStore'
 import { adminAPI } from '@/api/admin'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
 
 interface Props {
@@ -119,8 +119,8 @@ const handleReplace = async () => {
   submitting.value = true
 
   try {
-    const result = await adminAPI.users.replaceGroup(props.user.id, props.oldGroup.id, selectedGroupId.value)
-    appStore.showSuccess(t('admin.users.replaceGroupSuccess', { count: result.migrated_keys }))
+    const result = await adminAPI.users.replaceGroup(props.user.id, { old_group_id: props.oldGroup.id, new_group_id: selectedGroupId.value })
+    appStore.showSuccess(t('admin.users.replaceGroupSuccess', { count: result.migratedKeys }))
     emit('success')
     emit('close')
   } catch (error) {

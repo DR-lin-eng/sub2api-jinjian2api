@@ -1,31 +1,37 @@
-import type { UsageCleanupTask } from '@/features/admin-usage/domain/models/adminUsage'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { UsageCleanupTask } from '@/features/admin-usage/domain/models/usageCleanupTask'
 
-export interface UsageCleanupTaskDto {
-  id: number
-  status: string
-  created_by: number
-  deleted_rows: number
-  error_message?: string | null
-  canceled_by?: number | null
-  canceled_at?: string | null
-  started_at?: string | null
-  finished_at?: string | null
-  created_at: string
-  updated_at: string
-}
+export class UsageCleanupTaskDto {
+  @Expose() @Transform(({ value }) => value ?? 0) id!: number
+  @Expose() @Transform(({ value }) => value ?? '') status!: string
+  @Expose({ name: 'created_by' }) @Transform(({ value }) => value ?? 0) createdBy!: number
+  @Expose({ name: 'deleted_rows' }) @Transform(({ value }) => value ?? 0) deletedRows!: number
+  @Expose({ name: 'error_message' }) @Transform(({ value }) => value ?? '') errorMessage!: string
+  @Expose({ name: 'canceled_by' }) @Transform(({ value }) => value ?? 0) canceledBy!: number
+  @Expose({ name: 'canceled_at' }) @Transform(({ value }) => value ?? '') canceledAt!: string
+  @Expose({ name: 'started_at' }) @Transform(({ value }) => value ?? '') startedAt!: string
+  @Expose({ name: 'finished_at' }) @Transform(({ value }) => value ?? '') finishedAt!: string
+  @Expose({ name: 'created_at' }) @Transform(({ value }) => value ?? '') createdAt!: string
+  @Expose({ name: 'updated_at' }) @Transform(({ value }) => value ?? '') updatedAt!: string
 
-export function toEntity(dto: UsageCleanupTaskDto): UsageCleanupTask {
-  return {
-    id: dto.id ?? 0,
-    status: dto.status ?? '',
-    createdBy: dto.created_by ?? 0,
-    deletedRows: dto.deleted_rows ?? 0,
-    errorMessage: dto.error_message,
-    canceledBy: dto.canceled_by,
-    canceledAt: dto.canceled_at,
-    startedAt: dto.started_at,
-    finishedAt: dto.finished_at,
-    createdAt: dto.created_at ?? '',
-    updatedAt: dto.updated_at ?? '',
+  static fromJson(json: unknown): UsageCleanupTaskDto {
+    return plainToInstance(UsageCleanupTaskDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): UsageCleanupTask {
+    const e = new UsageCleanupTask()
+    e.id = this.id
+    e.status = this.status
+    e.createdBy = this.createdBy
+    e.deletedRows = this.deletedRows
+    e.errorMessage = this.errorMessage
+    e.canceledBy = this.canceledBy
+    e.canceledAt = this.canceledAt
+    e.startedAt = this.startedAt
+    e.finishedAt = this.finishedAt
+    e.createdAt = this.createdAt
+    e.updatedAt = this.updatedAt
+    return e
   }
 }

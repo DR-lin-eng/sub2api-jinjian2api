@@ -1,13 +1,24 @@
-import type { InstallResponse } from '@/features/setup/domain/models/installResponse'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { InstallResponse } from '@/features/setup/domain/models/installResponse'
 
-export interface InstallResponseDto {
-  message: string
-  restart: boolean
-}
+export class InstallResponseDto {
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  message!: string
 
-export function toEntity(dto: InstallResponseDto): InstallResponse {
-  return {
-    message: dto.message ?? '',
-    restart: dto.restart ?? false,
+  @Expose()
+  @Transform(({ value }) => value ?? false)
+  restart!: boolean
+
+  static fromJson(json: unknown): InstallResponseDto {
+    return plainToInstance(InstallResponseDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): InstallResponse {
+    const entity = new InstallResponse()
+    entity.message = this.message
+    entity.restart = this.restart
+    return entity
   }
 }

@@ -177,9 +177,9 @@ import {
   type OpsErrorTrendResponse,
   type OpsLatencyHistogramResponse,
   type OpsThroughputTrendResponse,
-  type OpsMetricThresholds,
-  type OpsAdvancedSettings
-} from '@/features/admin-ops/presentation/api'
+  type OpsMetricThresholds
+} from '@/features/admin-ops/domain/models/opsMetricThresholds'
+import type { OpsAdvancedSettings } from '@/features/admin-ops/domain/models/opsAdvancedSettings'
 import { useAdminSettingsStore, useAppStore } from '@/stores'
 import OpsDashboardHeader from '@/features/admin-ops/presentation/widgets/OpsDashboardHeader.vue'
 import OpsDashboardSkeleton from '@/features/admin-ops/presentation/widgets/OpsDashboardSkeleton.vue'
@@ -467,20 +467,20 @@ const { pause: pauseCountdown, resume: resumeCountdown } = useIntervalFn(
 )
 
 function applyDashboardAdvancedSettings(settings: OpsAdvancedSettings) {
-  showConcurrency.value = settings.display_concurrency
-  showSwitchRateTrend.value = settings.display_switch_rate_trend
-  showThroughputTrend.value = settings.display_throughput_trend
-  showLatencyHistogram.value = settings.display_latency_histogram
-  showErrorDistribution.value = settings.display_error_distribution
-  showErrorTrend.value = settings.display_error_trend
-  showImageGenerationStats.value = settings.display_image_generation_stats ?? true
-  showAlertEvents.value = settings.display_alert_events
-  showOpenAITokenStats.value = settings.display_openai_token_stats
-  showUserUsageStats.value = settings.display_user_usage_stats
-  showSystemLogs.value = settings.display_system_logs
-  autoRefreshEnabled.value = settings.auto_refresh_enabled
-  autoRefreshIntervalMs.value = settings.auto_refresh_interval_seconds * 1000
-  autoRefreshCountdown.value = settings.auto_refresh_interval_seconds
+  showConcurrency.value = settings.displayConcurrency
+  showSwitchRateTrend.value = settings.displaySwitchRateTrend
+  showThroughputTrend.value = settings.displayThroughputTrend
+  showLatencyHistogram.value = settings.displayLatencyHistogram
+  showErrorDistribution.value = settings.displayErrorDistribution
+  showErrorTrend.value = settings.displayErrorTrend
+  showImageGenerationStats.value = settings.displayImageGenerationStats ?? true
+  showAlertEvents.value = settings.displayAlertEvents
+  showOpenAITokenStats.value = settings.displayOpenaiTokenStats
+  showUserUsageStats.value = settings.displayUserUsageStats
+  showSystemLogs.value = settings.displaySystemLogs
+  autoRefreshEnabled.value = settings.autoRefreshEnabled
+  autoRefreshIntervalMs.value = settings.autoRefreshIntervalSeconds * 1000
+  autoRefreshCountdown.value = settings.autoRefreshIntervalSeconds
 
   if (!showSwitchRateTrend.value) switchTrend.value = null
   if (!showThroughputTrend.value) throughputTrend.value = null
@@ -508,7 +508,7 @@ function resetDashboardAdvancedSettings() {
 
 async function loadDashboardAdvancedSettings() {
   try {
-    const settings = await opsAPI.getAdvancedSettings()
+    const settings = await queryStore.getAdvancedSettings()
     applyDashboardAdvancedSettings(settings)
   } catch (err) {
     console.error('[OpsDashboard] Failed to load dashboard advanced settings', err)
@@ -518,7 +518,7 @@ async function loadDashboardAdvancedSettings() {
 
 async function loadDashboardSettingsSnapshot() {
   try {
-    const settings = await opsAPI.getSettingsSnapshot()
+    const settings = await queryStore.getSettingsSnapshot()
     applyDashboardAdvancedSettings(settings.advanced)
     metricThresholds.value = settings.metric_thresholds || null
   } catch (err) {
@@ -657,7 +657,7 @@ function buildSwitchTrendParams() {
 async function refreshOverviewWithCancel(fetchSeq: number, signal: AbortSignal) {
   if (!opsEnabled.value) return
   try {
-    const data = await opsAPI.getDashboardOverview(buildApiParams(), { signal })
+    const data = await queryStore.getDashboardOverview(buildApiParams(), { signal })
     if (fetchSeq !== dashboardFetchSeq) return
     overview.value = data
   } catch (err: any) {
@@ -671,7 +671,7 @@ async function refreshSwitchTrendWithCancel(fetchSeq: number, signal: AbortSigna
   if (!opsEnabled.value || !showSwitchRateTrend.value) return
   loadingSwitchTrend.value = true
   try {
-    const data = await opsAPI.getThroughputTrend(buildSwitchTrendParams(), { signal })
+    const data = await queryStore.getThroughputTrend(buildSwitchTrendParams(), { signal })
     if (fetchSeq !== dashboardFetchSeq) return
     switchTrend.value = data
   } catch (err: any) {
@@ -689,7 +689,7 @@ async function refreshThroughputTrendWithCancel(fetchSeq: number, signal: AbortS
   if (!opsEnabled.value || !showThroughputTrend.value) return
   loadingTrend.value = true
   try {
-    const data = await opsAPI.getThroughputTrend(buildApiParams(), { signal })
+    const data = await queryStore.getThroughputTrend(buildApiParams(), { signal })
     if (fetchSeq !== dashboardFetchSeq) return
     throughputTrend.value = data
   } catch (err: any) {
@@ -710,7 +710,7 @@ async function refreshCoreSnapshotWithCancel(fetchSeq: number, signal: AbortSign
   loadingLatency.value = showLatencyHistogram.value
   loadingErrorDistribution.value = showErrorDistribution.value
   try {
-    const data = await opsAPI.getDashboardSnapshotV2(buildSnapshotApiParams(), { signal })
+    const data = await queryStore.getDashboardSnapshotV2(buildSnapshotApiParams(), { signal })
     if (fetchSeq !== dashboardFetchSeq) return
     overview.value = data.overview
     throughputTrend.value = showThroughputTrend.value ? data.throughput_trend ?? null : null
@@ -747,7 +747,7 @@ async function refreshLatencyHistogramWithCancel(fetchSeq: number, signal: Abort
   if (!opsEnabled.value || !showLatencyHistogram.value) return
   loadingLatency.value = true
   try {
-    const data = await opsAPI.getLatencyHistogram(buildApiParams(), { signal })
+    const data = await queryStore.getLatencyHistogram(buildApiParams(), { signal })
     if (fetchSeq !== dashboardFetchSeq) return
     latencyHistogram.value = data
   } catch (err: any) {
@@ -765,7 +765,7 @@ async function refreshErrorTrendWithCancel(fetchSeq: number, signal: AbortSignal
   if (!opsEnabled.value || !showErrorTrend.value) return
   loadingErrorTrend.value = true
   try {
-    const data = await opsAPI.getErrorTrend(buildApiParams(), { signal })
+    const data = await queryStore.getErrorTrend(buildApiParams(), { signal })
     if (fetchSeq !== dashboardFetchSeq) return
     errorTrend.value = data
   } catch (err: any) {
@@ -783,7 +783,7 @@ async function refreshErrorDistributionWithCancel(fetchSeq: number, signal: Abor
   if (!opsEnabled.value || !showErrorDistribution.value) return
   loadingErrorDistribution.value = true
   try {
-    const data = await opsAPI.getErrorDistribution(buildApiParams(), { signal })
+    const data = await queryStore.getErrorDistribution(buildApiParams(), { signal })
     if (fetchSeq !== dashboardFetchSeq) return
     errorDistribution.value = data
   } catch (err: any) {
@@ -906,7 +906,7 @@ onMounted(async () => {
 
 async function loadThresholds() {
   try {
-    const thresholds = await opsAPI.getMetricThresholds()
+    const thresholds = await queryStore.getMetricThresholds()
     metricThresholds.value = thresholds || null
   } catch (err) {
     console.warn('[OpsDashboard] Failed to load thresholds', err)

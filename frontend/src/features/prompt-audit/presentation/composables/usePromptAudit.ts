@@ -20,13 +20,11 @@ import {
   configToDraft,
   draftFingerprint,
   emptyEventFilters,
-} from '@/features/prompt-audit/domain/promptAuditViewModel'
-import type {
-  PromptAuditDraft,
-  PromptAuditEndpointDraft,
-  PromptDeletePreview,
-  PromptEventFilters,
-} from '@/features/prompt-audit/domain/models/promptAuditTypes'
+} from '@/features/prompt-audit/presentation/utils/promptAuditViewModel'
+import type { PromptAuditDraft } from '@/features/prompt-audit/domain/models/promptAuditDraft'
+import type { PromptAuditEndpointDraft } from '@/features/prompt-audit/domain/models/promptAuditEndpointDraft'
+import type { PromptDeletePreview } from '@/features/prompt-audit/domain/models/promptDeletePreview'
+import type { PromptEventFilters } from '@/features/prompt-audit/domain/models/promptEventFilters'
 
 export type PromptAuditPageTab = 'config' | 'events'
 
@@ -91,20 +89,19 @@ export function usePromptAudit() {
     replaceDraft({
       ...actionStore.draft,
       enabled: value,
-      blocking_enabled: value ? actionStore.draft.blocking_enabled : false,
+      blockingEnabled: value ? actionStore.draft.blockingEnabled : false,
     })
   }
   function setBlocking(value: boolean): void {
     if (!actionStore.draft || !actionStore.draft.enabled) return
-    if (value && !actionStore.draft.blocking_enabled) {
+    if (value && !actionStore.draft.blockingEnabled) {
       showBlockingConfirmation.value = true
       return
     }
-    replaceDraft({ ...actionStore.draft, blocking_enabled: value })
-  }
+    replaceDraft({ ...actionStore.draft, blockingEnabled: value })  }
   function confirmBlocking(): void {
     showBlockingConfirmation.value = false
-    if (actionStore.draft) replaceDraft({ ...actionStore.draft, blocking_enabled: true })
+    if (actionStore.draft) replaceDraft({ ...actionStore.draft, blockingEnabled: true })
   }
   function resetDraft(): void {
     if (queryStore.serverConfig) actionStore.setDraft(queryStore.serverConfig)
@@ -136,7 +133,7 @@ export function usePromptAudit() {
       const result = await actionStore.probeEndpoint(endpoint)
       if (!result) return
       if (result.ok) appStore.showSuccess(t('admin.promptAudit.messages.probeSucceeded'))
-      else appStore.showError(`${result.error_code || result.status}: ${result.message}`)
+      else appStore.showError(`${result.errorCode || result.status}: ${result.message}`)
     } catch (error) {
       appStore.showError(errorMessageOf(error, 'admin.promptAudit.errors.probe'))
     }
@@ -189,7 +186,7 @@ export function usePromptAudit() {
       const result = mode === 'single'
         ? await actionStore.deleteEvent(ids[0])
         : await actionStore.batchDeleteEvents(ids)
-      appStore.showSuccess(t('admin.promptAudit.messages.deleted', { count: result.deleted_events }))
+      appStore.showSuccess(t('admin.promptAudit.messages.deleted', { count: result.deletedEvents }))
       await Promise.allSettled([loadEvents(), loadRuntime()])
     } catch (error) {
       appStore.showError(errorMessageOf(error, 'admin.promptAudit.errors.delete'))
@@ -233,7 +230,7 @@ export function usePromptAudit() {
       if (!preview || !previewFilters) return
       const result = await actionStore.deleteByFilter(previewFilters, preview)
       closeFilterDelete()
-      appStore.showSuccess(t('admin.promptAudit.messages.deleted', { count: result.deleted_events }))
+      appStore.showSuccess(t('admin.promptAudit.messages.deleted', { count: result.deletedEvents }))
       await Promise.allSettled([loadEvents(), loadRuntime()])
     } catch (error) {
       clearDeletePreview()

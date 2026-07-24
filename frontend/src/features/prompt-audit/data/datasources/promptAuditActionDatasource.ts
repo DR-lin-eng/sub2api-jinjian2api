@@ -1,67 +1,58 @@
 import { apiClient } from '@/core/networks/client'
-import type {
-  PromptAuditConfig,
-  PromptAuditEndpointDraft,
-  PromptAuditUpdateRequest,
-  PromptDeletePreview,
-  PromptDeleteResult,
-  PromptEventFilters,
-  PromptProbeResult,
-} from '@/features/prompt-audit/domain/models/promptAuditTypes'
-import { eventFilterPayload } from '@/features/prompt-audit/domain/promptAuditViewModel'
+import { PromptAuditConfigDto } from '@/features/prompt-audit/data/models/promptAuditConfigDto'
+import { PromptProbeResultDto } from '@/features/prompt-audit/data/models/promptProbeResultDto'
+import { PromptDeleteResultDto } from '@/features/prompt-audit/data/models/promptDeleteResultDto'
+import type { UpdatePromptAuditConfigRequest } from '@/features/prompt-audit/data/requests_models/updatePromptAuditConfigRequest'
+import type { PromptAuditEndpointDraft } from '@/features/prompt-audit/domain/models/promptAuditEndpointDraft'
+import type { PromptEventFilters } from '@/features/prompt-audit/domain/models/promptEventFilters'
+import type { PromptDeletePreview } from '@/features/prompt-audit/domain/models/promptDeletePreview'
+import { eventFilterPayload } from '@/features/prompt-audit/data/utils/promptAuditQueryParams'
 
 const basePath = '/admin/prompt-audit'
 
-export async function updateConfig(payload: PromptAuditUpdateRequest): Promise<PromptAuditConfig> {
-  const { data } = await apiClient.put<PromptAuditConfig>(`${basePath}/config`, payload)
-  return data
+export class PromptAuditActionDatasource {
+  async updateConfig(req: UpdatePromptAuditConfigRequest): Promise<PromptAuditConfigDto> {
+    const { data } = await apiClient.put<unknown>(`${basePath}/config`, req)
+    return PromptAuditConfigDto.fromJson(data)
+  }
+
+  async probeEndpoint(endpoint: PromptAuditEndpointDraft): Promise<PromptProbeResultDto> {
+    const { data } = await apiClient.post<unknown>(`${basePath}/endpoints/probe`, {
+      endpoint: {
+        id: endpoint.id,
+        name: endpoint.name,
+        protocol: 'openai_compatible',
+        base_url: endpoint.baseUrl,
+        model: endpoint.model,
+        token: endpoint.token || undefined,
+        timeout_ms: endpoint.timeoutMs,
+        input_limit: endpoint.inputLimit,
+        enabled: endpoint.enabled,
+      },
+    })
+    return PromptProbeResultDto.fromJson(data)
+  }
+
+  async deleteEvent(id: number): Promise<PromptDeleteResultDto> {
+    const { data } = await apiClient.delete<unknown>(`${basePath}/events/${id}`)
+    return PromptDeleteResultDto.fromJson(data)
+  }
+
+  async batchDeleteEvents(ids: number[]): Promise<PromptDeleteResultDto> {
+    const { data } = await apiClient.post<unknown>(`${basePath}/events/batch-delete`, { ids })
+    return PromptDeleteResultDto.fromJson(data)
+  }
+
+  async deleteEventsByFilter(filters: PromptEventFilters, preview: PromptDeletePreview): Promise<PromptDeleteResultDto> {
+    const { data } = await apiClient.post<unknown>(`${basePath}/events/delete-by-filter`, {
+      filter: eventFilterPayload(filters),
+      snapshot_max_id: preview.snapshotMaxId,
+      filter_hash: preview.filterHash,
+      confirmation_token: preview.confirmationToken,
+      confirm: true,
+    })
+    return PromptDeleteResultDto.fromJson(data)
+  }
 }
 
-export async function probeEndpoint(endpoint: PromptAuditEndpointDraft): Promise<PromptProbeResult> {
-  const { data } = await apiClient.post<PromptProbeResult>(`${basePath}/endpoints/probe`, {
-    endpoint: {
-      id: endpoint.id,
-      name: endpoint.name,
-      protocol: 'openai_compatible',
-      base_url: endpoint.base_url,
-      model: endpoint.model,
-      token: endpoint.token || undefined,
-      timeout_ms: endpoint.timeout_ms,
-      input_limit: endpoint.input_limit,
-      enabled: endpoint.enabled,
-    },
-  })
-  return data
-}
-
-export async function deleteEvent(id: number): Promise<PromptDeleteResult> {
-  const { data } = await apiClient.delete<PromptDeleteResult>(`${basePath}/events/${id}`)
-  return data
-}
-
-export async function batchDeleteEvents(ids: number[]): Promise<PromptDeleteResult> {
-  const { data } = await apiClient.post<PromptDeleteResult>(`${basePath}/events/batch-delete`, { ids })
-  return data
-}
-
-export async function deleteEventsByFilter(
-  filters: PromptEventFilters,
-  preview: PromptDeletePreview,
-): Promise<PromptDeleteResult> {
-  const { data } = await apiClient.post<PromptDeleteResult>(`${basePath}/events/delete-by-filter`, {
-    filter: eventFilterPayload(filters),
-    snapshot_max_id: preview.snapshot_max_id,
-    filter_hash: preview.filter_hash,
-    confirmation_token: preview.confirmation_token,
-    confirm: true,
-  })
-  return data
-}
-
-export const promptAuditActionAPI = {
-  updateConfig,
-  probeEndpoint,
-  deleteEvent,
-  batchDeleteEvents,
-  deleteEventsByFilter,
-}
+export const promptAuditActionDatasource = new PromptAuditActionDatasource()

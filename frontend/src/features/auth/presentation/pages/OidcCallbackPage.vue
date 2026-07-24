@@ -253,17 +253,15 @@ import PendingOAuthCreateAccountForm, {
 import { apiClient } from '@/core/networks/client'
 import { useAuthStore, useAppStore } from '@/stores'
 import {
-  completeOIDCOAuthRegistration,
-  exchangePendingOAuthCompletion,
   getOAuthCompletionKind,
-  getPublicSettings,
   isOAuthLoginCompletion,
-  login2FA,
   persistOAuthTokenContext,
   type OAuthAdoptionDecision,
   type OAuthTokenResponse,
-  type PendingOAuthExchangeResponse
-} from '@/features/auth/presentation/api'
+  type PendingOAuthExchangeResponse,
+} from '@/features/auth/presentation/utils/oauthUtils'
+import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
+import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
 import {
   clearAllAffiliateReferralCodes,
   loadOAuthAffiliateCode,

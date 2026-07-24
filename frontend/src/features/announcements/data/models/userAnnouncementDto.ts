@@ -1,30 +1,60 @@
-import type {
-  AnnouncementNotifyMode,
-  UserAnnouncement,
-} from '@/features/announcements/domain/models/announcement'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { UserAnnouncement } from '@/features/announcements/domain/models/userAnnouncement'
+import type { AnnouncementNotifyMode } from '@/features/announcements/domain/models/announcementNotifyMode'
 
-export interface UserAnnouncementDto {
-  id: number
-  title: string
-  content: string
-  notify_mode: AnnouncementNotifyMode
-  starts_at?: string
-  ends_at?: string
-  read_at?: string
-  created_at: string
-  updated_at: string
-}
+export class UserAnnouncementDto {
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  id!: number
 
-export function toEntity(dto: UserAnnouncementDto): UserAnnouncement {
-  return {
-    id: dto.id,
-    title: dto.title,
-    content: dto.content,
-    notifyMode: dto.notify_mode,
-    startsAt: dto.starts_at,
-    endsAt: dto.ends_at,
-    readAt: dto.read_at,
-    createdAt: dto.created_at,
-    updatedAt: dto.updated_at,
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  title!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  content!: string
+
+  @Expose({ name: 'notify_mode' })
+  @Transform(({ value }) => value ?? 'silent')
+  notifyMode!: AnnouncementNotifyMode
+
+  @Expose({ name: 'starts_at' })
+  @Transform(({ value }) => value ?? '')
+  startsAt!: string
+
+  @Expose({ name: 'ends_at' })
+  @Transform(({ value }) => value ?? '')
+  endsAt!: string
+
+  @Expose({ name: 'read_at' })
+  @Transform(({ value }) => value ?? '')
+  readAt!: string
+
+  @Expose({ name: 'created_at' })
+  @Transform(({ value }) => value ?? '')
+  createdAt!: string
+
+  @Expose({ name: 'updated_at' })
+  @Transform(({ value }) => value ?? '')
+  updatedAt!: string
+
+  static fromJson(json: unknown): UserAnnouncementDto {
+    return plainToInstance(UserAnnouncementDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): UserAnnouncement {
+    const entity = new UserAnnouncement()
+    entity.id = this.id
+    entity.title = this.title
+    entity.content = this.content
+    entity.notifyMode = this.notifyMode
+    entity.startsAt = this.startsAt
+    entity.endsAt = this.endsAt
+    entity.readAt = this.readAt
+    entity.createdAt = this.createdAt
+    entity.updatedAt = this.updatedAt
+    return entity
   }
 }

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useAppStore } from '@/core/stores/appStore'
-import { getPublicSettings } from '@/features/auth/data/datasources/authDatasource'
+import { getPublicSettings } from '@/features/auth/data/datasources/authQueryDatasource'
 import type { PublicSettings } from '@/types'
 
 function createDeferred<T>() {

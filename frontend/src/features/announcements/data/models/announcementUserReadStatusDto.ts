@@ -1,21 +1,44 @@
-import type { AnnouncementUserReadStatus } from '@/features/announcements/domain/models/announcement'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { AnnouncementUserReadStatus } from '@/features/announcements/domain/models/announcementUserReadStatus'
 
-export interface AnnouncementUserReadStatusDto {
-  user_id: number
-  email: string
-  username: string
-  balance: number
-  eligible: boolean
-  read_at?: string
-}
+export class AnnouncementUserReadStatusDto {
+  @Expose({ name: 'user_id' })
+  @Transform(({ value }) => value ?? 0)
+  userId!: number
 
-export function toEntity(dto: AnnouncementUserReadStatusDto): AnnouncementUserReadStatus {
-  return {
-    userId: dto.user_id,
-    email: dto.email,
-    username: dto.username,
-    balance: dto.balance ?? 0,
-    eligible: dto.eligible ?? false,
-    readAt: dto.read_at,
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  email!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  username!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  balance!: number
+
+  @Expose()
+  @Transform(({ value }) => value ?? false)
+  eligible!: boolean
+
+  @Expose({ name: 'read_at' })
+  @Transform(({ value }) => value ?? '')
+  readAt!: string
+
+  static fromJson(json: unknown): AnnouncementUserReadStatusDto {
+    return plainToInstance(AnnouncementUserReadStatusDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): AnnouncementUserReadStatus {
+    const entity = new AnnouncementUserReadStatus()
+    entity.userId = this.userId
+    entity.email = this.email
+    entity.username = this.username
+    entity.balance = this.balance
+    entity.eligible = this.eligible
+    entity.readAt = this.readAt
+    return entity
   }
 }

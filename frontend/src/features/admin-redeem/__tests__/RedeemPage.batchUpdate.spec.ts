@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 
 import RedeemPage from '@/features/admin-redeem/presentation/pages/RedeemPage.vue'
 
@@ -13,20 +14,29 @@ const { listRedeemCodes, batchUpdateRedeemCodes, getAllGroups, showSuccess, show
     showInfo: vi.fn()
   }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    redeem: {
-      list: listRedeemCodes,
-      generate: vi.fn(),
-      delete: vi.fn(),
-      batchDelete: vi.fn(),
-      batchUpdate: batchUpdateRedeemCodes,
-      exportCodes: vi.fn()
-    },
-    groups: {
-      getAll: getAllGroups
-    }
+vi.mock('@/features/admin-redeem/data/repositories/adminRedeemQueryRepositoryImpl', () => ({
+  adminRedeemQueryRepository: {
+    list: listRedeemCodes,
+    getById: vi.fn(),
+    getStats: vi.fn(),
+    exportCodes: vi.fn(),
   }
+}))
+
+vi.mock('@/features/admin-redeem/data/repositories/adminRedeemActionRepositoryImpl', () => ({
+  adminRedeemActionRepository: {
+    generate: vi.fn(),
+    deleteCode: vi.fn(),
+    batchDelete: vi.fn(),
+    batchUpdate: batchUpdateRedeemCodes,
+    expire: vi.fn(),
+  }
+}))
+
+vi.mock('@/features/admin-groups/presentation/composables/useAdminGroups', () => ({
+  useAdminGroups: () => ({
+    getAll: getAllGroups,
+  })
 }))
 
 vi.mock('@/core/stores/appStore', () => ({
@@ -101,6 +111,7 @@ const SelectStub = {
 
 describe('admin RedeemPage batch update', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
     localStorage.clear()
     document.body.innerHTML = ''
 
@@ -119,10 +130,17 @@ describe('admin RedeemPage batch update', () => {
           type: 'balance',
           value: 10,
           status: 'unused',
-          used_by: null,
-          used_at: null,
-          created_at: '2026-01-01T00:00:00Z',
-          expires_at: null
+          usedBy: null,
+          usedAt: null,
+          createdAt: '2026-01-01T00:00:00Z',
+          expiresAt: null,
+          maxUses: 0,
+          usedCount: 0,
+          maxUsesPerUser: 0,
+          updatedAt: '',
+          notes: '',
+          groupId: null,
+          validityDays: 0,
         },
         {
           id: 2,
@@ -130,10 +148,17 @@ describe('admin RedeemPage batch update', () => {
           type: 'balance',
           value: 20,
           status: 'unused',
-          used_by: null,
-          used_at: null,
-          created_at: '2026-01-01T00:00:00Z',
-          expires_at: null
+          usedBy: null,
+          usedAt: null,
+          createdAt: '2026-01-01T00:00:00Z',
+          expiresAt: null,
+          maxUses: 0,
+          usedCount: 0,
+          maxUsesPerUser: 0,
+          updatedAt: '',
+          notes: '',
+          groupId: null,
+          validityDays: 0,
         }
       ],
       total: 2,
@@ -178,9 +203,12 @@ describe('admin RedeemPage batch update', () => {
     await wrapper.get('[data-test="batch-update-form"]').trigger('submit')
     await flushPromises()
 
-    expect(batchUpdateRedeemCodes).toHaveBeenCalledWith([1], {
-      status: 'disabled',
-      notes: 'maintenance'
+    expect(batchUpdateRedeemCodes).toHaveBeenCalledWith({
+      ids: [1],
+      fields: {
+        status: 'disabled',
+        notes: 'maintenance'
+      }
     })
     expect(showSuccess).toHaveBeenCalledWith('admin.redeem.batchUpdateSuccess')
   })

@@ -1,17 +1,34 @@
-import type { TotpSetupResponse } from '@/features/profile/domain/models/totp'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { TotpSetupResponse } from '@/features/profile/domain/models/totpSetupResponse'
 
-export interface TotpSetupResponseDto {
-  secret: string
-  qr_code_url: string
-  setup_token: string
-  countdown: number
-}
+export class TotpSetupResponseDto {
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  secret!: string
 
-export function toEntity(dto: TotpSetupResponseDto): TotpSetupResponse {
-  return {
-    secret: dto.secret ?? '',
-    qrCodeUrl: dto.qr_code_url ?? '',
-    setupToken: dto.setup_token ?? '',
-    countdown: dto.countdown ?? 0,
+  @Expose({ name: 'qr_code_url' })
+  @Transform(({ value }) => value ?? '')
+  qrCodeUrl!: string
+
+  @Expose({ name: 'setup_token' })
+  @Transform(({ value }) => value ?? '')
+  setupToken!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  countdown!: number
+
+  static fromJson(json: unknown): TotpSetupResponseDto {
+    return plainToInstance(TotpSetupResponseDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): TotpSetupResponse {
+    const e = new TotpSetupResponse()
+    e.secret = this.secret
+    e.qrCodeUrl = this.qrCodeUrl
+    e.setupToken = this.setupToken
+    e.countdown = this.countdown
+    return e
   }
 }

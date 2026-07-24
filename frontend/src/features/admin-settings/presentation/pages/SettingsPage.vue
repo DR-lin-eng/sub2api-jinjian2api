@@ -7981,24 +7981,24 @@ import {
   deriveWeChatConnectStoredMode,
   normalizeDefaultSubscriptionSettings,
   resolveWeChatConnectModeCapabilities,
-} from "@/features/admin-settings/presentation/api";
+} from "@/features/admin-settings/presentation/utils/adminSettingsUtils";
 import type {
   AuthSourceDefaultsState,
   AuthSourceType,
-  ClientIPResolutionMode,
+  ClientIpResolutionMode as ClientIPResolutionMode,
   SystemSettings,
-  UpdateSettingsRequest,
-  DefaultSubscriptionSetting,
   DefaultPlatformQuotasMap,
-  OpenAIFastPolicyRule,
-  ThinkingDisplayMode,
-  WeChatConnectMode,
-  WebSearchEmulationConfig,
-  WebSearchProviderConfig,
-  WebSearchTestResult,
-  AdminApiKey,
-  AdminApiKeyScope,
-} from "@/features/admin-settings/presentation/api";
+  OpenAIFastPolicySettings,
+} from "@/features/admin-settings/domain/models/adminSettings";
+import type { DefaultSubscriptionSetting } from "@/features/admin-settings/domain/models/defaultSubscriptionSetting";
+import type { UpdateSettingsRequest } from "@/features/admin-settings/data/requests_models/updateSettingsRequest";
+import type { OpenAIFastPolicyRule } from "@/features/admin-settings/domain/models/openAIFastPolicyRule";
+import type { ThinkingDisplayMode } from "@/features/admin-settings/domain/models/streamTimeoutSettings";
+import type { AdminApiKey, AdminApiKeyScope } from "@/features/admin-settings/domain/models/adminApiKey";
+import type { WebSearchEmulationConfig } from "@/features/admin-settings/domain/models/webSearchEmulationConfig";
+import type { WebSearchProviderConfig } from "@/features/admin-settings/domain/models/webSearchProviderConfig";
+import type { WebSearchTestResult } from "@/features/admin-settings/domain/models/webSearchTestResult";
+import type { WeChatConnectMode } from "@/features/admin-settings/presentation/utils/adminSettingsUtils";
 import type {
   AdminGroup,
   LoginAgreementDocument,
@@ -8032,7 +8032,7 @@ import { affiliatesAPI, type AffiliateAdminEntry, type SimpleUser as AffiliateSi
 import { extractApiErrorMessage, extractI18nErrorMessage } from "@/core/utils/apiError";
 import { useAppStore } from "@/stores";
 import { useAdminSettingsStore } from "@/core/stores/adminSettingsStore";
-import { normalizeVisibleMethod } from "@/features/billing/presentation/paymentFlowResolver";
+import { normalizeVisibleMethod } from "@/features/billing/presentation/utils/paymentFlowResolver";
 import {
   isRegistrationEmailSuffixDomainValid,
   normalizeRegistrationEmailSuffixDomain,

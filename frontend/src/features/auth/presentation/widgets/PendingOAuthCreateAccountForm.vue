@@ -105,7 +105,8 @@ import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
 import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptchaWidget.vue'
-import { getPublicSettings, sendPendingOAuthVerifyCode } from '@/features/auth/data/datasources/authDatasource'
+import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
+import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
 import { useAppStore } from '@/stores'
 import {
   resolveHumanVerification,

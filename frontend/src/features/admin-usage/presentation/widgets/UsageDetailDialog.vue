@@ -157,7 +157,7 @@ import {
   buildUsageBillingCalculation,
   type UsageBillingCostLine,
 } from '@/core/utils/usageBillingCalculation'
-import type { AdminUsageLog } from '@/features/admin-usage/domain/models/adminUsage'
+import type { AdminUsageLog } from '@/features/admin-usage/domain/models/adminUsageLog'
 const props = defineProps<{
   show: boolean
   usage: AdminUsageLog | null

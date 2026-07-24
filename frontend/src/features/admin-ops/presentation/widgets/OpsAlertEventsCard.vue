@@ -5,12 +5,18 @@ import { useAppStore } from '@/core/stores/appStore'
 import Select from '@/common/widgets/forms/Select.vue'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import { opsAPI, type AlertEventsQuery } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import type { AlertEvent } from '@/features/admin-ops/presentation/opsTypeSignals'
-import { formatCompactNumber, formatDateTime, formatExactNumber } from '@/features/admin-ops/presentation/opsFormatter'
+import type { AlertEventsQuery } from '@/features/admin-ops/data/requests_models/alertEventsQuery'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
+import { useAdminOpsActionStore } from '@/features/admin-ops/presentation/stores/adminOpsActionStore'
+import type { AlertEvent } from '@/features/admin-ops/domain/models/alertEvent'
+import type { CreateAlertSilenceRequest } from '@/features/admin-ops/data/requests_models/createAlertSilenceRequest'
+import type { UpdateAlertEventStatusRequest } from '@/features/admin-ops/data/requests_models/updateAlertEventStatusRequest'
+import { formatCompactNumber, formatDateTime, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const actionStore = useAdminOpsActionStore()
 
 const PAGE_SIZE = 10
 
@@ -82,15 +88,15 @@ function buildQuery(overrides: Partial<AlertEventsQuery> = {}): AlertEventsQuery
   }
   if (severity.value) q.severity = severity.value
   if (status.value) q.status = status.value
-  if (emailSent.value === 'true') q.email_sent = true
-  if (emailSent.value === 'false') q.email_sent = false
+  if (emailSent.value === 'true') q.emailSent = true
+  if (emailSent.value === 'false') q.emailSent = false
   return { ...q, ...overrides }
 }
 
 async function loadFirstPage() {
   loading.value = true
   try {
-    const data = await opsAPI.listAlertEvents(buildQuery())
+    const data = await queryStore.listAlertEvents(buildQuery())
     events.value = data
     hasMore.value = data.length === PAGE_SIZE
   } catch (err: any) {
@@ -111,8 +117,8 @@ async function loadMore() {
 
   loadingMore.value = true
   try {
-    const data = await opsAPI.listAlertEvents(
-      buildQuery({ before_fired_at: last.fired_at || last.created_at, before_id: last.id })
+    const data = await queryStore.listAlertEvents(
+      buildQuery({ before_fired_at: last.firedAt || last.createdAt, before_id: last.id })
     )
     if (!data.length) {
       hasMore.value = false
@@ -156,9 +162,9 @@ function formatDurationMs(ms: number): string {
 }
 
 function formatDurationLabel(event: AlertEvent): string {
-  const firedAt = new Date(event.fired_at || event.created_at)
+  const firedAt = new Date(event.firedAt || event.createdAt)
   if (Number.isNaN(firedAt.getTime())) return '-'
-  const resolvedAtStr = event.resolved_at || null
+  const resolvedAtStr = event.resolvedAt || null
   const status = String(event.status || '').trim().toLowerCase()
 
   if (resolvedAtStr) {
@@ -201,7 +207,7 @@ async function openDetail(row: AlertEvent) {
   historyLoading.value = true
 
   try {
-    const detail = await opsAPI.getAlertEvent(row.id)
+    const detail = await queryStore.getAlertEvent(row.id)
     selected.value = detail
   } catch (err: any) {
     console.error('[OpsAlertEventsCard] Failed to load alert detail', err)
@@ -227,7 +233,7 @@ async function loadHistory() {
     const groupIdRaw = ev.dimensions?.groupId
     const groupId = typeof groupIdRaw === 'number' ? groupIdRaw : undefined
 
-    const items = await opsAPI.listAlertEvents({
+    const items = await queryStore.listAlertEvents({
       limit: 20,
       time_range: historyRange.value,
       platform: platform || undefined,
@@ -237,7 +243,7 @@ async function loadHistory() {
 
     // Best-effort: narrow to same rule_id + dimensions
     history.value = items.filter((it) => {
-      if (it.rule_id !== ev.rule_id) return false
+      if (it.ruleId !== ev.ruleId) return false
       const p1 = getDimensionString(it, 'platform')
       const p2 = getDimensionString(ev, 'platform')
       if ((p1 || '') !== (p2 || '')) return false
@@ -272,14 +278,15 @@ async function silenceAlert() {
     const groupId = typeof groupIdRaw === 'number' ? groupIdRaw : null
     const region = getDimensionString(ev, 'region') || null
 
-    await opsAPI.createAlertSilence({
-      rule_id: ev.rule_id,
+    const silenceReq: CreateAlertSilenceRequest = {
+      rule_id: ev.ruleId,
       platform: platform || '',
       group_id: groupId ?? undefined,
       region: region ?? undefined,
       until: durationToUntilRFC3339(silenceDuration.value),
       reason: `silence from UI (${silenceDuration.value})`
-    })
+    }
+    await actionStore.createAlertSilence(silenceReq)
 
     appStore.showSuccess(t('admin.ops.alertEvents.detail.silenceSuccess'))
   } catch (err: any) {
@@ -295,11 +302,12 @@ async function manualResolve() {
   if (detailActionLoading.value) return
   detailActionLoading.value = true
   try {
-    await opsAPI.updateAlertEventStatus(selected.value.id, 'manual_resolved')
+    const statusReq: UpdateAlertEventStatusRequest = { status: 'manual_resolved' }
+    await actionStore.updateAlertEventStatus(selected.value.id, statusReq)
     appStore.showSuccess(t('admin.ops.alertEvents.detail.manualResolvedSuccess'))
 
     // Refresh detail + first page to reflect new status
-    const detail = await opsAPI.getAlertEvent(selected.value.id)
+    const detail = await queryStore.getAlertEvent(selected.value.id)
     selected.value = detail
     await loadFirstPage()
     await loadHistory()
@@ -432,7 +440,7 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
               :title="row.title || ''"
             >
               <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-600 dark:text-gray-300">
-                {{ formatDateTime(row.fired_at || row.created_at) }}
+                {{ formatDateTime(row.firedAt || row.createdAt) }}
               </td>
               <td class="whitespace-nowrap px-4 py-3">
                 <div class="flex items-center gap-2">
@@ -448,7 +456,7 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
                 {{ getDimensionString(row, 'platform') || '-' }}
               </td>
               <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-600 dark:text-gray-300">
-                <span class="font-mono">#{{ row.rule_id }}</span>
+                <span class="font-mono">#{{ row.ruleId }}</span>
               </td>
               <td class="min-w-[260px] px-4 py-3 text-xs text-gray-700 dark:text-gray-200">
                 <div class="font-semibold truncate max-w-[360px]">{{ row.title || '-' }}</div>
@@ -465,10 +473,10 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
               <td class="whitespace-nowrap px-4 py-3 text-right text-xs">
                 <span
                   class="inline-flex items-center justify-end gap-1.5"
-                  :title="row.email_sent ? t('admin.ops.alertEvents.table.emailSent') : t('admin.ops.alertEvents.table.emailIgnored')"
+                  :title="row.emailSent ? t('admin.ops.alertEvents.table.emailSent') : t('admin.ops.alertEvents.table.emailIgnored')"
                 >
                   <Icon
-                    v-if="row.email_sent"
+                    v-if="row.emailSent"
                     name="checkCircle"
                     size="sm"
                     class="text-green-600 dark:text-green-400"
@@ -480,7 +488,7 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
                     class="text-gray-400 dark:text-gray-500"
                   />
                   <span class="text-[11px] font-bold text-gray-600 dark:text-gray-300">
-                    {{ row.email_sent ? t('admin.ops.alertEvents.table.emailSent') : t('admin.ops.alertEvents.table.emailIgnored') }}
+                    {{ row.emailSent ? t('admin.ops.alertEvents.table.emailSent') : t('admin.ops.alertEvents.table.emailIgnored') }}
                   </span>
                 </span>
               </td>
@@ -561,19 +569,19 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-900">
               <div class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ t('admin.ops.alertEvents.detail.firedAt') }}</div>
-              <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">{{ formatDateTime(selected.fired_at || selected.created_at) }}</div>
+              <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">{{ formatDateTime(selected.firedAt || selected.createdAt) }}</div>
             </div>
             <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-900">
               <div class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ t('admin.ops.alertEvents.detail.resolvedAt') }}</div>
-              <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">{{ selected.resolved_at ? formatDateTime(selected.resolved_at) : '-' }}</div>
+              <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">{{ selected.resolvedAt ? formatDateTime(selected.resolvedAt) : '-' }}</div>
             </div>
             <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-900">
               <div class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ t('admin.ops.alertEvents.detail.ruleId') }}</div>
               <div class="mt-1 flex flex-wrap items-center gap-2">
-                <div class="font-mono text-sm font-bold text-gray-900 dark:text-white">#{{ selected.rule_id }}</div>
+                <div class="font-mono text-sm font-bold text-gray-900 dark:text-white">#{{ selected.ruleId }}</div>
                 <a
                   class="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-[11px] font-bold text-gray-700 ring-1 ring-gray-200 hover:bg-gray-50 dark:bg-dark-800 dark:text-gray-200 dark:ring-dark-700 dark:hover:bg-dark-700"
-                  :href="`/admin/ops?open_alert_rules=1&alert_rule_id=${selected.rule_id}`"
+                  :href="`/admin/ops?open_alert_rules=1&alert_rule_id=${selected.ruleId}`"
                 >
                   <Icon name="externalLink" size="xs" />
                   {{ t('admin.ops.alertEvents.detail.viewRule') }}
@@ -624,7 +632,7 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
               </thead>
               <tbody class="divide-y divide-gray-100 dark:divide-dark-700">
                 <tr v-for="it in history" :key="it.id" class="hover:bg-gray-50 dark:hover:bg-dark-700/50">
-                  <td class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">{{ formatDateTime(it.fired_at || it.created_at) }}</td>
+                  <td class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">{{ formatDateTime(it.firedAt || it.createdAt) }}</td>
                   <td class="px-3 py-2 text-xs">
                     <span class="inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold ring-1 ring-inset" :class="statusBadgeClass(it.status)">
                       {{ formatStatusLabel(it.status) }}
@@ -632,11 +640,11 @@ const empty = computed(() => events.value.length === 0 && !loading.value)
                   </td>
                   <td class="px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
                     <span
-                      v-if="typeof it.metric_value === 'number' && typeof it.threshold_value === 'number'"
+                      v-if="typeof it.metricValue === 'number' && typeof it.thresholdValue === 'number'"
                       class="tabular-nums"
-                      :title="`${formatExactNumber(it.metric_value)} / ${formatExactNumber(it.threshold_value)}`"
+                      :title="`${formatExactNumber(it.metricValue)} / ${formatExactNumber(it.thresholdValue)}`"
                     >
-                      {{ formatCompactNumber(it.metric_value, 2) }} / {{ formatCompactNumber(it.threshold_value, 2) }}
+                      {{ formatCompactNumber(it.metricValue, 2) }} / {{ formatCompactNumber(it.thresholdValue, 2) }}
                     </span>
                     <span v-else>-</span>
                   </td>

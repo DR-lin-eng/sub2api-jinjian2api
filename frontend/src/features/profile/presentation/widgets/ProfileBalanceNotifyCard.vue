@@ -161,9 +161,10 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/core/stores/authStore'
 import { useAppStore } from '@/core/stores/appStore'
-import { userAPI } from '@/api'
+import { useProfileQueryStore } from '@/features/profile/presentation/stores/profileQueryStore'
+import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
-import type { NotifyEmailEntry } from '@/features/auth/domain/models/auth'
+import type { NotifyEmailEntry } from '@/types'
 const maxTotalEmails = 3
 
 interface PendingEmail {
@@ -187,6 +188,8 @@ const props = defineProps<{
 const { t } = useI18n()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const profileQuery = useProfileQueryStore()
+const profileAction = useProfileActionStore()
 
 const notifyEnabled = ref(props.enabled)
 const customThreshold = ref<number | null>(props.threshold)
@@ -227,7 +230,7 @@ onUnmounted(() => {
 
 const handleToggle = async () => {
   try {
-    const updated = await userAPI.updateProfile({ balance_notify_enabled: notifyEnabled.value })
+    const updated = await profileAction.updateProfile({ balance_notify_enabled: notifyEnabled.value })
     authStore.user = updated
   } catch (err: unknown) {
     appStore.showError(extractApiErrorMessage(err, t('common.error')))
@@ -239,7 +242,7 @@ const handleThresholdUpdate = async () => {
   savingThreshold.value = true
   try {
     const threshold = customThreshold.value && customThreshold.value > 0 ? customThreshold.value : 0
-    const updated = await userAPI.updateProfile({ balance_notify_threshold: threshold })
+    const updated = await profileAction.updateProfile({ balance_notify_threshold: threshold })
     authStore.user = updated
     appStore.showSuccess(t('common.saved'))
   } catch (err: unknown) {
@@ -252,7 +255,7 @@ const handleThresholdUpdate = async () => {
 async function handleEmailToggle(entry: NotifyEmailEntry) {
   const newDisabled = !entry.disabled
   try {
-    const updated = await userAPI.toggleNotifyEmail(entry.email, newDisabled)
+    const updated = await profileAction.toggleNotifyEmail(entry.email, newDisabled)
     authStore.user = updated
     emailEntries.value = [...updated.balanceNotifyExtraEmails]
   } catch (err: unknown) {
@@ -279,7 +282,7 @@ async function sendCodeFor(idx: number) {
   if (!pe) return
   pe.sending = true
   try {
-    await userAPI.sendNotifyEmailCode(pe.email)
+    await profileAction.sendNotifyEmailCode(pe.email)
     pe.codeSent = true
     pe.countdown = 60
     pe.timer = setInterval(() => {
@@ -302,11 +305,11 @@ async function verifyPending(idx: number) {
   if (!pe || !pe.code || pe.code.length !== 6) return
   pe.verifying = true
   try {
-    await userAPI.verifyNotifyEmail(pe.email, pe.code)
+    await profileAction.verifyNotifyEmail(pe.email, pe.code)
     if (pe.timer) clearInterval(pe.timer)
     pendingEmails.value.splice(idx, 1)
     appStore.showSuccess(t('profile.balanceNotify.verifySuccess'))
-    const updated = await userAPI.getProfile()
+    const updated = await profileQuery.getProfile()
     authStore.user = updated
     emailEntries.value = [...updated.balanceNotifyExtraEmails]
   } catch (err: unknown) {
@@ -318,9 +321,9 @@ async function verifyPending(idx: number) {
 
 const handleRemoveEmail = async (email: string) => {
   try {
-    await userAPI.removeNotifyEmail(email)
+    await profileAction.removeNotifyEmail(email)
     appStore.showSuccess(t('profile.balanceNotify.removeSuccess'))
-    const updated = await userAPI.getProfile()
+    const updated = await profileQuery.getProfile()
     authStore.user = updated
     emailEntries.value = [...updated.balanceNotifyExtraEmails]
   } catch (err: unknown) {
@@ -328,11 +331,10 @@ const handleRemoveEmail = async (email: string) => {
   }
 }
 
-// Verify saved unverified emails
 async function sendCodeForSaved(email: string) {
   sendingSavedCode.value = true
   try {
-    await userAPI.sendNotifyEmailCode(email)
+    await profileAction.sendNotifyEmailCode(email)
     verifyingEmail.value = email
     verifyCode.value = ''
     verifyCountdown.value = 60
@@ -356,12 +358,12 @@ async function verifySavedEmail(email: string) {
   if (!verifyCode.value || verifyCode.value.length !== 6) return
   verifyingSaved.value = true
   try {
-    await userAPI.verifyNotifyEmail(email, verifyCode.value)
+    await profileAction.verifyNotifyEmail(email, verifyCode.value)
     verifyingEmail.value = ''
     verifyCode.value = ''
     if (verifyTimer) { clearInterval(verifyTimer); verifyTimer = null }
     appStore.showSuccess(t('profile.balanceNotify.verifySuccess'))
-    const updated = await userAPI.getProfile()
+    const updated = await profileQuery.getProfile()
     authStore.user = updated
     emailEntries.value = [...updated.balanceNotifyExtraEmails]
   } catch (err: unknown) {

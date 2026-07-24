@@ -39,7 +39,7 @@ vi.mock('@/features/keys/data/datasources/keysDatasource', () => ({
   keysAPI: { list: vi.fn() },
 }))
 
-vi.mock('@/features/groups-user/data/datasources/groupsUserDatasource', () => ({
+vi.mock('@/features/groups-user/data/repositories/groupsUserQueryRepositoryImpl', () => ({
   userGroupsAPI: { getUserGroupRates: vi.fn() },
 }))
 

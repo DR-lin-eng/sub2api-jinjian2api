@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-full min-h-0 flex-col">
     <div class="flex min-h-0 flex-1 flex-col overflow-hidden" :class="flat ? '' : 'card'">
-      <IpGeoBatchToolbar :ips="rows.map((r) => r.client_ip)" @failed="emit('ipGeoBatchFailed')" />
+      <IpGeoBatchToolbar :ips="rows.map((r) => r.clientIp)" @failed="emit('ipGeoBatchFailed')" />
 
       <DataTable
         :columns="columns"
@@ -17,7 +17,7 @@
         <template #cell-created_at="{ row }">
           <span
             class="text-sm text-gray-600 dark:text-gray-400"
-            :title="row.requestId || row.client_request_id"
+            :title="row.requestId || row.clientRequestId"
           >{{ formatDateTime(row.createdAt) }}</span>
         </template>
 
@@ -46,8 +46,8 @@
 
         <template #cell-model="{ row }">
           <div v-if="hasModelMapping(row)" class="space-y-0.5 text-xs">
-            <div class="break-all font-medium text-gray-900 dark:text-white">{{ row.requested_model }}</div>
-            <div class="break-all text-gray-500 dark:text-gray-400"><span class="mr-0.5">↳</span>{{ row.upstream_model }}</div>
+            <div class="break-all font-medium text-gray-900 dark:text-white">{{ row.requestedModel }}</div>
+            <div class="break-all text-gray-500 dark:text-gray-400"><span class="mr-0.5">↳</span>{{ row.upstreamModel }}</div>
           </div>
           <span v-else-if="displayModel(row)" class="text-sm font-medium text-gray-900 dark:text-white">{{ displayModel(row) }}</span>
           <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
@@ -59,7 +59,7 @@
             class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200"
             :title="t('admin.ops.errorLog.id') + ' ' + row.groupId"
           >
-            {{ row.group_name || '#' + row.groupId }}
+            {{ row.groupName || '#' + row.groupId }}
           </span>
           <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
         </template>
@@ -67,24 +67,24 @@
         <template #cell-user="{ row }">
           <div v-if="row.userId" class="text-sm">
             <button
-              v-if="userClickable && row.user_email"
+              v-if="userClickable && row.userEmail"
               class="font-medium text-primary-600 underline decoration-dashed underline-offset-2 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
               :title="t('admin.usage.clickToViewBalance')"
-              @click.stop="emit('userClick', row.userId, row.user_email)"
+              @click.stop="emit('userClick', row.userId, row.userEmail)"
             >
-              {{ row.user_email }}
+              {{ row.userEmail }}
             </button>
-            <span v-else class="font-medium text-gray-900 dark:text-white">{{ row.user_email || '-' }}</span>
+            <span v-else class="font-medium text-gray-900 dark:text-white">{{ row.userEmail || '-' }}</span>
             <span class="ml-1 text-gray-500 dark:text-gray-400">#{{ row.userId }}</span>
           </div>
           <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
         </template>
 
         <template #cell-api_key="{ row }">
-          <div v-if="row.apiKeyId || row.api_key_name" class="text-sm">
-            <span class="text-gray-900 dark:text-white">{{ row.api_key_name || '#' + row.apiKeyId }}</span>
+          <div v-if="row.apiKeyId || row.apiKeyName" class="text-sm">
+            <span class="text-gray-900 dark:text-white">{{ row.apiKeyName || '#' + row.apiKeyId }}</span>
             <span
-              v-if="row.api_key_deleted"
+              v-if="row.apiKeyDeleted"
               class="ml-1 inline-flex items-center rounded px-1 py-px text-[10px] font-medium leading-tight bg-rose-100 text-rose-600 ring-1 ring-inset ring-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:ring-rose-500/30"
             >{{ t('admin.ops.errorLog.keyDeletedBadge') }}</span>
           </div>
@@ -96,7 +96,7 @@
             v-if="row.accountId"
             class="text-sm text-gray-900 dark:text-white"
             :title="t('admin.ops.errorLog.accountId') + ' ' + row.accountId"
-          >{{ row.account_name || '#' + row.accountId }}</span>
+          >{{ row.accountName || '#' + row.accountId }}</span>
           <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
         </template>
 
@@ -142,9 +142,9 @@
 
         <template #cell-client_ip="{ row }">
           <div @click.stop>
-            <div v-if="row.client_ip">
-              <span class="text-sm font-mono text-gray-600 dark:text-gray-400">{{ row.client_ip }}</span>
-              <IpGeoCell :ip="row.client_ip" />
+            <div v-if="row.clientIp">
+              <span class="text-sm font-mono text-gray-600 dark:text-gray-400">{{ row.clientIp }}</span>
+              <IpGeoCell :ip="row.clientIp" />
             </div>
             <span v-else class="text-sm text-gray-400 dark:text-gray-500">-</span>
           </div>
@@ -186,9 +186,9 @@ import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import IpGeoCell from '@/common/widgets/data/IpGeoCell.vue'
 import IpGeoBatchToolbar from '@/common/widgets/data/IpGeoBatchToolbar.vue'
-import type { OpsErrorLog } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
+import type { OpsErrorLog } from '@/features/admin-ops/domain/models/opsErrorLog'
 import type { Column } from '@/common/types/uiTypes'
-import { getSeverityClass, formatDateTime } from '@/features/admin-ops/presentation/opsFormatter'
+import { getSeverityClass, formatDateTime } from '@/features/admin-ops/presentation/utils/opsFormatter'
 import { mapErrorCategory } from '@/core/utils/errorCategory'
 import { mapErrorSortKey, statusCodeBadgeClass } from '@/core/utils/errorBadges'
 
@@ -223,20 +223,20 @@ const columns = computed<Column[]>(() =>
 
 function isUpstreamRow(log: OpsErrorLog): boolean {
   const phase = String(log.phase || '').toLowerCase()
-  const owner = String(log.error_owner || '').toLowerCase()
+  const owner = String(log.errorOwner || '').toLowerCase()
   return phase === 'upstream' && owner === 'provider'
 }
 
 function hasModelMapping(log: OpsErrorLog): boolean {
-  const requested = String(log.requested_model || '').trim()
-  const upstream = String(log.upstream_model || '').trim()
+  const requested = String(log.requestedModel || '').trim()
+  const upstream = String(log.upstreamModel || '').trim()
   return !!requested && !!upstream && requested !== upstream
 }
 
 function displayModel(log: OpsErrorLog): string {
-  const upstream = String(log.upstream_model || '').trim()
+  const upstream = String(log.upstreamModel || '').trim()
   if (upstream) return upstream
-  const requested = String(log.requested_model || '').trim()
+  const requested = String(log.requestedModel || '').trim()
   if (requested) return requested
   return String(log.model || '').trim()
 }
@@ -253,7 +253,7 @@ function formatRequestType(type: number | null | undefined): string {
 // 徽章配色对齐用量明细(UsageTable)的 bg-X-100/text-X-800 体系
 function getTypeBadge(log: OpsErrorLog): { label: string; className: string } {
   const phase = String(log.phase || '').toLowerCase()
-  const owner = String(log.error_owner || '').toLowerCase()
+  const owner = String(log.errorOwner || '').toLowerCase()
 
   if (isUpstreamRow(log)) {
     return { label: t('admin.ops.errorLog.typeUpstream'), className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }

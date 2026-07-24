@@ -1,41 +1,94 @@
-import type { RedeemCode, RedeemCodeType } from '@/features/admin-redeem/domain/models/redeem'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { RedeemCode } from '@/features/admin-redeem/domain/models/redeemCode'
 
-export interface RedeemCodeDto {
-  id: number
-  code: string
-  type: RedeemCodeType
-  value: number
-  status: 'active' | 'used' | 'expired' | 'unused' | 'disabled'
-  max_uses: number
-  used_count: number
-  max_uses_per_user: number
-  used_by: number | null
-  used_at: string | null
-  created_at: string
-  expires_at?: string | null
-  updated_at?: string
-  notes?: string
-  group_id?: number | null
-  validity_days?: number
-}
+export class RedeemCodeDto {
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  id!: number
 
-export function toEntity(dto: RedeemCodeDto): RedeemCode {
-  return {
-    id: dto.id,
-    code: dto.code,
-    type: dto.type,
-    value: dto.value,
-    status: dto.status,
-    maxUses: dto.max_uses ?? 0,
-    usedCount: dto.used_count ?? 0,
-    maxUsesPerUser: dto.max_uses_per_user ?? 0,
-    usedBy: dto.used_by ?? null,
-    usedAt: dto.used_at ?? null,
-    createdAt: dto.created_at,
-    expiresAt: dto.expires_at ?? null,
-    updatedAt: dto.updated_at,
-    notes: dto.notes,
-    groupId: dto.group_id ?? null,
-    validityDays: dto.validity_days,
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  code!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? 'balance')
+  type!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  value!: number
+
+  @Expose()
+  @Transform(({ value }) => value ?? 'unused')
+  status!: string
+
+  @Expose({ name: 'max_uses' })
+  @Transform(({ value }) => value ?? 0)
+  maxUses!: number
+
+  @Expose({ name: 'used_count' })
+  @Transform(({ value }) => value ?? 0)
+  usedCount!: number
+
+  @Expose({ name: 'max_uses_per_user' })
+  @Transform(({ value }) => value ?? 0)
+  maxUsesPerUser!: number
+
+  @Expose({ name: 'used_by' })
+  @Transform(({ value }) => value ?? null)
+  usedBy!: number | null
+
+  @Expose({ name: 'used_at' })
+  @Transform(({ value }) => value ?? null)
+  usedAt!: string | null
+
+  @Expose({ name: 'created_at' })
+  @Transform(({ value }) => value ?? '')
+  createdAt!: string
+
+  @Expose({ name: 'expires_at' })
+  @Transform(({ value }) => value ?? null)
+  expiresAt!: string | null
+
+  @Expose({ name: 'updated_at' })
+  @Transform(({ value }) => value ?? '')
+  updatedAt!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  notes!: string
+
+  @Expose({ name: 'group_id' })
+  @Transform(({ value }) => value ?? null)
+  groupId!: number | null
+
+  @Expose({ name: 'validity_days' })
+  @Transform(({ value }) => value ?? 0)
+  validityDays!: number
+
+  static fromJson(json: unknown): RedeemCodeDto {
+    return plainToInstance(RedeemCodeDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): RedeemCode {
+    const entity = new RedeemCode()
+    entity.id = this.id
+    entity.code = this.code
+    entity.type = this.type as RedeemCode['type']
+    entity.value = this.value
+    entity.status = this.status as RedeemCode['status']
+    entity.maxUses = this.maxUses
+    entity.usedCount = this.usedCount
+    entity.maxUsesPerUser = this.maxUsesPerUser
+    entity.usedBy = this.usedBy
+    entity.usedAt = this.usedAt
+    entity.createdAt = this.createdAt
+    entity.expiresAt = this.expiresAt
+    entity.updatedAt = this.updatedAt
+    entity.notes = this.notes
+    entity.groupId = this.groupId
+    entity.validityDays = this.validityDays
+    return entity
   }
 }

@@ -1,21 +1,44 @@
-import type { SubscriptionSummaryItem } from '@/features/subscriptions/domain/models/subscriptionSummaryItem'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { SubscriptionSummaryItem } from '@/features/subscriptions/domain/models/subscriptionSummaryItem'
 
-export interface SubscriptionSummaryItemDto {
-  id: number
-  group_id: number
-  group_name?: string
-  status: string
-  expires_at: string | null
-  starts_at: string
-}
+export class SubscriptionSummaryItemDto {
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  id!: number
 
-export function toEntity(dto: SubscriptionSummaryItemDto): SubscriptionSummaryItem {
-  return {
-    id: dto.id ?? 0,
-    groupId: dto.group_id ?? 0,
-    groupName: dto.group_name,
-    status: dto.status ?? '',
-    expiresAt: dto.expires_at ?? null,
-    startsAt: dto.starts_at ?? '',
+  @Expose({ name: 'group_id' })
+  @Transform(({ value }) => value ?? 0)
+  groupId!: number
+
+  @Expose({ name: 'group_name' })
+  @Transform(({ value }) => value ?? '')
+  groupName!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  status!: string
+
+  @Expose({ name: 'expires_at' })
+  @Transform(({ value }) => value ?? '')
+  expiresAt!: string
+
+  @Expose({ name: 'starts_at' })
+  @Transform(({ value }) => value ?? '')
+  startsAt!: string
+
+  static fromJson(json: unknown): SubscriptionSummaryItemDto {
+    return plainToInstance(SubscriptionSummaryItemDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): SubscriptionSummaryItem {
+    const entity = new SubscriptionSummaryItem()
+    entity.id = this.id
+    entity.groupId = this.groupId
+    entity.groupName = this.groupName
+    entity.status = this.status
+    entity.expiresAt = this.expiresAt
+    entity.startsAt = this.startsAt
+    return entity
   }
 }

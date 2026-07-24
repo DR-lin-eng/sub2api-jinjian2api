@@ -1,19 +1,37 @@
-import type { ProxyAccountSummary } from '@/features/admin-proxies/domain/models/proxy'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
 import type { AccountPlatform, AccountType } from '@/types'
-export interface ProxyAccountSummaryDto {
-  id: number
-  name: string
-  platform: AccountPlatform
-  type: AccountType
-  notes?: string | null
-}
+import { ProxyAccountSummary } from '@/features/admin-proxies/domain/models/proxyAccountSummary'
 
-export function toEntity(dto: ProxyAccountSummaryDto): ProxyAccountSummary {
-  return {
-    id: dto.id ?? 0,
-    name: dto.name ?? '',
-    platform: dto.platform,
-    type: dto.type,
-    notes: dto.notes,
+export class ProxyAccountSummaryDto {
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  id!: number
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  name!: string
+
+  @Expose()
+  platform!: AccountPlatform
+
+  @Expose()
+  type!: AccountType
+
+  @Expose()
+  notes?: string
+
+  static fromJson(json: unknown): ProxyAccountSummaryDto {
+    return plainToInstance(ProxyAccountSummaryDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): ProxyAccountSummary {
+    const entity = new ProxyAccountSummary()
+    entity.id = this.id
+    entity.name = this.name
+    entity.platform = this.platform
+    entity.type = this.type
+    entity.notes = this.notes
+    return entity
   }
 }

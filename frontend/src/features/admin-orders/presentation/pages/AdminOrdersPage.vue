@@ -121,7 +121,7 @@ import { useAppStore } from '@/core/stores/appStore'
 import { useAdminOrdersQueryStore } from '@/features/admin-orders/presentation/stores/adminOrdersQueryStore'
 import { useAdminOrdersActionStore } from '@/features/admin-orders/presentation/stores/adminOrdersActionStore'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
-import { formatOrderDateTime } from '@/features/billing/presentation/orderUtilsFormatter'
+import { formatOrderDateTime } from '@/features/billing/presentation/utils/orderUtilsFormatter'
 import type { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
 import type { RefundOrderRequest } from '@/features/admin-orders/data/requests_models/refundOrderRequest'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
@@ -132,7 +132,7 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 import AdminRefundDialog from '@/features/admin-orders/presentation/widgets/AdminRefundDialog.vue'
 import OrderStatusBadge from '@/features/billing/presentation/widgets/OrderStatusBadge.vue'
 import OrderTable from '@/features/billing/presentation/widgets/OrderTable.vue'
-import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
+import { currencySymbol } from '@/features/billing/presentation/utils/currencyFormatter'
 
 interface AuditLog {
   id: number

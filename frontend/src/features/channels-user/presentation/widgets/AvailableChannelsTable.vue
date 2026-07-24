@@ -95,8 +95,8 @@
                   <GroupBadge
                     :name="g.name"
                     :platform="g.platform as GroupPlatform"
-                    :subscription-type="(g.subscription_type || 'standard') as SubscriptionType"
-                    :rate-multiplier="g.rate_multiplier"
+                    :subscription-type="(g.subscriptionType || 'standard') as SubscriptionType"
+                    :rate-multiplier="g.rateMultiplier"
                     :user-rate-multiplier="userGroupRates[g.id] ?? null"
                     always-show-rate
                   />
@@ -129,8 +129,8 @@
                   <GroupBadge
                     :name="g.name"
                     :platform="g.platform as GroupPlatform"
-                    :subscription-type="(g.subscription_type || 'standard') as SubscriptionType"
-                    :rate-multiplier="g.rate_multiplier"
+                    :subscription-type="(g.subscriptionType || 'standard') as SubscriptionType"
+                    :rate-multiplier="g.rateMultiplier"
                     :user-rate-multiplier="userGroupRates[g.id] ?? null"
                     always-show-rate
                   />
@@ -152,7 +152,7 @@
           <td class="align-top px-4 py-3">
             <div class="flex flex-wrap gap-1">
               <SupportedModelChip
-                v-for="m in section.supported_models"
+                v-for="m in section.supportedModels"
                 :key="`${section.platform}-${m.name}`"
                 :model="m"
                 :pricing-key-prefix="pricingKeyPrefix"
@@ -160,7 +160,7 @@
                 :show-platform="false"
                 :platform-hint="section.platform"
               />
-              <span v-if="section.supported_models.length === 0" class="text-xs text-gray-400">
+              <span v-if="section.supportedModels.length === 0" class="text-xs text-gray-400">
                 {{ noModelsLabel }}
               </span>
             </div>
@@ -177,7 +177,9 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import SupportedModelChip from './SupportedModelChip.vue'
-import type { UserAvailableChannel, UserAvailableGroup, UserChannelPlatformSection } from '@/features/channels-user/data/datasources/channelsUserDatasource'
+import type { UserAvailableChannel } from '@/features/channels-user/domain/models/userAvailableChannel'
+import type { UserAvailableGroup } from '@/features/channels-user/domain/models/userAvailableGroup'
+import type { UserChannelPlatformSection } from '@/features/channels-user/domain/models/userChannelPlatformSection'
 import { platformBadgeClass } from '@/core/utils/platformColors'
 import { useAppStore } from '@/core/stores/appStore'
 import { hasPeakRate as groupHasPeakRate, formatPeakRateWindow, serverTimezoneLabel } from '@/core/utils/peak-rate'
@@ -208,21 +210,21 @@ void props.userGroupRates
 const { t } = useI18n()
 
 function exclusiveGroups(section: UserChannelPlatformSection): UserAvailableGroup[] {
-  return section.groups.filter((g) => g.is_exclusive)
+  return section.groups.filter((g) => g.isExclusive)
 }
 
 function publicGroups(section: UserChannelPlatformSection): UserAvailableGroup[] {
-  return section.groups.filter((g) => !g.is_exclusive)
+  return section.groups.filter((g) => !g.isExclusive)
 }
 
 const appStore = useAppStore()
 
 function toPeakRateFields(group: UserAvailableGroup) {
   return {
-    peakRateEnabled: group.peak_rate_enabled,
-    peakStart: group.peak_start,
-    peakEnd: group.peak_end,
-    peakRateMultiplier: group.peak_rate_multiplier,
+    peakRateEnabled: group.peakRateEnabled,
+    peakStart: group.peakStart,
+    peakEnd: group.peakEnd,
+    peakRateMultiplier: group.peakRateMultiplier,
   }
 }
 

@@ -1,19 +1,45 @@
-import type { RedeemCodeResult } from '@/features/billing/domain/models/redeem'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { RedeemCodeResult } from '@/features/billing/domain/models/redeemCodeResult'
 
-export interface RedeemCodeResultDto {
-  message: string
-  type: string
-  value: number
-  new_balance?: number
-  new_concurrency?: number
-}
+export class RedeemCodeResultDto {
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  message!: string
 
-export function toEntity(dto: RedeemCodeResultDto): RedeemCodeResult {
-  return {
-    message: dto.message ?? '',
-    type: dto.type ?? '',
-    value: dto.value ?? 0,
-    newBalance: dto.new_balance,
-    newConcurrency: dto.new_concurrency,
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  type!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  value!: number
+
+  @Expose({ name: 'new_balance' })
+  newBalance?: number
+
+  @Expose({ name: 'new_concurrency' })
+  newConcurrency?: number
+
+  @Expose({ name: 'group_name' })
+  groupName?: string
+
+  @Expose({ name: 'validity_days' })
+  validityDays?: number
+
+  static fromJson(json: unknown): RedeemCodeResultDto {
+    return plainToInstance(RedeemCodeResultDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): RedeemCodeResult {
+    const entity = new RedeemCodeResult()
+    entity.message = this.message
+    entity.type = this.type
+    entity.value = this.value
+    entity.newBalance = this.newBalance
+    entity.newConcurrency = this.newConcurrency
+    entity.groupName = this.groupName
+    entity.validityDays = this.validityDays
+    return entity
   }
 }

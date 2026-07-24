@@ -1,65 +1,141 @@
-import type { Proxy } from '@/features/admin-proxies/domain/models/proxy'
-import type { ProxyProtocol } from '@/features/admin-proxies/domain/models/proxy'
-export interface ProxyDto {
-  id: number
-  name: string
-  protocol: ProxyProtocol
-  host: string
-  port: number
-  username: string | null
-  password?: string | null
-  status: 'active' | 'inactive' | 'expired'
-  account_count?: number
-  latency_ms?: number
-  latency_status?: 'success' | 'failed'
-  latency_message?: string
-  ip_address?: string
-  country?: string
-  country_code?: string
-  region?: string
-  city?: string
-  quality_status?: 'healthy' | 'warn' | 'challenge' | 'failed'
-  quality_score?: number
-  quality_grade?: string
-  quality_summary?: string
-  quality_checked?: number
-  expires_at: string | null
-  fallback_mode: 'none' | 'proxy' | 'direct'
-  backup_proxy_id?: number | null
-  expiry_warn_days: number
-  created_at: string
-  updated_at: string
-}
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { Proxy } from '@/features/admin-proxies/domain/models/proxy'
+import type { ProxyProtocol, ProxyStatus, ProxyFallbackMode } from '@/features/admin-proxies/domain/models/proxy'
 
-export function toEntity(dto: ProxyDto): Proxy {
-  return {
-    id: dto.id ?? 0,
-    name: dto.name ?? '',
-    protocol: dto.protocol ?? 'http',
-    host: dto.host ?? '',
-    port: dto.port ?? 0,
-    username: dto.username ?? null,
-    password: dto.password,
-    status: dto.status ?? 'inactive',
-    accountCount: dto.account_count,
-    latencyMs: dto.latency_ms,
-    latencyStatus: dto.latency_status,
-    latencyMessage: dto.latency_message,
-    ipAddress: dto.ip_address,
-    country: dto.country,
-    countryCode: dto.country_code,
-    region: dto.region,
-    city: dto.city,
-    qualityStatus: dto.quality_status,
-    qualityScore: dto.quality_score,
-    qualityGrade: dto.quality_grade,
-    qualitySummary: dto.quality_summary,
-    qualityChecked: dto.quality_checked,
-    expiresAt: dto.expires_at ?? null,
-    fallbackMode: dto.fallback_mode ?? 'none',
-    backupProxyId: dto.backup_proxy_id,
-    expiryWarnDays: dto.expiry_warn_days ?? 0,
-    createdAt: dto.created_at ?? '',
-    updatedAt: dto.updated_at ?? '',
+export class ProxyDto {
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  id!: number
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  name!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? 'http')
+  protocol!: ProxyProtocol
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  host!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  port!: number
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  username!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  password!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? 'inactive')
+  status!: ProxyStatus
+
+  @Expose({ name: 'account_count' })
+  accountCount?: number
+
+  @Expose({ name: 'latency_ms' })
+  latencyMs?: number
+
+  @Expose({ name: 'latency_status' })
+  latencyStatus?: 'success' | 'failed'
+
+  @Expose({ name: 'latency_message' })
+  latencyMessage?: string
+
+  @Expose({ name: 'ip_address' })
+  ipAddress?: string
+
+  @Expose()
+  country?: string
+
+  @Expose({ name: 'country_code' })
+  countryCode?: string
+
+  @Expose()
+  region?: string
+
+  @Expose()
+  city?: string
+
+  @Expose({ name: 'quality_status' })
+  qualityStatus?: 'healthy' | 'warn' | 'challenge' | 'failed'
+
+  @Expose({ name: 'quality_score' })
+  qualityScore?: number
+
+  @Expose({ name: 'quality_grade' })
+  qualityGrade?: string
+
+  @Expose({ name: 'quality_summary' })
+  qualitySummary?: string
+
+  @Expose({ name: 'quality_checked' })
+  qualityChecked?: number
+
+  @Expose({ name: 'expires_at' })
+  @Transform(({ value }) => value ?? '')
+  expiresAt!: string
+
+  @Expose({ name: 'fallback_mode' })
+  @Transform(({ value }) => value ?? 'none')
+  fallbackMode!: ProxyFallbackMode
+
+  @Expose({ name: 'backup_proxy_id' })
+  @Transform(({ value }) => value ?? 0)
+  backupProxyId!: number
+
+  @Expose({ name: 'expiry_warn_days' })
+  @Transform(({ value }) => value ?? 0)
+  expiryWarnDays!: number
+
+  @Expose({ name: 'created_at' })
+  @Transform(({ value }) => value ?? '')
+  createdAt!: string
+
+  @Expose({ name: 'updated_at' })
+  @Transform(({ value }) => value ?? '')
+  updatedAt!: string
+
+  static fromJson(json: unknown): ProxyDto {
+    return plainToInstance(ProxyDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): Proxy {
+    const entity = new Proxy()
+    entity.id = this.id
+    entity.name = this.name
+    entity.protocol = this.protocol
+    entity.host = this.host
+    entity.port = this.port
+    entity.username = this.username
+    entity.password = this.password
+    entity.status = this.status
+    entity.accountCount = this.accountCount
+    entity.latencyMs = this.latencyMs
+    entity.latencyStatus = this.latencyStatus
+    entity.latencyMessage = this.latencyMessage
+    entity.ipAddress = this.ipAddress
+    entity.country = this.country
+    entity.countryCode = this.countryCode
+    entity.region = this.region
+    entity.city = this.city
+    entity.qualityStatus = this.qualityStatus
+    entity.qualityScore = this.qualityScore
+    entity.qualityGrade = this.qualityGrade
+    entity.qualitySummary = this.qualitySummary
+    entity.qualityChecked = this.qualityChecked
+    entity.expiresAt = this.expiresAt
+    entity.fallbackMode = this.fallbackMode
+    entity.backupProxyId = this.backupProxyId
+    entity.expiryWarnDays = this.expiryWarnDays
+    entity.createdAt = this.createdAt
+    entity.updatedAt = this.updatedAt
+    return entity
   }
 }

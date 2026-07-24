@@ -6,7 +6,11 @@ import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { adminAPI } from '@/api'
-import { opsAPI, type OpsDashboardOverview, type OpsMetricThresholds, type OpsRealtimeTrafficSummary } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
+import type { OpsDashboardOverview } from '@/features/admin-ops/domain/models/opsDashboardOverview'
+import type { OpsMetricThresholds } from '@/features/admin-ops/domain/models/opsMetricThresholds'
+import type { OpsRealtimeTrafficSummaryResponse } from '@/features/admin-ops/domain/models/opsRealtimeTrafficSummaryResponse'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
 import type { OpsRequestDetailsPreset } from '@/features/admin-ops/presentation/widgets/OpsRequestDetailsDialog.vue'
 import { useAdminSettingsStore } from '@/stores'
 import { formatBytes } from '@/core/utils/format'
@@ -15,7 +19,7 @@ import {
   formatDurationMs,
   formatExactDurationMs,
   formatExactNumber
-} from '@/features/admin-ops/presentation/opsFormatter'
+} from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 type RealtimeWindow = '1min' | '5min' | '30min' | '1h'
 
@@ -228,7 +232,7 @@ type ThresholdLevel = 'normal' | 'warning' | 'critical'
 
 function getSLAThresholdLevel(slaPercent: number | null): ThresholdLevel {
   if (slaPercent == null) return 'normal'
-  const threshold = props.thresholds?.sla_percent_min
+  const threshold = props.thresholds?.slaPercentMin
   if (threshold == null) return 'normal'
 
   // SLA is "higher is better":
@@ -243,7 +247,7 @@ function getSLAThresholdLevel(slaPercent: number | null): ThresholdLevel {
 
 function getTTFTThresholdLevel(ttftMs: number | null): ThresholdLevel {
   if (ttftMs == null) return 'normal'
-  const threshold = props.thresholds?.ttft_p99_ms_max
+  const threshold = props.thresholds?.ttftP99MsMax
   if (threshold == null) return 'normal'
   if (ttftMs >= threshold) return 'critical'
   if (ttftMs >= threshold * 0.8) return 'warning'
@@ -252,7 +256,7 @@ function getTTFTThresholdLevel(ttftMs: number | null): ThresholdLevel {
 
 function getRequestErrorRateThresholdLevel(errorRatePercent: number | null): ThresholdLevel {
   if (errorRatePercent == null) return 'normal'
-  const threshold = props.thresholds?.request_error_rate_percent_max
+  const threshold = props.thresholds?.requestErrorRatePercentMax
   if (threshold == null) return 'normal'
   if (errorRatePercent >= threshold) return 'critical'
   if (errorRatePercent >= threshold * 0.8) return 'warning'
@@ -261,7 +265,7 @@ function getRequestErrorRateThresholdLevel(errorRatePercent: number | null): Thr
 
 function getUpstreamErrorRateThresholdLevel(upstreamErrorRatePercent: number | null): ThresholdLevel {
   if (upstreamErrorRatePercent == null) return 'normal'
-  const threshold = props.thresholds?.upstream_error_rate_percent_max
+  const threshold = props.thresholds?.upstreamErrorRatePercentMax
   if (threshold == null) return 'normal'
   if (upstreamErrorRatePercent >= threshold) return 'critical'
   if (upstreamErrorRatePercent >= threshold * 0.8) return 'warning'
@@ -308,7 +312,7 @@ async function loadRealtimeTrafficSummary() {
   }
   realtimeTrafficLoading.value = true
   try {
-    const res = await opsAPI.getRealtimeTrafficSummary(realtimeWindow.value, props.platform, props.groupId)
+    const res = await queryStore.getRealtimeTrafficSummary(realtimeWindow.value, props.platform, props.groupId)
     if (res && res.enabled === false) {
       adminSettingsStore.setOpsRealtimeMonitoringEnabledLocal(false)
     }
@@ -819,7 +823,7 @@ const jobsStatus = computed<'ok' | 'warn' | 'unknown'>(() => {
   if (!list.length) return 'unknown'
   for (const hb of list) {
     if (!hb) continue
-    if (hb.last_error_at && (!hb.last_success_at || hb.last_error_at > hb.last_success_at)) return 'warn'
+    if (hb.lastError_at && (!hb.last_success_at || hb.lastError_at > hb.last_success_at)) return 'warn'
   }
   return 'ok'
 })
@@ -828,7 +832,7 @@ const jobsWarnCount = computed(() => {
   let warn = 0
   for (const hb of jobHeartbeats.value) {
     if (!hb) continue
-    if (hb.last_error_at && (!hb.last_success_at || hb.last_error_at > hb.last_success_at)) warn++
+    if (hb.lastError_at && (!hb.last_success_at || hb.lastError_at > hb.last_success_at)) warn++
   }
   return warn
 })
@@ -1571,7 +1575,7 @@ function handleToolbarRefresh() {
                 class="font-mono tabular-nums"
                 :title="formatExactDurationMs(hb.last_duration_ms)"
               >{{ formatDurationMs(hb.last_duration_ms) }}</span>
-              <span>{{ formatTimeShort(hb.updated_at) }}</span>
+              <span>{{ formatTimeShort(hb.updatedAt) }}</span>
             </div>
           </div>
 
@@ -1580,7 +1584,7 @@ function handleToolbarRefresh() {
               {{ t('admin.ops.lastSuccess') }} <span class="font-mono">{{ formatTimeShort(hb.last_success_at) }}</span>
             </div>
             <div>
-              {{ t('admin.ops.lastError') }} <span class="font-mono">{{ formatTimeShort(hb.last_error_at) }}</span>
+              {{ t('admin.ops.lastError') }} <span class="font-mono">{{ formatTimeShort(hb.lastError_at) }}</span>
             </div>
             <div>
               {{ t('admin.ops.result') }} <span class="font-mono">{{ hb.last_result || '-' }}</span>
@@ -1588,10 +1592,10 @@ function handleToolbarRefresh() {
           </div>
 
           <div
-            v-if="hb.last_error"
+            v-if="hb.lastError"
             class="mt-3 rounded-lg bg-rose-50 p-2 text-xs text-rose-700 dark:bg-rose-900/20 dark:text-rose-300"
           >
-            {{ hb.last_error }}
+            {{ hb.lastError }}
           </div>
         </div>
       </div>

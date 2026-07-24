@@ -3,8 +3,10 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Select from '@/common/widgets/forms/Select.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
-import { opsAPI, type OpsOpenAITokenStatsResponse, type OpsOpenAITokenStatsTimeRange } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import { formatCompactNumber, formatDurationMs, formatExactDurationMs, formatExactNumber } from '@/features/admin-ops/presentation/opsFormatter'
+import type { OpsOpenAITokenStats } from '@/features/admin-ops/domain/models/opsOpenAITokenStats'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
+import { formatCompactNumber, formatDurationMs, formatExactDurationMs, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 interface Props {
   platformFilter?: string
@@ -94,11 +96,11 @@ async function loadData() {
   loading.value = true
   errorMessage.value = ''
   try {
-    response.value = await opsAPI.getOpenAITokenStats(buildParams())
+    response.value = await queryStore.getOpenAITokenStats(buildParams())
     // 防御：若 total 变化导致当前页超出最大页，则回退到末页并重新拉取一次。
     if (viewMode.value === 'pagination' && page.value > totalPages.value) {
       page.value = totalPages.value
-      response.value = await opsAPI.getOpenAITokenStats(buildParams())
+      response.value = await queryStore.getOpenAITokenStats(buildParams())
     }
   } catch (err: any) {
     console.error('[OpsOpenAITokenStatsCard] Failed to load data', err)

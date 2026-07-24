@@ -11,23 +11,21 @@ import { defineStore } from 'pinia'
 import { reactive, ref } from 'vue'
 import { promptAuditQueryRepository as defaultRepo } from '@/features/prompt-audit/data/repositories/promptAuditQueryRepositoryImpl'
 import type { PromptAuditQueryRepository } from '@/features/prompt-audit/domain/repositories/promptAuditQueryRepository'
-import type {
-  PromptAuditDraft,
-  PromptAuditEvent,
-  PromptAuditGroup,
-  PromptAuditRuntime,
-  PromptDeletePreview,
-  PromptEventFilters,
-  PromptEventPage,
-} from '@/features/prompt-audit/domain/models/promptAuditTypes'
-import { configToDraft, emptyEventFilters } from '@/features/prompt-audit/domain/promptAuditViewModel'
+import type { PromptAuditDraft } from '@/features/prompt-audit/domain/models/promptAuditDraft'
+import type { PromptAuditEvent } from '@/features/prompt-audit/domain/models/promptAuditEvent'
+import type { PromptAuditGroup } from '@/features/prompt-audit/domain/models/promptAuditGroup'
+import type { PromptAuditRuntime } from '@/features/prompt-audit/domain/models/promptAuditRuntime'
+import type { PromptDeletePreview } from '@/features/prompt-audit/domain/models/promptDeletePreview'
+import type { PromptEventFilters } from '@/features/prompt-audit/domain/models/promptEventFilters'
+import type { PromptEventPage } from '@/features/prompt-audit/domain/models/promptEventPage'
+import { configToDraft, emptyEventFilters } from '@/features/prompt-audit/presentation/utils/promptAuditViewModel'
 
 export function createPromptAuditQueryStore(repo: PromptAuditQueryRepository) {
   return defineStore('promptAudit/query', () => {
     const serverConfig = ref<PromptAuditDraft | null>(null)
     const runtime = ref<PromptAuditRuntime | null>(null)
     const groups = ref<PromptAuditGroup[]>([])
-    const events = reactive<PromptEventPage>({ items: [], total: 0, page: 1, page_size: 20, pages: 0 })
+    const events = reactive<PromptEventPage>({ items: [], total: 0, page: 1, pageSize: 20, pages: 0 })
     const appliedFilters = ref<PromptEventFilters>(emptyEventFilters())
     const activeEvent = ref<PromptAuditEvent | null>(null)
 
@@ -80,7 +78,7 @@ export function createPromptAuditQueryStore(repo: PromptAuditQueryRepository) {
       loading.events = true
       errors.events = null
       try {
-        const result = await repo.listEvents(appliedFilters.value, events.page, events.page_size)
+        const result = await repo.listEvents(appliedFilters.value, events.page, events.pageSize)
         Object.assign(events, result)
         return result
       } catch (error) {
@@ -115,7 +113,7 @@ export function createPromptAuditQueryStore(repo: PromptAuditQueryRepository) {
       appliedFilters.value = { ...next }
     }
     function setPage(page: number): void { events.page = page }
-    function setPageSize(pageSize: number): void { events.page_size = pageSize; events.page = 1 }
+    function setPageSize(pageSize: number): void { events.pageSize = pageSize; events.page = 1 }
     function clearActiveEvent(): void { activeEvent.value = null }
 
     return {

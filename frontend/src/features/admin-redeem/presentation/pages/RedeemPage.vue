@@ -132,7 +132,7 @@
             <span class="text-sm font-medium text-gray-900 dark:text-white">
               <template v-if="row.type === 'balance'">${{ value.toFixed(2) }}</template>
               <template v-else-if="row.type === 'subscription'">
-                {{ row.validity_days || 30 }} {{ t('admin.redeem.days') }}
+                {{ row.validityDays || 30 }} {{ t('admin.redeem.days') }}
                 <span v-if="row.group" class="ml-1 text-xs text-gray-500 dark:text-gray-400"
                   >({{ row.group.name }})</span
                 >
@@ -161,7 +161,7 @@
               {{ row.usedCount }} /
               {{ row.maxUses === 0 ? t('admin.redeem.unlimited') : row.maxUses }}
               <span class="block text-xs text-gray-400 dark:text-gray-500">
-                {{ row.max_uses_per_user === 0 ? t('admin.redeem.unlimitedPerUser') : t('admin.redeem.perUserLimit', { count: row.max_uses_per_user }) }}
+                {{ row.maxUsesPerUser === 0 ? t('admin.redeem.unlimitedPerUser') : t('admin.redeem.perUserLimit', { count: row.maxUsesPerUser }) }}
               </span>
             </div>
           </template>
@@ -661,8 +661,9 @@ import GroupOptionItem from '@/common/widgets/data/GroupOptionItem.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { useAdminRedeem } from '@/features/admin-redeem/presentation/composables/useAdminRedeem'
 import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
-import type { RedeemCode, BatchUpdateRedeemCodeFields } from '@/features/admin-redeem/domain/models/redeem'
-import type { RedeemCodeType } from '@/features/admin-redeem/domain/models/redeem'
+import type { RedeemCode, RedeemCodeType } from '@/features/admin-redeem/domain/models/redeemCode'
+import type { GenerateRedeemCodesRequest } from '@/features/admin-redeem/data/requests_models/generateRedeemCodesRequest'
+import type { BatchUpdateRedeemCodesRequest } from '@/features/admin-redeem/data/requests_models/batchUpdateRedeemCodesRequest'
 import type { Group, GroupPlatform, SubscriptionType } from '@/features/admin-groups/domain/models/adminGroups'
 const $redeem = useAdminRedeem()
 const $groups = useAdminGroups()
@@ -1023,30 +1024,29 @@ const closeBatchUpdateDialog = () => {
   showBatchUpdateDialog.value = false
 }
 
-const buildBatchUpdateFields = (): BatchUpdateRedeemCodeFields | null => {
-  const fields: BatchUpdateRedeemCodeFields = {}
+const buildBatchUpdateFields = (): BatchUpdateRedeemCodesRequest['fields'] | null => {
+  const fields: BatchUpdateRedeemCodesRequest['fields'] = {}
 
   if (batchUpdateForm.update_status) {
     fields.status = batchUpdateForm.status
   }
   if (batchUpdateForm.update_expires_at) {
     if (batchUpdateForm.expires_mode === 'clear') {
-      fields.expiresAt = null
+      fields.expires_at = null
     } else {
       const expiresAt = new Date(batchUpdateForm.expires_at_local)
       if (!batchUpdateForm.expires_at_local || Number.isNaN(expiresAt.getTime())) {
         appStore.showError(t('admin.redeem.expiryDaysRequired'))
         return null
       }
-      fields.expiresAt = expiresAt.toISOString()
+      fields.expires_at = expiresAt.toISOString()
     }
   }
   if (batchUpdateForm.update_notes) {
     fields.notes = batchUpdateForm.notes
   }
   if (batchUpdateForm.update_group_id) {
-    fields.groupId =
-      batchUpdateForm.group_id == null ? null : Number(batchUpdateForm.group_id)
+    fields.group_id = batchUpdateForm.group_id == null ? null : Number(batchUpdateForm.group_id)
   }
 
   return Object.keys(fields).length > 0 ? fields : null
@@ -1067,16 +1067,22 @@ const handleGenerateCodes = async () => {
 
   generating.value = true
   try {
-    const result = await $redeem.generate(
-      generateForm.count,
-      generateForm.type,
-      generateForm.value,
-      generateForm.type === 'subscription' ? generateForm.group_id : undefined,
-      generateForm.type === 'subscription' ? generateForm.validity_days : undefined,
-      expiresInDays,
-      generateForm.max_uses,
-      generateForm.max_uses_per_user
-    )
+    const req: GenerateRedeemCodesRequest = {
+      count: generateForm.count,
+      type: generateForm.type,
+      value: generateForm.value,
+      max_uses: generateForm.max_uses,
+      max_uses_per_user: generateForm.max_uses_per_user,
+    }
+    if (generateForm.type === 'subscription') {
+      req.group_id = generateForm.group_id
+      req.validity_days = generateForm.validity_days
+    }
+    if (expiresInDays !== undefined) {
+      req.expires_in_days = expiresInDays
+    }
+
+    const result = await $redeem.generate(req)
     showGenerateDialog.value = false
     generatedCodes.value = result
     showResultDialog.value = true
@@ -1149,7 +1155,6 @@ const confirmDelete = async () => {
 
 const confirmDeleteUnused = async () => {
   try {
-    // Get all unused codes and delete them
     const unusedCodesResponse = await $redeem.list(1, 1000, { status: 'unused' })
     const unusedCodeIds = unusedCodesResponse.items.map((code) => code.id)
 
@@ -1159,7 +1164,7 @@ const confirmDeleteUnused = async () => {
       return
     }
 
-    const result = await $redeem.batchDelete(unusedCodeIds)
+    const result = await $redeem.batchDelete({ ids: unusedCodeIds })
     appStore.showSuccess(t('admin.redeem.codesDeleted', { count: result.deleted }))
     showDeleteUnusedDialog.value = false
     loadCodes()
@@ -1193,7 +1198,8 @@ const handleBatchUpdate = async () => {
 
   batchUpdating.value = true
   try {
-    const result = await $redeem.batchUpdate(ids, fields)
+    const req: BatchUpdateRedeemCodesRequest = { ids, fields }
+    const result = await $redeem.batchUpdate(req)
     appStore.showSuccess(t('admin.redeem.batchUpdateSuccess', { count: result.updated }))
     showBatchUpdateDialog.value = false
     clearSelectedCodes()

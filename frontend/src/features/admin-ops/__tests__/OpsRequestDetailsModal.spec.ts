@@ -5,7 +5,7 @@ import OpsRequestDetailsDialog from '@/features/admin-ops/presentation/widgets/O
 
 const mockListRequestDetails = vi.fn()
 
-vi.mock('@/features/admin-ops/data/datasources/adminOpsDatasource', () => ({
+vi.mock('@/features/admin-ops/data/datasources/adminOpsQueryDatasource', () => ({
   opsAPI: {
     listRequestDetails: (...args: any[]) => mockListRequestDetails(...args)
   }

@@ -1,41 +1,85 @@
-import type { BatchImageItemEntity, BatchImageItemError } from '@/features/batch-image/domain/models/batchImageItem'
+import 'reflect-metadata'
+import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
+import { BatchImageItem, BatchImageItemError } from '@/features/batch-image/domain/models/batchImageItem'
 
-export interface BatchImageItemErrorDto {
-  code: string
-  message: string
-  source?: string
-}
+export class BatchImageItemErrorDto {
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  code!: string
 
-export interface BatchImageItemDto {
-  batch_id?: string
-  source_task_name?: string
-  custom_id: string
-  status: string
-  prompt_preview?: string | null
-  mime_type: string | null
-  file_extension: string | null
-  image_count: number
-  error?: BatchImageItemErrorDto | null
-}
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  message!: string
 
-function toItemError(dto: BatchImageItemErrorDto): BatchImageItemError {
-  return {
-    code: dto.code ?? '',
-    message: dto.message ?? '',
-    source: dto.source,
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  source!: string
+
+  static fromJson(json: unknown): BatchImageItemErrorDto {
+    return plainToInstance(BatchImageItemErrorDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): BatchImageItemError {
+    const entity = new BatchImageItemError()
+    entity.code = this.code
+    entity.message = this.message
+    entity.source = this.source
+    return entity
   }
 }
 
-export function toEntity(dto: BatchImageItemDto): BatchImageItemEntity {
-  return {
-    batchId: dto.batch_id,
-    sourceTaskName: dto.source_task_name,
-    customId: dto.custom_id ?? '',
-    status: dto.status ?? '',
-    promptPreview: dto.prompt_preview,
-    mimeType: dto.mime_type ?? null,
-    fileExtension: dto.file_extension ?? null,
-    imageCount: dto.image_count ?? 0,
-    error: dto.error ? toItemError(dto.error) : undefined,
+export class BatchImageItemDto {
+  @Expose({ name: 'batch_id' })
+  @Transform(({ value }) => value ?? '')
+  batchId!: string
+
+  @Expose({ name: 'source_task_name' })
+  @Transform(({ value }) => value ?? '')
+  sourceTaskName!: string
+
+  @Expose({ name: 'custom_id' })
+  @Transform(({ value }) => value ?? '')
+  customId!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  status!: string
+
+  @Expose({ name: 'prompt_preview' })
+  @Transform(({ value }) => value ?? '')
+  promptPreview!: string
+
+  @Expose({ name: 'mime_type' })
+  @Transform(({ value }) => value ?? '')
+  mimeType!: string
+
+  @Expose({ name: 'file_extension' })
+  @Transform(({ value }) => value ?? '')
+  fileExtension!: string
+
+  @Expose({ name: 'image_count' })
+  @Transform(({ value }) => value ?? 0)
+  imageCount!: number
+
+  @Expose()
+  @Type(() => BatchImageItemErrorDto)
+  error?: BatchImageItemErrorDto
+
+  static fromJson(json: unknown): BatchImageItemDto {
+    return plainToInstance(BatchImageItemDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): BatchImageItem {
+    const entity = new BatchImageItem()
+    entity.batchId = this.batchId
+    entity.sourceTaskName = this.sourceTaskName
+    entity.customId = this.customId
+    entity.status = this.status
+    entity.promptPreview = this.promptPreview
+    entity.mimeType = this.mimeType
+    entity.fileExtension = this.fileExtension
+    entity.imageCount = this.imageCount
+    entity.error = this.error ? this.error.toEntity() : undefined
+    return entity
   }
 }

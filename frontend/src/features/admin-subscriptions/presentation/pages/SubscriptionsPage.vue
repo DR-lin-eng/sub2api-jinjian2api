@@ -760,7 +760,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import type { SimpleUser } from '@/features/admin-usage/presentation/api'
+import type { SimpleUser } from '@/features/admin-usage/domain/models/simpleUser'
 import type { Column } from '@/common/types/uiTypes'
 import { formatDateTimeToMinute } from '@/core/utils/format'
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
@@ -779,7 +779,7 @@ import { getRemainingDurationParts, isOneTimeDailyQuota, type RemainingDurationP
 import { useAdminSubscriptions } from '@/features/admin-subscriptions/presentation/composables/useAdminSubscriptions'
 import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
 import { useAdminUsage } from '@/features/admin-usage/presentation/composables/useAdminUsage'
-import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/subscription'
+import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/userSubscription'
 import type { Group, GroupPlatform, SubscriptionType } from '@/features/admin-groups/domain/models/adminGroups'
 const $subscriptions = useAdminSubscriptions()
 const $groups = useAdminGroups()
@@ -1213,9 +1213,9 @@ const handleAssignSubscription = async () => {
   submitting.value = true
   try {
     await $subscriptions.assign({
-      userId: assignForm.user_id,
-      groupId: assignForm.group_id,
-      validityDays: assignForm.validity_days
+      user_id: assignForm.user_id!,
+      group_id: assignForm.group_id!,
+      validity_days: assignForm.validity_days
     })
     appStore.showSuccess(t('admin.subscriptions.subscriptionAssigned'))
     closeAssignModal()

@@ -326,13 +326,12 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
 import { useAuthStore, useAppStore } from '@/stores'
 import {
-  getPublicSettings,
-  isWeChatWebOAuthEnabled,
-  validatePromoCode,
-  validateInvitationCode,
   clearCredentialKeyPrefetch,
-  prefetchCredentialKey
-} from '@/features/auth/presentation/api'
+  prefetchCredentialKey,
+} from '@/core/networks/credentialEncryption'
+import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
+import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
+import { isWeChatWebOAuthEnabled } from '@/features/auth/presentation/utils/wechatOAuthResolver'
 import { buildAuthErrorMessage } from '@/core/utils/authError'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import {

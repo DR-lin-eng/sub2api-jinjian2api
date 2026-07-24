@@ -55,13 +55,15 @@ import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import AvailableChannelsTable from '@/features/channels-user/presentation/widgets/AvailableChannelsTable.vue'
-import userChannelsAPI, { type UserAvailableChannel } from '@/features/channels-user/presentation/api'
+import type { UserAvailableChannel } from '@/features/channels-user/domain/models/userAvailableChannel'
+import { useChannelsUser } from '@/features/channels-user/presentation/composables/useChannelsUser'
 import userGroupsAPI from '@/features/groups-user/presentation/api'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const { getAvailable } = useChannelsUser()
 
 const channels = ref<UserAvailableChannel[]>([])
 const userGroupRates = ref<Record<number, number>>({})
@@ -94,7 +96,7 @@ const filteredChannels = computed(() => {
         (p) =>
           p.platform.toLowerCase().includes(q) ||
           p.groups.some((g) => g.name.toLowerCase().includes(q)) ||
-          p.supported_models.some((m) => m.name.toLowerCase().includes(q)),
+          p.supportedModels.some((m) => m.name.toLowerCase().includes(q)),
       )
       if (matchingSections.length === 0) return null
       return { ...ch, platforms: matchingSections }
@@ -108,7 +110,7 @@ async function loadChannels() {
     // 渠道列表和用户专属倍率并发拉取。专属倍率失败不阻塞渠道展示——
     // 失败时只是无法渲染专属倍率角标，降级为仅显示默认倍率。
     const [list, rates] = await Promise.all([
-      userChannelsAPI.getAvailable(),
+      getAvailable(),
       userGroupsAPI.getUserGroupRates().catch((err: unknown) => {
         console.error('Failed to load user group rates:', err)
         return {} as Record<number, number>

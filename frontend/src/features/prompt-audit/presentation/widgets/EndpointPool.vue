@@ -38,8 +38,7 @@
               class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
               :class="endpoint.enabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'"
               @click="toggleEndpoint(endpoint.id)"
-            >
-              <span
+            >              <span
                 class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ease-in-out"
                 :class="endpoint.enabled ? 'translate-x-5' : 'translate-x-0'"
               />
@@ -61,8 +60,8 @@
           <div>
             <p class="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 xl:hidden">{{ t('admin.promptAudit.pool.limits') }}</p>
             <div class="flex flex-wrap gap-1.5 text-xs text-gray-600 dark:text-dark-300">
-              <span class="rounded-md bg-gray-100 px-2 py-1 tabular-nums dark:bg-dark-800">{{ endpoint.timeout_ms }} ms</span>
-              <span class="rounded-md bg-gray-100 px-2 py-1 tabular-nums dark:bg-dark-800">{{ endpoint.input_limit }} chars</span>
+              <span class="rounded-md bg-gray-100 px-2 py-1 tabular-nums dark:bg-dark-800">{{ endpoint.timeoutMs }} ms</span>
+              <span class="rounded-md bg-gray-100 px-2 py-1 tabular-nums dark:bg-dark-800">{{ endpoint.inputLimit }} chars</span>
             </div>
           </div>
 
@@ -76,7 +75,7 @@
               {{ t('admin.promptAudit.pool.probeProgress') }}
             </p>
             <p v-if="probeResults[endpoint.id]" class="mt-1.5 line-clamp-2 text-xs leading-5" :class="probeResults[endpoint.id].ok ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'">
-              {{ t('admin.promptAudit.pool.probeResult', { status: probeResults[endpoint.id].status, http: probeResults[endpoint.id].http_status || '—', latency: probeResults[endpoint.id].latency_ms }) }}
+              {{ t('admin.promptAudit.pool.probeResult', { status: probeResults[endpoint.id].status, http: probeResults[endpoint.id].httpStatus || '—', latency: probeResults[endpoint.id].latencyMs }) }}
               · {{ probeResults[endpoint.id].message }}
             </p>
           </div>
@@ -104,15 +103,15 @@
         </label>
         <label class="space-y-1 text-sm text-gray-700 dark:text-dark-200 sm:col-span-2">
           <span>{{ t('admin.promptAudit.pool.baseUrl') }}</span>
-          <input v-model="editing.base_url" class="input w-full" required inputmode="url" :aria-label="t('admin.promptAudit.pool.baseUrl')" />
+          <input v-model="editing.baseUrl" class="input w-full" required inputmode="url" :aria-label="t('admin.promptAudit.pool.baseUrl')" />
         </label>
         <label class="space-y-1 text-sm text-gray-700 dark:text-dark-200 sm:col-span-2">
           <span>{{ t('admin.promptAudit.pool.apiKey') }}</span>
-          <input v-model="editing.token" class="input w-full" type="password" autocomplete="new-password" :placeholder="editing.has_token ? t('admin.promptAudit.pool.keepSecret') : ''" :aria-label="t('admin.promptAudit.pool.apiKey')" />
+          <input v-model="editing.token" class="input w-full" type="password" autocomplete="new-password" :placeholder="editing.hasToken ? t('admin.promptAudit.pool.keepSecret') : ''" :aria-label="t('admin.promptAudit.pool.apiKey')" />
           <span class="block text-xs text-gray-500 dark:text-dark-400">{{ t('admin.promptAudit.pool.secretHint') }}</span>
         </label>
-        <label v-if="editing.has_token" class="flex items-center gap-2 text-sm text-red-600 dark:text-red-300 sm:col-span-2">
-          <input v-model="editing.clear_token" type="checkbox" :aria-label="t('admin.promptAudit.pool.clearSecret')" />
+        <label v-if="editing.hasToken" class="flex items-center gap-2 text-sm text-red-600 dark:text-red-300 sm:col-span-2">
+          <input v-model="editing.clearToken" type="checkbox" :aria-label="t('admin.promptAudit.pool.clearSecret')" />
           {{ t('admin.promptAudit.pool.clearSecret') }}
         </label>
         <label class="space-y-1 text-sm text-gray-700 dark:text-dark-200 sm:col-span-2">
@@ -121,11 +120,11 @@
         </label>
         <label class="space-y-1 text-sm text-gray-700 dark:text-dark-200">
           <span>{{ t('admin.promptAudit.pool.timeout') }}</span>
-          <input v-model.number="editing.timeout_ms" class="input w-full" type="number" min="100" max="30000" required :aria-label="t('admin.promptAudit.pool.timeout')" />
+          <input v-model.number="editing.timeoutMs" class="input w-full" type="number" min="100" max="30000" required :aria-label="t('admin.promptAudit.pool.timeout')" />
         </label>
         <label class="space-y-1 text-sm text-gray-700 dark:text-dark-200">
           <span>{{ t('admin.promptAudit.pool.inputLimit') }}</span>
-          <input v-model.number="editing.input_limit" class="input w-full" type="number" min="128" max="100000" required :aria-label="t('admin.promptAudit.pool.inputLimit')" />
+          <input v-model.number="editing.inputLimit" class="input w-full" type="number" min="128" max="100000" required :aria-label="t('admin.promptAudit.pool.inputLimit')" />
         </label>
       </form>
       <template #footer>
@@ -142,8 +141,9 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import type { PromptAuditEndpointDraft, PromptProbeResult } from '@/features/prompt-audit/domain/models/promptAuditTypes'
-import { cloneData, createDefaultEndpoint } from '@/features/prompt-audit/domain/promptAuditViewModel'
+import type { PromptAuditEndpointDraft } from '@/features/prompt-audit/domain/models/promptAuditEndpointDraft'
+import type { PromptProbeResult } from '@/features/prompt-audit/domain/models/promptProbeResult'
+import { cloneData, createDefaultEndpoint } from '@/features/prompt-audit/presentation/utils/promptAuditViewModel'
 
 const props = defineProps<{
   endpoints: PromptAuditEndpointDraft[]
@@ -171,10 +171,10 @@ function closeEditor() {
   editingIndex.value = -1
 }
 function saveEditor() {
-  if (!editing.value?.id.trim() || !editing.value.name.trim() || !editing.value.base_url.trim()) return
+  if (!editing.value?.id.trim() || !editing.value.name.trim() || !editing.value.baseUrl.trim()) return
   const next = props.endpoints.map((item) => cloneData(item))
   const value = cloneData(editing.value)
-  if (value.token.trim()) value.clear_token = false
+  if (value.token.trim()) value.clearToken = false
   if (editingIndex.value < 0) next.push(value)
   else next.splice(editingIndex.value, 1, value)
   emit('update:endpoints', next)
@@ -188,6 +188,6 @@ function removeEndpoint(endpoint: PromptAuditEndpointDraft) {
   emit('update:endpoints', props.endpoints.filter((item) => item.id !== endpoint.id).map((item) => cloneData(item)))
 }
 function hasCredential(endpoint: PromptAuditEndpointDraft): boolean {
-  return Boolean(endpoint.token.trim() || (endpoint.has_token && !endpoint.clear_token))
+  return Boolean(endpoint.token.trim() || (endpoint.hasToken && !endpoint.clearToken))
 }
 </script>

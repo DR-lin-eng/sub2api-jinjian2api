@@ -3,7 +3,7 @@ import {
   buildPaymentErrorToastMessage,
   describePaymentScenarioError,
   normalizePaymentMethodForDisplay,
-} from '@/features/billing/presentation/paymentUxSignals'
+} from '@/features/billing/presentation/utils/paymentUxSignals'
 
 describe('normalizePaymentMethodForDisplay', () => {
   it('collapses visible payment aliases to canonical method ids', () => {

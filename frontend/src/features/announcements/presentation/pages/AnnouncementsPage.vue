@@ -266,7 +266,8 @@ import AnnouncementReadStatusDialog from '@/features/announcements/presentation/
 import { useAnnouncements } from '@/features/announcements/presentation/composables/useAnnouncements'
 import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
-import type { Announcement, AnnouncementTargeting } from '@/features/announcements/domain/models/announcement'
+import type { Announcement } from '@/features/announcements/domain/models/announcement'
+import type { AnnouncementTargeting } from '@/features/announcements/domain/models/announcementTargeting'
 const $announcements = useAnnouncements()
 const $groups = useAdminGroups()
 

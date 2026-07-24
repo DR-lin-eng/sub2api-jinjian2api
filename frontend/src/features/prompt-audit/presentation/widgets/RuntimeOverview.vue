@@ -49,16 +49,16 @@
               failed: runtime.queue.failed,
             }) }}
             <span class="mx-1.5 text-gray-300 dark:text-dark-600">·</span>
-            {{ t('admin.promptAudit.runtime.deliveryTotals', { enqueued: runtime.enqueued_total, dropped: runtime.dropped_total, processed: runtime.processed_total, failed: runtime.failed_total }) }}
+            {{ t('admin.promptAudit.runtime.deliveryTotals', { enqueued: runtime.enqueuedTotal, dropped: runtime.droppedTotal, processed: runtime.processedTotal, failed: runtime.failedTotal }) }}
           </p>
         </div>
         <div class="rounded-xl border border-gray-100 px-4 py-3 dark:border-dark-700/60 dark:bg-dark-900/20">
           <h3 class="text-sm font-medium text-gray-900 dark:text-white">{{ t('admin.promptAudit.runtime.latest') }}</h3>
           <p class="mt-2 text-sm text-gray-600 dark:text-dark-300">
-            {{ runtime.last_processed_at ? formatDate(runtime.last_processed_at) : t('admin.promptAudit.common.never') }}
+            {{ runtime.lastProcessedAt ? formatDate(runtime.lastProcessedAt) : t('admin.promptAudit.common.never') }}
           </p>
-          <p v-if="runtime.last_error_code" class="mt-1 break-words text-sm text-red-600 dark:text-red-300">
-            {{ runtime.last_error_code }}<span v-if="runtime.last_error_message"> · {{ runtime.last_error_message }}</span>
+          <p v-if="runtime.lastErrorCode" class="mt-1 break-words text-sm text-red-600 dark:text-red-300">
+            {{ runtime.lastErrorCode }}<span v-if="runtime.lastErrorMessage"> · {{ runtime.lastErrorMessage }}</span>
           </p>
           <div v-if="Object.keys(runtime.endpoints).length" class="mt-3 flex flex-wrap gap-2">
             <span v-for="(probe, id) in runtime.endpoints" :key="id" class="rounded-md px-2 py-1 text-xs" :class="probe.ok ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300'">
@@ -74,7 +74,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { PromptAuditRuntime } from '@/features/prompt-audit/domain/models/promptAuditTypes'
+import type { PromptAuditRuntime } from '@/features/prompt-audit/domain/models/promptAuditRuntime'
 
 const props = defineProps<{ runtime: PromptAuditRuntime | null; loading: boolean; error: string }>()
 defineEmits<{ (event: 'refresh'): void }>()
@@ -84,17 +84,17 @@ const statusItems = computed(() => {
   const runtime = props.runtime
   if (!runtime) return []
   return [
-    { label: t('admin.promptAudit.runtime.process'), value: t(`admin.promptAudit.status.${runtime.process_status}`), dot: statusDot(runtime.process_status) },
-    { label: t('admin.promptAudit.runtime.mode'), value: t(`admin.promptAudit.mode.${runtime.effective_mode}`) },
-    { label: t('admin.promptAudit.runtime.version'), value: `${runtime.active_config_version} / ${runtime.expected_config_version}` },
-    { label: t('admin.promptAudit.runtime.workers'), value: `${runtime.worker_active} / ${runtime.worker_total}` },
-    { label: t('admin.promptAudit.runtime.queue'), value: `${runtime.queue.active} / ${runtime.queue_capacity}` },
-    { label: t('admin.promptAudit.runtime.dependencies'), value: `DB ${runtime.database_status} · Redis ${runtime.redis_status}` },
+    { label: t('admin.promptAudit.runtime.process'), value: t(`admin.promptAudit.status.${runtime.processStatus}`), dot: statusDot(runtime.processStatus) },
+    { label: t('admin.promptAudit.runtime.mode'), value: t(`admin.promptAudit.mode.${runtime.effectiveMode}`) },
+    { label: t('admin.promptAudit.runtime.version'), value: `${runtime.activeConfigVersion} / ${runtime.expectedConfigVersion}` },
+    { label: t('admin.promptAudit.runtime.workers'), value: `${runtime.workerActive} / ${runtime.workerTotal}` },
+    { label: t('admin.promptAudit.runtime.queue'), value: `${runtime.queue.active} / ${runtime.queueCapacity}` },
+    { label: t('admin.promptAudit.runtime.dependencies'), value: `DB ${runtime.databaseStatus} · Redis ${runtime.redisStatus}` },
   ]
 })
 
 const guardMetricItems = computed(() => {
-  const metrics = props.runtime?.guard_metrics
+  const metrics = props.runtime?.guardMetrics
   if (!metrics) return []
   return [
     { label: t('admin.promptAudit.metrics.total'), value: metrics.total },
@@ -104,7 +104,7 @@ const guardMetricItems = computed(() => {
     { label: t('admin.promptAudit.metrics.unavailable'), value: metrics.unavailable },
     { label: t('admin.promptAudit.metrics.timeouts'), value: metrics.timeouts },
     { label: t('admin.promptAudit.metrics.failovers'), value: metrics.failovers },
-    { label: 'P95', value: metrics.latency_p95_ms != null ? `${metrics.latency_p95_ms} ms` : '—' },
+    { label: 'P95', value: metrics.latencyP95Ms != null ? `${metrics.latencyP95Ms} ms` : '—' },
   ]
 })
 
@@ -112,7 +112,7 @@ function formatDate(value: string): string {
   return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'medium' }).format(new Date(value))
 }
 
-function statusDot(status: string): string {
+  function statusDot(status: string): string {
   if (status === 'running') return 'bg-emerald-500'
   if (status === 'disabled') return 'bg-gray-400'
   if (status === 'degraded') return 'bg-amber-500'

@@ -114,7 +114,7 @@ import { formatDateTime } from '@/core/utils/format'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import GroupOptionItem from '@/common/widgets/data/GroupOptionItem.vue'
-import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
 import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 

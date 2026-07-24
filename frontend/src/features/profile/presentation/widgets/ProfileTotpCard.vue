@@ -103,12 +103,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { totpAPI } from '@/api'
+import { useProfileQueryStore } from '@/features/profile/presentation/stores/profileQueryStore'
 import TotpSetupDialog from './TotpSetupDialog.vue'
 import TotpDisableDialog from './TotpDisableDialog.vue'
-import type { TotpStatus } from '@/features/auth/domain/models/totp'
+import type { TotpStatus } from '@/features/profile/domain/models/totpStatus'
 
 const { t } = useI18n()
+const profileQuery = useProfileQueryStore()
 
 const loading = ref(true)
 const status = ref<TotpStatus | null>(null)
@@ -118,7 +119,7 @@ const showDisableDialog = ref(false)
 const loadStatus = async () => {
   loading.value = true
   try {
-    status.value = await totpAPI.getStatus()
+    status.value = await profileQuery.getStatus()
   } catch (error) {
     console.error('Failed to load TOTP status:', error)
   } finally {

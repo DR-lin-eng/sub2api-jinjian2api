@@ -10,7 +10,7 @@ const mockCleanupSystemLogs = vi.fn()
 const mockGetSystemLogSinkHealth = vi.fn()
 const mockGetRuntimeLogConfig = vi.fn()
 
-vi.mock('@/features/admin-ops/data/datasources/adminOpsDatasource', () => ({
+vi.mock('@/features/admin-ops/data/datasources/adminOpsQueryDatasource', () => ({
   opsAPI: {
     listSystemLogs: (...args: any[]) => mockListSystemLogs(...args),
     cleanupSystemLogs: (...args: any[]) => mockCleanupSystemLogs(...args),

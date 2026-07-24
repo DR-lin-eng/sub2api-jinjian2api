@@ -1,39 +1,89 @@
-import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/subscription'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { UserSubscription } from '@/features/admin-subscriptions/domain/models/userSubscription'
 
-export interface UserSubscriptionDto {
-  id: number
-  user_id: number
-  group_id: number
-  status: 'active' | 'expired' | 'revoked' | 'suspended'
-  starts_at: string
-  daily_usage_usd: number
-  weekly_usage_usd: number
-  monthly_usage_usd: number
-  daily_window_start: string | null
-  weekly_window_start: string | null
-  monthly_window_start: string | null
-  created_at: string
-  updated_at: string
-  revoked_at?: string | null
-  expires_at: string | null
-}
+export class UserSubscriptionDto {
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  id!: number
 
-export function toEntity(dto: UserSubscriptionDto): UserSubscription {
-  return {
-    id: dto.id,
-    userId: dto.user_id,
-    groupId: dto.group_id,
-    status: dto.status,
-    startsAt: dto.starts_at,
-    dailyUsageUsd: dto.daily_usage_usd ?? 0,
-    weeklyUsageUsd: dto.weekly_usage_usd ?? 0,
-    monthlyUsageUsd: dto.monthly_usage_usd ?? 0,
-    dailyWindowStart: dto.daily_window_start ?? null,
-    weeklyWindowStart: dto.weekly_window_start ?? null,
-    monthlyWindowStart: dto.monthly_window_start ?? null,
-    createdAt: dto.created_at,
-    updatedAt: dto.updated_at,
-    revokedAt: dto.revoked_at ?? null,
-    expiresAt: dto.expires_at ?? null,
+  @Expose({ name: 'user_id' })
+  @Transform(({ value }) => value ?? 0)
+  userId!: number
+
+  @Expose({ name: 'group_id' })
+  @Transform(({ value }) => value ?? 0)
+  groupId!: number
+
+  @Expose()
+  @Transform(({ value }) => value ?? 'active')
+  status!: 'active' | 'expired' | 'revoked' | 'suspended'
+
+  @Expose({ name: 'starts_at' })
+  @Transform(({ value }) => value ?? '')
+  startsAt!: string
+
+  @Expose({ name: 'daily_usage_usd' })
+  @Transform(({ value }) => value ?? 0)
+  dailyUsageUsd!: number
+
+  @Expose({ name: 'weekly_usage_usd' })
+  @Transform(({ value }) => value ?? 0)
+  weeklyUsageUsd!: number
+
+  @Expose({ name: 'monthly_usage_usd' })
+  @Transform(({ value }) => value ?? 0)
+  monthlyUsageUsd!: number
+
+  @Expose({ name: 'daily_window_start' })
+  @Transform(({ value }) => value ?? '')
+  dailyWindowStart!: string
+
+  @Expose({ name: 'weekly_window_start' })
+  @Transform(({ value }) => value ?? '')
+  weeklyWindowStart!: string
+
+  @Expose({ name: 'monthly_window_start' })
+  @Transform(({ value }) => value ?? '')
+  monthlyWindowStart!: string
+
+  @Expose({ name: 'created_at' })
+  @Transform(({ value }) => value ?? '')
+  createdAt!: string
+
+  @Expose({ name: 'updated_at' })
+  @Transform(({ value }) => value ?? '')
+  updatedAt!: string
+
+  @Expose({ name: 'revoked_at' })
+  @Transform(({ value }) => value ?? '')
+  revokedAt!: string
+
+  @Expose({ name: 'expires_at' })
+  @Transform(({ value }) => value ?? '')
+  expiresAt!: string
+
+  static fromJson(json: unknown): UserSubscriptionDto {
+    return plainToInstance(UserSubscriptionDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): UserSubscription {
+    const entity = new UserSubscription()
+    entity.id = this.id
+    entity.userId = this.userId
+    entity.groupId = this.groupId
+    entity.status = this.status
+    entity.startsAt = this.startsAt
+    entity.dailyUsageUsd = this.dailyUsageUsd
+    entity.weeklyUsageUsd = this.weeklyUsageUsd
+    entity.monthlyUsageUsd = this.monthlyUsageUsd
+    entity.dailyWindowStart = this.dailyWindowStart
+    entity.weeklyWindowStart = this.weeklyWindowStart
+    entity.monthlyWindowStart = this.monthlyWindowStart
+    entity.createdAt = this.createdAt
+    entity.updatedAt = this.updatedAt
+    entity.revokedAt = this.revokedAt
+    entity.expiresAt = this.expiresAt
+    return entity
   }
 }

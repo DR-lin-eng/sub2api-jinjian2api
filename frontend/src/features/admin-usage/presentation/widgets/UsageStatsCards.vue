@@ -92,7 +92,8 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import type { AdminUsageStatsResponse, UsageStatsResponse } from '@/features/admin-usage/domain/models/adminUsage'
+import type { AdminUsageStatsResponse } from '@/features/admin-usage/domain/models/adminUsageStatsResponse'
+import type { UsageStatsResponse } from '@/core/models/domain/usageStatsResponse'
 
 const props = withDefaults(defineProps<{
   stats: (AdminUsageStatsResponse | UsageStatsResponse) | null

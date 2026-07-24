@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { opsAPI, type OpsAccountAvailabilityStatsResponse, type OpsConcurrencyStatsResponse, type OpsUserConcurrencyStatsResponse } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import { formatCompactNumber, formatExactNumber } from '@/features/admin-ops/presentation/opsFormatter'
+import type { OpsConcurrencyStats } from '@/features/admin-ops/domain/models/opsConcurrencyStats'
+import type { OpsUserConcurrencyStats } from '@/features/admin-ops/domain/models/opsUserConcurrencyStats'
+import type { OpsAccountAvailabilityStats } from '@/features/admin-ops/domain/models/opsAccountAvailabilityStats'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
+import { formatCompactNumber, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 interface Props {
   platformFilter?: string
@@ -157,7 +161,7 @@ const groupRows = computed((): SummaryRow[] => {
 
       return {
         key: gid,
-        name: String(conc.group_name || avail.group_name || `Group ${gid}`),
+        name: String(conc.groupName || avail.groupName || `Group ${gid}`),
         platform: String(conc.platform || avail.platform || ''),
         total_accounts: totalAccounts,
         available_accounts: availableAccounts,
@@ -190,16 +194,16 @@ const accountRows = computed((): AccountRow[] => {
 
       // 只显示匹配的分组
       if (typeof props.groupIdFilter === 'number' && props.groupIdFilter > 0) {
-        if (conc.group_id !== props.groupIdFilter && avail.group_id !== props.groupIdFilter) {
+        if (conc.groupId !== props.groupIdFilter && avail.groupId !== props.groupIdFilter) {
           return null
         }
       }
 
       return {
         key: aid,
-        name: String(conc.account_name || avail.account_name || `Account ${aid}`),
+        name: String(conc.accountName || avail.accountName || `Account ${aid}`),
         platform: String(conc.platform || avail.platform || ''),
-        group_name: String(conc.group_name || avail.group_name || ''),
+        group_name: String(conc.groupName || avail.groupName || ''),
         current_in_use: safeNumber(conc.current_in_use),
         max_capacity: safeNumber(conc.max_capacity),
         waiting_in_queue: safeNumber(conc.waiting_in_queue),
@@ -233,8 +237,8 @@ const userRows = computed((): UserRow[] => {
       const u = userStats[uid] || {}
       return {
         key: uid,
-        user_id: safeNumber(u.user_id),
-        user_email: u.user_email || `User ${uid}`,
+        user_id: safeNumber(u.userId),
+        user_email: u.userEmail || `User ${uid}`,
         username: u.username || '',
         current_in_use: safeNumber(u.current_in_use),
         max_capacity: safeNumber(u.max_capacity),
@@ -266,13 +270,13 @@ async function loadData() {
   try {
     if (showByUser.value) {
       // 用户视图模式只加载用户并发数据
-      const userData = await opsAPI.getUserConcurrencyStats()
+      const userData = await queryStore.getUserConcurrencyStats()
       userConcurrency.value = userData
     } else {
       // 常规模式加载账号/平台/分组数据
       const [concData, availData] = await Promise.all([
-        opsAPI.getConcurrencyStats(props.platformFilter, props.groupIdFilter),
-        opsAPI.getAccountAvailabilityStats(props.platformFilter, props.groupIdFilter)
+        queryStore.getConcurrencyStats(props.platformFilter, props.groupIdFilter),
+        queryStore.getAccountAvailabilityStats(props.platformFilter, props.groupIdFilter)
       ])
       concurrency.value = concData
       availability.value = availData
@@ -415,11 +419,11 @@ watch(
           <!-- 用户信息和并发 -->
           <div class="mb-1.5 flex items-center justify-between gap-2">
             <div class="flex min-w-0 flex-1 items-center gap-1.5">
-              <span class="truncate text-[11px] font-bold text-gray-900 dark:text-white" :title="row.username || row.user_email">
-                {{ row.username || row.user_email }}
+              <span class="truncate text-[11px] font-bold text-gray-900 dark:text-white" :title="row.username || row.userEmail">
+                {{ row.username || row.userEmail }}
               </span>
-              <span v-if="row.username" class="shrink-0 truncate text-[10px] text-gray-400 dark:text-gray-500" :title="row.user_email">
-                {{ row.user_email }}
+              <span v-if="row.username" class="shrink-0 truncate text-[10px] text-gray-400 dark:text-gray-500" :title="row.userEmail">
+                {{ row.userEmail }}
               </span>
             </div>
             <div class="flex shrink-0 items-center gap-2 text-[10px]">
@@ -526,7 +530,7 @@ watch(
                 {{ row.name }}
               </div>
               <div class="mt-0.5 text-[9px] text-gray-400 dark:text-gray-500">
-                {{ row.group_name }}
+                {{ row.groupName }}
               </div>
             </div>
             <div class="flex shrink-0 items-center gap-2">

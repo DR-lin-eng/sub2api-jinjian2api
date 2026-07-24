@@ -166,11 +166,10 @@ import { useAppStore, useAuthStore } from '@/stores'
 import { apiClient } from '@/core/networks/client'
 import { buildApiUrl } from '@/core/networks/url'
 import {
-  exchangePendingOAuthCompletion,
-  login2FA,
   persistOAuthTokenContext,
-  type OAuthTokenResponse
-} from '@/features/auth/presentation/api'
+  type OAuthTokenResponse,
+} from '@/features/auth/presentation/utils/oauthUtils'
+import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
 import {
   clearAllAffiliateReferralCodes,
   loadOAuthAffiliateCode,

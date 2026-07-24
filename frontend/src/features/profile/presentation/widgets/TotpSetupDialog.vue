@@ -170,9 +170,10 @@
 import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { totpAPI } from '@/api'
+import { useProfileQueryStore } from '@/features/profile/presentation/stores/profileQueryStore'
+import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
 import QRCode from 'qrcode'
-import type { TotpSetupResponse } from '@/features/auth/domain/models/totp'
+import type { TotpSetupResponse } from '@/features/profile/domain/models/totpSetupResponse'
 
 const emit = defineEmits<{
   close: []
@@ -181,6 +182,8 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const profileQuery = useProfileQueryStore()
+const profileAction = useProfileActionStore()
 
 // Step: 0 = verify identity, 1 = QR code, 2 = verify TOTP code
 const step = ref(0)
@@ -312,7 +315,7 @@ const copySecret = async () => {
 const loadVerificationMethod = async () => {
   methodLoading.value = true
   try {
-    const method = await totpAPI.getVerificationMethod()
+    const method = await profileQuery.getVerificationMethod()
     verificationMethod.value = method.method
   } catch (err: any) {
     appStore.showError(err.response?.data?.message || t('common.error'))
@@ -325,9 +328,8 @@ const loadVerificationMethod = async () => {
 const handleSendCode = async () => {
   sendingCode.value = true
   try {
-    await totpAPI.sendVerifyCode()
+    await profileAction.sendVerifyCode()
     appStore.showSuccess(t('profile.totp.codeSent'))
-    // Start cooldown
     codeCooldown.value = 60
     if (cooldownTimer.value) {
       clearInterval(cooldownTimer.value)
@@ -351,13 +353,11 @@ const handleSendCode = async () => {
 
 const handleVerifyAndSetup = async () => {
   setupLoading.value = true
-
   try {
     const request = verificationMethod.value === 'email'
       ? { email_code: verifyForm.value.emailCode }
       : { password: verifyForm.value.password }
-
-    setupData.value = await totpAPI.initiateSetup(request)
+    setupData.value = await profileAction.initiateSetup(request)
     step.value = 1
   } catch (err: any) {
     appStore.showError(err.response?.data?.message || t('profile.totp.setupFailed'))
@@ -369,14 +369,9 @@ const handleVerifyAndSetup = async () => {
 const handleVerify = async () => {
   const totpCode = code.value.join('')
   if (totpCode.length !== 6 || !setupData.value) return
-
   verifying.value = true
-
   try {
-    await totpAPI.enable({
-      totpCode: totpCode,
-      setupToken: setupData.value.setupToken
-    })
+    await profileAction.enable({ totp_code: totpCode, setup_token: setupData.value.setupToken })
     appStore.showSuccess(t('profile.totp.enableSuccess'))
     emit('success')
   } catch (err: any) {

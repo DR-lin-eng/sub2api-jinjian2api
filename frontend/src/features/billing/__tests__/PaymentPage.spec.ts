@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, shallowMount } from '@vue/test-utils'
 import PaymentView from '@/features/billing/presentation/pages/PaymentPage.vue'
-import { PAYMENT_RECOVERY_STORAGE_KEY } from '@/features/billing/presentation/paymentFlowResolver'
-import { formatPaymentAmount } from '@/features/billing/presentation/currencyFormatter'
+import { PAYMENT_RECOVERY_STORAGE_KEY } from '@/features/billing/presentation/utils/paymentFlowResolver'
+import { formatPaymentAmount } from '@/features/billing/presentation/utils/currencyFormatter'
 import type { CheckoutInfoResponse, MethodLimit, SubscriptionPlan } from '@/types/payment'
 
 const routeState = vi.hoisted(() => ({

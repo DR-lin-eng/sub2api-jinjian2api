@@ -1,29 +1,65 @@
-import type { RedeemHistoryItem } from '@/features/billing/domain/models/redeem'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { RedeemHistoryItem } from '@/features/billing/domain/models/redeemHistoryItem'
 
-export interface RedeemHistoryItemDto {
-  id: number
-  code: string
-  type: string
-  value: number
-  status: string
-  used_at: string
-  created_at: string
+export class RedeemHistoryItemDto {
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  id!: number
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  code!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  type!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  value!: number
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  status!: string
+
+  @Expose({ name: 'used_at' })
+  @Transform(({ value }) => value ?? '')
+  usedAt!: string
+
+  @Expose({ name: 'created_at' })
+  @Transform(({ value }) => value ?? '')
+  createdAt!: string
+
+  @Expose()
   notes?: string
-  group_id?: number
-  validity_days?: number
-}
 
-export function toEntity(dto: RedeemHistoryItemDto): RedeemHistoryItem {
-  return {
-    id: dto.id ?? 0,
-    code: dto.code ?? '',
-    type: dto.type ?? '',
-    value: dto.value ?? 0,
-    status: dto.status ?? '',
-    usedAt: dto.used_at ?? '',
-    createdAt: dto.created_at ?? '',
-    notes: dto.notes,
-    groupId: dto.group_id,
-    validityDays: dto.validity_days,
+  @Expose({ name: 'group_id' })
+  groupId?: number
+
+  @Expose({ name: 'validity_days' })
+  validityDays?: number
+
+  @Expose({ name: 'group_name' })
+  groupName?: string
+
+  static fromJson(json: unknown): RedeemHistoryItemDto {
+    return plainToInstance(RedeemHistoryItemDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): RedeemHistoryItem {
+    const entity = new RedeemHistoryItem()
+    entity.id = this.id
+    entity.code = this.code
+    entity.type = this.type
+    entity.value = this.value
+    entity.status = this.status
+    entity.usedAt = this.usedAt
+    entity.createdAt = this.createdAt
+    entity.notes = this.notes
+    entity.groupId = this.groupId
+    entity.validityDays = this.validityDays
+    entity.groupName = this.groupName
+    return entity
   }
 }

@@ -81,11 +81,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { userAPI } from '@/api'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/core/stores/authStore'
+import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
-import type { User } from '@/features/auth/domain/models/auth'
+import type { User } from '@/types'
 
 const props = withDefaults(defineProps<{
   user: User | null
@@ -97,6 +97,7 @@ const props = withDefaults(defineProps<{
 const { t } = useI18n()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const profileAction = useProfileActionStore()
 
 const targetAvatarUploadBytes = 20 * 1024
 const avatarScaleSteps = [1, 0.92, 0.84, 0.76, 0.68, 0.6, 0.52, 0.44, 0.36]
@@ -229,13 +230,11 @@ async function handleAvatarFileChange(event: Event) {
 
 async function handleAvatarSave() {
   const normalized = normalizeUploadedAvatar(avatarDraft.value)
-  if (!normalized) {
-    return
-  }
+  if (!normalized) return
 
   avatarSaving.value = true
   try {
-    const updated = await userAPI.updateProfile({ avatar_url: normalized })
+    const updated = await profileAction.updateProfile({ avatar_url: normalized })
     authStore.user = updated
     avatarDraft.value = updated.avatarUrl?.trim() || ''
     appStore.showSuccess(t('profile.avatar.saveSuccess'))
@@ -247,9 +246,7 @@ async function handleAvatarSave() {
 }
 
 async function handleAvatarDelete() {
-  if (avatarSaving.value) {
-    return
-  }
+  if (avatarSaving.value) return
   if (!avatarDraft.value.trim() && !props.user?.avatarUrl?.trim()) {
     appStore.showError(t('profile.avatar.emptyDeleteHint'))
     return
@@ -257,7 +254,7 @@ async function handleAvatarDelete() {
 
   avatarSaving.value = true
   try {
-    const updated = await userAPI.updateProfile({ avatar_url: '' })
+    const updated = await profileAction.updateProfile({ avatar_url: '' })
     authStore.user = updated
     avatarDraft.value = ''
     appStore.showSuccess(t('profile.avatar.deleteSuccess'))

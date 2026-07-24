@@ -196,7 +196,8 @@ import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentati
 const adminAccountsQueryStore = useAdminAccountsQueryStore()
 import Select, { type SelectOption } from '@/common/widgets/forms/Select.vue'
 import { COMMON_ERROR_STATUS_CODES } from '@/core/utils/errorBadges'
-import type { SimpleApiKey, SimpleUser } from '@/features/admin-usage/data/datasources/adminUsageDatasource'
+import type { SimpleApiKey } from '@/features/admin-usage/domain/models/simpleApiKey'
+import type { SimpleUser } from '@/features/admin-usage/domain/models/simpleUser'
 
 type ModelValue = Record<string, any>
 

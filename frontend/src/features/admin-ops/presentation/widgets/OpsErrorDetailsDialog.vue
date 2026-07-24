@@ -4,8 +4,10 @@ import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import OpsErrorLogTable from './OpsErrorLogTable.vue'
-import { opsAPI, type OpsErrorLog } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import { formatCompactNumber, formatExactNumber } from '@/features/admin-ops/presentation/opsFormatter'
+import type { OpsErrorLog } from '@/features/admin-ops/domain/models/opsErrorLog'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
+import { formatCompactNumber, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 interface Props {
   show: boolean
@@ -115,19 +117,19 @@ async function fetchErrorLogs() {
     if (typeof props.groupId === 'number' && props.groupId > 0) params.groupId = props.groupId
 
     if (q.value.trim()) params.q = q.value.trim()
-    if (statusCode.value === 'other') params.status_codes_other = '1'
-    else if (typeof statusCode.value === 'number') params.status_codes = String(statusCode.value)
+    if (statusCode.value === 'other') params.statusCodes_other = '1'
+    else if (typeof statusCode.value === 'number') params.statusCodes = String(statusCode.value)
 
     const phaseVal = String(phase.value || '').trim()
     if (phaseVal) params.phase = phaseVal
 
     const ownerVal = String(errorOwner.value || '').trim()
-    if (ownerVal) params.error_owner = ownerVal
+    if (ownerVal) params.errorOwner = ownerVal
 
 
     const res = props.errorType === 'upstream'
-      ? await opsAPI.listUpstreamErrors(params)
-      : await opsAPI.listRequestErrors(params)
+      ? await queryStore.listUpstreamErrors(params)
+      : await queryStore.listRequestErrors(params)
     rows.value = res.items || []
     total.value = res.total || 0
   } catch (err) {

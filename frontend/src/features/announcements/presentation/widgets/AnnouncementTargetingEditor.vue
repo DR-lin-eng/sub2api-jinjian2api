@@ -171,7 +171,10 @@ import Select from '@/common/widgets/forms/Select.vue'
 import GroupSelector from '@/common/widgets/data/GroupSelector.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
-import type { AnnouncementTargeting, AnnouncementCondition, AnnouncementConditionGroup, AnnouncementConditionType, AnnouncementOperator } from '@/features/announcements/domain/models/announcement'
+import type { AnnouncementTargeting } from '@/features/announcements/domain/models/announcementTargeting'
+import type { AnnouncementCondition } from '@/features/announcements/domain/models/announcementCondition'
+import type { AnnouncementConditionGroup } from '@/features/announcements/domain/models/announcementConditionGroup'
+import type { AnnouncementConditionType, AnnouncementOperator } from '@/features/announcements/domain/models/announcementCondition'
 
 const { t } = useI18n()
 

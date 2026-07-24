@@ -5,7 +5,7 @@ import {
   getDisplayBillingMode,
 } from './billingMode'
 import { textInputTokens, textOutputTokens } from './imageUsage'
-import type { UsageLog } from '@/features/admin-usage/domain/models/adminUsage'
+import type { UsageLog } from '@/core/models/domain/usageLog'
 
 export type UsageBillingFormulaKind = 'direct' | 'split' | 'effective' | 'zero'
 

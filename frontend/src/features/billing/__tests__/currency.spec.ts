@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { currencySymbol, formatPaymentAmount } from '@/features/billing/presentation/currencyFormatter'
+import { currencySymbol, formatPaymentAmount } from '@/features/billing/presentation/utils/currencyFormatter'
 
 describe('formatPaymentAmount', () => {
   it('uses the currency default fraction digits', () => {

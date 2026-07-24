@@ -182,7 +182,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { useSubscriptionStore } from '@/stores'
-import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/subscription'
+import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/userSubscription'
 const { t } = useI18n()
 
 const subscriptionStore = useSubscriptionStore()

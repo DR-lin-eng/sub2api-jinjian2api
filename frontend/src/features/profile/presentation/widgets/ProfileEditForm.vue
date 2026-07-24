@@ -43,7 +43,7 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/core/stores/authStore'
 import { useAppStore } from '@/core/stores/appStore'
-import { userAPI } from '@/api'
+import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
 
 const props = withDefaults(defineProps<{
   initialUsername: string
@@ -55,6 +55,7 @@ const props = withDefaults(defineProps<{
 const { t } = useI18n()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const profileAction = useProfileActionStore()
 
 const username = ref(props.initialUsername)
 const loading = ref(false)
@@ -71,9 +72,7 @@ const handleUpdateProfile = async () => {
 
   loading.value = true
   try {
-    const updatedUser = await userAPI.updateProfile({
-      username: username.value
-    })
+    const updatedUser = await profileAction.updateProfile({ username: username.value })
     authStore.user = updatedUser
     appStore.showSuccess(t('profile.updateSuccess'))
   } catch (error: any) {

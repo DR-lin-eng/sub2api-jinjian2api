@@ -123,8 +123,10 @@ import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import UsageFilters from '@/features/admin-usage/presentation/widgets/UsageFilters.vue'
-import { adminUsageAPI } from '@/features/admin-usage/data/datasources/adminUsageDatasource'
-import type { AdminUsageQueryParams, UsageCleanupTask, CreateUsageCleanupTaskRequest } from '@/features/admin-usage/data/datasources/adminUsageDatasource'
+import { useAdminUsage } from '@/features/admin-usage/presentation/composables/useAdminUsage'
+import type { AdminUsageQueryParams } from '@/features/admin-usage/domain/models/adminUsageQueryParams'
+import type { UsageCleanupTask } from '@/features/admin-usage/domain/models/usageCleanupTask'
+import type { CreateUsageCleanupTaskRequest } from '@/features/admin-usage/data/requests_models/createUsageCleanupTaskRequest'
 import { requestTypeToLegacyStream } from '@/core/utils/usageRequestType'
 
 interface Props {
@@ -139,6 +141,7 @@ const emit = defineEmits(['close'])
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const $usage = useAdminUsage()
 
 const localFilters = ref<AdminUsageQueryParams>({})
 const localStartDate = ref('')
@@ -239,7 +242,7 @@ const loadTasks = async () => {
   if (!props.show) return
   tasksLoading.value = true
   try {
-    const res = await adminUsageAPI.listCleanupTasks({
+    const res = await $usage.listCleanupTasks({
       page: tasksPage.value,
       page_size: tasksPageSize.value
     })
@@ -336,7 +339,7 @@ const submitCleanup = async () => {
   submitting.value = true
   confirmVisible.value = false
   try {
-    await adminUsageAPI.createCleanupTask(payload)
+    await $usage.createCleanupTask(payload)
     appStore.showSuccess(t('admin.usage.cleanup.submitSuccess'))
     loadTasks()
   } catch (error) {
@@ -356,7 +359,7 @@ const cancelTask = async () => {
   canceling.value = true
   cancelConfirmVisible.value = false
   try {
-    await adminUsageAPI.cancelCleanupTask(task.id)
+    await $usage.cancelCleanupTask(task.id)
     appStore.showSuccess(t('admin.usage.cleanup.cancelSuccess'))
     loadTasks()
   } catch (error) {

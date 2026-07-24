@@ -192,13 +192,13 @@
               <div class="flex items-center gap-1.5">
                 <span class="text-gray-500 dark:text-gray-400">{{ t('keys.today') }}:</span>
                 <span class="font-medium text-gray-900 dark:text-white">
-                  ${{ (usageStats[row.id]?.today_actual_cost ?? 0).toFixed(4) }}
+                  ${{ (usageStats[row.id]?.todayActualCost ?? 0).toFixed(4) }}
                 </span>
               </div>
               <div class="mt-0.5 flex items-center gap-1.5">
                 <span class="text-gray-500 dark:text-gray-400">{{ t('keys.total') }}:</span>
                 <span class="font-medium text-gray-900 dark:text-white">
-                  ${{ (usageStats[row.id]?.total_actual_cost ?? 0).toFixed(4) }}
+                  ${{ (usageStats[row.id]?.totalActualCost ?? 0).toFixed(4) }}
                 </span>
               </div>
               <!-- Quota progress (if quota is set) -->
@@ -1157,7 +1157,7 @@ import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
 	import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 	import GroupOptionItem from '@/common/widgets/data/GroupOptionItem.vue'
 	import type { Column } from '@/common/types/uiTypes'
-import type { BatchApiKeyUsageStats } from '@/features/usage/presentation/api'
+import type { BatchApiKeyUsageStats } from '@/features/usage/domain/models/batchApiKeyUsageStats'
 import { formatDateTime } from '@/core/utils/format'
 import { maskApiKey } from '@/core/utils/maskApiKey'
 import {
@@ -1167,7 +1167,7 @@ import {
 import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 import type { UpdateApiKeyRequest } from '@/features/keys/data/requests_models/updateApiKeyRequest'
 import type { Group, SubscriptionType, GroupPlatform } from '@/features/admin-groups/domain/models/adminGroups'
-import type { PublicSettings } from '@/features/auth/domain/models/auth'
+import type { PublicSettings } from '@/types'
 
 // Helper to format date for datetime-local input
 const formatDateTimeLocal = (isoDate: string): string => {
@@ -1506,7 +1506,7 @@ const loadApiKeys = async () => {
     if (response.items.length > 0) {
       const keyIds = response.items.map((k: ApiKey) => k.id)
       try {
-        const usageResponse = await usageAPI.getDashboardApiKeysUsage(keyIds, { signal })
+        const usageResponse = await usageAPI.getDashboardApiKeysUsage({ api_key_ids: keyIds }, { signal })
         if (signal.aborted) return
         usageStats.value = usageResponse.stats
       } catch (e) {

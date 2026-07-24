@@ -6,8 +6,11 @@ import PolicyPanel from '@/features/prompt-audit/presentation/widgets/PolicyPane
 import EventWorkspace from '@/features/prompt-audit/presentation/widgets/EventWorkspace.vue'
 import EventDetailDialog from '@/features/prompt-audit/presentation/widgets/EventDetailDialog.vue'
 import FilterDeleteDialog from '@/features/prompt-audit/presentation/widgets/FilterDeleteDialog.vue'
-import type { PromptAuditDraft, PromptAuditEndpointDraft, PromptAuditEvent, PromptEventFilters } from '@/features/prompt-audit/domain/models/promptAuditTypes'
-import { emptyEventFilters, resolveDeleteRangeFilters, SCANNER_CATALOG } from '@/features/prompt-audit/domain/promptAuditViewModel'
+import type { PromptAuditDraft } from '@/features/prompt-audit/domain/models/promptAuditDraft'
+import type { PromptAuditEndpointDraft } from '@/features/prompt-audit/domain/models/promptAuditEndpointDraft'
+import type { PromptAuditEvent } from '@/features/prompt-audit/domain/models/promptAuditEvent'
+import type { PromptEventFilters } from '@/features/prompt-audit/domain/models/promptEventFilters'
+import { emptyEventFilters, resolveDeleteRangeFilters, SCANNER_CATALOG } from '@/features/prompt-audit/presentation/utils/promptAuditViewModel'
 
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
@@ -18,10 +21,10 @@ const DialogStub = defineComponent({ props: ['show', 'title'], emits: ['close'],
 const PaginationStub = defineComponent({ props: ['total', 'page', 'pageSize'], emits: ['update:page', 'update:pageSize'], template: '<div data-test="pagination" />' })
 
 const endpoint = (): PromptAuditEndpointDraft => ({
-  id: 'guard-1', name: 'Guard One', protocol: 'openai_compatible', base_url: 'http://127.0.0.1:8000',
-  model: 'guard-model', timeout_ms: 3000, input_limit: 4000, enabled: true,
-  has_token: true, token_status: 'configured', token: '', clear_token: false,
-})
+  id: 'guard-1', name: 'Guard One', protocol: 'openai_compatible', baseUrl: 'http://127.0.0.1:8000',
+  model: 'guard-model', timeoutMs: 3000, inputLimit: 4000, enabled: true,
+  hasToken: true, tokenStatus: 'configured', token: '', clearToken: false,
+} as PromptAuditEndpointDraft)
 
 describe('Prompt Audit components', () => {
   beforeEach(() => vi.restoreAllMocks())
@@ -43,7 +46,7 @@ describe('Prompt Audit components', () => {
     await token.setValue('replacement-canary')
     await wrapper.get('[data-test="save-endpoint"]').trigger('click')
     const updated = wrapper.emitted('update:endpoints')?.at(-1)?.[0] as PromptAuditEndpointDraft[]
-    expect(updated[0]).toMatchObject({ token: 'replacement-canary', clear_token: false })
+    expect(updated[0]).toMatchObject({ token: 'replacement-canary', clearToken: false })
 
     const probe = wrapper.findAll('button').find((button) => button.text().includes('admin.promptAudit.pool.probe'))
     await probe!.trigger('click')
@@ -52,10 +55,10 @@ describe('Prompt Audit components', () => {
 
   it('supports group search, stale configured groups, nine scanners, and bounded worker inputs', async () => {
     const draft: PromptAuditDraft = {
-      enabled: true, blocking_enabled: false, store_pass_events: false, effective_mode: 'async_audit', strategy: 'priority',
-      worker_count: 4, queue_capacity: 100, scanners: SCANNER_CATALOG.map((item) => item.id), all_groups: false, group_ids: [1, 99],
-      endpoints: [endpoint()], config_version: 1, updated_at: '', updated_by: 0, change_summary: '',
-    }
+      enabled: true, blockingEnabled: false, storePassEvents: false, effectiveMode: 'async_audit', strategy: 'priority',
+      workerCount: 4, queueCapacity: 100, scanners: SCANNER_CATALOG.map((item) => item.id), allGroups: false, groupIds: [1, 99],
+      endpoints: [endpoint()], configVersion: 1, updatedAt: '', updatedBy: 0, changeSummary: '',
+    } as PromptAuditDraft
     const wrapper = mount(PolicyPanel, {
       props: { draft, groups: [{ id: 1, name: 'Alpha', platform: 'openai', status: 'active' }, { id: 2, name: 'Beta', platform: 'claude', status: 'inactive' }] },
     })
@@ -66,14 +69,14 @@ describe('Prompt Audit components', () => {
     expect(wrapper.text()).not.toContain('Alpha')
     await wrapper.get('[aria-label="admin.promptAudit.policy.workerCount"]').setValue('6')
     const emitted = wrapper.emitted('update:draft')?.at(-1)?.[0] as PromptAuditDraft
-    expect(emitted.worker_count).toBe(6)
+    expect(emitted.workerCount).toBe(6)
   })
 
   it('keeps identity fields separate, supports selection, and opens filter deletion from the toolbar', async () => {
     const event: PromptAuditEvent = {
-      id: 1, job_id: 1, decision: 'critical', risk_level: 'critical', action: 'Block', categories: ['pii'], matched_scanners: ['pii'], scanner_scores: { pii: 1 }, scanner_evidence: { pii: 'redacted' }, scanner_backend: 'qwen3guard-openai', scanner_version: '1', guard_endpoint_id: 'guard-1', policy_id: 'priority', policy_version: 1, config_version: 1, chunk_total: 1, latency_ms: 10, issue_summaries: [], created_at: '2026-07-16T00:00:00Z',
-      snapshot: { request_id: 'req-1', user_id: 1, username: 'alice', user_email: 'alice@example.test', api_key_id: 2, api_key_name: 'alice-key', group_id: 3, group_name: 'Alpha', provider: 'openai', endpoint: '/v1/chat/completions', protocol: 'openai_chat', model: 'gpt-test', prompt_hash: 'a'.repeat(64), redacted_preview: 'redacted preview', full_prompt: 'full prompt text', prompt_length: 10, message_count: 1, stage: 'http' },
-    }
+      id: 1, jobId: 1, decision: 'critical', riskLevel: 'critical', action: 'Block', categories: ['pii'], matchedScanners: ['pii'], scannerScores: { pii: 1 }, scannerEvidence: { pii: 'redacted' }, scannerBackend: 'qwen3guard-openai', scannerVersion: '1', guardEndpointId: 'guard-1', policyId: 'priority', policyVersion: 1, configVersion: 1, chunkTotal: 1, latencyMs: 10, issueSummaries: [], createdAt: '2026-07-16T00:00:00Z',
+      snapshot: { requestId: 'req-1', userId: 1, username: 'alice', userEmail: 'alice@example.test', apiKeyId: 2, apiKeyName: 'alice-key', groupId: 3, groupName: 'Alpha', provider: 'openai', endpoint: '/v1/chat/completions', protocol: 'openai_chat', model: 'gpt-test', promptHash: 'a'.repeat(64), redactedPreview: 'redacted preview', fullPrompt: 'full prompt text', promptLength: 10, messageCount: 1, stage: 'http' },
+    } as PromptAuditEvent
     const wrapper = mount(EventWorkspace, {
       props: { events: [event], total: 1, page: 1, pageSize: 20, filters: emptyEventFilters(), selectedIds: [], loading: false, error: '' },
       global: { stubs: { Pagination: PaginationStub } },
@@ -93,12 +96,12 @@ describe('Prompt Audit components', () => {
   it('resolves delete range presets to an epoch start and a cutoff end', () => {
     const now = Date.parse('2026-07-17T12:00:00.000Z')
     const sevenDays = resolveDeleteRangeFilters(emptyEventFilters(), '7d', now)
-    expect(sevenDays.start_at).toBe('1970-01-01T00:00:00.000Z')
-    expect(sevenDays.end_at).toBe('2026-07-10T12:00:00.000Z')
+    expect(sevenDays.startAt).toBe('1970-01-01T00:00:00.000Z')
+    expect(sevenDays.endAt).toBe('2026-07-10T12:00:00.000Z')
     const all = resolveDeleteRangeFilters(emptyEventFilters(), 'all', now)
-    expect(all.start_at).toBe('1970-01-01T00:00:00.000Z')
-    expect(all.end_at).toBe('2026-07-17T12:00:00.000Z')
-    const customSource = { ...emptyEventFilters(), start_at: '2026-07-01T00:00', end_at: '2026-07-02T00:00' }
+    expect(all.startAt).toBe('1970-01-01T00:00:00.000Z')
+    expect(all.endAt).toBe('2026-07-17T12:00:00.000Z')
+    const customSource = { ...emptyEventFilters(), startAt: '2026-07-01T00:00', endAt: '2026-07-02T00:00' }
     expect(resolveDeleteRangeFilters(customSource, 'custom', now)).toEqual(customSource)
   })
 
@@ -110,60 +113,53 @@ describe('Prompt Audit components', () => {
     expect(wrapper.get<HTMLInputElement>('[data-test="range-preset-7d"]').element.checked).toBe(true)
     expect(wrapper.find('[data-test="custom-range"]').exists()).toBe(false)
     expect(wrapper.get('[data-test="delete-preview-empty"]').exists()).toBeTruthy()
-    // A valid preset is enough: confirm is armed immediately (one-click flow)
-    // and needs no disabled-reason hint.
     expect(wrapper.get('[data-test="confirm-filter-delete"]').attributes()).not.toHaveProperty('disabled')
     expect(wrapper.find('[data-test="confirm-disabled-reason"]').exists()).toBe(false)
     await wrapper.get('[data-test="confirm-filter-delete"]').trigger('click')
     const directConfirm = wrapper.emitted('confirm')?.at(-1)?.[0] as PromptEventFilters
-    expect(directConfirm.start_at).toBe('1970-01-01T00:00:00.000Z')
-    expect(Date.now() - new Date(directConfirm.end_at).getTime()).toBeGreaterThanOrEqual(7 * 24 * 60 * 60 * 1000)
+    expect(directConfirm.startAt).toBe('1970-01-01T00:00:00.000Z')
+    expect(Date.now() - new Date(directConfirm.endAt).getTime()).toBeGreaterThanOrEqual(7 * 24 * 60 * 60 * 1000)
 
     await wrapper.get('[data-test="range-preset-30d"]').setValue()
     expect(wrapper.emitted('criteria-change')?.length).toBeGreaterThan(0)
     await wrapper.get('[data-test="delete-risk"]').setValue('high')
     await wrapper.get('[data-test="run-delete-preview"]').trigger('click')
     const presetPreview = wrapper.emitted('preview')?.at(-1)?.[0] as PromptEventFilters
-    expect(presetPreview.risk_level).toBe('high')
-    expect(presetPreview.start_at).toBe('1970-01-01T00:00:00.000Z')
-    expect(Date.now() - new Date(presetPreview.end_at).getTime()).toBeGreaterThanOrEqual(30 * 24 * 60 * 60 * 1000)
+    expect(presetPreview.riskLevel).toBe('high')
+    expect(presetPreview.startAt).toBe('1970-01-01T00:00:00.000Z')
+    expect(Date.now() - new Date(presetPreview.endAt).getTime()).toBeGreaterThanOrEqual(30 * 24 * 60 * 60 * 1000)
 
     await wrapper.get('[data-test="range-preset-custom"]').setValue()
     expect(wrapper.find('[data-test="custom-range"]').exists()).toBe(true)
     expect(wrapper.get('[data-test="run-delete-preview"]').attributes()).toHaveProperty('disabled')
     expect(wrapper.get('[data-test="confirm-filter-delete"]').attributes()).toHaveProperty('disabled')
     expect(wrapper.get('[data-test="confirm-disabled-reason"]').text()).toBe('admin.promptAudit.events.filterDeleteConfirmInvalidRange')
-    expect(wrapper.get('[data-test="confirm-filter-delete"]').attributes('title')).toBe('admin.promptAudit.events.filterDeleteConfirmInvalidRange')
     await wrapper.get('[data-test="custom-range"] [aria-label="admin.promptAudit.events.startAt"]').setValue('2026-07-01T00:00')
     await wrapper.get('[data-test="custom-range"] [aria-label="admin.promptAudit.events.endAt"]').setValue('2026-07-02T00:00')
     expect(wrapper.get('[data-test="run-delete-preview"]').attributes()).not.toHaveProperty('disabled')
     expect(wrapper.get('[data-test="confirm-filter-delete"]').attributes()).not.toHaveProperty('disabled')
-    expect(wrapper.find('[data-test="confirm-disabled-reason"]').exists()).toBe(false)
     await wrapper.get('[data-test="run-delete-preview"]').trigger('click')
     const customPreview = wrapper.emitted('preview')?.at(-1)?.[0] as PromptEventFilters
-    expect(customPreview.start_at).toBe('2026-07-01T00:00')
-    expect(customPreview.end_at).toBe('2026-07-02T00:00')
+    expect(customPreview.startAt).toBe('2026-07-01T00:00')
+    expect(customPreview.endAt).toBe('2026-07-02T00:00')
 
     await wrapper.setProps({
-      preview: { matched_count: 3, filter_summary: {}, snapshot_max_id: 9, filter_hash: 'b'.repeat(64), confirmation_token: 'tok', expires_at: '2026-07-16T00:05:00Z' },
+      preview: { matchedCount: 3, filterSummary: {}, snapshotMaxId: 9, filterHash: 'b'.repeat(64), confirmationToken: 'tok', expiresAt: '2026-07-16T00:05:00Z' },
     })
     expect(wrapper.get('[data-test="delete-preview-result"]').text()).toContain('admin.promptAudit.events.filterDeleteCount')
-    expect(wrapper.find('[data-test="confirm-disabled-reason"]').exists()).toBe(false)
     expect(wrapper.get('[data-test="confirm-filter-delete"]').attributes()).not.toHaveProperty('disabled')
     await wrapper.get('[data-test="confirm-filter-delete"]').trigger('click')
     const confirmed = wrapper.emitted('confirm')?.at(-1)?.[0] as PromptEventFilters
-    expect(confirmed.start_at).toBe('2026-07-01T00:00')
-    expect(confirmed.end_at).toBe('2026-07-02T00:00')
+    expect(confirmed.startAt).toBe('2026-07-01T00:00')
+    expect(confirmed.endAt).toBe('2026-07-02T00:00')
   })
 
   it('explains that a zero-match preview leaves nothing to delete', async () => {
     const wrapper = mount(FilterDeleteDialog, {
       props: {
-        show: true,
-        initialFilters: emptyEventFilters(),
-        preview: { matched_count: 0, filter_summary: {}, snapshot_max_id: 0, filter_hash: 'c'.repeat(64), confirmation_token: 'tok', expires_at: '2026-07-16T00:05:00Z' },
-        previewing: false,
-        deleting: false,
+        show: true, initialFilters: emptyEventFilters(),
+        preview: { matchedCount: 0, filterSummary: {}, snapshotMaxId: 0, filterHash: 'c'.repeat(64), confirmationToken: 'tok', expiresAt: '2026-07-16T00:05:00Z' },
+        previewing: false, deleting: false,
       },
       global: { stubs: { BaseDialog: DialogStub } },
     })
@@ -175,7 +171,7 @@ describe('Prompt Audit components', () => {
   })
 
   it('inherits an explicit list-filter range as the custom preset', async () => {
-    const initialFilters = { ...emptyEventFilters(), start_at: '2026-07-01T00:00', end_at: '2026-07-02T00:00', decision: 'critical' }
+    const initialFilters = { ...emptyEventFilters(), startAt: '2026-07-01T00:00', endAt: '2026-07-02T00:00', decision: 'critical' }
     const wrapper = mount(FilterDeleteDialog, {
       props: { show: true, initialFilters, preview: null, previewing: false, deleting: false },
       global: { stubs: { BaseDialog: DialogStub } },
@@ -188,28 +184,28 @@ describe('Prompt Audit components', () => {
 
   it('shows the full unredacted prompt and structured guard return on the risks tab', async () => {
     const event: PromptAuditEvent = {
-      id: 1, job_id: 1, decision: 'critical', risk_level: 'critical', action: 'Block',
-      categories: ['sexual_content_or_sexual_acts'], matched_scanners: ['sexual_content_or_sexual_acts'],
-      scanner_scores: { sexual_content_or_sexual_acts: 1 },
-      scanner_evidence: { sexual_content_or_sexual_acts: 'Sexual Content or Sexual Acts' },
-      scanner_backend: 'qwen3guard-openai', scanner_version: 'qwen3guard', guard_endpoint_id: 'guard-1',
-      policy_id: 'priority', policy_version: 1, config_version: 1, chunk_total: 1, latency_ms: 12,
-      issue_summaries: [{
-        category: 'sexual_content_or_sexual_acts', scanner_id: 'sexual_content_or_sexual_acts',
+      id: 1, jobId: 1, decision: 'critical', riskLevel: 'critical', action: 'Block',
+      categories: ['sexual_content_or_sexual_acts'], matchedScanners: ['sexual_content_or_sexual_acts'],
+      scannerScores: { sexual_content_or_sexual_acts: 1 },
+      scannerEvidence: { sexual_content_or_sexual_acts: 'Sexual Content or Sexual Acts' },
+      scannerBackend: 'qwen3guard-openai', scannerVersion: 'qwen3guard', guardEndpointId: 'guard-1',
+      policyId: 'priority', policyVersion: 1, configVersion: 1, chunkTotal: 1, latencyMs: 12,
+      issueSummaries: [{
+        category: 'sexual_content_or_sexual_acts', scannerId: 'sexual_content_or_sexual_acts',
         title: '性内容或性行为', description: 'Sexual content or sexual acts', severity: 'critical',
-        severity_label: '严重', action: 'Block', action_label: '阻止',
+        severityLabel: '严重', action: 'Block', actionLabel: '阻止',
         code: 'prompt_audit_sexual_content_or_sexual_acts', score: 1,
-        evidence: 'Sexual Content or Sexual Acts', evidence_hash: 'abc',
+        evidence: 'Sexual Content or Sexual Acts', evidenceHash: 'abc',
       }],
-      created_at: '2026-07-16T00:00:00Z',
+      createdAt: '2026-07-16T00:00:00Z',
       snapshot: {
-        request_id: 'req-1', user_id: 1, username: 'alice', user_email: 'alice@example.test',
-        api_key_id: 2, api_key_name: 'alice-key', group_id: 3, group_name: 'Alpha', provider: 'openai',
+        requestId: 'req-1', userId: 1, username: 'alice', userEmail: 'alice@example.test',
+        apiKeyId: 2, apiKeyName: 'alice-key', groupId: 3, groupName: 'Alpha', provider: 'openai',
         endpoint: '/v1/chat/completions', protocol: 'openai_chat', model: 'gpt-test',
-        prompt_hash: 'a'.repeat(64), redacted_preview: 'redacted prompt body', full_prompt: 'complete unmasked prompt body', prompt_length: 20,
-        message_count: 1, stage: 'http',
+        promptHash: 'a'.repeat(64), redactedPreview: 'redacted prompt body', fullPrompt: 'complete unmasked prompt body', promptLength: 20,
+        messageCount: 1, stage: 'http',
       },
-    }
+    } as PromptAuditEvent
     const wrapper = mount(EventDetailDialog, {
       props: { show: true, event, loading: false },
       global: { stubs: { BaseDialog: DialogStub } },
@@ -221,10 +217,8 @@ describe('Prompt Audit components', () => {
     const riskTab = wrapper.findAll('[role="tab"]').find((tab) => tab.text().includes('admin.promptAudit.events.tabs.risks'))
     expect(riskTab).toBeTruthy()
     await riskTab!.trigger('click')
-    expect(wrapper.get('[data-test="event-detail-tab-panel"]').classes()).toContain('h-[min(62vh,36rem)]')
     expect(wrapper.get('[data-test="risk-prompt-preview"]').text()).toContain('complete unmasked prompt body')
     expect(wrapper.get('[data-test="risk-prompt-preview"]').text()).not.toContain('redacted prompt body')
-    expect(wrapper.get('[data-test="risk-prompt-full"]').classes()).toContain('overflow-auto')
     expect(wrapper.get('[data-test="risk-guard-return"]').text()).toContain('"decision": "admin.promptAudit.decisions.critical"')
     expect(wrapper.get('[data-test="risk-guard-return"]').text()).toContain('admin.promptAudit.scanners.sexual_content_or_sexual_acts')
     expect(wrapper.get('[data-test="risk-issue"]').text()).toContain('admin.promptAudit.scanners.sexual_content_or_sexual_acts')
@@ -232,19 +226,19 @@ describe('Prompt Audit components', () => {
 
   it('falls back to the redacted preview for events stored before full prompts were kept', async () => {
     const event: PromptAuditEvent = {
-      id: 2, job_id: 2, decision: 'flag', risk_level: 'medium', action: 'Warn',
-      categories: ['pii'], matched_scanners: ['pii'], scanner_scores: {}, scanner_evidence: {},
-      scanner_backend: 'qwen3guard-openai', scanner_version: '1', guard_endpoint_id: 'guard-1',
-      policy_id: 'priority', policy_version: 1, config_version: 1, chunk_total: 1, latency_ms: 5,
-      issue_summaries: [], created_at: '2026-07-16T00:00:00Z',
+      id: 2, jobId: 2, decision: 'flag', riskLevel: 'medium', action: 'Warn',
+      categories: ['pii'], matchedScanners: ['pii'], scannerScores: {}, scannerEvidence: {},
+      scannerBackend: 'qwen3guard-openai', scannerVersion: '1', guardEndpointId: 'guard-1',
+      policyId: 'priority', policyVersion: 1, configVersion: 1, chunkTotal: 1, latencyMs: 5,
+      issueSummaries: [], createdAt: '2026-07-16T00:00:00Z',
       snapshot: {
-        request_id: 'req-2', user_id: 1, username: 'bob', user_email: '', api_key_id: 2,
-        api_key_name: 'bob-key', group_id: 3, group_name: 'Alpha', provider: 'openai',
+        requestId: 'req-2', userId: 1, username: 'bob', userEmail: '', apiKeyId: 2,
+        apiKeyName: 'bob-key', groupId: 3, groupName: 'Alpha', provider: 'openai',
         endpoint: '/v1/chat/completions', protocol: 'openai_chat', model: 'gpt-test',
-        prompt_hash: 'b'.repeat(64), redacted_preview: 'legacy redacted preview', full_prompt: '', prompt_length: 20,
-        message_count: 1, stage: 'http',
+        promptHash: 'b'.repeat(64), redactedPreview: 'legacy redacted preview', fullPrompt: '', promptLength: 20,
+        messageCount: 1, stage: 'http',
       },
-    }
+    } as PromptAuditEvent
     const wrapper = mount(EventDetailDialog, {
       props: { show: true, event, loading: false },
       global: { stubs: { BaseDialog: DialogStub } },

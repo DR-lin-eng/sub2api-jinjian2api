@@ -50,7 +50,8 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import type { UserMonitorView, UserMonitorDetail } from '@/features/channel-monitor-user/data/datasources/channelMonitorUserDatasource'
+import type { UserMonitorView } from '@/features/channel-monitor-user/domain/models/userMonitorView'
+import type { UserMonitorDetail } from '@/features/channel-monitor-user/domain/models/userMonitorDetail'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import MonitorCard from './MonitorCard.vue'
 
@@ -70,12 +71,12 @@ const { t } = useI18n()
 
 function resolveAvailability(item: UserMonitorView): number | null {
   if (props.window === '7d') {
-    return item.availability_7d ?? null
+    return item.availability7d ?? null
   }
   const detail = props.detailCache[item.id]
   if (!detail) return null
-  const primary = detail.models.find(m => m.model === item.primary_model)
+  const primary = detail.models.find(m => m.model === item.primaryModel)
   if (!primary) return null
-  return props.window === '15d' ? primary.availability_15d ?? null : primary.availability_30d ?? null
+  return props.window === '15d' ? primary.availability15d ?? null : primary.availability30d ?? null
 }
 </script>

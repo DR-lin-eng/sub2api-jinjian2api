@@ -1,23 +1,49 @@
-import type { ApiKeyDailyUsagePoint } from '@/features/usage/domain/models/apiKeyDailyUsagePoint'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { ApiKeyDailyUsagePoint } from '@/features/usage/domain/models/apiKeyDailyUsagePoint'
 
-export interface ApiKeyDailyUsagePointDto {
-  date: string
-  requests: number
-  input_tokens: number
-  output_tokens: number
-  cache_read_tokens: number
-  cache_write_tokens: number
-  total_tokens: number
-}
+export class ApiKeyDailyUsagePointDto {
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  date!: string
 
-export function toEntity(dto: ApiKeyDailyUsagePointDto): ApiKeyDailyUsagePoint {
-  return {
-    date: dto.date ?? '',
-    requests: dto.requests ?? 0,
-    inputTokens: dto.input_tokens ?? 0,
-    outputTokens: dto.output_tokens ?? 0,
-    cacheReadTokens: dto.cache_read_tokens ?? 0,
-    cacheWriteTokens: dto.cache_write_tokens ?? 0,
-    totalTokens: dto.total_tokens ?? 0,
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  requests!: number
+
+  @Expose({ name: 'input_tokens' })
+  @Transform(({ value }) => value ?? 0)
+  inputTokens!: number
+
+  @Expose({ name: 'output_tokens' })
+  @Transform(({ value }) => value ?? 0)
+  outputTokens!: number
+
+  @Expose({ name: 'cache_read_tokens' })
+  @Transform(({ value }) => value ?? 0)
+  cacheReadTokens!: number
+
+  @Expose({ name: 'cache_write_tokens' })
+  @Transform(({ value }) => value ?? 0)
+  cacheWriteTokens!: number
+
+  @Expose({ name: 'total_tokens' })
+  @Transform(({ value }) => value ?? 0)
+  totalTokens!: number
+
+  static fromJson(json: unknown): ApiKeyDailyUsagePointDto {
+    return plainToInstance(ApiKeyDailyUsagePointDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): ApiKeyDailyUsagePoint {
+    const entity = new ApiKeyDailyUsagePoint()
+    entity.date = this.date
+    entity.requests = this.requests
+    entity.inputTokens = this.inputTokens
+    entity.outputTokens = this.outputTokens
+    entity.cacheReadTokens = this.cacheReadTokens
+    entity.cacheWriteTokens = this.cacheWriteTokens
+    entity.totalTokens = this.totalTokens
+    return entity
   }
 }

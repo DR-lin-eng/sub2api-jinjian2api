@@ -2,8 +2,10 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
-import { opsAPI, type OpsImageGenerationStatsResponse } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import { formatCompactNumber, formatDurationMs, formatExactDurationMs, formatExactNumber } from '@/features/admin-ops/presentation/opsFormatter'
+import type { OpsImageGenerationStats } from '@/features/admin-ops/domain/models/opsImageGenerationStats'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
+import { formatCompactNumber, formatDurationMs, formatExactDurationMs, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 interface Props {
   timeRange: '5m' | '30m' | '1h' | '6h' | '24h' | 'custom'
@@ -66,7 +68,7 @@ async function loadData() {
   loading.value = true
   errorMessage.value = ''
   try {
-    const result = await opsAPI.getImageGenerationStats(buildParams(), { signal: requestController.signal })
+    const result = await queryStore.getImageGenerationStats(buildParams(), { signal: requestController.signal })
     if (sequence !== requestSequence) return
     response.value = result
   } catch (err: any) {

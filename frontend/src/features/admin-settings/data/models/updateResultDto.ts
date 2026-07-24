@@ -1,13 +1,19 @@
-import type { UpdateResult } from '@/features/admin-settings/domain/models/system'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { UpdateResult } from '@/features/admin-settings/domain/models/updateResult'
 
-export interface UpdateResultDto {
-  message: string
-  need_restart: boolean
-}
+export class UpdateResultDto {
+  @Expose() @Transform(({ value }) => value ?? '') message!: string
+  @Expose({ name: 'need_restart' }) @Transform(({ value }) => value ?? false) needRestart!: boolean
 
-export function toEntity(dto: UpdateResultDto): UpdateResult {
-  return {
-    message: dto.message ?? '',
-    needRestart: dto.need_restart ?? false,
+  static fromJson(json: unknown): UpdateResultDto {
+    return plainToInstance(UpdateResultDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): UpdateResult {
+    const e = new UpdateResult()
+    e.message = this.message
+    e.needRestart = this.needRestart
+    return e
   }
 }

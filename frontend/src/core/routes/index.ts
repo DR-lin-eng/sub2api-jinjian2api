@@ -10,7 +10,7 @@ import { useAdminSettingsStore } from '@/core/stores/adminSettingsStore'
 import { useAdminComplianceStore } from '@/core/stores/adminComplianceStore'
 import { useNavigationLoadingState } from '@/core/routes/composables/useNavigationLoading'
 import { useRoutePrefetch } from '@/core/routes/composables/useRoutePrefetch'
-import { getSetupStatus } from '@/api'
+import { setupQueryRepo } from '@/api'
 import { resolveCompletedSetupRedirectPath } from './setupRedirect'
 import { resolveRouteDocumentTitle } from './title'
 import { adminChannelsRoutes } from '@/features/admin-channels'
@@ -762,8 +762,8 @@ router.beforeEach(async (to, _from, next) => {
 
   if (to.path === '/setup') {
     try {
-      const status = await getSetupStatus()
-      if (!status.needs_setup) {
+      const status = await setupQueryRepo.getSetupStatus()
+      if (!status.needsSetup) {
         next(resolveCompletedSetupRedirectPath(authStore.isAuthenticated, authStore.isAdmin))
         return
       }

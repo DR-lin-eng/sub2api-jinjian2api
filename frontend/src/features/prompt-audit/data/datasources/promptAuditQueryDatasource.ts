@@ -1,64 +1,52 @@
 import { apiClient } from '@/core/networks/client'
-import type {
-  PromptAuditConfig,
-  PromptAuditEvent,
-  PromptAuditGroup,
-  PromptAuditRuntime,
-  PromptDeletePreview,
-  PromptEventFilters,
-  PromptEventPage,
-} from '@/features/prompt-audit/domain/models/promptAuditTypes'
-import { eventFilterPayload, eventQueryParams } from '@/features/prompt-audit/domain/promptAuditViewModel'
+import { PromptAuditConfigDto } from '@/features/prompt-audit/data/models/promptAuditConfigDto'
+import { PromptAuditRuntimeDto } from '@/features/prompt-audit/data/models/promptAuditRuntimeDto'
+import { PromptAuditEventDto } from '@/features/prompt-audit/data/models/promptAuditEventDto'
+import { PromptEventPageDto } from '@/features/prompt-audit/data/models/promptEventPageDto'
+import { PromptDeletePreviewDto } from '@/features/prompt-audit/data/models/promptDeletePreviewDto'
+import { PromptAuditGroupDto } from '@/features/prompt-audit/data/models/promptAuditGroupDto'
+import type { PromptEventFilters } from '@/features/prompt-audit/domain/models/promptEventFilters'
+import { eventFilterPayload, eventQueryParams } from '@/features/prompt-audit/data/utils/promptAuditQueryParams'
 
 const basePath = '/admin/prompt-audit'
 
-export async function getConfig(): Promise<PromptAuditConfig> {
-  const { data } = await apiClient.get<PromptAuditConfig>(`${basePath}/config`)
-  return data
+export class PromptAuditQueryDatasource {
+  async getConfig(): Promise<PromptAuditConfigDto> {
+    const { data } = await apiClient.get<unknown>(`${basePath}/config`)
+    return PromptAuditConfigDto.fromJson(data)
+  }
+
+  async getRuntime(): Promise<PromptAuditRuntimeDto> {
+    const { data } = await apiClient.get<unknown>(`${basePath}/runtime`)
+    return PromptAuditRuntimeDto.fromJson(data)
+  }
+
+  async listEvents(filters: PromptEventFilters, page: number, pageSize: number): Promise<PromptEventPageDto> {
+    const { data } = await apiClient.get<unknown>(`${basePath}/events`, {
+      params: { page, page_size: pageSize, ...eventQueryParams(filters) },
+    })
+    return PromptEventPageDto.fromJson(data)
+  }
+
+  async getEvent(id: number): Promise<PromptAuditEventDto> {
+    const { data } = await apiClient.get<unknown>(`${basePath}/events/${id}`)
+    return PromptAuditEventDto.fromJson(data)
+  }
+
+  async previewDelete(filters: PromptEventFilters): Promise<PromptDeletePreviewDto> {
+    const { data } = await apiClient.post<unknown>(
+      `${basePath}/events/delete-preview`,
+      eventFilterPayload(filters),
+    )
+    return PromptDeletePreviewDto.fromJson(data)
+  }
+
+  async listGroups(): Promise<PromptAuditGroupDto[]> {
+    const { data } = await apiClient.get<unknown[]>('/admin/groups/all', {
+      params: { include_inactive: true },
+    })
+    return (data ?? []).map((item) => PromptAuditGroupDto.fromJson(item))
+  }
 }
 
-export async function getRuntime(): Promise<PromptAuditRuntime> {
-  const { data } = await apiClient.get<PromptAuditRuntime>(`${basePath}/runtime`)
-  return data
-}
-
-export async function listEvents(
-  filters: PromptEventFilters,
-  page: number,
-  pageSize: number,
-): Promise<PromptEventPage> {
-  const { data } = await apiClient.get<PromptEventPage>(`${basePath}/events`, {
-    params: { page, page_size: pageSize, ...eventQueryParams(filters) },
-  })
-  return data
-}
-
-export async function getEvent(id: number): Promise<PromptAuditEvent> {
-  const { data } = await apiClient.get<PromptAuditEvent>(`${basePath}/events/${id}`)
-  return data
-}
-
-// preview 语义: 返回删除快照,是 Query 语义
-export async function previewDelete(filters: PromptEventFilters): Promise<PromptDeletePreview> {
-  const { data } = await apiClient.post<PromptDeletePreview>(
-    `${basePath}/events/delete-preview`,
-    eventFilterPayload(filters),
-  )
-  return data
-}
-
-export async function listGroups(): Promise<PromptAuditGroup[]> {
-  const { data } = await apiClient.get<PromptAuditGroup[]>('/admin/groups/all', {
-    params: { include_inactive: true },
-  })
-  return data
-}
-
-export const promptAuditQueryAPI = {
-  getConfig,
-  getRuntime,
-  listEvents,
-  getEvent,
-  previewDelete,
-  listGroups,
-}
+export const promptAuditQueryDatasource = new PromptAuditQueryDatasource()

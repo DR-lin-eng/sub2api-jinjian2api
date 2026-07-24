@@ -8,16 +8,14 @@ import { defineStore } from 'pinia'
 import { reactive, ref } from 'vue'
 import { promptAuditActionRepository as defaultRepo } from '@/features/prompt-audit/data/repositories/promptAuditActionRepositoryImpl'
 import type { PromptAuditActionRepository } from '@/features/prompt-audit/domain/repositories/promptAuditActionRepository'
-import type {
-  PromptAuditConfig,
-  PromptAuditDraft,
-  PromptAuditEndpointDraft,
-  PromptDeletePreview,
-  PromptDeleteResult,
-  PromptEventFilters,
-  PromptProbeResult,
-} from '@/features/prompt-audit/domain/models/promptAuditTypes'
-import { buildUpdateRequest, cloneData } from '@/features/prompt-audit/domain/promptAuditViewModel'
+import type { PromptAuditConfig } from '@/features/prompt-audit/domain/models/promptAuditConfig'
+import type { PromptAuditDraft } from '@/features/prompt-audit/domain/models/promptAuditDraft'
+import type { PromptAuditEndpointDraft } from '@/features/prompt-audit/domain/models/promptAuditEndpointDraft'
+import type { PromptDeletePreview } from '@/features/prompt-audit/domain/models/promptDeletePreview'
+import type { PromptDeleteResult } from '@/features/prompt-audit/domain/models/promptDeleteResult'
+import type { PromptEventFilters } from '@/features/prompt-audit/domain/models/promptEventFilters'
+import type { PromptProbeResult } from '@/features/prompt-audit/domain/models/promptProbeResult'
+import { buildUpdateRequest, cloneData } from '@/features/prompt-audit/presentation/utils/promptAuditViewModel'
 
 export function createPromptAuditActionStore(repo: PromptAuditActionRepository) {
   return defineStore('promptAudit/action', () => {

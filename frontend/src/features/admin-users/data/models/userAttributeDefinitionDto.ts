@@ -1,57 +1,82 @@
-import type {
-  UserAttributeType, UserAttributeOption, UserAttributeDefinition,
-} from '@/features/admin-users/domain/models/userAttributes'
+import 'reflect-metadata'
+import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
+import type { UserAttributeType } from '@/features/admin-users/domain/models/userAttributeType'
+import { UserAttributeDefinition } from '@/features/admin-users/domain/models/userAttributeDefinition'
+import { UserAttributeOptionDto } from '@/features/admin-users/data/models/userAttributeOptionDto'
+import { UserAttributeValidationDto } from '@/features/admin-users/data/models/userAttributeValidationDto'
 
-interface UserAttributeValidationDto {
-  min_length?: number
-  max_length?: number
-  min?: number
-  max?: number
-  pattern?: string
-  message?: string
-}
+export class UserAttributeDefinitionDto {
+  @Expose()
+  @Transform(({ value }) => value ?? 0)
+  id!: number
 
-export interface UserAttributeDefinitionDto {
-  id: number
-  key: string
-  name: string
-  description: string
-  type: UserAttributeType
-  options: UserAttributeOption[]
-  required: boolean
-  validation: UserAttributeValidationDto
-  placeholder: string
-  display_order: number
-  enabled: boolean
-  created_at: string
-  updated_at: string
-}
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  key!: string
 
-function toValidationEntity(dto: UserAttributeValidationDto) {
-  return {
-    minLength: dto.min_length,
-    maxLength: dto.max_length,
-    min: dto.min,
-    max: dto.max,
-    pattern: dto.pattern,
-    message: dto.message,
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  name!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  description!: string
+
+  @Expose()
+  type!: UserAttributeType
+
+  @Expose()
+  @Type(() => UserAttributeOptionDto)
+  @Transform(({ value }) => value ?? [])
+  options!: UserAttributeOptionDto[]
+
+  @Expose()
+  @Transform(({ value }) => value ?? false)
+  required!: boolean
+
+  @Expose()
+  @Type(() => UserAttributeValidationDto)
+  validation!: UserAttributeValidationDto
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  placeholder!: string
+
+  @Expose({ name: 'display_order' })
+  @Transform(({ value }) => value ?? 0)
+  displayOrder!: number
+
+  @Expose()
+  @Transform(({ value }) => value ?? true)
+  enabled!: boolean
+
+  @Expose({ name: 'created_at' })
+  @Transform(({ value }) => value ?? '')
+  createdAt!: string
+
+  @Expose({ name: 'updated_at' })
+  @Transform(({ value }) => value ?? '')
+  updatedAt!: string
+
+  static fromJson(json: unknown): UserAttributeDefinitionDto {
+    return plainToInstance(UserAttributeDefinitionDto, json, { excludeExtraneousValues: true })
   }
-}
 
-export function toEntity(dto: UserAttributeDefinitionDto): UserAttributeDefinition {
-  return {
-    id: dto.id ?? 0,
-    key: dto.key ?? '',
-    name: dto.name ?? '',
-    description: dto.description ?? '',
-    type: dto.type,
-    options: dto.options ?? [],
-    required: dto.required ?? false,
-    validation: toValidationEntity(dto.validation ?? {}),
-    placeholder: dto.placeholder ?? '',
-    displayOrder: dto.display_order ?? 0,
-    enabled: dto.enabled ?? true,
-    createdAt: dto.created_at ?? '',
-    updatedAt: dto.updated_at ?? '',
+  toEntity(): UserAttributeDefinition {
+    const entity = new UserAttributeDefinition()
+    entity.id = this.id
+    entity.key = this.key
+    entity.name = this.name
+    entity.description = this.description
+    entity.type = this.type
+    entity.options = (this.options ?? []).map(o => o.toEntity())
+    entity.required = this.required
+    entity.validation = this.validation ? this.validation.toEntity() : new UserAttributeValidationDto().toEntity()
+    entity.placeholder = this.placeholder
+    entity.displayOrder = this.displayOrder
+    entity.enabled = this.enabled
+    entity.createdAt = this.createdAt
+    entity.updatedAt = this.updatedAt
+    return entity
   }
 }

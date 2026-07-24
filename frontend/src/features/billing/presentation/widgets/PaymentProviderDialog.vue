@@ -313,7 +313,7 @@ import Select from '@/common/widgets/forms/Select.vue'
 import type { SelectOption } from '@/common/widgets/forms/Select.vue'
 import ToggleSwitch from './ToggleSwitch.vue'
 import type { ProviderInstance } from '@/types/payment'
-import type { EasyPayCustomMethod, TypeOption } from '@/features/billing/presentation/providerConfigSignals'
+import type { EasyPayCustomMethod, TypeOption } from '@/features/billing/presentation/utils/providerConfigSignals'
 import {
   PROVIDER_CONFIG_FIELDS,
   PROVIDER_SUPPORTED_TYPES,
@@ -327,7 +327,7 @@ import {
   extractBaseUrl,
   parseEasyPayCustomMethods,
   serializeEasyPayCustomMethods,
-} from '@/features/billing/presentation/providerConfigSignals'
+} from '@/features/billing/presentation/utils/providerConfigSignals'
 
 /** Default payment_mode per provider key — "" means "no preference, use
  * provider's built-in default behavior". */

@@ -4,9 +4,9 @@ import { useI18n } from 'vue-i18n'
 import { Chart as ChartJS, CategoryScale, Filler, Legend, LineElement, LinearScale, PointElement, Title, Tooltip } from 'chart.js'
 import { Line } from 'vue-chartjs'
 import type { ChartComponentRef } from 'vue-chartjs'
-import type { OpsThroughputGroupBreakdownItem, OpsThroughputPlatformBreakdownItem, OpsThroughputTrendPoint } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import type { ChartState } from '@/features/admin-ops/presentation/opsTypeSignals'
-import { formatCompactNumber, formatExactNumber, formatHistoryLabel, sumNumbers } from '@/features/admin-ops/presentation/opsFormatter'
+import type { OpsThroughputTrendPoint, OpsThroughputPlatformBreakdown, OpsThroughputGroupBreakdown } from '@/features/admin-ops/domain/models/opsThroughputTrendResponse'
+import type { ChartState } from '@/features/admin-ops/presentation/utils/opsFormatter'
+import { formatCompactNumber, formatExactNumber, formatHistoryLabel, sumNumbers } from '@/features/admin-ops/presentation/utils/opsFormatter'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 
@@ -228,12 +228,12 @@ function downloadChart() {
     <div v-if="(props.topGroups?.length ?? 0) > 0" class="mb-3 flex flex-wrap gap-2">
       <button
         v-for="g in props.topGroups"
-        :key="g.group_id"
+        :key="g.groupId"
         type="button"
         class="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-50 dark:border-dark-700 dark:bg-dark-900 dark:text-gray-200 dark:hover:bg-dark-800"
-        @click="emit('selectGroup', g.group_id)"
+        @click="emit('selectGroup', g.groupId)"
       >
-        <span class="max-w-[180px] truncate">{{ g.group_name || `#${g.group_id}` }}</span>
+        <span class="max-w-[180px] truncate">{{ g.groupName || `#${g.groupId}` }}</span>
         <span class="tabular-nums text-gray-400 dark:text-gray-500" :title="formatExactNumber(g.request_count)">{{ formatCompactNumber(g.request_count) }}</span>
       </button>
     </div>

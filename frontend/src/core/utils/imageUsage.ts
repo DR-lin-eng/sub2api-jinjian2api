@@ -1,4 +1,4 @@
-import type { UsageLog } from '@/features/admin-usage/domain/models/adminUsage'
+import type { UsageLog } from '@/core/models/domain/usageLog'
 
 type Translate = (key: string) => string
 

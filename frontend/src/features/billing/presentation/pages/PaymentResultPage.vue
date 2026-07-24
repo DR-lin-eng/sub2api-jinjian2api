@@ -105,19 +105,20 @@ import {
   PAYMENT_RECOVERY_STORAGE_KEY,
   clearPaymentRecoverySnapshot,
   readPaymentRecoverySnapshot,
-} from '@/features/billing/presentation/paymentFlowResolver'
+} from '@/features/billing/presentation/utils/paymentFlowResolver'
 import { usePaymentStore } from '@/features/billing/presentation/stores/paymentStore'
-import { paymentAPI } from '@/features/billing/presentation/api'
-import type { PublicOrderVerifyResult } from '@/features/billing/presentation/api'
+import { useBillingActionStore } from '@/features/billing/presentation/stores/billingActionStore'
+import type { PublicOrderVerifyResult } from '@/features/billing/domain/models/publicOrderVerifyResult'
 import type { OrderStatus, PaymentOrder } from '@/types/payment'
-import { formatPaymentAmount, normalizePaymentCurrency } from '@/features/billing/presentation/currencyFormatter'
-import { normalizePaymentMethodForDisplay, paymentMethodI18nKey } from '@/features/billing/presentation/paymentUxSignals'
+import { formatPaymentAmount, normalizePaymentCurrency } from '@/features/billing/presentation/utils/currencyFormatter'
+import { normalizePaymentMethodForDisplay, paymentMethodI18nKey } from '@/features/billing/presentation/utils/paymentUxSignals'
 
 const i18n = useI18n()
 const { t } = i18n
 const route = useRoute()
 const router = useRouter()
 const paymentStore = usePaymentStore()
+const billingAction = useBillingActionStore()
 
 type ResolvedOrder = PaymentOrder | PublicOrderVerifyResult
 
@@ -206,16 +207,15 @@ function hasOrderId(nextOrder: ResolvedOrder | null): nextOrder is PaymentOrder 
 function orderNo(nextOrder: ResolvedOrder | null): string {
   if (!nextOrder) return ''
   if ('outTradeNo' in nextOrder) return nextOrder.outTradeNo || ''
-  if ('out_trade_no' in nextOrder) return nextOrder.out_trade_no || ''
   return ''
 }
 
 function hasAmountFields(nextOrder: ResolvedOrder | null): nextOrder is PaymentOrder {
-  return !!nextOrder && 'pay_amount' in nextOrder && typeof nextOrder.pay_amount === 'number' && 'amount' in nextOrder && typeof nextOrder.amount === 'number'
+  return !!nextOrder && 'payAmount' in nextOrder && typeof nextOrder.payAmount === 'number' && 'amount' in nextOrder && typeof nextOrder.amount === 'number'
 }
 
 function hasPaymentType(nextOrder: ResolvedOrder | null): nextOrder is PaymentOrder {
-  return !!nextOrder && 'payment_type' in nextOrder && typeof nextOrder.payment_type === 'string' && nextOrder.payment_type.trim() !== ''
+  return !!nextOrder && 'paymentType' in nextOrder && typeof nextOrder.paymentType === 'string' && nextOrder.paymentType.trim() !== ''
 }
 
 function normalizeOrderStatus(status: string | null | undefined): string {
@@ -284,8 +284,7 @@ function restoreRecoverySnapshot(context: {
 
 async function resolveOrderFromResumeToken(resumeToken: string): Promise<ResolvedOrder | null> {
   try {
-    const result = await paymentAPI.resolveOrderPublicByResumeToken(resumeToken)
-    return result.data
+    return await billingAction.resolveOrderPublicByResumeToken(resumeToken)
   } catch (_err: unknown) {
     return null
   }
@@ -293,12 +292,11 @@ async function resolveOrderFromResumeToken(resumeToken: string): Promise<Resolve
 
 async function resolveOrderFromOutTradeNo(outTradeNo: string): Promise<ResolvedOrder | null> {
   try {
-    const result = await paymentAPI.verifyOrder(outTradeNo)
-    return result.data
+    const result = await billingAction.verifyOrder(outTradeNo)
+    return (result as { data?: ResolvedOrder }).data ?? null
   } catch (_err: unknown) {
     try {
-      const result = await paymentAPI.verifyOrderPublic(outTradeNo)
-      return result.data
+      return await billingAction.verifyOrderPublic(outTradeNo)
     } catch (_innerErr: unknown) {
       return null
     }

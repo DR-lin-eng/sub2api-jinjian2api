@@ -74,9 +74,9 @@
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import { getMyErrorDetail } from '@/features/usage/data/datasources/usageDatasource'
+import { useUsageQueryStore } from '@/features/usage/presentation/stores/usageQueryStore'
 import { formatDateTime } from '@/core/utils/format'
-import type { UserErrorRequestDetail } from '@/types'
+import type { UserErrorRequestDetail } from '@/features/admin-ops/domain/models/userErrorTypes'
 
 const props = defineProps<{
   show: boolean
@@ -88,6 +88,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const usageStore = useUsageQueryStore()
 
 const loading = ref(false)
 const loadError = ref(false)
@@ -110,7 +111,7 @@ async function fetchDetail(id: number) {
   loadError.value = false
   detail.value = null
   try {
-    detail.value = await getMyErrorDetail(id)
+    detail.value = await usageStore.getMyErrorDetail(id)
   } catch (e) {
     console.error('[UserErrorDetailModal] Failed to load error detail:', e)
     loadError.value = true

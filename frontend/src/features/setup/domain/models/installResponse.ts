@@ -1,4 +1,4 @@
-export interface InstallResponse {
-  message: string
-  restart: boolean
+export class InstallResponse {
+  message!: string
+  restart!: boolean
 }

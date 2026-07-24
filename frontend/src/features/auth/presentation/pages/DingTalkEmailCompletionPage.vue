@@ -34,8 +34,8 @@ import { apiClient } from '@/core/networks/client'
 import { useAuthStore, useAppStore } from '@/stores'
 import {
   persistOAuthTokenContext,
-  type PendingOAuthExchangeResponse
-} from '@/features/auth/presentation/api'
+  type PendingOAuthExchangeResponse,
+} from '@/features/auth/presentation/utils/oauthUtils'
 import { clearAllAffiliateReferralCodes } from '@/core/utils/oauthAffiliate'
 
 const route = useRoute()

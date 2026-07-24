@@ -32,12 +32,8 @@ const HSL_SATURATION = 72
 const HSL_LIGHTNESS = 42
 
 export interface AvailabilityRow {
-  /** camelCase (admin domain) */
   primaryStatus?: MonitorStatus | ''
   availability7d?: number | null
-  /** snake_case (user-side wire) */
-  primary_status?: MonitorStatus | ''
-  availability_7d?: number | null
 }
 
 export function useChannelMonitorFormat() {
@@ -131,9 +127,8 @@ export function useChannelMonitorFormat() {
   }
 
   function formatAvailability(row: AvailabilityRow): string {
-    const status = row.primaryStatus ?? row.primary_status
-    if (!status) return '-'
-    return formatPercent(row.availability7d ?? row.availability_7d)
+    if (!row.primaryStatus) return '-'
+    return formatPercent(row.availability7d)
   }
 
   function formatRelativeTime(iso: string | null | undefined): string {

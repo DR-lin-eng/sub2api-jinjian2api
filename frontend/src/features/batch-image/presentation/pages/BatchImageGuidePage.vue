@@ -103,12 +103,12 @@
           </template>
 
           <template #cell-id="{ row }">
-	            <div class="flex w-[220px] items-start gap-1" :class="row.is_child ? 'pl-6' : ''">
+	            <div class="flex w-[220px] items-start gap-1" :class="row.isChild ? 'pl-6' : ''">
 	              <button
-	                v-if="row.child_count > 0 && !row.is_child"
+	                v-if="row.childCount > 0 && !row.isChild"
 	                type="button"
 	                class="mt-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 dark:text-gray-400 dark:hover:bg-dark-700 dark:hover:text-white"
-	                :title="expandedParentIds.has(row.id) ? t('batchImage.list.collapseChildren') : t('batchImage.list.expandChildren', { n: row.child_count }, row.child_count)"
+	                :title="expandedParentIds.has(row.id) ? t('batchImage.list.collapseChildren') : t('batchImage.list.expandChildren', { n: row.childCount }, row.childCount)"
 	                @click.stop="toggleChildRows(row.id)"
 	              >
 	                <Icon :name="expandedParentIds.has(row.id) ? 'chevronDown' : 'chevronRight'" size="xs" />
@@ -117,13 +117,13 @@
 	              <button type="button" class="min-w-0 flex-1 rounded-lg py-1 text-left transition-colors hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 dark:hover:bg-dark-700" @click="selectJob(row.id)">
 	                <span
 	                  class="flex min-w-0 items-center gap-2 text-sm font-medium"
-	                  :class="row.task_name ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
+	                  :class="row.taskName ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
                 >
-                  <span class="min-w-0 truncate">{{ row.task_name || defaultTaskName(row.createdAt) }}</span>
-                  <span v-if="row.child_count > 0 && !row.is_child" class="flex-shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-normal text-gray-600 dark:bg-dark-700 dark:text-gray-300">
-                    {{ t('batchImage.list.childCount', { n: row.child_count }, row.child_count) }}
+                  <span class="min-w-0 truncate">{{ row.taskName || defaultTaskName(row.createdAt) }}</span>
+                  <span v-if="row.childCount > 0 && !row.isChild" class="flex-shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-normal text-gray-600 dark:bg-dark-700 dark:text-gray-300">
+                    {{ t('batchImage.list.childCount', { n: row.childCount }, row.childCount) }}
                   </span>
-                  <span v-if="row.is_child" class="flex-shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-normal text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                  <span v-if="row.isChild" class="flex-shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-normal text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
                     {{ t('batchImage.list.childBadge') }}
                   </span>
 	                </span>
@@ -156,10 +156,10 @@
 
           <template #cell-counts="{ row }">
             <div class="flex items-center justify-center gap-2 text-sm tabular-nums">
-              <span class="text-emerald-600 dark:text-emerald-300">{{ displayJob(row).success_count }}</span>
+              <span class="text-emerald-600 dark:text-emerald-300">{{ displayJob(row).successCount }}</span>
               <span class="text-gray-300 dark:text-dark-500">/</span>
-              <span :class="displayJob(row).fail_count > 0 ? 'text-red-600 dark:text-red-300' : 'text-gray-400 dark:text-gray-500'">{{ displayJob(row).fail_count }}</span>
-              <span class="text-xs text-gray-400 dark:text-gray-500">{{ t('batchImage.list.totalCount', { n: displayJob(row).item_count }) }}</span>
+              <span :class="displayJob(row).failCount > 0 ? 'text-red-600 dark:text-red-300' : 'text-gray-400 dark:text-gray-500'">{{ displayJob(row).failCount }}</span>
+              <span class="text-xs text-gray-400 dark:text-gray-500">{{ t('batchImage.list.totalCount', { n: displayJob(row).itemCount }) }}</span>
             </div>
           </template>
 
@@ -170,8 +170,8 @@
           </template>
 
           <template #cell-downloaded="{ row }">
-            <span class="block text-center text-sm" :class="row.downloaded_at ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-500 dark:text-gray-400'">
-              {{ row.downloaded_at ? formatDate(row.downloaded_at) : t('batchImage.list.notDownloaded') }}
+            <span class="block text-center text-sm" :class="row.downloadedAt ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-500 dark:text-gray-400'">
+              {{ row.downloadedAt ? formatDate(row.downloadedAt) : t('batchImage.list.notDownloaded') }}
             </span>
           </template>
 
@@ -351,9 +351,9 @@
             <div class="min-w-0 text-center">
               <p class="text-xs text-gray-500 dark:text-gray-400">{{ hasChildJobs(currentJob.id) ? t('batchImage.detail.aggregatedResult') : t('batchImage.detail.result') }}</p>
               <p class="mt-1 flex items-center justify-center gap-2 font-medium tabular-nums">
-              <span class="text-emerald-600 dark:text-emerald-300">{{ (currentDisplayJob || currentJob).success_count }}</span>
+              <span class="text-emerald-600 dark:text-emerald-300">{{ (currentDisplayJob || currentJob).successCount }}</span>
               <span class="text-gray-300 dark:text-dark-500">/</span>
-              <span :class="(currentDisplayJob || currentJob).fail_count > 0 ? 'text-red-600 dark:text-red-300' : 'text-gray-400 dark:text-gray-500'">{{ (currentDisplayJob || currentJob).fail_count }}</span>
+              <span :class="(currentDisplayJob || currentJob).failCount > 0 ? 'text-red-600 dark:text-red-300' : 'text-gray-400 dark:text-gray-500'">{{ (currentDisplayJob || currentJob).failCount }}</span>
             </p>
             </div>
             <div class="min-w-0 text-center">
@@ -363,7 +363,7 @@
             <div class="min-w-0 text-center">
               <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('batchImage.detail.downloadStatus') }}</p>
               <p class="mt-1 truncate font-medium text-gray-900 dark:text-white">
-              {{ currentJob.downloaded_at ? formatDate(currentJob.downloaded_at) : t('batchImage.list.notDownloaded') }}
+              {{ currentJob.downloadedAt ? formatDate(currentJob.downloadedAt) : t('batchImage.list.notDownloaded') }}
             </p>
             </div>
           </div>
@@ -406,25 +406,25 @@
                   <span
                     class="block min-w-0 truncate font-mono text-sm"
                     :class="isRecoveredOriginalFailure(item) ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'"
-                    :title="item.custom_id"
+                    :title="item.customId"
                   >
-                    {{ item.custom_id }}
+                    {{ item.customId }}
                   </span>
                 </td>
                 <td class="px-3 py-2.5 text-left" :class="isRecoveredOriginalFailure(item) ? 'text-gray-400 dark:text-gray-500' : 'text-gray-700 dark:text-gray-300'">
                   <div
                     class="batch-prompt-trigger cursor-default truncate rounded px-1 text-sm leading-6 focus:outline-none"
                     tabindex="0"
-                    @pointerenter="schedulePromptPopoverOpen($event, item.prompt_preview || '-')"
+                    @pointerenter="schedulePromptPopoverOpen($event, item.promptPreview || '-')"
                     @pointerleave="schedulePromptPopoverClose"
-                    @mouseenter="schedulePromptPopoverOpen($event, item.prompt_preview || '-')"
+                    @mouseenter="schedulePromptPopoverOpen($event, item.promptPreview || '-')"
                     @mouseleave="schedulePromptPopoverClose"
-                    @click="showPromptPopover($event, item.prompt_preview || '-')"
-                    @focus="showPromptPopover($event, item.prompt_preview || '-')"
-                    @focusin="showPromptPopover($event, item.prompt_preview || '-')"
+                    @click="showPromptPopover($event, item.promptPreview || '-')"
+                    @focus="showPromptPopover($event, item.promptPreview || '-')"
+                    @focusin="showPromptPopover($event, item.promptPreview || '-')"
                     @blur="schedulePromptPopoverClose"
                   >
-                    {{ item.prompt_preview || '-' }}
+                    {{ item.promptPreview || '-' }}
                   </div>
                 </td>
                 <td class="px-3 py-2.5 text-center">
@@ -438,7 +438,7 @@
                       v-if="itemPreviewUrls[itemPreviewKey(item)] && !previewErrorIds.has(itemPreviewKey(item))"
                       type="button"
                       class="block h-full w-full overflow-hidden"
-                      :title="t('batchImage.detail.previewZoom', { id: item.custom_id })"
+                      :title="t('batchImage.detail.previewZoom', { id: item.customId })"
                       @click="openImagePreview(item)"
                     >
                       <img
@@ -458,7 +458,7 @@
                     >
                       <Icon :name="previewLoadingIds.has(itemPreviewKey(item)) ? 'refresh' : 'eye'" size="sm" :class="previewLoadingIds.has(itemPreviewKey(item)) ? 'animate-spin' : ''" />
                     </button>
-                    <div v-else class="flex h-full w-full items-center justify-center text-gray-400" :title="item.image_count > 0 ? t('batchImage.detail.previewUnavailable') : t('batchImage.detail.noImage')">
+                    <div v-else class="flex h-full w-full items-center justify-center text-gray-400" :title="item.imageCount > 0 ? t('batchImage.detail.previewUnavailable') : t('batchImage.detail.noImage')">
                       <Icon name="document" size="sm" />
                     </div>
                   </div>
@@ -521,7 +521,7 @@
       </template>
     </BaseDialog>
 
-    <BaseDialog :show="!!previewImageItem" :title="previewImageItem?.custom_id || t('batchImage.imagePreview.title')" width="extra-wide" :z-index="60" @close="closeImagePreview">
+    <BaseDialog :show="!!previewImageItem" :title="previewImageItem?.customId || t('batchImage.imagePreview.title')" width="extra-wide" :z-index="60" @close="closeImagePreview">
       <div class="space-y-3">
         <div class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
           {{ t('batchImage.imagePreview.notice') }}
@@ -531,7 +531,7 @@
             v-if="previewImageUrl"
             :src="previewImageUrl"
             class="max-h-[70vh] max-w-full rounded-md object-contain"
-            :alt="previewImageItem?.custom_id || ''"
+            :alt="previewImageItem?.customId || ''"
           />
         </div>
       </div>
@@ -678,13 +678,13 @@
               :key="row.localId"
               class="flex items-center gap-3 border-b border-gray-100 px-3 py-2 last:border-b-0 dark:border-dark-700"
             >
-              <span class="w-20 flex-shrink-0 font-mono text-xs text-gray-500 dark:text-gray-400">{{ row.custom_id }}</span>
+              <span class="w-20 flex-shrink-0 font-mono text-xs text-gray-500 dark:text-gray-400">{{ row.customId }}</span>
               <p class="min-w-0 flex-1 truncate text-sm text-gray-800 dark:text-gray-100">{{ row.prompt }}</p>
-              <span v-if="row.output_count > 1" class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
-                x{{ row.output_count }}
+              <span v-if="row.outputCount > 1" class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                x{{ row.outputCount }}
               </span>
-              <span v-if="row.reference_images.length" class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
-                {{ t('batchImage.create.referenceCount', { n: row.reference_images.length }, row.reference_images.length) }}
+              <span v-if="row.referenceImages.length" class="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('batchImage.create.referenceCount', { n: row.referenceImages.length }, row.referenceImages.length) }}
               </span>
               <button type="button" class="btn-ghost btn-icon flex-shrink-0 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20" :title="t('common.delete')" @click="removePromptRow(index)">
                 <Icon name="trash" size="sm" />
@@ -765,51 +765,39 @@ import { useClipboard } from '@/common/composables/useClipboard'
 import { getPersistedPageSize, setPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 import { useAppStore } from '@/core/stores/appStore'
 import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
-import {
-  cancelBatchImageJob,
-  deleteBatchImageJobRecord,
-  downloadBatchImageZip,
-  getBatchImageItemContent,
-  getBatchImageJob,
-  listBatchImageJobs,
-  listBatchImageItems,
-  listBatchImageModels,
-  saveBlob,
-  submitBatchImageJob,
-  type BatchImageItem,
-  type BatchImageJob,
-  type BatchImageJobsListOptions,
-  type BatchImageReferenceImage,
-  type BatchImageStatus,
-  type BatchImageSubmitItem,
-} from '@/features/batch-image/presentation/api'
+import { batchImageQueryRepository } from '@/features/batch-image/data/repositories/batchImageQueryRepositoryImpl'
+import { batchImageActionRepository } from '@/features/batch-image/data/repositories/batchImageActionRepositoryImpl'
+import { type BatchImageStatus, BatchImageJob } from '@/features/batch-image/domain/models/batchImageJob'
+import { BatchImageItem } from '@/features/batch-image/domain/models/batchImageItem'
+import type { ListBatchImageJobsRequest } from '@/features/batch-image/data/requests_models/listBatchImageJobsRequest'
+import type { BatchImageReferenceImage, BatchImageSubmitItem } from '@/features/batch-image/data/requests_models/submitBatchImageJobRequest'
 import type { Column } from '@/common/types/uiTypes'
 import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 
-type BatchImageJobRow = Pick<BatchImageJob, 'id' | 'task_name' | 'parent_batch_id' | 'status' | 'model' | 'provider' | 'item_count' | 'success_count' | 'fail_count' | 'estimated_cost' | 'hold_amount' | 'actual_cost' | 'created_at' | 'downloaded_at'> & {
-  api_key_id: number
-  api_key_name: string
-  child_count: number
-  is_child?: boolean
+type BatchImageJobRow = Pick<BatchImageJob, 'id' | 'taskName' | 'parentBatchId' | 'status' | 'model' | 'provider' | 'itemCount' | 'successCount' | 'failCount' | 'estimatedCost' | 'holdAmount' | 'actualCost' | 'costSettled' | 'createdAt' | 'downloadedAt'> & {
+  apiKeyId: number
+  apiKeyName: string
+  childCount: number
+  isChild?: boolean
 }
 
-type BatchImageDetailItem = BatchImageItem & {
-  batch_id: string
-  source_task_name: string
-}
+type BatchImageDetailItem = BatchImageItem
 
 type PromptRow = {
   localId: string
-  custom_id: string
+  customId: string
   prompt: string
-  output_count: number
-  reference_images: BatchImageReferenceImage[]
+  outputCount: number
+  referenceImages: BatchImageReferenceImage[]
 }
 
 type ReferenceImageDraft = BatchImageReferenceImage & {
   name: string
   size: number
 }
+
+const q = batchImageQueryRepository
+const a = batchImageActionRepository
 
 type PreviewCacheRecord = {
   key: string
@@ -963,6 +951,17 @@ const apiKeyFilterOptions = computed<SelectOption[]>(() => [
   })),
 ])
 
+function listOptions(): ListBatchImageJobsRequest {
+  const options: ListBatchImageJobsRequest = {
+    limit: pagination.page_size,
+    cursor: String((pagination.page - 1) * pagination.page_size),
+  }
+  if (filters.taskName.trim()) options.taskName = filters.taskName.trim()
+  if (filters.status) options.status = filters.status
+  if (filters.downloaded) options.downloaded = filters.downloaded
+  return options
+}
+
 const selectedRows = computed(() =>
   batchJobs.value.filter(job => selectedJobIds.value.has(job.id)),
 )
@@ -970,23 +969,23 @@ const selectedRows = computed(() =>
 const childrenByParent = computed(() => {
   const groups = new Map<string, BatchImageJobRow[]>()
   for (const job of batchJobs.value) {
-    if (!job.parent_batch_id) continue
-    const rows = groups.get(job.parent_batch_id) || []
+    if (!job.parentBatchId) continue
+    const rows = groups.get(job.parentBatchId) || []
     rows.push(job)
-    groups.set(job.parent_batch_id, rows)
+    groups.set(job.parentBatchId, rows)
   }
   for (const rows of groups.values()) {
-    rows.sort((a, b) => a.created_at - b.created_at)
+    rows.sort((a, b) => a.createdAt - b.createdAt)
   }
   return groups
 })
 
 const visibleBatchJobs = computed(() => {
   const rows: BatchImageJobRow[] = []
-  for (const job of batchJobs.value.filter(item => !item.parent_batch_id)) {
+  for (const job of batchJobs.value.filter(item => !item.parentBatchId)) {
     rows.push(job)
     if (expandedParentIds.value.has(job.id)) {
-      rows.push(...(childrenByParent.value.get(job.id) || []).map(child => ({ ...child, is_child: true })))
+      rows.push(...(childrenByParent.value.get(job.id) || []).map(child => ({ ...child, isChild: true })))
     }
   }
   return rows
@@ -1016,7 +1015,7 @@ const recoveredOriginalCustomIds = computed(() => {
   const ids = new Set<string>()
   for (const item of items.value) {
     if (!isChildDetailItem(item) || !isSuccessfulImageItem(item)) continue
-    const sourceCustomID = retrySourceCustomID(item.custom_id)
+    const sourceCustomID = retrySourceCustomID(item.customId)
     if (sourceCustomID) ids.add(sourceCustomID)
   }
   return ids
@@ -1037,21 +1036,21 @@ const endpointBase = computed(() => {
 const selectedModelReferenceLimit = computed(() => referenceImageLimitForModel(form.model))
 
 const estimatedOutputCount = computed(() =>
-  promptRows.value.reduce((sum, row) => sum + normalizeOutputCount(row.output_count), 0),
+  promptRows.value.reduce((sum, row) => sum + normalizeOutputCount(row.outputCount), 0),
 )
 
 const parsedItems = computed<BatchImageSubmitItem[]>(() => {
   const used = new Set<string>()
   return promptRows.value
     .map((row, index) => {
-      const customID = uniqueCustomID(row.custom_id || `img_${String(index + 1).padStart(3, '0')}`, used, index)
+      const customID = uniqueCustomID(row.customId || `img_${String(index + 1).padStart(3, '0')}`, used, index)
       const item: BatchImageSubmitItem = { custom_id: customID, prompt: row.prompt.trim() }
-      const outputCount = normalizeOutputCount(row.output_count)
+      const outputCount = normalizeOutputCount(row.outputCount)
       if (outputCount > 1) {
         item.output_count = outputCount
       }
-      if (row.reference_images.length) {
-        item.reference_images = row.reference_images
+      if (row.referenceImages.length) {
+        item.reference_images = row.referenceImages
       }
       return item
     })
@@ -1158,16 +1157,16 @@ function addPromptRow() {
   const prompt = promptDraft.value.trim()
   if (!prompt) return
   const outputCount = normalizeOutputCount(outputCountDraft.value)
-  const used = new Set(promptRows.value.map(row => row.custom_id))
+  const used = new Set(promptRows.value.map(row => row.customId))
   const customID = uniqueCustomID(customIdDraft.value || `img_${String(promptRows.value.length + 1).padStart(3, '0')}`, used, promptRows.value.length)
   promptRows.value = [
     ...promptRows.value,
     {
       localId: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      custom_id: customID,
+      customId: customID,
       prompt,
-      output_count: outputCount,
-      reference_images: referenceImageDrafts.value.map(({ name: _name, size: _size, ...ref }) => ref),
+      outputCount,
+      referenceImages: referenceImageDrafts.value.map(({ name: _name, size: _size, ...ref }) => ref),
     },
   ]
   promptDraft.value = ''
@@ -1271,10 +1270,10 @@ async function loadAvailableModels() {
 
   loadingModels.value = true
   try {
-    const result = await listBatchImageModels(key.key)
+    const result = await q.listModels(key.key)
     if (requestID !== modelRequestSeq) return
     const seen = new Set<string>()
-    availableBatchImageModels.value = (result.data || [])
+    availableBatchImageModels.value = result
       .map(model => String(model.id || '').trim())
       .filter((model) => {
         if (!model || seen.has(model)) return false
@@ -1312,8 +1311,8 @@ function resetFilters() {
   applyFilters()
 }
 
-function listOptions(): BatchImageJobsListOptions {
-  const options: BatchImageJobsListOptions = {
+function listOptions(): ListBatchImageJobsRequest {
+  const options: ListBatchImageJobsRequest = {
     limit: pagination.page_size,
     cursor: String((pagination.page - 1) * pagination.page_size),
   }
@@ -1326,58 +1325,61 @@ function listOptions(): BatchImageJobsListOptions {
 function toJobRow(job: BatchImageJob, key = selectedApiKey.value): BatchImageJobRow {
   return {
     id: job.id,
-    task_name: job.task_name || defaultTaskName(job.created_at),
-    parent_batch_id: job.parent_batch_id || null,
+    taskName: job.taskName,
+    parentBatchId: job.parentBatchId,
     status: job.status,
     model: job.model,
     provider: job.provider,
-    item_count: job.item_count,
-    success_count: job.success_count,
-    fail_count: job.fail_count,
-    estimated_cost: job.estimated_cost,
-    hold_amount: job.hold_amount,
-    actual_cost: job.actual_cost,
-    created_at: job.created_at,
-    downloaded_at: job.downloaded_at,
-    api_key_id: key?.id || 0,
-    api_key_name: key?.name || '',
-    child_count: 0,
+    itemCount: job.itemCount,
+    successCount: job.successCount,
+    failCount: job.failCount,
+    estimatedCost: job.estimatedCost,
+    holdAmount: job.holdAmount,
+    actualCost: job.actualCost,
+    costSettled: job.costSettled,
+    createdAt: job.createdAt,
+    downloadedAt: job.downloadedAt,
+    apiKeyId: key?.id || 0,
+    apiKeyName: key?.name || '',
+    childCount: 0,
   }
 }
 
 function applyChildCounts(rows: BatchImageJobRow[]) {
   const counts = new Map<string, number>()
   for (const row of rows) {
-    if (!row.parent_batch_id) continue
-    counts.set(row.parent_batch_id, (counts.get(row.parent_batch_id) || 0) + 1)
+    if (!row.parentBatchId) continue
+    counts.set(row.parentBatchId, (counts.get(row.parentBatchId) || 0) + 1)
   }
-  return rows.map(row => ({ ...row, child_count: counts.get(row.id) || 0 }))
+  return rows.map(row => ({ ...row, childCount: counts.get(row.id) || 0 }))
 }
 
-function displayJob<T extends Pick<BatchImageJob, 'id' | 'parent_batch_id' | 'status' | 'item_count' | 'success_count' | 'fail_count' | 'estimated_cost' | 'hold_amount' | 'actual_cost'>>(job: T): T {
-  if (job.parent_batch_id) return job
+function displayJob<T extends Pick<BatchImageJob, 'id' | 'parentBatchId' | 'status' | 'itemCount' | 'successCount' | 'failCount' | 'estimatedCost' | 'holdAmount' | 'actualCost' | 'costSettled'>>(job: T): T {
+  if (job.parentBatchId) return job
   const children = childrenByParent.value.get(job.id) || []
   if (!children.length) return job
 
-  const childSuccess = children.reduce((sum, child) => sum + child.success_count, 0)
-  const childEstimated = children.reduce((sum, child) => sum + child.estimated_cost, 0)
-  const childHold = children.reduce((sum, child) => sum + child.hold_amount, 0)
-  const childActual = children.reduce((sum, child) => sum + (child.actual_cost || 0), 0)
-  const childActualReady = children.every(child => child.actual_cost !== null)
-  const successCount = Math.min(job.item_count, job.success_count + childSuccess)
-  const failCount = Math.max(0, job.item_count - successCount)
-  const actualCost = job.actual_cost === null
-    ? (childActualReady ? childActual : null)
-    : job.actual_cost + childActual
+  const childSuccess = children.reduce((sum, child) => sum + child.successCount, 0)
+  const childEstimated = children.reduce((sum, child) => sum + child.estimatedCost, 0)
+  const childHold = children.reduce((sum, child) => sum + child.holdAmount, 0)
+  const childActual = children.reduce((sum, child) => sum + child.actualCost, 0)
+  const childActualReady = children.every(child => child.costSettled)
+  const successCount = Math.min(job.itemCount, job.successCount + childSuccess)
+  const failCount = Math.max(0, job.itemCount - successCount)
+  const actualCost = !job.costSettled
+    ? (childActualReady ? childActual : 0)
+    : job.actualCost + childActual
+  const costSettled = job.costSettled || childActualReady
 
   return {
     ...job,
-    success_count: successCount,
-    fail_count: failCount,
+    successCount,
+    failCount,
     status: failCount === 0 && TERMINAL_STATUSES.has(job.status) ? 'completed' : job.status,
-    estimated_cost: job.estimated_cost + childEstimated,
-    hold_amount: job.hold_amount + childHold,
-    actual_cost: actualCost,
+    estimatedCost: job.estimatedCost + childEstimated,
+    holdAmount: job.holdAmount + childHold,
+    actualCost,
+    costSettled,
   }
 }
 
@@ -1507,7 +1509,7 @@ async function loadBatchJobs() {
   try {
     const options = listOptions()
     const results = await Promise.all(keys.map(async (key) => {
-      const result = await listBatchImageJobs(key.key, options)
+      const result = await q.list(key.key, options)
       return {
         hasMore: Boolean(result.has_more),
         rows: (result.data || []).map(job => toJobRow(job, key)),
@@ -1515,7 +1517,7 @@ async function loadBatchJobs() {
     }))
     batchJobs.value = applyChildCounts(results
       .flatMap(result => result.rows)
-      .sort((a, b) => b.created_at - a.created_at)
+      .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, pagination.page_size))
     pagination.has_more = results.some(result => result.hasMore)
     selectedJobIds.value = new Set([...selectedJobIds.value].filter(id => visibleBatchJobs.value.some(job => job.id === id)))
@@ -1531,7 +1533,7 @@ function upsertJob(job: BatchImageJob) {
   const index = batchJobs.value.findIndex(item => item.id === job.id)
   if (index >= 0) {
     const rows = [...batchJobs.value]
-    rows[index] = { ...next, is_child: rows[index].is_child }
+    rows[index] = { ...next, isChild: rows[index].isChild }
     batchJobs.value = applyChildCounts(rows)
     return
   }
@@ -1618,7 +1620,7 @@ function validateForm(): boolean {
     return false
   }
   const refLimit = selectedModelReferenceLimit.value
-  if (promptRows.value.some(row => row.reference_images.length > refLimit)) {
+  if (promptRows.value.some(row => row.referenceImages.length > refLimit)) {
     appStore.showError(batchImageText('tooManyReferenceImages'))
     return false
   }
@@ -1633,7 +1635,7 @@ async function submitJob() {
   if (!key) return
 	  submitting.value = true
 	  try {
-	    const job = await submitBatchImageJob(
+	    const job = await a.submit(
 	      key.key,
 	      {
 	        model: form.model,
@@ -1667,7 +1669,7 @@ async function refreshSelected() {
   if (!key) return
   refreshing.value = true
   try {
-    const job = await getBatchImageJob(key.key, selectedBatchId.value)
+    const job = await q.getById(key.key, selectedBatchId.value)
     currentJob.value = job
     upsertJob(job)
     if (TERMINAL_STATUSES.has(job.status)) stopPolling()
@@ -1687,9 +1689,9 @@ async function refreshDetail() {
 
 function selectJob(batchId: string) {
   const row = batchJobs.value.find(job => job.id === batchId)
-  if (row?.api_key_id && geminiApiKeys.value.some(key => key.id === row.api_key_id)) {
-    form.apiKeyId = row.api_key_id
-    selectedBatchApiKeyId.value = row.api_key_id
+  if (row?.apiKeyId && geminiApiKeys.value.some(key => key.id === row.apiKeyId)) {
+    form.apiKeyId = row.apiKeyId
+    selectedBatchApiKeyId.value = row.apiKeyId
   } else {
     selectedBatchApiKeyId.value = 0
   }
@@ -1722,13 +1724,13 @@ function canCancel(job: Pick<BatchImageJob, 'status'>) {
   return !TERMINAL_STATUSES.has(job.status)
 }
 
-function canDownload(job: Pick<BatchImageJob, 'status' | 'success_count'>) {
-  return job.status === 'completed' && job.success_count > 0
+function canDownload(job: Pick<BatchImageJob, 'status' | 'successCount'>) {
+  return job.status === 'completed' && job.successCount > 0
 }
 
-function canRetry(job: Pick<BatchImageJob, 'status' | 'fail_count'>) {
+function canRetry(job: Pick<BatchImageJob, 'status' | 'failCount'>) {
   const display = 'id' in job ? displayJob(job as BatchImageJob) : job
-  return TERMINAL_STATUSES.has(display.status) && display.fail_count > 0
+  return TERMINAL_STATUSES.has(display.status) && display.failCount > 0
 }
 
 function isDownloadingJob(batchId: string) {
@@ -1736,14 +1738,14 @@ function isDownloadingJob(batchId: string) {
 }
 
 function applyJobApiKey(job: BatchImageJobRow | Pick<BatchImageJob, 'id'>) {
-  if ('api_key_id' in job && job.api_key_id && geminiApiKeys.value.some(key => key.id === job.api_key_id)) {
-    form.apiKeyId = job.api_key_id
+  if ('apiKeyId' in job && job.apiKeyId && geminiApiKeys.value.some(key => key.id === job.apiKeyId)) {
+    form.apiKeyId = job.apiKeyId
   }
 }
 
 function apiKeyForJob(job: BatchImageJobRow | Pick<BatchImageJob, 'id'>): ApiKey | null {
-  if ('api_key_id' in job && job.api_key_id) {
-    return geminiApiKeys.value.find(key => key.id === job.api_key_id) || null
+  if ('apiKeyId' in job && job.apiKeyId) {
+    return geminiApiKeys.value.find(key => key.id === job.apiKeyId) || null
   }
   return selectedApiKey.value
 }
@@ -1775,7 +1777,7 @@ async function cancelSelected() {
   if (!window.confirm(batchImageText('cancelConfirm'))) return
   cancelling.value = true
   try {
-    const job = await cancelBatchImageJob(key.key, currentJob.value.id)
+    const job = await a.cancel(key.key, currentJob.value.id)
     currentJob.value = job
     upsertJob(job)
     appStore.showSuccess(batchImageText('cancelled'))
@@ -1806,17 +1808,17 @@ async function retryFailedJob(job: BatchImageJobRow | BatchImageJob) {
     const sourceItems = await ensureItemsForRetry(key.key, job.id)
     const failedItems = sourceItems
       .filter(item => item.status === 'failed')
-      .map(item => ({ custom_id: retryCustomID(item.custom_id), prompt: String(item.prompt_preview || '').trim() }))
+      .map(item => ({ custom_id: retryCustomID(item.customId), prompt: String(item.promptPreview || '').trim() }))
       .filter(item => item.prompt)
     if (failedItems.length === 0) {
       appStore.showError(batchImageText('retryMissingPrompts'))
       return
     }
-    const retryJob = await submitBatchImageJob(
+    const retryJob = await a.submit(
       key.key,
       {
         model: job.model,
-        task_name: `${job.task_name || defaultTaskName()} ${t('batchImage.messages.retryTaskNameSuffix')}`,
+        task_name: `${job.taskName || defaultTaskName()} ${t('batchImage.messages.retryTaskNameSuffix')}`,
         parent_batch_id: rootBatchIdForRetry(job),
         provider: job.provider,
         image_size: '1K',
@@ -1830,8 +1832,8 @@ async function retryFailedJob(job: BatchImageJobRow | BatchImageJob) {
     selectedBatchApiKeyId.value = key.id
     items.value = []
     upsertJob(retryJob)
-    if (retryJob.parent_batch_id) {
-      expandedParentIds.value = new Set([...expandedParentIds.value, retryJob.parent_batch_id])
+    if (retryJob.parentBatchId) {
+      expandedParentIds.value = new Set([...expandedParentIds.value, retryJob.parentBatchId])
     }
     appStore.showSuccess(batchImageText('retrySubmitted'))
     void loadItems()
@@ -1847,7 +1849,7 @@ async function ensureItemsForRetry(apiKey: string, batchId: string) {
   if (selectedBatchId.value === batchId && items.value.length > 0) {
     return items.value
   }
-  const result = await listBatchImageItems(apiKey, batchId)
+  const result = await q.listItems(apiKey, batchId)
   return result.data || []
 }
 
@@ -1857,7 +1859,7 @@ function retryCustomID(customID: string) {
 }
 
 function rootBatchIdForRetry(job: BatchImageJobRow | BatchImageJob) {
-  return job.parent_batch_id || job.id
+  return job.parentBatchId || job.id
 }
 
 async function downloadJob(job: (BatchImageJobRow | Pick<BatchImageJob, 'id'>)) {
@@ -1869,8 +1871,8 @@ async function downloadJob(job: (BatchImageJobRow | Pick<BatchImageJob, 'id'>)) 
   downloading.value = true
   downloadingBatchId.value = job.id
   try {
-    const blob = await downloadBatchImageZip(key.key, job.id)
-    saveBlob(blob, `${job.id}.zip`)
+    const blob = await a.downloadZip(key.key, job.id)
+    a.saveBlob(blob, `${job.id}.zip`)
     markJobDownloaded(job.id)
   } catch (error: any) {
     appStore.showError(batchImageErrorMessage(error, batchImageText('downloadFailed')))
@@ -1889,8 +1891,8 @@ async function downloadSelectedJobs() {
       if (!key) continue
       downloading.value = true
       downloadingBatchId.value = row.id
-      const blob = await downloadBatchImageZip(key.key, row.id)
-      saveBlob(blob, `${row.id}.zip`)
+      const blob = await a.downloadZip(key.key, row.id)
+      a.saveBlob(blob, `${row.id}.zip`)
       markJobDownloaded(row.id)
     }
     appStore.showSuccess(batchImageText('batchDownloadStarted'))
@@ -1911,7 +1913,7 @@ async function deleteJob(job: BatchImageJobRow) {
   if (!window.confirm(batchImageText('deleteConfirm'))) return
   deletingBatchId.value = job.id
   try {
-    await deleteBatchImageJobRecord(key.key, job.id)
+    await a.deleteRecord(key.key, job.id)
     removeJobFromList(job.id)
     appStore.showSuccess(batchImageText('deleted'))
   } catch (error: any) {
@@ -1931,7 +1933,7 @@ async function deleteSelectedJobs() {
       const key = apiKeyForJob(row)
       if (!key) continue
       deletingBatchId.value = row.id
-      await deleteBatchImageJobRecord(key.key, row.id)
+      await a.deleteRecord(key.key, row.id)
       removeJobFromList(row.id)
     }
     appStore.showSuccess(batchImageText('deleted'))
@@ -1945,9 +1947,9 @@ async function deleteSelectedJobs() {
 
 function markJobDownloaded(batchId: string) {
   const downloadedAt = Math.floor(Date.now() / 1000)
-  batchJobs.value = batchJobs.value.map(job => job.id === batchId ? { ...job, downloaded_at: job.downloaded_at || downloadedAt } : job)
-  if (currentJob.value?.id === batchId && !currentJob.value.downloaded_at) {
-    currentJob.value = { ...currentJob.value, downloaded_at: downloadedAt }
+  batchJobs.value = batchJobs.value.map(job => job.id === batchId ? { ...job, downloadedAt: job.downloadedAt || downloadedAt } : job)
+  if (currentJob.value?.id === batchId && !currentJob.value.downloadedAt) {
+    currentJob.value = { ...currentJob.value, downloadedAt }
   }
 }
 
@@ -1958,20 +1960,20 @@ function removeJobFromList(batchId: string) {
 }
 
 function canLoadItemPreview(item: BatchImageItem) {
-  return (item.status === 'succeeded' || item.status === 'success') && item.image_count > 0
+  return (item.status === 'succeeded' || item.status === 'success') && item.imageCount > 0
 }
 
-function isSuccessfulImageItem(item: Pick<BatchImageItem, 'status' | 'image_count'>) {
-  return (item.status === 'succeeded' || item.status === 'success') && item.image_count > 0
+function isSuccessfulImageItem(item: Pick<BatchImageItem, 'status' | 'imageCount'>) {
+  return (item.status === 'succeeded' || item.status === 'success') && item.imageCount > 0
 }
 
 function detailRootBatchId() {
-  return currentJob.value?.parent_batch_id || selectedBatchId.value || currentJob.value?.id || ''
+  return currentJob.value?.parentBatchId || selectedBatchId.value || currentJob.value?.id || ''
 }
 
-function isChildDetailItem(item: Pick<BatchImageDetailItem, 'batch_id'>) {
+function isChildDetailItem(item: Pick<BatchImageDetailItem, 'batchId'>) {
   const rootBatchId = detailRootBatchId()
-  return Boolean(rootBatchId && item.batch_id && item.batch_id !== rootBatchId)
+  return Boolean(rootBatchId && item.batchId && item.batchId !== rootBatchId)
 }
 
 function retrySourceCustomID(customID: string) {
@@ -1982,9 +1984,9 @@ function isRecoveredOriginalFailure(item: BatchImageDetailItem) {
   const rootBatchId = detailRootBatchId()
   return Boolean(
     rootBatchId
-    && item.batch_id === rootBatchId
+    && item.batchId === rootBatchId
     && item.status === 'failed'
-    && recoveredOriginalCustomIds.value.has(item.custom_id),
+    && recoveredOriginalCustomIds.value.has(item.customId),
   )
 }
 
@@ -2003,8 +2005,8 @@ function previewCacheKey(batchId: string, customID: string, imageIndex = 0) {
   return [batchId, customID, imageIndex].map(part => encodeURIComponent(String(part))).join(':')
 }
 
-function itemPreviewKey(item: Pick<BatchImageItem, 'batch_id' | 'custom_id'>) {
-  return previewCacheKey(item.batch_id || selectedBatchId.value || currentJob.value?.id || '', item.custom_id, 0)
+function itemPreviewKey(item: Pick<BatchImageItem, 'batchId' | 'customId'>) {
+  return previewCacheKey(item.batchId || selectedBatchId.value || currentJob.value?.id || '', item.customId, 0)
 }
 
 function idbRequest<T>(request: IDBRequest<T>): Promise<T> {
@@ -2056,10 +2058,10 @@ async function hydrateCachedItemPreviews(detailItems: BatchImageDetailItem[]) {
   if (!previewableItems.length || !previewCacheSupported()) return
 
   await Promise.all(previewableItems.map(async (item) => {
-    const batchId = item.batch_id || selectedBatchId.value || currentJob.value?.id || ''
+    const batchId = item.batchId || selectedBatchId.value || currentJob.value?.id || ''
     const previewKey = itemPreviewKey(item)
     if (!batchId || itemPreviewUrls[previewKey] || previewErrorIds.value.has(previewKey)) return
-    const cached = await getCachedPreviewBlob(previewCacheKey(batchId, item.custom_id, 0)).catch(() => null)
+    const cached = await getCachedPreviewBlob(previewCacheKey(batchId, item.customId, 0)).catch(() => null)
     if (!cached || itemPreviewUrls[previewKey]) return
     itemPreviewUrls[previewKey] = URL.createObjectURL(cached)
   }))
@@ -2198,11 +2200,11 @@ async function loadItems() {
     clearItemPreviews()
     const jobs = detailJobsForBatch(batchId)
     const results = await Promise.all(jobs.map(async (job) => {
-      const result = await listBatchImageItems(key.key, job.id)
+      const result = await q.listItems(key.key, job.id)
       return (result.data || []).map(item => ({
         ...item,
-        batch_id: job.id,
-        source_task_name: detailSourceName(job, batchId),
+        batchId: job.id,
+        sourceTaskName: detailSourceName(job, batchId),
       }))
     }))
     const detailItems = results.flat()
@@ -2219,23 +2221,23 @@ function detailJobsForBatch(batchId: string): BatchImageJobRow[] {
   const row = batchJobs.value.find(job => job.id === batchId)
   const base = row || (currentJob.value && currentJob.value.id === batchId ? toJobRow(currentJob.value, keyForSelectedBatch() || selectedApiKey.value) : null)
   if (!base) return []
-  if (base.parent_batch_id) return [base]
+  if (base.parentBatchId) return [base]
   return [base, ...(childrenByParent.value.get(base.id) || [])]
 }
 
-function detailSourceName(job: Pick<BatchImageJobRow, 'id' | 'task_name' | 'parent_batch_id'>, rootBatchId: string) {
-  const name = job.task_name || job.id
+function detailSourceName(job: Pick<BatchImageJobRow, 'id' | 'taskName' | 'parentBatchId'>, rootBatchId: string) {
+  const name = job.taskName || job.id
   if (job.id === rootBatchId) return t('batchImage.detail.mainTask', { name })
   return t('batchImage.detail.childTask', { name })
 }
 
 async function loadItemPreview(item: BatchImageItem) {
-  const batchId = item.batch_id || selectedBatchId.value || currentJob.value?.id || ''
+  const batchId = item.batchId || selectedBatchId.value || currentJob.value?.id || ''
   const previewKey = itemPreviewKey(item)
   if (!batchId || !canLoadItemPreview(item) || (itemPreviewUrls[previewKey] && !previewErrorIds.value.has(previewKey))) return
   const key = keyForSelectedBatch() || requireApiKey()
   if (!key) return
-  const cacheKey = previewCacheKey(batchId, item.custom_id, 0)
+  const cacheKey = previewCacheKey(batchId, item.customId, 0)
   previewLoadingIds.value = new Set([...previewLoadingIds.value, previewKey])
   try {
     previewErrorIds.value = new Set([...previewErrorIds.value].filter(id => id !== previewKey))
@@ -2248,7 +2250,7 @@ async function loadItemPreview(item: BatchImageItem) {
       itemPreviewUrls[previewKey] = URL.createObjectURL(cached)
       return
     }
-    const blob = await getBatchImageItemContent(key.key, batchId, item.custom_id, 0)
+    const blob = await q.getItemContent(key.key, batchId, item.customId, 0)
     const thumbnail = await createThumbnailBlob(blob).catch(() => blob)
     itemPreviewUrls[previewKey] = URL.createObjectURL(thumbnail)
     if (thumbnail !== blob || thumbnail.size <= 1024 * 1024) {
@@ -2299,10 +2301,10 @@ function copyInstruction() {
   void copyToClipboard(agentInstruction.value, batchImageText('copiedInstruction'))
 }
 
-function statusLabel(jobOrStatus: BatchImageStatus | Pick<BatchImageJob, 'status' | 'success_count' | 'fail_count'>) {
+function statusLabel(jobOrStatus: BatchImageStatus | Pick<BatchImageJob, 'status' | 'successCount' | 'failCount'>) {
   const status = typeof jobOrStatus === 'string' ? jobOrStatus : jobOrStatus.status
-  if (typeof jobOrStatus !== 'string' && status === 'completed' && jobOrStatus.fail_count > 0) {
-    if (jobOrStatus.success_count > 0) return t('batchImage.status.partialSuccess')
+  if (typeof jobOrStatus !== 'string' && status === 'completed' && jobOrStatus.failCount > 0) {
+    if (jobOrStatus.successCount > 0) return t('batchImage.status.partialSuccess')
     return t('batchImage.status.allFailed')
   }
   const statusKeys: Record<string, string> = {
@@ -2320,10 +2322,10 @@ function statusLabel(jobOrStatus: BatchImageStatus | Pick<BatchImageJob, 'status
   return key ? t(`batchImage.status.${key}`) : status
 }
 
-function statusBadgeClass(jobOrStatus: BatchImageStatus | Pick<BatchImageJob, 'status' | 'success_count' | 'fail_count'>) {
+function statusBadgeClass(jobOrStatus: BatchImageStatus | Pick<BatchImageJob, 'status' | 'successCount' | 'failCount'>) {
   const status = typeof jobOrStatus === 'string' ? jobOrStatus : jobOrStatus.status
-  if (typeof jobOrStatus !== 'string' && status === 'completed' && jobOrStatus.fail_count > 0) {
-    if (jobOrStatus.success_count > 0) return 'badge-warning'
+  if (typeof jobOrStatus !== 'string' && status === 'completed' && jobOrStatus.failCount > 0) {
+    if (jobOrStatus.successCount > 0) return 'badge-warning'
     return 'badge-danger'
   }
   if (status === 'completed') return 'badge-success'
@@ -2384,20 +2386,18 @@ function friendlyItemError(error: BatchImageItem['error']) {
   if (error.code === 'PROVIDER_ITEM_FAILED') return t('batchImage.itemResult.providerItemFailed')
   return error.message || error.code || '-'
 }
-
-function formatMoney(value: number | null | undefined) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return '$0.00'
   return `$${Number(value).toFixed(2)}`
 }
 
-function terminalZeroCost(job: Pick<BatchImageJob, 'status' | 'actual_cost'>) {
-  return job.actual_cost === null && (job.status === 'failed' || job.status === 'cancelled')
+function terminalZeroCost(job: Pick<BatchImageJob, 'status' | 'costSettled'>) {
+  return !job.costSettled && (job.status === 'failed' || job.status === 'cancelled')
 }
 
-function costLabel(job: Pick<BatchImageJob, 'status' | 'hold_amount' | 'actual_cost'>) {
-  if (job.actual_cost !== null) return formatMoney(job.actual_cost)
+function costLabel(job: Pick<BatchImageJob, 'status' | 'holdAmount' | 'actualCost' | 'costSettled'>) {
+  if (job.costSettled) return formatMoney(job.actualCost)
   if (terminalZeroCost(job)) return formatMoney(0)
-  return t('batchImage.detail.holdCost', { amount: formatMoney(job.hold_amount) })
+  return t('batchImage.detail.holdCost', { amount: formatMoney(job.holdAmount) })
 }
 
 type BatchImageTextKey =

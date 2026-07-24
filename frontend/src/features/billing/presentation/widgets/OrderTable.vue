@@ -45,7 +45,7 @@ import type { PaymentOrder } from '@/types/payment'
 import type { Column } from '@/common/types/uiTypes'
 import DataTable from '@/common/widgets/data/DataTable.vue'
 import OrderStatusBadge from '@/features/billing/presentation/widgets/OrderStatusBadge.vue'
-import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
+import { currencySymbol } from '@/features/billing/presentation/utils/currencyFormatter'
 
 const { t } = useI18n()
 

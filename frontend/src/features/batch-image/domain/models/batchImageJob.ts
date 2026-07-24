@@ -10,23 +10,24 @@ export type BatchImageStatus =
   | 'output_deleted'
   | string
 
-export interface BatchImageJobEntity {
-  id: string
-  object: string
-  taskName: string
-  parentBatchId?: string | null
-  status: BatchImageStatus
-  model: string
-  provider: string
-  itemCount: number
-  successCount: number
-  failCount: number
-  estimatedCost: number
-  holdAmount: number
-  actualCost: number | null
-  createdAt: number
-  submittedAt: number | null
-  settledAt: number | null
-  downloadedAt?: number | null
-  outputDeletedAt?: number | null
+export class BatchImageJob {
+  id!: string
+  object!: string
+  taskName!: string
+  parentBatchId!: string
+  status!: BatchImageStatus
+  model!: string
+  provider!: string
+  itemCount!: number
+  successCount!: number
+  failCount!: number
+  estimatedCost!: number
+  holdAmount!: number
+  actualCost!: number
+  costSettled!: boolean
+  createdAt!: number
+  submittedAt!: number
+  settledAt!: number
+  downloadedAt!: number
+  outputDeletedAt!: number
 }

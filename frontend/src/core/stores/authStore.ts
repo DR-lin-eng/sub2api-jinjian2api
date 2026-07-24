@@ -18,7 +18,9 @@ import {
   setRefreshTokenMemory,
   setTokenExpiresAtMemory,
 } from '@/core/networks/tokenStore'
-import type { User, LoginRequest, RegisterRequest, EncryptedRegisterRequest, AuthResponse } from '@/features/auth/domain/models/auth'
+import type { User, LoginRequest, AuthResponse } from '@/types'
+import type { RegisterRequest } from '@/features/auth/data/requests_models/registerRequest'
+import type { EncryptedRegisterRequest } from '@/features/auth/data/requests_models/encryptedRegisterRequest'
 const clearAuthToken = clearTokenMemory
 const getTokenExpiresAt = getTokenExpiresAtMemory
 const setAuthToken = setAccessToken
@@ -287,7 +289,7 @@ export const useAuthStore = defineStore('auth', () => {
    */
   async function login2FA(tempToken: string, totpCode: string): Promise<User> {
     try {
-      const response = await authAPI.login2FA({ tempToken: tempToken, totpCode: totpCode })
+      const response = await authAPI.login2FA({ temp_token: tempToken, totp_code: totpCode })
       setAuthFromResponse(response)
       return user.value!
     } catch (error) {
@@ -438,11 +440,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     try {
-      const response = await authAPI.getCurrentUser()
-      if (response.data.runMode) {
-        runMode.value = response.data.runMode
+      const profile = await authAPI.getCurrentUser()
+      if (profile.runMode) {
+        runMode.value = profile.runMode
       }
-      const { runMode: _runMode, ...userData } = response.data
+      const { runMode: _runMode, ...userData } = profile
       user.value = userData
 
       // Update localStorage

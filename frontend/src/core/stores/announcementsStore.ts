@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { announcementsAPI } from '@/api'
-import type { UserAnnouncement } from '@/features/announcements/domain/models/announcement'
+import { announcementsQueryRepository } from '@/features/announcements/data/repositories/announcementsQueryRepositoryImpl'
+import { announcementsActionRepository } from '@/features/announcements/data/repositories/announcementsActionRepositoryImpl'
+import type { UserAnnouncement } from '@/features/announcements/domain/models/userAnnouncement'
 const THROTTLE_MS = 20 * 60 * 1000 // 20 minutes
 
 export const useAnnouncementStore = defineStore('announcements', () => {
@@ -32,7 +33,7 @@ export const useAnnouncementStore = defineStore('announcements', () => {
 
     try {
       loading.value = true
-      const all = await announcementsAPI.list(false)
+      const all = await announcementsQueryRepository.list()
       announcements.value = all.slice(0, 20)
       enqueueNewPopups()
     } catch (err: any) {
@@ -86,7 +87,7 @@ export const useAnnouncementStore = defineStore('announcements', () => {
 
   async function markAsRead(id: number) {
     try {
-      await announcementsAPI.markRead(id)
+      await announcementsActionRepository.markRead(id)
       const ann = announcements.value.find((a) => a.id === id)
       if (ann) {
         ann.readAt = new Date().toISOString()
@@ -102,7 +103,7 @@ export const useAnnouncementStore = defineStore('announcements', () => {
 
     try {
       loading.value = true
-      await Promise.all(unread.map((a) => announcementsAPI.markRead(a.id)))
+      await Promise.all(unread.map((a) => announcementsActionRepository.markRead(a.id)))
       announcements.value.forEach((a) => {
         if (!a.readAt) {
           a.readAt = new Date().toISOString()

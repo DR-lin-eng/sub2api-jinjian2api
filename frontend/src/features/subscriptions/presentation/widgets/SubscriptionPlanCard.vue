@@ -105,7 +105,7 @@ import { useI18n } from 'vue-i18n'
 import type { SubscriptionPlan } from '@/types/payment'
 import { useAppStore } from '@/core/stores/appStore'
 import { hasPeakRate as groupHasPeakRate, formatPeakRateWindow, serverTimezoneLabel } from '@/core/utils/peak-rate'
-import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
+import { currencySymbol } from '@/features/billing/presentation/utils/currencyFormatter'
 import {
   platformAccentBarClass,
   platformBadgeLightClass,
@@ -116,7 +116,7 @@ import {
   platformDiscountClass,
   platformLabel,
 } from '@/core/utils/platformColors'
-import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/subscription'
+import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/userSubscription'
 
 const props = defineProps<{ plan: SubscriptionPlan; activeSubscriptions?: UserSubscription[] }>()
 const emit = defineEmits<{ select: [plan: SubscriptionPlan] }>()

@@ -3,7 +3,7 @@
  * 配色统一 bg-X-100/text-X-800 体系,与 UsageTable 一致。
  */
 
-import type { UsageRequestType } from '@/features/admin-usage/domain/models/adminUsage'
+import type { UsageRequestType } from '@/core/models/domain/usageLog'
 
 export type UsageRequestKind = UsageRequestType
 

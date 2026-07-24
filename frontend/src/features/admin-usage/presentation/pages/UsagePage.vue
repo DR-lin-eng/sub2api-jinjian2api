@@ -187,7 +187,7 @@ import { useI18n } from 'vue-i18n'
 import { saveAs } from 'file-saver'
 import { useRoute } from 'vue-router'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminUsageAPI } from '@/features/admin-usage/presentation/api'
+import type { AdminUsageStatsResponse } from '@/features/admin-usage/domain/models/adminUsageStatsResponse'
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 import { formatReasoningEffort } from '@/core/utils/format'
 import { calculateOutputTokensPerSecond } from '@/core/utils/usageMetrics'
@@ -202,20 +202,20 @@ import UserBalanceHistoryModal from '@/features/admin-users/presentation/widgets
 import OpsErrorLogTable from '@/features/admin-ops/presentation/widgets/OpsErrorLogTable.vue'
 import OpsErrorDetailModal from '@/features/admin-ops/presentation/widgets/OpsErrorDetailDialog.vue'
 import { listErrorLogs } from '@/features/admin-ops/presentation/api'
-import type { OpsErrorLog } from '@/features/admin-ops/presentation/api'
+import type { OpsErrorLog } from '@/features/admin-ops/domain/models/opsErrorLog'
 import ModelDistributionChart from '@/features/admin-dashboard/presentation/widgets/ModelDistributionChart.vue'; import GroupDistributionChart from '@/features/admin-dashboard/presentation/widgets/GroupDistributionChart.vue'; import TokenUsageTrend from '@/features/admin-dashboard/presentation/widgets/TokenUsageTrend.vue'
 import EndpointDistributionChart from '@/features/admin-dashboard/presentation/widgets/EndpointDistributionChart.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-; import type { AdminUsageStatsResponse, AdminUsageQueryParams } from '@/features/admin-usage/presentation/api'
 import { useAdminUsers } from '@/features/admin-users/presentation/composables/useAdminUsers'
 import { useAdminUsage } from '@/features/admin-usage/presentation/composables/useAdminUsage'
 import { useAdminDashboard } from '@/features/admin-dashboard/presentation/composables/useAdminDashboard'
-import type { AdminUsageLog } from '@/features/admin-usage/domain/models/adminUsage'
+import type { AdminUsageLog } from '@/features/admin-usage/domain/models/adminUsageLog'
+import type { AdminUsageQueryParams } from '@/features/admin-usage/domain/models/adminUsageQueryParams'
 import type { TrendDataPoint } from '@/features/admin-dashboard/domain/models/trendDataPoint'
 import type { ModelStat } from '@/features/admin-dashboard/domain/models/modelStat'
 import type { GroupStat } from '@/features/admin-dashboard/domain/models/groupStat'
 import type { EndpointStat } from '@/features/admin-dashboard/domain/models/endpointStat'
-import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 const $users = useAdminUsers()
 const $usage = useAdminUsage()
 const $dashboard = useAdminDashboard()
@@ -566,7 +566,7 @@ const exportToExcel = async () => {
     ]
     const ws = XLSX.utils.aoa_to_sheet([headers])
     while (true) {
-      const res = await adminUsageAPI.list(
+      const res = await $usage.list(
         buildUsageListParams(p, 100, true),
         { signal: c.signal }
       )

@@ -45,13 +45,17 @@ vi.mock('@/api/admin', () => ({
   },
 }))
 
-vi.mock('@/features/admin-usage/data/datasources/adminUsageDatasource', () => ({
-  adminUsageAPI: {
-    list: vi.fn(),
+vi.mock('@/features/admin-usage/data/repositories/adminUsageQueryRepositoryImpl', () => ({
+  adminUsageQueryRepository: {
+    list,
+    getStats,
+    searchUsers: vi.fn().mockResolvedValue([]),
+    searchApiKeys: vi.fn().mockResolvedValue([]),
+    listCleanupTasks: vi.fn().mockResolvedValue({ items: [], total: 0 }),
   },
 }))
 
-vi.mock('@/features/admin-ops/data/datasources/adminOpsDatasource', () => ({
+vi.mock('@/features/admin-ops/data/datasources/adminOpsQueryDatasource', () => ({
   listErrorLogs,
 }))
 

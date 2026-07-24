@@ -216,7 +216,8 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { usageAPI, userGroupsAPI } from '@/api'
+import { useUsageQueryStore } from '@/features/usage/presentation/stores/usageQueryStore'
+import { userGroupsAPI } from '@/api'
 import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
@@ -236,7 +237,7 @@ import { getLast24HourRange, parseRangeBoundary, toDateInputValue } from '@/core
 import { BILLING_MODE_IMAGE, getBillingModeLabel } from '@/core/utils/billingMode'
 import { calculateOutputTokensPerSecond } from '@/core/utils/usageMetrics'
 import { resolveUsageRequestType, requestTypeToLegacyStream } from '@/core/utils/usageRequestType'
-import type { UserErrorRequest } from '@/types'
+import type { UserErrorRequest } from '@/features/admin-ops/domain/models/userErrorTypes'
 import type { Column } from '@/common/types/uiTypes'
 import { COMMON_ERROR_STATUS_CODES } from '@/core/utils/errorBadges'
 import type { ApiKey } from '@/features/keys/domain/models/apiKey'
@@ -245,10 +246,13 @@ import type { Group } from '@/features/admin-groups/domain/models/adminGroups'
 import type { GroupStat } from '@/features/admin-dashboard/domain/models/groupStat'
 import type { ModelStat } from '@/features/admin-dashboard/domain/models/modelStat'
 import type { TrendDataPoint } from '@/features/admin-dashboard/domain/models/trendDataPoint'
-import type { UsageLog, UsageQueryParams, UsageStatsResponse } from '@/features/admin-usage/domain/models/adminUsage'
+import type { UsageLog } from '@/core/models/domain/usageLog'
+import type { UsageQueryParams } from '@/features/admin-usage/domain/models/adminUsageQueryParams'
+import type { UsageStatsResponse } from '@/core/models/domain/usageStatsResponse'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const usageStore = useUsageQueryStore()
 
 type DistributionMetric = 'tokens' | 'actual_cost'
 type EndpointSource = 'inbound' | 'upstream' | 'path'
@@ -425,7 +429,7 @@ const loadLogs = async () => {
   abortController = controller
   loading.value = true
   try {
-    const res = await usageAPI.query(buildUsageListParams(pagination.page, pagination.page_size), {
+    const res = await usageStore.query(buildUsageListParams(pagination.page, pagination.page_size), {
       signal: controller.signal,
     })
     if (!controller.signal.aborted) {
@@ -445,7 +449,7 @@ const loadStats = async () => {
   const seq = ++statsReqSeq
   endpointStatsLoading.value = true
   try {
-    const stats = await usageAPI.getStats(normalizedFilters.value)
+    const stats = await usageStore.getStats(normalizedFilters.value)
     if (seq !== statsReqSeq) return
     usageStats.value = stats
     inboundEndpointStats.value = stats.endpoints || []
@@ -466,7 +470,7 @@ const loadModelStats = async () => {
   const seq = ++modelStatsReqSeq
   modelStatsLoading.value = true
   try {
-    const response = await usageAPI.getDashboardModels({
+    const response = await usageStore.getDashboardModels({
       ...normalizedFilters.value,
       model_source: 'requested',
     })
@@ -486,7 +490,7 @@ const loadChartData = async () => {
   const seq = ++chartReqSeq
   chartsLoading.value = true
   try {
-    const snapshot = await usageAPI.getDashboardSnapshotV2({
+    const snapshot = await usageStore.getDashboardSnapshotV2({
       ...normalizedFilters.value,
       granularity: granularity.value,
       include_trend: true,
@@ -620,7 +624,7 @@ const exportToCSV = async () => {
     const pageSize = 100
     const totalPages = Math.ceil(pagination.total / pageSize)
     for (let page = 1; page <= totalPages; page++) {
-      const response = await usageAPI.query(buildUsageListParams(page, pageSize))
+      const response = await usageStore.query(buildUsageListParams(page, pageSize))
       allLogs.push(...response.items)
     }
     if (allLogs.length === 0) {
@@ -824,7 +828,7 @@ const resetErrorRows = () => {
 const loadErrors = async () => {
   errorLoading.value = true
   try {
-    const resp = await usageAPI.listMyErrorRequests({
+    const resp = await usageStore.listMyErrorRequests({
       page: errorPage.value,
       pageSize: errorPageSize.value,
       startDate: startDate.value,

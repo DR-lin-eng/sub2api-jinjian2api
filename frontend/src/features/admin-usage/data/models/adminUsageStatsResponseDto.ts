@@ -1,37 +1,46 @@
-import type { AdminUsageStatsResponse, EndpointStat } from '@/features/admin-usage/domain/models/adminUsage'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { AdminUsageStatsResponse } from '@/features/admin-usage/domain/models/adminUsageStatsResponse'
+import type { EndpointStat } from '@/features/admin-dashboard/domain/models/endpointStat'
 
-export interface AdminUsageStatsResponseDto {
-  total_requests: number
-  total_input_tokens: number
-  total_output_tokens: number
-  total_cache_tokens: number
-  total_cache_creation_tokens: number
-  total_cache_read_tokens: number
-  total_tokens: number
-  total_cost: number
-  total_actual_cost: number
-  total_account_cost: number
-  average_duration_ms: number
-  endpoints?: EndpointStat[]
-  upstream_endpoints?: EndpointStat[]
-  endpoint_paths?: EndpointStat[]
-}
+export class AdminUsageStatsResponseDto {
+  @Expose({ name: 'total_requests' }) @Transform(({ value }) => value ?? 0) totalRequests!: number
+  @Expose({ name: 'total_input_tokens' }) @Transform(({ value }) => value ?? 0) totalInputTokens!: number
+  @Expose({ name: 'total_output_tokens' }) @Transform(({ value }) => value ?? 0) totalOutputTokens!: number
+  @Expose({ name: 'total_cache_tokens' }) @Transform(({ value }) => value ?? 0) totalCacheTokens!: number
+  @Expose({ name: 'total_cache_creation_tokens' }) @Transform(({ value }) => value ?? 0) totalCacheCreationTokens!: number
+  @Expose({ name: 'total_cache_read_tokens' }) @Transform(({ value }) => value ?? 0) totalCacheReadTokens!: number
+  @Expose({ name: 'total_tokens' }) @Transform(({ value }) => value ?? 0) totalTokens!: number
+  @Expose({ name: 'total_cost' }) @Transform(({ value }) => value ?? 0) totalCost!: number
+  @Expose({ name: 'total_actual_cost' }) @Transform(({ value }) => value ?? 0) totalActualCost!: number
+  @Expose({ name: 'total_account_cost' }) @Transform(({ value }) => value ?? 0) totalAccountCost!: number
+  @Expose({ name: 'average_duration_ms' }) @Transform(({ value }) => value ?? 0) averageDurationMs!: number
+  @Expose() @Transform(({ value }) => value ?? {}) models!: Record<string, number>
+  @Expose() endpoints?: EndpointStat[]
+  @Expose({ name: 'upstream_endpoints' }) upstreamEndpoints?: EndpointStat[]
+  @Expose({ name: 'endpoint_paths' }) endpointPaths?: EndpointStat[]
 
-export function toEntity(dto: AdminUsageStatsResponseDto): AdminUsageStatsResponse {
-  return {
-    totalRequests: dto.total_requests ?? 0,
-    totalInputTokens: dto.total_input_tokens ?? 0,
-    totalOutputTokens: dto.total_output_tokens ?? 0,
-    totalCacheTokens: dto.total_cache_tokens ?? 0,
-    totalCacheCreationTokens: dto.total_cache_creation_tokens ?? 0,
-    totalCacheReadTokens: dto.total_cache_read_tokens ?? 0,
-    totalTokens: dto.total_tokens ?? 0,
-    totalCost: dto.total_cost ?? 0,
-    totalActualCost: dto.total_actual_cost ?? 0,
-    totalAccountCost: dto.total_account_cost ?? 0,
-    averageDurationMs: dto.average_duration_ms ?? 0,
-    endpoints: dto.endpoints,
-    upstreamEndpoints: dto.upstream_endpoints,
-    endpointPaths: dto.endpoint_paths,
+  static fromJson(json: unknown): AdminUsageStatsResponseDto {
+    return plainToInstance(AdminUsageStatsResponseDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): AdminUsageStatsResponse {
+    const e = new AdminUsageStatsResponse()
+    e.totalRequests = this.totalRequests
+    e.totalInputTokens = this.totalInputTokens
+    e.totalOutputTokens = this.totalOutputTokens
+    e.totalCacheTokens = this.totalCacheTokens
+    e.totalCacheCreationTokens = this.totalCacheCreationTokens
+    e.totalCacheReadTokens = this.totalCacheReadTokens
+    e.totalTokens = this.totalTokens
+    e.totalCost = this.totalCost
+    e.totalActualCost = this.totalActualCost
+    e.totalAccountCost = this.totalAccountCost
+    e.averageDurationMs = this.averageDurationMs
+    e.models = this.models
+    e.endpoints = this.endpoints
+    e.upstreamEndpoints = this.upstreamEndpoints
+    e.endpointPaths = this.endpointPaths
+    return e
   }
 }

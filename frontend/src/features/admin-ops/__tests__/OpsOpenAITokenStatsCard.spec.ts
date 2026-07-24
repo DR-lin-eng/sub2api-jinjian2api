@@ -5,7 +5,7 @@ import OpsOpenAITokenStatsCard from '@/features/admin-ops/presentation/widgets/O
 
 const mockGetOpenAITokenStats = vi.fn()
 
-vi.mock('@/features/admin-ops/data/datasources/adminOpsDatasource', () => ({
+vi.mock('@/features/admin-ops/data/datasources/adminOpsQueryDatasource', () => ({
   opsAPI: {
     getOpenAITokenStats: (...args: any[]) => mockGetOpenAITokenStats(...args),
   },

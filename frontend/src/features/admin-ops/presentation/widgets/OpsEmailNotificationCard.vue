@@ -2,13 +2,18 @@
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { opsAPI } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import type { EmailNotificationConfig, AlertSeverity } from '@/features/admin-ops/presentation/opsTypeSignals'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
+import { useAdminOpsActionStore } from '@/features/admin-ops/presentation/stores/adminOpsActionStore'
+import type { EmailNotificationConfig } from '@/features/admin-ops/domain/models/emailNotificationConfig'
+import type { AlertSeverity } from '@/features/admin-ops/domain/models/alertRule'
+import type { UpdateEmailNotificationConfigRequest } from '@/features/admin-ops/data/requests_models/updateEmailNotificationConfigRequest'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const actionStore = useAdminOpsActionStore()
 
 const loading = ref(false)
 const config = ref<EmailNotificationConfig | null>(null)
@@ -31,7 +36,7 @@ const severityOptions: Array<{ value: AlertSeverity | ''; label: string }> = [
 async function loadConfig() {
   loading.value = true
   try {
-    const data = await opsAPI.getEmailNotificationConfig()
+    const data = await queryStore.getEmailNotificationConfig()
     config.value = data
   } catch (err: any) {
     console.error('[OpsEmailNotificationCard] Failed to load config', err)
@@ -49,7 +54,12 @@ async function saveConfig() {
   }
   saving.value = true
   try {
-    config.value = await opsAPI.updateEmailNotificationConfig(draft.value)
+    const d = draft.value
+    const req: UpdateEmailNotificationConfigRequest = {
+      alert: { enabled: d.alert.enabled, recipients: d.alert.recipients, min_severity: d.alert.minSeverity, rate_limit_per_hour: d.alert.rateLimitPerHour, batching_window_seconds: d.alert.batchingWindowSeconds, include_resolved_alerts: d.alert.includeResolvedAlerts },
+      report: { enabled: d.report.enabled, recipients: d.report.recipients, daily_summary_enabled: d.report.dailySummaryEnabled, daily_summary_schedule: d.report.dailySummarySchedule, weekly_summary_enabled: d.report.weeklySummaryEnabled, weekly_summary_schedule: d.report.weeklySummarySchedule, error_digest_enabled: d.report.errorDigestEnabled, error_digest_schedule: d.report.errorDigestSchedule, error_digest_min_count: d.report.errorDigestMinCount, account_health_enabled: d.report.accountHealthEnabled, account_health_schedule: d.report.accountHealthSchedule, account_health_error_rate_threshold: d.report.accountHealthErrorRateThreshold },
+    }
+    config.value = await actionStore.updateEmailNotificationConfig(req)
     showEditor.value = false
     appStore.showSuccess(t('admin.ops.email.saveSuccess'))
   } catch (err: any) {
@@ -102,42 +112,42 @@ const editorValidation = computed(() => {
   const invalidReportRecipients = draft.value.report.recipients.filter((e) => !isValidEmailAddress(e))
   if (invalidReportRecipients.length > 0) errors.push(t('admin.ops.email.validation.invalidRecipients'))
 
-  if (!isNonNegativeNumber(draft.value.alert.rate_limit_per_hour)) {
+  if (!isNonNegativeNumber(draft.value.alert.rateLimitPerHour)) {
     errors.push(t('admin.ops.email.validation.rateLimitRange'))
   }
   if (
-    !isNonNegativeNumber(draft.value.alert.batching_window_seconds) ||
-    draft.value.alert.batching_window_seconds > 86400
+    !isNonNegativeNumber(draft.value.alert.batchingWindowSeconds) ||
+    draft.value.alert.batchingWindowSeconds > 86400
   ) {
     errors.push(t('admin.ops.email.validation.batchWindowRange'))
   }
 
   const dailyErr = validateCronField(
-    draft.value.report.daily_summary_enabled,
-    draft.value.report.daily_summary_schedule
+    draft.value.report.dailySummaryEnabled,
+    draft.value.report.dailySummarySchedule
   )
   if (dailyErr) errors.push(dailyErr)
   const weeklyErr = validateCronField(
-    draft.value.report.weekly_summary_enabled,
-    draft.value.report.weekly_summary_schedule
+    draft.value.report.weeklySummaryEnabled,
+    draft.value.report.weeklySummarySchedule
   )
   if (weeklyErr) errors.push(weeklyErr)
   const digestErr = validateCronField(
-    draft.value.report.error_digest_enabled,
-    draft.value.report.error_digest_schedule
+    draft.value.report.errorDigestEnabled,
+    draft.value.report.errorDigestSchedule
   )
   if (digestErr) errors.push(digestErr)
   const accErr = validateCronField(
-    draft.value.report.account_health_enabled,
-    draft.value.report.account_health_schedule
+    draft.value.report.accountHealthEnabled,
+    draft.value.report.accountHealthSchedule
   )
   if (accErr) errors.push(accErr)
 
-  if (!isNonNegativeNumber(draft.value.report.error_digest_min_count)) {
+  if (!isNonNegativeNumber(draft.value.report.errorDigestMinCount)) {
     errors.push(t('admin.ops.email.validation.digestMinCountRange'))
   }
 
-  const thr = draft.value.report.account_health_error_rate_threshold
+  const thr = draft.value.report.accountHealthErrorRateThreshold
   if (!(typeof thr === 'number' && Number.isFinite(thr) && thr >= 0 && thr <= 100)) {
     errors.push(t('admin.ops.email.validation.accountHealthThresholdRange'))
   }
@@ -224,12 +234,12 @@ onMounted(() => {
           <div class="text-xs text-gray-600 dark:text-gray-300">
             {{ t('admin.ops.email.minSeverity') }}:
             <span class="ml-1 font-medium text-gray-900 dark:text-white">{{
-              config.alert.min_severity || t('admin.ops.email.minSeverityAll')
+              config.alert.minSeverity || t('admin.ops.email.minSeverityAll')
             }}</span>
           </div>
           <div class="text-xs text-gray-600 dark:text-gray-300">
             {{ t('admin.ops.email.rateLimitPerHour') }}:
-            <span class="ml-1 font-medium text-gray-900 dark:text-white">{{ config.alert.rate_limit_per_hour }}</span>
+            <span class="ml-1 font-medium text-gray-900 dark:text-white">{{ config.alert.rateLimitPerHour }}</span>
           </div>
         </div>
       </div>
@@ -276,7 +286,7 @@ onMounted(() => {
 
           <div>
             <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.email.minSeverity') }}</div>
-            <Select v-model="draft.alert.min_severity" :options="severityOptions" />
+            <Select v-model="draft.alert.minSeverity" :options="severityOptions" />
           </div>
 
           <div class="md:col-span-2">
@@ -315,19 +325,19 @@ onMounted(() => {
 
           <div>
             <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.email.rateLimitPerHour') }}</div>
-            <input v-model.number="draft.alert.rate_limit_per_hour" type="number" min="0" max="100000" class="input" />
+            <input v-model.number="draft.alert.rateLimitPerHour" type="number" min="0" max="100000" class="input" />
           </div>
 
           <div>
             <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.email.batchWindowSeconds') }}</div>
-            <input v-model.number="draft.alert.batching_window_seconds" type="number" min="0" max="86400" class="input" />
+            <input v-model.number="draft.alert.batchingWindowSeconds" type="number" min="0" max="86400" class="input" />
           </div>
 
           <div>
             <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.email.includeResolved') }}</div>
             <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <input v-model="draft.alert.include_resolved_alerts" type="checkbox" class="h-4 w-4 rounded border-gray-300" />
-              <span>{{ draft.alert.include_resolved_alerts ? t('common.enabled') : t('common.disabled') }}</span>
+              <input v-model="draft.alert.includeResolvedAlerts" type="checkbox" class="h-4 w-4 rounded border-gray-300" />
+              <span>{{ draft.alert.includeResolvedAlerts ? t('common.enabled') : t('common.disabled') }}</span>
             </label>
           </div>
         </div>
@@ -383,45 +393,45 @@ onMounted(() => {
                 <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.email.dailySummary') }}</div>
                 <div class="flex items-center gap-2">
                   <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                    <input v-model="draft.report.daily_summary_enabled" type="checkbox" class="h-4 w-4 rounded border-gray-300" />
+                    <input v-model="draft.report.dailySummaryEnabled" type="checkbox" class="h-4 w-4 rounded border-gray-300" />
                   </label>
-                  <input v-model="draft.report.daily_summary_schedule" type="text" class="input" :placeholder="t('admin.ops.email.cronPlaceholder')" />
+                  <input v-model="draft.report.dailySummarySchedule" type="text" class="input" :placeholder="t('admin.ops.email.cronPlaceholder')" />
                 </div>
               </div>
               <div>
                 <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.email.weeklySummary') }}</div>
                 <div class="flex items-center gap-2">
                   <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                    <input v-model="draft.report.weekly_summary_enabled" type="checkbox" class="h-4 w-4 rounded border-gray-300" />
+                    <input v-model="draft.report.weeklySummaryEnabled" type="checkbox" class="h-4 w-4 rounded border-gray-300" />
                   </label>
-                  <input v-model="draft.report.weekly_summary_schedule" type="text" class="input" :placeholder="t('admin.ops.email.cronPlaceholder')" />
+                  <input v-model="draft.report.weeklySummarySchedule" type="text" class="input" :placeholder="t('admin.ops.email.cronPlaceholder')" />
                 </div>
               </div>
               <div>
                 <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.email.errorDigest') }}</div>
                 <div class="flex items-center gap-2">
                   <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                    <input v-model="draft.report.error_digest_enabled" type="checkbox" class="h-4 w-4 rounded border-gray-300" />
+                    <input v-model="draft.report.errorDigestEnabled" type="checkbox" class="h-4 w-4 rounded border-gray-300" />
                   </label>
-                  <input v-model="draft.report.error_digest_schedule" type="text" class="input" :placeholder="t('admin.ops.email.cronPlaceholder')" />
+                  <input v-model="draft.report.errorDigestSchedule" type="text" class="input" :placeholder="t('admin.ops.email.cronPlaceholder')" />
                 </div>
               </div>
               <div>
                 <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.email.errorDigestMinCount') }}</div>
-                <input v-model.number="draft.report.error_digest_min_count" type="number" min="0" max="1000000" class="input" />
+                <input v-model.number="draft.report.errorDigestMinCount" type="number" min="0" max="1000000" class="input" />
               </div>
               <div>
                 <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.email.accountHealth') }}</div>
                 <div class="flex items-center gap-2">
                   <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                    <input v-model="draft.report.account_health_enabled" type="checkbox" class="h-4 w-4 rounded border-gray-300" />
+                    <input v-model="draft.report.accountHealthEnabled" type="checkbox" class="h-4 w-4 rounded border-gray-300" />
                   </label>
-                  <input v-model="draft.report.account_health_schedule" type="text" class="input" :placeholder="t('admin.ops.email.cronPlaceholder')" />
+                  <input v-model="draft.report.accountHealthSchedule" type="text" class="input" :placeholder="t('admin.ops.email.cronPlaceholder')" />
                 </div>
               </div>
               <div>
                 <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.email.accountHealthThreshold') }}</div>
-                <input v-model.number="draft.report.account_health_error_rate_threshold" type="number" min="0" max="100" step="0.1" class="input" />
+                <input v-model.number="draft.report.accountHealthErrorRateThreshold" type="number" min="0" max="100" step="0.1" class="input" />
               </div>
             </div>
             <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ t('admin.ops.email.reportHint') }}</div>

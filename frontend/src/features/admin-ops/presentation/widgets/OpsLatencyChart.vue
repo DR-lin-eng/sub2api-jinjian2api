@@ -3,11 +3,11 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Chart as ChartJS, BarElement, CategoryScale, Legend, LinearScale, Tooltip } from 'chart.js'
 import { Bar } from 'vue-chartjs'
-import type { OpsLatencyHistogramResponse } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import type { ChartState } from '@/features/admin-ops/presentation/opsTypeSignals'
+import type { OpsLatencyHistogramResponse } from '@/features/admin-ops/domain/models/opsLatencyHistogramResponse'
+import type { ChartState } from '@/features/admin-ops/presentation/utils/opsFormatter'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
-import { formatCompactNumber } from '@/features/admin-ops/presentation/opsFormatter'
+import { formatCompactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend)
 

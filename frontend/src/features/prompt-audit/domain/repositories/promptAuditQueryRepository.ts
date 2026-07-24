@@ -1,13 +1,16 @@
-/**
- * PromptAuditQueryRepository (interface). Auto-generated from promptAuditQueryDatasource.ts.
- */
-import type * as ds from '@/features/prompt-audit/data/datasources/promptAuditQueryDatasource'
+import type { PromptAuditConfig } from '@/features/prompt-audit/domain/models/promptAuditConfig'
+import type { PromptAuditRuntime } from '@/features/prompt-audit/domain/models/promptAuditRuntime'
+import type { PromptAuditEvent } from '@/features/prompt-audit/domain/models/promptAuditEvent'
+import type { PromptEventPage } from '@/features/prompt-audit/domain/models/promptEventPage'
+import type { PromptDeletePreview } from '@/features/prompt-audit/domain/models/promptDeletePreview'
+import type { PromptAuditGroup } from '@/features/prompt-audit/domain/models/promptAuditGroup'
+import type { PromptEventFilters } from '@/features/prompt-audit/domain/models/promptEventFilters'
 
-export type PromptAuditQueryRepository = {
-  readonly getConfig: typeof ds.getConfig
-  readonly getRuntime: typeof ds.getRuntime
-  readonly listEvents: typeof ds.listEvents
-  readonly getEvent: typeof ds.getEvent
-  readonly previewDelete: typeof ds.previewDelete
-  readonly listGroups: typeof ds.listGroups
+export interface PromptAuditQueryRepository {
+  getConfig(): Promise<PromptAuditConfig>
+  getRuntime(): Promise<PromptAuditRuntime>
+  listEvents(filters: PromptEventFilters, page: number, pageSize: number): Promise<PromptEventPage>
+  getEvent(id: number): Promise<PromptAuditEvent>
+  previewDelete(filters: PromptEventFilters): Promise<PromptDeletePreview>
+  listGroups(): Promise<PromptAuditGroup[]>
 }

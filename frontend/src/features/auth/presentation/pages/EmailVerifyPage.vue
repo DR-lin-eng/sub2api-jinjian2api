@@ -172,15 +172,16 @@ import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptch
 import { useAuthStore, useAppStore } from '@/stores'
 import {
   persistOAuthTokenContext,
-  getPublicSettings,
   isOAuthLoginCompletion,
+  type PendingOAuthSendVerifyCodeResponse,
+} from '@/features/auth/presentation/utils/oauthUtils'
+import {
   clearCredentialKeyPrefetch,
   createCredentialEnvelope,
   prefetchCredentialKey,
-  type PendingOAuthSendVerifyCodeResponse,
-  sendPendingOAuthVerifyCode,
-  sendVerifyCode,
-} from '@/features/auth/presentation/api'
+} from '@/core/networks/credentialEncryption'
+import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
+import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
 import { apiClient } from '@/core/networks/client'
 import { buildAuthErrorMessage } from '@/core/utils/authError'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'

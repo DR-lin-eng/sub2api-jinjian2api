@@ -76,14 +76,14 @@
       </details>
 
       <div v-if="preview" class="rounded-xl border border-red-200 bg-red-50/60 px-4 py-3 dark:border-red-900/60 dark:bg-red-950/20" data-test="delete-preview-result">
-        <p class="text-sm font-semibold text-red-700 dark:text-red-300">{{ t('admin.promptAudit.events.filterDeleteCount', { count: preview.matched_count }) }}</p>
+        <p class="text-sm font-semibold text-red-700 dark:text-red-300">{{ t('admin.promptAudit.events.filterDeleteCount', { count: preview.matchedCount }) }}</p>
         <dl class="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-dark-300">
           <dt>{{ t('admin.promptAudit.events.snapshotMax') }}</dt>
-          <dd>{{ preview.snapshot_max_id }}</dd>
+          <dd>{{ preview.snapshotMaxId }}</dd>
           <dt>Filter SHA-256</dt>
-          <dd class="break-all font-mono">{{ preview.filter_hash }}</dd>
+          <dd class="break-all font-mono">{{ preview.filterHash }}</dd>
           <dt>{{ t('admin.promptAudit.events.expiresAt') }}</dt>
-          <dd>{{ formatDate(preview.expires_at) }}</dd>
+          <dd>{{ formatDate(preview.expiresAt) }}</dd>
         </dl>
         <p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">{{ t('admin.promptAudit.events.filterDeleteWarning') }}</p>
       </div>
@@ -120,7 +120,8 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import type { PromptDeletePreview, PromptEventFilters } from '@/features/prompt-audit/domain/models/promptAuditTypes'
+import type { PromptDeletePreview } from '@/features/prompt-audit/domain/models/promptDeletePreview'
+import type { PromptEventFilters } from '@/features/prompt-audit/domain/models/promptEventFilters'
 import {
   DELETE_RANGE_PRESETS,
   cloneData,
@@ -128,7 +129,7 @@ import {
   hasExplicitDeleteRange,
   resolveDeleteRangeFilters,
   type DeleteRangePreset,
-} from '@/features/prompt-audit/domain/promptAuditViewModel'
+} from '@/features/prompt-audit/presentation/utils/promptAuditViewModel'
 
 const props = defineProps<{
   show: boolean
@@ -168,12 +169,12 @@ const canPreview = computed(() => preset.value !== 'custom' || hasExplicitDelete
 // disabled only when the range is invalid, work is in flight, or a fresh
 // preview already proved there is nothing to delete.
 const confirmDisabled = computed(
-  () => !canPreview.value || props.previewing || props.deleting || (props.preview !== null && props.preview.matched_count === 0),
+  () => !canPreview.value || props.previewing || props.deleting || (props.preview !== null && props.preview.matchedCount === 0),
 )
 const confirmDisabledReason = computed(() => {
   if (props.previewing || props.deleting) return ''
   if (!canPreview.value) return 'admin.promptAudit.events.filterDeleteConfirmInvalidRange'
-  if (props.preview && props.preview.matched_count === 0) return 'admin.promptAudit.events.filterDeleteConfirmNoMatches'
+  if (props.preview && props.preview.matchedCount === 0) return 'admin.promptAudit.events.filterDeleteConfirmNoMatches'
   return ''
 })
 

@@ -8,12 +8,10 @@ const { getReadStatus, showError } = vi.hoisted(() => ({
   showError: vi.fn(),
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    announcements: {
-      getReadStatus,
-    },
-  },
+vi.mock('@/features/announcements/presentation/stores/announcementsQueryStore', () => ({
+  useAnnouncementsQueryStore: () => ({
+    getReadStatus,
+  }),
 }))
 
 vi.mock('@/core/stores/appStore', () => ({

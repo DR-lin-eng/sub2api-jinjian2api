@@ -38,10 +38,10 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import { usePaymentStore } from '@/features/billing/presentation/stores/paymentStore'
-import { paymentAPI } from '@/features/billing/presentation/api'
+import { useBillingActionStore } from '@/features/billing/presentation/stores/billingActionStore'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import { useAppStore } from '@/stores'
-import { isBuiltInAlipayMethod, isBuiltInWxpayMethod } from '@/features/billing/presentation/providerConfigSignals'
+import { isBuiltInAlipayMethod, isBuiltInWxpayMethod } from '@/features/billing/presentation/utils/providerConfigSignals'
 import QRCode from 'qrcode'
 import alipayIcon from '@/assets/icons/alipay.svg'
 import wxpayIcon from '@/assets/icons/wxpay.svg'
@@ -50,6 +50,7 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const paymentStore = usePaymentStore()
+const billingAction = useBillingActionStore()
 const appStore = useAppStore()
 
 const qrCanvas = ref<HTMLCanvasElement | null>(null)
@@ -174,7 +175,7 @@ async function handleCancel() {
   if (!orderId.value || cancelling.value) return
   cancelling.value = true
   try {
-    await paymentAPI.cancelOrder(orderId.value)
+    await billingAction.cancelOrder(orderId.value)
     cleanup()
     router.push('/purchase')
   } catch (err: unknown) {

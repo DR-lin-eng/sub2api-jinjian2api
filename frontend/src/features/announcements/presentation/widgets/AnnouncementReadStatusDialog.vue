@@ -73,7 +73,6 @@
 import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
 import { formatDateTime } from '@/core/utils/format'
 import type { Column } from '@/common/types/uiTypes'
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
@@ -82,10 +81,12 @@ import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import DataTable from '@/common/widgets/data/DataTable.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import type { AnnouncementUserReadStatus } from '@/features/announcements/domain/models/announcement'
+import type { AnnouncementUserReadStatus } from '@/features/announcements/domain/models/announcementUserReadStatus'
+import { useAnnouncementsQueryStore } from '@/features/announcements/presentation/stores/announcementsQueryStore'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const $query = useAnnouncementsQueryStore()
 
 const props = defineProps<{
   show: boolean
@@ -157,16 +158,16 @@ async function load() {
 
   try {
     loading.value = true
-    const res = await adminAPI.announcements.getReadStatus(
+    const res = await $query.getReadStatus(
       props.announcementId,
       pagination.page,
       pagination.page_size,
       {
         search: search.value,
         sort_by: sortState.sort_by,
-        sort_order: sortState.sort_order
+        sort_order: sortState.sort_order,
       },
-      { signal }
+      { signal },
     )
 
     if (signal.aborted || currentController !== requestController) return

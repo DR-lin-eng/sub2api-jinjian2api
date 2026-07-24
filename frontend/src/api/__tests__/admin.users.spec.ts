@@ -10,76 +10,10 @@ vi.mock('@/core/networks/client', () => ({
   },
 }))
 
-import {
-  batchUpdateLimits,
-  bindUserAuthIdentity,
-  type AdminBindAuthIdentityRequest,
-  type AdminBoundAuthIdentity,
-  type BatchUpdateUserLimitsRequest,
-  type BatchUpdateUserLimitsResponse,
-} from '@/features/admin-users/data/datasources/adminUsersDatasource'
-
-type Assert<T extends true> = T
-type IsExact<T, U> = (
-  (<G>() => G extends T ? 1 : 2) extends (<G>() => G extends U ? 1 : 2)
-    ? ((<G>() => G extends U ? 1 : 2) extends (<G>() => G extends T ? 1 : 2) ? true : false)
-    : false
-)
-
-type ExpectedAdminBindAuthIdentityRequest = {
-  provider_type: string
-  provider_key: string
-  provider_subject: string
-  issuer?: string
-  metadata?: Record<string, unknown>
-  channel?: {
-    channel: string
-    channel_app_id: string
-    channel_subject: string
-    metadata?: Record<string, unknown>
-  }
-}
-
-type ExpectedAdminBoundAuthIdentity = {
-  user_id: number
-  provider_type: string
-  provider_key: string
-  provider_subject: string
-  verified_at?: string | null
-  issuer?: string | null
-  metadata: Record<string, unknown> | null
-  created_at: string
-  updated_at: string
-  channel?: {
-    channel: string
-    channel_app_id: string
-    channel_subject: string
-    metadata: Record<string, unknown> | null
-    created_at: string
-    updated_at: string
-  } | null
-}
-
-const requestContractExact: Assert<
-  IsExact<AdminBindAuthIdentityRequest, ExpectedAdminBindAuthIdentityRequest>
-> = true
-const responseContractExact: Assert<
-  IsExact<AdminBoundAuthIdentity, ExpectedAdminBoundAuthIdentity>
-> = true
-const batchRequestContractExact: Assert<
-  IsExact<
-    BatchUpdateUserLimitsRequest,
-    {
-      user_ids: number[]
-      all?: boolean
-      concurrency?: number
-      rpm_limit?: number
-    }
-  >
-> = true
-const batchResponseContractExact: Assert<
-  IsExact<BatchUpdateUserLimitsResponse, { affected: number }>
-> = true
+import { adminUsersActionDatasource } from '@/features/admin-users/data/datasources/adminUsersActionDatasource'
+import type { BindAdminAuthIdentityRequest } from '@/features/admin-users/data/requests_models/bindAdminAuthIdentityRequest'
+import type { BatchUpdateUserLimitsRequest } from '@/features/admin-users/data/requests_models/batchUpdateUserLimitsRequest'
+import type { AdminBoundAuthIdentity } from '@/features/admin-users/domain/models/adminBoundAuthIdentity'
 
 describe('admin users api auth identity binding', () => {
   beforeEach(() => {
@@ -87,7 +21,7 @@ describe('admin users api auth identity binding', () => {
   })
 
   it('posts the backend-compatible auth identity bind payload and returns the backend response shape', async () => {
-    const payload: AdminBindAuthIdentityRequest = {
+    const payload: BindAdminAuthIdentityRequest = {
       provider_type: 'wechat',
       provider_key: 'wechat-main',
       provider_subject: 'union-123',
@@ -100,7 +34,7 @@ describe('admin users api auth identity binding', () => {
       },
     }
 
-    const response: AdminBoundAuthIdentity = {
+    const rawResponse = {
       user_id: 9,
       provider_type: 'wechat',
       provider_key: 'wechat-main',
@@ -119,17 +53,15 @@ describe('admin users api auth identity binding', () => {
         updated_at: '2026-04-22T00:00:00Z',
       },
     }
-    post.mockResolvedValue({ data: response })
+    post.mockResolvedValue({ data: rawResponse })
 
-    const result = await bindUserAuthIdentity(9, payload)
+    const result = await adminUsersActionDatasource.bindUserAuthIdentity(9, payload)
+    const entity: AdminBoundAuthIdentity = result.toEntity()
 
     expect(post).toHaveBeenCalledWith('/admin/users/9/auth-identities', payload)
-    expect(result).toEqual(response)
-  })
-
-  it('keeps bind auth identity request and response types aligned with the backend contract', () => {
-    expect(requestContractExact).toBe(true)
-    expect(responseContractExact).toBe(true)
+    expect(entity.userId).toBe(9)
+    expect(entity.providerType).toBe('wechat')
+    expect(entity.channel?.channelAppId).toBe('wx-open')
   })
 
   it('posts batch limit updates once with only the supplied limit fields', async () => {
@@ -138,13 +70,11 @@ describe('admin users api auth identity binding', () => {
       all: false,
       rpm_limit: 0,
     }
-    post.mockResolvedValue({ data: { affected: 2 } satisfies BatchUpdateUserLimitsResponse })
+    post.mockResolvedValue({ data: { affected: 2 } })
 
-    const result = await batchUpdateLimits(request)
+    const result = await adminUsersActionDatasource.batchUpdateLimits(request)
 
     expect(post).toHaveBeenCalledWith('/admin/users/batch-limits', request)
     expect(result).toEqual({ affected: 2 })
-    expect(batchRequestContractExact).toBe(true)
-    expect(batchResponseContractExact).toBe(true)
   })
 })

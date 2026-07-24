@@ -168,8 +168,8 @@ import { reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import type { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
-import { formatOrderDateTime } from '@/features/billing/presentation/orderUtilsFormatter'
-import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
+import { formatOrderDateTime } from '@/features/billing/presentation/utils/orderUtilsFormatter'
+import { currencySymbol } from '@/features/billing/presentation/utils/currencyFormatter'
 
 const { t } = useI18n()
 

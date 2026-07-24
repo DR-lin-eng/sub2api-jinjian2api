@@ -259,7 +259,7 @@ import { useAuthStore } from '@/core/stores/authStore'
 import { usePaymentStore } from '@/features/billing/presentation/stores/paymentStore'
 import { useSubscriptionStore } from '@/features/subscriptions/presentation/stores/subscriptionsStore'
 import { useAppStore } from '@/stores'
-import { paymentAPI } from '@/features/billing/presentation/api'
+import { useBillingQueryStore } from '@/features/billing/presentation/stores/billingQueryStore'
 import { extractApiErrorMessage, extractI18nErrorMessage } from '@/core/utils/apiError'
 import { isMobileDevice } from '@/core/utils/device'
 import { hasPeakRate, formatPeakRateWindow, serverTimezoneLabel, type PeakRateFields } from '@/core/utils/peak-rate'
@@ -267,7 +267,7 @@ import type { SubscriptionPlan, CheckoutInfoResponse, CreateOrderResult, OrderTy
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import AmountInput from '@/features/billing/presentation/widgets/AmountInput.vue'
 import PaymentMethodSelector from '@/features/billing/presentation/widgets/PaymentMethodSelector.vue'
-import { METHOD_ORDER, getPaymentPopupFeatures, isBuiltInAlipayMethod, isBuiltInWxpayMethod } from '@/features/billing/presentation/providerConfigSignals'
+import { METHOD_ORDER, getPaymentPopupFeatures, isBuiltInAlipayMethod, isBuiltInWxpayMethod } from '@/features/billing/presentation/utils/providerConfigSignals'
 import {
   PAYMENT_RECOVERY_STORAGE_KEY,
   buildCreateOrderPayload,
@@ -278,15 +278,15 @@ import {
   readPaymentRecoverySnapshot,
   type PaymentRecoverySnapshot,
   writePaymentRecoverySnapshot,
-} from '@/features/billing/presentation/paymentFlowResolver'
+} from '@/features/billing/presentation/utils/paymentFlowResolver'
 import { platformAccentBarClass, platformBadgeLightClass, platformBadgeClass, platformTextClass, platformLabel } from '@/core/utils/platformColors'
 import SubscriptionPlanCard from '@/features/subscriptions/presentation/widgets/SubscriptionPlanCard.vue'
 import PaymentStatusPanel from '@/features/billing/presentation/widgets/PaymentStatusPanel.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import { DEFAULT_PAYMENT_CURRENCY, formatPaymentAmount, normalizePaymentCurrency } from '@/features/billing/presentation/currencyFormatter'
+import { DEFAULT_PAYMENT_CURRENCY, formatPaymentAmount, normalizePaymentCurrency } from '@/features/billing/presentation/utils/currencyFormatter'
 import type { PaymentMethodOption } from '@/features/billing/presentation/widgets/PaymentMethodSelector.vue'
-import { buildPaymentErrorToastMessage, describePaymentScenarioError } from '@/features/billing/presentation/paymentUxSignals'
-import { hasWechatResumeQuery, parseWechatResumeRoute, stripWechatResumeQuery } from '@/features/billing/presentation/paymentWechatResumeResolver'
+import { buildPaymentErrorToastMessage, describePaymentScenarioError } from '@/features/billing/presentation/utils/paymentUxSignals'
+import { hasWechatResumeQuery, parseWechatResumeRoute, stripWechatResumeQuery } from '@/features/billing/presentation/utils/paymentWechatResumeResolver'
 
 const i18n = useI18n()
 const { t } = i18n
@@ -296,6 +296,7 @@ const authStore = useAuthStore()
 const paymentStore = usePaymentStore()
 const subscriptionStore = useSubscriptionStore()
 const appStore = useAppStore()
+const billingQuery = useBillingQueryStore()
 
 const user = computed(() => authStore.user)
 const activeSubscriptions = computed(() => subscriptionStore.activeSubscriptions)
@@ -1091,7 +1092,7 @@ async function resumeWechatPaymentFromQuery() {
 
 onMounted(async () => {
   try {
-    const res = await paymentAPI.getCheckoutInfo()
+    const res = await billingQuery.getCheckoutInfo()
     checkout.value = res.data
     if (enabledMethods.value.length) {
       const order: readonly string[] = METHOD_ORDER

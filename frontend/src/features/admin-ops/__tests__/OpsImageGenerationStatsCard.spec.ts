@@ -5,7 +5,7 @@ import OpsImageGenerationStatsCard from '@/features/admin-ops/presentation/widge
 
 const mockGetImageGenerationStats = vi.fn()
 
-vi.mock('@/features/admin-ops/data/datasources/adminOpsDatasource', () => ({
+vi.mock('@/features/admin-ops/data/datasources/adminOpsQueryDatasource', () => ({
   opsAPI: {
     getImageGenerationStats: (...args: any[]) => mockGetImageGenerationStats(...args)
   }

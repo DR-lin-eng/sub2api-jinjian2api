@@ -11,17 +11,17 @@
           <legend class="text-sm font-medium text-gray-900 dark:text-white">{{ t('admin.promptAudit.policy.scope') }}</legend>
           <div class="mt-3 flex flex-wrap gap-5 text-sm text-gray-700 dark:text-dark-200">
             <label class="flex items-center gap-2">
-              <input type="radio" name="prompt-audit-scope" :checked="draft.all_groups" @change="patch({ all_groups: true, group_ids: [] })" />
+              <input type="radio" name="prompt-audit-scope" :checked="draft.allGroups" @change="patch({ allGroups: true, groupIds: [] })" />
               {{ t('admin.promptAudit.policy.allGroups') }}
             </label>
             <label class="flex items-center gap-2">
-              <input type="radio" name="prompt-audit-scope" :checked="!draft.all_groups" @change="patch({ all_groups: false })" />
+              <input type="radio" name="prompt-audit-scope" :checked="!draft.allGroups" @change="patch({ allGroups: false })" />
               {{ t('admin.promptAudit.policy.selectedGroups') }}
             </label>
           </div>
         </fieldset>
 
-        <div v-if="!draft.all_groups" class="mt-4">
+        <div v-if="!draft.allGroups" class="mt-4">
           <label class="block text-sm text-gray-700 dark:text-dark-200">
             <span>{{ t('admin.promptAudit.policy.searchGroups') }}</span>
             <input v-model="groupSearch" type="search" class="input mt-1.5 w-full" :aria-label="t('admin.promptAudit.policy.searchGroups')" />
@@ -29,7 +29,7 @@
           <div class="mt-3 max-h-52 overflow-y-auto rounded-lg border border-gray-200 p-2 dark:border-dark-700">
             <label v-for="group in filteredGroups" :key="group.id" class="flex cursor-pointer items-center justify-between gap-3 rounded-md px-2 py-2 text-sm hover:bg-gray-50 dark:hover:bg-dark-800">
               <span class="flex items-center gap-2 text-gray-800 dark:text-dark-100">
-                <input type="checkbox" :checked="draft.group_ids.includes(group.id)" @change="toggleGroup(group.id)" />
+                <input type="checkbox" :checked="draft.groupIds.includes(group.id)" @change="toggleGroup(group.id)" />
                 {{ group.name }}
               </span>
               <span class="text-xs text-gray-500 dark:text-dark-400">{{ group.platform }} · {{ group.status }}</span>
@@ -39,7 +39,7 @@
           <div v-if="missingGroupIds.length" class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
             {{ t('admin.promptAudit.policy.missingGroups') }}: {{ missingGroupIds.join(', ') }}
           </div>
-          <p class="mt-2 text-xs text-gray-500 dark:text-dark-400">{{ t('admin.promptAudit.policy.selectedCount', { count: draft.group_ids.length }) }}</p>
+          <p class="mt-2 text-xs text-gray-500 dark:text-dark-400">{{ t('admin.promptAudit.policy.selectedCount', { count: draft.groupIds.length }) }}</p>
         </div>
 
         <fieldset class="mt-5 border-t border-gray-100 pt-5 dark:border-dark-800">
@@ -56,11 +56,11 @@
       <div class="space-y-4 rounded-xl border border-gray-200 p-4 dark:border-dark-700/60 dark:bg-dark-900/20 sm:p-5">
         <label class="block text-sm text-gray-700 dark:text-dark-200">
           <span>{{ t('admin.promptAudit.policy.workerCount') }}</span>
-          <input :value="draft.worker_count" type="number" min="1" max="32" class="input mt-1.5 w-full" :aria-label="t('admin.promptAudit.policy.workerCount')" @input="patch({ worker_count: Number(($event.target as HTMLInputElement).value) })" />
+          <input :value="draft.workerCount" type="number" min="1" max="32" class="input mt-1.5 w-full" :aria-label="t('admin.promptAudit.policy.workerCount')" @input="patch({ workerCount: Number(($event.target as HTMLInputElement).value) })" />
         </label>
         <label class="block text-sm text-gray-700 dark:text-dark-200">
           <span>{{ t('admin.promptAudit.policy.queueCapacity') }}</span>
-          <input :value="draft.queue_capacity" type="number" min="1" max="100000" class="input mt-1.5 w-full" :aria-label="t('admin.promptAudit.policy.queueCapacity')" @input="patch({ queue_capacity: Number(($event.target as HTMLInputElement).value) })" />
+          <input :value="draft.queueCapacity" type="number" min="1" max="100000" class="input mt-1.5 w-full" :aria-label="t('admin.promptAudit.policy.queueCapacity')" @input="patch({ queueCapacity: Number(($event.target as HTMLInputElement).value) })" />
         </label>
         <div class="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:bg-dark-900/50 dark:text-dark-300">
           <p class="font-medium text-gray-800 dark:text-dark-100">{{ t('admin.promptAudit.policy.strategy') }}</p>
@@ -74,8 +74,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { PromptAuditDraft, PromptAuditGroup } from '@/features/prompt-audit/domain/models/promptAuditTypes'
-import { cloneData, SCANNER_CATALOG } from '@/features/prompt-audit/domain/promptAuditViewModel'
+import type { PromptAuditDraft } from '@/features/prompt-audit/domain/models/promptAuditDraft'
+import type { PromptAuditGroup } from '@/features/prompt-audit/domain/models/promptAuditGroup'
+import { cloneData, SCANNER_CATALOG } from '@/features/prompt-audit/presentation/utils/promptAuditViewModel'
 
 const props = defineProps<{ draft: PromptAuditDraft; groups: PromptAuditGroup[] }>()
 const emit = defineEmits<{ (event: 'update:draft', value: PromptAuditDraft): void }>()
@@ -88,16 +89,16 @@ const filteredGroups = computed(() => {
   return props.groups.filter((group) => `${group.name} ${group.id} ${group.platform}`.toLowerCase().includes(query))
 })
 const knownGroupIds = computed(() => new Set(props.groups.map((group) => group.id)))
-const missingGroupIds = computed(() => props.draft.group_ids.filter((id) => !knownGroupIds.value.has(id)))
+const missingGroupIds = computed(() => props.draft.groupIds.filter((id) => !knownGroupIds.value.has(id)))
 
 function patch(value: Partial<PromptAuditDraft>) {
   emit('update:draft', { ...cloneData(props.draft), ...value })
 }
 function toggleGroup(id: number) {
-  const selected = new Set(props.draft.group_ids)
+  const selected = new Set(props.draft.groupIds)
   if (selected.has(id)) selected.delete(id)
   else selected.add(id)
-  patch({ group_ids: [...selected].sort((a, b) => a - b) })
+  patch({ groupIds: [...selected].sort((a, b) => a - b) })
 }
 function toggleScanner(id: string) {
   const selected = new Set(props.draft.scanners)

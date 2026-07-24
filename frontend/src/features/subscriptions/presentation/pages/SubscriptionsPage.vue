@@ -248,18 +248,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/core/stores/appStore'
-import subscriptionsAPI from '@/features/subscriptions/presentation/api'
+import { useSubscriptionsQueryStore } from '@/features/subscriptions/presentation/stores/subscriptionsQueryStore'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { formatDateTimeToMinute } from '@/core/utils/format'
 import { hasPeakRate, formatPeakRateWindow, serverTimezoneLabel } from '@/core/utils/peak-rate'
 import { platformBorderClass, platformBadgeClass, platformButtonClass, platformLabel } from '@/core/utils/platformColors'
 import { getRemainingDurationParts, isOneTimeDailyQuota, type RemainingDurationParts } from '@/core/utils/subscriptionQuota'
-import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/subscription'
+import type { UserSubscription } from '@/features/admin-subscriptions/domain/models/userSubscription'
 
 function platformAccentDotClass(p: string): string {
   switch (p) {
@@ -275,8 +275,9 @@ const { t } = useI18n()
 const router = useRouter()
 const appStore = useAppStore()
 
-const subscriptions = ref<UserSubscription[]>([])
-const loading = ref(true)
+const queryStore = useSubscriptionsQueryStore()
+const subscriptions = computed(() => queryStore.subscriptions)
+const loading = computed(() => queryStore.loading.list)
 
 function subscriptionHasPeakRate(subscription: UserSubscription): boolean {
   return hasPeakRate(subscription.group)
@@ -288,13 +289,10 @@ function subscriptionPeakRateLabel(subscription: UserSubscription): string {
 
 async function loadSubscriptions() {
   try {
-    loading.value = true
-    subscriptions.value = await subscriptionsAPI.getMySubscriptions()
+    await queryStore.list()
   } catch (error) {
     console.error('Failed to load subscriptions:', error)
     appStore.showError(t('userSubscriptions.failedToLoad'))
-  } finally {
-    loading.value = false
   }
 }
 

@@ -326,20 +326,19 @@ import PendingOAuthCreateAccountForm, {
 import { apiClient } from '@/core/networks/client'
 import { useAuthStore, useAppStore } from '@/stores'
 import {
-  completeWeChatOAuthRegistration,
-  exchangePendingOAuthCompletion,
-  getAuthToken,
-  hasExplicitWeChatOAuthCapabilities,
   getOAuthCompletionKind,
   isOAuthLoginCompletion,
-  login2FA,
-  prepareOAuthBindAccessTokenCookie,
   persistOAuthTokenContext,
-  resolveWeChatOAuthStartStrict,
   type OAuthAdoptionDecision,
   type OAuthTokenResponse,
-  type PendingOAuthExchangeResponse
-} from '@/features/auth/presentation/api'
+  type PendingOAuthExchangeResponse,
+} from '@/features/auth/presentation/utils/oauthUtils'
+import {
+  hasExplicitWeChatOAuthCapabilities,
+  resolveWeChatOAuthStartStrict,
+} from '@/features/auth/presentation/utils/wechatOAuthResolver'
+import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
+import { getAccessToken } from '@/core/networks/tokenStore'
 import {
   clearAllAffiliateReferralCodes,
   loadOAuthAffiliateCode,

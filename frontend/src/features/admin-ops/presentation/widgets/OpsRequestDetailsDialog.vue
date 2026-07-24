@@ -5,8 +5,11 @@ import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import { useClipboard } from '@/common/composables/useClipboard'
 import { useAppStore } from '@/stores'
-import { opsAPI, type OpsRequestDetailsParams, type OpsRequestDetail } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import { formatDateTime, formatDurationMs, formatExactDurationMs, parseTimeRangeMinutes } from '@/features/admin-ops/presentation/opsFormatter'
+import type { OpsRequestDetailsParams } from '@/features/admin-ops/data/requests_models/opsRequestDetailsParams'
+import type { OpsRequestDetail } from '@/features/admin-ops/domain/models/opsRequestDetail'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
+import { formatDateTime, formatDurationMs, formatExactDurationMs, parseTimeRangeMinutes } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 export interface OpsRequestDetailsPreset {
   title: string
@@ -74,13 +77,13 @@ const fetchData = async () => {
 
     const platform = (props.platform || '').trim()
     if (platform) params.platform = platform
-    if (typeof props.groupId === 'number' && props.groupId > 0) params.group_id = props.groupId
+    if (typeof props.groupId === 'number' && props.groupId > 0) params.groupId = props.groupId
 
     if (typeof props.preset.min_duration_ms === 'number') params.min_duration_ms = props.preset.min_duration_ms
     if (typeof props.preset.max_duration_ms === 'number') params.max_duration_ms = props.preset.max_duration_ms
     if (props.preset.ttft_only) params.ttft_only = true
 
-    const res = await opsAPI.listRequestDetails(params)
+    const res = await queryStore.listRequestDetails(params)
     items.value = res.items || []
     total.value = res.total || 0
   } catch (e: any) {
@@ -225,7 +228,7 @@ const kindBadgeClass = (kind: string) => {
               <tbody class="divide-y divide-gray-200 bg-white dark:divide-dark-700 dark:bg-dark-800">
                 <tr v-for="(row, idx) in items" :key="idx" class="hover:bg-gray-50 dark:hover:bg-dark-700/50">
                   <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-600 dark:text-gray-300">
-                    {{ formatDateTime(row.created_at) }}
+                    {{ formatDateTime(row.createdAt) }}
                   </td>
                   <td class="whitespace-nowrap px-4 py-3">
                     <span class="rounded-full px-2 py-1 text-[10px] font-bold" :class="kindBadgeClass(row.kind)">
@@ -245,16 +248,16 @@ const kindBadgeClass = (kind: string) => {
                     {{ formatDurationMs(showsTTFT ? row.first_token_ms : row.duration_ms) }}
                   </td>
                   <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-600 dark:text-gray-300">
-                    {{ row.status_code ?? '-' }}
+                    {{ row.statusCode ?? '-' }}
                   </td>
                   <td class="px-4 py-3">
-                    <div v-if="row.request_id" class="flex items-center gap-2">
-                      <span class="max-w-[220px] truncate font-mono text-[11px] text-gray-700 dark:text-gray-200" :title="row.request_id">
-                        {{ row.request_id }}
+                    <div v-if="row.requestId" class="flex items-center gap-2">
+                      <span class="max-w-[220px] truncate font-mono text-[11px] text-gray-700 dark:text-gray-200" :title="row.requestId">
+                        {{ row.requestId }}
                       </span>
                       <button
                         class="rounded-md bg-gray-100 px-2 py-1 text-[10px] font-bold text-gray-600 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-300 dark:hover:bg-dark-600"
-                        @click="handleCopyRequestId(row.request_id)"
+                        @click="handleCopyRequestId(row.requestId)"
                       >
                         {{ t('admin.ops.requestDetails.copy') }}
                       </button>

@@ -7,7 +7,7 @@ import AdminComplianceDialog from '@/features/admin-settings/presentation/widget
 import { resolveRouteDocumentTitle } from '@/core/routes/title'
 import AnnouncementPopup from '@/common/widgets/data/AnnouncementPopup.vue'
 import { useAppStore, useAuthStore, useSubscriptionStore, useAnnouncementStore, useAdminComplianceStore, useAdminSettingsStore } from '@/stores'
-import { getSetupStatus } from '@/features/setup/data/datasources/setupDatasource'
+import { setupQueryDatasource } from '@/features/setup/data/datasources/setupQueryDatasource'
 import { updateFavicon } from '@/core/services/branding'
 
 const router = useRouter()
@@ -119,8 +119,8 @@ onMounted(async () => {
 
   // Check if setup is needed
   try {
-    const status = await getSetupStatus()
-    if (status.needs_setup && route.path !== '/setup') {
+    const status = await setupQueryDatasource.getSetupStatus()
+    if (status.needsSetup && route.path !== '/setup') {
       router.replace('/setup')
       return
     }

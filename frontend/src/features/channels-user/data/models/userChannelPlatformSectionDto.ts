@@ -1,19 +1,33 @@
-import type { UserChannelPlatformSection } from '@/features/channels-user/domain/models/userChannelPlatformSection'
-import type { UserAvailableGroupDto } from './userAvailableGroupDto'
-import type { UserSupportedModelDto } from './userSupportedModelDto'
-import { toEntity as toGroupEntity } from './userAvailableGroupDto'
-import { toEntity as toModelEntity } from './userSupportedModelDto'
+import 'reflect-metadata'
+import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
+import { UserChannelPlatformSection } from '@/features/channels-user/domain/models/userChannelPlatformSection'
+import { UserAvailableGroupDto } from './userAvailableGroupDto'
+import { UserSupportedModelDto } from './userSupportedModelDto'
 
-export interface UserChannelPlatformSectionDto {
-  platform: string
-  groups: UserAvailableGroupDto[]
-  supported_models: UserSupportedModelDto[]
-}
+export class UserChannelPlatformSectionDto {
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  platform!: string
 
-export function toEntity(dto: UserChannelPlatformSectionDto): UserChannelPlatformSection {
-  return {
-    platform: dto.platform ?? '',
-    groups: (dto.groups ?? []).map(toGroupEntity),
-    supportedModels: (dto.supported_models ?? []).map(toModelEntity),
+  @Expose()
+  @Transform(({ value }) => value ?? [])
+  @Type(() => UserAvailableGroupDto)
+  groups!: UserAvailableGroupDto[]
+
+  @Expose({ name: 'supported_models' })
+  @Transform(({ value }) => value ?? [])
+  @Type(() => UserSupportedModelDto)
+  supportedModels!: UserSupportedModelDto[]
+
+  static fromJson(json: unknown): UserChannelPlatformSectionDto {
+    return plainToInstance(UserChannelPlatformSectionDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): UserChannelPlatformSection {
+    const e = new UserChannelPlatformSection()
+    e.platform = this.platform
+    e.groups = (this.groups ?? []).map(g => g.toEntity())
+    e.supportedModels = (this.supportedModels ?? []).map(m => m.toEntity())
+    return e
   }
 }

@@ -1845,8 +1845,11 @@ export type { SubscriptionPlan, PaymentOrder, CheckoutInfoResponse } from './pay
 
 export type {
   PlatformQuotaItem,
-  PlatformQuotaUpdateItem,
   PlatformQuotaPlatform,
   PlatformQuotaWindow,
-  PlatformQuotasResponse,
-} from '@/features/admin-users/data/datasources/adminUsersDatasource'
+} from '@/features/admin-users/domain/models/platformQuotaItem'
+
+/** Legacy HTTP response shape — profile feature uses this until it migrates to the DTO layer. */
+export interface PlatformQuotasResponse {
+  platform_quotas: import('@/features/admin-users/domain/models/platformQuotaItem').PlatformQuotaItem[]
+}

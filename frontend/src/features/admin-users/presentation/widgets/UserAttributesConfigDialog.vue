@@ -246,7 +246,7 @@ import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import { createStableObjectKeyResolver } from '@/core/utils/stableObjectKey'
-import type { UserAttributeDefinition, UserAttributeType, UserAttributeOption } from '@/features/admin-users/domain/models/userAttributes'
+import type { UserAttributeDefinition, UserAttributeType, UserAttributeOption } from '@/features/admin-users/domain/models/userAttributeDefinition'
 
 const { t } = useI18n()
 const appStore = useAppStore()

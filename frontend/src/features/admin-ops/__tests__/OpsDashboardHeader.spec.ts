@@ -13,7 +13,7 @@ vi.mock('@/api', () => ({
   }
 }))
 
-vi.mock('@/features/admin-ops/data/datasources/adminOpsDatasource', () => ({
+vi.mock('@/features/admin-ops/data/datasources/adminOpsQueryDatasource', () => ({
   opsAPI: {
     getRealtimeTrafficSummary: vi.fn()
   }

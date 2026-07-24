@@ -1,4 +1,4 @@
-export interface SetupStatus {
-  needsSetup: boolean
-  step: string
+export class SetupStatus {
+  needsSetup!: boolean
+  step!: string
 }

@@ -1,15 +1,26 @@
-import type { SubscriptionSummary } from '@/features/subscriptions/domain/models/subscriptionSummary'
-import type { SubscriptionSummaryItemDto } from './subscriptionSummaryItemDto'
-import { toEntity as toItemEntity } from './subscriptionSummaryItemDto'
+import 'reflect-metadata'
+import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
+import { SubscriptionSummary } from '@/features/subscriptions/domain/models/subscriptionSummary'
+import { SubscriptionSummaryItemDto } from './subscriptionSummaryItemDto'
 
-export interface SubscriptionSummaryDto {
-  active_count: number
-  subscriptions: SubscriptionSummaryItemDto[]
-}
+export class SubscriptionSummaryDto {
+  @Expose({ name: 'active_count' })
+  @Transform(({ value }) => value ?? 0)
+  activeCount!: number
 
-export function toEntity(dto: SubscriptionSummaryDto): SubscriptionSummary {
-  return {
-    activeCount: dto.active_count ?? 0,
-    subscriptions: (dto.subscriptions ?? []).map(toItemEntity),
+  @Expose()
+  @Type(() => SubscriptionSummaryItemDto)
+  @Transform(({ value }) => value ?? [])
+  subscriptions!: SubscriptionSummaryItemDto[]
+
+  static fromJson(json: unknown): SubscriptionSummaryDto {
+    return plainToInstance(SubscriptionSummaryDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): SubscriptionSummary {
+    const entity = new SubscriptionSummary()
+    entity.activeCount = this.activeCount
+    entity.subscriptions = this.subscriptions.map(item => item.toEntity())
+    return entity
   }
 }

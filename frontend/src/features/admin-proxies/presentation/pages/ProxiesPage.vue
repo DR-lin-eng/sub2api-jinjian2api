@@ -987,7 +987,9 @@ import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 import { formatDateTime } from '@/core/utils/format'
 import { proxyExpiryBadgeClass, proxyExpiryLabelKey } from '@/core/utils/proxyExpiry'
 import { useAdminProxies } from '@/features/admin-proxies/presentation/composables/useAdminProxies'
-import type { Proxy, ProxyAccountSummary, ProxyProtocol, ProxyQualityCheckResult } from '@/features/admin-proxies/domain/models/proxy'
+import type { Proxy, ProxyProtocol } from '@/features/admin-proxies/domain/models/proxy'
+import type { ProxyAccountSummary } from '@/features/admin-proxies/domain/models/proxyAccountSummary'
+import type { ProxyQualityCheckResult } from '@/features/admin-proxies/domain/models/proxyQualityCheckResult'
 const $proxies = useAdminProxies()
 
 const { t } = useI18n()

@@ -45,8 +45,8 @@ vi.mock('@/features/billing/data/datasources/paymentDatasource', () => ({
 }))
 
 import PaymentResultView from '@/features/billing/presentation/pages/PaymentResultPage.vue'
-import { PAYMENT_RECOVERY_STORAGE_KEY } from '@/features/billing/presentation/paymentFlowResolver'
-import { formatPaymentAmount } from '@/features/billing/presentation/currencyFormatter'
+import { PAYMENT_RECOVERY_STORAGE_KEY } from '@/features/billing/presentation/utils/paymentFlowResolver'
+import { formatPaymentAmount } from '@/features/billing/presentation/utils/currencyFormatter'
 
 const orderFactory = (status: string) => ({
   id: 42,

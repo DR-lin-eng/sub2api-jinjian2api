@@ -6,7 +6,7 @@ import OpsUserUsageStatsCard from '@/features/admin-ops/presentation/widgets/Ops
 const mockGetUserUsageStats = vi.fn()
 const mockPush = vi.fn()
 
-vi.mock('@/features/admin-ops/data/datasources/adminOpsDatasource', () => ({
+vi.mock('@/features/admin-ops/data/datasources/adminOpsQueryDatasource', () => ({
   opsAPI: {
     getUserUsageStats: (...args: any[]) => mockGetUserUsageStats(...args)
   }

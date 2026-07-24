@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import PaymentProviderDialog from '@/features/billing/presentation/widgets/PaymentProviderDialog.vue'
-import { STRIPE_SDK_API_VERSION } from '@/features/billing/presentation/providerConfigSignals'
+import { STRIPE_SDK_API_VERSION } from '@/features/billing/presentation/utils/providerConfigSignals'
 import type { ProviderInstance } from '@/types/payment'
 
 const messages: Record<string, string> = {

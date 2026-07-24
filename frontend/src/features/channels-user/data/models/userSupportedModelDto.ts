@@ -1,17 +1,31 @@
-import type { UserSupportedModel } from '@/features/channels-user/domain/models/userSupportedModel'
-import type { UserSupportedModelPricingDto } from './userSupportedModelPricingDto'
-import { toEntity as toPricingEntity } from './userSupportedModelPricingDto'
+import 'reflect-metadata'
+import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
+import { UserSupportedModel } from '@/features/channels-user/domain/models/userSupportedModel'
+import { UserSupportedModelPricingDto } from './userSupportedModelPricingDto'
 
-export interface UserSupportedModelDto {
-  name: string
-  platform: string
-  pricing: UserSupportedModelPricingDto | null
-}
+export class UserSupportedModelDto {
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  name!: string
 
-export function toEntity(dto: UserSupportedModelDto): UserSupportedModel {
-  return {
-    name: dto.name ?? '',
-    platform: dto.platform ?? '',
-    pricing: dto.pricing ? toPricingEntity(dto.pricing) : null,
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  platform!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? null)
+  @Type(() => UserSupportedModelPricingDto)
+  pricing!: UserSupportedModelPricingDto | null
+
+  static fromJson(json: unknown): UserSupportedModelDto {
+    return plainToInstance(UserSupportedModelDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): UserSupportedModel {
+    const e = new UserSupportedModel()
+    e.name = this.name
+    e.platform = this.platform
+    e.pricing = this.pricing ? this.pricing.toEntity() : null
+    return e
   }
 }

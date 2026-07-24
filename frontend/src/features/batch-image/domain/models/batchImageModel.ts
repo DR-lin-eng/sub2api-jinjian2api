@@ -1,5 +1,5 @@
-export interface BatchImageModelEntity {
-  id: string
-  object: string
-  provider: string
+export class BatchImageModel {
+  id!: string
+  object!: string
+  provider!: string
 }

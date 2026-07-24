@@ -1,15 +1,29 @@
-import type { BatchImageModelEntity } from '@/features/batch-image/domain/models/batchImageModel'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { BatchImageModel } from '@/features/batch-image/domain/models/batchImageModel'
 
-export interface BatchImageModelDto {
-  id: string
-  object: string
-  provider: string
-}
+export class BatchImageModelDto {
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  id!: string
 
-export function toEntity(dto: BatchImageModelDto): BatchImageModelEntity {
-  return {
-    id: dto.id ?? '',
-    object: dto.object ?? '',
-    provider: dto.provider ?? '',
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  object!: string
+
+  @Expose()
+  @Transform(({ value }) => value ?? '')
+  provider!: string
+
+  static fromJson(json: unknown): BatchImageModelDto {
+    return plainToInstance(BatchImageModelDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): BatchImageModel {
+    const entity = new BatchImageModel()
+    entity.id = this.id
+    entity.object = this.object
+    entity.provider = this.provider
+    return entity
   }
 }

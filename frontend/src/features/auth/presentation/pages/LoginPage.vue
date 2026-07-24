@@ -229,19 +229,20 @@ import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanV
 import { useAuthStore, useAppStore } from '@/stores'
 import {
   clearCredentialKeyPrefetch,
-  getPublicSettings,
-  isTotp2FARequired,
-  isWeChatWebOAuthEnabled,
-  prefetchCredentialKey
-} from '@/features/auth/presentation/api'
+  prefetchCredentialKey,
+} from '@/core/networks/credentialEncryption'
+import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
+import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
+import { isTotp2FARequired } from '@/features/auth/presentation/utils/authUtils'
+import { isWeChatWebOAuthEnabled } from '@/features/auth/presentation/utils/wechatOAuthResolver'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import { clearAllAffiliateReferralCodes } from '@/core/utils/oauthAffiliate'
 import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
 } from '@/core/services/humanVerification'
-import type { LoginAgreementDocument } from '@/features/auth/domain/models/auth'
-import type { TotpLoginResponse } from '@/features/auth/domain/models/totp'
+import type { LoginAgreementDocument } from '@/types'
+import type { TotpLoginResponse } from '@/types'
 
 const { t } = useI18n()
 const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'

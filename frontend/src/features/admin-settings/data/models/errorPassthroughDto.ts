@@ -1,41 +1,47 @@
-import type { ErrorPassthroughRule } from '@/features/admin-settings/domain/models/errorPassthrough'
+import 'reflect-metadata'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { ErrorPassthroughRule } from '@/features/admin-settings/domain/models/errorPassthrough'
 
-export interface ErrorPassthroughRuleDto {
-  id: number
-  name: string
-  enabled: boolean
-  priority: number
-  error_codes: number[]
-  keywords: string[]
-  match_mode: 'any' | 'all'
-  platforms: string[]
-  passthrough_code: boolean
-  response_code: number | null
-  passthrough_body: boolean
-  custom_message: string | null
-  skip_monitoring: boolean
-  description: string | null
-  created_at: string
-  updated_at: string
-}
+export class ErrorPassthroughRuleDto {
+  @Expose() @Transform(({ value }) => value ?? 0) id!: number
+  @Expose() @Transform(({ value }) => value ?? '') name!: string
+  @Expose() @Transform(({ value }) => value ?? false) enabled!: boolean
+  @Expose() @Transform(({ value }) => value ?? 0) priority!: number
+  @Expose({ name: 'error_codes' }) @Transform(({ value }) => value ?? []) errorCodes!: number[]
+  @Expose() @Transform(({ value }) => value ?? []) keywords!: string[]
+  @Expose({ name: 'match_mode' }) @Transform(({ value }) => value ?? 'any') matchMode!: 'any' | 'all'
+  @Expose() @Transform(({ value }) => value ?? []) platforms!: string[]
+  @Expose({ name: 'passthrough_code' }) @Transform(({ value }) => value ?? false) passthroughCode!: boolean
+  @Expose({ name: 'response_code' }) @Transform(({ value }) => value ?? null) responseCode!: number | null
+  @Expose({ name: 'passthrough_body' }) @Transform(({ value }) => value ?? false) passthroughBody!: boolean
+  @Expose({ name: 'custom_message' }) @Transform(({ value }) => value ?? null) customMessage!: string | null
+  @Expose({ name: 'skip_monitoring' }) @Transform(({ value }) => value ?? false) skipMonitoring!: boolean
+  @Expose() @Transform(({ value }) => value ?? null) description!: string | null
+  @Expose({ name: 'created_at' }) @Transform(({ value }) => value ?? '') createdAt!: string
+  @Expose({ name: 'updated_at' }) @Transform(({ value }) => value ?? '') updatedAt!: string
 
-export function toEntity(dto: ErrorPassthroughRuleDto): ErrorPassthroughRule {
-  return {
-    id: dto.id,
-    name: dto.name ?? '',
-    enabled: dto.enabled ?? false,
-    priority: dto.priority ?? 0,
-    errorCodes: dto.error_codes ?? [],
-    keywords: dto.keywords ?? [],
-    matchMode: dto.match_mode ?? 'any',
-    platforms: dto.platforms ?? [],
-    passthroughCode: dto.passthrough_code ?? false,
-    responseCode: dto.response_code ?? null,
-    passthroughBody: dto.passthrough_body ?? false,
-    customMessage: dto.custom_message ?? null,
-    skipMonitoring: dto.skip_monitoring ?? false,
-    description: dto.description ?? null,
-    createdAt: dto.created_at ?? '',
-    updatedAt: dto.updated_at ?? '',
+  static fromJson(json: unknown): ErrorPassthroughRuleDto {
+    return plainToInstance(ErrorPassthroughRuleDto, json, { excludeExtraneousValues: true })
+  }
+
+  toEntity(): ErrorPassthroughRule {
+    const e = new ErrorPassthroughRule()
+    e.id = this.id
+    e.name = this.name
+    e.enabled = this.enabled
+    e.priority = this.priority
+    e.errorCodes = this.errorCodes
+    e.keywords = this.keywords
+    e.matchMode = this.matchMode
+    e.platforms = this.platforms
+    e.passthroughCode = this.passthroughCode
+    e.responseCode = this.responseCode
+    e.passthroughBody = this.passthroughBody
+    e.customMessage = this.customMessage
+    e.skipMonitoring = this.skipMonitoring
+    e.description = this.description
+    e.createdAt = this.createdAt
+    e.updatedAt = this.updatedAt
+    return e
   }
 }

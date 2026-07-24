@@ -782,7 +782,7 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()
 import type { BatchUserUsageStats } from '@/features/admin-dashboard/presentation/api'
-import type { PlatformQuotaItem } from '@/features/admin-users/presentation/api'
+import type { PlatformQuotaItem } from '@/features/admin-users/domain/models/platformQuotaItem'
 import type { Column } from '@/common/types/uiTypes'
 import type { SelectOption } from '@/common/widgets/forms/Select.vue'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
@@ -811,9 +811,9 @@ import GroupReplaceModal from '@/features/admin-users/presentation/widgets/Group
 import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
 import { useAdminDashboard } from '@/features/admin-dashboard/presentation/composables/useAdminDashboard'
 import { useAdminUsers } from '@/features/admin-users/presentation/composables/useAdminUsers'
-import type { AdminUser } from '@/features/admin-users/domain/models/adminUsers'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
-import type { UserAttributeDefinition } from '@/features/admin-users/domain/models/userAttributes'
+import type { UserAttributeDefinition } from '@/features/admin-users/domain/models/userAttributeDefinition'
 const $groups = useAdminGroups()
 const $dashboard = useAdminDashboard()
 const $userAttributes = useAdminUsers()
@@ -1400,7 +1400,7 @@ const loadUsersSecondaryData = async (
           if (typeof expectedSeq === 'number' && expectedSeq !== secondaryDataSeq) return
           platformQuotaStats.value = {
             ...platformQuotaStats.value,
-            ...response.platform_quotas
+            ...response
           }
         } catch (e) {
           if (signal?.aborted) return

@@ -13,9 +13,9 @@ import {
   Tooltip
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
-import type { OpsThroughputTrendPoint } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import type { ChartState } from '@/features/admin-ops/presentation/opsTypeSignals'
-import { formatHistoryLabel, sumNumbers } from '@/features/admin-ops/presentation/opsFormatter'
+import type { OpsThroughputTrendPoint } from '@/features/admin-ops/domain/models/opsThroughputTrendPoint'
+import type { ChartState } from '@/features/admin-ops/presentation/utils/opsFormatter'
+import { formatHistoryLabel, sumNumbers } from '@/features/admin-ops/presentation/utils/opsFormatter'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 

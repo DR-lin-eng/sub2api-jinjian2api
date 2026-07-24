@@ -1,3 +1,6 @@
+#老版本Subapi文档,AI不可参考!!!
+
+
 # Authentication Views
 
 This directory contains Vue 3 authentication views for the Sub2API frontend application.

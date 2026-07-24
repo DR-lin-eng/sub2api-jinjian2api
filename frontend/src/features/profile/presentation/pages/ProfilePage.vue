@@ -57,7 +57,7 @@ import ProfileBalanceNotifyCard from '@/features/profile/presentation/widgets/Pr
 import ProfileInfoCard from '@/features/profile/presentation/widgets/ProfileInfoCard.vue'
 import ProfilePasswordForm from '@/features/profile/presentation/widgets/ProfilePasswordForm.vue'
 import ProfileTotpCard from '@/features/profile/presentation/widgets/ProfileTotpCard.vue'
-import { isWeChatWebOAuthEnabled } from '@/features/auth/presentation/api'
+import { isWeChatWebOAuthEnabled } from '@/features/auth/presentation/utils/wechatOAuthResolver'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/core/stores/authStore'
 

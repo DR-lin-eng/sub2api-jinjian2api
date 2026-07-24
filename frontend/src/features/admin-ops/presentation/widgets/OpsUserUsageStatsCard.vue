@@ -7,11 +7,10 @@ import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import {
   opsAPI,
   type OpsUserUsageStatsParams,
-  type OpsUserUsageStatsResponse,
-  type OpsUserUsageStatsTimeRange
-} from '@/features/admin-ops/data/datasources/adminOpsDatasource'
+  type OpsUserUsageStats
+} from '@/features/admin-ops/domain/models/opsUserUsageStats'
 import { formatCurrency, formatDateTime } from '@/core/utils/format'
-import { formatCompactNumber, formatExactNumber } from '@/features/admin-ops/presentation/opsFormatter'
+import { formatCompactNumber, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 interface Props {
   platformFilter?: string
@@ -80,10 +79,10 @@ async function loadData() {
   loading.value = true
   errorMessage.value = ''
   try {
-    response.value = await opsAPI.getUserUsageStats(buildParams())
+    response.value = await queryStore.getUserUsageStats(buildParams())
     if (viewMode.value === 'pagination' && page.value > totalPages.value) {
       page.value = totalPages.value
-      response.value = await opsAPI.getUserUsageStats(buildParams())
+      response.value = await queryStore.getUserUsageStats(buildParams())
     }
   } catch (err: any) {
     console.error('[OpsUserUsageStatsCard] Failed to load data', err)
@@ -206,15 +205,15 @@ function onNextPage() {
             <tbody>
               <tr
                 v-for="row in items"
-                :key="row.user_id"
+                :key="row.userId"
                 class="border-b border-gray-100 text-gray-700 last:border-b-0 dark:border-dark-800 dark:text-gray-200"
               >
                 <td class="px-3 py-2">
-                  <button class="text-left font-medium text-primary-600 hover:underline dark:text-primary-400" @click="openUserUsage(row.user_id)">
-                    {{ row.username || row.email || `#${row.user_id}` }}
+                  <button class="text-left font-medium text-primary-600 hover:underline dark:text-primary-400" @click="openUserUsage(row.userId)">
+                    {{ row.username || row.email || `#${row.userId}` }}
                   </button>
                   <div v-if="row.email && row.email !== row.username" class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    {{ row.email }} · #{{ row.user_id }}
+                    {{ row.email }} · #{{ row.userId }}
                   </div>
                 </td>
                 <td class="px-3 py-2 tabular-nums" :title="formatExactNumber(row.request_count)">{{ formatCompactNumber(row.request_count) }}</td>

@@ -46,7 +46,7 @@ import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { formatDateTime } from '@/core/utils/format'
-import type { UsageLog } from '@/features/admin-usage/domain/models/adminUsage'
+import type { UsageLog } from '@/core/models/domain/usageLog'
 defineProps<{
   data: UsageLog[]
   loading: boolean

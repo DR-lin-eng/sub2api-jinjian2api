@@ -98,11 +98,11 @@ import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { usePaymentStore } from '@/features/billing/presentation/stores/paymentStore'
-import { paymentAPI } from '@/features/billing/presentation/api'
+import { useBillingQueryStore } from '@/features/billing/presentation/stores/billingQueryStore'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import { isMobileDevice } from '@/core/utils/device'
-import { formatPaymentAmount, normalizePaymentCurrency } from '@/features/billing/presentation/currencyFormatter'
-import { PAYMENT_RECOVERY_STORAGE_KEY, readPaymentRecoverySnapshot } from '@/features/billing/presentation/paymentFlowResolver'
+import { formatPaymentAmount, normalizePaymentCurrency } from '@/features/billing/presentation/utils/currencyFormatter'
+import { PAYMENT_RECOVERY_STORAGE_KEY, readPaymentRecoverySnapshot } from '@/features/billing/presentation/utils/paymentFlowResolver'
 import type { PaymentOrder } from '@/types/payment'
 import type { Stripe, StripeElements } from '@stripe/stripe-js'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
@@ -113,6 +113,7 @@ const { t } = i18n
 const route = useRoute()
 const router = useRouter()
 const paymentStore = usePaymentStore()
+const billingQuery = useBillingQueryStore()
 
 // 弹窗模式：指定支付宝或微信方式时跳过 AppLayout
 const isPopup = computed(() => !!route.query.method)
@@ -155,7 +156,7 @@ onMounted(async () => {
         currency.value = normalizePaymentCurrency(restored.currency)
       }
     }
-    const res = await paymentAPI.getOrder(orderId)
+    const res = await billingQuery.getOrder(orderId)
     order.value = res.data
     if (res.data.currency) {
       currency.value = normalizePaymentCurrency(res.data.currency)

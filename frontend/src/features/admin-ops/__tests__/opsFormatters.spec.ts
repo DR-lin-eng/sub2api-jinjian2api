@@ -4,7 +4,7 @@ import {
   formatDurationMs,
   formatExactDurationMs,
   formatExactNumber
-} from '@/features/admin-ops/presentation/opsFormatter'
+} from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 describe('opsFormatters adaptive units', () => {
   it.each([

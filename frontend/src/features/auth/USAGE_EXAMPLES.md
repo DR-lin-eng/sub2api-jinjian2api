@@ -1,3 +1,6 @@
+#老版本Subapi文档,AI不可参考!!!
+
+
 # Authentication Views Usage Examples
 
 This document provides practical examples of how to use the authentication views in the Sub2API frontend.
