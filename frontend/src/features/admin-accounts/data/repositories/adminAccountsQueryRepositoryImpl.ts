@@ -1,6 +1,6 @@
 import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { adminAccountsQueryDatasource } from '@/features/admin-accounts/data/datasources/adminAccountsQueryDatasource'
-import type { OpenAIQuotaUsage } from '@/features/admin-accounts/data/datasources/adminAccountsQueryDatasource'
+import type { OpenAIQuotaUsage } from '@/features/admin-accounts/domain/models/openAIQuotaUsage'
 import type { ClaudeModel } from '@/features/admin-accounts/domain/models/claudeModel'
 import type { Account } from '@/features/admin-accounts/domain/models/account'
 import type { AccountUsageInfo } from '@/features/admin-accounts/domain/models/accountUsageInfo'
@@ -78,7 +78,7 @@ export class AdminAccountsQueryRepositoryImpl implements AdminAccountsQueryRepos
   }
 
   async queryOpenAIQuota(id: number): Promise<OpenAIQuotaUsage> {
-    return this.ds.queryOpenAIQuota(id)
+    return (await this.ds.queryOpenAIQuota(id)).toEntity()
   }
 
   async getUpstreamBillingProbeSettings(): Promise<UpstreamBillingProbeSettings> {

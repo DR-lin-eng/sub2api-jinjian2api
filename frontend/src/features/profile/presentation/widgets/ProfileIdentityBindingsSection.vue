@@ -201,12 +201,7 @@ import {
   resolveWeChatOAuthStartStrict,
   type WeChatOAuthPublicSettings,
 } from '@/features/auth/presentation/utils/wechatOAuthResolver'
-import {
-  bindEmailIdentity,
-  sendEmailBindingCode,
-  startOAuthBinding,
-  unbindAuthIdentity,
-} from '@/features/profile/data/datasources/profileDatasource'
+import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/core/stores/authStore'
@@ -556,7 +551,7 @@ function startBinding(provider: UserAuthProvider): void {
   if (provider === 'email') {
     return
   }
-  startOAuthBinding(provider, {
+  useProfileActionStore().startOAuthBinding(provider, {
     redirectTo: route.fullPath || '/profile',
     wechatOAuthSettings: provider === 'wechat' ? wechatOAuthSettings.value : null,
   })
@@ -570,7 +565,7 @@ function applyUpdatedUser(user: User): void {
 async function handleUnbind(provider: BindableProvider, providerLabel: string): Promise<void> {
   unbindingProvider.value = provider
   try {
-    const user = await unbindAuthIdentity(provider)
+    const user = await useProfileActionStore().unbindAuthIdentity(provider)
     applyUpdatedUser(user)
     appStore.showSuccess(t('profile.authBindings.unbindSuccess', { providerName: providerLabel }))
   } catch (error) {
@@ -618,7 +613,7 @@ async function sendEmailCode(): Promise<void> {
 
   isSendingEmailCode.value = true
   try {
-    await sendEmailBindingCode(emailBindingForm.email)
+    await useProfileActionStore().sendEmailBindingCode(emailBindingForm.email)
     appStore.showSuccess(t('profile.authBindings.codeSentTo', { email: emailBindingForm.email }))
   } catch (error) {
     appStore.showError((error as { message?: string }).message || t('auth.sendCodeFailed'))
@@ -634,7 +629,7 @@ async function bindEmail(): Promise<void> {
 
   isBindingEmail.value = true
   try {
-    const user = await bindEmailIdentity({
+    const user = await useProfileActionStore().bindEmailIdentity({
       email: emailBindingForm.email,
       verify_code: emailBindingForm.verifyCode,
       password: emailBindingForm.password,

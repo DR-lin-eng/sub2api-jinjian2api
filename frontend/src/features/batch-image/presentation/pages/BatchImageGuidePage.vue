@@ -765,8 +765,8 @@ import { useClipboard } from '@/common/composables/useClipboard'
 import { getPersistedPageSize, setPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 import { useAppStore } from '@/core/stores/appStore'
 import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
-import { batchImageQueryRepository } from '@/features/batch-image/data/repositories/batchImageQueryRepositoryImpl'
-import { batchImageActionRepository } from '@/features/batch-image/data/repositories/batchImageActionRepositoryImpl'
+import { useBatchImageQueryStore } from '@/features/batch-image/presentation/stores/batchImageQueryStore'
+import { useBatchImageActionStore } from '@/features/batch-image/presentation/stores/batchImageActionStore'
 import { type BatchImageStatus, BatchImageJob } from '@/features/batch-image/domain/models/batchImageJob'
 import { BatchImageItem } from '@/features/batch-image/domain/models/batchImageItem'
 import type { ListBatchImageJobsRequest } from '@/features/batch-image/data/requests_models/listBatchImageJobsRequest'
@@ -796,8 +796,8 @@ type ReferenceImageDraft = BatchImageReferenceImage & {
   size: number
 }
 
-const q = batchImageQueryRepository
-const a = batchImageActionRepository
+const q = useBatchImageQueryStore()
+const a = useBatchImageActionStore()
 
 type PreviewCacheRecord = {
   key: string

@@ -1139,9 +1139,9 @@
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 
 const { t } = useI18n()
-import { authQueryRepository } from '@/features/auth/data/repositories/authQueryRepositoryImpl'
-import { usageQueryRepository } from '@/features/usage/data/repositories/usageQueryRepositoryImpl'
-import { userGroupsAPI } from '@/features/groups-user/data/datasources/groupsUserDatasource'
+import { useUsageQueryStore } from '@/features/usage/presentation/stores/usageQueryStore'
+import { useAppStore } from '@/core/stores/appStore'
+import { useGroupsUserQueryStore } from '@/features/groups-user/presentation/stores/groupsUserQueryStore'
 import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
 import { useKeysActionStore } from '@/features/keys/presentation/stores/keysActionStore'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
@@ -1531,7 +1531,7 @@ const loadApiKeys = async () => {
 
 const loadGroups = async () => {
   try {
-    groups.value = await userGroupsAPI.getAvailable()
+    groups.value = await useGroupsUserQueryStore().getAvailable()
   } catch (error) {
     console.error('Failed to load groups:', error)
   }
@@ -1539,7 +1539,7 @@ const loadGroups = async () => {
 
 const loadUserGroupRates = async () => {
   try {
-    userGroupRates.value = await userGroupsAPI.getUserGroupRates()
+    userGroupRates.value = await useGroupsUserQueryStore().getUserGroupRates()
   } catch (error) {
     console.error('Failed to load user group rates:', error)
   }

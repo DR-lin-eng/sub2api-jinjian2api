@@ -256,7 +256,7 @@ import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { useAdminChannelMonitor } from '@/features/admin-channel-monitor/presentation/composables/useAdminChannelMonitor'
 import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
-import { userGroupsAPI } from '@/features/groups-user/data/repositories/groupsUserQueryRepositoryImpl'
+import { useGroupsUserQueryStore } from '@/features/groups-user/presentation/stores/groupsUserQueryStore'
 import type { APIMode, BodyOverrideMode, MonitorMode, Provider } from '@/core/constants/channelMonitor'
 import type { ChannelMonitor } from '@/features/admin-channel-monitor/domain/models/channelMonitor'
 import type { CreateChannelMonitorRequest } from '@/features/admin-channel-monitor/data/requests_models/createChannelMonitorRequest'
@@ -677,7 +677,7 @@ async function openMyKeyPicker() {
   try {
     const [res, rates] = await Promise.all([
       keysQuery.list(1, 100, { status: 'active' }),
-      userGroupsAPI.getUserGroupRates(),
+      useGroupsUserQueryStore().getUserGroupRates(),
     ])
     const items = res.items || []
     const now = Date.now()

@@ -1,8 +1,9 @@
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
 import type { CompositeModelRoute } from '@/features/admin-groups/domain/models/compositeModelRoute'
 import type { CompositeRouteDecision } from '@/features/admin-groups/domain/models/compositeRouteDecision'
+import type { GroupRateMultiplier } from '@/features/admin-groups/domain/models/groupRateMultiplier'
+import type { GroupRPMOverride } from '@/features/admin-groups/domain/models/groupRPMOverride'
 import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
-import type { GroupRateMultiplierEntry, GroupRPMOverrideEntry } from '@/features/admin-groups/data/datasources/adminGroupsQueryDatasource'
 import type { PreviewCompositeRouteRequest } from '@/features/admin-groups/data/requests_models/previewCompositeRouteRequest'
 import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 
@@ -34,8 +35,8 @@ export interface AdminGroupsQueryRepository {
   getGroupApiKeys(id: number, page?: number, pageSize?: number): Promise<PaginatedResponse<unknown>>
   listCompositeRoutes(id: number): Promise<CompositeModelRoute[]>
   previewCompositeRoute(id: number, request: PreviewCompositeRouteRequest): Promise<CompositeRouteDecision>
-  getGroupRateMultipliers(id: number): Promise<GroupRateMultiplierEntry[]>
-  getGroupRPMOverrides(id: number): Promise<GroupRPMOverrideEntry[]>
+  getGroupRateMultipliers(id: number): Promise<GroupRateMultiplier[]>
+  getGroupRPMOverrides(id: number): Promise<GroupRPMOverride[]>
   getUsageSummary(timezone?: string): Promise<{ group_id: number; today_cost: number; total_cost: number }[]>
   getCapacitySummary(): Promise<{ group_id: number; concurrency_used: number; concurrency_max: number; sessions_used: number; sessions_max: number; rpm_used: number; rpm_max: number }[]>
 }

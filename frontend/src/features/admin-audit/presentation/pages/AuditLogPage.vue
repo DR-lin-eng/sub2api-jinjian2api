@@ -356,7 +356,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { AuditLog } from '@/features/admin-audit/domain/models/auditLog'
 import type { AuditLogQuery } from '@/features/admin-audit/domain/models/auditLogQuery'
-import { totpQueryDatasource } from '@/features/profile/data/datasources/totpQueryDatasource'
+import { useTotpQueryStore } from '@/features/profile/presentation/stores/totpQueryStore'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
 import DataTable from '@/common/widgets/data/DataTable.vue'
@@ -619,7 +619,7 @@ async function openClearDialog() {
   if (checkingTotpStatus.value) return
   checkingTotpStatus.value = true
   try {
-    const status = await totpQueryDatasource.getStatus().then(dto => dto.toEntity())
+    const status = await useTotpQueryStore().getStatus()
     if (!status.enabled) {
       appStore.showError(t('stepUp.notEnabled'))
       return

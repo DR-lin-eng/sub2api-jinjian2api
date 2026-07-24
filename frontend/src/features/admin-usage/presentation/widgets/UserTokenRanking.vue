@@ -82,7 +82,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getUserBreakdown, type UserBreakdownParams } from '@/features/admin-dashboard/data/datasources/adminDashboardDatasource'
+import { useAdminDashboardQueryStore } from '@/features/admin-dashboard/presentation/stores/adminDashboardQueryStore'
+import type { AdminDashboardUserBreakdownRequest as UserBreakdownParams } from '@/features/admin-dashboard/data/requests_models/adminDashboardUserBreakdownRequest'
 import { formatCompactNumber, formatCostFixed } from '@/core/utils/format'
 import Select from '@/common/widgets/forms/Select.vue'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
@@ -150,7 +151,7 @@ const load = async () => {
       limit: limit.value,
     }
     if (props.model) params.model = props.model
-    const res = await getUserBreakdown(params)
+    const res = await useAdminDashboardQueryStore().getUserBreakdown(params)
     if (seq !== reqSeq) return
     items.value = res.users || []
   } catch {

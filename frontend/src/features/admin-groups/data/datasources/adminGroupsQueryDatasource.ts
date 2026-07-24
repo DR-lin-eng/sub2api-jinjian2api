@@ -3,27 +3,10 @@ import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { AdminGroupDto } from '@/features/admin-groups/data/models/adminGroupDto'
 import { CompositeModelRouteDto } from '@/features/admin-groups/data/models/compositeModelRouteDto'
 import { CompositeRouteDecisionDto } from '@/features/admin-groups/data/models/compositeRouteDecisionDto'
+import { GroupRateMultiplierDto } from '@/features/admin-groups/data/models/groupRateMultiplierDto'
+import { GroupRPMOverrideDto } from '@/features/admin-groups/data/models/groupRPMOverrideDto'
 import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
 import type { PreviewCompositeRouteRequest } from '@/features/admin-groups/data/requests_models/previewCompositeRouteRequest'
-
-export interface GroupRateMultiplierEntry {
-  user_id: number
-  user_name: string
-  user_email: string
-  user_notes: string
-  user_status: string
-  rate_multiplier?: number | null
-  rpm_override?: number | null
-}
-
-export interface GroupRPMOverrideEntry {
-  user_id: number
-  user_name: string
-  user_email: string
-  user_notes: string
-  user_status: string
-  rpm_override: number
-}
 
 export class AdminGroupsQueryDatasource {
   async list(
@@ -112,27 +95,16 @@ export class AdminGroupsQueryDatasource {
     return CompositeRouteDecisionDto.fromJson(data)
   }
 
-  async getGroupRateMultipliers(id: number): Promise<GroupRateMultiplierEntry[]> {
-    const { data } = await apiClient.get<GroupRateMultiplierEntry[]>(
-      `/admin/groups/${id}/rate-multipliers`,
-    )
-    return data
+  async getGroupRateMultipliers(id: number): Promise<GroupRateMultiplierDto[]> {
+    const { data } = await apiClient.get<unknown[]>(`/admin/groups/${id}/rate-multipliers`)
+    return data.map(item => GroupRateMultiplierDto.fromJson(item))
   }
 
-  async getGroupRPMOverrides(id: number): Promise<GroupRPMOverrideEntry[]> {
-    const { data } = await apiClient.get<GroupRateMultiplierEntry[]>(
-      `/admin/groups/${id}/rate-multipliers`,
-    )
+  async getGroupRPMOverrides(id: number): Promise<GroupRPMOverrideDto[]> {
+    const { data } = await apiClient.get<unknown[]>(`/admin/groups/${id}/rate-multipliers`)
     return data
-      .filter(e => e.rpm_override != null)
-      .map(e => ({
-        user_id: e.user_id,
-        user_name: e.user_name,
-        user_email: e.user_email,
-        user_notes: e.user_notes,
-        user_status: e.user_status,
-        rpm_override: e.rpm_override as number,
-      }))
+      .filter((e: any) => e.rpm_override != null)
+      .map(item => GroupRPMOverrideDto.fromJson(item))
   }
 
   async getUsageSummary(

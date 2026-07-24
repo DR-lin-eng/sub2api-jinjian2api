@@ -3,8 +3,9 @@ import type { AdminGroupsQueryRepository } from '@/features/admin-groups/domain/
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
 import type { CompositeModelRoute } from '@/features/admin-groups/domain/models/compositeModelRoute'
 import type { CompositeRouteDecision } from '@/features/admin-groups/domain/models/compositeRouteDecision'
+import type { GroupRateMultiplier } from '@/features/admin-groups/domain/models/groupRateMultiplier'
+import type { GroupRPMOverride } from '@/features/admin-groups/domain/models/groupRPMOverride'
 import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
-import type { GroupRateMultiplierEntry, GroupRPMOverrideEntry } from '@/features/admin-groups/data/datasources/adminGroupsQueryDatasource'
 import type { PreviewCompositeRouteRequest } from '@/features/admin-groups/data/requests_models/previewCompositeRouteRequest'
 import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 
@@ -73,12 +74,12 @@ export class AdminGroupsQueryRepositoryImpl implements AdminGroupsQueryRepositor
     return (await this.ds.previewCompositeRoute(id, request)).toEntity()
   }
 
-  async getGroupRateMultipliers(id: number): Promise<GroupRateMultiplierEntry[]> {
-    return this.ds.getGroupRateMultipliers(id)
+  async getGroupRateMultipliers(id: number): Promise<GroupRateMultiplier[]> {
+    return (await this.ds.getGroupRateMultipliers(id)).map(dto => dto.toEntity())
   }
 
-  async getGroupRPMOverrides(id: number): Promise<GroupRPMOverrideEntry[]> {
-    return this.ds.getGroupRPMOverrides(id)
+  async getGroupRPMOverrides(id: number): Promise<GroupRPMOverride[]> {
+    return (await this.ds.getGroupRPMOverrides(id)).map(dto => dto.toEntity())
   }
 
   async getUsageSummary(timezone?: string): Promise<{ group_id: number; today_cost: number; total_cost: number }[]> {

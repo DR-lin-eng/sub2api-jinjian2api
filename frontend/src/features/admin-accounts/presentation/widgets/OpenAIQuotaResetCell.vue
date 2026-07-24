@@ -134,7 +134,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { OpenAIQuotaUsage } from '@/features/admin-accounts/data/datasources/adminAccountsQueryDatasource'
+import type { OpenAIQuotaUsage } from '@/features/admin-accounts/domain/models/openAIQuotaUsage'
 import type { OpenAIQuotaResetResult } from '@/features/admin-accounts/domain/models/openAIQuotaResetResult'
 import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
 import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'

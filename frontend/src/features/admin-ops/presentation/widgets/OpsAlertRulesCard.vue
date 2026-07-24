@@ -5,7 +5,7 @@ import { useAppStore } from '@/core/stores/appStore'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Select, { type SelectOption } from '@/common/widgets/forms/Select.vue'
-import { adminGroupsQueryRepository } from '@/features/admin-groups/data/repositories/adminGroupsQueryRepositoryImpl'
+import { useAdminGroupsQueryStore } from '@/features/admin-groups/presentation/stores/adminGroupsQueryStore'
 import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
 const queryStore = useAdminOpsQueryStore()
 import { useAdminOpsActionStore } from '@/features/admin-ops/presentation/stores/adminOpsActionStore'
@@ -78,7 +78,7 @@ const groupOptionsBase = ref<SelectOption[]>([])
 
 async function loadGroups() {
   try {
-    const list = await adminGroupsQueryRepository.getAll()
+    const list = await useAdminGroupsQueryStore().getAll()
     groupOptionsBase.value = list.map((g: any) => ({ value: g.id, label: g.name }))
   } catch (err) {
     console.error('[OpsAlertRulesCard] Failed to load groups', err)

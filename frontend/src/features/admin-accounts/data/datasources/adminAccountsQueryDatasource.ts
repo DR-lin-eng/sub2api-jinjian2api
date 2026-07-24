@@ -12,6 +12,7 @@ import { TempUnschedulableStatusDto } from '@/features/admin-accounts/data/model
 import { UpstreamBillingProbeSettingsDto } from '@/features/admin-accounts/data/models/upstreamBillingProbeSettingsDto'
 import { AccountUsageStatsResponseDto } from '@/features/admin-accounts/data/models/accountUsageStatsResponseDto'
 import { AdminDataPayloadDto } from '@/features/admin-accounts/data/models/adminDataPayloadDto'
+import { OpenAIQuotaUsageDto } from '@/features/admin-accounts/data/models/openAIQuotaUsageDto'
 import type { ClaudeModel } from '@/features/admin-accounts/domain/models/claudeModel'
 // ==================== Query-side response types ====================
 
@@ -19,46 +20,6 @@ export interface AccountListWithEtagResultDto {
   notModified: boolean
   etag: string | null
   data: PaginatedResponse<AccountDto> | null
-}
-
-export interface OpenAIRateLimitWindow {
-  used_percent: number
-  limit_window_seconds: number
-  reset_after_seconds: number
-  reset_at: number
-}
-
-export interface OpenAIRateLimit {
-  allowed: boolean
-  limit_reached: boolean
-  primary_window?: OpenAIRateLimitWindow | null
-  secondary_window?: OpenAIRateLimitWindow | null
-}
-
-export interface OpenAIAdditionalRateLimit {
-  limit_name: string
-  metered_feature: string
-  rate_limit?: OpenAIRateLimit | null
-}
-
-export interface OpenAIRateLimitResetCreditDetail {
-  expires_at?: string
-}
-
-export interface OpenAIRateLimitResetCredits {
-  available_count: number
-  credits?: OpenAIRateLimitResetCreditDetail[]
-}
-
-export interface OpenAIQuotaUsage {
-  user_id?: string
-  account_id?: string
-  email?: string
-  plan_type?: string
-  rate_limit?: OpenAIRateLimit | null
-  additional_rate_limits?: OpenAIAdditionalRateLimit[]
-  rate_limit_reset_credits?: OpenAIRateLimitResetCredits | null
-  fetched_at: number
 }
 
 // ==================== Query Datasource ====================
@@ -210,9 +171,9 @@ export class AdminAccountsQueryDatasource {
     return data
   }
 
-  async queryOpenAIQuota(id: number): Promise<OpenAIQuotaUsage> {
-    const { data } = await apiClient.get<OpenAIQuotaUsage>(`/admin/openai/accounts/${id}/quota`)
-    return data
+  async queryOpenAIQuota(id: number): Promise<OpenAIQuotaUsageDto> {
+    const { data } = await apiClient.get<unknown>(`/admin/openai/accounts/${id}/quota`)
+    return OpenAIQuotaUsageDto.fromJson(data)
   }
 
   async getUpstreamBillingProbeSettings(): Promise<UpstreamBillingProbeSettingsDto> {

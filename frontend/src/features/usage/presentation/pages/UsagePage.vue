@@ -217,7 +217,7 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { useUsageQueryStore } from '@/features/usage/presentation/stores/usageQueryStore'
-import { userGroupsAPI } from '@/features/groups-user/data/datasources/groupsUserDatasource'
+import { useGroupsUserQueryStore } from '@/features/groups-user/presentation/stores/groupsUserQueryStore'
 import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
@@ -806,7 +806,7 @@ const loadFilterOptions = async () => {
   try {
     const [keys, availableGroups] = await Promise.all([
       keysQuery.list(1, 100),
-      userGroupsAPI.getAvailable(),
+      useGroupsUserQueryStore().getAvailable(),
     ])
     apiKeys.value = keys.items
     groups.value = availableGroups

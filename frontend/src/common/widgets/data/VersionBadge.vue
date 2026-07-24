@@ -642,14 +642,14 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/core/stores/authStore'
-import { systemActionRepository } from '@/features/admin-settings/data/repositories/systemActionRepositoryImpl'
-import { systemQueryRepository } from '@/features/admin-settings/data/repositories/systemQueryRepositoryImpl'
+import { useAdminSettingsActionStore } from '@/features/admin-settings/presentation/stores/adminSettingsActionStore'
+import { useAdminSettingsQueryStore } from '@/features/admin-settings/presentation/stores/adminSettingsQueryStore'
 import type { RollbackVersionInfo } from '@/features/admin-settings/domain/models/rollbackVersionInfo'
 
-const performUpdate = () => systemActionRepository.performUpdate()
-const restartService = () => systemActionRepository.restartService()
-const getRollbackVersions = () => systemQueryRepository.getRollbackVersions()
-const rollbackAPI = (version?: string) => systemActionRepository.rollback(version)
+const performUpdate = () => useAdminSettingsActionStore().performUpdate()
+const restartService = () => useAdminSettingsActionStore().restartService()
+const getRollbackVersions = () => useAdminSettingsQueryStore().getRollbackVersions()
+const rollbackAPI = (version?: string) => useAdminSettingsActionStore().rollback(version)
 import { useClipboard } from '@/common/composables/useClipboard'
 import Icon from '@/common/widgets/icons/Icon.vue'
 

@@ -7,7 +7,7 @@ import type { AccountUsageStatsResponse } from '@/features/admin-accounts/domain
 import type { TempUnschedulableStatus } from '@/features/admin-accounts/domain/models/tempUnschedulableStatus'
 import type { AdminDataPayload } from '@/features/admin-accounts/domain/models/adminDataPayload'
 import type { UpstreamBillingProbeSettings } from '@/features/admin-accounts/domain/models/upstreamBillingProbeSettings'
-import type { OpenAIQuotaUsage } from '@/features/admin-accounts/data/datasources/adminAccountsQueryDatasource'
+import type { OpenAIQuotaUsage } from '@/features/admin-accounts/domain/models/openAIQuotaUsage'
 
 export interface AccountListWithEtagResult {
   notModified: boolean

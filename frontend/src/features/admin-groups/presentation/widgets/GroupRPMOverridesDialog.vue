@@ -209,8 +209,9 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { GroupRPMOverrideEntry } from '@/features/admin-groups/data/datasources/adminGroupsDatasource'
+import { useAdminGroupsQueryStore } from '@/features/admin-groups/presentation/stores/adminGroupsQueryStore'
+import { useAdminGroupsActionStore } from '@/features/admin-groups/presentation/stores/adminGroupsActionStore'
+import type { GroupRPMOverride } from '@/features/admin-groups/domain/models/groupRPMOverride'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
@@ -218,7 +219,7 @@ import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
 import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 
-interface LocalEntry extends GroupRPMOverrideEntry {}
+interface LocalEntry extends GroupRPMOverride {}
 
 const props = defineProps<{
   show: boolean
@@ -235,7 +236,7 @@ const appStore = useAppStore()
 
 const loading = ref(false)
 const saving = ref(false)
-const serverEntries = ref<GroupRPMOverrideEntry[]>([])
+const serverEntries = ref<GroupRPMOverride[]>([])
 const localEntries = ref<LocalEntry[]>([])
 const searchQuery = ref('')
 const searchResults = ref<AdminUser[]>([])
@@ -267,7 +268,7 @@ const paginatedLocalEntries = computed(() => {
   return localEntries.value.slice(start, start + pageSize.value)
 })
 
-const cloneEntries = (entries: GroupRPMOverrideEntry[]): LocalEntry[] => {
+const cloneEntries = (entries: GroupRPMOverride[]): LocalEntry[] => {
   return entries.map(e => ({ ...e }))
 }
 
