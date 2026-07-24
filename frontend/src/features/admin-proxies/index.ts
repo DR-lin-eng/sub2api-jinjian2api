@@ -1,7 +1,10 @@
-export { default as ProxiesPage } from './presentation/pages/ProxiesPage.vue'
-export type { Proxy } from './domain/models/proxy'
-export type { ProxyProtocol } from './enums/proxyProtocol'
-export type { ProxyStatus, ProxyFallbackMode } from './enums/proxyEnums'
-export type { ProxyAccountSummary } from './domain/models/proxyAccountSummary'
-export type { ProxyQualityCheckResult } from './domain/models/proxyQualityCheckResult'
-export type { ProxyQualityCheckItem } from './domain/models/proxyQualityCheckItem'
+import type { RouteRecordRaw } from 'vue-router'
+
+export const adminProxiesRoutes: RouteRecordRaw[] = [
+  {
+    path: '/admin/proxies',
+    name: 'AdminProxies',
+    component: () => import('@/features/admin-proxies/presentation/pages/ProxiesPage.vue'),
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Proxy Management', titleKey: 'admin.proxies.title', descriptionKey: 'admin.proxies.description' },
+  },
+]

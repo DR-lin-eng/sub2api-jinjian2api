@@ -3,7 +3,6 @@
 /* MUST NOT export: store / composable / repository / datasource / widget. */
 import type { RouteRecordRaw } from 'vue-router'
 
-export { default as ChannelsPage } from './presentation/pages/ChannelsPage.vue'
 
 export const adminChannelsRoutes: RouteRecordRaw[] = [
   {

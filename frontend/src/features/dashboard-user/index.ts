@@ -1,6 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
 
-export { default as DashboardPage } from './presentation/pages/DashboardPage.vue'
 
 export const dashboardUserRoutes: RouteRecordRaw[] = [
   {

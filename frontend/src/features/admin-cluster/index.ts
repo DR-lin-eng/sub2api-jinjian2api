@@ -3,7 +3,6 @@
 /* MUST NOT export: store / composable / repository / datasource / widget */
 import type { RouteRecordRaw } from 'vue-router'
 
-export { default as MultiInstancePage } from './presentation/pages/MultiInstancePage.vue'
 
 export const adminClusterRoutes: RouteRecordRaw[] = [
   {

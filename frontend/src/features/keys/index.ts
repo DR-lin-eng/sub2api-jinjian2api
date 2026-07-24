@@ -3,8 +3,6 @@
 /* MUST NOT export: store / composable / repository / datasource / widget.      */
 import type { RouteRecordRaw } from 'vue-router'
 
-export { default as KeysPage } from './presentation/pages/KeysPage.vue'
-export { default as KeyUsagePage } from './presentation/pages/KeyUsagePage.vue'
 
 export const keysRoutes: RouteRecordRaw[] = [
   {
@@ -26,6 +24,7 @@ export const keysRoutes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: false,
       title: 'Key Usage',
+      backendModePublic: true,
     },
   },
 ]

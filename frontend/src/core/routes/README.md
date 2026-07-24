@@ -1,3 +1,6 @@
+##遗留文件AI禁止参考
+
+
 # Vue Router Configuration
 
 ## Overview

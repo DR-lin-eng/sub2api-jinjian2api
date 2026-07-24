@@ -3,7 +3,6 @@
 /* MUST NOT export: store / composable / repository / datasource / widget.  */
 import type { RouteRecordRaw } from 'vue-router'
 
-export { default as BackupPage } from './presentation/pages/BackupPage.vue'
 
 // BackupPage is mounted inside SettingsPage as a child component; no top-level route.
 export const adminBackupRoutes: RouteRecordRaw[] = []

@@ -3,7 +3,6 @@
 /* MUST NOT export: store / composable / repository / datasource / widget.      */
 import type { RouteRecordRaw } from 'vue-router'
 
-export { default as AuditLogPage } from './presentation/pages/AuditLogPage.vue'
 
 export const adminAuditRoutes: RouteRecordRaw[] = [
   {
