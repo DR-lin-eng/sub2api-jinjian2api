@@ -5,12 +5,11 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed, readonly } from 'vue'
-import {
-  authAPI,
-  isTotp2FARequired,
-  type LoginResponse,
-  type RefreshTokenResponse,
-} from '@/api'
+import { authActionRepository } from '@/features/auth/data/repositories/authActionRepositoryImpl'
+import { authQueryRepository } from '@/features/auth/data/repositories/authQueryRepositoryImpl'
+import type { LoginResponse } from '@/features/auth/domain/repositories/authActionRepository'
+import type { SessionRefreshResult as RefreshTokenResponse } from '@/core/networks/sessionRefresh'
+import type { TotpLoginResult } from '@/features/auth/domain/models/totpLoginResult'
 import {
   clearTokenMemory,
   getTokenExpiresAtMemory,
@@ -18,6 +17,10 @@ import {
   setRefreshTokenMemory,
   setTokenExpiresAtMemory,
 } from '@/core/networks/tokenStore'
+
+function isTotp2FARequired(r: LoginResponse): r is TotpLoginResult {
+  return 'requires2fa' in r && (r as TotpLoginResult).requires2fa === true
+}
 import type { User } from '@/core/models/domain/user'
 import type { LoginRequest } from '@/features/auth/data/requests_models/loginRequest'
 import type { AuthResponse } from '@/features/auth/domain/models/authResponse'
@@ -140,7 +143,7 @@ export const useAuthStore = defineStore('auth', () => {
 
       let response: RefreshTokenResponse
       try {
-        response = await authAPI.refreshToken()
+        response = await authActionRepository.refreshToken()
       } catch {
         clearAuth({ preservePendingAuthSession: true })
         return
@@ -229,7 +232,7 @@ export const useAuthStore = defineStore('auth', () => {
    */
   async function performTokenRefresh(): Promise<void> {
     try {
-      const response = await authAPI.refreshToken()
+      const response = await authActionRepository.refreshToken()
 
       // Update state
       token.value = response.access_token
@@ -264,7 +267,7 @@ export const useAuthStore = defineStore('auth', () => {
    */
   async function login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
-      const response = await authAPI.login(credentials)
+      const response = await authActionRepository.login(credentials)
 
       // If 2FA is required, return the response without setting auth state
       if (isTotp2FARequired(response)) {
@@ -291,7 +294,7 @@ export const useAuthStore = defineStore('auth', () => {
    */
   async function login2FA(tempToken: string, totpCode: string): Promise<User> {
     try {
-      const response = await authAPI.login2FA({ temp_token: tempToken, totp_code: totpCode })
+      const response = await authActionRepository.login2FA({ temp_token: tempToken, totp_code: totpCode })
       setAuthFromResponse(response)
       return user.value!
     } catch (error) {
@@ -349,7 +352,7 @@ export const useAuthStore = defineStore('auth', () => {
    */
   async function register(userData: RegisterRequest | EncryptedRegisterRequest): Promise<User> {
     try {
-      const response = await authAPI.register(userData)
+      const response = await authActionRepository.register(userData)
 
       // Use the common helper to set auth state
       setAuthFromResponse(response)
@@ -420,7 +423,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function logout(): Promise<void> {
     try {
       // Call API logout (revokes refresh token on server)
-      await authAPI.logout()
+      await authActionRepository.logout()
     } catch (err) {
       // 服务端吊销失败（网络/5xx/超时）不应阻止本地登出，否则用户点了退出仍处于登录态。
       console.warn('Logout API call failed, clearing local session anyway', err)
@@ -442,7 +445,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     try {
-      const profile = await authAPI.getCurrentUser()
+      const profile = await authQueryRepository.getCurrentUser()
       if (profile.runMode) {
         runMode.value = profile.runMode
       }

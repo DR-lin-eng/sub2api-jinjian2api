@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { adminAPI } from '@/api'
+import { adminSettingsQueryRepository } from '@/features/admin-settings/data/repositories/adminSettingsQueryRepositoryImpl'
+import { adminOrdersQueryRepository } from '@/features/admin-orders/data/repositories/adminOrdersQueryRepositoryImpl'
 import type { CustomMenuItem } from '@/features/auth/domain/models/customMenuItem'
 
 export const useAdminSettingsStore = defineStore('adminSettings', () => {
@@ -58,21 +59,21 @@ export const useAdminSettingsStore = defineStore('adminSettings', () => {
     loading.value = true
     try {
       const [settings, paymentConfigResp] = await Promise.all([
-        adminAPI.settings.getSettings(),
-        adminAPI.payment.getConfig()
+        adminSettingsQueryRepository.getSettings(),
+        adminOrdersQueryRepository.getConfig()
       ])
-      opsMonitoringEnabled.value = settings.ops_monitoring_enabled ?? true
+      opsMonitoringEnabled.value = settings.opsMonitoringEnabled ?? true
       writeCachedBool('ops_monitoring_enabled_cached', opsMonitoringEnabled.value)
 
-      opsRealtimeMonitoringEnabled.value = settings.ops_realtime_monitoring_enabled ?? true
+      opsRealtimeMonitoringEnabled.value = settings.opsRealtimeMonitoringEnabled ?? true
       writeCachedBool('ops_realtime_monitoring_enabled_cached', opsRealtimeMonitoringEnabled.value)
 
-      opsQueryModeDefault.value = settings.ops_query_mode_default || 'auto'
+      opsQueryModeDefault.value = settings.opsQueryModeDefault || 'auto'
       writeCachedString('ops_query_mode_default_cached', opsQueryModeDefault.value)
 
-      customMenuItems.value = Array.isArray(settings.custom_menu_items) ? settings.custom_menu_items : []
+      customMenuItems.value = Array.isArray(settings.customMenuItems) ? settings.customMenuItems : []
 
-      paymentEnabled.value = paymentConfigResp.data?.enabled ?? false
+      paymentEnabled.value = paymentConfigResp.enabled ?? false
       writeCachedBool('payment_enabled_cached', paymentEnabled.value)
 
       loaded.value = true

@@ -5,7 +5,7 @@ import Select from '@/common/widgets/forms/Select.vue'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import { adminAPI } from '@/api'
+import { adminGroupsQueryRepository } from '@/features/admin-groups/data/repositories/adminGroupsQueryRepositoryImpl'
 import type { OpsDashboardOverview } from '@/features/admin-ops/domain/models/opsDashboardOverview'
 import type { OpsMetricThresholds } from '@/features/admin-ops/domain/models/opsMetricThresholds'
 import type { OpsRealtimeTrafficSummaryResponse } from '@/features/admin-ops/domain/models/opsRealtimeTrafficSummaryResponse'
@@ -163,7 +163,7 @@ watch(
 
 onMounted(async () => {
   try {
-    const list = await adminAPI.groups.getAll()
+    const list = await adminGroupsQueryRepository.getAll()
     groups.value = list.map((g: any) => ({ id: g.id, name: g.name, platform: g.platform }))
   } catch (e) {
     console.error('[OpsDashboardHeader] Failed to load groups', e)

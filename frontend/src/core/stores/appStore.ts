@@ -6,12 +6,10 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { i18n } from '@/core/i18n'
-import {
-  checkUpdates as checkUpdatesAPI,
-  getPublicSettings as fetchPublicSettingsAPI,
-  type VersionInfo,
-  type ReleaseInfo,
-} from '@/api'
+import { systemQueryRepository } from '@/features/admin-settings/data/repositories/systemQueryRepositoryImpl'
+import { authQueryRepository } from '@/features/auth/data/repositories/authQueryRepositoryImpl'
+import type { VersionInfo } from '@/features/admin-settings/domain/models/versionInfo'
+import type { ReleaseInfo } from '@/features/admin-settings/domain/models/releaseInfo'
 import type { PublicSettings } from '@/features/auth/domain/models/publicSettings'
 
 type ToastType = 'success' | 'error' | 'info' | 'warning'
@@ -255,11 +253,11 @@ export const useAppStore = defineStore('app', () => {
     // Return cached data if available and not forcing refresh
     if (versionLoaded.value && !force) {
       return {
-        current_version: currentVersion.value,
-        latest_version: latestVersion.value,
-        has_update: hasUpdate.value,
-        build_type: buildType.value,
-        release_info: releaseInfo.value || undefined,
+        currentVersion: currentVersion.value,
+        latestVersion: latestVersion.value,
+        hasUpdate: hasUpdate.value,
+        buildType: buildType.value,
+        releaseInfo: releaseInfo.value || undefined,
         cached: true
       }
     }
@@ -271,12 +269,12 @@ export const useAppStore = defineStore('app', () => {
 
     versionLoading.value = true
     try {
-      const data = await checkUpdatesAPI(force)
-      currentVersion.value = data.current_version
-      latestVersion.value = data.latest_version
-      hasUpdate.value = data.has_update
-      buildType.value = data.build_type || 'source'
-      releaseInfo.value = data.release_info || null
+      const data = await systemQueryRepository.checkUpdates(force)
+      currentVersion.value = data.currentVersion
+      latestVersion.value = data.latestVersion
+      hasUpdate.value = data.hasUpdate
+      buildType.value = data.buildType || 'source'
+      releaseInfo.value = data.releaseInfo || null
       versionLoaded.value = true
       return data
     } catch (error) {
@@ -391,7 +389,7 @@ export const useAppStore = defineStore('app', () => {
     publicSettingsLoading.value = true
     let apiRequest: Promise<PublicSettings>
     try {
-      apiRequest = fetchPublicSettingsAPI()
+      apiRequest = authQueryRepository.getPublicSettings()
     } catch (error) {
       console.error('Failed to fetch public settings:', error)
       publicSettingsLoading.value = false

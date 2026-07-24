@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { adminComplianceAPI, type AdminComplianceStatus } from '@/api'
+import { complianceQueryRepository } from '@/features/admin-settings/data/repositories/complianceQueryRepositoryImpl'
+import { complianceActionRepository } from '@/features/admin-settings/data/repositories/complianceActionRepositoryImpl'
+import type { AdminComplianceStatus } from '@/features/admin-settings/domain/models/adminComplianceStatus'
 import { getLocale } from '@/core/i18n'
 
 const FALLBACK_ZH_PHRASE = '我已阅读、理解并同意 Sub2API 部署与运营合规承诺'
@@ -18,15 +20,15 @@ export const useAdminComplianceStore = defineStore('adminCompliance', () => {
   const currentLocale = computed(() => getLocale())
   const expectedPhrase = computed(() => {
     if (currentLocale.value === 'zh') {
-      return status.value?.ack_phrase_zh || FALLBACK_ZH_PHRASE
+      return status.value?.ackPhraseZh || FALLBACK_ZH_PHRASE
     }
-    return status.value?.ack_phrase_en || FALLBACK_EN_PHRASE
+    return status.value?.ackPhraseEn || FALLBACK_EN_PHRASE
   })
 
   async function fetchStatus(): Promise<AdminComplianceStatus> {
     loading.value = true
     try {
-      const nextStatus = await adminComplianceAPI.getStatus()
+      const nextStatus = await complianceQueryRepository.getStatus()
       status.value = nextStatus
       initialized.value = true
       forceVisible.value = nextStatus.required
@@ -39,7 +41,7 @@ export const useAdminComplianceStore = defineStore('adminCompliance', () => {
   async function accept(phrase: string): Promise<AdminComplianceStatus> {
     submitting.value = true
     try {
-      const nextStatus = await adminComplianceAPI.accept({
+      const nextStatus = await complianceActionRepository.accept({
         phrase,
         language: currentLocale.value
       })
@@ -55,12 +57,12 @@ export const useAdminComplianceStore = defineStore('adminCompliance', () => {
     status.value = {
       required: true,
       version: partialStatus?.version || status.value?.version || 'v2026.06.10',
-      document_path_zh: partialStatus?.document_path_zh || status.value?.document_path_zh || 'docs/legal/admin-compliance.zh.md',
-      document_path_en: partialStatus?.document_path_en || status.value?.document_path_en || 'docs/legal/admin-compliance.en.md',
-      document_url_zh: partialStatus?.document_url_zh || status.value?.document_url_zh || 'https://github.com/Wei-Shaw/sub2api/blob/main/docs/legal/admin-compliance.zh.md',
-      document_url_en: partialStatus?.document_url_en || status.value?.document_url_en || 'https://github.com/Wei-Shaw/sub2api/blob/main/docs/legal/admin-compliance.en.md',
-      ack_phrase_zh: partialStatus?.ack_phrase_zh || status.value?.ack_phrase_zh || FALLBACK_ZH_PHRASE,
-      ack_phrase_en: partialStatus?.ack_phrase_en || status.value?.ack_phrase_en || FALLBACK_EN_PHRASE,
+      documentPathZh: partialStatus?.documentPathZh || status.value?.documentPathZh || 'docs/legal/admin-compliance.zh.md',
+      documentPathEn: partialStatus?.documentPathEn || status.value?.documentPathEn || 'docs/legal/admin-compliance.en.md',
+      documentUrlZh: partialStatus?.documentUrlZh || status.value?.documentUrlZh || 'https://github.com/Wei-Shaw/sub2api/blob/main/docs/legal/admin-compliance.zh.md',
+      documentUrlEn: partialStatus?.documentUrlEn || status.value?.documentUrlEn || 'https://github.com/Wei-Shaw/sub2api/blob/main/docs/legal/admin-compliance.en.md',
+      ackPhraseZh: partialStatus?.ackPhraseZh || status.value?.ackPhraseZh || FALLBACK_ZH_PHRASE,
+      ackPhraseEn: partialStatus?.ackPhraseEn || status.value?.ackPhraseEn || FALLBACK_EN_PHRASE,
       acknowledgement: status.value?.acknowledgement
     }
     initialized.value = true

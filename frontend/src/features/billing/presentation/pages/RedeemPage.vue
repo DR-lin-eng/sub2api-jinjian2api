@@ -349,7 +349,7 @@ import { useAppStore } from '@/core/stores/appStore'
 import { useSubscriptionStore } from '@/features/subscriptions/presentation/stores/subscriptionsStore'
 import { useBillingQueryStore } from '@/features/billing/presentation/stores/billingQueryStore'
 import { useBillingActionStore } from '@/features/billing/presentation/stores/billingActionStore'
-import { authAPI } from '@/api'
+import { authQueryRepository } from '@/features/auth/data/repositories/authQueryRepositoryImpl'
 import type { RedeemHistoryItem } from '@/features/billing/domain/models/redeemHistoryItem'
 import type { RedeemCodeResult } from '@/features/billing/domain/models/redeemCodeResult'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
@@ -477,7 +477,7 @@ const handleRedeem = async () => {
 onMounted(async () => {
   fetchHistory()
   try {
-    const settings = await authAPI.getPublicSettings()
+    const settings = await authQueryRepository.getPublicSettings()
     contactInfo.value = settings.contactInfo || ''
   } catch (error) {
     console.error('Failed to load contact info:', error)

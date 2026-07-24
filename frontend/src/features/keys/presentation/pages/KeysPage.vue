@@ -1139,7 +1139,9 @@
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 
 const { t } = useI18n()
-import { authAPI, usageAPI, userGroupsAPI } from '@/api'
+import { authQueryRepository } from '@/features/auth/data/repositories/authQueryRepositoryImpl'
+import { usageQueryRepository } from '@/features/usage/data/repositories/usageQueryRepositoryImpl'
+import { userGroupsAPI } from '@/features/groups-user/data/datasources/groupsUserDatasource'
 import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
 import { useKeysActionStore } from '@/features/keys/presentation/stores/keysActionStore'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
@@ -1506,7 +1508,7 @@ const loadApiKeys = async () => {
     if (response.items.length > 0) {
       const keyIds = response.items.map((k: ApiKey) => k.id)
       try {
-        const usageResponse = await usageAPI.getDashboardApiKeysUsage({ api_key_ids: keyIds }, { signal })
+        const usageResponse = await usageQueryRepository.getDashboardApiKeysUsage({ api_key_ids: keyIds }, { signal })
         if (signal.aborted) return
         usageStats.value = usageResponse.stats
       } catch (e) {
@@ -1545,7 +1547,7 @@ const loadUserGroupRates = async () => {
 
 const loadPublicSettings = async () => {
   try {
-    publicSettings.value = await authAPI.getPublicSettings()
+    publicSettings.value = await authQueryRepository.getPublicSettings()
   } catch (error) {
     console.error('Failed to load public settings:', error)
   }
