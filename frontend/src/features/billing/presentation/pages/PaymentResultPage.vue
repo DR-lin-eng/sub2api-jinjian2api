@@ -109,7 +109,7 @@ import {
 import { usePaymentStore } from '@/features/billing/presentation/stores/paymentStore'
 import { useBillingActionStore } from '@/features/billing/presentation/stores/billingActionStore'
 import type { PublicOrderVerifyResult } from '@/features/billing/domain/models/publicOrderVerifyResult'
-import type { OrderStatus } from '@/features/admin-orders/domain/models/orderTypes'
+import type { OrderStatus } from '@/features/admin-orders/enums/orderTypes'
 import { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
 import { formatPaymentAmount, normalizePaymentCurrency } from '@/features/billing/presentation/utils/currencyFormatter'
 import { normalizePaymentMethodForDisplay, paymentMethodI18nKey } from '@/features/billing/presentation/utils/paymentUxSignals'

@@ -1,4 +1,4 @@
-import type { GroupPlatform } from '@/features/admin-groups/domain/models/groupPlatform';
+import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform';
 
 export type ModelsListCandidatesMode = "create" | "edit";
 

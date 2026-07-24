@@ -1,4 +1,4 @@
-import type { ClusterInstanceStatus } from '@/features/admin-cluster/domain/models/clusterInstanceStatus'
+import type { ClusterInstanceStatus } from '@/features/admin-cluster/enums/clusterInstanceStatus'
 
 export class ClusterInstance {
   runnerId!: string

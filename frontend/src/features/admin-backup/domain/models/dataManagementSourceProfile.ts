@@ -1,5 +1,5 @@
 import type { DataManagementSourceConfig } from '@/features/admin-backup/domain/models/dataManagementSourceConfig'
-import type { SourceType } from '@/features/admin-backup/domain/models/sourceType'
+import type { SourceType } from '@/features/admin-backup/enums/sourceType'
 
 export class DataManagementSourceProfile {
   sourceType!: SourceType

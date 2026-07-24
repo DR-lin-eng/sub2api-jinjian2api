@@ -1,4 +1,5 @@
-import type { ProxyProtocol, ProxyStatus, ProxyFallbackMode } from '@/features/admin-proxies/domain/models/proxy'
+import type { ProxyProtocol } from '@/features/admin-proxies/enums/proxyProtocol'
+import type { ProxyStatus, ProxyFallbackMode } from '@/features/admin-proxies/enums/proxyEnums'
 
 export interface UpdateProxyRequest {
   name?: string

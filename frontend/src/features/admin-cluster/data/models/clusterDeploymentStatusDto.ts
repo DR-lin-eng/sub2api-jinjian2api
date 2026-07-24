@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
-import type { ClusterDeploymentMode } from '@/features/admin-cluster/domain/models/clusterDeploymentMode'
-import type { ClusterWorkerMode } from '@/features/admin-cluster/domain/models/clusterWorkerMode'
+import type { ClusterDeploymentMode } from '@/features/admin-cluster/enums/clusterDeploymentMode'
+import type { ClusterWorkerMode } from '@/features/admin-cluster/enums/clusterWorkerMode'
 import { ClusterDeploymentStatus } from '@/features/admin-cluster/domain/models/clusterDeploymentStatus'
 
 export class ClusterDeploymentStatusDto {

@@ -1,4 +1,4 @@
-import type { GroupPlatform } from '@/features/admin-groups/domain/models/groupPlatform'
+import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
 
 export const OPENAI_CC_SWITCH_CODEX_MODEL = 'gpt-5.6'
 

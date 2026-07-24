@@ -1,6 +1,7 @@
 import type { DefaultPlatformQuotasMap } from '@/features/admin-settings/domain/models/adminSettings'
 import type { DefaultSubscriptionSetting } from '@/features/admin-settings/domain/models/defaultSubscriptionSetting'
-import type { AuthSourceDefaultsState, AuthSourceType } from '@/features/admin-settings/domain/models/adminSettings'
+import type { AuthSourceDefaultsState } from '@/features/admin-settings/domain/models/adminSettings'
+import type { AuthSourceType } from '@/features/admin-settings/enums/authSourceType'
 import type { UpdateSettingsRequest } from '@/features/admin-settings/data/requests_models/updateSettingsRequest'
 
 const PLATFORMS: Array<keyof DefaultPlatformQuotasMap> = ['anthropic', 'openai', 'gemini', 'antigravity', 'grok']

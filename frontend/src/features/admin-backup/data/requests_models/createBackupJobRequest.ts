@@ -1,4 +1,4 @@
-import type { BackupType } from '@/features/admin-backup/domain/models/backupType'
+import type { BackupType } from '@/features/admin-backup/enums/backupType'
 
 export interface CreateBackupJobRequest {
   backup_type: BackupType

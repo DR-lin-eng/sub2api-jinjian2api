@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
 import { BackupRecord } from '@/features/admin-backup/domain/models/backupRecord'
-import type { BackupStatus } from '@/features/admin-backup/domain/models/backupRecord'
+import type { BackupStatus } from '@/features/admin-backup/enums/backupStatus'
 
 export class BackupRecordDto {
   @Expose() @Transform(({ value }) => value ?? '') id!: string

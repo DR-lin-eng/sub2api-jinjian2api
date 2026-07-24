@@ -1,5 +1,5 @@
-import type { AnnouncementStatus } from './announcementStatus'
-import type { AnnouncementNotifyMode } from './announcementNotifyMode'
+import type { AnnouncementStatus } from '@/features/announcements/enums/announcementStatus'
+import type { AnnouncementNotifyMode } from '@/features/announcements/enums/announcementNotifyMode'
 import type { AnnouncementTargeting } from './announcementTargeting'
 
 export class Announcement {

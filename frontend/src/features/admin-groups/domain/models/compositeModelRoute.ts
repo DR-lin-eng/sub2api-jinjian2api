@@ -1,6 +1,6 @@
-import type { CompositeRouteMatchType } from './compositeRouteMatchType'
-import type { CompositeRouteEndpoint } from './compositeRouteEndpoint'
-import type { GroupPlatform } from './groupPlatform'
+import type { CompositeRouteMatchType } from '@/features/admin-groups/enums/compositeRouteMatchType'
+import type { CompositeRouteEndpoint } from '@/features/admin-groups/enums/compositeRouteEndpoint'
+import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
 
 export class CompositeModelRoute {
   id!: number

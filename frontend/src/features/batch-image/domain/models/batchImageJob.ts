@@ -1,14 +1,4 @@
-export type BatchImageStatus =
-  | 'queued'
-  | 'running'
-  | 'indexing'
-  | 'processing_results'
-  | 'settling'
-  | 'completed'
-  | 'failed'
-  | 'cancelled'
-  | 'output_deleted'
-  | string
+import type { BatchImageStatus } from '@/features/batch-image/enums/batchImageStatus'
 
 export class BatchImageJob {
   id!: string

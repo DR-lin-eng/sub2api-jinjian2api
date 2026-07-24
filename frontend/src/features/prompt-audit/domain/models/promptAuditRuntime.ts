@@ -1,4 +1,4 @@
-import type { PromptAuditMode } from './promptAuditConfig'
+import type { PromptAuditMode } from '@/features/prompt-audit/enums/promptAuditMode'
 import type { PromptQueueStats } from './promptQueueStats'
 import type { PromptGuardMetrics } from './promptGuardMetrics'
 import type { PromptProbeResult } from './promptProbeResult'

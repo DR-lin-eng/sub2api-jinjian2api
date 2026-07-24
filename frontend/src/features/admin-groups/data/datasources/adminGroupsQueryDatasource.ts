@@ -3,7 +3,7 @@ import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { AdminGroupDto } from '@/features/admin-groups/data/models/adminGroupDto'
 import { CompositeModelRouteDto } from '@/features/admin-groups/data/models/compositeModelRouteDto'
 import { CompositeRouteDecisionDto } from '@/features/admin-groups/data/models/compositeRouteDecisionDto'
-import type { GroupPlatform } from '@/features/admin-groups/domain/models/groupPlatform'
+import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
 import type { PreviewCompositeRouteRequest } from '@/features/admin-groups/data/requests_models/previewCompositeRouteRequest'
 
 export interface GroupRateMultiplierEntry {

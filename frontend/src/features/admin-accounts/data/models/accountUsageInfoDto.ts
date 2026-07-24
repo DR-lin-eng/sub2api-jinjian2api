@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
 import type { GrokBillingSummary } from '@/features/admin-accounts/domain/models/grokBillingSummary'
-import type { GrokQuotaWindow } from '@/features/admin-accounts/domain/models/grokQuotaWindow'
+import { GrokQuotaWindowDto } from '@/features/admin-accounts/data/models/grokQuotaWindowDto'
 import { AccountUsageInfo } from '@/features/admin-accounts/domain/models/accountUsageInfo'
 import { AccountAiCreditDto } from '@/features/admin-accounts/data/models/accountAiCreditDto'
 import { UsageProgressDto } from '@/features/admin-accounts/data/models/usageProgressDto'
@@ -27,8 +27,8 @@ export class AccountUsageInfoDto {
     return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, AntigravityModelQuotaDto.fromJson(v)]))
   })
   antigravityQuota!: Record<string, AntigravityModelQuotaDto>
-  @Expose({ name: 'grok_request_quota' }) grokRequestQuota?: GrokQuotaWindow
-  @Expose({ name: 'grok_token_quota' }) grokTokenQuota?: GrokQuotaWindow
+  @Expose({ name: 'grok_request_quota' }) @Type(() => GrokQuotaWindowDto) grokRequestQuota?: GrokQuotaWindowDto
+  @Expose({ name: 'grok_token_quota' }) @Type(() => GrokQuotaWindowDto) grokTokenQuota?: GrokQuotaWindowDto
   @Expose({ name: 'grok_retry_after_seconds' }) @Transform(({ value }) => value ?? 0) grokRetryAfterSeconds!: number
   @Expose({ name: 'grok_entitlement_status' }) @Transform(({ value }) => value ?? '') grokEntitlementStatus!: string
   @Expose({ name: 'grok_quota_snapshot_state' }) @Transform(({ value }) => value ?? '') grokQuotaSnapshotState!: string
@@ -73,8 +73,8 @@ export class AccountUsageInfoDto {
     e.geminiProMinute = this.geminiProMinute ? this.geminiProMinute.toEntity() : undefined
     e.geminiFlashMinute = this.geminiFlashMinute ? this.geminiFlashMinute.toEntity() : undefined
     e.antigravityQuota = Object.fromEntries(Object.entries(this.antigravityQuota ?? {}).map(([k, dto]) => [k, dto.toEntity()]))
-    e.grokRequestQuota = this.grokRequestQuota
-    e.grokTokenQuota = this.grokTokenQuota
+    e.grokRequestQuota = this.grokRequestQuota ? this.grokRequestQuota.toEntity() : undefined
+    e.grokTokenQuota = this.grokTokenQuota ? this.grokTokenQuota.toEntity() : undefined
     e.grokRetryAfterSeconds = this.grokRetryAfterSeconds
     e.grokEntitlementStatus = this.grokEntitlementStatus
     e.grokQuotaSnapshotState = this.grokQuotaSnapshotState

@@ -1,5 +1,5 @@
-import type { ClusterDeploymentMode } from '@/features/admin-cluster/domain/models/clusterDeploymentMode'
-import type { ClusterWorkerMode } from '@/features/admin-cluster/domain/models/clusterWorkerMode'
+import type { ClusterDeploymentMode } from '@/features/admin-cluster/enums/clusterDeploymentMode'
+import type { ClusterWorkerMode } from '@/features/admin-cluster/enums/clusterWorkerMode'
 
 export class ClusterDeploymentStatus {
   mode!: ClusterDeploymentMode

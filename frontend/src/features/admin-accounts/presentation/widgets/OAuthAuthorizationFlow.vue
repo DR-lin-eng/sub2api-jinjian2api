@@ -815,7 +815,7 @@ import { useI18n } from 'vue-i18n'
 import { useClipboard } from '@/common/composables/useClipboard'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import type { AddMethod, AuthInputMethod } from '@/features/admin-accounts/presentation/composables/useAccountOAuth'
-import type { AccountPlatform } from '@/features/admin-accounts/domain/models/accountPlatform'
+import type { AccountPlatform } from '@/features/admin-accounts/enums/accountPlatform'
 interface Props {
   addMethod: AddMethod
   authUrl?: string

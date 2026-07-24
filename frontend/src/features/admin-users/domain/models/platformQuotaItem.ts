@@ -1,5 +1,4 @@
-export type PlatformQuotaPlatform = 'anthropic' | 'openai' | 'gemini' | 'antigravity' | 'grok' | string
-export type PlatformQuotaWindow = 'daily' | 'weekly' | 'monthly' | string
+import type { PlatformQuotaPlatform } from '@/features/admin-users/enums/platformQuotaEnums'
 
 export class PlatformQuotaItem {
   platform!: PlatformQuotaPlatform

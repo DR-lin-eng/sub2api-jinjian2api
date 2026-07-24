@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
-import type { ClusterTaskStatus } from '@/features/admin-cluster/domain/models/clusterTaskStatus'
+import type { ClusterTaskStatus } from '@/features/admin-cluster/enums/clusterTaskStatus'
 import { ClusterTaskRun } from '@/features/admin-cluster/domain/models/clusterTaskRun'
 
 export class ClusterTaskRunDto {

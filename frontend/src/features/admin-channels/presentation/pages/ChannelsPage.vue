@@ -639,7 +639,7 @@ import { useAdminAccounts } from '@/features/admin-accounts/presentation/composa
 import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
 import { useAdminSettings } from '@/features/admin-settings/presentation/composables/useAdminSettings'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
-import type { GroupPlatform } from '@/features/admin-groups/domain/models/groupPlatform'
+import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
 import type { ChannelStatus, BillingModelSource } from '@/core/constants/channel'
 import type { Column } from '@/common/types/uiTypes'
 import { platformTextClass, platformBadgeLightClass } from '@/core/utils/platformColors'

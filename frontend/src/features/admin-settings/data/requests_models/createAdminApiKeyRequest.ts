@@ -1,4 +1,4 @@
-import type { AdminApiKeyScope } from '@/features/admin-settings/domain/models/adminApiKey'
+import type { AdminApiKeyScope } from '@/features/admin-settings/enums/adminApiKeyScope'
 
 export interface CreateAdminApiKeyRequest {
   name: string

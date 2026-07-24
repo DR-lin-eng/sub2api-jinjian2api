@@ -236,7 +236,7 @@ import { adminAPI } from "@/api";
 import type {
   EmailTemplateEventOption,
   EmailTemplateOption,
-} from "@/features/admin-settings/domain/models/emailTemplateOption";
+} from "@/features/admin-settings/enums/emailTemplateEventOption";
 import { useAppStore } from "@/stores";
 import { extractApiErrorMessage } from "@/core/utils/apiError";
 

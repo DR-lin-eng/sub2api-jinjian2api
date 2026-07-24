@@ -1,5 +1,7 @@
 export { default as ProxiesPage } from './presentation/pages/ProxiesPage.vue'
-export type { Proxy, ProxyProtocol, ProxyStatus, ProxyFallbackMode } from './domain/models/proxy'
+export type { Proxy } from './domain/models/proxy'
+export type { ProxyProtocol } from './enums/proxyProtocol'
+export type { ProxyStatus, ProxyFallbackMode } from './enums/proxyEnums'
 export type { ProxyAccountSummary } from './domain/models/proxyAccountSummary'
 export type { ProxyQualityCheckResult } from './domain/models/proxyQualityCheckResult'
 export type { ProxyQualityCheckItem } from './domain/models/proxyQualityCheckItem'

@@ -1,4 +1,4 @@
-import type { BackupJobStatus } from '@/features/admin-backup/domain/models/backupJobStatus'
+import type { BackupJobStatus } from '@/features/admin-backup/enums/backupJobStatus'
 
 export class CreateBackupJobResponse {
   jobId!: string

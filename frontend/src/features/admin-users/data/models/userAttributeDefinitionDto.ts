@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import type { UserAttributeType } from '@/features/admin-users/domain/models/userAttributeType'
+import type { UserAttributeType } from '@/features/admin-users/enums/userAttributeType'
 import { UserAttributeDefinition } from '@/features/admin-users/domain/models/userAttributeDefinition'
 import { UserAttributeOptionDto } from '@/features/admin-users/data/models/userAttributeOptionDto'
 import { UserAttributeValidationDto } from '@/features/admin-users/data/models/userAttributeValidationDto'

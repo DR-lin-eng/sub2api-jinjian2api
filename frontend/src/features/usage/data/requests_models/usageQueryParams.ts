@@ -6,7 +6,7 @@ export interface UsageQueryParams {
   accountId?: number
   groupId?: number
   model?: string
-  requestType?: import('@/features/admin-usage/domain/models/usageRequestType').UsageRequestType
+  requestType?: import('@/features/admin-usage/enums/usageRequestType').UsageRequestType
   stream?: boolean
   billingType?: number | null
   billingMode?: string | null

@@ -1,5 +1,5 @@
-import type { AnnouncementStatus } from '@/features/announcements/domain/models/announcementStatus'
-import type { AnnouncementNotifyMode } from '@/features/announcements/domain/models/announcementNotifyMode'
+import type { AnnouncementStatus } from '@/features/announcements/enums/announcementStatus'
+import type { AnnouncementNotifyMode } from '@/features/announcements/enums/announcementNotifyMode'
 import type { AnnouncementTargeting } from '@/features/announcements/domain/models/announcementTargeting'
 
 export interface UpdateAnnouncementRequest {

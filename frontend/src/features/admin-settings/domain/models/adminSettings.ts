@@ -7,17 +7,9 @@ import type { DefaultSubscriptionSetting } from './defaultSubscriptionSetting'
 import type { ClientIpResolutionStatus } from './clientIpResolutionStatus'
 import type { OpenAIFastPolicySettings } from './openAIFastPolicySettings'
 import type { AuthSourceDefaultsValue } from './authSourceDefaultsValue'
-
-export type PlatformType = 'anthropic' | 'openai' | 'gemini' | 'antigravity' | 'grok'
-export type QuotaWindowType = 'daily' | 'weekly' | 'monthly'
-export type ClientIpResolutionMode = 'auto_compat' | 'trusted_proxy' | 'direct'
-export type AuthSourceType = 'email' | 'linuxdo' | 'oidc' | 'wechat' | 'github' | 'google' | 'dingtalk'
-export type ThinkingDisplayMode = 'off' | 'display_only' | 'force'
-export type AdminApiKeyScope =
-  | 'admin.read' | 'admin.write' | 'admin.users.read' | 'admin.users.write'
-  | 'admin.accounts.read' | 'admin.accounts.write' | 'admin.settings.read' | 'admin.settings.write'
-  | 'admin.backups.read' | 'admin.backups.write' | 'admin.system.read' | 'admin.system.write'
-  | 'admin.audit.read' | 'admin.audit.write' | 'admin.ops.read' | 'admin.ops.write'
+import type { PlatformType } from '@/features/admin-settings/enums/platformType'
+import type { ClientIpResolutionMode } from '@/features/admin-settings/enums/clientIpResolutionMode'
+import type { AuthSourceType } from '@/features/admin-settings/enums/authSourceType'
 
 export type DefaultPlatformQuotasMap = Partial<Record<PlatformType, PlatformQuotaLimits>>
 export type AuthSourceDefaultsState = Record<AuthSourceType, AuthSourceDefaultsValue>

@@ -2,9 +2,9 @@ import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
 import { CompositeRouteDecision } from '@/features/admin-groups/domain/models/compositeRouteDecision'
 import { CompositeModelRouteDto } from './compositeModelRouteDto'
-import type { CompositeRouteSource } from '@/features/admin-groups/domain/models/compositeRouteSource'
-import type { CompositeRouteEndpoint } from '@/features/admin-groups/domain/models/compositeRouteEndpoint'
-import type { GroupPlatform } from '@/features/admin-groups/domain/models/groupPlatform'
+import type { CompositeRouteSource } from '@/features/admin-groups/enums/compositeRouteSource'
+import type { CompositeRouteEndpoint } from '@/features/admin-groups/enums/compositeRouteEndpoint'
+import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
 
 export class CompositeRouteDecisionDto {
   @Expose()

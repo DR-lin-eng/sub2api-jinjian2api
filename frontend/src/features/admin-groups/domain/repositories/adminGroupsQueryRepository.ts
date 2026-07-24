@@ -1,7 +1,7 @@
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
 import type { CompositeModelRoute } from '@/features/admin-groups/domain/models/compositeModelRoute'
 import type { CompositeRouteDecision } from '@/features/admin-groups/domain/models/compositeRouteDecision'
-import type { GroupPlatform } from '@/features/admin-groups/domain/models/groupPlatform'
+import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
 import type { GroupRateMultiplierEntry, GroupRPMOverrideEntry } from '@/features/admin-groups/data/datasources/adminGroupsQueryDatasource'
 import type { PreviewCompositeRouteRequest } from '@/features/admin-groups/data/requests_models/previewCompositeRouteRequest'
 import type { PaginatedResponse } from '@/core/networks/paginatedResponse'

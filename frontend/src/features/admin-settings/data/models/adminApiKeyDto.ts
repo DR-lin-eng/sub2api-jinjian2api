@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
 import { AdminApiKey } from '@/features/admin-settings/domain/models/adminApiKey'
-import type { AdminApiKeyScope } from '@/features/admin-settings/domain/models/adminApiKey'
+import type { AdminApiKeyScope } from '@/features/admin-settings/enums/adminApiKeyScope'
 
 export class AdminApiKeyDto {
   @Expose() @Transform(({ value }) => value ?? '') id!: string

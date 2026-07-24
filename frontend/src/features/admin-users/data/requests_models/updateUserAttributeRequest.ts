@@ -1,4 +1,4 @@
-import type { UserAttributeType } from '@/features/admin-users/domain/models/userAttributeType'
+import type { UserAttributeType } from '@/features/admin-users/enums/userAttributeType'
 import type { UserAttributeOption } from '@/features/admin-users/domain/models/userAttributeOption'
 import type { UserAttributeValidation } from '@/features/admin-users/domain/models/userAttributeValidation'
 

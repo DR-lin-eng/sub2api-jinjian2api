@@ -1,4 +1,4 @@
-import type { CreateOrderResultType } from './createOrderResultType'
+import type { CreateOrderResultType } from '@/features/billing/enums/createOrderResultType'
 import type { WechatOAuthInfo } from './wechatOAuthInfo'
 import type { WechatJSAPIPayload } from './wechatJSAPIPayload'
 

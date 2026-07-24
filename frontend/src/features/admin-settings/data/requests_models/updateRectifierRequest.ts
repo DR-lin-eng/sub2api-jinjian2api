@@ -1,4 +1,4 @@
-import type { ThinkingDisplayMode } from '@/features/admin-settings/domain/models/streamTimeoutSettings'
+import type { ThinkingDisplayMode } from '@/features/admin-settings/enums/thinkingDisplayMode'
 
 export interface UpdateRectifierRequest {
   enabled: boolean

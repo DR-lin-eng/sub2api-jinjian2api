@@ -1,5 +1,5 @@
-export type AnnouncementConditionType = 'subscription' | 'balance'
-export type AnnouncementOperator = 'in' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq'
+import type { AnnouncementConditionType } from '@/features/announcements/enums/announcementConditionType'
+import type { AnnouncementOperator } from '@/features/announcements/enums/announcementOperator'
 
 export class AnnouncementCondition {
   type!: AnnouncementConditionType

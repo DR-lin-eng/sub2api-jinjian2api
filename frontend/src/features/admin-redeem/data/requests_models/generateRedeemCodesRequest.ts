@@ -1,4 +1,4 @@
-import type { RedeemCodeType } from '@/features/admin-redeem/domain/models/redeemCode'
+import type { RedeemCodeType } from '@/features/admin-redeem/enums/redeemCodeType'
 
 export interface GenerateRedeemCodesRequest {
   count: number

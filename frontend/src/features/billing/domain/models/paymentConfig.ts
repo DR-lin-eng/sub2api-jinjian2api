@@ -1,4 +1,4 @@
-import type { PaymentType } from '@/features/admin-orders/domain/models/orderTypes'
+import type { PaymentType } from '@/features/admin-orders/enums/orderTypes'
 
 export class PaymentConfig {
   paymentEnabled!: boolean

@@ -1,8 +1,8 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
 import { AnnouncementCondition } from '@/features/announcements/domain/models/announcementCondition'
-import type { AnnouncementConditionType } from '@/features/announcements/domain/models/announcementCondition'
-import type { AnnouncementOperator } from '@/features/announcements/domain/models/announcementCondition'
+import type { AnnouncementConditionType } from '@/features/announcements/enums/announcementConditionType'
+import type { AnnouncementOperator } from '@/features/announcements/enums/announcementOperator'
 
 export class AnnouncementConditionDto {
   @Expose()

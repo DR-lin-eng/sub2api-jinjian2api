@@ -6,7 +6,7 @@ import { ListS3ProfilesResponseDto } from '@/features/admin-backup/data/models/l
 import { BackupJobDto } from '@/features/admin-backup/data/models/backupJobDto'
 import { ListBackupJobsResponseDto } from '@/features/admin-backup/data/models/listBackupJobsResponseDto'
 import type { ListBackupJobsRequest } from '@/features/admin-backup/data/requests_models/listBackupJobsRequest'
-import type { SourceType } from '@/features/admin-backup/domain/models/sourceType'
+import type { SourceType } from '@/features/admin-backup/enums/sourceType'
 
 export class DataManagementQueryDatasource {
   async getAgentHealth(): Promise<BackupAgentHealthDto> {

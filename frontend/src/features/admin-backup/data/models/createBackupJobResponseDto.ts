@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
 import { CreateBackupJobResponse } from '@/features/admin-backup/domain/models/createBackupJobResponse'
-import type { BackupJobStatus } from '@/features/admin-backup/domain/models/backupJobStatus'
+import type { BackupJobStatus } from '@/features/admin-backup/enums/backupJobStatus'
 
 export class CreateBackupJobResponseDto {
   @Expose({ name: 'job_id' }) @Transform(({ value }) => value ?? '') jobId!: string

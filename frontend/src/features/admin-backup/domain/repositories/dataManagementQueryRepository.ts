@@ -4,7 +4,7 @@ import type { DataManagementConfig } from '@/features/admin-backup/domain/models
 import type { ListBackupJobsResponse } from '@/features/admin-backup/domain/models/listBackupJobsResponse'
 import type { ListS3ProfilesResponse } from '@/features/admin-backup/domain/models/listS3ProfilesResponse'
 import type { ListSourceProfilesResponse } from '@/features/admin-backup/domain/models/listSourceProfilesResponse'
-import type { SourceType } from '@/features/admin-backup/domain/models/sourceType'
+import type { SourceType } from '@/features/admin-backup/enums/sourceType'
 import type { ListBackupJobsRequest } from '@/features/admin-backup/data/requests_models/listBackupJobsRequest'
 
 export interface DataManagementQueryRepository {

@@ -1,4 +1,4 @@
-export type BackupStatus = 'pending' | 'running' | 'completed' | 'failed'
+import type { BackupStatus } from '@/features/admin-backup/enums/backupStatus'
 
 export class BackupRecord {
   id!: string

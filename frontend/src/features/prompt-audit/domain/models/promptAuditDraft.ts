@@ -1,4 +1,4 @@
-import type { PromptAuditMode } from './promptAuditConfig'
+import type { PromptAuditMode } from '@/features/prompt-audit/enums/promptAuditMode'
 import type { PromptAuditEndpointDraft } from './promptAuditEndpointDraft'
 
 export class PromptAuditDraft {

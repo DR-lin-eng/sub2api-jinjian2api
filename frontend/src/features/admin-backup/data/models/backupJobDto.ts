@@ -3,8 +3,8 @@ import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
 import { BackupJob } from '@/features/admin-backup/domain/models/backupJob'
 import { BackupArtifactInfoDto } from '@/features/admin-backup/data/models/backupArtifactInfoDto'
 import { BackupS3InfoDto } from '@/features/admin-backup/data/models/backupS3InfoDto'
-import type { BackupJobStatus } from '@/features/admin-backup/domain/models/backupJobStatus'
-import type { BackupType } from '@/features/admin-backup/domain/models/backupType'
+import type { BackupJobStatus } from '@/features/admin-backup/enums/backupJobStatus'
+import type { BackupType } from '@/features/admin-backup/enums/backupType'
 
 export class BackupJobDto {
   @Expose({ name: 'job_id' }) @Transform(({ value }) => value ?? '') jobId!: string

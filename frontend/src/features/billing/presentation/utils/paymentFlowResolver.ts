@@ -1,4 +1,4 @@
-import type { OrderType } from '@/features/admin-orders/domain/models/orderTypes'
+import type { OrderType } from '@/features/admin-orders/enums/orderTypes'
 import type { CreateOrderRequest } from '@/features/billing/data/requests_models/createOrderRequest'
 import type { CreateOrderResult } from '@/features/billing/domain/models/createOrderResult'
 import type { MethodLimit } from '@/features/billing/domain/models/methodLimit'

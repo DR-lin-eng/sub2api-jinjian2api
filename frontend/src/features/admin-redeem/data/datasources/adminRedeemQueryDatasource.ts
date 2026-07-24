@@ -1,7 +1,7 @@
 import { apiClient } from '@/core/networks/client'
 import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { RedeemCodeDto } from '@/features/admin-redeem/data/models/redeemCodeDto'
-import type { RedeemCodeType } from '@/features/admin-redeem/domain/models/redeemCode'
+import type { RedeemCodeType } from '@/features/admin-redeem/enums/redeemCodeType'
 
 export class AdminRedeemQueryDatasource {
   async list(

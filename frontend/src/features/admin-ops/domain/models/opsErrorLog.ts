@@ -1,5 +1,4 @@
-export type OpsErrorOwner = 'client' | 'provider' | 'platform' | string
-export type OpsErrorSource = 'client_request' | 'upstream_http' | 'gateway' | string
+import type { OpsErrorOwner, OpsErrorSource } from '@/features/admin-ops/enums/opsErrorEnums'
 
 export class OpsErrorLog {
   id!: number

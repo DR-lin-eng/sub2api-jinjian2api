@@ -1,4 +1,4 @@
-import type { ProxyProtocol } from '@/features/admin-proxies/domain/models/proxy'
+import type { ProxyProtocol } from '@/features/admin-proxies/enums/proxyProtocol'
 
 export interface BatchCreateProxyItem {
   protocol: ProxyProtocol

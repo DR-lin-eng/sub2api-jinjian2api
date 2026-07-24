@@ -3,7 +3,7 @@ import { reactive } from 'vue'
 import type { DataManagementQueryRepository } from '@/features/admin-backup/domain/repositories/dataManagementQueryRepository'
 import { dataManagementQueryRepository as defaultRepo } from '@/features/admin-backup/data/repositories/dataManagementQueryRepositoryImpl'
 import type { ListBackupJobsRequest } from '@/features/admin-backup/data/requests_models/listBackupJobsRequest'
-import type { SourceType } from '@/features/admin-backup/domain/models/sourceType'
+import type { SourceType } from '@/features/admin-backup/enums/sourceType'
 
 type TaskKey =
   | 'getAgentHealth'

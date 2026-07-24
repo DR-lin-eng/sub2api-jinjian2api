@@ -1,5 +1,5 @@
-import type { GroupPlatform } from './groupPlatform'
-import type { SubscriptionType } from './subscriptionType'
+import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
+import type { SubscriptionType } from '@/features/admin-groups/enums/subscriptionType'
 import type { OpenAIMessagesDispatchModelConfig } from './openAIMessagesDispatchModelConfig'
 
 export class Group {

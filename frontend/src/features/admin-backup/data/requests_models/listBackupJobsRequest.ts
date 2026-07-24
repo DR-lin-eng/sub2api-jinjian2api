@@ -1,5 +1,5 @@
-import type { BackupJobStatus } from '@/features/admin-backup/domain/models/backupJobStatus'
-import type { BackupType } from '@/features/admin-backup/domain/models/backupType'
+import type { BackupJobStatus } from '@/features/admin-backup/enums/backupJobStatus'
+import type { BackupType } from '@/features/admin-backup/enums/backupType'
 
 export interface ListBackupJobsRequest {
   page_size?: number

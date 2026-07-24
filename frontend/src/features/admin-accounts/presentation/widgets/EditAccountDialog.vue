@@ -2678,9 +2678,9 @@ import {
   splitModelMappingObject,
   isValidWildcardPattern
 } from '@/features/admin-accounts/presentation/composables/useModelWhitelist'
-import type { OpenAICompactMode } from '@/features/admin-accounts/domain/models/openAICompactMode'
-import type { OpenAIEndpointCapability } from '@/features/admin-accounts/domain/models/openAIEndpointCapability'
-import type { OpenAIResponsesMode } from '@/features/admin-accounts/domain/models/openAIResponsesMode'
+import type { OpenAICompactMode } from '@/features/admin-accounts/enums/openAICompactMode'
+import type { OpenAIEndpointCapability } from '@/features/admin-accounts/enums/openAIEndpointCapability'
+import type { OpenAIResponsesMode } from '@/features/admin-accounts/enums/openAIResponsesMode'
 import type { Account } from '@/features/admin-accounts/domain/models/account'
 import type { CheckMixedChannelResponse } from '@/features/admin-accounts/domain/models/checkMixedChannelResponse'
 import type { Proxy } from '@/features/admin-proxies/domain/models/proxy'

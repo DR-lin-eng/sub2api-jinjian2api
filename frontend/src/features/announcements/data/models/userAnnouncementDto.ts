@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
 import { UserAnnouncement } from '@/features/announcements/domain/models/userAnnouncement'
-import type { AnnouncementNotifyMode } from '@/features/announcements/domain/models/announcementNotifyMode'
+import type { AnnouncementNotifyMode } from '@/features/announcements/enums/announcementNotifyMode'
 
 export class UserAnnouncementDto {
   @Expose()

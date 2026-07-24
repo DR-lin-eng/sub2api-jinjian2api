@@ -2,7 +2,7 @@ import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
 import { DataManagementSourceProfile } from '@/features/admin-backup/domain/models/dataManagementSourceProfile'
 import { DataManagementSourceConfigDto } from '@/features/admin-backup/data/models/dataManagementSourceConfigDto'
-import type { SourceType } from '@/features/admin-backup/domain/models/sourceType'
+import type { SourceType } from '@/features/admin-backup/enums/sourceType'
 
 export class DataManagementSourceProfileDto {
   @Expose({ name: 'source_type' }) @Transform(({ value }) => value ?? 'postgres') sourceType!: SourceType

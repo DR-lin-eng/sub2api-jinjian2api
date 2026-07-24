@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
 import { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
-import type { OrderStatus, OrderType } from '@/features/admin-orders/domain/models/orderTypes'
+import type { OrderStatus, OrderType } from '@/features/admin-orders/enums/orderTypes'
 
 export class PaymentOrderDto {
   @Expose()

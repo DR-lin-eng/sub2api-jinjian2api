@@ -1,4 +1,4 @@
-export type RedeemCodeType = 'balance' | 'concurrency' | 'subscription' | 'invitation'
+import type { RedeemCodeType } from '@/features/admin-redeem/enums/redeemCodeType'
 
 export class RedeemCode {
   id!: number

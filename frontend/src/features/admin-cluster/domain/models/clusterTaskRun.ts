@@ -1,4 +1,4 @@
-import type { ClusterTaskStatus } from '@/features/admin-cluster/domain/models/clusterTaskStatus'
+import type { ClusterTaskStatus } from '@/features/admin-cluster/enums/clusterTaskStatus'
 
 export class ClusterTaskRun {
   id!: number

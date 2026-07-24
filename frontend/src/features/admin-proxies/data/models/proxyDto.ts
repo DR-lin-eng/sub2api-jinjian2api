@@ -1,7 +1,8 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
 import { Proxy } from '@/features/admin-proxies/domain/models/proxy'
-import type { ProxyProtocol, ProxyStatus, ProxyFallbackMode } from '@/features/admin-proxies/domain/models/proxy'
+import type { ProxyProtocol } from '@/features/admin-proxies/enums/proxyProtocol'
+import type { ProxyStatus, ProxyFallbackMode } from '@/features/admin-proxies/enums/proxyEnums'
 
 export class ProxyDto {
   @Expose()

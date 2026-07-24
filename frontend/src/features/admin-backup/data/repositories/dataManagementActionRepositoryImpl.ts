@@ -4,7 +4,7 @@ import type { DataManagementS3Profile } from '@/features/admin-backup/domain/mod
 import type { DataManagementSourceProfile } from '@/features/admin-backup/domain/models/dataManagementSourceProfile'
 import type { CreateBackupJobResponse } from '@/features/admin-backup/domain/models/createBackupJobResponse'
 import type { TestS3Response } from '@/features/admin-backup/domain/models/testS3Response'
-import type { SourceType } from '@/features/admin-backup/domain/models/sourceType'
+import type { SourceType } from '@/features/admin-backup/enums/sourceType'
 import type { DataManagementActionRepository } from '@/features/admin-backup/domain/repositories/dataManagementActionRepository'
 import type { UpdateDataManagementConfigRequest } from '@/features/admin-backup/data/requests_models/updateDataManagementConfigRequest'
 import type { TestS3Request } from '@/features/admin-backup/data/requests_models/testS3Request'

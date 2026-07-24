@@ -1,4 +1,4 @@
-export type OpsRequestKind = 'success' | 'error'
+import type { OpsRequestKind } from '@/features/admin-ops/enums/opsRequestKind'
 
 export class OpsRequestDetail {
   kind!: OpsRequestKind

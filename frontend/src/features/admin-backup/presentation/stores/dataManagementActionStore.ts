@@ -9,7 +9,7 @@ import type { UpdateSourceProfileRequest } from '@/features/admin-backup/data/re
 import type { CreateS3ProfileRequest } from '@/features/admin-backup/data/requests_models/createS3ProfileRequest'
 import type { UpdateS3ProfileRequest } from '@/features/admin-backup/data/requests_models/updateS3ProfileRequest'
 import type { CreateBackupJobRequest } from '@/features/admin-backup/data/requests_models/createBackupJobRequest'
-import type { SourceType } from '@/features/admin-backup/domain/models/sourceType'
+import type { SourceType } from '@/features/admin-backup/enums/sourceType'
 
 type TaskKey =
   | 'updateConfig'

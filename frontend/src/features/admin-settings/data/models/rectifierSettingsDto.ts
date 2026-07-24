@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
 import { RectifierSettings } from '@/features/admin-settings/domain/models/rectifierSettings'
-import type { ThinkingDisplayMode } from '@/features/admin-settings/domain/models/streamTimeoutSettings'
+import type { ThinkingDisplayMode } from '@/features/admin-settings/enums/thinkingDisplayMode'
 
 export class RectifierSettingsDto {
   @Expose() @Transform(({ value }) => value ?? false) enabled!: boolean

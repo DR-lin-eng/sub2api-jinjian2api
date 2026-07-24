@@ -1,8 +1,7 @@
 import type { PromptSnapshot } from './promptSnapshot'
 import type { PromptIssueSummary } from './promptIssueSummary'
 
-export type PromptDecision = 'pass' | 'flag' | 'critical'
-export type PromptRiskLevel = 'low' | 'medium' | 'high' | 'critical'
+import type { PromptDecision, PromptRiskLevel } from '@/features/prompt-audit/enums/promptAuditEnums'
 
 export class PromptAuditEvent {
   id!: number

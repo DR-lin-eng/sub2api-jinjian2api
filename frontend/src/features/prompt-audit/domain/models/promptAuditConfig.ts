@@ -1,6 +1,6 @@
 import type { PromptAuditEndpoint } from './promptAuditEndpoint'
 
-export type PromptAuditMode = 'off' | 'async_audit' | 'blocking'
+import type { PromptAuditMode } from '@/features/prompt-audit/enums/promptAuditMode'
 
 export class PromptAuditConfig {
   enabled!: boolean

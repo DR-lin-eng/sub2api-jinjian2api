@@ -1,4 +1,4 @@
-import type { AnnouncementNotifyMode } from './announcementNotifyMode'
+import type { AnnouncementNotifyMode } from '@/features/announcements/enums/announcementNotifyMode'
 
 export class UserAnnouncement {
   id!: number

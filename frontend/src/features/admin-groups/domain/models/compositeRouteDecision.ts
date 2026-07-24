@@ -1,6 +1,6 @@
-import type { CompositeRouteSource } from './compositeRouteSource'
-import type { CompositeRouteEndpoint } from './compositeRouteEndpoint'
-import type { GroupPlatform } from './groupPlatform'
+import type { CompositeRouteSource } from '@/features/admin-groups/enums/compositeRouteSource'
+import type { CompositeRouteEndpoint } from '@/features/admin-groups/enums/compositeRouteEndpoint'
+import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
 import type { CompositeModelRoute } from './compositeModelRoute'
 
 export class CompositeRouteDecision {

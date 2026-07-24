@@ -1,4 +1,6 @@
-export type ThinkingDisplayMode = 'off' | 'display_only' | 'force'
+import type { ThinkingDisplayMode } from '@/features/admin-settings/enums/thinkingDisplayMode'
+
+export { ThinkingDisplayMode }
 
 export class StreamTimeoutSettings {
   enabled!: boolean

@@ -15,7 +15,7 @@ import type {
   TestContentModerationAPIKeysResponse,
   KeywordBlockingMode,
   ModerationMode,
-} from '@/features/admin-risk-control/domain/models/adminRiskControl'
+} from '@/features/admin-risk-control/enums/riskControlEnums'
 
 // ── Re-export union types (same values, no mapping needed) ──────────────────
 export type { ModerationMode, KeywordBlockingMode, ContentModerationModelFilterType, ContentModerationAPIKeyStatusValue }

@@ -1,4 +1,4 @@
-import type { OrderStatus, OrderType } from './orderTypes'
+import type { OrderStatus, OrderType } from '@/features/admin-orders/enums/orderTypes'
 
 export class PaymentOrder {
   id!: number

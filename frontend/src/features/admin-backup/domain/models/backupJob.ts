@@ -1,7 +1,7 @@
 import type { BackupArtifactInfo } from '@/features/admin-backup/domain/models/backupArtifactInfo'
-import type { BackupJobStatus } from '@/features/admin-backup/domain/models/backupJobStatus'
+import type { BackupJobStatus } from '@/features/admin-backup/enums/backupJobStatus'
 import type { BackupS3Info } from '@/features/admin-backup/domain/models/backupS3Info'
-import type { BackupType } from '@/features/admin-backup/domain/models/backupType'
+import type { BackupType } from '@/features/admin-backup/enums/backupType'
 
 export class BackupJob {
   jobId!: string

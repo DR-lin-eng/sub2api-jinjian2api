@@ -263,7 +263,7 @@ import { useBillingQueryStore } from '@/features/billing/presentation/stores/bil
 import { extractApiErrorMessage, extractI18nErrorMessage } from '@/core/utils/apiError'
 import { isMobileDevice } from '@/core/utils/device'
 import { hasPeakRate, formatPeakRateWindow, serverTimezoneLabel, type PeakRateFields } from '@/core/utils/peak-rate'
-import type { OrderType } from '@/features/admin-orders/domain/models/orderTypes'
+import type { OrderType } from '@/features/admin-orders/enums/orderTypes'
 import { SubscriptionPlan } from '@/features/admin-orders/domain/models/subscriptionPlan'
 import type { CheckoutInfoResponse } from '@/features/billing/domain/models/checkoutInfoResponse'
 import type { CreateOrderResult } from '@/features/billing/domain/models/createOrderResult'

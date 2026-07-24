@@ -1,6 +1,5 @@
-export type ProxyProtocol = 'http' | 'https' | 'socks5' | 'socks5h'
-export type ProxyStatus = 'active' | 'inactive' | 'expired'
-export type ProxyFallbackMode = 'none' | 'proxy' | 'direct'
+import type { ProxyProtocol } from '@/features/admin-proxies/enums/proxyProtocol'
+import type { ProxyStatus, ProxyFallbackMode } from '@/features/admin-proxies/enums/proxyEnums'
 
 export class Proxy {
   id!: number

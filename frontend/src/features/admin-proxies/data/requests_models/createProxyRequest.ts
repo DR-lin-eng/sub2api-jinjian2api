@@ -1,4 +1,5 @@
-import type { ProxyProtocol, ProxyFallbackMode } from '@/features/admin-proxies/domain/models/proxy'
+import type { ProxyProtocol } from '@/features/admin-proxies/enums/proxyProtocol'
+import type { ProxyFallbackMode } from '@/features/admin-proxies/enums/proxyEnums'
 
 export interface CreateProxyRequest {
   name: string
