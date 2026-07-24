@@ -537,7 +537,7 @@ import IpGeoCell from '@/common/widgets/data/IpGeoCell.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import UsageDetailDialog from './UsageDetailDialog.vue'
 import { fetchBatch, getEntry } from '@/core/utils/ipGeoLookup'
-import type { Column } from '@/common/types/uiTypes'
+import type { Column } from '@/common/widgets/types'
 import type { AdminUsageLog } from '@/features/admin-usage/domain/models/adminUsageLog'
 
 interface Props {

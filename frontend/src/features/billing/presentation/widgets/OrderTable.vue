@@ -42,7 +42,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
-import type { Column } from '@/common/types/uiTypes'
+import type { Column } from '@/common/widgets/types'
 import DataTable from '@/common/widgets/data/DataTable.vue'
 import OrderStatusBadge from '@/features/billing/presentation/widgets/OrderStatusBadge.vue'
 import { currencySymbol } from '@/features/billing/presentation/utils/currencyFormatter'

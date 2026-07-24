@@ -238,7 +238,7 @@ import { BILLING_MODE_IMAGE, getBillingModeLabel } from '@/core/utils/billingMod
 import { calculateOutputTokensPerSecond } from '@/core/utils/usageMetrics'
 import { resolveUsageRequestType, requestTypeToLegacyStream } from '@/core/utils/usageRequestType'
 import type { UserErrorRequest } from '@/features/admin-ops/domain/models/userErrorTypes'
-import type { Column } from '@/common/types/uiTypes'
+import type { Column } from '@/common/widgets/types'
 import { COMMON_ERROR_STATUS_CODES } from '@/core/utils/errorBadges'
 import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 import type { EndpointStat } from '@/features/admin-dashboard/domain/models/endpointStat'

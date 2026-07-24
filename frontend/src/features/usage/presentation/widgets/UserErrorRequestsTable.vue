@@ -138,7 +138,7 @@ import {
   statusCodeBadgeClass,
 } from '@/core/utils/errorBadges'
 import type { UserErrorRequest } from '@/features/admin-ops/domain/models/userErrorRequest'
-import type { Column } from '@/common/types/uiTypes'
+import type { Column } from '@/common/widgets/types'
 
 const props = defineProps<{
   rows: UserErrorRequest[]

@@ -783,7 +783,7 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 const { t } = useI18n()
 import type { BatchUserUsageStats } from '@/features/admin-dashboard/presentation/api'
 import type { PlatformQuotaItem } from '@/features/admin-users/domain/models/platformQuotaItem'
-import type { Column } from '@/common/types/uiTypes'
+import type { Column } from '@/common/widgets/types'
 import type { SelectOption } from '@/common/widgets/forms/Select.vue'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'

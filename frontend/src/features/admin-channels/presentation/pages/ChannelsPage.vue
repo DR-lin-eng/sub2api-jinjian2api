@@ -641,7 +641,7 @@ import { useAdminSettings } from '@/features/admin-settings/presentation/composa
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
 import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
 import type { ChannelStatus, BillingModelSource } from '@/core/constants/channel'
-import type { Column } from '@/common/types/uiTypes'
+import type { Column } from '@/common/widgets/types'
 import { platformTextClass, platformBadgeLightClass } from '@/core/utils/platformColors'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'

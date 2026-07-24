@@ -74,7 +74,7 @@ import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { formatDateTime } from '@/core/utils/format'
-import type { Column } from '@/common/types/uiTypes'
+import type { Column } from '@/common/widgets/types'
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'

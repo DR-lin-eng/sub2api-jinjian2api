@@ -771,7 +771,7 @@ import { type BatchImageStatus, BatchImageJob } from '@/features/batch-image/dom
 import { BatchImageItem } from '@/features/batch-image/domain/models/batchImageItem'
 import type { ListBatchImageJobsRequest } from '@/features/batch-image/data/requests_models/listBatchImageJobsRequest'
 import type { BatchImageReferenceImage, BatchImageSubmitItem } from '@/features/batch-image/data/requests_models/submitBatchImageJobRequest'
-import type { Column } from '@/common/types/uiTypes'
+import type { Column } from '@/common/widgets/types'
 import type { ApiKey } from '@/features/keys/domain/models/apiKey'
 
 type BatchImageJobRow = Pick<BatchImageJob, 'id' | 'taskName' | 'parentBatchId' | 'status' | 'model' | 'provider' | 'itemCount' | 'successCount' | 'failCount' | 'estimatedCost' | 'holdAmount' | 'actualCost' | 'costSettled' | 'createdAt' | 'downloadedAt'> & {
