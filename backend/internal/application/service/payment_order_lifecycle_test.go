@@ -102,6 +102,18 @@ func (r *paymentOrderLifecycleRedeemRepo) GetByID(_ context.Context, id int64) (
 	return nil, ErrRedeemCodeNotFound
 }
 
+func (r *paymentOrderLifecycleRedeemRepo) GetByIDs(ctx context.Context, ids []int64) ([]RedeemCode, error) {
+	codes := make([]RedeemCode, 0, len(ids))
+	for _, id := range ids {
+		code, err := r.GetByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		codes = append(codes, *code)
+	}
+	return codes, nil
+}
+
 func (r *paymentOrderLifecycleRedeemRepo) GetByCode(_ context.Context, code string) (*RedeemCode, error) {
 	redeemCode, ok := r.codesByCode[code]
 	if !ok {

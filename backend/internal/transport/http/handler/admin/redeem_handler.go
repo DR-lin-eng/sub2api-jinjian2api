@@ -512,8 +512,14 @@ func (h *RedeemHandler) ExportGenerated(c *gin.Context) {
 		}
 	} else {
 		for i := range codes {
-			buf.WriteString(codes[i].Code)
-			buf.WriteByte('\n')
+			if _, err := buf.WriteString(codes[i].Code); err != nil {
+				response.InternalError(c, "Failed to export generated redeem codes: "+err.Error())
+				return
+			}
+			if err := buf.WriteByte('\n'); err != nil {
+				response.InternalError(c, "Failed to export generated redeem codes: "+err.Error())
+				return
+			}
 		}
 	}
 
