@@ -380,6 +380,7 @@ func (h *OpenAIGatewayHandler) recordForcedOpenAIImageChildUsage(
 			UpstreamEndpoint:   upstreamEndpoint,
 			UserAgent:          input.userAgent,
 			IPAddress:          input.clientIP,
+			SessionID:          input.sessionID,
 			RequestPayloadHash: input.requestHash,
 			APIKeyService:      h.apiKeyService,
 			QuotaPlatform:      input.quotaPlatform,
@@ -466,6 +467,7 @@ func (h *OpenAIGatewayHandler) handleForcedOpenAIImageResponses(
 		requestCtx:    c.Request.Context(),
 		userAgent:     c.GetHeader("User-Agent"),
 		clientIP:      ip.GetClientIP(c),
+		sessionID:     service.ExtractClientSessionID(c),
 		inbound:       GetInboundEndpoint(c),
 		quotaPlatform: service.QuotaPlatform(c.Request.Context(), apiKey),
 	}
@@ -662,6 +664,7 @@ func (h *OpenAIGatewayHandler) handleForcedOpenAIImageResponsesWebSocket(
 			requestCtx:    c.Request.Context(),
 			userAgent:     c.GetHeader("User-Agent"),
 			clientIP:      ip.GetClientIP(c),
+			sessionID:     service.ExtractClientSessionID(c),
 			inbound:       GetInboundEndpoint(c),
 			quotaPlatform: service.QuotaPlatform(c.Request.Context(), apiKey),
 		}

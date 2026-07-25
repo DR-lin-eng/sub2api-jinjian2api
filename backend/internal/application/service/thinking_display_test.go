@@ -17,6 +17,9 @@ func TestThinkingDisplayNeedsOptIn(t *testing.T) {
 		want    bool
 	}{
 		// display 默认 omitted 的模型族：必须显式补 summarized
+		{"opus-5", "claude-opus-5", true},
+		{"opus-5 Bedrock regional", "us.anthropic.claude-opus-5-v1", true},
+		{"opus-5 Vertex deployment", "claude-opus-5@20260725", true},
 		{"opus-4-8", "claude-opus-4-8", true},
 		{"opus-4-7", "claude-opus-4-7", true},
 		{"sonnet-5", "claude-sonnet-5", true},
@@ -82,6 +85,13 @@ func TestNormalizeAnthropicThinkingDisplay(t *testing.T) {
 		wantMax     int64  // 0 = 不校验
 	}{
 		// —— 免费档：已经在思考，只是摘要被隐藏 ——
+		{
+			name:  "opus-5 Bedrock enabled：改为 adaptive",
+			body:  `{"model":"claude-opus-5","max_tokens":8192,"thinking":{"type":"enabled","budget_tokens":4096}}`,
+			model: "us.anthropic.claude-opus-5-v1", mode: ThinkingDisplayModeDisplayOnly, stream: true,
+			applied: true, wantType: "adaptive", wantDisplay: "summarized",
+			wantBudget: "", wantMax: 8192,
+		},
 		{
 			name:  "adaptive 缺 display：补齐（零成本）",
 			body:  `{"model":"claude-opus-4-8","max_tokens":1024,"thinking":{"type":"adaptive"}}`,

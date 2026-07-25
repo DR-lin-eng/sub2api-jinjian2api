@@ -68,6 +68,7 @@ type openAIForcedImageRunInput struct {
 	requestCtx    context.Context
 	userAgent     string
 	clientIP      string
+	sessionID     string
 	inbound       string
 	quotaPlatform string
 }

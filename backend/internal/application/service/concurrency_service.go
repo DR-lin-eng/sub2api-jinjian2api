@@ -236,6 +236,7 @@ type ConcurrencyService struct {
 	standaloneRequestSlots atomic.Bool
 	localAPIKeySlots       localSlotRegistry
 	localUserSlots         localSlotRegistry
+	localLiveLeases        sync.Map // leaseID -> *localLiveLease
 
 	priorityAdmissionConfig atomic.Pointer[priorityAdmissionRuntimeConfig]
 	priorityPendingMu       sync.Mutex
@@ -264,6 +265,23 @@ type localRequestSlot struct {
 	waiting  atomic.Int64
 	lastUsed atomic.Int64
 	retired  atomic.Bool
+}
+
+type localLiveLease struct {
+	userRelease   func()
+	apiKeyRelease func()
+}
+
+func (l *localLiveLease) release() {
+	if l == nil {
+		return
+	}
+	if l.apiKeyRelease != nil {
+		l.apiKeyRelease()
+	}
+	if l.userRelease != nil {
+		l.userRelease()
+	}
 }
 
 type cachedAccountLoadBatch struct {
@@ -602,6 +620,15 @@ func (s *ConcurrencyService) GetAPIKeyConcurrencyBatch(ctx context.Context, apiK
 }
 
 func (s *ConcurrencyService) acquireStandaloneSlot(registry *localSlotRegistry, id int64, maxConcurrency int) (*AcquireResult, bool) {
+	return s.acquireStandaloneSlotWithAllowance(registry, id, maxConcurrency, 0)
+}
+
+func (s *ConcurrencyService) acquireStandaloneSlotWithAllowance(
+	registry *localSlotRegistry,
+	id int64,
+	maxConcurrency int,
+	allowance int,
+) (*AcquireResult, bool) {
 	for {
 		slot := registry.getOrCreate(id)
 		if slot == nil {
@@ -609,7 +636,16 @@ func (s *ConcurrencyService) acquireStandaloneSlot(registry *localSlotRegistry, 
 		}
 		for !slot.retired.Load() {
 			current := slot.active.Load()
-			if maxConcurrency > 0 && current >= int64(maxConcurrency) {
+			limit := int64(maxConcurrency)
+			if maxConcurrency > 0 && allowance > 0 {
+				maxInt := int64(^uint(0) >> 1)
+				if limit > maxInt-int64(allowance) {
+					limit = maxInt
+				} else {
+					limit += int64(allowance)
+				}
+			}
+			if maxConcurrency > 0 && current >= limit {
 				slot.lastUsed.Store(time.Now().UnixNano())
 				return rejectedAcquireResult, true
 			}

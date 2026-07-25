@@ -284,6 +284,8 @@ func (h *OpenAIGatewayHandler) recordCyberPolicyIfMarked(c *gin.Context, apiKey 
 		userAgent = c.GetHeader("User-Agent")
 		clientIPStr = strings.TrimSpace(ip.GetClientIP(c))
 	}
+	// Snapshot request-scoped data before the asynchronous writer starts.
+	sessionID := service.ExtractClientSessionID(c)
 	apiKeyPrefix := ""
 	if apiKey != nil {
 		apiKeyPrefix = keyPrefix(apiKey.Key, 8)
@@ -340,6 +342,7 @@ func (h *OpenAIGatewayHandler) recordCyberPolicyIfMarked(c *gin.Context, apiKey 
 				UpstreamEndpoint:   upstreamEndpoint,
 				UserAgent:          userAgent,
 				IPAddress:          clientIPStr,
+				SessionID:          sessionID,
 				RequestPayloadHash: requestPayloadHash,
 				APIKeyService:      apiKeySvc,
 				ChannelUsageFields: channelFields,

@@ -34,6 +34,7 @@ const (
 	// ordinary request slots, because idle ingress sessions do not hold a turn slot.
 	openAIWSIngressLeaseKeyPrefix  = "concurrency:openai_ws_ingress:api_key:"
 	openAIWSIngressLeaseTTLSeconds = 60
+	liveLeaseTTLSeconds            = 60
 	// 等待队列计数器格式: concurrency:wait:{userID}
 	waitQueueKeyPrefix = "concurrency:wait:"
 	// 账号级等待队列计数器格式: wait:account:{accountID}

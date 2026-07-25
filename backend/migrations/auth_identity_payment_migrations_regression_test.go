@@ -240,3 +240,16 @@ func TestMigration173AllowsCyberBlockedUsageRequestType(t *testing.T) {
 	require.Contains(t, sql, "ADD CONSTRAINT usage_logs_request_type_check")
 	require.Contains(t, sql, "CHECK (request_type IN (0, 1, 2, 3, 4)) NOT VALID")
 }
+
+func TestLiveUsageRequestTypeConstraintValidatesWithoutLongExclusiveLock(t *testing.T) {
+	allowContent, err := FS.ReadFile("188_allow_live_usage_request_type.sql")
+	require.NoError(t, err)
+	allowSQL := string(allowContent)
+	require.Contains(t, allowSQL, "CHECK (request_type >= 0 AND request_type <= 5)")
+	require.Contains(t, allowSQL, "NOT VALID")
+	require.NotContains(t, allowSQL, "VALIDATE CONSTRAINT")
+
+	validateContent, err := FS.ReadFile("197_validate_live_usage_request_type.sql")
+	require.NoError(t, err)
+	require.Contains(t, string(validateContent), "VALIDATE CONSTRAINT usage_logs_request_type_check")
+}

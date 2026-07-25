@@ -98,6 +98,66 @@ func (s *ConcurrencyCacheSuite) TestOpenAIWSIngressAPIKeySlot_ReapsCrashedLeaseW
 	require.Equal(s.T(), int64(2), count)
 }
 
+func (s *ConcurrencyCacheSuite) TestLiveLease_CountsTowardRegularAccountAndUserLimits() {
+	liveCache, ok := s.cache.(service.LiveConcurrencyCache)
+	require.True(s.T(), ok)
+	apiKeyCache := s.apiKeyConcurrencyCache()
+
+	accountID := int64(9101)
+	userID := int64(9102)
+	apiKeyID := int64(9103)
+	acquired, err := liveCache.AcquireLiveLease(
+		s.ctx,
+		accountID,
+		1,
+		userID,
+		1,
+		apiKeyID,
+		1,
+		"live-integration",
+		service.LiveConcurrencyReplacements{},
+	)
+	require.NoError(s.T(), err)
+	require.True(s.T(), acquired)
+
+	regularAccount, err := s.cache.AcquireAccountSlot(s.ctx, accountID, 1, "regular-account")
+	require.NoError(s.T(), err)
+	require.False(s.T(), regularAccount)
+	regularUser, err := s.cache.AcquireUserSlot(s.ctx, userID, 1, "regular-user")
+	require.NoError(s.T(), err)
+	require.False(s.T(), regularUser)
+	regularAPIKey, err := apiKeyCache.AcquireAPIKeySlot(s.ctx, apiKeyID, 1, "regular-api-key")
+	require.NoError(s.T(), err)
+	require.False(s.T(), regularAPIKey)
+	priorityAccount, err := s.rawCache.AcquirePriorityAccountSlot(s.ctx, service.PriorityAccountAdmissionRequest{
+		AccountID:      accountID,
+		MaxConcurrency: 1,
+		Tier:           service.RequestSchedulingTierNormal,
+		RequestID:      "priority-account",
+	})
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), service.PriorityAccountAdmissionRejected, priorityAccount)
+	priorityUser, err := s.rawCache.AcquirePriorityUserSlot(s.ctx, service.PriorityUserAdmissionRequest{
+		UserID:         userID,
+		MaxConcurrency: 1,
+		Tier:           service.RequestSchedulingTierNormal,
+		RequestID:      "priority-user",
+	})
+	require.NoError(s.T(), err)
+	require.Equal(s.T(), service.PriorityAccountAdmissionRejected, priorityUser)
+
+	refreshed, err := liveCache.RefreshLiveLease(s.ctx, accountID, userID, apiKeyID, "live-integration")
+	require.NoError(s.T(), err)
+	require.True(s.T(), refreshed)
+	require.NoError(s.T(), liveCache.ReleaseLiveLease(s.ctx, accountID, userID, apiKeyID, "live-integration"))
+	regularAccount, err = s.cache.AcquireAccountSlot(s.ctx, accountID, 1, "regular-account")
+	require.NoError(s.T(), err)
+	require.True(s.T(), regularAccount)
+	regularAPIKey, err = apiKeyCache.AcquireAPIKeySlot(s.ctx, apiKeyID, 1, "regular-api-key")
+	require.NoError(s.T(), err)
+	require.True(s.T(), regularAPIKey)
+}
+
 func (s *ConcurrencyCacheSuite) TestAccountSlot_AcquireAndRelease() {
 	accountID := int64(10)
 	reqID1, reqID2, reqID3 := "req1", "req2", "req3"

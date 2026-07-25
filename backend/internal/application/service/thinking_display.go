@@ -35,6 +35,7 @@ const (
 // Opus 4.6 / Sonnet 4.6 的 display 默认就是 "summarized"，无需补齐，故不在此列。
 // 更老的模型（Sonnet 4.5 / Haiku 4.5 / Opus 4.5 等）不认识 adaptive，更不能碰。
 var thinkingDisplayOptInPrefixes = []string{
+	"claude-opus-5",
 	"claude-opus-4-8",
 	"claude-opus-4-7",
 	"claude-sonnet-5",
@@ -47,7 +48,12 @@ var thinkingDisplayOptInPrefixes = []string{
 // 任何 "claude-opus-4" 级别的前缀匹配都会把两者混为一谈。
 func thinkingDisplayNeedsOptIn(model string) bool {
 	m := strings.ToLower(strings.TrimSpace(model))
-	m = strings.TrimPrefix(m, "anthropic.") // Bedrock 风格的 provider 前缀
+	// Bedrock model IDs can be either anthropic.claude-* or regional inference
+	// profiles such as us.anthropic.claude-*.
+	if providerIndex := strings.Index(m, "anthropic."); providerIndex == 0 ||
+		(providerIndex > 0 && m[providerIndex-1] == '.') {
+		m = m[providerIndex+len("anthropic."):]
+	}
 	for _, prefix := range thinkingDisplayOptInPrefixes {
 		if !strings.HasPrefix(m, prefix) {
 			continue

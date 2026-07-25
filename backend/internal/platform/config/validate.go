@@ -689,6 +689,9 @@ func (c *Config) Validate() error {
 	if c.Gateway.ConcurrencySlotTTLMinutes <= 0 {
 		return fmt.Errorf("gateway.concurrency_slot_ttl_minutes must be positive")
 	}
+	if c.Gateway.Live.MaxSessionDurationSeconds <= 0 {
+		c.Gateway.Live.MaxSessionDurationSeconds = 3600
+	}
 	if c.Gateway.StreamDataIntervalTimeout < 0 {
 		return fmt.Errorf("gateway.stream_data_interval_timeout must be non-negative")
 	}

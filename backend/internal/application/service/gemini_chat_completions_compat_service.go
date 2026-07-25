@@ -473,7 +473,7 @@ func geminiResponseToChatCompletions(
 	rawData []byte,
 	usageOverride *ClaudeUsage,
 ) (*apicompat.ChatCompletionsResponse, *ClaudeUsage, error) {
-	claudeRespMap, usage := convertGeminiToClaudeMessage(geminiResp, originalModel, rawData)
+	claudeRespMap, usage := convertGeminiToClaudeMessage(geminiResp, originalModel, rawData, true)
 	if usageOverride != nil && (usageOverride.InputTokens > 0 || usageOverride.OutputTokens > 0 || usageOverride.CacheReadInputTokens > 0) {
 		usage = usageOverride
 		if usageMap, ok := claudeRespMap["usage"].(map[string]any); ok {
@@ -597,6 +597,40 @@ func (s *GeminiMessagesCompatService) handleChatCompletionsStreamingResponseFrom
 		seenToolJSON = ""
 		return disconnected
 	}
+	emitTextDelta := func(delta string) bool {
+		if delta == "" {
+			return false
+		}
+		if openToolIndex >= 0 && closeOpenTool() {
+			return true
+		}
+		if openBlockType != "text" {
+			if closeOpenBlock() {
+				return true
+			}
+			idx := nextBlockIndex
+			nextBlockIndex++
+			openBlockIndex = idx
+			openBlockType = "text"
+			if emitAnthropicEvent(&apicompat.AnthropicStreamEvent{
+				Type:  "content_block_start",
+				Index: &idx,
+				ContentBlock: &apicompat.AnthropicContentBlock{
+					Type: "text",
+					Text: "",
+				},
+			}) {
+				return true
+			}
+		}
+		return emitAnthropicEvent(&apicompat.AnthropicStreamEvent{
+			Type: "content_block_delta",
+			Delta: &apicompat.AnthropicDelta{
+				Type: "text_delta",
+				Text: delta,
+			},
+		})
+	}
 
 	reader := bufio.NewReader(resp.Body)
 	for {
@@ -629,42 +663,15 @@ func (s *GeminiMessagesCompatService) handleChatCompletionsStreamingResponseFrom
 
 						for _, part := range extractGeminiParts(geminiResp) {
 							if text, ok := part["text"].(string); ok && text != "" {
-								if openToolIndex >= 0 {
-									if closeOpenTool() {
-										return &geminiStreamResult{usage: &usage, firstTokenMs: firstTokenMs}, nil
-									}
-								}
 								delta, newSeen := computeGeminiTextDelta(seenText, text)
 								seenText = newSeen
-								if delta == "" {
-									continue
+								if emitTextDelta(delta) {
+									return &geminiStreamResult{usage: &usage, firstTokenMs: firstTokenMs}, nil
 								}
-								if openBlockType != "text" {
-									if closeOpenBlock() {
-										return &geminiStreamResult{usage: &usage, firstTokenMs: firstTokenMs}, nil
-									}
-									idx := nextBlockIndex
-									nextBlockIndex++
-									openBlockIndex = idx
-									openBlockType = "text"
-									if emitAnthropicEvent(&apicompat.AnthropicStreamEvent{
-										Type:  "content_block_start",
-										Index: &idx,
-										ContentBlock: &apicompat.AnthropicContentBlock{
-											Type: "text",
-											Text: "",
-										},
-									}) {
-										return &geminiStreamResult{usage: &usage, firstTokenMs: firstTokenMs}, nil
-									}
-								}
-								if emitAnthropicEvent(&apicompat.AnthropicStreamEvent{
-									Type: "content_block_delta",
-									Delta: &apicompat.AnthropicDelta{
-										Type: "text_delta",
-										Text: delta,
-									},
-								}) {
+								continue
+							}
+							if inlineData, ok := part["inlineData"].(map[string]any); ok {
+								if markdown, valid := geminiInlineImageMarkdown(inlineData); valid && emitTextDelta(markdown) {
 									return &geminiStreamResult{usage: &usage, firstTokenMs: firstTokenMs}, nil
 								}
 								continue

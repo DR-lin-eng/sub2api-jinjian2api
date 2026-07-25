@@ -12,6 +12,7 @@ import (
 	"time"
 
 	sqlmock "github.com/DATA-DOG/go-sqlmock"
+	"github.com/Wei-Shaw/sub2api/migrations"
 	"github.com/stretchr/testify/require"
 )
 
@@ -104,12 +105,26 @@ func TestMigrationChecksumCompatibilityRules_CoverEditedUpgradeCompatibilityMigr
 		"118_wechat_dual_mode_and_auth_source_defaults.sql",
 		"120_enforce_payment_orders_out_trade_no_unique_notx.sql",
 		"123_fix_legacy_auth_source_grant_on_signup_defaults.sql",
+		"188_allow_live_usage_request_type.sql",
 	} {
 		rule, ok := migrationChecksumCompatibilityRules[name]
 		require.Truef(t, ok, "missing compatibility rule for %s", name)
 		require.NotEmpty(t, rule.fileChecksum)
 		require.NotEmpty(t, rule.acceptedDBChecksum)
 	}
+}
+
+func TestMigrationChecksumCompatibilityRules_AcceptUpstreamLiveConstraint(t *testing.T) {
+	const (
+		name             = "188_allow_live_usage_request_type.sql"
+		upstreamChecksum = "0233dba07a75bd9c740402a64e3af75c2a3884dfc8c4b63145df115e716fd35e"
+	)
+
+	content, err := migrations.FS.ReadFile(name)
+	require.NoError(t, err)
+	fileChecksum := migrationChecksum(string(content))
+	require.Equal(t, migrationChecksumCompatibilityRules[name].fileChecksum, fileChecksum)
+	require.True(t, isMigrationChecksumCompatible(name, upstreamChecksum, fileChecksum))
 }
 
 func TestEnsureAtlasBaselineAligned(t *testing.T) {

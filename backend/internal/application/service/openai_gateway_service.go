@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/platform/config"
+	"github.com/Wei-Shaw/sub2api/internal/platform/liveattestation"
 	"github.com/Wei-Shaw/sub2api/internal/shared/ip"
 	"github.com/Wei-Shaw/sub2api/internal/shared/logger"
 	"github.com/Wei-Shaw/sub2api/internal/shared/openai"
@@ -435,6 +436,8 @@ type OpenAIGatewayService struct {
 	balanceNotifyService  *BalanceNotifyService
 	settingService        *SettingService
 	userPlatformQuotaRepo UserPlatformQuotaRepository
+	liveAttestation       liveattestation.Provider
+	liveAttestationCipher SecretEncryptor
 
 	openaiWSPoolOnce              sync.Once
 	openaiWSStateStoreOnce        sync.Once
@@ -530,6 +533,8 @@ func NewOpenAIGatewayService(
 		balanceNotifyService:    balanceNotifyService,
 		settingService:          settingService,
 		userPlatformQuotaRepo:   userPlatformQuotaRepo,
+		liveAttestation:         liveattestation.NewProvider(),
+		liveAttestationCipher:   newLiveAttestationCipher(cfg),
 		responseHeaderFilter:    compileResponseHeaderFilter(cfg),
 		codexSnapshotThrottle:   newAccountWriteThrottle(openAICodexSnapshotPersistMinInterval),
 		openaiModelTransient:    newOpenAIAccountModelTransientState(openAIModelTransientDefaultMax),

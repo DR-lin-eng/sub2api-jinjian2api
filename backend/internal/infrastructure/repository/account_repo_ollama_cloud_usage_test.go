@@ -195,13 +195,15 @@ func TestListDueOllamaCloudUsageAccountsFiltersOrdersAndLimits(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = db.Close() })
 	now := time.Date(2026, time.July, 22, 12, 0, 0, 0, time.UTC)
+	debounce := time.Minute
+	maxWait := time.Hour
 	var capturedSQL string
-	mock.ExpectQuery("WITH RECURSIVE legacy_candidates AS").
-		WithArgs(now.Unix(), 20).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}))
+	mock.ExpectQuery("WITH configured AS").
+		WithArgs(now.UTC(), debounce.Seconds(), maxWait.Seconds(), 20, service.OllamaCloudUsageMinFetchInterval.Seconds()).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "group_last_used_at"}))
 	repo := newAccountRepositoryWithSQL(nil, captureQuerySQL{db: db, captured: &capturedSQL}, nil)
 
-	accounts, err := repo.ListDueOllamaCloudUsageAccounts(context.Background(), now, 20)
+	accounts, err := repo.ListDueOllamaCloudUsageAccounts(context.Background(), now, debounce, maxWait, 20)
 
 	require.NoError(t, err)
 	require.Empty(t, accounts)
@@ -214,22 +216,36 @@ func TestListDueOllamaCloudUsageAccountsFiltersOrdersAndLimits(t *testing.T) {
 		ollamaCloudBaseURLMatchesSQL("credentials ->> 'base_url'"),
 		"jsonb_typeof(extra -> 'ollama_cloud_usage_session') = 'string'",
 		`extra @> '{"ollama_cloud_usage_auto_refresh": true}'::jsonb`,
+		"configured AS",
+		"eligible AS",
 		"next_refresh_unix",
-		"parsed_next_refresh_at::timestamptz <= to_timestamp($1)",
-		"(extra #>> '{ollama_cloud_usage_snapshot,next_refresh_unix}')::numeric <= $1",
 		"trunc((extra #>> '{ollama_cloud_usage_snapshot,next_refresh_unix}')::numeric)",
 		"BETWEEN 0 AND 9223372036854775807",
+		"WHEN next_refresh_unix BETWEEN 0 AND 253402300799",
+		"MAX(last_used_at) OVER ( PARTITION BY credentials ->> 'api_key' ) AS group_last_used_at",
 		"SELECT DISTINCT ON (api_key)",
-		"FROM legacy_grouped",
-		"steady_candidates AS NOT MATERIALIZED",
-		"JOIN LATERAL",
-		"steady.seen_api_keys || candidate.api_key",
-		"LIMIT $2",
+		"FROM due_candidates",
+		"LIMIT $4",
+		"make_interval(secs => $2::double precision)",
+		"make_interval(secs => $3::double precision)",
+		// Minimum interval floor between successful fetches.
+		"make_interval(secs => $5::double precision)",
+		// The parser validates calendar bounds before the direct cast so invalid
+		// stored dates fail open without invoking jsonpath for every candidate.
+		"substring(fetched_at, 1, 4)::integer",
+		"substring(fetched_at, 9, 2)::integer BETWEEN 1",
+		"THEN fetched_at::timestamptz",
+		"group_last_used_at > parsed_fetched_at::timestamptz",
+		"group_last_used_at > parsed_last_attempt_at::timestamptz",
+		"$1 >= activity_due_at",
+		"COALESCE(parsed_next_refresh_at, '-infinity'::timestamptz)",
+		"ORDER BY due_class, due_at NULLS FIRST, id",
 	} {
 		require.Contains(t, normalized, clause)
 	}
 	require.NotContains(t, normalized, "row_number()")
-	require.NotContains(t, normalized, "PARTITION BY")
+	require.NotContains(t, normalized, "CROSS JOIN LATERAL")
+	require.NotContains(t, normalized, "jsonb_path_query_first_tz")
 	require.NotContains(t, normalized, "~*")
 	require.NoError(t, mock.ExpectationsWereMet())
 }

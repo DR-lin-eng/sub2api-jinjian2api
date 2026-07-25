@@ -1076,7 +1076,7 @@ func (s *GeminiMessagesCompatService) Forward(ctx context.Context, c *gin.Contex
 				return nil, s.writeClaudeError(c, http.StatusBadGateway, "upstream_error", "Failed to read upstream stream")
 			}
 			collectedBytes, _ := json.Marshal(collected)
-			claudeResp, usageObj2 := convertGeminiToClaudeMessage(collected, originalModel, collectedBytes)
+			claudeResp, usageObj2 := convertGeminiToClaudeMessage(collected, originalModel, collectedBytes, false)
 			c.JSON(http.StatusOK, claudeResp)
 			usage = usageObj2
 			if usageObj != nil && (usageObj.InputTokens > 0 || usageObj.OutputTokens > 0) {
@@ -1973,7 +1973,7 @@ func (s *GeminiMessagesCompatService) handleNonStreamingResponse(c *gin.Context,
 		return nil, s.writeClaudeError(c, http.StatusBadGateway, "upstream_error", "Failed to parse upstream response")
 	}
 
-	claudeResp, usage := convertGeminiToClaudeMessage(geminiResp, originalModel, unwrappedBody)
+	claudeResp, usage := convertGeminiToClaudeMessage(geminiResp, originalModel, unwrappedBody, false)
 	c.JSON(http.StatusOK, claudeResp)
 
 	return usage, nil
@@ -2723,7 +2723,7 @@ func unwrapGeminiResponse(raw []byte) ([]byte, error) {
 	return raw, nil
 }
 
-func convertGeminiToClaudeMessage(geminiResp map[string]any, originalModel string, rawData []byte) (map[string]any, *ClaudeUsage) {
+func convertGeminiToClaudeMessage(geminiResp map[string]any, originalModel string, rawData []byte, includeInlineData bool) (map[string]any, *ClaudeUsage) {
 	usage := extractGeminiUsage(rawData)
 	if usage == nil {
 		usage = &ClaudeUsage{}
@@ -2745,6 +2745,14 @@ func convertGeminiToClaudeMessage(geminiResp map[string]any, originalModel strin
 								"type": "text",
 								"text": text,
 							})
+						}
+						if inlineData, ok := pm["inlineData"].(map[string]any); includeInlineData && ok {
+							if markdown, valid := geminiInlineImageMarkdown(inlineData); valid {
+								contentBlocks = append(contentBlocks, map[string]any{
+									"type": "text",
+									"text": markdown,
+								})
+							}
 						}
 						if fc, ok := pm["functionCall"].(map[string]any); ok {
 							name, _ := fc["name"].(string)
@@ -2786,6 +2794,54 @@ func convertGeminiToClaudeMessage(geminiResp map[string]any, originalModel strin
 	}
 
 	return resp, usage
+}
+
+func isGeminiInlineImageMIMEType(mimeType string) bool {
+	switch mimeType {
+	case "image/gif", "image/jpeg", "image/png", "image/webp":
+		return true
+	default:
+		return false
+	}
+}
+
+func geminiInlineImageMarkdown(inlineData map[string]any) (string, bool) {
+	mimeType, _ := inlineData["mimeType"].(string)
+	data, _ := inlineData["data"].(string)
+	if !isGeminiInlineImageMIMEType(mimeType) || !isValidBase64(data) {
+		return "", false
+	}
+	return fmt.Sprintf("![image](data:%s;base64,%s)", mimeType, data), true
+}
+
+func isValidBase64(data string) bool {
+	if data == "" || len(data)%4 != 0 {
+		return false
+	}
+	padding := 0
+	for i := 0; i < len(data); i++ {
+		c := data[i]
+		if c == '=' {
+			padding++
+			if padding > 2 || i < len(data)-2 {
+				return false
+			}
+			continue
+		}
+		if padding > 0 || !isGeminiBase64Alphabet(c) {
+			return false
+		}
+	}
+	return true
+}
+
+func isGeminiBase64Alphabet(c byte) bool {
+	switch {
+	case c >= 'A' && c <= 'Z', c >= 'a' && c <= 'z', c >= '0' && c <= '9', c == '+', c == '/':
+		return true
+	default:
+		return false
+	}
 }
 
 func extractGeminiUsage(data []byte) *ClaudeUsage {

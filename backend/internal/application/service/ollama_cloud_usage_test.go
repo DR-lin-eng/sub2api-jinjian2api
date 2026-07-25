@@ -200,7 +200,7 @@ func applyOllamaUsageTestManagedExtra(account, source *Account) {
 	}
 }
 
-func (r *ollamaUsageTestRepo) ListDueOllamaCloudUsageAccounts(_ context.Context, _ time.Time, limit int) ([]Account, error) {
+func (r *ollamaUsageTestRepo) ListDueOllamaCloudUsageAccounts(_ context.Context, _ time.Time, _, _ time.Duration, limit int) ([]Account, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if len(r.due) > 0 {
@@ -328,15 +328,42 @@ func TestOllamaCloudUsageSettingsDefaultOffAndValidation(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, settings.Enabled)
 	require.Equal(t, 60, settings.IntervalMinutes)
+	require.Equal(t, 1, settings.DebounceMinutes)
 
-	err = settingsService.SetOllamaCloudUsageSettings(context.Background(), &OllamaCloudUsageSettings{Enabled: true, IntervalMinutes: 14})
+	err = settingsService.SetOllamaCloudUsageSettings(context.Background(), &OllamaCloudUsageSettings{Enabled: true, IntervalMinutes: 14, DebounceMinutes: 1})
 	require.Error(t, err)
-	err = settingsService.SetOllamaCloudUsageSettings(context.Background(), &OllamaCloudUsageSettings{Enabled: true, IntervalMinutes: 90})
+	err = settingsService.SetOllamaCloudUsageSettings(context.Background(), &OllamaCloudUsageSettings{Enabled: true, IntervalMinutes: 90, DebounceMinutes: 61})
+	require.Error(t, err)
+	// DebounceMinutes=0 (legacy omit) defaults to 1 on write.
+	err = settingsService.SetOllamaCloudUsageSettings(context.Background(), &OllamaCloudUsageSettings{Enabled: true, IntervalMinutes: 90, DebounceMinutes: 0})
+	require.NoError(t, err)
+	settings, err = settingsService.GetOllamaCloudUsageSettings(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, 1, settings.DebounceMinutes)
+	err = settingsService.SetOllamaCloudUsageSettings(context.Background(), &OllamaCloudUsageSettings{Enabled: true, IntervalMinutes: 90, DebounceMinutes: 2})
 	require.NoError(t, err)
 	settings, err = settingsService.GetOllamaCloudUsageSettings(context.Background())
 	require.NoError(t, err)
 	require.True(t, settings.Enabled)
 	require.Equal(t, 90, settings.IntervalMinutes)
+	require.Equal(t, 2, settings.DebounceMinutes)
+
+	// debounce >= interval would make the debounce term unreachable in
+	// min(lastUsed+debounce, fetchedAt+maxWait), silently ignoring the operator's
+	// setting, so it is rejected rather than accepted and dropped.
+	err = settingsService.SetOllamaCloudUsageSettings(context.Background(), &OllamaCloudUsageSettings{Enabled: true, IntervalMinutes: 15, DebounceMinutes: 15})
+	require.Error(t, err, "debounce equal to interval must be rejected")
+	err = settingsService.SetOllamaCloudUsageSettings(context.Background(), &OllamaCloudUsageSettings{Enabled: true, IntervalMinutes: 15, DebounceMinutes: 60})
+	require.Error(t, err, "debounce greater than interval must be rejected")
+	err = settingsService.SetOllamaCloudUsageSettings(context.Background(), &OllamaCloudUsageSettings{Enabled: true, IntervalMinutes: 16, DebounceMinutes: 15})
+	require.NoError(t, err, "debounce below interval stays valid")
+
+	// Legacy JSON without debounce_minutes defaults to 1.
+	repo.values[SettingKeyOllamaCloudUsageSettings] = `{"enabled":true,"interval_minutes":45}`
+	settings, err = settingsService.GetOllamaCloudUsageSettings(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, 45, settings.IntervalMinutes)
+	require.Equal(t, 1, settings.DebounceMinutes)
 }
 
 func TestOllamaCloudUsageRunnerSettingsCacheBoundsDisabledReadsAndReturnsCopies(t *testing.T) {

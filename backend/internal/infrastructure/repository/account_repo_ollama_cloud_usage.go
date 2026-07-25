@@ -366,185 +366,191 @@ func canonicalJSON(raw string) string {
 	return string(encoded)
 }
 
-// ListDueOllamaCloudUsageAccounts returns at most one due representative per
-// exact API key before hydration. New snapshots take the indexed Unix path;
-// only legacy or malformed snapshots pay the RFC3339 compatibility cost.
-func (r *accountRepository) ListDueOllamaCloudUsageAccounts(ctx context.Context, now time.Time, limit int) ([]service.Account, error) {
+// ollamaCloudUsageParseRFC3339SQL returns an exception-free RFC3339(/Nano)
+// parser for a snapshot timestamp expression. PostgreSQL's direct cast handles
+// Z, offsets, and nanoseconds efficiently, but it aborts the whole query for an
+// impossible date. Validate both the shape and Gregorian day range first so
+// malformed stored values still fail open to NULL without the much slower
+// per-row jsonpath datetime parser used by the original upstream query.
+func ollamaCloudUsageParseRFC3339SQL(expression string) string {
+	year := `substring(` + expression + `, 1, 4)::integer`
+	month := `substring(` + expression + `, 6, 2)::integer`
+	day := `substring(` + expression + `, 9, 2)::integer`
+	maxDay := `CASE ` + month + `
+		WHEN 2 THEN CASE
+			WHEN (` + year + ` % 400 = 0)
+				OR (` + year + ` % 4 = 0 AND ` + year + ` % 100 <> 0)
+			THEN 29 ELSE 28 END
+		WHEN 4 THEN 30
+		WHEN 6 THEN 30
+		WHEN 9 THEN 30
+		WHEN 11 THEN 30
+		ELSE 31
+	END`
+	return `CASE
+		WHEN ` + expression + ` IS NULL THEN NULL
+		WHEN ` + expression + ` ~ '^[0-9]{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[0-1])T([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\.[0-9]+)?(Z|[+-](0[0-9]|1[0-9]|2[0-3]):[0-5][0-9])$'
+			AND ` + year + ` BETWEEN 1 AND 9999
+			AND ` + day + ` BETWEEN 1 AND (` + maxDay + `)
+		THEN ` + expression + `::timestamptz
+		ELSE NULL
+	END`
+}
+
+// ListDueOllamaCloudUsageAccounts returns at most one truly-due activity-driven
+// candidate per exact API key. Due timing (debounce, max-wait, failure backoff)
+// is evaluated in SQL before LIMIT so non-due active groups cannot starve due ones.
+// Account.LastUsedAt is stamped with the group MAX(last_used_at) for a service
+// pure-function recheck against races between list and refresh.
+//
+// Rules mirror service.ollamaCloudUsageAutoRefreshDueAt (keep both in sync):
+//   - missing/invalid snapshot or times → fail-open first due
+//   - success: activity after fetched_at;
+//     due_at = GREATEST(LEAST(last_used+debounce, fetched+maxWait), fetched+minFetchInterval)
+//   - failed/unauthorized: activity after last_attempt; activity_due = LEAST(...);
+//     final due_at is not earlier than a valid next_refresh_at (invalid/missing fail-open)
+func (r *accountRepository) ListDueOllamaCloudUsageAccounts(
+	ctx context.Context,
+	now time.Time,
+	debounce, maxWait time.Duration,
+	limit int,
+) ([]service.Account, error) {
 	if limit <= 0 {
 		return []service.Account{}, nil
 	}
 	if r == nil || r.sql == nil {
 		return nil, errors.New("account repository SQL executor not configured")
 	}
+	if debounce <= 0 {
+		debounce = time.Minute
+	}
+	if maxWait <= 0 {
+		maxWait = time.Hour
+	}
+	debounceSeconds := debounce.Seconds()
+	maxWaitSeconds := maxWait.Seconds()
+	minFetchIntervalSeconds := service.OllamaCloudUsageMinFetchInterval.Seconds()
 	rows, err := r.sql.QueryContext(ctx, `
-		WITH RECURSIVE legacy_candidates AS MATERIALIZED (
-			SELECT
-				id,
-				credentials ->> 'api_key' AS api_key,
-				extra #>> '{ollama_cloud_usage_snapshot,status}' AS snapshot_status,
-				extra #>> '{ollama_cloud_usage_snapshot,next_refresh_at}' AS next_refresh_at
+		WITH configured AS (
+			SELECT id, status, credentials ->> 'api_key' AS api_key, extra,
+				MAX(last_used_at) OVER (
+					PARTITION BY credentials ->> 'api_key'
+				) AS group_last_used_at
 			FROM accounts
 			WHERE deleted_at IS NULL
-				AND status = 'active'
 				AND `+ollamaCloudUsageEligibleSQL+`
 				AND jsonb_typeof(extra -> 'ollama_cloud_usage_session') = 'string'
-				AND extra @> '{"ollama_cloud_usage_auto_refresh": true}'::jsonb
-				AND (
-					jsonb_typeof(extra #> '{ollama_cloud_usage_snapshot,next_refresh_unix}') = 'number'
-					AND (extra #>> '{ollama_cloud_usage_snapshot,next_refresh_unix}')::numeric =
-						trunc((extra #>> '{ollama_cloud_usage_snapshot,next_refresh_unix}')::numeric)
-					AND (extra #>> '{ollama_cloud_usage_snapshot,next_refresh_unix}')::numeric
-						BETWEEN 0 AND 9223372036854775807
-					AND extra #>> '{ollama_cloud_usage_snapshot,status}' IN ('ok', 'unauthorized', 'failed')
-				) IS NOT TRUE
-		), legacy_parsed AS MATERIALIZED (
-			SELECT
-				id,
-				api_key,
-				snapshot_status,
-				next_refresh_at,
-				next_refresh_at ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$' AS rfc3339_shape,
-				jsonb_path_query_first_tz(
-					jsonb_build_object(
-						'value',
-						replace(
-							regexp_replace(
-								regexp_replace(next_refresh_at, '(\.[0-9]{6})[0-9]+(Z|[+-])', '\1\2'),
-								'Z$',
-								'+00:00'
-							),
-							'T',
-							' '
-						)
-					),
-					'$.value.datetime()',
-					'{}'::jsonb,
-					true
-				) #>> '{}' AS parsed_next_refresh_at
-			FROM legacy_candidates
-		), legacy_due AS MATERIALIZED (
-			SELECT
-				id,
-				api_key,
+		), eligible AS (
+			SELECT id, api_key,
+				extra -> 'ollama_cloud_usage_snapshot' AS snapshot,
 				CASE
-					WHEN snapshot_status NOT IN ('ok', 'unauthorized', 'failed')
-						OR snapshot_status IS NULL
-						OR next_refresh_at IS NULL
-						OR NOT rfc3339_shape
-						OR parsed_next_refresh_at IS NULL
-					THEN 0
-					ELSE 1
-				END AS legacy_priority,
-				CASE
-					WHEN rfc3339_shape AND parsed_next_refresh_at IS NOT NULL
-					THEN EXTRACT(EPOCH FROM parsed_next_refresh_at::timestamptz)
-				END AS next_refresh_unix
-			FROM legacy_parsed
-			WHERE snapshot_status NOT IN ('ok', 'unauthorized', 'failed')
-				OR snapshot_status IS NULL
-				OR next_refresh_at IS NULL
-				OR NOT rfc3339_shape
-				OR parsed_next_refresh_at IS NULL
-				OR parsed_next_refresh_at::timestamptz <= to_timestamp($1)
-		), legacy_grouped AS (
-			SELECT DISTINCT ON (api_key)
-				id,
-				api_key,
-				0 AS queue_class,
-				legacy_priority,
-				next_refresh_unix
-			FROM legacy_due
-			ORDER BY api_key, legacy_priority, next_refresh_unix NULLS FIRST, id
-		), legacy AS (
-			SELECT *
-			FROM legacy_grouped
-			ORDER BY legacy_priority, next_refresh_unix NULLS FIRST, id
-			LIMIT $2
-		), steady_candidates AS NOT MATERIALIZED (
-			SELECT
-				id,
-				credentials ->> 'api_key' AS api_key,
-				(extra #>> '{ollama_cloud_usage_snapshot,next_refresh_unix}')::numeric AS next_refresh_unix
-			FROM accounts
-			WHERE deleted_at IS NULL
-				AND status = 'active'
-				AND `+ollamaCloudUsageEligibleSQL+`
-				AND jsonb_typeof(extra -> 'ollama_cloud_usage_session') = 'string'
+					WHEN jsonb_typeof(extra #> '{ollama_cloud_usage_snapshot,next_refresh_unix}') = 'number'
+						AND (extra #>> '{ollama_cloud_usage_snapshot,next_refresh_unix}')::numeric =
+							trunc((extra #>> '{ollama_cloud_usage_snapshot,next_refresh_unix}')::numeric)
+						AND (extra #>> '{ollama_cloud_usage_snapshot,next_refresh_unix}')::numeric
+							BETWEEN 0 AND 9223372036854775807
+					THEN (extra #>> '{ollama_cloud_usage_snapshot,next_refresh_unix}')::numeric
+				END AS next_refresh_unix,
+				group_last_used_at
+			FROM configured
+			WHERE status = 'active'
 				AND extra @> '{"ollama_cloud_usage_auto_refresh": true}'::jsonb
-				AND jsonb_typeof(extra #> '{ollama_cloud_usage_snapshot,next_refresh_unix}') = 'number'
-				AND (extra #>> '{ollama_cloud_usage_snapshot,next_refresh_unix}')::numeric =
-					trunc((extra #>> '{ollama_cloud_usage_snapshot,next_refresh_unix}')::numeric)
-				AND (extra #>> '{ollama_cloud_usage_snapshot,next_refresh_unix}')::numeric
-					BETWEEN 0 AND 9223372036854775807
-				AND extra #>> '{ollama_cloud_usage_snapshot,status}' IN ('ok', 'unauthorized', 'failed')
-				AND (extra #>> '{ollama_cloud_usage_snapshot,next_refresh_unix}')::numeric <= $1
-		), steady AS (
-			SELECT
-				seed.id,
-				seed.api_key,
-				1 AS queue_class,
-				0 AS legacy_priority,
-				seed.next_refresh_unix,
-				ARRAY[seed.api_key]::text[] AS seen_api_keys,
-				1 AS selected_count
-			FROM (
-				SELECT id, api_key, next_refresh_unix
-				FROM steady_candidates
-				WHERE NOT EXISTS (
-					SELECT 1
-					FROM legacy_grouped
-					WHERE legacy_grouped.api_key = steady_candidates.api_key
-				)
-				ORDER BY next_refresh_unix, id
-				LIMIT 1
-			) AS seed
-
-			UNION ALL
-
-			SELECT
-				candidate.id,
-				candidate.api_key,
-				1 AS queue_class,
-				0 AS legacy_priority,
-				candidate.next_refresh_unix,
-				steady.seen_api_keys || candidate.api_key,
-				steady.selected_count + 1
-			FROM steady
-			JOIN LATERAL (
-				SELECT id, api_key, next_refresh_unix
-				FROM steady_candidates
-				WHERE (next_refresh_unix, id) > (steady.next_refresh_unix, steady.id)
-					AND NOT (api_key = ANY(steady.seen_api_keys))
-					AND NOT EXISTS (
-						SELECT 1
-						FROM legacy_grouped
-						WHERE legacy_grouped.api_key = steady_candidates.api_key
+		), joined AS (
+			SELECT e.id, e.api_key, e.snapshot, e.next_refresh_unix, e.group_last_used_at,
+				e.snapshot #>> '{status}' AS status,
+				e.snapshot #>> '{fetched_at}' AS fetched_at,
+				e.snapshot #>> '{last_attempt_at}' AS last_attempt_at,
+				e.snapshot #>> '{next_refresh_at}' AS next_refresh_at
+			FROM eligible e
+		), parsed AS (
+			SELECT id, api_key, snapshot, group_last_used_at, status,
+				CASE WHEN status = 'ok'
+					THEN `+ollamaCloudUsageParseRFC3339SQL("fetched_at")+`
+				END AS parsed_fetched_at,
+				CASE WHEN status IN ('failed', 'unauthorized')
+					THEN `+ollamaCloudUsageParseRFC3339SQL("last_attempt_at")+`
+				END AS parsed_last_attempt_at,
+				CASE WHEN status IN ('failed', 'unauthorized') THEN
+					CASE
+						WHEN next_refresh_unix BETWEEN 0 AND 253402300799
+							THEN to_timestamp(next_refresh_unix::double precision)
+						ELSE (`+ollamaCloudUsageParseRFC3339SQL("next_refresh_at")+`)::timestamptz
+					END
+				END AS parsed_next_refresh_at
+			FROM joined
+			OFFSET 0
+		), timed AS (
+			SELECT *,
+				CASE
+					WHEN status = 'ok'
+						AND parsed_fetched_at IS NOT NULL
+						AND group_last_used_at IS NOT NULL
+						AND group_last_used_at > parsed_fetched_at::timestamptz
+					THEN GREATEST(
+						LEAST(
+							group_last_used_at + make_interval(secs => $2::double precision),
+							parsed_fetched_at::timestamptz + make_interval(secs => $3::double precision)
+						),
+						parsed_fetched_at::timestamptz + make_interval(secs => $5::double precision)
 					)
-				ORDER BY next_refresh_unix, id
-				LIMIT 1
-			) AS candidate ON true
-			WHERE steady.selected_count < $2
+					WHEN status IN ('failed', 'unauthorized')
+						AND parsed_last_attempt_at IS NOT NULL
+						AND group_last_used_at IS NOT NULL
+						AND group_last_used_at > parsed_last_attempt_at::timestamptz
+					THEN GREATEST(
+						LEAST(
+							group_last_used_at + make_interval(secs => $2::double precision),
+							parsed_last_attempt_at::timestamptz + make_interval(secs => $3::double precision)
+						),
+						COALESCE(parsed_next_refresh_at, '-infinity'::timestamptz)
+					)
+					ELSE NULL
+				END AS activity_due_at
+			FROM parsed
+		), candidates AS (
+			SELECT *,
+				CASE
+					WHEN snapshot IS NULL OR snapshot = 'null'::jsonb OR status IS NULL
+						OR status NOT IN ('ok', 'failed', 'unauthorized') THEN 0
+					WHEN status = 'ok' AND parsed_fetched_at IS NULL THEN 0
+					WHEN status IN ('failed', 'unauthorized') AND parsed_last_attempt_at IS NULL THEN 0
+					WHEN activity_due_at IS NOT NULL AND $1 >= activity_due_at THEN 1
+					ELSE NULL
+				END AS due_class,
+				activity_due_at AS due_at
+			FROM timed
+		), due_candidates AS MATERIALIZED (
+			SELECT id, api_key, group_last_used_at, due_class, due_at
+			FROM candidates
+			WHERE due_class IS NOT NULL
+		), due_grouped AS (
+			SELECT DISTINCT ON (api_key)
+				id, api_key, group_last_used_at, due_class, due_at
+			FROM due_candidates
+			ORDER BY api_key, due_class, due_at NULLS FIRST, id
 		)
-		SELECT id
-		FROM (
-			SELECT id, queue_class, legacy_priority, next_refresh_unix FROM legacy
-			UNION ALL
-			SELECT id, queue_class, legacy_priority, next_refresh_unix FROM steady
-		) queued
-		ORDER BY queue_class, legacy_priority, next_refresh_unix NULLS FIRST, id
-		LIMIT $2
-	`, now.UTC().Unix(), limit)
+		SELECT id, group_last_used_at
+		FROM due_grouped
+		ORDER BY due_class, due_at NULLS FIRST, id
+		LIMIT $4
+	`, now.UTC(), debounceSeconds, maxWaitSeconds, limit, minFetchIntervalSeconds)
 	if err != nil {
 		return nil, err
 	}
 	defer func() { _ = rows.Close() }()
+	type dueRow struct {
+		id            int64
+		groupLastUsed *time.Time
+	}
+	rowsOut := make([]dueRow, 0, limit)
 	ids := make([]int64, 0, limit)
 	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
+		var row dueRow
+		if err := rows.Scan(&row.id, &row.groupLastUsed); err != nil {
 			return nil, err
 		}
-		ids = append(ids, id)
+		rowsOut = append(rowsOut, row)
+		ids = append(ids, row.id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -553,11 +559,26 @@ func (r *accountRepository) ListDueOllamaCloudUsageAccounts(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	result := make([]service.Account, 0, len(accounts))
+	byID := make(map[int64]*service.Account, len(accounts))
 	for _, account := range accounts {
 		if account != nil {
-			result = append(result, *account)
+			byID[account.ID] = account
 		}
+	}
+	result := make([]service.Account, 0, len(rowsOut))
+	for _, row := range rowsOut {
+		account := byID[row.id]
+		if account == nil {
+			continue
+		}
+		// Stamp group MAX(last_used_at) for service due evaluation.
+		if row.groupLastUsed != nil {
+			ts := row.groupLastUsed.UTC()
+			account.LastUsedAt = &ts
+		} else {
+			account.LastUsedAt = nil
+		}
+		result = append(result, *account)
 	}
 	return result, nil
 }

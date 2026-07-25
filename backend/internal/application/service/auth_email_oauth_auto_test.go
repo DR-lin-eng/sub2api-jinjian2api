@@ -71,6 +71,7 @@ func TestEmailOAuthAuto_SnapshotsPlatformQuotaDefaults(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, user)
 	require.Equal(t, int64(88), user.ID)
+	require.Equal(t, 1, userRepo.guardedCreates)
 
 	require.Len(t, quotaRepo.bulkInsertCalls, 1, "createEmailOAuthUser must snapshot platform quotas via BulkInsertInitial")
 
@@ -85,4 +86,51 @@ func TestEmailOAuthAuto_SnapshotsPlatformQuotaDefaults(t *testing.T) {
 	require.NotNil(t, geminiRecord, "expected gemini platform record")
 	require.NotNil(t, geminiRecord.MonthlyLimitUSD)
 	require.InDelta(t, 100.0, *geminiRecord.MonthlyLimitUSD, 0.0001)
+}
+
+func TestEmailOAuthAuto_RejectsAliasOnlyCollision(t *testing.T) {
+	userRepo := &userRepoStub{aliasExists: true}
+	quotaRepo := &userPlatformQuotaRepoStub{}
+	svc := newEmailOAuthAutoAuthService(userRepo, map[string]string{
+		SettingKeyRegistrationEnabled: "true",
+	}, quotaRepo)
+
+	user, err := svc.createEmailOAuthUser(
+		context.Background(),
+		"some.one+oidc@gmail.com",
+		"alias-attempt",
+		"oidc",
+		"",
+		"",
+	)
+
+	require.Nil(t, user)
+	require.ErrorIs(t, err, ErrEmailExists)
+	require.Equal(t, 1, userRepo.guardedCreates)
+	require.Empty(t, userRepo.created)
+	require.Empty(t, quotaRepo.bulkInsertCalls)
+}
+
+func TestEmailOAuthAuto_ResumesExactConcurrentRegistration(t *testing.T) {
+	existing := &User{ID: 91, Email: "exact@example.com", Status: StatusActive}
+	userRepo := &userRepoStub{
+		aliasExists:  true,
+		usersByEmail: map[string]*User{existing.Email: existing},
+	}
+	svc := newEmailOAuthAutoAuthService(userRepo, map[string]string{
+		SettingKeyRegistrationEnabled: "true",
+	}, &userPlatformQuotaRepoStub{})
+
+	user, err := svc.createEmailOAuthUser(
+		context.Background(),
+		existing.Email,
+		"exact",
+		"google",
+		"",
+		"",
+	)
+
+	require.NoError(t, err)
+	require.Same(t, existing, user)
+	require.Equal(t, 1, userRepo.guardedCreates)
 }

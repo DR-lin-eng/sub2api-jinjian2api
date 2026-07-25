@@ -218,6 +218,11 @@ func (s *PricingService) Stop() {
 
 // startUpdateScheduler 启动定时更新调度器
 func (s *PricingService) startUpdateScheduler() {
+	if s == nil || s.cfg == nil || strings.TrimSpace(s.cfg.Pricing.RemoteURL) == "" {
+		logger.LegacyPrintf("service.pricing", "%s", "[Pricing] Remote sync disabled: pricing remote URL is empty")
+		return
+	}
+
 	// 定期检查哈希更新
 	hashInterval := time.Duration(s.cfg.Pricing.HashCheckIntervalMinutes) * time.Minute
 	if hashInterval < time.Minute {
@@ -776,12 +781,32 @@ func (s *PricingService) extractBaseName(model string) string {
 	return strings.Join(result, "-")
 }
 
+func containsModelFamily(model, family string) bool {
+	for searchFrom := 0; searchFrom <= len(model)-len(family); {
+		relative := strings.Index(model[searchFrom:], family)
+		if relative < 0 {
+			return false
+		}
+		start := searchFrom + relative
+		end := start + len(family)
+		if end == len(model) {
+			return true
+		}
+		switch model[end] {
+		case '-', '.', '[', ':', '@', '/', '_':
+			return true
+		}
+		searchFrom = start + 1
+	}
+	return false
+}
+
 // matchByModelFamily 基于模型系列匹配
 func (s *PricingService) matchByModelFamily(model string) *LiteLLMModelPricing {
 	// modelFamily 定义一个模型系列的匹配和定价查找规则。
 	type modelFamily struct {
 		name    string   // 系列名称
-		match   []string // 用于将模型归类到此系列的模式（strings.Contains 匹配）
+		match   []string // 用于将模型归类到此系列的模式（带型号后缀边界匹配）
 		pricing []string // 用于在定价数据中查找价格的模式（nil 则复用 match；可包含低版本 fallback）
 	}
 
@@ -789,6 +814,10 @@ func (s *PricingService) matchByModelFamily(model string) *LiteLLMModelPricing {
 	// 因子串关系误匹配 "claude-opus-4-7"（opus-4.7 系列）。
 	// 注意：原 map 实现存在 Go map 迭代随机性导致的同类 bug，此处改为有序切片修复。
 	families := []modelFamily{
+		// Opus 5 与 Opus 4.8 同价（$5/$25 per MTok）。定价数据缺失 claude-opus-5 时
+		// 必须回退到 4.8，否则会掉进 "opus-4" 系列按 $15/$75 计费（3 倍超收）。
+		{name: "opus-5", match: []string{"claude-opus-5"}, pricing: []string{"claude-opus-5", "claude-opus-4-8"}},
+		{name: "opus-4.8", match: []string{"claude-opus-4-8", "claude-opus-4.8"}, pricing: []string{"claude-opus-4-8", "claude-opus-4.8", "claude-opus-4-7"}},
 		{name: "opus-4.7", match: []string{"claude-opus-4-7", "claude-opus-4.7"}, pricing: []string{"claude-opus-4-7", "claude-opus-4.7", "claude-opus-4-6"}},
 		{name: "opus-4.6", match: []string{"claude-opus-4-6", "claude-opus-4.6"}},
 		{name: "opus-4.5", match: []string{"claude-opus-4-5", "claude-opus-4.5"}},
@@ -805,7 +834,7 @@ func (s *PricingService) matchByModelFamily(model string) *LiteLLMModelPricing {
 	var matched *modelFamily
 	for i := range families {
 		for _, pattern := range families[i].match {
-			if strings.Contains(model, pattern) || strings.Contains(model, strings.ReplaceAll(pattern, "-", "")) {
+			if containsModelFamily(model, pattern) || containsModelFamily(model, strings.ReplaceAll(pattern, "-", "")) {
 				matched = &families[i]
 				break
 			}
@@ -821,6 +850,11 @@ func (s *PricingService) matchByModelFamily(model string) *LiteLLMModelPricing {
 		switch {
 		case strings.Contains(model, "opus"):
 			switch {
+			// "opus-5" 必须先判：不能用裸 "5" 匹配，否则 claude-opus-4-5 会被误判。
+			case containsModelFamily(model, "opus-5") || containsModelFamily(model, "opus5"):
+				fallbackName = "opus-5"
+			case strings.Contains(model, "4.8") || strings.Contains(model, "4-8"):
+				fallbackName = "opus-4.8"
 			case strings.Contains(model, "4.7") || strings.Contains(model, "4-7"):
 				fallbackName = "opus-4.7"
 			case strings.Contains(model, "4.6") || strings.Contains(model, "4-6"):
@@ -869,7 +903,7 @@ func (s *PricingService) matchByModelFamily(model string) *LiteLLMModelPricing {
 	for _, pattern := range lookups {
 		for key, pricing := range s.pricingData {
 			keyLower := strings.ToLower(key)
-			if strings.Contains(keyLower, pattern) {
+			if containsModelFamily(keyLower, pattern) {
 				logger.LegacyPrintf("service.pricing", "[Pricing] Fuzzy matched %s -> %s", model, key)
 				return pricing
 			}
