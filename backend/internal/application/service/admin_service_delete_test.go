@@ -364,6 +364,10 @@ func (s *redeemRepoStub) GetByID(ctx context.Context, id int64) (*RedeemCode, er
 	panic("unexpected GetByID call")
 }
 
+func (s *redeemRepoStub) GetByIDs(ctx context.Context, ids []int64) ([]RedeemCode, error) {
+	panic("unexpected GetByIDs call")
+}
+
 func (s *redeemRepoStub) GetByCode(ctx context.Context, code string) (*RedeemCode, error) {
 	panic("unexpected GetByCode call")
 }

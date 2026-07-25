@@ -48,7 +48,7 @@
               <Icon name="edit" size="md" class="mr-2" />
               {{ t('admin.redeem.batchUpdate') }}
             </button>
-            <button @click="showGenerateDialog = true" class="btn btn-primary">
+            <button data-test="generate-open" @click="showGenerateDialog = true" class="btn btn-primary">
               {{ t('admin.redeem.generateCodes') }}
             </button>
           </div>
@@ -292,7 +292,7 @@
           <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
             {{ t('admin.redeem.generateCodesTitle') }}
           </h2>
-          <form @submit.prevent="handleGenerateCodes" class="space-y-4">
+          <form data-test="generate-form" @submit.prevent="handleGenerateCodes" class="space-y-4">
             <div>
               <label class="input-label">{{ t('admin.redeem.codeType') }}</label>
               <Select v-model="generateForm.type" :options="typeOptions" />
@@ -422,10 +422,10 @@
             <div>
               <label class="input-label">{{ t('admin.redeem.count') }}</label>
               <input
+                data-test="generate-count"
                 v-model.number="generateForm.count"
                 type="number"
                 min="1"
-                max="100"
                 required
                 class="input"
               />
@@ -607,6 +607,9 @@
                 class="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 p-3 font-mono text-sm text-gray-800 focus:outline-none dark:border-dark-600 dark:bg-dark-700 dark:text-gray-200"
               ></textarea>
             </div>
+            <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">
+              {{ t('admin.redeem.downloadPrompt') }}
+            </p>
           </div>
           <!-- Footer -->
           <div
@@ -630,9 +633,31 @@
               </svg>
               {{ copiedAll ? t('admin.redeem.copied') : t('admin.redeem.copyAll') }}
             </button>
-            <button @click="downloadGeneratedCodes" class="btn btn-primary flex items-center gap-2">
+            <button
+              data-test="download-generated-csv"
+              @click="downloadGeneratedCodes('csv')"
+              :disabled="downloadingFormat !== null"
+              class="btn btn-primary flex items-center gap-2"
+            >
               <Icon name="download" size="sm" :stroke-width="2" />
-              {{ t('admin.redeem.download') }}
+              {{
+                downloadingFormat === 'csv'
+                  ? t('admin.redeem.downloading')
+                  : t('admin.redeem.downloadCsv')
+              }}
+            </button>
+            <button
+              data-test="download-generated-txt"
+              @click="downloadGeneratedCodes('txt')"
+              :disabled="downloadingFormat !== null"
+              class="btn btn-primary flex items-center gap-2"
+            >
+              <Icon name="download" size="sm" :stroke-width="2" />
+              {{
+                downloadingFormat === 'txt'
+                  ? t('admin.redeem.downloading')
+                  : t('admin.redeem.downloadTxt')
+              }}
             </button>
           </div>
         </div>
@@ -724,6 +749,7 @@ const textareaHeight = computed(() => {
 })
 
 const copiedAll = ref(false)
+const downloadingFormat = ref<'csv' | 'txt' | null>(null)
 
 const closeResultDialog = () => {
   showResultDialog.value = false
@@ -741,16 +767,27 @@ const copyGeneratedCodes = async () => {
   }
 }
 
-const downloadGeneratedCodes = () => {
-  const blob = new Blob([generatedCodesText.value], { type: 'text/plain' })
-  const url = window.URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `redeem-codes-${new Date().toISOString().split('T')[0]}.txt`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  window.URL.revokeObjectURL(url)
+const downloadGeneratedCodes = async (format: 'csv' | 'txt') => {
+  downloadingFormat.value = format
+  try {
+    const blob = await adminAPI.redeem.exportGenerated(
+      generatedCodes.value.map((code) => code.id),
+      format
+    )
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `redeem-codes-new-${new Date().toISOString().split('T')[0]}.${format}`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (error: any) {
+    appStore.showError(error.response?.data?.detail || t('admin.redeem.failedToExportGenerated'))
+    console.error('Error exporting generated codes:', error)
+  } finally {
+    downloadingFormat.value = null
+  }
 }
 
 const columns = computed<Column[]>(() => [

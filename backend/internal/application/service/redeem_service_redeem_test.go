@@ -30,6 +30,18 @@ func (r *redeemRejectRepo) GetByID(ctx context.Context, id int64) (*RedeemCode, 
 	return &clone, nil
 }
 
+func (r *redeemRejectRepo) GetByIDs(ctx context.Context, ids []int64) ([]RedeemCode, error) {
+	codes := make([]RedeemCode, 0, len(ids))
+	for _, id := range ids {
+		code, err := r.GetByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		codes = append(codes, *code)
+	}
+	return codes, nil
+}
+
 func (r *redeemRejectRepo) GetByCode(ctx context.Context, code string) (*RedeemCode, error) {
 	if r.code.Code != code {
 		return nil, ErrRedeemCodeNotFound

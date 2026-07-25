@@ -1,10 +1,54 @@
 package service
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"time"
 )
+
+const redeemCodeGenerationChunkSize = 200
+
+// generateRedeemCodesInChunks keeps database and allocation spikes bounded while
+// allowing callers to choose any positive generation count.
+func generateRedeemCodesInChunks(
+	ctx context.Context,
+	repo RedeemCodeRepository,
+	count int,
+	newCode func() (RedeemCode, error),
+) ([]RedeemCode, error) {
+	if count <= 0 {
+		return nil, errors.New("count must be greater than 0")
+	}
+	initialCapacity := count
+	if initialCapacity > redeemCodeGenerationChunkSize {
+		initialCapacity = redeemCodeGenerationChunkSize
+	}
+	codes := make([]RedeemCode, 0, initialCapacity)
+
+	for generated := 0; generated < count; {
+		chunkSize := count - generated
+		if chunkSize > redeemCodeGenerationChunkSize {
+			chunkSize = redeemCodeGenerationChunkSize
+		}
+		chunk := make([]RedeemCode, 0, chunkSize)
+		for i := 0; i < chunkSize; i++ {
+			code, err := newCode()
+			if err != nil {
+				return nil, err
+			}
+			chunk = append(chunk, code)
+		}
+		if err := repo.CreateBatch(ctx, chunk); err != nil {
+			return nil, err
+		}
+		codes = append(codes, chunk...)
+		generated += chunkSize
+	}
+
+	return codes, nil
+}
 
 type RedeemCode struct {
 	ID        int64

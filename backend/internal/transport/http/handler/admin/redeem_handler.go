@@ -6,6 +6,7 @@ import (
 	"encoding/csv"
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -34,7 +35,7 @@ func NewRedeemHandler(adminService service.AdminService, redeemService *service.
 
 // GenerateRedeemCodesRequest represents generate redeem codes request
 type GenerateRedeemCodesRequest struct {
-	Count          int        `json:"count" binding:"required,min=1,max=100"`
+	Count          int        `json:"count" binding:"required,min=1"`
 	Type           string     `json:"type" binding:"required,oneof=balance concurrency subscription invitation"`
 	Value          float64    `json:"value"`
 	GroupID        *int64     `json:"group_id"`      // 订阅类型必填
@@ -43,6 +44,11 @@ type GenerateRedeemCodesRequest struct {
 	ExpiresInDays  *int       `json:"expires_in_days" binding:"omitempty,min=1,max=3650"`
 	MaxUses        *int       `json:"max_uses" binding:"omitempty,min=0,max=1000000000"`
 	MaxUsesPerUser *int       `json:"max_uses_per_user" binding:"omitempty,min=0,max=1000000000"`
+}
+
+type ExportGeneratedRedeemCodesRequest struct {
+	IDs    []int64 `json:"ids" binding:"required,min=1,dive,gt=0"`
+	Format string  `json:"format" binding:"required,oneof=csv txt"`
 }
 
 // CreateAndRedeemCodeRequest represents creating a fixed code and redeeming it for a target user.
@@ -468,4 +474,53 @@ func (h *RedeemHandler) Export(c *gin.Context) {
 	c.Header("Content-Type", "text/csv")
 	c.Header("Content-Disposition", "attachment; filename=redeem_codes.csv")
 	c.Data(200, "text/csv", buf.Bytes())
+}
+
+// ExportGenerated exports only the codes returned by one completed generation request.
+func (h *RedeemHandler) ExportGenerated(c *gin.Context) {
+	var req ExportGeneratedRedeemCodesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+
+	codes, err := h.adminService.GetRedeemCodesByIDs(c.Request.Context(), req.IDs)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+
+	var buf bytes.Buffer
+	contentType := "text/plain; charset=utf-8"
+	if req.Format == "csv" {
+		contentType = "text/csv; charset=utf-8"
+		writer := csv.NewWriter(&buf)
+		if err := writer.Write([]string{"code"}); err != nil {
+			response.InternalError(c, "Failed to export generated redeem codes: "+err.Error())
+			return
+		}
+		for i := range codes {
+			if err := writer.Write([]string{codes[i].Code}); err != nil {
+				response.InternalError(c, "Failed to export generated redeem codes: "+err.Error())
+				return
+			}
+		}
+		writer.Flush()
+		if err := writer.Error(); err != nil {
+			response.InternalError(c, "Failed to export generated redeem codes: "+err.Error())
+			return
+		}
+	} else {
+		for i := range codes {
+			buf.WriteString(codes[i].Code)
+			buf.WriteByte('\n')
+		}
+	}
+
+	filename := fmt.Sprintf("redeem-codes-new-%s.%s", time.Now().UTC().Format("20060102-150405"), req.Format)
+	c.Header("Cache-Control", "private, no-store")
+	c.Header("Pragma", "no-cache")
+	c.Header("X-Content-Type-Options", "nosniff")
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	c.Data(http.StatusOK, contentType, buf.Bytes())
 }

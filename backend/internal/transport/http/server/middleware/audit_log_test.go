@@ -31,6 +31,7 @@ func TestDeriveAuditAction(t *testing.T) {
 			t.Fatalf("deriveAuditAction(%q, %q) = %q, want %q", tc.method, tc.path, got, tc.want)
 		}
 	}
+	require.Equal(t, "admin.redeem_codes.export_generated", auditActionOverrides["POST /api/v1/admin/redeem-codes/export-generated"])
 }
 
 type auditCaptureRepository struct {

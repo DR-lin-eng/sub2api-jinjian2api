@@ -2769,6 +2769,10 @@ func (r *oauthPendingFlowRedeemCodeRepo) GetByID(context.Context, int64) (*servi
 	panic("unexpected GetByID call")
 }
 
+func (r *oauthPendingFlowRedeemCodeRepo) GetByIDs(context.Context, []int64) ([]service.RedeemCode, error) {
+	panic("unexpected GetByIDs call")
+}
+
 func (r *oauthPendingFlowRedeemCodeRepo) GetByCode(ctx context.Context, code string) (*service.RedeemCode, error) {
 	entity, err := r.client.RedeemCode.Query().Where(redeemcode.CodeEQ(code)).Only(ctx)
 	if err != nil {

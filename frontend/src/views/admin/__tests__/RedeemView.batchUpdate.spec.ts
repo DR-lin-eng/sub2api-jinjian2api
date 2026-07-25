@@ -3,9 +3,20 @@ import { flushPromises, mount } from '@vue/test-utils'
 
 import RedeemView from '../RedeemView.vue'
 
-const { listRedeemCodes, batchUpdateRedeemCodes, getAllGroups, showSuccess, showError, showInfo } =
+const {
+  listRedeemCodes,
+  generateRedeemCodes,
+  exportGeneratedRedeemCodes,
+  batchUpdateRedeemCodes,
+  getAllGroups,
+  showSuccess,
+  showError,
+  showInfo
+} =
   vi.hoisted(() => ({
     listRedeemCodes: vi.fn(),
+    generateRedeemCodes: vi.fn(),
+    exportGeneratedRedeemCodes: vi.fn(),
     batchUpdateRedeemCodes: vi.fn(),
     getAllGroups: vi.fn(),
     showSuccess: vi.fn(),
@@ -17,11 +28,12 @@ vi.mock('@/api/admin', () => ({
   adminAPI: {
     redeem: {
       list: listRedeemCodes,
-      generate: vi.fn(),
+      generate: generateRedeemCodes,
       delete: vi.fn(),
       batchDelete: vi.fn(),
       batchUpdate: batchUpdateRedeemCodes,
-      exportCodes: vi.fn()
+      exportCodes: vi.fn(),
+      exportGenerated: exportGeneratedRedeemCodes
     },
     groups: {
       getAll: getAllGroups
@@ -99,12 +111,35 @@ const SelectStub = {
   `
 }
 
-describe('admin RedeemView batch update', () => {
+const mountRedeemView = () =>
+  mount(RedeemView, {
+    attachTo: document.body,
+    global: {
+      stubs: {
+        AppLayout: { template: '<div><slot /></div>' },
+        TablePageLayout: {
+          template: '<div><slot name="filters" /><slot name="table" /><slot name="pagination" /></div>'
+        },
+        DataTable: DataTableStub,
+        Pagination: true,
+        ConfirmDialog: true,
+        Select: SelectStub,
+        GroupBadge: true,
+        GroupOptionItem: true,
+        Icon: true,
+        Teleport: true
+      }
+    }
+  })
+
+describe('admin RedeemView', () => {
   beforeEach(() => {
     localStorage.clear()
     document.body.innerHTML = ''
 
     listRedeemCodes.mockReset()
+    generateRedeemCodes.mockReset()
+    exportGeneratedRedeemCodes.mockReset()
     batchUpdateRedeemCodes.mockReset()
     getAllGroups.mockReset()
     showSuccess.mockReset()
@@ -143,28 +178,11 @@ describe('admin RedeemView batch update', () => {
     })
     batchUpdateRedeemCodes.mockResolvedValue({ updated: 1, message: 'ok' })
     getAllGroups.mockResolvedValue([])
+    exportGeneratedRedeemCodes.mockResolvedValue(new Blob(['code\nNEW-CODE\n'], { type: 'text/csv' }))
   })
 
   it('submits only checked fields for selected redeem codes', async () => {
-    const wrapper = mount(RedeemView, {
-      attachTo: document.body,
-      global: {
-        stubs: {
-          AppLayout: { template: '<div><slot /></div>' },
-          TablePageLayout: {
-            template: '<div><slot name="filters" /><slot name="table" /><slot name="pagination" /></div>'
-          },
-          DataTable: DataTableStub,
-          Pagination: true,
-          ConfirmDialog: true,
-          Select: SelectStub,
-          GroupBadge: true,
-          GroupOptionItem: true,
-          Icon: true,
-          Teleport: true
-        }
-      }
-    })
+    const wrapper = mountRedeemView()
 
     await flushPromises()
     await wrapper.findAll('[data-test="select-code"]')[0].setValue(true)
@@ -183,5 +201,51 @@ describe('admin RedeemView batch update', () => {
       notes: 'maintenance'
     })
     expect(showSuccess).toHaveBeenCalledWith('admin.redeem.batchUpdateSuccess')
+  })
+
+  it('allows counts above the former cap and downloads only the generated batch', async () => {
+    generateRedeemCodes.mockResolvedValue([
+      {
+        id: 101,
+        code: 'NEW-CODE',
+        type: 'balance',
+        value: 10,
+        status: 'unused',
+        max_uses: 1,
+        used_count: 0,
+        max_uses_per_user: 1,
+        used_by: null,
+        used_at: null,
+        created_at: '2026-07-25T00:00:00Z'
+      }
+    ])
+    const originalCreateObjectURL = window.URL.createObjectURL
+    const originalRevokeObjectURL = window.URL.revokeObjectURL
+    window.URL.createObjectURL = vi.fn(() => 'blob:generated-redeem-codes')
+    window.URL.revokeObjectURL = vi.fn()
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+
+    const wrapper = mountRedeemView()
+    await flushPromises()
+    await wrapper.get('[data-test="generate-open"]').trigger('click')
+
+    const countInput = wrapper.get('[data-test="generate-count"]')
+    expect(countInput.attributes('max')).toBeUndefined()
+    await countInput.setValue('101')
+    await wrapper.get('[data-test="generate-form"]').trigger('submit')
+    await flushPromises()
+
+    expect(generateRedeemCodes).toHaveBeenCalledWith(101, 'balance', 10, undefined, undefined, undefined, 1, 1)
+    expect(wrapper.get('[data-test="download-generated-csv"]').exists()).toBe(true)
+    expect(wrapper.get('[data-test="download-generated-txt"]').exists()).toBe(true)
+
+    await wrapper.get('[data-test="download-generated-csv"]').trigger('click')
+    await flushPromises()
+    expect(exportGeneratedRedeemCodes).toHaveBeenCalledWith([101], 'csv')
+    expect(clickSpy).toHaveBeenCalled()
+
+    clickSpy.mockRestore()
+    window.URL.createObjectURL = originalCreateObjectURL
+    window.URL.revokeObjectURL = originalRevokeObjectURL
   })
 })

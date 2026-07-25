@@ -1290,6 +1290,10 @@ func (s *adminServiceImpl) GetRedeemCode(ctx context.Context, id int64) (*Redeem
 	return s.redeemCodeRepo.GetByID(ctx, id)
 }
 
+func (s *adminServiceImpl) GetRedeemCodesByIDs(ctx context.Context, ids []int64) ([]RedeemCode, error) {
+	return s.redeemCodeRepo.GetByIDs(ctx, ids)
+}
+
 func (s *adminServiceImpl) GenerateRedeemCodes(ctx context.Context, input *GenerateRedeemCodesInput) ([]RedeemCode, error) {
 	if input.ExpiresAt != nil && !input.ExpiresAt.After(time.Now()) {
 		return nil, ErrRedeemCodeExpired
@@ -1324,11 +1328,10 @@ func (s *adminServiceImpl) GenerateRedeemCodes(ctx context.Context, input *Gener
 		}
 	}
 
-	codes := make([]RedeemCode, 0, input.Count)
-	for i := 0; i < input.Count; i++ {
+	return generateRedeemCodesInChunks(ctx, s.redeemCodeRepo, input.Count, func() (RedeemCode, error) {
 		codeValue, err := GenerateRedeemCode()
 		if err != nil {
-			return nil, err
+			return RedeemCode{}, err
 		}
 		code := RedeemCode{
 			Code:             codeValue,
@@ -1348,12 +1351,8 @@ func (s *adminServiceImpl) GenerateRedeemCodes(ctx context.Context, input *Gener
 				code.ValidityDays = 30 // 默认30天
 			}
 		}
-		if err := s.redeemCodeRepo.Create(ctx, &code); err != nil {
-			return nil, err
-		}
-		codes = append(codes, code)
-	}
-	return codes, nil
+		return code, nil
+	})
 }
 
 func (s *adminServiceImpl) DeleteRedeemCode(ctx context.Context, id int64) error {

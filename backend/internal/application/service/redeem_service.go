@@ -52,6 +52,7 @@ type RedeemCodeRepository interface {
 	Create(ctx context.Context, code *RedeemCode) error
 	CreateBatch(ctx context.Context, codes []RedeemCode) error
 	GetByID(ctx context.Context, id int64) (*RedeemCode, error)
+	GetByIDs(ctx context.Context, ids []int64) ([]RedeemCode, error)
 	GetByCode(ctx context.Context, code string) (*RedeemCode, error)
 	Update(ctx context.Context, code *RedeemCode) error
 	BatchUpdate(ctx context.Context, ids []int64, fields RedeemCodeBatchUpdateFields) (int64, error)
@@ -204,9 +205,6 @@ func (s *RedeemService) GenerateCodes(ctx context.Context, req GenerateCodesRequ
 		return nil, errors.New("value must not be zero")
 	}
 
-	if req.Count > 1000 {
-		return nil, errors.New("cannot generate more than 1000 codes at once")
-	}
 	maxUses := 1
 	if req.MaxUses != nil {
 		if *req.MaxUses < 0 {
@@ -233,14 +231,13 @@ func (s *RedeemService) GenerateCodes(ctx context.Context, req GenerateCodesRequ
 		value = 0
 	}
 
-	codes := make([]RedeemCode, 0, req.Count)
-	for i := 0; i < req.Count; i++ {
+	codes, err := generateRedeemCodesInChunks(ctx, s.redeemRepo, req.Count, func() (RedeemCode, error) {
 		code, err := s.GenerateRandomCode()
 		if err != nil {
-			return nil, fmt.Errorf("generate code: %w", err)
+			return RedeemCode{}, fmt.Errorf("generate code: %w", err)
 		}
 
-		codes = append(codes, RedeemCode{
+		return RedeemCode{
 			Code:             code,
 			Type:             codeType,
 			Value:            value,
@@ -248,11 +245,9 @@ func (s *RedeemService) GenerateCodes(ctx context.Context, req GenerateCodesRequ
 			MaxUses:          maxUses,
 			MaxUsesPerUser:   maxUsesPerUser,
 			LimitsConfigured: true,
-		})
-	}
-
-	// 批量插入
-	if err := s.redeemRepo.CreateBatch(ctx, codes); err != nil {
+		}, nil
+	})
+	if err != nil {
 		return nil, fmt.Errorf("create batch codes: %w", err)
 	}
 

@@ -80,6 +80,8 @@ func (s *RedeemCodeRepoSuite) TestCreateBatch() {
 
 	err := s.repo.CreateBatch(s.ctx, codes)
 	s.Require().NoError(err, "CreateBatch")
+	s.Require().NotZero(codes[0].ID, "expected first bulk-created ID to be populated")
+	s.Require().NotZero(codes[1].ID, "expected second bulk-created ID to be populated")
 
 	got1, err := s.repo.GetByCode(s.ctx, "BATCH-1")
 	s.Require().NoError(err)
@@ -88,6 +90,20 @@ func (s *RedeemCodeRepoSuite) TestCreateBatch() {
 	got2, err := s.repo.GetByCode(s.ctx, "BATCH-2")
 	s.Require().NoError(err)
 	s.Require().Equal(float64(20), got2.Value)
+}
+
+func (s *RedeemCodeRepoSuite) TestGetByIDsPreservesRequestedOrder() {
+	codes := []service.RedeemCode{
+		{Code: "BATCH-ORDER-1", Type: service.RedeemTypeBalance, Value: 10, Status: service.StatusUnused},
+		{Code: "BATCH-ORDER-2", Type: service.RedeemTypeBalance, Value: 20, Status: service.StatusUnused},
+	}
+	s.Require().NoError(s.repo.CreateBatch(s.ctx, codes))
+
+	got, err := s.repo.GetByIDs(s.ctx, []int64{codes[1].ID, codes[0].ID})
+	s.Require().NoError(err)
+	s.Require().Len(got, 2)
+	s.Require().Equal("BATCH-ORDER-2", got[0].Code)
+	s.Require().Equal("BATCH-ORDER-1", got[1].Code)
 }
 
 func (s *RedeemCodeRepoSuite) TestGetByID_NotFound() {

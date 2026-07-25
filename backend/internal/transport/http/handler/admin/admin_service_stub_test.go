@@ -713,6 +713,22 @@ func (s *stubAdminService) GetRedeemCode(ctx context.Context, id int64) (*servic
 	return &code, nil
 }
 
+func (s *stubAdminService) GetRedeemCodesByIDs(ctx context.Context, ids []int64) ([]service.RedeemCode, error) {
+	byID := make(map[int64]service.RedeemCode, len(s.redeems))
+	for _, code := range s.redeems {
+		byID[code.ID] = code
+	}
+	codes := make([]service.RedeemCode, 0, len(ids))
+	for _, id := range ids {
+		code, ok := byID[id]
+		if !ok {
+			return nil, service.ErrRedeemCodeNotFound
+		}
+		codes = append(codes, code)
+	}
+	return codes, nil
+}
+
 func (s *stubAdminService) GenerateRedeemCodes(ctx context.Context, input *service.GenerateRedeemCodesInput) ([]service.RedeemCode, error) {
 	return s.redeems, nil
 }

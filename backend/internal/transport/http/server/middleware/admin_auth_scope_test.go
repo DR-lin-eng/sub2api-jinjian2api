@@ -26,6 +26,7 @@ func TestAdminAPIKeyScopePolicy(t *testing.T) {
 		{http.MethodDelete, "/api/v1/admin/settings/admin-api-keys/id", []string{service.AdminAPIKeyScopeSettingsRead}, false},
 		{http.MethodGet, "/api/v1/admin/accounts/data", []string{service.AdminAPIKeyScopeRead}, false},
 		{http.MethodGet, "/api/v1/admin/ops/concurrency", []string{service.AdminAPIKeyScopeRead}, true},
+		{http.MethodPost, "/api/v1/admin/redeem-codes/export-generated", []string{service.AdminAPIKeyScopeRead}, true},
 	}
 	for _, check := range checks {
 		c, _ := gin.CreateTestContext(httptest.NewRecorder())
@@ -34,4 +35,20 @@ func TestAdminAPIKeyScopePolicy(t *testing.T) {
 		c.Request = &http.Request{Method: check.method, URL: parsed}
 		require.Equal(t, check.allow, adminAPIKeyRequestAllowed(c, check.scopes), "%s %s", check.method, check.path)
 	}
+}
+
+func TestGeneratedRedeemExportRequiresAdminAuthentication(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.Use(adminAuth(nil, nil, nil, nil))
+	router.POST("/api/v1/admin/redeem-codes/export-generated", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/admin/redeem-codes/export-generated", nil)
+	router.ServeHTTP(recorder, request)
+
+	require.Equal(t, http.StatusUnauthorized, recorder.Code)
+	require.Contains(t, recorder.Body.String(), "UNAUTHORIZED")
 }

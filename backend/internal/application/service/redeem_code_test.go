@@ -1,11 +1,27 @@
 package service
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 )
+
+type chunkRecordingRedeemRepo struct {
+	*redeemRejectRepo
+	batchSizes []int
+	nextID     int64
+}
+
+func (r *chunkRecordingRedeemRepo) CreateBatch(_ context.Context, codes []RedeemCode) error {
+	r.batchSizes = append(r.batchSizes, len(codes))
+	for i := range codes {
+		r.nextID++
+		codes[i].ID = r.nextID
+	}
+	return nil
+}
 
 func TestRedeemCodeExpiry(t *testing.T) {
 	now := time.Now().UTC()
@@ -73,4 +89,21 @@ func TestRedeemCodeUsageLimits(t *testing.T) {
 			require.Equal(t, tt.want, tt.code.CanUse())
 		})
 	}
+}
+
+func TestGenerateCodesHasNoQuantityCapAndUsesBoundedChunks(t *testing.T) {
+	repo := &chunkRecordingRedeemRepo{redeemRejectRepo: &redeemRejectRepo{}}
+	svc := &RedeemService{redeemRepo: repo}
+
+	codes, err := svc.GenerateCodes(context.Background(), GenerateCodesRequest{
+		Count: 1001,
+		Type:  RedeemTypeBalance,
+		Value: 10,
+	})
+
+	require.NoError(t, err)
+	require.Len(t, codes, 1001)
+	require.Equal(t, []int{200, 200, 200, 200, 200, 1}, repo.batchSizes)
+	require.EqualValues(t, 1, codes[0].ID)
+	require.EqualValues(t, 1001, codes[len(codes)-1].ID)
 }

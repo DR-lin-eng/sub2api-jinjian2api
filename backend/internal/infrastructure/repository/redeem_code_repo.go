@@ -80,7 +80,15 @@ func (r *redeemCodeRepository) CreateBatch(ctx context.Context, codes []service.
 		builders = append(builders, b)
 	}
 
-	return r.client.RedeemCode.CreateBulk(builders...).Exec(ctx)
+	created, err := r.client.RedeemCode.CreateBulk(builders...).Save(ctx)
+	if err != nil {
+		return err
+	}
+	for i := range created {
+		codes[i].ID = created[i].ID
+		codes[i].CreatedAt = created[i].CreatedAt
+	}
+	return nil
 }
 
 func (r *redeemCodeRepository) GetByID(ctx context.Context, id int64) (*service.RedeemCode, error) {
@@ -94,6 +102,41 @@ func (r *redeemCodeRepository) GetByID(ctx context.Context, id int64) (*service.
 		return nil, err
 	}
 	return redeemCodeEntityToService(m), nil
+}
+
+func (r *redeemCodeRepository) GetByIDs(ctx context.Context, ids []int64) ([]service.RedeemCode, error) {
+	if len(ids) == 0 {
+		return []service.RedeemCode{}, nil
+	}
+
+	const queryChunkSize = 500
+	byID := make(map[int64]service.RedeemCode, len(ids))
+	for start := 0; start < len(ids); start += queryChunkSize {
+		end := start + queryChunkSize
+		if end > len(ids) {
+			end = len(ids)
+		}
+		entities, err := r.client.RedeemCode.Query().
+			Where(redeemcode.IDIn(ids[start:end]...)).
+			All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, entity := range entities {
+			code := redeemCodeEntityToService(entity)
+			byID[code.ID] = *code
+		}
+	}
+
+	codes := make([]service.RedeemCode, 0, len(ids))
+	for _, id := range ids {
+		code, ok := byID[id]
+		if !ok {
+			return nil, service.ErrRedeemCodeNotFound
+		}
+		codes = append(codes, code)
+	}
+	return codes, nil
 }
 
 func (r *redeemCodeRepository) GetByCode(ctx context.Context, code string) (*service.RedeemCode, error) {

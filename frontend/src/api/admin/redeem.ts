@@ -201,6 +201,22 @@ export async function exportCodes(filters?: {
   return response.data
 }
 
+/**
+ * Export only the redeem codes returned by one generation request.
+ * This uses the authenticated API client and keeps code IDs out of the URL.
+ */
+export async function exportGenerated(
+  ids: number[],
+  format: 'csv' | 'txt'
+): Promise<Blob> {
+  const response = await apiClient.post(
+    '/admin/redeem-codes/export-generated',
+    { ids, format },
+    { responseType: 'blob' }
+  )
+  return response.data
+}
+
 export const redeemAPI = {
   list,
   getById,
@@ -210,7 +226,8 @@ export const redeemAPI = {
   batchUpdate,
   expire,
   getStats,
-  exportCodes
+  exportCodes,
+  exportGenerated
 }
 
 export default redeemAPI
