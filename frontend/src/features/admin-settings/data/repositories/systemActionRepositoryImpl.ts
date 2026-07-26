@@ -5,15 +5,15 @@ import type { UpdateResult } from '@/features/admin-settings/domain/models/updat
 class SystemActionRepositoryImpl implements SystemActionRepository {
   private readonly ds = systemActionDatasource
 
-  async performUpdate(): Promise<UpdateResult> {
+  performUpdate = async () : Promise<UpdateResult>  => {
     return (await this.ds.performUpdate()).toEntity()
   }
 
-  async rollback(version?: string): Promise<UpdateResult> {
+  rollback = async (version?: string) : Promise<UpdateResult>  => {
     return (await this.ds.rollback(version)).toEntity()
   }
 
-  async restartService(): Promise<{ message: string }> {
+  restartService = async () : Promise<{ message: string }>  => {
     return this.ds.restartService()
   }
 }

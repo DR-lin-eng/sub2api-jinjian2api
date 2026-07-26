@@ -1,5 +1,5 @@
 import { apiClient } from './client'
-import type { CredentialEnvelope } from '@/core/models/domain/credentialEnvelope'
+import type { CredentialEnvelope } from '@/features/auth/data/requests_models/credentialEnvelope'
 const CREDENTIAL_ALGORITHM = 'RSA-OAEP-256+A256GCM' as const
 const PUBLIC_KEY_EXPIRY_SKEW_SECONDS = 5
 
@@ -150,8 +150,8 @@ export async function createCredentialEnvelope(email: string, password: string):
 
   return {
     algorithm: CREDENTIAL_ALGORITHM,
-    keyId: serverKey.keyId,
-    encryptedKey: encodeBase64URL(encryptedKey),
+    key_id: serverKey.keyId,
+    encrypted_key: encodeBase64URL(encryptedKey),
     iv: encodeBase64URL(iv.buffer),
     ciphertext: encodeBase64URL(ciphertext)
   }

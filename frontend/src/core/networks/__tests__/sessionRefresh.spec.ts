@@ -2,10 +2,10 @@ import axios from 'axios'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const refreshPayload = {
-  access_token: 'access-2',
-  refresh_token: 'refresh-2',
-  expires_in: 3600,
-  token_type: 'Bearer',
+  accessToken: 'access-2',
+  refreshToken: 'refresh-2',
+  expiresIn: 3600,
+  tokenType: 'Bearer',
 }
 
 describe('browser session refresh coordination', () => {

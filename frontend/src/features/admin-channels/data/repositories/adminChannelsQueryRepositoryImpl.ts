@@ -10,21 +10,21 @@ import type {
 export class AdminChannelsQueryRepositoryImpl implements AdminChannelsQueryRepository {
   private readonly ds = adminChannelsQueryDatasource
 
-  async list(
+  list = async (
     page: number = 1,
     pageSize: number = 20,
     filters?: AdminChannelsListFilters,
     options?: { signal?: AbortSignal },
-  ): Promise<PaginatedResponse<Channel>> {
+  ): Promise<PaginatedResponse<Channel>> => {
     const dtoPage = await this.ds.list(page, pageSize, filters, options)
     return { ...dtoPage, items: dtoPage.items.map(dto => dto.toEntity()) }
   }
 
-  async getById(id: number): Promise<Channel> {
+  getById = async (id: number) : Promise<Channel>  => {
     return (await this.ds.getById(id)).toEntity()
   }
 
-  async getModelDefaultPricing(model: string): Promise<ModelDefaultPricing> {
+  getModelDefaultPricing = async (model: string) : Promise<ModelDefaultPricing>  => {
     return (await this.ds.getModelDefaultPricing(model)).toEntity()
   }
 }

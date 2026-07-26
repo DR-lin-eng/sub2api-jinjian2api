@@ -232,6 +232,7 @@ export default {
       LOCAL_CAPTCHA_EXPIRED: 'CAPTCHA expired. Enter the new challenge',
       LOCAL_CAPTCHA_INVALID: 'Incorrect CAPTCHA. Try the new challenge',
       LOCAL_CAPTCHA_UNAVAILABLE: 'CAPTCHA service is temporarily unavailable',
+      CREDENTIAL_BROWSER_FLOW_REQUIRED: 'Login session expired. Please refresh the page and try again.',
     },
     registrationFailed: 'Registration failed. Please try again.',
     emailSuffixNotAllowed: 'This email domain is not allowed for registration.',

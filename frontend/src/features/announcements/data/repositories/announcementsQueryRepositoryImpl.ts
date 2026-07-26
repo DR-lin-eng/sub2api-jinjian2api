@@ -6,7 +6,7 @@ import type { ListAnnouncementsRequest } from '@/features/announcements/data/req
 class AnnouncementsQueryRepositoryImpl implements AnnouncementsQueryRepository {
   private readonly ds = announcementsQueryDatasource
 
-  async list(req: ListAnnouncementsRequest = {}): Promise<UserAnnouncement[]> {
+  list = async (req: ListAnnouncementsRequest = {}) : Promise<UserAnnouncement[]>  => {
     return (await this.ds.list(req)).map((dto) => dto.toEntity())
   }
 }

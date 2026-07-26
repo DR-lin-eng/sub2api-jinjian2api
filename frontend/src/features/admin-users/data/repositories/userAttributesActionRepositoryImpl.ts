@@ -9,23 +9,23 @@ import { userAttributesActionDatasource } from '@/features/admin-users/data/data
 export class UserAttributesActionRepositoryImpl implements UserAttributesActionRepository {
   private readonly ds = userAttributesActionDatasource
 
-  async createDefinition(req: CreateUserAttributeRequest): Promise<UserAttributeDefinition> {
+  createDefinition = async (req: CreateUserAttributeRequest) : Promise<UserAttributeDefinition>  => {
     return (await this.ds.createDefinition(req)).toEntity()
   }
 
-  async updateDefinition(id: number, req: UpdateUserAttributeRequest): Promise<UserAttributeDefinition> {
+  updateDefinition = async (id: number, req: UpdateUserAttributeRequest) : Promise<UserAttributeDefinition>  => {
     return (await this.ds.updateDefinition(id, req)).toEntity()
   }
 
-  async deleteDefinition(id: number): Promise<{ message: string }> {
+  deleteDefinition = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.deleteDefinition(id)
   }
 
-  async reorderDefinitions(req: ReorderUserAttributesRequest): Promise<{ message: string }> {
+  reorderDefinitions = async (req: ReorderUserAttributesRequest) : Promise<{ message: string }>  => {
     return this.ds.reorderDefinitions(req)
   }
 
-  async updateUserAttributeValues(userId: number, req: UpdateUserAttributeValuesRequest): Promise<{ message: string }> {
+  updateUserAttributeValues = async (userId: number, req: UpdateUserAttributeValuesRequest) : Promise<{ message: string }>  => {
     return this.ds.updateUserAttributeValues(userId, req)
   }
 }

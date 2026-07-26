@@ -8,23 +8,23 @@ import type { TotpEnableRequest } from '@/features/profile/data/requests_models/
 import type { TotpDisableRequest } from '@/features/profile/data/requests_models/totpDisableRequest'
 
 class TotpActionRepositoryImpl implements TotpActionRepository {
-  async sendVerifyCode(): Promise<{ success: boolean }> {
+  sendVerifyCode = async () : Promise<{ success: boolean }>  => {
     return totpActionDatasource.sendVerifyCode()
   }
 
-  async initiateSetup(req?: TotpSetupRequest): Promise<TotpSetupResponse> {
+  initiateSetup = async (req?: TotpSetupRequest) : Promise<TotpSetupResponse>  => {
     return (await totpActionDatasource.initiateSetup(req)).toEntity()
   }
 
-  async enable(req: TotpEnableRequest): Promise<TotpEnableResponse> {
+  enable = async (req: TotpEnableRequest) : Promise<TotpEnableResponse>  => {
     return (await totpActionDatasource.enable(req)).toEntity()
   }
 
-  async disable(req: TotpDisableRequest): Promise<{ success: boolean }> {
+  disable = async (req: TotpDisableRequest) : Promise<{ success: boolean }>  => {
     return totpActionDatasource.disable(req)
   }
 
-  async stepUp(code: string): Promise<TotpStepUpResponse> {
+  stepUp = async (code: string) : Promise<TotpStepUpResponse>  => {
     return (await totpActionDatasource.stepUp(code)).toEntity()
   }
 }

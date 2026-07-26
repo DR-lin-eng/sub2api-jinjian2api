@@ -6,19 +6,19 @@ import { userAttributesQueryDatasource } from '@/features/admin-users/data/datas
 export class UserAttributesQueryRepositoryImpl implements UserAttributesQueryRepository {
   private readonly ds = userAttributesQueryDatasource
 
-  async listDefinitions(): Promise<UserAttributeDefinition[]> {
+  listDefinitions = async () : Promise<UserAttributeDefinition[]>  => {
     return (await this.ds.listDefinitions()).map(dto => dto.toEntity())
   }
 
-  async listEnabledDefinitions(): Promise<UserAttributeDefinition[]> {
+  listEnabledDefinitions = async () : Promise<UserAttributeDefinition[]>  => {
     return (await this.ds.listEnabledDefinitions()).map(dto => dto.toEntity())
   }
 
-  async getUserAttributeValues(userId: number): Promise<UserAttributeValue[]> {
+  getUserAttributeValues = async (userId: number) : Promise<UserAttributeValue[]>  => {
     return (await this.ds.getUserAttributeValues(userId)).map(dto => dto.toEntity())
   }
 
-  async getBatchUserAttributes(userIds: number[]): Promise<Record<number, Record<number, string>>> {
+  getBatchUserAttributes = async (userIds: number[]) : Promise<Record<number, Record<number, string>>>  => {
     return this.ds.getBatchUserAttributes(userIds)
   }
 }

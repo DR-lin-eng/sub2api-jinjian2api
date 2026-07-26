@@ -8,15 +8,15 @@ import type { SetupActionRepository } from '@/features/setup/domain/repositories
 class SetupActionRepositoryImpl implements SetupActionRepository {
   private readonly ds = setupActionDatasource
 
-  async testDatabase(req: TestDatabaseRequest): Promise<void> {
+  testDatabase = async (req: TestDatabaseRequest) : Promise<void>  => {
     return this.ds.testDatabase(req)
   }
 
-  async testRedis(req: TestRedisRequest): Promise<void> {
+  testRedis = async (req: TestRedisRequest) : Promise<void>  => {
     return this.ds.testRedis(req)
   }
 
-  async install(req: InstallRequest): Promise<InstallResponse> {
+  install = async (req: InstallRequest) : Promise<InstallResponse>  => {
     return (await this.ds.install(req)).toEntity()
   }
 }

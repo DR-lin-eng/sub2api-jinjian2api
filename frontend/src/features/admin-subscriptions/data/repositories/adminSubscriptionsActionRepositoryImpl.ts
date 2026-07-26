@@ -9,27 +9,27 @@ import type { ResetSubscriptionQuotaRequest } from '@/features/admin-subscriptio
 class AdminSubscriptionsActionRepositoryImpl implements AdminSubscriptionsActionRepository {
   private readonly ds = adminSubscriptionsActionDatasource
 
-  async assign(req: AssignSubscriptionRequest): Promise<UserSubscription> {
+  assign = async (req: AssignSubscriptionRequest) : Promise<UserSubscription>  => {
     return (await this.ds.assign(req)).toEntity()
   }
 
-  async bulkAssign(req: BulkAssignSubscriptionRequest): Promise<UserSubscription[]> {
+  bulkAssign = async (req: BulkAssignSubscriptionRequest) : Promise<UserSubscription[]>  => {
     return (await this.ds.bulkAssign(req)).map(dto => dto.toEntity())
   }
 
-  async extend(id: number, req: ExtendSubscriptionRequest): Promise<UserSubscription> {
+  extend = async (id: number, req: ExtendSubscriptionRequest) : Promise<UserSubscription>  => {
     return (await this.ds.extend(id, req)).toEntity()
   }
 
-  async revoke(id: number): Promise<{ message: string }> {
+  revoke = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.revoke(id)
   }
 
-  async restore(id: number): Promise<UserSubscription> {
+  restore = async (id: number) : Promise<UserSubscription>  => {
     return (await this.ds.restore(id)).toEntity()
   }
 
-  async resetQuota(id: number, req: ResetSubscriptionQuotaRequest): Promise<UserSubscription> {
+  resetQuota = async (id: number, req: ResetSubscriptionQuotaRequest) : Promise<UserSubscription>  => {
     return (await this.ds.resetQuota(id, req)).toEntity()
   }
 }

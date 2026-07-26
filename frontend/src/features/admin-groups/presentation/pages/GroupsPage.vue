@@ -249,7 +249,7 @@
             </div>
           </template>
 
-          <template #cell-rate_multiplier="{ value }">
+          <template #cell-rateMultiplier="{ value }">
             <span class="text-sm text-gray-700 dark:text-gray-300"
               >{{ value }}x</span
             >
@@ -4063,7 +4063,7 @@ const allColumns = computed<Column[]>(() => [
     sortable: true,
   },
   {
-    key: "rate_multiplier",
+    key: "rateMultiplier",
     label: t("admin.groups.columns.rateMultiplier"),
     sortable: true,
   },

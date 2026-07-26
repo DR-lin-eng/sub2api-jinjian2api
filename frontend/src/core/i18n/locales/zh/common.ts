@@ -232,6 +232,7 @@ export default {
       LOCAL_CAPTCHA_EXPIRED: '验证码已过期，请重新输入',
       LOCAL_CAPTCHA_INVALID: '验证码错误，请重新输入',
       LOCAL_CAPTCHA_UNAVAILABLE: '验证码服务暂时不可用，请稍后重试',
+      CREDENTIAL_BROWSER_FLOW_REQUIRED: '登录验证已过期，请刷新页面后重试。',
     },
     registrationFailed: '注册失败，请重试。',
     emailSuffixNotAllowed: '该邮箱域名不在允许注册范围内。',

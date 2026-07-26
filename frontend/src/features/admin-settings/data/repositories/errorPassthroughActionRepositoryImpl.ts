@@ -7,19 +7,19 @@ import type { UpdateErrorPassthroughRuleRequest } from '@/features/admin-setting
 class ErrorPassthroughActionRepositoryImpl implements ErrorPassthroughActionRepository {
   private readonly ds = errorPassthroughActionDatasource
 
-  async create(req: CreateErrorPassthroughRuleRequest): Promise<ErrorPassthroughRule> {
+  create = async (req: CreateErrorPassthroughRuleRequest) : Promise<ErrorPassthroughRule>  => {
     return (await this.ds.create(req)).toEntity()
   }
 
-  async update(id: number, req: UpdateErrorPassthroughRuleRequest): Promise<ErrorPassthroughRule> {
+  update = async (id: number, req: UpdateErrorPassthroughRuleRequest) : Promise<ErrorPassthroughRule>  => {
     return (await this.ds.update(id, req)).toEntity()
   }
 
-  async deleteRule(id: number): Promise<{ message: string }> {
+  deleteRule = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.deleteRule(id)
   }
 
-  async toggleEnabled(id: number, enabled: boolean): Promise<ErrorPassthroughRule> {
+  toggleEnabled = async (id: number, enabled: boolean) : Promise<ErrorPassthroughRule>  => {
     return (await this.ds.toggleEnabled(id, enabled)).toEntity()
   }
 }

@@ -7,19 +7,19 @@ import type { KeysActionRepository } from '@/features/keys/domain/repositories/k
 export class KeysActionRepositoryImpl implements KeysActionRepository {
   private readonly ds = keysActionDatasource
 
-  async create(req: CreateApiKeyRequest): Promise<ApiKey> {
+  create = async (req: CreateApiKeyRequest) : Promise<ApiKey>  => {
     return (await this.ds.create(req)).toEntity()
   }
 
-  async update(id: number, req: UpdateApiKeyRequest): Promise<ApiKey> {
+  update = async (id: number, req: UpdateApiKeyRequest) : Promise<ApiKey>  => {
     return (await this.ds.update(id, req)).toEntity()
   }
 
-  async deleteKey(id: number): Promise<{ message: string }> {
+  deleteKey = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.deleteKey(id)
   }
 
-  async toggleStatus(id: number, status: 'active' | 'inactive'): Promise<ApiKey> {
+  toggleStatus = async (id: number, status: 'active' | 'inactive') : Promise<ApiKey>  => {
     return (await this.ds.toggleStatus(id, status)).toEntity()
   }
 }

@@ -9,61 +9,61 @@ import type { CreateCompositeRouteRequest } from '@/features/admin-groups/data/r
 export class AdminGroupsActionRepositoryImpl implements AdminGroupsActionRepository {
   private readonly ds = adminGroupsActionDatasource
 
-  async create(req: CreateGroupRequest): Promise<AdminGroup> {
+  create = async (req: CreateGroupRequest) : Promise<AdminGroup>  => {
     return (await this.ds.create(req)).toEntity()
   }
 
-  async duplicate(id: number): Promise<AdminGroup> {
+  duplicate = async (id: number) : Promise<AdminGroup>  => {
     return (await this.ds.duplicate(id)).toEntity()
   }
 
-  async update(id: number, req: UpdateGroupRequest): Promise<AdminGroup> {
+  update = async (id: number, req: UpdateGroupRequest) : Promise<AdminGroup>  => {
     return (await this.ds.update(id, req)).toEntity()
   }
 
-  async deleteGroup(id: number): Promise<{ message: string }> {
+  deleteGroup = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.deleteGroup(id)
   }
 
-  async toggleStatus(id: number, status: 'active' | 'inactive'): Promise<AdminGroup> {
+  toggleStatus = async (id: number, status: 'active' | 'inactive') : Promise<AdminGroup>  => {
     return (await this.ds.toggleStatus(id, status)).toEntity()
   }
 
-  async createCompositeRoute(id: number, route: CreateCompositeRouteRequest): Promise<CompositeModelRoute> {
+  createCompositeRoute = async (id: number, route: CreateCompositeRouteRequest) : Promise<CompositeModelRoute>  => {
     return (await this.ds.createCompositeRoute(id, route)).toEntity()
   }
 
-  async updateCompositeRoute(id: number, routeId: number, route: CreateCompositeRouteRequest): Promise<CompositeModelRoute> {
+  updateCompositeRoute = async (id: number, routeId: number, route: CreateCompositeRouteRequest) : Promise<CompositeModelRoute>  => {
     return (await this.ds.updateCompositeRoute(id, routeId, route)).toEntity()
   }
 
-  async deleteCompositeRoute(id: number, routeId: number): Promise<{ message: string }> {
+  deleteCompositeRoute = async (id: number, routeId: number) : Promise<{ message: string }>  => {
     return this.ds.deleteCompositeRoute(id, routeId)
   }
 
-  async updateSortOrder(updates: Array<{ id: number; sort_order: number }>): Promise<{ message: string }> {
+  updateSortOrder = async (updates: Array<{ id: number; sort_order: number }>) : Promise<{ message: string }>  => {
     return this.ds.updateSortOrder(updates)
   }
 
-  async clearGroupRateMultipliers(id: number): Promise<{ message: string }> {
+  clearGroupRateMultipliers = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.clearGroupRateMultipliers(id)
   }
 
-  async batchSetGroupRateMultipliers(
+  batchSetGroupRateMultipliers = async (
     id: number,
     entries: Array<{ user_id: number; rate_multiplier: number }>,
-  ): Promise<{ message: string }> {
+  ): Promise<{ message: string }> => {
     return this.ds.batchSetGroupRateMultipliers(id, entries)
   }
 
-  async batchSetGroupRPMOverrides(
+  batchSetGroupRPMOverrides = async (
     id: number,
     entries: Array<{ user_id: number; rpm_override: number }>,
-  ): Promise<{ message: string }> {
+  ): Promise<{ message: string }> => {
     return this.ds.batchSetGroupRPMOverrides(id, entries)
   }
 
-  async clearGroupRPMOverrides(id: number): Promise<{ message: string }> {
+  clearGroupRPMOverrides = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.clearGroupRPMOverrides(id)
   }
 }

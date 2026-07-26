@@ -4,7 +4,7 @@ import type { AnnouncementsActionRepository } from '@/features/announcements/dom
 class AnnouncementsActionRepositoryImpl implements AnnouncementsActionRepository {
   private readonly ds = announcementsActionDatasource
 
-  async markRead(id: number): Promise<{ message: string }> {
+  markRead = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.markRead(id)
   }
 }

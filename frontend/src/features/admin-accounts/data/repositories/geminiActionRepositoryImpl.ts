@@ -8,11 +8,11 @@ import type { GeminiActionRepository } from '@/features/admin-accounts/domain/re
 export class GeminiActionRepositoryImpl implements GeminiActionRepository {
   private readonly ds = geminiActionDatasource
 
-  async generateAuthUrl(payload: GeminiAuthUrlRequest): Promise<GeminiAuthUrlResponse> {
+  generateAuthUrl = async (payload: GeminiAuthUrlRequest) : Promise<GeminiAuthUrlResponse>  => {
     return (await this.ds.generateAuthUrl(payload)).toEntity()
   }
 
-  async exchangeCode(payload: GeminiExchangeCodeRequest): Promise<GeminiTokenInfo> {
+  exchangeCode = async (payload: GeminiExchangeCodeRequest) : Promise<GeminiTokenInfo>  => {
     return (await this.ds.exchangeCode(payload)).toEntity()
   }
 }

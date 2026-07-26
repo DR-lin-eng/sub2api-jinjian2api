@@ -5,7 +5,7 @@ import type { GrokQueryRepository } from '@/features/admin-accounts/domain/repos
 export class GrokQueryRepositoryImpl implements GrokQueryRepository {
   private readonly ds = grokQueryDatasource
 
-  async queryQuota(id: number): Promise<GrokQuotaProbeResult> {
+  queryQuota = async (id: number) : Promise<GrokQuotaProbeResult>  => {
     return (await this.ds.queryQuota(id)).toEntity()
   }
 }

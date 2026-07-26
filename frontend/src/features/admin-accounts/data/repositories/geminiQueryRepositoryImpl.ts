@@ -5,7 +5,7 @@ import type { GeminiQueryRepository } from '@/features/admin-accounts/domain/rep
 export class GeminiQueryRepositoryImpl implements GeminiQueryRepository {
   private readonly ds = geminiQueryDatasource
 
-  async getCapabilities(): Promise<GeminiOAuthCapabilities> {
+  getCapabilities = async () : Promise<GeminiOAuthCapabilities>  => {
     return (await this.ds.getCapabilities()).toEntity()
   }
 }

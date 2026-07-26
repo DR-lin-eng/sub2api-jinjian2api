@@ -8,15 +8,15 @@ import type { AntigravityActionRepository } from '@/features/admin-accounts/doma
 export class AntigravityActionRepositoryImpl implements AntigravityActionRepository {
   private readonly ds = antigravityActionDatasource
 
-  async generateAuthUrl(payload: AntigravityAuthUrlRequest): Promise<AntigravityAuthUrlResponse> {
+  generateAuthUrl = async (payload: AntigravityAuthUrlRequest) : Promise<AntigravityAuthUrlResponse>  => {
     return (await this.ds.generateAuthUrl(payload)).toEntity()
   }
 
-  async exchangeCode(payload: AntigravityExchangeCodeRequest): Promise<AntigravityTokenInfo> {
+  exchangeCode = async (payload: AntigravityExchangeCodeRequest) : Promise<AntigravityTokenInfo>  => {
     return (await this.ds.exchangeCode(payload)).toEntity()
   }
 
-  async refreshAntigravityToken(refreshToken: string, proxyId?: number | null): Promise<AntigravityTokenInfo> {
+  refreshAntigravityToken = async (refreshToken: string, proxyId?: number | null) : Promise<AntigravityTokenInfo>  => {
     return (await this.ds.refreshAntigravityToken(refreshToken, proxyId)).toEntity()
   }
 }

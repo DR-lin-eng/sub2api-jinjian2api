@@ -55,8 +55,8 @@ describe('DataTable', () => {
           { key: 'created_at', label: 'Created', sortable: true }
         ],
         data: [
-          { id: 1, name: 'Beta', created_at: '2026-01-02T00:00:00Z' },
-          { id: 2, name: 'Alpha', created_at: '2026-01-01T00:00:00Z' }
+          { id: 1, name: 'Beta', createdAt: '2026-01-02T00:00:00Z' },
+          { id: 2, name: 'Alpha', createdAt: '2026-01-01T00:00:00Z' }
         ],
         defaultSortKey: 'name',
         defaultSortOrder: 'asc'

@@ -4,11 +4,11 @@ import type { TotpStatus } from '@/features/profile/domain/models/totpStatus'
 import type { TotpVerificationMethod } from '@/features/profile/domain/models/totpVerificationMethod'
 
 class TotpQueryRepositoryImpl implements TotpQueryRepository {
-  async getStatus(): Promise<TotpStatus> {
+  getStatus = async () : Promise<TotpStatus>  => {
     return (await totpQueryDatasource.getStatus()).toEntity()
   }
 
-  async getVerificationMethod(): Promise<TotpVerificationMethod> {
+  getVerificationMethod = async () : Promise<TotpVerificationMethod>  => {
     return (await totpQueryDatasource.getVerificationMethod()).toEntity()
   }
 }

@@ -22,13 +22,13 @@ import {
 
 describe('applyInterceptWarmup', () => {
   it('create + enabled=true: should set intercept_warmup_requests to true', () => {
-    const creds: Record<string, unknown> = { access_token: 'tok' }
+    const creds: Record<string, unknown> = { accessToken: 'tok' }
     applyInterceptWarmup(creds, true, 'create')
     expect(creds.intercept_warmup_requests).toBe(true)
   })
 
   it('create + enabled=false: should not add the field', () => {
-    const creds: Record<string, unknown> = { access_token: 'tok' }
+    const creds: Record<string, unknown> = { accessToken: 'tok' }
     applyInterceptWarmup(creds, false, 'create')
     expect('intercept_warmup_requests' in creds).toBe(false)
   })
@@ -66,20 +66,20 @@ describe('applyInterceptWarmup', () => {
 
 describe('applyAntigravityProjectID', () => {
   it('create + project id: trims and stores configured project fallback', () => {
-    const creds: Record<string, unknown> = { access_token: 'tok' }
+    const creds: Record<string, unknown> = { accessToken: 'tok' }
     applyAntigravityProjectID(creds, '  configured-project  ', 'create')
     expect(creds[ANTIGRAVITY_PROJECT_ID_CREDENTIAL_KEY]).toBe('configured-project')
   })
 
   it('create + empty project id: should not add the field', () => {
-    const creds: Record<string, unknown> = { access_token: 'tok' }
+    const creds: Record<string, unknown> = { accessToken: 'tok' }
     applyAntigravityProjectID(creds, '   ', 'create')
     expect(ANTIGRAVITY_PROJECT_ID_CREDENTIAL_KEY in creds).toBe(false)
   })
 
   it('edit + empty project id: deletes existing fallback', () => {
     const creds: Record<string, unknown> = {
-      access_token: 'tok',
+      accessToken: 'tok',
       [ANTIGRAVITY_PROJECT_ID_CREDENTIAL_KEY]: 'old-project'
     }
     applyAntigravityProjectID(creds, '', 'edit')

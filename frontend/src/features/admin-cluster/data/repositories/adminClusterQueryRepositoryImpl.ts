@@ -8,7 +8,7 @@ import type { AdminClusterQueryRepository } from '@/features/admin-cluster/domai
 export class AdminClusterQueryRepositoryImpl implements AdminClusterQueryRepository {
   private readonly ds = adminClusterQueryDatasource
 
-  async getStatus(options?: { signal?: AbortSignal }): Promise<ClusterStatusResponse> {
+  getStatus = async (options?: { signal?: AbortSignal }) : Promise<ClusterStatusResponse>  => {
     const dto = await this.ds.getStatus(options)
     return dto.toEntity()
   }

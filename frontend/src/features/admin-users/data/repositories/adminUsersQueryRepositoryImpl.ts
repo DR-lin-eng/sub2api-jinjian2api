@@ -10,44 +10,44 @@ import { adminUsersQueryDatasource } from '@/features/admin-users/data/datasourc
 export class AdminUsersQueryRepositoryImpl implements AdminUsersQueryRepository {
   private readonly ds = adminUsersQueryDatasource
 
-  async list(
+  list = async (
     page?: number,
     pageSize?: number,
     filters?: Parameters<AdminUsersQueryRepository['list']>[2],
     options?: { signal?: AbortSignal }
-  ): Promise<PaginatedResponse<AdminUser>> {
+  ): Promise<PaginatedResponse<AdminUser>> => {
     const result = await this.ds.list(page, pageSize, filters, options)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }
 
-  async getById(id: number, includeDeleted = false): Promise<AdminUser> {
+  getById = async (id: number, includeDeleted = false) : Promise<AdminUser>  => {
     return (await this.ds.getById(id, includeDeleted)).toEntity()
   }
 
-  async getUserApiKeys(id: number): Promise<PaginatedResponse<ApiKey>> {
+  getUserApiKeys = async (id: number) : Promise<PaginatedResponse<ApiKey>>  => {
     const result = await this.ds.getUserApiKeys(id)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }
 
-  async getUserUsageStats(id: number, period?: string): Promise<AdminUserUsageStats> {
+  getUserUsageStats = async (id: number, period?: string) : Promise<AdminUserUsageStats>  => {
     return (await this.ds.getUserUsageStats(id, period)).toEntity()
   }
 
-  async getUserBalanceHistory(
+  getUserBalanceHistory = async (
     id: number,
     page?: number,
     pageSize?: number,
     type?: string
-  ): Promise<BalanceHistoryPage> {
+  ): Promise<BalanceHistoryPage> => {
     const result = await this.ds.getUserBalanceHistory(id, page, pageSize, type)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }
 
-  async getPlatformQuotas(id: number): Promise<PlatformQuotaItem[]> {
+  getPlatformQuotas = async (id: number) : Promise<PlatformQuotaItem[]>  => {
     return (await this.ds.getPlatformQuotas(id)).map(dto => dto.toEntity())
   }
 
-  async getBatchPlatformQuotas(userIds: number[]): Promise<Record<number, PlatformQuotaItem[]>> {
+  getBatchPlatformQuotas = async (userIds: number[]) : Promise<Record<number, PlatformQuotaItem[]>>  => {
     const raw = await this.ds.getBatchPlatformQuotas(userIds)
     const result: Record<number, PlatformQuotaItem[]> = {}
     for (const [userId, dtos] of Object.entries(raw)) {

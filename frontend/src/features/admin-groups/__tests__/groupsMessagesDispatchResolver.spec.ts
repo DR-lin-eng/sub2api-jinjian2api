@@ -47,10 +47,10 @@ describe("groupsMessagesDispatch", () => {
   it("hydrates form state from api config", () => {
     expect(
       messagesDispatchConfigToFormState({
-        opus_mapped_model: "gpt-5.4",
-        sonnet_mapped_model: "gpt-5.2",
-        haiku_mapped_model: "gpt-5.4-mini",
-        exact_model_mappings: {
+        opusMappedModel: "gpt-5.4",
+        sonnetMappedModel: "gpt-5.2",
+        haikuMappedModel: "gpt-5.4-mini",
+        exactModelMappings: {
           "claude-opus-4-6": "gpt-5.4",
           "claude-haiku-4-5-20251001": "gpt-5.4-mini",
         },

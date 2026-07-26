@@ -7,15 +7,15 @@ import type { UpdatePromoCodeRequest } from '@/features/admin-promo/data/request
 class AdminPromoActionRepositoryImpl implements AdminPromoActionRepository {
   private readonly ds = adminPromoActionDatasource
 
-  async create(req: CreatePromoCodeRequest): Promise<PromoCode> {
+  create = async (req: CreatePromoCodeRequest) : Promise<PromoCode>  => {
     return (await this.ds.create(req)).toEntity()
   }
 
-  async update(id: number, req: UpdatePromoCodeRequest): Promise<PromoCode> {
+  update = async (id: number, req: UpdatePromoCodeRequest) : Promise<PromoCode>  => {
     return (await this.ds.update(id, req)).toEntity()
   }
 
-  async deleteCode(id: number): Promise<{ message: string }> {
+  deleteCode = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.deleteCode(id)
   }
 }

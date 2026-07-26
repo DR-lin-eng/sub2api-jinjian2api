@@ -23,32 +23,32 @@ export class AdminChannelMonitorQueryRepositoryImpl implements AdminChannelMonit
     private readonly templateDs: AdminChannelMonitorTemplateQueryDatasource = adminChannelMonitorTemplateQueryDatasource,
   ) {}
 
-  async list(
+  list = async (
     params: ChannelMonitorListParams = {},
     options?: { signal?: AbortSignal },
-  ): Promise<ChannelMonitorListResponse> {
+  ): Promise<ChannelMonitorListResponse> => {
     return (await this.monitorDs.list(params, options)).toEntity()
   }
 
-  async getById(id: number): Promise<ChannelMonitor> {
+  getById = async (id: number) : Promise<ChannelMonitor>  => {
     return (await this.monitorDs.getById(id)).toEntity()
   }
 
-  async listHistory(id: number, params: HistoryParams = {}): Promise<HistoryResponse> {
+  listHistory = async (id: number, params: HistoryParams = {}) : Promise<HistoryResponse>  => {
     return (await this.monitorDs.listHistory(id, params)).toEntity()
   }
 
-  async listTemplates(
+  listTemplates = async (
     params: ChannelMonitorTemplateListParams = {},
-  ): Promise<ChannelMonitorTemplateListResponse> {
+  ): Promise<ChannelMonitorTemplateListResponse> => {
     return (await this.templateDs.list(params)).toEntity()
   }
 
-  async getTemplateById(id: number): Promise<ChannelMonitorTemplate> {
+  getTemplateById = async (id: number) : Promise<ChannelMonitorTemplate>  => {
     return (await this.templateDs.getById(id)).toEntity()
   }
 
-  async listAssociatedMonitors(id: number): Promise<AssociatedMonitorsResponse> {
+  listAssociatedMonitors = async (id: number) : Promise<AssociatedMonitorsResponse>  => {
     return (await this.templateDs.listAssociatedMonitors(id)).toEntity()
   }
 }

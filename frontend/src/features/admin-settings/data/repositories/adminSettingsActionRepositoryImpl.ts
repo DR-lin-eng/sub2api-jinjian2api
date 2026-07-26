@@ -43,55 +43,55 @@ import {
 class AdminSettingsActionRepositoryImpl implements AdminSettingsActionRepository {
   private readonly ds = adminSettingsActionDatasource
 
-  async updateSettings(req: UpdateSettingsRequest): Promise<SystemSettings> {
+  updateSettings = async (req: UpdateSettingsRequest) : Promise<SystemSettings>  => {
     return (await this.ds.updateSettings(req)).toEntity()
   }
 
-  async testSmtpConnection(req: TestSmtpRequest): Promise<{ message: string }> {
+  testSmtpConnection = async (req: TestSmtpRequest) : Promise<{ message: string }>  => {
     return this.ds.testSmtpConnection(req)
   }
 
-  async sendTestEmail(req: SendTestEmailRequest): Promise<{ message: string }> {
+  sendTestEmail = async (req: SendTestEmailRequest) : Promise<{ message: string }>  => {
     return this.ds.sendTestEmail(req)
   }
 
-  async updateEmailTemplate(event: string, locale: string, req: UpdateEmailTemplateRequest): Promise<EmailTemplateDetail> {
-    return this.ds.updateEmailTemplate(event, locale, req) as Promise<EmailTemplateDetail>
+  updateEmailTemplate = async (event: string, locale: string, req: UpdateEmailTemplateRequest) : Promise<EmailTemplateDetail>  => {
+    return await this.ds.updateEmailTemplate(event, locale, req) as Promise<EmailTemplateDetail>
   }
 
-  async restoreOfficialEmailTemplate(event: string, locale: string): Promise<EmailTemplateDetail> {
-    return this.ds.restoreOfficialEmailTemplate(event, locale) as Promise<EmailTemplateDetail>
+  restoreOfficialEmailTemplate = async (event: string, locale: string) : Promise<EmailTemplateDetail>  => {
+    return await this.ds.restoreOfficialEmailTemplate(event, locale) as Promise<EmailTemplateDetail>
   }
 
-  async previewEmailTemplate(req: PreviewEmailTemplateRequest): Promise<{ subject: string; html: string }> {
-    return this.ds.previewEmailTemplate(req) as Promise<{ subject: string; html: string }>
+  previewEmailTemplate = async (req: PreviewEmailTemplateRequest) : Promise<{ subject: string; html: string }>  => {
+    return await this.ds.previewEmailTemplate(req) as Promise<{ subject: string; html: string }>
   }
 
-  async createAdminApiKey(req: CreateAdminApiKeyRequest): Promise<{ key: string; metadata: AdminApiKey }> {
-    return this.ds.createAdminApiKey(req) as Promise<{ key: string; metadata: AdminApiKey }>
+  createAdminApiKey = async (req: CreateAdminApiKeyRequest) : Promise<{ key: string; metadata: AdminApiKey }>  => {
+    return await this.ds.createAdminApiKey(req) as Promise<{ key: string; metadata: AdminApiKey }>
   }
 
-  async updateAdminApiKey(id: string, req: UpdateAdminApiKeyRequest): Promise<AdminApiKey> {
+  updateAdminApiKey = async (id: string, req: UpdateAdminApiKeyRequest) : Promise<AdminApiKey>  => {
     return await this.ds.updateAdminApiKey(id, req) as Promise<AdminApiKey>
   }
 
-  async rotateAdminApiKey(id: string): Promise<{ key: string; metadata: AdminApiKey }> {
+  rotateAdminApiKey = async (id: string) : Promise<{ key: string; metadata: AdminApiKey }>  => {
     return await this.ds.rotateAdminApiKey(id) as Promise<{ key: string; metadata: AdminApiKey }>
   }
 
-  async revokeAdminApiKey(id: string): Promise<{ message: string }> {
+  revokeAdminApiKey = async (id: string) : Promise<{ message: string }>  => {
     return this.ds.revokeAdminApiKey(id)
   }
 
-  async regenerateAdminApiKey(): Promise<{ key: string }> {
+  regenerateAdminApiKey = async () : Promise<{ key: string }>  => {
     return await this.ds.regenerateAdminApiKey() as Promise<{ key: string }>
   }
 
-  async deleteAdminApiKey(): Promise<{ message: string }> {
+  deleteAdminApiKey = async () : Promise<{ message: string }>  => {
     return this.ds.deleteAdminApiKey()
   }
 
-  async updateOverloadCooldownSettings(req: UpdateOverloadCooldownRequest): Promise<OverloadCooldownSettings> {
+  updateOverloadCooldownSettings = async (req: UpdateOverloadCooldownRequest) : Promise<OverloadCooldownSettings>  => {
     const raw = await this.ds.updateOverloadCooldownSettings(req) as { enabled: boolean; cooldown_minutes: number }
     const e = new OverloadCooldownSettingsClass()
     e.enabled = raw.enabled ?? false
@@ -99,7 +99,7 @@ class AdminSettingsActionRepositoryImpl implements AdminSettingsActionRepository
     return e
   }
 
-  async updateRateLimit429CooldownSettings(req: UpdateRateLimit429CooldownRequest): Promise<RateLimit429CooldownSettings> {
+  updateRateLimit429CooldownSettings = async (req: UpdateRateLimit429CooldownRequest) : Promise<RateLimit429CooldownSettings>  => {
     const raw = await this.ds.updateRateLimit429CooldownSettings(req) as { enabled: boolean; cooldown_seconds: number }
     const e = new RateLimit429CooldownSettingsClass()
     e.enabled = raw.enabled ?? false
@@ -107,14 +107,14 @@ class AdminSettingsActionRepositoryImpl implements AdminSettingsActionRepository
     return e
   }
 
-  async updateGlobalTempUnschedulableSettings(req: UpdateGlobalTempUnschedulableRequest): Promise<GlobalTempUnschedulableSettings> {
+  updateGlobalTempUnschedulableSettings = async (req: UpdateGlobalTempUnschedulableRequest) : Promise<GlobalTempUnschedulableSettings>  => {
     const raw = await this.ds.updateGlobalTempUnschedulableSettings(req) as { enabled: boolean }
     const e = new GlobalTempUnschedulableSettingsClass()
     e.enabled = raw.enabled ?? false
     return e
   }
 
-  async updateStreamTimeoutSettings(req: UpdateStreamTimeoutRequest): Promise<StreamTimeoutSettings> {
+  updateStreamTimeoutSettings = async (req: UpdateStreamTimeoutRequest) : Promise<StreamTimeoutSettings>  => {
     const raw = await this.ds.updateStreamTimeoutSettings(req) as Record<string, unknown>
     const e = new StreamTimeoutSettingsClass()
     e.enabled = (raw.enabled as boolean) ?? false
@@ -125,7 +125,7 @@ class AdminSettingsActionRepositoryImpl implements AdminSettingsActionRepository
     return e
   }
 
-  async updateRectifierSettings(req: UpdateRectifierRequest): Promise<RectifierSettings> {
+  updateRectifierSettings = async (req: UpdateRectifierRequest) : Promise<RectifierSettings>  => {
     const raw = await this.ds.updateRectifierSettings(req) as Record<string, unknown>
     const e = new RectifierSettingsClass()
     e.enabled = (raw.enabled as boolean) ?? false
@@ -137,19 +137,19 @@ class AdminSettingsActionRepositoryImpl implements AdminSettingsActionRepository
     return e
   }
 
-  async updateBetaPolicySettings(req: UpdateBetaPolicyRequest): Promise<BetaPolicySettings> {
+  updateBetaPolicySettings = async (req: UpdateBetaPolicyRequest) : Promise<BetaPolicySettings>  => {
     return this.ds.updateBetaPolicySettings(req) as Promise<BetaPolicySettings>
   }
 
-  async updateWebSearchEmulationConfig(req: UpdateWebSearchEmulationRequest): Promise<WebSearchEmulationConfig> {
+  updateWebSearchEmulationConfig = async (req: UpdateWebSearchEmulationRequest) : Promise<WebSearchEmulationConfig>  => {
     return this.ds.updateWebSearchEmulationConfig(req) as Promise<WebSearchEmulationConfig>
   }
 
-  async testWebSearchEmulation(query: string, provider?: string): Promise<unknown> {
+  testWebSearchEmulation = async (query: string, provider?: string) : Promise<unknown>  => {
     return this.ds.testWebSearchEmulation(query, provider)
   }
 
-  async resetWebSearchUsage(provider: string): Promise<{ message: string }> {
+  resetWebSearchUsage = async (provider: string) : Promise<{ message: string }>  => {
     return this.ds.resetWebSearchUsage(provider)
   }
 }

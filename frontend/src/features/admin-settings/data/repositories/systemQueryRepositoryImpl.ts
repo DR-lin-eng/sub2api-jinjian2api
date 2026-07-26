@@ -6,15 +6,15 @@ import type { RollbackVersionInfo } from '@/features/admin-settings/domain/model
 class SystemQueryRepositoryImpl implements SystemQueryRepository {
   private readonly ds = systemQueryDatasource
 
-  async getVersion(): Promise<{ version: string }> {
+  getVersion = async () : Promise<{ version: string }>  => {
     return this.ds.getVersion()
   }
 
-  async checkUpdates(force = false): Promise<VersionInfo> {
+  checkUpdates = async (force = false) : Promise<VersionInfo>  => {
     return (await this.ds.checkUpdates(force)).toEntity()
   }
 
-  async getRollbackVersions(): Promise<RollbackVersionInfo[]> {
+  getRollbackVersions = async () : Promise<RollbackVersionInfo[]>  => {
     return (await this.ds.getRollbackVersions()).map(dto => dto.toEntity())
   }
 }

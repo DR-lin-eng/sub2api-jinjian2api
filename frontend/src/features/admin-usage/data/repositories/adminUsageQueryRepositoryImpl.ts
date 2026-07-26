@@ -38,12 +38,12 @@ function toListRequest(p: Partial<AdminUsageQueryParams>) {
 class AdminUsageQueryRepositoryImpl implements AdminUsageQueryRepository {
   private readonly ds = adminUsageQueryDatasource
 
-  async list(params: Partial<AdminUsageQueryParams>, options?: { signal?: AbortSignal }): Promise<PaginatedResponse<AdminUsageLog>> {
+  list = async (params: Partial<AdminUsageQueryParams>, options?: { signal?: AbortSignal }) : Promise<PaginatedResponse<AdminUsageLog>>  => {
     const result = await this.ds.list(toListRequest(params), options)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }
 
-  async getStats(params: Partial<AdminUsageQueryParams> & { nocache?: number }): Promise<AdminUsageStatsResponse> {
+  getStats = async (params: Partial<AdminUsageQueryParams> & { nocache?: number }) : Promise<AdminUsageStatsResponse>  => {
     const req: AdminUsageStatsRequest = {
       user_id: params.userId,
       api_key_id: params.apiKeyId,
@@ -60,15 +60,15 @@ class AdminUsageQueryRepositoryImpl implements AdminUsageQueryRepository {
     return (await this.ds.getStats(req)).toEntity()
   }
 
-  async searchUsers(keyword: string): Promise<SimpleUser[]> {
+  searchUsers = async (keyword: string) : Promise<SimpleUser[]>  => {
     return (await this.ds.searchUsers(keyword)).map(dto => dto.toEntity())
   }
 
-  async searchApiKeys(userId?: number, keyword?: string): Promise<SimpleApiKey[]> {
+  searchApiKeys = async (userId?: number, keyword?: string) : Promise<SimpleApiKey[]>  => {
     return (await this.ds.searchApiKeys(userId, keyword)).map(dto => dto.toEntity())
   }
 
-  async listCleanupTasks(params: ListCleanupTasksRequest, options?: { signal?: AbortSignal }): Promise<PaginatedResponse<UsageCleanupTask>> {
+  listCleanupTasks = async (params: ListCleanupTasksRequest, options?: { signal?: AbortSignal }) : Promise<PaginatedResponse<UsageCleanupTask>>  => {
     const result = await this.ds.listCleanupTasks(params, options)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }

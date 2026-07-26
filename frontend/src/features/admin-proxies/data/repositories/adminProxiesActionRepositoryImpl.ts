@@ -11,35 +11,35 @@ import type { AdminDataImportResult } from '@/features/admin-accounts/domain/mod
 class AdminProxiesActionRepositoryImpl implements AdminProxiesActionRepository {
   private readonly ds = adminProxiesActionDatasource
 
-  async create(req: CreateProxyRequest): Promise<Proxy> {
+  create = async (req: CreateProxyRequest) : Promise<Proxy>  => {
     return (await this.ds.create(req)).toEntity()
   }
 
-  async update(id: number, req: UpdateProxyRequest): Promise<Proxy> {
+  update = async (id: number, req: UpdateProxyRequest) : Promise<Proxy>  => {
     return (await this.ds.update(id, req)).toEntity()
   }
 
-  async deleteProxy(id: number): Promise<{ message: string }> {
+  deleteProxy = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.deleteProxy(id)
   }
 
-  async toggleStatus(id: number, status: 'active' | 'inactive'): Promise<Proxy> {
+  toggleStatus = async (id: number, status: 'active' | 'inactive') : Promise<Proxy>  => {
     return (await this.ds.toggleStatus(id, status)).toEntity()
   }
 
-  async testProxy(id: number) {
+  testProxy = async (id: number) => {
     return this.ds.testProxy(id)
   }
 
-  async batchCreate(req: BatchCreateProxyRequest): Promise<{ created: number; skipped: number }> {
+  batchCreate = async (req: BatchCreateProxyRequest) : Promise<{ created: number; skipped: number }>  => {
     return this.ds.batchCreate(req)
   }
 
-  async batchDelete(req: BatchDeleteProxyRequest) {
+  batchDelete = async (req: BatchDeleteProxyRequest) => {
     return this.ds.batchDelete(req)
   }
 
-  async importData(payload: { data: AdminDataPayload }): Promise<AdminDataImportResult> {
+  importData = async (payload: { data: AdminDataPayload }) : Promise<AdminDataImportResult>  => {
     return this.ds.importData(payload)
   }
 }

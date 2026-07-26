@@ -7,7 +7,7 @@ import type { SubscriptionProgress } from '@/features/admin-subscriptions/domain
 class AdminSubscriptionsQueryRepositoryImpl implements AdminSubscriptionsQueryRepository {
   private readonly ds = adminSubscriptionsQueryDatasource
 
-  async list(
+  list = async (
     page: number,
     pageSize: number,
     filters?: {
@@ -19,25 +19,25 @@ class AdminSubscriptionsQueryRepositoryImpl implements AdminSubscriptionsQueryRe
       sort_order?: 'asc' | 'desc'
     },
     options?: { signal?: AbortSignal },
-  ): Promise<PaginatedResponse<UserSubscription>> {
+  ): Promise<PaginatedResponse<UserSubscription>> => {
     const result = await this.ds.list(page, pageSize, filters, options)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }
 
-  async getById(id: number): Promise<UserSubscription> {
+  getById = async (id: number) : Promise<UserSubscription>  => {
     return (await this.ds.getById(id)).toEntity()
   }
 
-  async getProgress(id: number): Promise<SubscriptionProgress> {
+  getProgress = async (id: number) : Promise<SubscriptionProgress>  => {
     return (await this.ds.getProgress(id)).toEntity()
   }
 
-  async listByGroup(groupId: number, page: number, pageSize: number): Promise<PaginatedResponse<UserSubscription>> {
+  listByGroup = async (groupId: number, page: number, pageSize: number) : Promise<PaginatedResponse<UserSubscription>>  => {
     const result = await this.ds.listByGroup(groupId, page, pageSize)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }
 
-  async listByUser(userId: number, page: number, pageSize: number): Promise<PaginatedResponse<UserSubscription>> {
+  listByUser = async (userId: number, page: number, pageSize: number) : Promise<PaginatedResponse<UserSubscription>>  => {
     const result = await this.ds.listByUser(userId, page, pageSize)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }

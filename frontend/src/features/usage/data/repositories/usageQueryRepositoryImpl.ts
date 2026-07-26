@@ -11,30 +11,30 @@ class UsageQueryRepositoryImpl implements UsageQueryRepository {
   getByDateRange: UsageQueryRepository['getByDateRange'] = (...args) => this.ds.getByDateRange(...args)
   getById: UsageQueryRepository['getById'] = (...args) => this.ds.getById(...args)
 
-  async getDashboardStats() {
+  getDashboardStats = async () => {
     return (await this.ds.getDashboardStats()).toEntity()
   }
 
-  async getDashboardTrend(params?: Parameters<UsageQueryRepository['getDashboardTrend']>[0]) {
+  getDashboardTrend = async (params?: Parameters<UsageQueryRepository['getDashboardTrend']>[0]) => {
     return (await this.ds.getDashboardTrend(params)).toEntity()
   }
 
-  async getDashboardModels(params?: Parameters<UsageQueryRepository['getDashboardModels']>[0]) {
+  getDashboardModels = async (params?: Parameters<UsageQueryRepository['getDashboardModels']>[0]) => {
     return (await this.ds.getDashboardModels(params)).toEntity()
   }
 
-  async getMyApiKeyDailyUsage(apiKeyId: number, days?: number) {
+  getMyApiKeyDailyUsage = async (apiKeyId: number, days?: number) => {
     return (await this.ds.getMyApiKeyDailyUsage(apiKeyId, days)).toEntity()
   }
 
-  async getDashboardSnapshotV2(params?: Parameters<UsageQueryRepository['getDashboardSnapshotV2']>[0]) {
+  getDashboardSnapshotV2 = async (params?: Parameters<UsageQueryRepository['getDashboardSnapshotV2']>[0]) => {
     return (await this.ds.getDashboardSnapshotV2(params)).toEntity()
   }
 
-  async getDashboardApiKeysUsage(
+  getDashboardApiKeysUsage = async (
     req: Parameters<UsageQueryRepository['getDashboardApiKeysUsage']>[0],
     options?: Parameters<UsageQueryRepository['getDashboardApiKeysUsage']>[1],
-  ) {
+  ) => {
     return (await this.ds.getDashboardApiKeysUsage(req, options)).toEntity()
   }
 

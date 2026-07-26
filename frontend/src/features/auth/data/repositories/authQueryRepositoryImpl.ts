@@ -7,15 +7,15 @@ import type { LocalCaptchaChallenge } from '@/features/auth/domain/models/localC
 class AuthQueryRepositoryImpl implements AuthQueryRepository {
   private readonly ds = authQueryDatasource
 
-  async getCurrentUser(): Promise<CurrentUserResponse> {
+  getCurrentUser = async () : Promise<CurrentUserResponse>  => {
     return (await this.ds.getCurrentUser()).toEntity()
   }
 
-  async getPublicSettings(): Promise<PublicSettings> {
+  getPublicSettings = async () : Promise<PublicSettings>  => {
     return (await this.ds.getPublicSettings()).toEntity()
   }
 
-  async getLocalCaptcha(): Promise<LocalCaptchaChallenge> {
+  getLocalCaptcha = async () : Promise<LocalCaptchaChallenge>  => {
     return (await this.ds.getLocalCaptcha()).toEntity()
   }
 }

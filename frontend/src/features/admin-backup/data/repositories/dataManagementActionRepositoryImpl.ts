@@ -17,60 +17,60 @@ import type { CreateBackupJobRequest } from '@/features/admin-backup/data/reques
 export class DataManagementActionRepositoryImpl implements DataManagementActionRepository {
   private readonly ds = dataManagementActionDatasource
 
-  async updateConfig(req: UpdateDataManagementConfigRequest): Promise<DataManagementConfig> {
+  updateConfig = async (req: UpdateDataManagementConfigRequest) : Promise<DataManagementConfig>  => {
     return (await this.ds.updateConfig(req)).toEntity()
   }
 
-  async testS3(req: TestS3Request): Promise<TestS3Response> {
+  testS3 = async (req: TestS3Request) : Promise<TestS3Response>  => {
     return (await this.ds.testS3(req)).toEntity()
   }
 
-  async createSourceProfile(
+  createSourceProfile = async (
     sourceType: SourceType,
     req: CreateSourceProfileRequest,
-  ): Promise<DataManagementSourceProfile> {
+  ): Promise<DataManagementSourceProfile> => {
     return (await this.ds.createSourceProfile(sourceType, req)).toEntity()
   }
 
-  async updateSourceProfile(
+  updateSourceProfile = async (
     sourceType: SourceType,
     profileId: string,
     req: UpdateSourceProfileRequest,
-  ): Promise<DataManagementSourceProfile> {
+  ): Promise<DataManagementSourceProfile> => {
     return (await this.ds.updateSourceProfile(sourceType, profileId, req)).toEntity()
   }
 
-  async deleteSourceProfile(sourceType: SourceType, profileId: string): Promise<void> {
+  deleteSourceProfile = async (sourceType: SourceType, profileId: string) : Promise<void>  => {
     await this.ds.deleteSourceProfile(sourceType, profileId)
   }
 
-  async setActiveSourceProfile(
+  setActiveSourceProfile = async (
     sourceType: SourceType,
     profileId: string,
-  ): Promise<DataManagementSourceProfile> {
+  ): Promise<DataManagementSourceProfile> => {
     return (await this.ds.setActiveSourceProfile(sourceType, profileId)).toEntity()
   }
 
-  async createS3Profile(req: CreateS3ProfileRequest): Promise<DataManagementS3Profile> {
+  createS3Profile = async (req: CreateS3ProfileRequest) : Promise<DataManagementS3Profile>  => {
     return (await this.ds.createS3Profile(req)).toEntity()
   }
 
-  async updateS3Profile(
+  updateS3Profile = async (
     profileId: string,
     req: UpdateS3ProfileRequest,
-  ): Promise<DataManagementS3Profile> {
+  ): Promise<DataManagementS3Profile> => {
     return (await this.ds.updateS3Profile(profileId, req)).toEntity()
   }
 
-  async deleteS3Profile(profileId: string): Promise<void> {
+  deleteS3Profile = async (profileId: string) : Promise<void>  => {
     await this.ds.deleteS3Profile(profileId)
   }
 
-  async setActiveS3Profile(profileId: string): Promise<DataManagementS3Profile> {
+  setActiveS3Profile = async (profileId: string) : Promise<DataManagementS3Profile>  => {
     return (await this.ds.setActiveS3Profile(profileId)).toEntity()
   }
 
-  async createBackupJob(req: CreateBackupJobRequest): Promise<CreateBackupJobResponse> {
+  createBackupJob = async (req: CreateBackupJobRequest) : Promise<CreateBackupJobResponse>  => {
     return (await this.ds.createBackupJob(req)).toEntity()
   }
 }

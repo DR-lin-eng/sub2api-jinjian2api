@@ -8,28 +8,28 @@ import type { AdminBackupQueryRepository } from '@/features/admin-backup/domain/
 export class AdminBackupQueryRepositoryImpl implements AdminBackupQueryRepository {
   private readonly ds = adminBackupQueryDatasource
 
-  async getS3Config(): Promise<BackupS3Config> {
+  getS3Config = async () : Promise<BackupS3Config>  => {
     return (await this.ds.getS3Config()).toEntity()
   }
 
-  async getImageStorageConfig(): Promise<ImageStorageConfigResponse> {
+  getImageStorageConfig = async () : Promise<ImageStorageConfigResponse>  => {
     return (await this.ds.getImageStorageConfig()).toEntity()
   }
 
-  async getSchedule(): Promise<BackupScheduleConfig> {
+  getSchedule = async () : Promise<BackupScheduleConfig>  => {
     return (await this.ds.getSchedule()).toEntity()
   }
 
-  async listBackups(): Promise<{ items: BackupRecord[] }> {
+  listBackups = async () : Promise<{ items: BackupRecord[] }>  => {
     const { items } = await this.ds.listBackups()
     return { items: items.map(dto => dto.toEntity()) }
   }
 
-  async getBackup(id: string): Promise<BackupRecord> {
+  getBackup = async (id: string) : Promise<BackupRecord>  => {
     return (await this.ds.getBackup(id)).toEntity()
   }
 
-  async getDownloadURL(id: string): Promise<{ url: string }> {
+  getDownloadURL = async (id: string) : Promise<{ url: string }>  => {
     return this.ds.getDownloadURL(id)
   }
 }

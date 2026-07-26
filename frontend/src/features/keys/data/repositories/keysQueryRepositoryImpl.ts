@@ -6,7 +6,7 @@ import type { KeysQueryRepository } from '@/features/keys/domain/repositories/ke
 export class KeysQueryRepositoryImpl implements KeysQueryRepository {
   private readonly ds = keysQueryDatasource
 
-  async list(
+  list = async (
     page: number = 1,
     pageSize: number = 10,
     filters?: {
@@ -17,12 +17,12 @@ export class KeysQueryRepositoryImpl implements KeysQueryRepository {
       sort_order?: 'asc' | 'desc'
     },
     options?: { signal?: AbortSignal },
-  ): Promise<PaginatedResponse<ApiKey>> {
+  ): Promise<PaginatedResponse<ApiKey>> => {
     const dtoPage = await this.ds.list(page, pageSize, filters, options)
     return { ...dtoPage, items: dtoPage.items.map(dto => dto.toEntity()) }
   }
 
-  async getById(id: number): Promise<ApiKey> {
+  getById = async (id: number) : Promise<ApiKey>  => {
     return (await this.ds.getById(id)).toEntity()
   }
 }

@@ -9,23 +9,23 @@ import type { PromptAuditEndpointDraft } from '@/features/prompt-audit/domain/mo
 import type { UpdatePromptAuditConfigRequest } from '@/features/prompt-audit/data/requests_models/updatePromptAuditConfigRequest'
 
 export class PromptAuditActionRepositoryImpl implements PromptAuditActionRepository {
-  async updateConfig(req: UpdatePromptAuditConfigRequest): Promise<PromptAuditConfig> {
+  updateConfig = async (req: UpdatePromptAuditConfigRequest) : Promise<PromptAuditConfig>  => {
     return (await ds.updateConfig(req)).toEntity()
   }
 
-  async probeEndpoint(endpoint: PromptAuditEndpointDraft): Promise<PromptProbeResult> {
+  probeEndpoint = async (endpoint: PromptAuditEndpointDraft) : Promise<PromptProbeResult>  => {
     return (await ds.probeEndpoint(endpoint)).toEntity()
   }
 
-  async deleteEvent(id: number): Promise<PromptDeleteResult> {
+  deleteEvent = async (id: number) : Promise<PromptDeleteResult>  => {
     return (await ds.deleteEvent(id)).toEntity()
   }
 
-  async batchDeleteEvents(ids: number[]): Promise<PromptDeleteResult> {
+  batchDeleteEvents = async (ids: number[]) : Promise<PromptDeleteResult>  => {
     return (await ds.batchDeleteEvents(ids)).toEntity()
   }
 
-  async deleteEventsByFilter(filters: PromptEventFilters, preview: PromptDeletePreview): Promise<PromptDeleteResult> {
+  deleteEventsByFilter = async (filters: PromptEventFilters, preview: PromptDeletePreview) : Promise<PromptDeleteResult>  => {
     return (await ds.deleteEventsByFilter(filters, preview)).toEntity()
   }
 }

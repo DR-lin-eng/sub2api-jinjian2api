@@ -5,7 +5,7 @@ import type { ChannelsUserQueryRepository } from '@/features/channels-user/domai
 export class ChannelsUserQueryRepositoryImpl implements ChannelsUserQueryRepository {
   private readonly ds = channelsUserQueryDatasource
 
-  async getAvailable(options?: { signal?: AbortSignal }): Promise<UserAvailableChannel[]> {
+  getAvailable = async (options?: { signal?: AbortSignal }) : Promise<UserAvailableChannel[]>  => {
     return (await this.ds.getAvailable(options)).map(dto => dto.toEntity())
   }
 }

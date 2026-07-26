@@ -5,11 +5,11 @@ import type { GroupsUserQueryRepository } from '@/features/groups-user/domain/re
 export class GroupsUserQueryRepositoryImpl implements GroupsUserQueryRepository {
   private readonly ds = groupsUserQueryDatasource
 
-  async getAvailable(): Promise<Group[]> {
+  getAvailable = async () : Promise<Group[]>  => {
     return (await this.ds.getAvailable()).map(dto => dto.toEntity())
   }
 
-  async getUserGroupRates(): Promise<Record<number, number>> {
+  getUserGroupRates = async () : Promise<Record<number, number>>  => {
     return this.ds.getUserGroupRates()
   }
 }

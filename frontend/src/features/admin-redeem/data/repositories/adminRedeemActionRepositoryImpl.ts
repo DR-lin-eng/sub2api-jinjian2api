@@ -8,24 +8,24 @@ import type { BatchDeleteRedeemCodesRequest } from '@/features/admin-redeem/data
 class AdminRedeemActionRepositoryImpl implements AdminRedeemActionRepository {
   private readonly ds = adminRedeemActionDatasource
 
-  async generate(req: GenerateRedeemCodesRequest): Promise<RedeemCode[]> {
+  generate = async (req: GenerateRedeemCodesRequest) : Promise<RedeemCode[]>  => {
     const dtos = await this.ds.generate(req)
     return dtos.map(dto => dto.toEntity())
   }
 
-  async deleteCode(id: number): Promise<{ message: string }> {
+  deleteCode = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.deleteCode(id)
   }
 
-  async batchDelete(req: BatchDeleteRedeemCodesRequest): Promise<{ deleted: number; message: string }> {
+  batchDelete = async (req: BatchDeleteRedeemCodesRequest) : Promise<{ deleted: number; message: string }>  => {
     return this.ds.batchDelete(req)
   }
 
-  async batchUpdate(req: BatchUpdateRedeemCodesRequest): Promise<{ updated: number; message: string }> {
+  batchUpdate = async (req: BatchUpdateRedeemCodesRequest) : Promise<{ updated: number; message: string }>  => {
     return this.ds.batchUpdate(req)
   }
 
-  async expire(id: number): Promise<RedeemCode> {
+  expire = async (id: number) : Promise<RedeemCode>  => {
     return (await this.ds.expire(id)).toEntity()
   }
 }

@@ -6,11 +6,11 @@ import type { ScheduledTestsQueryRepository } from '@/features/admin-accounts/do
 export class ScheduledTestsQueryRepositoryImpl implements ScheduledTestsQueryRepository {
   private readonly ds = scheduledTestsQueryDatasource
 
-  async listByAccount(accountId: number): Promise<ScheduledTestPlan[]> {
+  listByAccount = async (accountId: number) : Promise<ScheduledTestPlan[]>  => {
     return (await this.ds.listByAccount(accountId)).map(dto => dto.toEntity())
   }
 
-  async listResults(planId: number, limit?: number): Promise<ScheduledTestResult[]> {
+  listResults = async (planId: number, limit?: number) : Promise<ScheduledTestResult[]>  => {
     return (await this.ds.listResults(planId, limit)).map(dto => dto.toEntity())
   }
 }

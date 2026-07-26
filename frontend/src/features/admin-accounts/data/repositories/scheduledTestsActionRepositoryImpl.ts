@@ -7,15 +7,15 @@ import type { ScheduledTestsActionRepository } from '@/features/admin-accounts/d
 export class ScheduledTestsActionRepositoryImpl implements ScheduledTestsActionRepository {
   private readonly ds = scheduledTestsActionDatasource
 
-  async create(req: CreateScheduledTestPlanRequest): Promise<ScheduledTestPlan> {
+  create = async (req: CreateScheduledTestPlanRequest) : Promise<ScheduledTestPlan>  => {
     return (await this.ds.create(req)).toEntity()
   }
 
-  async update(id: number, req: UpdateScheduledTestPlanRequest): Promise<ScheduledTestPlan> {
+  update = async (id: number, req: UpdateScheduledTestPlanRequest) : Promise<ScheduledTestPlan>  => {
     return (await this.ds.update(id, req)).toEntity()
   }
 
-  async deletePlan(id: number): Promise<void> {
+  deletePlan = async (id: number) : Promise<void>  => {
     return this.ds.deletePlan(id)
   }
 }

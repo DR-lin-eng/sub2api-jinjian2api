@@ -5,11 +5,11 @@ import type { TlsFingerprintProfile } from '@/features/admin-settings/domain/mod
 class TlsFingerprintProfileQueryRepositoryImpl implements TlsFingerprintProfileQueryRepository {
   private readonly ds = tlsFingerprintProfileQueryDatasource
 
-  async list(): Promise<TlsFingerprintProfile[]> {
+  list = async () : Promise<TlsFingerprintProfile[]>  => {
     return (await this.ds.list()).map(dto => dto.toEntity())
   }
 
-  async getById(id: number): Promise<TlsFingerprintProfile> {
+  getById = async (id: number) : Promise<TlsFingerprintProfile>  => {
     return (await this.ds.getById(id)).toEntity()
   }
 }

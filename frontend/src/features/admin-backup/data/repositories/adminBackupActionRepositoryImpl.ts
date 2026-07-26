@@ -13,35 +13,35 @@ import type { CreateBackupRequest } from '@/features/admin-backup/data/requests_
 export class AdminBackupActionRepositoryImpl implements AdminBackupActionRepository {
   private readonly ds = adminBackupActionDatasource
 
-  async updateS3Config(req: UpdateBackupS3ConfigRequest): Promise<BackupS3Config> {
+  updateS3Config = async (req: UpdateBackupS3ConfigRequest) : Promise<BackupS3Config>  => {
     return (await this.ds.updateS3Config(req)).toEntity()
   }
 
-  async testS3Connection(req: UpdateBackupS3ConfigRequest): Promise<TestS3Response> {
+  testS3Connection = async (req: UpdateBackupS3ConfigRequest) : Promise<TestS3Response>  => {
     return (await this.ds.testS3Connection(req)).toEntity()
   }
 
-  async updateImageStorageConfig(req: UpdateImageStorageConfigRequest): Promise<ImageStorageConfig> {
+  updateImageStorageConfig = async (req: UpdateImageStorageConfigRequest) : Promise<ImageStorageConfig>  => {
     return (await this.ds.updateImageStorageConfig(req)).toEntity()
   }
 
-  async testImageStorageConnection(req: UpdateImageStorageConfigRequest): Promise<TestS3Response> {
+  testImageStorageConnection = async (req: UpdateImageStorageConfigRequest) : Promise<TestS3Response>  => {
     return (await this.ds.testImageStorageConnection(req)).toEntity()
   }
 
-  async updateSchedule(req: UpdateBackupScheduleConfigRequest): Promise<BackupScheduleConfig> {
+  updateSchedule = async (req: UpdateBackupScheduleConfigRequest) : Promise<BackupScheduleConfig>  => {
     return (await this.ds.updateSchedule(req)).toEntity()
   }
 
-  async createBackup(req?: CreateBackupRequest): Promise<BackupRecord> {
+  createBackup = async (req?: CreateBackupRequest) : Promise<BackupRecord>  => {
     return (await this.ds.createBackup(req)).toEntity()
   }
 
-  async deleteBackup(id: string): Promise<void> {
+  deleteBackup = async (id: string) : Promise<void>  => {
     await this.ds.deleteBackup(id)
   }
 
-  async restoreBackup(id: string, password: string): Promise<BackupRecord> {
+  restoreBackup = async (id: string, password: string) : Promise<BackupRecord>  => {
     return (await this.ds.restoreBackup(id, password)).toEntity()
   }
 }

@@ -8,19 +8,19 @@ import type { AdminChannelsActionRepository } from '@/features/admin-channels/do
 export class AdminChannelsActionRepositoryImpl implements AdminChannelsActionRepository {
   private readonly ds = adminChannelsActionDatasource
 
-  async create(req: CreateChannelRequest): Promise<Channel> {
+  create = async (req: CreateChannelRequest) : Promise<Channel>  => {
     return (await this.ds.create(req)).toEntity()
   }
 
-  async update(id: number, req: UpdateChannelRequest): Promise<Channel> {
+  update = async (id: number, req: UpdateChannelRequest) : Promise<Channel>  => {
     return (await this.ds.update(id, req)).toEntity()
   }
 
-  async remove(id: number): Promise<void> {
+  remove = async (id: number) : Promise<void>  => {
     await this.ds.remove(id)
   }
 
-  async syncPricingModels(platform: string): Promise<SyncPricingModelsResult> {
+  syncPricingModels = async (platform: string) : Promise<SyncPricingModelsResult>  => {
     return (await this.ds.syncPricingModels(platform)).toEntity()
   }
 }

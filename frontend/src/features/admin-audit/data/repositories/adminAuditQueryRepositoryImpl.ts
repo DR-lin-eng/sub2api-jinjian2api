@@ -11,10 +11,10 @@ import type { AdminAuditQueryRepository } from '@/features/admin-audit/domain/re
 export class AdminAuditQueryRepositoryImpl implements AdminAuditQueryRepository {
   private readonly ds = adminAuditQueryDatasource
 
-  async list(
+  list = async (
     query: AuditLogQuery = {},
     options?: { signal?: AbortSignal },
-  ): Promise<PaginatedResponse<AuditLog>> {
+  ): Promise<PaginatedResponse<AuditLog>> => {
     const req: ListAuditLogRequest = {
       page: query.page,
       page_size: query.pageSize,
@@ -33,7 +33,7 @@ export class AdminAuditQueryRepositoryImpl implements AdminAuditQueryRepository 
     return { ...dtoPage, items: dtoPage.items.map((dto) => dto.toEntity()) }
   }
 
-  async getById(id: number): Promise<AuditLog> {
+  getById = async (id: number) : Promise<AuditLog>  => {
     return (await this.ds.getById(id)).toEntity()
   }
 }

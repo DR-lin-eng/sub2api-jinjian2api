@@ -9,27 +9,27 @@ import type { PromptAuditGroup } from '@/features/prompt-audit/domain/models/pro
 import type { PromptEventFilters } from '@/features/prompt-audit/domain/models/promptEventFilters'
 
 export class PromptAuditQueryRepositoryImpl implements PromptAuditQueryRepository {
-  async getConfig(): Promise<PromptAuditConfig> {
+  getConfig = async () : Promise<PromptAuditConfig>  => {
     return (await ds.getConfig()).toEntity()
   }
 
-  async getRuntime(): Promise<PromptAuditRuntime> {
+  getRuntime = async () : Promise<PromptAuditRuntime>  => {
     return (await ds.getRuntime()).toEntity()
   }
 
-  async listEvents(filters: PromptEventFilters, page: number, pageSize: number): Promise<PromptEventPage> {
+  listEvents = async (filters: PromptEventFilters, page: number, pageSize: number) : Promise<PromptEventPage>  => {
     return (await ds.listEvents(filters, page, pageSize)).toEntity()
   }
 
-  async getEvent(id: number): Promise<PromptAuditEvent> {
+  getEvent = async (id: number) : Promise<PromptAuditEvent>  => {
     return (await ds.getEvent(id)).toEntity()
   }
 
-  async previewDelete(filters: PromptEventFilters): Promise<PromptDeletePreview> {
+  previewDelete = async (filters: PromptEventFilters) : Promise<PromptDeletePreview>  => {
     return (await ds.previewDelete(filters)).toEntity()
   }
 
-  async listGroups(): Promise<PromptAuditGroup[]> {
+  listGroups = async () : Promise<PromptAuditGroup[]>  => {
     return (await ds.listGroups()).map((dto) => dto.toEntity())
   }
 }

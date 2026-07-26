@@ -27,7 +27,7 @@ function persistTokens(dto: AuthResultDto): void {
 class AuthActionRepositoryImpl implements AuthActionRepository {
   private readonly ds = authActionDatasource
 
-  async login(req: LoginRequest): Promise<LoginResponse> {
+  login = async (req: LoginRequest) : Promise<LoginResponse>  => {
     const dto = await this.ds.login(req)
     if (isTotpRequired(dto)) {
       return dto.toEntity()
@@ -36,19 +36,19 @@ class AuthActionRepositoryImpl implements AuthActionRepository {
     return dto.toEntity()
   }
 
-  async login2FA(req: TotpLogin2FARequest): Promise<AuthResult> {
+  login2FA = async (req: TotpLogin2FARequest) : Promise<AuthResult>  => {
     const dto = await this.ds.login2FA(req)
     persistTokens(dto)
     return dto.toEntity()
   }
 
-  async register(req: RegisterRequest | EncryptedRegisterRequest): Promise<AuthResult> {
+  register = async (req: RegisterRequest | EncryptedRegisterRequest) : Promise<AuthResult>  => {
     const dto = await this.ds.register(req)
     persistTokens(dto)
     return dto.toEntity()
   }
 
-  async logout(): Promise<void> {
+  logout = async () : Promise<void>  => {
     await this.ds.logout()
     clearTokenMemory()
     localStorage.removeItem('auth_user')

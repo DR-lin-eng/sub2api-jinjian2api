@@ -9,7 +9,7 @@ import type { AdminDataPayload } from '@/features/admin-accounts/domain/models/a
 class AdminProxiesQueryRepositoryImpl implements AdminProxiesQueryRepository {
   private readonly ds = adminProxiesQueryDatasource
 
-  async list(
+  list = async (
     page: number = 1,
     pageSize: number = 20,
     filters?: {
@@ -20,36 +20,36 @@ class AdminProxiesQueryRepositoryImpl implements AdminProxiesQueryRepository {
       sort_order?: 'asc' | 'desc'
     },
     options?: { signal?: AbortSignal },
-  ): Promise<PaginatedResponse<Proxy>> {
+  ): Promise<PaginatedResponse<Proxy>> => {
     const result = await this.ds.list(page, pageSize, filters, options)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }
 
-  async getAll(): Promise<Proxy[]> {
+  getAll = async () : Promise<Proxy[]>  => {
     return (await this.ds.getAll()).map(dto => dto.toEntity())
   }
 
-  async getAllWithCount(): Promise<Proxy[]> {
+  getAllWithCount = async () : Promise<Proxy[]>  => {
     return (await this.ds.getAllWithCount()).map(dto => dto.toEntity())
   }
 
-  async getById(id: number): Promise<Proxy> {
+  getById = async (id: number) : Promise<Proxy>  => {
     return (await this.ds.getById(id)).toEntity()
   }
 
-  async checkProxyQuality(id: number): Promise<ProxyQualityCheckResult> {
+  checkProxyQuality = async (id: number) : Promise<ProxyQualityCheckResult>  => {
     return (await this.ds.checkProxyQuality(id)).toEntity()
   }
 
-  async getStats(id: number) {
+  getStats = async (id: number) => {
     return this.ds.getStats(id)
   }
 
-  async getProxyAccounts(id: number): Promise<ProxyAccountSummary[]> {
+  getProxyAccounts = async (id: number) : Promise<ProxyAccountSummary[]>  => {
     return (await this.ds.getProxyAccounts(id)).map(dto => dto.toEntity())
   }
 
-  async exportData(options?: {
+  exportData = async (options?: {
     ids?: number[]
     filters?: {
       protocol?: string
@@ -58,7 +58,7 @@ class AdminProxiesQueryRepositoryImpl implements AdminProxiesQueryRepository {
       sort_by?: string
       sort_order?: 'asc' | 'desc'
     }
-  }): Promise<AdminDataPayload> {
+  }): Promise<AdminDataPayload> => {
     return this.ds.exportData(options)
   }
 }

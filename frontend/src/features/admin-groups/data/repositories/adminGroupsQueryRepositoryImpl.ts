@@ -12,7 +12,7 @@ import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 export class AdminGroupsQueryRepositoryImpl implements AdminGroupsQueryRepository {
   private readonly ds = adminGroupsQueryDatasource
 
-  async list(
+  list = async (
     page: number = 1,
     pageSize: number = 20,
     filters?: {
@@ -24,31 +24,31 @@ export class AdminGroupsQueryRepositoryImpl implements AdminGroupsQueryRepositor
       sort_order?: 'asc' | 'desc'
     },
     options?: { signal?: AbortSignal },
-  ): Promise<PaginatedResponse<AdminGroup>> {
+  ): Promise<PaginatedResponse<AdminGroup>> => {
     const result = await this.ds.list(page, pageSize, filters, options)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }
 
-  async getAll(platform?: GroupPlatform): Promise<AdminGroup[]> {
+  getAll = async (platform?: GroupPlatform) : Promise<AdminGroup[]>  => {
     const dtos = await this.ds.getAll(platform)
     return dtos.map(dto => dto.toEntity())
   }
 
-  async getAllIncludingInactive(): Promise<AdminGroup[]> {
+  getAllIncludingInactive = async () : Promise<AdminGroup[]>  => {
     const dtos = await this.ds.getAllIncludingInactive()
     return dtos.map(dto => dto.toEntity())
   }
 
-  async getByPlatform(platform: GroupPlatform): Promise<AdminGroup[]> {
+  getByPlatform = async (platform: GroupPlatform) : Promise<AdminGroup[]>  => {
     const dtos = await this.ds.getByPlatform(platform)
     return dtos.map(dto => dto.toEntity())
   }
 
-  async getById(id: number): Promise<AdminGroup> {
+  getById = async (id: number) : Promise<AdminGroup>  => {
     return (await this.ds.getById(id)).toEntity()
   }
 
-  async getModelsListCandidates(id: number, platform?: GroupPlatform): Promise<string[]> {
+  getModelsListCandidates = async (id: number, platform?: GroupPlatform) : Promise<string[]>  => {
     return this.ds.getModelsListCandidates(id, platform)
   }
 
@@ -61,32 +61,32 @@ export class AdminGroupsQueryRepositoryImpl implements AdminGroupsQueryRepositor
     return this.ds.getStats(id)
   }
 
-  async getGroupApiKeys(id: number, page?: number, pageSize?: number): Promise<PaginatedResponse<unknown>> {
+  getGroupApiKeys = async (id: number, page?: number, pageSize?: number) : Promise<PaginatedResponse<unknown>>  => {
     return this.ds.getGroupApiKeys(id, page, pageSize)
   }
 
-  async listCompositeRoutes(id: number): Promise<CompositeModelRoute[]> {
+  listCompositeRoutes = async (id: number) : Promise<CompositeModelRoute[]>  => {
     const dtos = await this.ds.listCompositeRoutes(id)
     return dtos.map(dto => dto.toEntity())
   }
 
-  async previewCompositeRoute(id: number, request: PreviewCompositeRouteRequest): Promise<CompositeRouteDecision> {
+  previewCompositeRoute = async (id: number, request: PreviewCompositeRouteRequest) : Promise<CompositeRouteDecision>  => {
     return (await this.ds.previewCompositeRoute(id, request)).toEntity()
   }
 
-  async getGroupRateMultipliers(id: number): Promise<GroupRateMultiplier[]> {
+  getGroupRateMultipliers = async (id: number) : Promise<GroupRateMultiplier[]>  => {
     return (await this.ds.getGroupRateMultipliers(id)).map(dto => dto.toEntity())
   }
 
-  async getGroupRPMOverrides(id: number): Promise<GroupRPMOverride[]> {
+  getGroupRPMOverrides = async (id: number) : Promise<GroupRPMOverride[]>  => {
     return (await this.ds.getGroupRPMOverrides(id)).map(dto => dto.toEntity())
   }
 
-  async getUsageSummary(timezone?: string): Promise<{ group_id: number; today_cost: number; total_cost: number }[]> {
+  getUsageSummary = async (timezone?: string) : Promise<{ group_id: number; today_cost: number; total_cost: number }[]>  => {
     return this.ds.getUsageSummary(timezone)
   }
 
-  async getCapacitySummary(): Promise<{ group_id: number; concurrency_used: number; concurrency_max: number; sessions_used: number; sessions_max: number; rpm_used: number; rpm_max: number }[]> {
+  getCapacitySummary = async () : Promise<{ group_id: number; concurrency_used: number; concurrency_max: number; sessions_used: number; sessions_max: number; rpm_used: number; rpm_max: number }[]>  => {
     return this.ds.getCapacitySummary()
   }
 }

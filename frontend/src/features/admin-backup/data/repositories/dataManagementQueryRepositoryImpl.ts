@@ -12,27 +12,27 @@ import type { ListBackupJobsRequest } from '@/features/admin-backup/data/request
 export class DataManagementQueryRepositoryImpl implements DataManagementQueryRepository {
   private readonly ds = dataManagementQueryDatasource
 
-  async getAgentHealth(): Promise<BackupAgentHealth> {
+  getAgentHealth = async () : Promise<BackupAgentHealth>  => {
     return (await this.ds.getAgentHealth()).toEntity()
   }
 
-  async getConfig(): Promise<DataManagementConfig> {
+  getConfig = async () : Promise<DataManagementConfig>  => {
     return (await this.ds.getConfig()).toEntity()
   }
 
-  async listSourceProfiles(sourceType: SourceType): Promise<ListSourceProfilesResponse> {
+  listSourceProfiles = async (sourceType: SourceType) : Promise<ListSourceProfilesResponse>  => {
     return (await this.ds.listSourceProfiles(sourceType)).toEntity()
   }
 
-  async listS3Profiles(): Promise<ListS3ProfilesResponse> {
+  listS3Profiles = async () : Promise<ListS3ProfilesResponse>  => {
     return (await this.ds.listS3Profiles()).toEntity()
   }
 
-  async listBackupJobs(request?: ListBackupJobsRequest): Promise<ListBackupJobsResponse> {
+  listBackupJobs = async (request?: ListBackupJobsRequest) : Promise<ListBackupJobsResponse>  => {
     return (await this.ds.listBackupJobs(request)).toEntity()
   }
 
-  async getBackupJob(jobId: string): Promise<BackupJob> {
+  getBackupJob = async (jobId: string) : Promise<BackupJob>  => {
     return (await this.ds.getBackupJob(jobId)).toEntity()
   }
 }

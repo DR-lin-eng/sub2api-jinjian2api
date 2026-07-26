@@ -42,15 +42,15 @@ describe('admin users api auth identity binding', () => {
       verified_at: '2026-04-22T00:00:00Z',
       issuer: null,
       metadata: { source: 'admin-repair' },
-      created_at: '2026-04-22T00:00:00Z',
-      updated_at: '2026-04-22T00:00:00Z',
+      createdAt: '2026-04-22T00:00:00Z',
+      updatedAt: '2026-04-22T00:00:00Z',
       channel: {
         channel: 'open',
         channel_app_id: 'wx-open',
         channel_subject: 'openid-123',
         metadata: { scene: 'migration' },
-        created_at: '2026-04-22T00:00:00Z',
-        updated_at: '2026-04-22T00:00:00Z',
+        createdAt: '2026-04-22T00:00:00Z',
+        updatedAt: '2026-04-22T00:00:00Z',
       },
     }
     post.mockResolvedValue({ data: rawResponse })

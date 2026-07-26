@@ -19,59 +19,59 @@ import type { UpdateErrorResolvedRequest } from '@/features/admin-ops/data/reque
 export class AdminOpsActionRepositoryImpl implements AdminOpsActionRepository {
   private readonly ds = adminOpsActionDatasource
 
-  async updateErrorResolved(errorId: number, req: UpdateErrorResolvedRequest): Promise<void> {
+  updateErrorResolved = async (errorId: number, req: UpdateErrorResolvedRequest) : Promise<void>  => {
     return this.ds.updateErrorResolved(errorId, req)
   }
 
-  async updateRequestErrorResolved(errorId: number, req: UpdateErrorResolvedRequest): Promise<void> {
+  updateRequestErrorResolved = async (errorId: number, req: UpdateErrorResolvedRequest) : Promise<void>  => {
     return this.ds.updateRequestErrorResolved(errorId, req)
   }
 
-  async updateUpstreamErrorResolved(errorId: number, req: UpdateErrorResolvedRequest): Promise<void> {
+  updateUpstreamErrorResolved = async (errorId: number, req: UpdateErrorResolvedRequest) : Promise<void>  => {
     return this.ds.updateUpstreamErrorResolved(errorId, req)
   }
 
-  async createAlertRule(req: CreateAlertRuleRequest): Promise<AlertRule> {
+  createAlertRule = async (req: CreateAlertRuleRequest) : Promise<AlertRule>  => {
     return (await this.ds.createAlertRule(req)).toEntity()
   }
 
-  async updateAlertRule(id: number, req: UpdateAlertRuleRequest): Promise<AlertRule> {
+  updateAlertRule = async (id: number, req: UpdateAlertRuleRequest) : Promise<AlertRule>  => {
     return (await this.ds.updateAlertRule(id, req)).toEntity()
   }
 
-  async deleteAlertRule(id: number): Promise<void> {
+  deleteAlertRule = async (id: number) : Promise<void>  => {
     return this.ds.deleteAlertRule(id)
   }
 
-  async updateAlertEventStatus(id: number, req: UpdateAlertEventStatusRequest): Promise<void> {
+  updateAlertEventStatus = async (id: number, req: UpdateAlertEventStatusRequest) : Promise<void>  => {
     return this.ds.updateAlertEventStatus(id, req)
   }
 
-  async createAlertSilence(req: CreateAlertSilenceRequest): Promise<void> {
+  createAlertSilence = async (req: CreateAlertSilenceRequest) : Promise<void>  => {
     return this.ds.createAlertSilence(req)
   }
 
-  async updateEmailNotificationConfig(req: UpdateEmailNotificationConfigRequest): Promise<EmailNotificationConfig> {
+  updateEmailNotificationConfig = async (req: UpdateEmailNotificationConfigRequest) : Promise<EmailNotificationConfig>  => {
     return (await this.ds.updateEmailNotificationConfig(req)).toEntity()
   }
 
-  async updateAlertRuntimeSettings(req: UpdateAlertRuntimeSettingsRequest): Promise<OpsAlertRuntimeSettings> {
+  updateAlertRuntimeSettings = async (req: UpdateAlertRuntimeSettingsRequest) : Promise<OpsAlertRuntimeSettings>  => {
     return (await this.ds.updateAlertRuntimeSettings(req)).toEntity()
   }
 
-  async updateRuntimeLogConfig(req: UpdateRuntimeLogConfigRequest): Promise<OpsRuntimeLogConfig> {
+  updateRuntimeLogConfig = async (req: UpdateRuntimeLogConfigRequest) : Promise<OpsRuntimeLogConfig>  => {
     return (await this.ds.updateRuntimeLogConfig(req)).toEntity()
   }
 
-  async resetRuntimeLogConfig(): Promise<OpsRuntimeLogConfig> {
+  resetRuntimeLogConfig = async () : Promise<OpsRuntimeLogConfig>  => {
     return (await this.ds.resetRuntimeLogConfig()).toEntity()
   }
 
-  async cleanupSystemLogs(req: CleanupSystemLogsRequest): Promise<{ deleted: number }> {
+  cleanupSystemLogs = async (req: CleanupSystemLogsRequest) : Promise<{ deleted: number }>  => {
     return this.ds.cleanupSystemLogs(req)
   }
 
-  async updateAdvancedSettings(req: UpdateAdvancedSettingsRequest): Promise<OpsAdvancedSettings> {
+  updateAdvancedSettings = async (req: UpdateAdvancedSettingsRequest) : Promise<OpsAdvancedSettings>  => {
     return (await this.ds.updateAdvancedSettings(req)).toEntity()
   }
 }

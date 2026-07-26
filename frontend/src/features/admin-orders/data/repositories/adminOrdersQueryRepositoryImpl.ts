@@ -11,15 +11,15 @@ import { adminOrdersQueryDatasource } from '@/features/admin-orders/data/datasou
 export class AdminOrdersQueryRepositoryImpl implements AdminOrdersQueryRepository {
   private readonly ds = adminOrdersQueryDatasource
 
-  async getConfig(): Promise<AdminPaymentConfig> {
+  getConfig = async () : Promise<AdminPaymentConfig>  => {
     return (await this.ds.getConfig()).toEntity()
   }
 
-  async getDashboard(days?: number): Promise<DashboardStats> {
+  getDashboard = async (days?: number) : Promise<DashboardStats>  => {
     return (await this.ds.getDashboard(days)).toEntity()
   }
 
-  async getOrders(req?: GetOrdersRequest): Promise<PaginatedResponse<PaymentOrder>> {
+  getOrders = async (req?: GetOrdersRequest) : Promise<PaginatedResponse<PaymentOrder>>  => {
     const result = await this.ds.getOrders(req)
     return {
       ...result,
@@ -27,15 +27,15 @@ export class AdminOrdersQueryRepositoryImpl implements AdminOrdersQueryRepositor
     }
   }
 
-  async getOrder(id: number): Promise<unknown> {
+  getOrder = async (id: number) : Promise<unknown>  => {
     return this.ds.getOrder(id)
   }
 
-  async getPlans(): Promise<SubscriptionPlan[]> {
+  getPlans = async () : Promise<SubscriptionPlan[]>  => {
     return (await this.ds.getPlans()).map(dto => dto.toEntity())
   }
 
-  async getProviders(): Promise<ProviderInstance[]> {
+  getProviders = async () : Promise<ProviderInstance[]>  => {
     return (await this.ds.getProviders()).map(dto => dto.toEntity())
   }
 }

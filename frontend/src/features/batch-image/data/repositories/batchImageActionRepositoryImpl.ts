@@ -6,19 +6,19 @@ import type { SubmitBatchImageJobRequest } from '@/features/batch-image/data/req
 class BatchImageActionRepositoryImpl implements BatchImageActionRepository {
   private readonly ds = batchImageActionDatasource
 
-  async submit(apiKey: string, req: SubmitBatchImageJobRequest, idempotencyKey: string): Promise<BatchImageJob> {
+  submit = async (apiKey: string, req: SubmitBatchImageJobRequest, idempotencyKey: string) : Promise<BatchImageJob>  => {
     return (await this.ds.submit(apiKey, req, idempotencyKey)).toEntity()
   }
 
-  async cancel(apiKey: string, batchId: string): Promise<BatchImageJob> {
+  cancel = async (apiKey: string, batchId: string) : Promise<BatchImageJob>  => {
     return (await this.ds.cancel(apiKey, batchId)).toEntity()
   }
 
-  async downloadZip(apiKey: string, batchId: string): Promise<Blob> {
+  downloadZip = async (apiKey: string, batchId: string) : Promise<Blob>  => {
     return this.ds.downloadZip(apiKey, batchId)
   }
 
-  async deleteRecord(apiKey: string, batchId: string): Promise<void> {
+  deleteRecord = async (apiKey: string, batchId: string) : Promise<void>  => {
     return this.ds.deleteRecord(apiKey, batchId)
   }
 

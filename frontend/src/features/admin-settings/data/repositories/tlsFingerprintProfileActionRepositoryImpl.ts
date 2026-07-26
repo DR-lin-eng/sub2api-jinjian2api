@@ -7,15 +7,15 @@ import type { UpdateTlsFingerprintProfileRequest } from '@/features/admin-settin
 class TlsFingerprintProfileActionRepositoryImpl implements TlsFingerprintProfileActionRepository {
   private readonly ds = tlsFingerprintProfileActionDatasource
 
-  async create(req: CreateTlsFingerprintProfileRequest): Promise<TlsFingerprintProfile> {
+  create = async (req: CreateTlsFingerprintProfileRequest) : Promise<TlsFingerprintProfile>  => {
     return (await this.ds.create(req)).toEntity()
   }
 
-  async update(id: number, req: UpdateTlsFingerprintProfileRequest): Promise<TlsFingerprintProfile> {
+  update = async (id: number, req: UpdateTlsFingerprintProfileRequest) : Promise<TlsFingerprintProfile>  => {
     return (await this.ds.update(id, req)).toEntity()
   }
 
-  async deleteProfile(id: number): Promise<{ message: string }> {
+  deleteProfile = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.deleteProfile(id)
   }
 }

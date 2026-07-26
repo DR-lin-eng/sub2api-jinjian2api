@@ -8,7 +8,7 @@ import type { AdminAuditActionRepository } from '@/features/admin-audit/domain/r
 export class AdminAuditActionRepositoryImpl implements AdminAuditActionRepository {
   private readonly ds = adminAuditActionDatasource
 
-  async clear(req: ClearAuditLogRequest): Promise<{ deleted: number }> {
+  clear = async (req: ClearAuditLogRequest) : Promise<{ deleted: number }>  => {
     return this.ds.clear(req)
   }
 }

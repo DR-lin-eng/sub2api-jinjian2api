@@ -15,28 +15,28 @@ import type { WebSearchEmulationConfig } from '@/features/admin-settings/domain/
 class AdminSettingsQueryRepositoryImpl implements AdminSettingsQueryRepository {
   private readonly ds = adminSettingsQueryDatasource
 
-  async getSettings(): Promise<SystemSettings> {
+  getSettings = async () : Promise<SystemSettings>  => {
     return (await this.ds.getSettings()).toEntity()
   }
 
-  async getEmailTemplates(): Promise<{ events: unknown[]; locales: string[]; templates?: EmailTemplateSummary[] }> {
+  getEmailTemplates = async () : Promise<{ events: unknown[]; locales: string[]; templates?: EmailTemplateSummary[] }>  => {
     return await this.ds.getEmailTemplates() as Promise<{ events: unknown[]; locales: string[]; templates?: EmailTemplateSummary[] }>
   }
 
-  async getEmailTemplate(event: string, locale: string): Promise<EmailTemplateDetail> {
+  getEmailTemplate = async (event: string, locale: string) : Promise<EmailTemplateDetail>  => {
     return await this.ds.getEmailTemplate(event, locale) as Promise<EmailTemplateDetail>
   }
 
-  async listAdminApiKeys(): Promise<{ items: AdminApiKey[] }> {
+  listAdminApiKeys = async () : Promise<{ items: AdminApiKey[] }>  => {
     return await this.ds.listAdminApiKeys() as Promise<{ items: AdminApiKey[] }>
   }
 
-  async getAdminApiKey(): Promise<{ exists: boolean; maskedKey: string }> {
+  getAdminApiKey = async () : Promise<{ exists: boolean; maskedKey: string }>  => {
     const raw = await this.ds.getAdminApiKey() as { exists: boolean; masked_key: string }
     return { exists: raw.exists ?? false, maskedKey: raw.masked_key ?? '' }
   }
 
-  async getOverloadCooldownSettings(): Promise<OverloadCooldownSettings> {
+  getOverloadCooldownSettings = async () : Promise<OverloadCooldownSettings>  => {
     const raw = await this.ds.getOverloadCooldownSettings() as { enabled: boolean; cooldown_minutes: number }
     const e = new (await import('@/features/admin-settings/domain/models/overloadCooldownSettings')).OverloadCooldownSettings()
     e.enabled = raw.enabled ?? false
@@ -44,7 +44,7 @@ class AdminSettingsQueryRepositoryImpl implements AdminSettingsQueryRepository {
     return e
   }
 
-  async getRateLimit429CooldownSettings(): Promise<RateLimit429CooldownSettings> {
+  getRateLimit429CooldownSettings = async () : Promise<RateLimit429CooldownSettings>  => {
     const raw = await this.ds.getRateLimit429CooldownSettings() as { enabled: boolean; cooldown_seconds: number }
     const e = new (await import('@/features/admin-settings/domain/models/rateLimit429CooldownSettings')).RateLimit429CooldownSettings()
     e.enabled = raw.enabled ?? false
@@ -52,14 +52,14 @@ class AdminSettingsQueryRepositoryImpl implements AdminSettingsQueryRepository {
     return e
   }
 
-  async getGlobalTempUnschedulableSettings(): Promise<GlobalTempUnschedulableSettings> {
+  getGlobalTempUnschedulableSettings = async () : Promise<GlobalTempUnschedulableSettings>  => {
     const raw = await this.ds.getGlobalTempUnschedulableSettings() as { enabled: boolean }
     const e = new (await import('@/features/admin-settings/domain/models/globalTempUnschedulableSettings')).GlobalTempUnschedulableSettings()
     e.enabled = raw.enabled ?? false
     return e
   }
 
-  async getStreamTimeoutSettings(): Promise<StreamTimeoutSettings> {
+  getStreamTimeoutSettings = async () : Promise<StreamTimeoutSettings>  => {
     const raw = await this.ds.getStreamTimeoutSettings() as Record<string, unknown>
     const e = new (await import('@/features/admin-settings/domain/models/streamTimeoutSettings')).StreamTimeoutSettings()
     e.enabled = (raw.enabled as boolean) ?? false
@@ -70,7 +70,7 @@ class AdminSettingsQueryRepositoryImpl implements AdminSettingsQueryRepository {
     return e
   }
 
-  async getRectifierSettings(): Promise<RectifierSettings> {
+  getRectifierSettings = async () : Promise<RectifierSettings>  => {
     const raw = await this.ds.getRectifierSettings() as Record<string, unknown>
     const e = new (await import('@/features/admin-settings/domain/models/rectifierSettings')).RectifierSettings()
     e.enabled = (raw.enabled as boolean) ?? false
@@ -82,11 +82,11 @@ class AdminSettingsQueryRepositoryImpl implements AdminSettingsQueryRepository {
     return e
   }
 
-  async getBetaPolicySettings(): Promise<BetaPolicySettings> {
+  getBetaPolicySettings = async () : Promise<BetaPolicySettings>  => {
     return this.ds.getBetaPolicySettings() as Promise<BetaPolicySettings>
   }
 
-  async getWebSearchEmulationConfig(): Promise<WebSearchEmulationConfig> {
+  getWebSearchEmulationConfig = async () : Promise<WebSearchEmulationConfig>  => {
     return this.ds.getWebSearchEmulationConfig() as Promise<WebSearchEmulationConfig>
   }
 }

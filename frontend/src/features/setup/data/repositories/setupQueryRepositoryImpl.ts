@@ -5,7 +5,7 @@ import type { SetupQueryRepository } from '@/features/setup/domain/repositories/
 class SetupQueryRepositoryImpl implements SetupQueryRepository {
   private readonly ds = setupQueryDatasource
 
-  async getSetupStatus(): Promise<SetupStatus> {
+  getSetupStatus = async () : Promise<SetupStatus>  => {
     return (await this.ds.getSetupStatus()).toEntity()
   }
 }

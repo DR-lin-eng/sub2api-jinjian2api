@@ -5,11 +5,11 @@ import type { ErrorPassthroughRule } from '@/features/admin-settings/domain/mode
 class ErrorPassthroughQueryRepositoryImpl implements ErrorPassthroughQueryRepository {
   private readonly ds = errorPassthroughQueryDatasource
 
-  async list(): Promise<ErrorPassthroughRule[]> {
+  list = async () : Promise<ErrorPassthroughRule[]>  => {
     return (await this.ds.list()).map(dto => dto.toEntity())
   }
 
-  async getById(id: number): Promise<ErrorPassthroughRule> {
+  getById = async (id: number) : Promise<ErrorPassthroughRule>  => {
     return (await this.ds.getById(id)).toEntity()
   }
 }

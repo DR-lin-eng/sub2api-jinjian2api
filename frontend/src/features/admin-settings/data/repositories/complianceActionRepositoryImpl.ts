@@ -6,7 +6,7 @@ import type { AcceptAdminComplianceRequest } from '@/features/admin-settings/dat
 class ComplianceActionRepositoryImpl implements ComplianceActionRepository {
   private readonly ds = complianceActionDatasource
 
-  async accept(req: AcceptAdminComplianceRequest): Promise<AdminComplianceStatus> {
+  accept = async (req: AcceptAdminComplianceRequest) : Promise<AdminComplianceStatus>  => {
     return (await this.ds.accept(req)).toEntity()
   }
 }

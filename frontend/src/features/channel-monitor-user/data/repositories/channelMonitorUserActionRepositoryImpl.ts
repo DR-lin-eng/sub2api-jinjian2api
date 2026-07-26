@@ -5,11 +5,11 @@ import type { StatusBatchRequest } from '@/features/channel-monitor-user/data/re
 export class ChannelMonitorUserActionRepositoryImpl implements ChannelMonitorUserActionRepository {
   private readonly ds = channelMonitorUserActionDatasource
 
-  async status(id: number) {
+  status = async (id: number) => {
     return (await this.ds.status(id)).toEntity()
   }
 
-  async statusBatch(req: StatusBatchRequest) {
+  statusBatch = async (req: StatusBatchRequest) => {
     return (await this.ds.statusBatch(req)).map(dto => dto.toEntity())
   }
 }

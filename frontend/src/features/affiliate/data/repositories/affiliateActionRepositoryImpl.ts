@@ -7,19 +7,19 @@ import type { AffiliateActionRepository } from '@/features/affiliate/domain/repo
 class AffiliateActionRepositoryImpl implements AffiliateActionRepository {
   private readonly ds = affiliateActionDatasource
 
-  async lookupUsers(q: string): Promise<SimpleUser[]> {
+  lookupUsers = async (q: string) : Promise<SimpleUser[]>  => {
     return (await this.ds.lookupUsers(q)).map(dto => dto.toEntity())
   }
 
-  async updateUserSettings(userId: number, req: UpdateAffiliateUserRequest): Promise<{ userId: number }> {
+  updateUserSettings = async (userId: number, req: UpdateAffiliateUserRequest) : Promise<{ userId: number }>  => {
     return this.ds.updateUserSettings(userId, req)
   }
 
-  async clearUserSettings(userId: number): Promise<{ userId: number }> {
+  clearUserSettings = async (userId: number) : Promise<{ userId: number }>  => {
     return this.ds.clearUserSettings(userId)
   }
 
-  async batchSetRate(req: BatchSetRateRequest): Promise<{ affected: number }> {
+  batchSetRate = async (req: BatchSetRateRequest) : Promise<{ affected: number }>  => {
     return this.ds.batchSetRate(req)
   }
 }

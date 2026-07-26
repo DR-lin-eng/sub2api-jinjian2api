@@ -7,7 +7,7 @@ import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 class AdminRedeemQueryRepositoryImpl implements AdminRedeemQueryRepository {
   private readonly ds = adminRedeemQueryDatasource
 
-  async list(
+  list = async (
     page: number = 1,
     pageSize: number = 20,
     filters?: {
@@ -18,26 +18,26 @@ class AdminRedeemQueryRepositoryImpl implements AdminRedeemQueryRepository {
       sort_order?: 'asc' | 'desc'
     },
     options?: { signal?: AbortSignal },
-  ): Promise<PaginatedResponse<RedeemCode>> {
+  ): Promise<PaginatedResponse<RedeemCode>> => {
     const result = await this.ds.list(page, pageSize, filters, options)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }
 
-  async getById(id: number): Promise<RedeemCode> {
+  getById = async (id: number) : Promise<RedeemCode>  => {
     return (await this.ds.getById(id)).toEntity()
   }
 
-  async getStats() {
+  getStats = async () => {
     return this.ds.getStats()
   }
 
-  async exportCodes(filters?: {
+  exportCodes = async (filters?: {
     type?: RedeemCodeType
     status?: 'used' | 'expired' | 'unused' | 'disabled'
     search?: string
     sort_by?: string
     sort_order?: 'asc' | 'desc'
-  }): Promise<Blob> {
+  }): Promise<Blob> => {
     return this.ds.exportCodes(filters)
   }
 }

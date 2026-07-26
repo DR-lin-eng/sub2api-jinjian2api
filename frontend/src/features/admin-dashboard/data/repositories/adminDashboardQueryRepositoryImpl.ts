@@ -26,51 +26,51 @@ import type { AdminDashboardBatchApiKeysUsageRequest } from '@/features/admin-da
 class AdminDashboardQueryRepositoryImpl implements AdminDashboardQueryRepository {
   private readonly ds = adminDashboardQueryDatasource
 
-  async getStats(): Promise<DashboardStats> {
+  getStats = async () : Promise<DashboardStats>  => {
     return (await this.ds.getStats()).toEntity()
   }
 
-  async getRealtimeMetrics(): Promise<DashboardRealtimeMetrics> {
+  getRealtimeMetrics = async () : Promise<DashboardRealtimeMetrics>  => {
     return (await this.ds.getRealtimeMetrics()).toEntity()
   }
 
-  async getUsageTrend(params?: AdminDashboardTrendRequest): Promise<TrendResponse> {
+  getUsageTrend = async (params?: AdminDashboardTrendRequest) : Promise<TrendResponse>  => {
     return (await this.ds.getUsageTrend(params)).toEntity()
   }
 
-  async getModelStats(params?: AdminDashboardModelStatsRequest): Promise<ModelStatsResponse> {
+  getModelStats = async (params?: AdminDashboardModelStatsRequest) : Promise<ModelStatsResponse>  => {
     return (await this.ds.getModelStats(params)).toEntity()
   }
 
-  async getGroupStats(params?: AdminDashboardGroupStatsRequest): Promise<GroupStatsResponse> {
+  getGroupStats = async (params?: AdminDashboardGroupStatsRequest) : Promise<GroupStatsResponse>  => {
     return (await this.ds.getGroupStats(params)).toEntity()
   }
 
-  async getUserBreakdown(params: AdminDashboardUserBreakdownRequest): Promise<UserBreakdownResponse> {
+  getUserBreakdown = async (params: AdminDashboardUserBreakdownRequest) : Promise<UserBreakdownResponse>  => {
     return (await this.ds.getUserBreakdown(params)).toEntity()
   }
 
-  async getSnapshotV2(params?: AdminDashboardSnapshotV2Request): Promise<AdminDashboardSnapshotV2Response> {
+  getSnapshotV2 = async (params?: AdminDashboardSnapshotV2Request) : Promise<AdminDashboardSnapshotV2Response>  => {
     return (await this.ds.getSnapshotV2(params)).toEntity()
   }
 
-  async getApiKeyUsageTrend(params?: AdminDashboardApiKeyTrendRequest): Promise<ApiKeyTrendResponse> {
+  getApiKeyUsageTrend = async (params?: AdminDashboardApiKeyTrendRequest) : Promise<ApiKeyTrendResponse>  => {
     return (await this.ds.getApiKeyUsageTrend(params)).toEntity()
   }
 
-  async getUserUsageTrend(params?: AdminDashboardUserTrendRequest): Promise<UserTrendResponse> {
+  getUserUsageTrend = async (params?: AdminDashboardUserTrendRequest) : Promise<UserTrendResponse>  => {
     return (await this.ds.getUserUsageTrend(params)).toEntity()
   }
 
-  async getUserSpendingRanking(params?: AdminDashboardUserSpendingRankingRequest): Promise<UserSpendingRankingResponse> {
+  getUserSpendingRanking = async (params?: AdminDashboardUserSpendingRankingRequest) : Promise<UserSpendingRankingResponse>  => {
     return (await this.ds.getUserSpendingRanking(params)).toEntity()
   }
 
-  async getBatchUsersUsage(req: AdminDashboardBatchUsersUsageRequest): Promise<BatchUsersUsageResponse> {
+  getBatchUsersUsage = async (req: AdminDashboardBatchUsersUsageRequest) : Promise<BatchUsersUsageResponse>  => {
     return (await this.ds.getBatchUsersUsage(req)).toEntity()
   }
 
-  async getBatchApiKeysUsage(req: AdminDashboardBatchApiKeysUsageRequest): Promise<BatchApiKeysUsageResponse> {
+  getBatchApiKeysUsage = async (req: AdminDashboardBatchApiKeysUsageRequest) : Promise<BatchApiKeysUsageResponse>  => {
     return (await this.ds.getBatchApiKeysUsage(req)).toEntity()
   }
 }

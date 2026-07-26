@@ -11,23 +11,23 @@ import type { GrokActionRepository } from '@/features/admin-accounts/domain/repo
 export class GrokActionRepositoryImpl implements GrokActionRepository {
   private readonly ds = grokActionDatasource
 
-  async generateAuthUrl(payload: GrokAuthUrlRequest): Promise<GrokAuthUrlResponse> {
+  generateAuthUrl = async (payload: GrokAuthUrlRequest) : Promise<GrokAuthUrlResponse>  => {
     return (await this.ds.generateAuthUrl(payload)).toEntity()
   }
 
-  async exchangeCode(payload: GrokExchangeCodeRequest): Promise<GrokTokenInfo> {
+  exchangeCode = async (payload: GrokExchangeCodeRequest) : Promise<GrokTokenInfo>  => {
     return (await this.ds.exchangeCode(payload)).toEntity()
   }
 
-  async refreshGrokToken(refreshToken: string, proxyId?: number | null): Promise<GrokTokenInfo> {
+  refreshGrokToken = async (refreshToken: string, proxyId?: number | null) : Promise<GrokTokenInfo>  => {
     return (await this.ds.refreshGrokToken(refreshToken, proxyId)).toEntity()
   }
 
-  async resetQuota(id: number): Promise<GrokQuotaResetResult> {
+  resetQuota = async (id: number) : Promise<GrokQuotaResetResult>  => {
     return (await this.ds.resetQuota(id)).toEntity()
   }
 
-  async createFromSSO(payload: GrokSSOToOAuthRequest): Promise<GrokSSOToOAuthResponse> {
+  createFromSSO = async (payload: GrokSSOToOAuthRequest) : Promise<GrokSSOToOAuthResponse>  => {
     return (await this.ds.createFromSSO(payload)).toEntity()
   }
 }

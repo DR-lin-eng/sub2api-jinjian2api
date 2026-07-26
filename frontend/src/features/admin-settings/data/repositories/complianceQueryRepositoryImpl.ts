@@ -5,7 +5,7 @@ import type { AdminComplianceStatus } from '@/features/admin-settings/domain/mod
 class ComplianceQueryRepositoryImpl implements ComplianceQueryRepository {
   private readonly ds = complianceQueryDatasource
 
-  async getStatus(): Promise<AdminComplianceStatus> {
+  getStatus = async () : Promise<AdminComplianceStatus>  => {
     return (await this.ds.getStatus()).toEntity()
   }
 }

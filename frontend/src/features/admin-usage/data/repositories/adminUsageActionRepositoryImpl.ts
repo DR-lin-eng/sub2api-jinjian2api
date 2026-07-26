@@ -8,15 +8,15 @@ import type { UpdateApiKeyGroupRequest } from '@/features/admin-usage/data/reque
 class AdminUsageActionRepositoryImpl implements AdminUsageActionRepository {
   private readonly ds = adminUsageActionDatasource
 
-  async createCleanupTask(req: CreateUsageCleanupTaskRequest): Promise<UsageCleanupTask> {
+  createCleanupTask = async (req: CreateUsageCleanupTaskRequest) : Promise<UsageCleanupTask>  => {
     return (await this.ds.createCleanupTask(req)).toEntity()
   }
 
-  async cancelCleanupTask(taskId: number): Promise<{ id: number; status: string }> {
+  cancelCleanupTask = async (taskId: number) : Promise<{ id: number; status: string }>  => {
     return this.ds.cancelCleanupTask(taskId)
   }
 
-  async updateApiKeyGroup(id: number, req: UpdateApiKeyGroupRequest): Promise<UpdateApiKeyGroupResult> {
+  updateApiKeyGroup = async (id: number, req: UpdateApiKeyGroupRequest) : Promise<UpdateApiKeyGroupResult>  => {
     return (await this.ds.updateApiKeyGroup(id, req)).toEntity()
   }
 }

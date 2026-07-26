@@ -33,75 +33,75 @@ import type {
 export class AdminAccountsActionRepositoryImpl implements AdminAccountsActionRepository {
   private readonly ds = adminAccountsActionDatasource
 
-  async getBatchSummaries(accountIds: number[]): Promise<AccountSummary[]> {
+  getBatchSummaries = async (accountIds: number[]) : Promise<AccountSummary[]>  => {
     return this.ds.getBatchSummaries(accountIds)
   }
 
-  async create(accountData: CreateAccountRequest): Promise<Account> {
+  create = async (accountData: CreateAccountRequest) : Promise<Account>  => {
     return (await this.ds.create(accountData)).toEntity()
   }
 
-  async duplicate(id: number): Promise<Account> {
+  duplicate = async (id: number) : Promise<Account>  => {
     return (await this.ds.duplicate(id)).toEntity()
   }
 
-  async update(id: number, updates: UpdateAccountRequest): Promise<Account> {
+  update = async (id: number, updates: UpdateAccountRequest) : Promise<Account>  => {
     return (await this.ds.update(id, updates)).toEntity()
   }
 
-  async checkMixedChannelRisk(payload: CheckMixedChannelRequest): Promise<CheckMixedChannelResponse> {
+  checkMixedChannelRisk = async (payload: CheckMixedChannelRequest) : Promise<CheckMixedChannelResponse>  => {
     return (await this.ds.checkMixedChannelRisk(payload)).toEntity()
   }
 
-  async deleteAccount(id: number): Promise<{ message: string }> {
+  deleteAccount = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.deleteAccount(id)
   }
 
-  async toggleStatus(id: number, status: 'active' | 'inactive'): Promise<Account> {
+  toggleStatus = async (id: number, status: 'active' | 'inactive') : Promise<Account>  => {
     return this.update(id, { status })
   }
 
-  async testAccount(id: number): Promise<TestAccountResult> {
+  testAccount = async (id: number) : Promise<TestAccountResult>  => {
     return this.ds.testAccount(id)
   }
 
-  async refreshCredentials(id: number): Promise<Account> {
+  refreshCredentials = async (id: number) : Promise<Account>  => {
     return (await this.ds.refreshCredentials(id)).toEntity()
   }
 
-  async applyOAuthCredentials(id: number, payload: ApplyOAuthCredentialsPayload): Promise<Account> {
+  applyOAuthCredentials = async (id: number, payload: ApplyOAuthCredentialsPayload) : Promise<Account>  => {
     return (await this.ds.applyOAuthCredentials(id, payload)).toEntity()
   }
 
-  async clearError(id: number): Promise<Account> {
+  clearError = async (id: number) : Promise<Account>  => {
     return (await this.ds.clearError(id)).toEntity()
   }
 
-  async clearRateLimit(id: number): Promise<Account> {
+  clearRateLimit = async (id: number) : Promise<Account>  => {
     return (await this.ds.clearRateLimit(id)).toEntity()
   }
 
-  async recoverState(id: number): Promise<Account> {
+  recoverState = async (id: number) : Promise<Account>  => {
     return (await this.ds.recoverState(id)).toEntity()
   }
 
-  async resetAccountQuota(id: number): Promise<Account> {
+  resetAccountQuota = async (id: number) : Promise<Account>  => {
     return (await this.ds.resetAccountQuota(id)).toEntity()
   }
 
-  async resetTempUnschedulable(id: number): Promise<{ message: string }> {
+  resetTempUnschedulable = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.resetTempUnschedulable(id)
   }
 
-  async generateAuthUrl(endpoint: string, config: { proxy_id?: number }): Promise<OAuthAuthUrlResponse> {
+  generateAuthUrl = async (endpoint: string, config: { proxy_id?: number }) : Promise<OAuthAuthUrlResponse>  => {
     const dto = await this.ds.generateAuthUrl(endpoint, { proxyId: config.proxy_id })
     return { auth_url: dto.auth_url, session_id: dto.session_id }
   }
 
-  async exchangeCode(
+  exchangeCode = async (
     endpoint: string,
     exchangeData: { session_id: string; code: string; state?: string; proxy_id?: number },
-  ): Promise<Record<string, unknown>> {
+  ): Promise<Record<string, unknown>> => {
     return this.ds.exchangeCode(endpoint, {
       sessionId: exchangeData.session_id,
       code: exchangeData.code,
@@ -110,7 +110,7 @@ export class AdminAccountsActionRepositoryImpl implements AdminAccountsActionRep
     })
   }
 
-  async batchCreate(accounts: CreateAccountRequest[]): Promise<BatchCreateResult> {
+  batchCreate = async (accounts: CreateAccountRequest[]) : Promise<BatchCreateResult>  => {
     const dto = await this.ds.batchCreate(accounts)
     return {
       success: dto.success,
@@ -123,7 +123,7 @@ export class AdminAccountsActionRepositoryImpl implements AdminAccountsActionRep
     }
   }
 
-  async batchUpdateCredentials(request: BatchUpdateCredentialsRequest): Promise<BatchUpdateCredentialsResult> {
+  batchUpdateCredentials = async (request: BatchUpdateCredentialsRequest) : Promise<BatchUpdateCredentialsResult>  => {
     return this.ds.batchUpdateCredentials({
       accountIds: request.account_ids,
       field: request.field,
@@ -131,26 +131,26 @@ export class AdminAccountsActionRepositoryImpl implements AdminAccountsActionRep
     })
   }
 
-  async bulkUpdate(
+  bulkUpdate = async (
     accountIdsOrPayload: number[] | Record<string, unknown>,
     updates?: Record<string, unknown>,
-  ): Promise<BulkUpdateResult> {
+  ): Promise<BulkUpdateResult> => {
     return this.ds.bulkUpdate(accountIdsOrPayload, updates)
   }
 
-  async getBatchTodayStats(accountIds: number[]): Promise<BatchTodayStatsResponse> {
+  getBatchTodayStats = async (accountIds: number[]) : Promise<BatchTodayStatsResponse>  => {
     return (await this.ds.getBatchTodayStats(accountIds)).toEntity()
   }
 
-  async setSchedulable(id: number, schedulable: boolean): Promise<Account> {
+  setSchedulable = async (id: number, schedulable: boolean) : Promise<Account>  => {
     return (await this.ds.setSchedulable(id, schedulable)).toEntity()
   }
 
-  async syncUpstreamModels(id: number): Promise<SyncUpstreamModelsResult> {
+  syncUpstreamModels = async (id: number) : Promise<SyncUpstreamModelsResult>  => {
     return this.ds.syncUpstreamModels(id)
   }
 
-  async syncUpstreamModelsPreview(params: SyncUpstreamPreviewParams): Promise<SyncUpstreamModelsResult> {
+  syncUpstreamModelsPreview = async (params: SyncUpstreamPreviewParams) : Promise<SyncUpstreamModelsResult>  => {
     return this.ds.syncUpstreamModelsPreview({
       platform: params.platform,
       type: params.type,
@@ -159,7 +159,7 @@ export class AdminAccountsActionRepositoryImpl implements AdminAccountsActionRep
     })
   }
 
-  async previewFromCrs(params: { base_url: string; username: string; password: string }): Promise<PreviewFromCRSResult> {
+  previewFromCrs = async (params: { base_url: string; username: string; password: string }) : Promise<PreviewFromCRSResult>  => {
     return this.ds.previewFromCrs({
       baseUrl: params.base_url,
       username: params.username,
@@ -167,13 +167,13 @@ export class AdminAccountsActionRepositoryImpl implements AdminAccountsActionRep
     })
   }
 
-  async syncFromCrs(params: {
+  syncFromCrs = async (params: {
     base_url: string
     username: string
     password: string
     sync_proxies?: boolean
     selected_account_ids?: string[]
-  }): Promise<SyncFromCRSResult> {
+  }): Promise<SyncFromCRSResult> => {
     return this.ds.syncFromCrs({
       baseUrl: params.base_url,
       username: params.username,
@@ -183,54 +183,54 @@ export class AdminAccountsActionRepositoryImpl implements AdminAccountsActionRep
     })
   }
 
-  async importData(payload: { data: AdminDataPayload; skip_default_group_bind?: boolean }): Promise<AdminDataImportResult> {
+  importData = async (payload: { data: AdminDataPayload; skip_default_group_bind?: boolean }) : Promise<AdminDataImportResult>  => {
     return (await this.ds.importData({
       data: payload.data,
       skipDefaultGroupBind: payload.skip_default_group_bind,
     })).toEntity()
   }
 
-  async importCodexSession(payload: CodexSessionImportRequest): Promise<CodexSessionImportResult> {
+  importCodexSession = async (payload: CodexSessionImportRequest) : Promise<CodexSessionImportResult>  => {
     return (await this.ds.importCodexSession(payload)).toEntity()
   }
 
-  async createOpenAICodexPAT(payload: OpenAICodexPATCreateRequest): Promise<Account> {
+  createOpenAICodexPAT = async (payload: OpenAICodexPATCreateRequest) : Promise<Account>  => {
     return (await this.ds.createOpenAICodexPAT(payload)).toEntity()
   }
 
-  async refreshOpenAIToken(
+  refreshOpenAIToken = async (
     refreshToken: string,
     proxyId?: number | null,
     endpoint: string = '/admin/openai/refresh-token',
     clientId?: string,
-  ): Promise<Record<string, unknown>> {
+  ): Promise<Record<string, unknown>> => {
     return this.ds.refreshOpenAIToken(refreshToken, proxyId, endpoint, clientId)
   }
 
-  async revertProxyFallback(id: number): Promise<{ message: string }> {
+  revertProxyFallback = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.revertProxyFallback(id)
   }
 
-  async batchClearError(accountIds: number[]): Promise<BatchOperationResult> {
+  batchClearError = async (accountIds: number[]) : Promise<BatchOperationResult>  => {
     return this.ds.batchClearError(accountIds)
   }
 
-  async batchRefresh(accountIds: number[]): Promise<BatchOperationResult> {
+  batchRefresh = async (accountIds: number[]) : Promise<BatchOperationResult>  => {
     return this.ds.batchRefresh(accountIds)
   }
 
-  async setPrivacy(id: number): Promise<Account> {
+  setPrivacy = async (id: number) : Promise<Account>  => {
     return (await this.ds.setPrivacy(id)).toEntity()
   }
 
-  async resetOpenAIQuota(id: number): Promise<OpenAIQuotaResetResult> {
+  resetOpenAIQuota = async (id: number) : Promise<OpenAIQuotaResetResult>  => {
     return (await this.ds.resetOpenAIQuota(id)).toEntity()
   }
 
-  async createSparkShadow(
+  createSparkShadow = async (
     parentId: number,
     payload: { name?: string; priority?: number; concurrency?: number; group_ids?: number[] },
-  ): Promise<Account> {
+  ): Promise<Account> => {
     return (await this.ds.createSparkShadow(parentId, {
       name: payload.name,
       priority: payload.priority,
@@ -239,19 +239,19 @@ export class AdminAccountsActionRepositoryImpl implements AdminAccountsActionRep
     })).toEntity()
   }
 
-  async updateUpstreamBillingProbeSettings(settings: UpstreamBillingProbeSettings): Promise<UpstreamBillingProbeSettings> {
+  updateUpstreamBillingProbeSettings = async (settings: UpstreamBillingProbeSettings) : Promise<UpstreamBillingProbeSettings>  => {
     return (await this.ds.updateUpstreamBillingProbeSettings(settings)).toEntity()
   }
 
-  async setUpstreamBillingProbeEnabled(id: number, enabled: boolean): Promise<void> {
+  setUpstreamBillingProbeEnabled = async (id: number, enabled: boolean) : Promise<void>  => {
     await this.ds.setUpstreamBillingProbeEnabled(id, enabled)
   }
 
-  async probeUpstreamBilling(id: number): Promise<UpstreamBillingProbeResult> {
+  probeUpstreamBilling = async (id: number) : Promise<UpstreamBillingProbeResult>  => {
     return (await this.ds.probeUpstreamBilling(id)).toEntity()
   }
 
-  async probeUpstreamBillingBatch(accountIds: number[]): Promise<UpstreamBillingProbeResult[]> {
+  probeUpstreamBillingBatch = async (accountIds: number[]) : Promise<UpstreamBillingProbeResult[]>  => {
     const dtos = await this.ds.probeUpstreamBillingBatch(accountIds)
     return dtos.map(dto => dto.toEntity())
   }

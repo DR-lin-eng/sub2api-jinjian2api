@@ -7,27 +7,27 @@ import type { AnnouncementUserReadStatus } from '@/features/announcements/domain
 class AdminAnnouncementsQueryRepositoryImpl implements AdminAnnouncementsQueryRepository {
   private readonly ds = adminAnnouncementsQueryDatasource
 
-  async list(
+  list = async (
     page: number,
     pageSize: number,
     filters?: { status?: string; search?: string; sort_by?: string; sort_order?: 'asc' | 'desc' },
     options?: { signal?: AbortSignal },
-  ): Promise<PaginatedResponse<Announcement>> {
+  ): Promise<PaginatedResponse<Announcement>> => {
     const res = await this.ds.list(page, pageSize, filters, options)
     return { ...res, items: res.items.map((dto) => dto.toEntity()) }
   }
 
-  async getById(id: number): Promise<Announcement> {
+  getById = async (id: number) : Promise<Announcement>  => {
     return (await this.ds.getById(id)).toEntity()
   }
 
-  async getReadStatus(
+  getReadStatus = async (
     id: number,
     page: number,
     pageSize: number,
     filters?: { search?: string; sort_by?: string; sort_order?: 'asc' | 'desc' },
     options?: { signal?: AbortSignal },
-  ): Promise<PaginatedResponse<AnnouncementUserReadStatus>> {
+  ): Promise<PaginatedResponse<AnnouncementUserReadStatus>> => {
     const res = await this.ds.getReadStatus(id, page, pageSize, filters, options)
     return { ...res, items: res.items.map((dto) => dto.toEntity()) }
   }

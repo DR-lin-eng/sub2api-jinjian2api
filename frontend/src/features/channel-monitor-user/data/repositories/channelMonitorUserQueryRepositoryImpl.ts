@@ -4,7 +4,7 @@ import type { ChannelMonitorUserQueryRepository } from '@/features/channel-monit
 export class ChannelMonitorUserQueryRepositoryImpl implements ChannelMonitorUserQueryRepository {
   private readonly ds = channelMonitorUserQueryDatasource
 
-  async list(options?: { signal?: AbortSignal }) {
+  list = async (options?: { signal?: AbortSignal }) => {
     return (await this.ds.list(options)).map(dto => dto.toEntity())
   }
 }

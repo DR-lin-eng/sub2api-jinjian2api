@@ -15,39 +15,39 @@ import { adminUsersActionDatasource } from '@/features/admin-users/data/datasour
 export class AdminUsersActionRepositoryImpl implements AdminUsersActionRepository {
   private readonly ds = adminUsersActionDatasource
 
-  async create(req: CreateAdminUserRequest): Promise<AdminUser> {
+  create = async (req: CreateAdminUserRequest) : Promise<AdminUser>  => {
     return (await this.ds.create(req)).toEntity()
   }
 
-  async update(id: number, req: UpdateAdminUserRequest): Promise<AdminUser> {
+  update = async (id: number, req: UpdateAdminUserRequest) : Promise<AdminUser>  => {
     return (await this.ds.update(id, req)).toEntity()
   }
 
-  async deleteUser(id: number): Promise<{ message: string }> {
+  deleteUser = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.deleteUser(id)
   }
 
-  async updateBalance(id: number, req: UpdateUserBalanceRequest): Promise<AdminUser> {
+  updateBalance = async (id: number, req: UpdateUserBalanceRequest) : Promise<AdminUser>  => {
     return (await this.ds.updateBalance(id, req)).toEntity()
   }
 
-  async batchUpdateLimits(req: BatchUpdateUserLimitsRequest): Promise<{ affected: number }> {
+  batchUpdateLimits = async (req: BatchUpdateUserLimitsRequest) : Promise<{ affected: number }>  => {
     return this.ds.batchUpdateLimits(req)
   }
 
-  async replaceGroup(userId: number, req: ReplaceUserGroupRequest): Promise<{ migratedKeys: number }> {
+  replaceGroup = async (userId: number, req: ReplaceUserGroupRequest) : Promise<{ migratedKeys: number }>  => {
     return this.ds.replaceGroup(userId, req)
   }
 
-  async bindUserAuthIdentity(userId: number, req: BindAdminAuthIdentityRequest): Promise<AdminBoundAuthIdentity> {
+  bindUserAuthIdentity = async (userId: number, req: BindAdminAuthIdentityRequest) : Promise<AdminBoundAuthIdentity>  => {
     return (await this.ds.bindUserAuthIdentity(userId, req)).toEntity()
   }
 
-  async updatePlatformQuotas(id: number, req: UpdatePlatformQuotasRequest): Promise<PlatformQuotaItem[]> {
+  updatePlatformQuotas = async (id: number, req: UpdatePlatformQuotasRequest) : Promise<PlatformQuotaItem[]>  => {
     return (await this.ds.updatePlatformQuotas(id, req)).map(dto => dto.toEntity())
   }
 
-  async resetPlatformQuotaWindow(id: number, req: ResetPlatformQuotaWindowRequest): Promise<PlatformQuotaItem[]> {
+  resetPlatformQuotaWindow = async (id: number, req: ResetPlatformQuotaWindowRequest) : Promise<PlatformQuotaItem[]>  => {
     return (await this.ds.resetPlatformQuotaWindow(id, req)).map(dto => dto.toEntity())
   }
 }

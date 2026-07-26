@@ -12,27 +12,27 @@ import type { AffiliateQueryRepository } from '@/features/affiliate/domain/repos
 class AffiliateQueryRepositoryImpl implements AffiliateQueryRepository {
   private readonly ds = affiliateQueryDatasource
 
-  async listUsers(params?: ListAffiliateUsersParams): Promise<PaginatedResponse<AffiliateAdminEntry>> {
+  listUsers = async (params?: ListAffiliateUsersParams) : Promise<PaginatedResponse<AffiliateAdminEntry>>  => {
     const result = await this.ds.listUsers(params)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }
 
-  async listInviteRecords(params?: ListAffiliateRecordsParams): Promise<PaginatedResponse<AffiliateInviteRecord>> {
+  listInviteRecords = async (params?: ListAffiliateRecordsParams) : Promise<PaginatedResponse<AffiliateInviteRecord>>  => {
     const result = await this.ds.listInviteRecords(params)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }
 
-  async listRebateRecords(params?: ListAffiliateRecordsParams): Promise<PaginatedResponse<AffiliateRebateRecord>> {
+  listRebateRecords = async (params?: ListAffiliateRecordsParams) : Promise<PaginatedResponse<AffiliateRebateRecord>>  => {
     const result = await this.ds.listRebateRecords(params)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }
 
-  async listTransferRecords(params?: ListAffiliateRecordsParams): Promise<PaginatedResponse<AffiliateTransferRecord>> {
+  listTransferRecords = async (params?: ListAffiliateRecordsParams) : Promise<PaginatedResponse<AffiliateTransferRecord>>  => {
     const result = await this.ds.listTransferRecords(params)
     return { ...result, items: result.items.map(dto => dto.toEntity()) }
   }
 
-  async getUserOverview(userId: number): Promise<AffiliateUserOverview> {
+  getUserOverview = async (userId: number) : Promise<AffiliateUserOverview>  => {
     return (await this.ds.getUserOverview(userId)).toEntity()
   }
 }

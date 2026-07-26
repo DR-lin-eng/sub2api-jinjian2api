@@ -7,15 +7,15 @@ import type { UpdateAnnouncementRequest } from '@/features/announcements/data/re
 class AdminAnnouncementsActionRepositoryImpl implements AdminAnnouncementsActionRepository {
   private readonly ds = adminAnnouncementsActionDatasource
 
-  async create(req: CreateAnnouncementRequest): Promise<Announcement> {
+  create = async (req: CreateAnnouncementRequest) : Promise<Announcement>  => {
     return (await this.ds.create(req)).toEntity()
   }
 
-  async update(id: number, req: UpdateAnnouncementRequest): Promise<Announcement> {
+  update = async (id: number, req: UpdateAnnouncementRequest) : Promise<Announcement>  => {
     return (await this.ds.update(id, req)).toEntity()
   }
 
-  async deleteAnnouncement(id: number): Promise<{ message: string }> {
+  deleteAnnouncement = async (id: number) : Promise<{ message: string }>  => {
     return this.ds.deleteAnnouncement(id)
   }
 }

@@ -11769,7 +11769,7 @@ const providerKeyOptions = computed(() => [
 
 const enabledProviderKeyOptions = computed(() => {
   const enabled = form.paymentEnabledTypes;
-  return providerKeyOptions.value.filter((opt) => enabled.includes(opt.value));
+  return providerKeyOptions.value.filter((opt) => enabled?.includes(opt.value));
 });
 
 const loadBalanceOptions = computed(() => [
