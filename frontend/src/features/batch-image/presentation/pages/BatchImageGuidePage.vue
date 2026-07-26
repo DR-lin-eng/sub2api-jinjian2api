@@ -767,12 +767,13 @@ import { useAppStore } from '@/core/stores/appStore'
 import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
 import { useBatchImageQueryStore } from '@/features/batch-image/presentation/stores/batchImageQueryStore'
 import { useBatchImageActionStore } from '@/features/batch-image/presentation/stores/batchImageActionStore'
-import { type BatchImageStatus, BatchImageJob } from '@/features/batch-image/domain/models/batchImageJob'
+import { BatchImageJob } from '@/features/batch-image/domain/models/batchImageJob'
+import type { BatchImageStatus } from '@/features/batch-image/enums/batchImageStatus'
 import { BatchImageItem } from '@/features/batch-image/domain/models/batchImageItem'
 import type { ListBatchImageJobsRequest } from '@/features/batch-image/data/requests_models/listBatchImageJobsRequest'
 import type { BatchImageReferenceImage, BatchImageSubmitItem } from '@/features/batch-image/data/requests_models/submitBatchImageJobRequest'
 import type { Column } from '@/common/widgets/types'
-import type { ApiKey } from '@/features/keys/domain/models/apiKey'
+import type { ApiKey } from '@/core/models/domain/apiKey'
 
 type BatchImageJobRow = Pick<BatchImageJob, 'id' | 'taskName' | 'parentBatchId' | 'status' | 'model' | 'provider' | 'itemCount' | 'successCount' | 'failCount' | 'estimatedCost' | 'holdAmount' | 'actualCost' | 'costSettled' | 'createdAt' | 'downloadedAt'> & {
   apiKeyId: number
@@ -1311,16 +1312,6 @@ function resetFilters() {
   applyFilters()
 }
 
-function listOptions(): ListBatchImageJobsRequest {
-  const options: ListBatchImageJobsRequest = {
-    limit: pagination.page_size,
-    cursor: String((pagination.page - 1) * pagination.page_size),
-  }
-  if (filters.taskName.trim()) options.taskName = filters.taskName.trim()
-  if (filters.status) options.status = filters.status
-  if (filters.downloaded) options.downloaded = filters.downloaded
-  return options
-}
 
 function toJobRow(job: BatchImageJob, key = selectedApiKey.value): BatchImageJobRow {
   return {
@@ -2386,6 +2377,8 @@ function friendlyItemError(error: BatchImageItem['error']) {
   if (error.code === 'PROVIDER_ITEM_FAILED') return t('batchImage.itemResult.providerItemFailed')
   return error.message || error.code || '-'
 }
+
+function formatMoney(value: number | null | undefined): string {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return '$0.00'
   return `$${Number(value).toFixed(2)}`
 }

@@ -29,7 +29,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { PlatformQuotaItem, PlatformQuotaPlatform } from '@/features/admin-users/domain/models/platformQuotaItem'
+import type { PlatformQuotaItem } from '@/features/admin-users/domain/models/platformQuotaItem'
+import type { PlatformQuotaPlatform } from '@/features/admin-users/enums/platformQuotaEnums'
 
 const props = defineProps<{ quotas?: PlatformQuotaItem[] }>()
 const { t } = useI18n()

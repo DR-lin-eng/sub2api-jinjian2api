@@ -4,7 +4,7 @@ import { CompositeRouteDecision } from '@/features/admin-groups/domain/models/co
 import { CompositeModelRouteDto } from './compositeModelRouteDto'
 import type { CompositeRouteSource } from '@/features/admin-groups/enums/compositeRouteSource'
 import type { CompositeRouteEndpoint } from '@/features/admin-groups/enums/compositeRouteEndpoint'
-import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
+import type { GroupPlatform } from '@/core/enums/groupPlatform'
 
 export class CompositeRouteDecisionDto {
   @Expose()

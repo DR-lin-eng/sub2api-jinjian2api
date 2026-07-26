@@ -1,4 +1,4 @@
-import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { Account } from '@/core/models/domain/account'
 
 const normalizeUsageRefreshValue = (value: unknown): string => {
   if (value == null) return ''

@@ -1,6 +1,6 @@
-import type { CustomMenuItem } from './customMenuItem'
-import type { CustomEndpoint } from './customEndpoint'
-import type { LoginAgreementDocument } from './loginAgreementDocument'
+import type { CustomMenuItem } from '@/core/models/domain/customMenuItem'
+import type { CustomEndpoint } from '@/core/models/domain/customEndpoint'
+import type { LoginAgreementDocument } from '@/core/models/domain/loginAgreementDocument'
 
 export class PublicSettings {
   registrationEnabled!: boolean

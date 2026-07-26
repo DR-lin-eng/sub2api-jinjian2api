@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import AccountUsageCell from '@/features/admin-accounts/presentation/widgets/AccountUsageCell.vue'
-import { Account } from '@/features/admin-accounts/domain/models/account'
+import { Account } from '@/core/models/domain/account'
 
 const { getUsage } = vi.hoisted(() => ({
   getUsage: vi.fn()

@@ -362,7 +362,7 @@ import ModelDistributionChart from '@/features/admin-dashboard/presentation/widg
 import TokenUsageTrend from '@/features/admin-dashboard/presentation/widgets/TokenUsageTrend.vue'
 import { useAdminDashboardQueryStore } from '@/features/admin-dashboard/presentation/stores/adminDashboardQueryStore'
 // TODO(spec-exception): useBatchImageAccess is a temporary cross-feature service; see .eslintrc.cjs override.
-import { useBatchImageAccess } from '@/core/services/useBatchImageAccess'
+import { useBatchImageAccess } from '@/features/batch-image/presentation/composables/useBatchImageAccess'
 import { getLast24HourRange } from '@/core/utils/dateRange'
 
 import {
@@ -718,11 +718,11 @@ const loadUserInsightsSnapshot = async (currentSeq: number) => {
       user_ranking_limit: rankingLimit
     })
     if (currentSeq !== dashboardLoadSeq) return
-    userTrend.value = response.users_trend || []
+    userTrend.value = response.usersTrend || []
     rankingItems.value = response.ranking || []
-    rankingTotalActualCost.value = response.ranking_total_actual_cost || 0
-    rankingTotalRequests.value = response.ranking_total_requests || 0
-    rankingTotalTokens.value = response.ranking_total_tokens || 0
+    rankingTotalActualCost.value = response.rankingTotalActualCost || 0
+    rankingTotalRequests.value = response.rankingTotalRequests || 0
+    rankingTotalTokens.value = response.rankingTotalTokens || 0
   } catch (error) {
     if (currentSeq !== dashboardLoadSeq) return
     console.error('Error loading dashboard user insights:', error)

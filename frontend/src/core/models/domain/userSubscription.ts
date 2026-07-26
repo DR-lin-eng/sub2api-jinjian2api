@@ -1,4 +1,4 @@
-import type { Group } from '@/features/admin-groups/domain/models/group'
+import type { Group } from '@/core/models/domain/group'
 import type { User } from '@/core/models/domain/user'
 
 export class UserSubscription {

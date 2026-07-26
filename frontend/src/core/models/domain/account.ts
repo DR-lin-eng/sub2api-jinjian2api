@@ -1,8 +1,8 @@
-import type { AccountPlatform } from '@/features/admin-accounts/enums/accountPlatform'
-import type { AccountType } from '@/features/admin-accounts/enums/accountType'
-import { AccountSchedulerScore } from '@/features/admin-accounts/domain/models/accountSchedulerScore'
-import { AccountSchedulerGroupScore } from '@/features/admin-accounts/domain/models/accountSchedulerGroupScore'
-import { AccountHourlyUsageStats } from '@/features/admin-accounts/domain/models/accountHourlyUsageStats'
+import type { AccountPlatform } from '@/core/enums/accountPlatform'
+import type { AccountType } from '@/core/enums/accountType'
+import { AccountSchedulerScore } from '@/core/models/domain/accountSchedulerScore'
+import { AccountSchedulerGroupScore } from '@/core/models/domain/accountSchedulerGroupScore'
+import { AccountHourlyUsageStats } from '@/core/models/domain/accountHourlyUsageStats'
 
 export class Account {
   id!: number

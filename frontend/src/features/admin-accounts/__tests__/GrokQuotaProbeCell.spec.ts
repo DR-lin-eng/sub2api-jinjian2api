@@ -1,7 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import GrokQuotaProbeCell from '@/features/admin-accounts/presentation/widgets/GrokQuotaProbeCell.vue'
-import { Account } from '@/features/admin-accounts/domain/models/account'
+import { Account } from '@/core/models/domain/account'
 
 const { queryQuota } = vi.hoisted(() => ({
   queryQuota: vi.fn()

@@ -41,7 +41,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useAppStore } from '@/core/stores/appStore'
 import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
 

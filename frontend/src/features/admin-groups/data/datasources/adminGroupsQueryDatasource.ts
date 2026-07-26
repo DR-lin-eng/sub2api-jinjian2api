@@ -5,7 +5,7 @@ import { CompositeModelRouteDto } from '@/features/admin-groups/data/models/comp
 import { CompositeRouteDecisionDto } from '@/features/admin-groups/data/models/compositeRouteDecisionDto'
 import { GroupRateMultiplierDto } from '@/features/admin-groups/data/models/groupRateMultiplierDto'
 import { GroupRPMOverrideDto } from '@/features/admin-groups/data/models/groupRPMOverrideDto'
-import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
+import type { GroupPlatform } from '@/core/enums/groupPlatform'
 import type { PreviewCompositeRouteRequest } from '@/features/admin-groups/data/requests_models/previewCompositeRouteRequest'
 
 export class AdminGroupsQueryDatasource {

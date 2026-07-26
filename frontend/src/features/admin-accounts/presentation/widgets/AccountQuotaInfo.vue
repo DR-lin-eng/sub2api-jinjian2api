@@ -31,7 +31,7 @@
 import { computed, ref, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { GeminiCredentials } from '@/features/admin-accounts/domain/models/geminiCredentials'
-import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { Account } from '@/core/models/domain/account'
 const props = defineProps<{
   account: Account
 }>()

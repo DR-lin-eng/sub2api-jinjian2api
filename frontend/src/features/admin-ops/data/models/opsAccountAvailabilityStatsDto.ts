@@ -1,6 +1,9 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
-import { PlatformAvailability, GroupAvailability, AccountAvailability, OpsAccountAvailabilityStats } from '@/features/admin-ops/domain/models/opsAccountAvailabilityStats'
+import { OpsAccountAvailabilityStats } from '@/features/admin-ops/domain/models/opsAccountAvailabilityStats'
+import { PlatformAvailability } from '@/features/admin-ops/domain/models/platformAvailability'
+import { GroupAvailability } from '@/features/admin-ops/domain/models/groupAvailability'
+import { AccountAvailability } from '@/features/admin-ops/domain/models/accountAvailability'
 
 export class PlatformAvailabilityDto {
   @Expose() @Transform(({ value }) => value ?? '') platform!: string

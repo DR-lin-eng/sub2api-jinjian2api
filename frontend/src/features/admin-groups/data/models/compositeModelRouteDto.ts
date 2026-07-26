@@ -3,7 +3,7 @@ import { Expose, Transform, plainToInstance } from 'class-transformer'
 import { CompositeModelRoute } from '@/features/admin-groups/domain/models/compositeModelRoute'
 import type { CompositeRouteMatchType } from '@/features/admin-groups/enums/compositeRouteMatchType'
 import type { CompositeRouteEndpoint } from '@/features/admin-groups/enums/compositeRouteEndpoint'
-import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
+import type { GroupPlatform } from '@/core/enums/groupPlatform'
 
 export class CompositeModelRouteDto {
   @Expose()

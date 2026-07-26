@@ -6,7 +6,7 @@ import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/
 const queryStore = useAdminOpsQueryStore()
 import { useAdminOpsActionStore } from '@/features/admin-ops/presentation/stores/adminOpsActionStore'
 import type { EmailNotificationConfig } from '@/features/admin-ops/domain/models/emailNotificationConfig'
-import type { AlertSeverity } from '@/features/admin-ops/domain/models/alertRule'
+import type { AlertSeverity } from '@/features/admin-ops/enums/alertEnums'
 import type { UpdateEmailNotificationConfigRequest } from '@/features/admin-ops/data/requests_models/updateEmailNotificationConfigRequest'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'

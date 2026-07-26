@@ -26,7 +26,7 @@
 import '@/core/themes/onboarding.css'
 import { computed, onMounted } from 'vue'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useOnboardingTour } from '@/core/services/useOnboardingTour'
 import { useOnboardingStore } from '@/core/stores/onboardingStore'
 import AppSidebar from './AppSidebar.vue'

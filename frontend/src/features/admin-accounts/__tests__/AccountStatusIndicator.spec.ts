@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import AccountStatusIndicator from '@/features/admin-accounts/presentation/widgets/AccountStatusIndicator.vue'
-import { Account } from '@/features/admin-accounts/domain/models/account'
+import { Account } from '@/core/models/domain/account'
 
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')

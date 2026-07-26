@@ -987,7 +987,8 @@ import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 import { formatDateTime } from '@/core/utils/format'
 import { proxyExpiryBadgeClass, proxyExpiryLabelKey } from '@/core/utils/proxyExpiry'
 import { useAdminProxies } from '@/features/admin-proxies/presentation/composables/useAdminProxies'
-import type { Proxy, ProxyProtocol } from '@/features/admin-proxies/domain/models/proxy'
+import type { Proxy } from '@/features/admin-proxies/domain/models/proxy'
+import type { ProxyProtocol } from '@/features/admin-proxies/enums/proxyProtocol'
 import type { ProxyAccountSummary } from '@/features/admin-proxies/domain/models/proxyAccountSummary'
 import type { ProxyQualityCheckResult } from '@/features/admin-proxies/domain/models/proxyQualityCheckResult'
 const $proxies = useAdminProxies()
@@ -1045,7 +1046,11 @@ const visiblePasswordIds = reactive(new Set<number>())
 const copyMenuProxyId = ref<number | null>(null)
 const loading = ref(false)
 const searchQuery = ref('')
-const filters = reactive({
+type ProxyStatusFilter = '' | 'active' | 'inactive' | 'expired'
+const filters = reactive<{
+  protocol: '' | ProxyProtocol
+  status: ProxyStatusFilter
+}>({
   protocol: '',
   status: ''
 })
@@ -1347,7 +1352,7 @@ const handleBatchCreate = async () => {
 
   submitting.value = true
   try {
-    const result = await $proxies.batchCreate(batchParseResult.proxies)
+    const result = await $proxies.batchCreate({ proxies: batchParseResult.proxies })
     const created = result.created || 0
     const skipped = result.skipped || 0
 
@@ -1387,12 +1392,12 @@ const handleCreateProxy = async () => {
       protocol: createForm.protocol,
       host: createForm.host.trim(),
       port: createForm.port,
-      username: createForm.username.trim() || null,
-      password: createForm.password.trim() || null,
-      expiresAt: createForm.expires_at ? Math.floor(new Date(createForm.expires_at).getTime() / 1000) : null,
-      fallbackMode: createForm.fallback_mode,
-      backupProxyId: createForm.fallback_mode === 'proxy' ? createForm.backup_proxy_id : null,
-      expiryWarnDays: createForm.expiry_warn_days,
+      username: createForm.username.trim() || undefined,
+      password: createForm.password.trim() || undefined,
+      expires_at: createForm.expires_at ? Math.floor(new Date(createForm.expires_at).getTime() / 1000) : null,
+      fallback_mode: createForm.fallback_mode,
+      backup_proxy_id: createForm.fallback_mode === 'proxy' ? createForm.backup_proxy_id : null,
+      expiry_warn_days: createForm.expiry_warn_days,
     })
     appStore.showSuccess(t('admin.proxies.proxyCreated'))
     closeCreateModal()
@@ -1799,7 +1804,7 @@ const fetchAllProxiesForBatch = async (): Promise<Proxy[]> => {
       pageSize,
       {
         protocol: filters.protocol || undefined,
-        status: filters.status as any,
+        status: filters.status || undefined,
         search: searchQuery.value || undefined,
         sort_by: sortState.sort_by,
         sort_order: sortState.sort_order
@@ -1971,7 +1976,7 @@ const confirmBatchDelete = async () => {
   }
 
   try {
-    const result = await $proxies.batchDelete(ids)
+    const result = await $proxies.batchDelete({ ids })
     const deleted = result.deleted_ids?.length || 0
     const skipped = result.skipped?.length || 0
 

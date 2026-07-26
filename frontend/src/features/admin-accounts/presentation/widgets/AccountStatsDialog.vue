@@ -514,7 +514,7 @@ import ModelDistributionChart from '@/features/admin-dashboard/presentation/widg
 import EndpointDistributionChart from '@/features/admin-dashboard/presentation/widgets/EndpointDistributionChart.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
-import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { Account } from '@/core/models/domain/account'
 import type { AccountUsageStatsResponse } from '@/features/admin-accounts/domain/models/accountUsageStatsResponse'
 
 const queryStore = useAdminAccountsQueryStore()

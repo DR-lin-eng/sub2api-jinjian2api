@@ -1,6 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import { OpsErrorTrendPoint, OpsErrorTrendResponse } from '@/features/admin-ops/domain/models/opsErrorTrendResponse'
+import { OpsErrorTrendResponse } from '@/features/admin-ops/domain/models/opsErrorTrendResponse'
+import { OpsErrorTrendPoint } from '@/features/admin-ops/domain/models/opsErrorTrendPoint'
 
 export class OpsErrorTrendPointDto {
   @Expose({ name: 'bucket_start' }) @Transform(({ value }) => value ?? '') bucketStart!: string

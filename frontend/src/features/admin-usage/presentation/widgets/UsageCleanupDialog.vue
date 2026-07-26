@@ -53,15 +53,15 @@
                   </button>
                 </div>
                 <div class="text-xs text-gray-400">
-                  {{ formatDateTime(task.created_at) }}
+                  {{ formatDateTime(task.createdAt) }}
                 </div>
               </div>
               <div class="flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                 <span>{{ t('admin.usage.cleanup.range') }}: {{ formatRange(task) }}</span>
-                <span>{{ t('admin.usage.cleanup.deletedRows') }}: {{ task.deleted_rows.toLocaleString() }}</span>
+                <span>{{ t('admin.usage.cleanup.deletedRows') }}: {{ task.deletedRows.toLocaleString() }}</span>
               </div>
-              <div v-if="task.error_message" class="text-xs text-rose-500">
-                {{ task.error_message }}
+              <div v-if="task.errorMessage" class="text-xs text-rose-500">
+                {{ task.errorMessage }}
               </div>
             </div>
           </div>
@@ -225,8 +225,9 @@ const formatDateTime = (value?: string | null) => {
 }
 
 const formatRange = (task: UsageCleanupTask) => {
-  const start = formatDateTime(task.filters.start_time)
-  const end = formatDateTime(task.filters.end_time)
+  const filters = task.filters ?? {}
+  const start = formatDateTime(filters.start_time)
+  const end = formatDateTime(filters.end_time)
   return `${start} ~ ${end}`
 }
 

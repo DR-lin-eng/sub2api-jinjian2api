@@ -4,6 +4,13 @@ import { useAppStore } from '@/core/stores/appStore'
 import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
 import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
 import type { GeminiOAuthCapabilities } from '@/features/admin-accounts/domain/models/geminiOAuthCapabilities'
+import type { GeminiAuthUrlRequest } from '@/features/admin-accounts/data/requests_models/geminiAuthUrlRequest'
+import type { GeminiExchangeCodeRequest } from '@/features/admin-accounts/data/requests_models/geminiExchangeCodeRequest'
+
+type GeminiOAuthTypeValue = NonNullable<GeminiAuthUrlRequest['oauth_type']>
+const GEMINI_OAUTH_TYPES: readonly GeminiOAuthTypeValue[] = ['code_assist', 'google_one', 'ai_studio']
+const isGeminiOAuthType = (value: string | undefined): value is GeminiOAuthTypeValue =>
+  typeof value === 'string' && (GEMINI_OAUTH_TYPES as readonly string[]).includes(value)
 
 export interface GeminiTokenInfo {
   access_token?: string
@@ -51,15 +58,15 @@ export function useGeminiOAuth() {
     error.value = ''
 
     try {
-      const payload: Record<string, unknown> = {}
-      if (proxyId) payload.proxyId = proxyId
+      const payload: GeminiAuthUrlRequest = {}
+      if (proxyId) payload.proxy_id = proxyId
       const trimmedProjectID = projectId?.trim()
       if (trimmedProjectID) payload.project_id = trimmedProjectID
-      if (oauthType) payload.oauth_type = oauthType
+      if (isGeminiOAuthType(oauthType)) payload.oauth_type = oauthType
       const trimmedTierID = tierId?.trim()
       if (trimmedTierID) payload.tier_id = trimmedTierID
 
-      const response = await actionStore.gemini_generateAuthUrl(payload as any)
+      const response = await actionStore.gemini_generateAuthUrl(payload)
       authUrl.value = response.authUrl
       sessionId.value = response.sessionId
       state.value = response.state
@@ -91,17 +98,17 @@ export function useGeminiOAuth() {
     error.value = ''
 
     try {
-      const payload: Record<string, unknown> = {
+      const payload: GeminiExchangeCodeRequest = {
         session_id: params.sessionId,
         state: params.state,
         code
       }
-      if (params.proxyId) payload.proxyId = params.proxyId
-      if (params.oauthType) payload.oauth_type = params.oauthType
+      if (params.proxyId) payload.proxy_id = params.proxyId
+      if (isGeminiOAuthType(params.oauthType)) payload.oauth_type = params.oauthType
       const trimmedTierID = params.tierId?.trim()
       if (trimmedTierID) payload.tier_id = trimmedTierID
 
-      const tokenInfo = await actionStore.gemini_exchangeCode(payload as any)
+      const tokenInfo = await actionStore.gemini_exchangeCode(payload)
       return tokenInfo as GeminiTokenInfo
     } catch (err: any) {
       // Check for specific missing project_id error

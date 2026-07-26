@@ -1,4 +1,4 @@
-import type { Group } from '@/features/admin-groups/domain/models/group'
+import type { Group } from '@/core/models/domain/group'
 
 export interface GroupsUserQueryRepository {
   getAvailable(): Promise<Group[]>

@@ -1,3 +1,5 @@
+import type { OrderStatus } from '@/features/admin-orders/enums/orderTypes'
+
 export class AffiliateRebateRecord {
   orderId!: number
   outTradeNo!: string
@@ -11,6 +13,6 @@ export class AffiliateRebateRecord {
   payAmount!: number
   rebateAmount!: number
   paymentType!: string
-  orderStatus!: string
+  orderStatus!: OrderStatus
   createdAt!: string
 }

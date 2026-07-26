@@ -204,8 +204,10 @@ import {
 import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
-import type { User, UserAuthBindingStatus, UserAuthProvider } from '@/features/auth/domain/models/auth'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import type { User } from '@/core/models/domain/user'
+import type { UserAuthBindingStatus } from '@/core/models/domain/userAuthBindingStatus'
+import type { UserAuthProvider } from '@/core/models/domain/userAuthProvider'
 type BindableProvider = Exclude<UserAuthProvider, 'email'>
 
 const props = withDefaults(

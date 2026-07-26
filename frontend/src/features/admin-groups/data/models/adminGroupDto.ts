@@ -1,9 +1,9 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
 import { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
-import { GroupDto } from './groupDto'
+import { GroupDto } from '@/core/models/data/groupDto'
 import { ModelsListConfigDto } from './modelsListConfigDto'
-import { OpenAIMessagesDispatchModelConfigDto } from './openAIMessagesDispatchModelConfigDto'
+import { OpenAIMessagesDispatchModelConfigDto } from '@/core/models/data/openAIMessagesDispatchModelConfigDto'
 
 export class AdminGroupDto extends GroupDto {
   @Expose({ name: 'model_routing' })

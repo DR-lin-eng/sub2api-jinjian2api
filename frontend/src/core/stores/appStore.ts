@@ -6,11 +6,17 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { i18n } from '@/core/i18n'
+// TODO(spec-exception): core/stores/appStore imports two feature repository impls,
+// violating spec §3 R2 (core/** MUST NOT import features/**). Resolving this requires
+// either (a) lifting the SystemQueryRepository/AuthQueryRepository interfaces up to
+// `core/domain/repositories` and wiring impls via DI, or (b) moving app-version /
+// public-settings bootstrap out of appStore into a feature-level bootstrap orchestrator.
+// Deferred for a dedicated repository-layer refactor pass.
 import { systemQueryRepository } from '@/features/admin-settings/data/repositories/systemQueryRepositoryImpl'
 import { authQueryRepository } from '@/features/auth/data/repositories/authQueryRepositoryImpl'
-import type { VersionInfo } from '@/features/admin-settings/domain/models/versionInfo'
-import type { ReleaseInfo } from '@/features/admin-settings/domain/models/releaseInfo'
-import type { PublicSettings } from '@/features/auth/domain/models/publicSettings'
+import type { VersionInfo } from '@/core/models/domain/versionInfo'
+import type { ReleaseInfo } from '@/core/models/domain/releaseInfo'
+import type { PublicSettings } from '@/core/models/domain/publicSettings'
 
 type ToastType = 'success' | 'error' | 'info' | 'warning'
 

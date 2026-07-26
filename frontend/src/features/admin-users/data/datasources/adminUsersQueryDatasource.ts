@@ -4,7 +4,7 @@ import { AdminUserDto } from '@/features/admin-users/data/models/adminUserDto'
 import { AdminUserUsageStatsDto } from '@/features/admin-users/data/models/adminUserUsageStatsDto'
 import { BalanceHistoryItemDto } from '@/features/admin-users/data/models/balanceHistoryItemDto'
 import { PlatformQuotaItemDto } from '@/features/admin-users/data/models/platformQuotaItemDto'
-import { ApiKeyDto } from '@/features/keys/data/models/apiKeyDto'
+import { ApiKeyDto } from '@/core/models/data/apiKeyDto'
 
 export class AdminUsersQueryDatasource {
   async list(

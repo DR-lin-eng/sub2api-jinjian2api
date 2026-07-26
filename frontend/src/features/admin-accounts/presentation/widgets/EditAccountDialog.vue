@@ -2624,7 +2624,7 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
 import { useAdminSettingsQueryStore } from '@/features/admin-settings/presentation/stores/adminSettingsQueryStore'
 
@@ -2636,7 +2636,7 @@ import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import ProxySelector from '@/common/widgets/data/ProxySelector.vue'
+import ProxySelector from '@/features/admin-proxies/presentation/widgets/ProxySelector.vue'
 import ProxyAdBanner from '@/common/widgets/data/ProxyAdBanner.vue'
 import GroupSelector from '@/common/widgets/data/GroupSelector.vue'
 import ModelWhitelistSelector from '@/features/admin-accounts/presentation/widgets/ModelWhitelistSelector.vue'
@@ -2681,7 +2681,7 @@ import {
 import type { OpenAICompactMode } from '@/features/admin-accounts/enums/openAICompactMode'
 import type { OpenAIEndpointCapability } from '@/features/admin-accounts/enums/openAIEndpointCapability'
 import type { OpenAIResponsesMode } from '@/features/admin-accounts/enums/openAIResponsesMode'
-import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { Account } from '@/core/models/domain/account'
 import type { CheckMixedChannelResponse } from '@/features/admin-accounts/domain/models/checkMixedChannelResponse'
 import type { Proxy } from '@/features/admin-proxies/domain/models/proxy'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
@@ -2705,7 +2705,7 @@ const authStore = useAuthStore()
 
 // Spark 影子账号(parent_account_id 非空):代理恒继承母账号,不可独立编辑(外审 B/P1),
 // 故隐藏代理选择器。
-const isSparkShadow = computed(() => props.account?.parentAccountId > 0)
+const isSparkShadow = computed(() => (props.account?.parentAccountId ?? 0) > 0)
 
 // Platform-specific hint for Base URL
 const baseUrlHint = computed(() => {
@@ -3624,7 +3624,7 @@ const syncFormFromAccount = (newAccount: Account | null) => {
 
 async function loadTLSProfiles() {
   try {
-    const profiles = await adminSettingsQueryStore.tlsFingerprintProfile_list()
+    const profiles = await adminSettingsQueryStore.listTlsProfiles()
     tlsFingerprintProfiles.value = profiles.map((p: any) => ({ id: p.id, name: p.name }))
   } catch {
     tlsFingerprintProfiles.value = []

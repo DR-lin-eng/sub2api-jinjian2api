@@ -1,4 +1,4 @@
-import type { VersionInfo } from '@/features/admin-settings/domain/models/versionInfo'
+import type { VersionInfo } from '@/core/models/domain/versionInfo'
 import type { RollbackVersionInfo } from '@/features/admin-settings/domain/models/rollbackVersionInfo'
 
 export interface SystemQueryRepository {

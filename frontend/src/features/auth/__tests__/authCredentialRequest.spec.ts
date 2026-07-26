@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { apiClient } from '@/core/networks/client'
 import { login, register } from '@/features/auth/data/datasources/authActionDatasource'
 import { createCredentialEnvelope } from '@/core/networks/credentialEncryption'
-import type { CredentialEnvelope } from '@/features/auth/domain/models/credentialEnvelope'
+import type { CredentialEnvelope } from '@/core/models/domain/credentialEnvelope'
 
 vi.mock('@/core/networks/credentialEncryption', () => ({
   createCredentialEnvelope: vi.fn()

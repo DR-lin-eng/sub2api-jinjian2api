@@ -12,7 +12,7 @@ import type { OpsAdvancedSettings } from '@/features/admin-ops/domain/models/ops
 import type { OpsAlertRuntimeSettings } from '@/features/admin-ops/domain/models/opsAlertRuntimeSettings'
 import type { EmailNotificationConfig } from '@/features/admin-ops/domain/models/emailNotificationConfig'
 import type { OpsMetricThresholds } from '@/features/admin-ops/domain/models/opsMetricThresholds'
-import type { AlertSeverity } from '@/features/admin-ops/domain/models/alertRule'
+import type { AlertSeverity } from '@/features/admin-ops/enums/alertEnums'
 import type { UpdateAlertRuntimeSettingsRequest } from '@/features/admin-ops/data/requests_models/updateAlertRuntimeSettingsRequest'
 import type { UpdateEmailNotificationConfigRequest } from '@/features/admin-ops/data/requests_models/updateEmailNotificationConfigRequest'
 import type { UpdateAdvancedSettingsRequest } from '@/features/admin-ops/data/requests_models/updateAdvancedSettingsRequest'
@@ -51,7 +51,7 @@ const metricThresholds = ref<OpsMetricThresholds>({
 async function loadAllSettings() {
   loading.value = true
   try {
-    const settings = await getSettingsSnapshot().catch(async () => {
+    const settings = await queryStore.getSettingsSnapshot().catch(async () => {
       const [runtime, email, advanced] = await Promise.all([
         queryStore.getAlertRuntimeSettings(),
         queryStore.getEmailNotificationConfig(),

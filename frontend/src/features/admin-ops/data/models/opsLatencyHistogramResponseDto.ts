@@ -1,6 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import { OpsLatencyHistogramBucket, OpsLatencyHistogramResponse } from '@/features/admin-ops/domain/models/opsLatencyHistogramResponse'
+import { OpsLatencyHistogramResponse } from '@/features/admin-ops/domain/models/opsLatencyHistogramResponse'
+import { OpsLatencyHistogramBucket } from '@/features/admin-ops/domain/models/opsLatencyHistogramBucket'
 
 export class OpsLatencyHistogramBucketDto {
   @Expose() @Transform(({ value }) => value ?? '') range!: string

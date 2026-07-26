@@ -79,11 +79,13 @@
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
+import { useAdminUsers } from '@/features/admin-users/presentation/composables/useAdminUsers'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
+
+const $adminUsers = useAdminUsers()
 
 interface Props {
   show: boolean
@@ -119,7 +121,7 @@ const handleReplace = async () => {
   submitting.value = true
 
   try {
-    const result = await adminAPI.users.replaceGroup(props.user.id, { old_group_id: props.oldGroup.id, new_group_id: selectedGroupId.value })
+    const result = await $adminUsers.replaceGroup(props.user.id, { old_group_id: props.oldGroup.id, new_group_id: selectedGroupId.value })
     appStore.showSuccess(t('admin.users.replaceGroupSuccess', { count: result.migratedKeys }))
     emit('success')
     emit('close')

@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import Select from '@/common/widgets/forms/Select.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import type { OpsOpenAITokenStats } from '@/features/admin-ops/domain/models/opsOpenAITokenStats'
+import type { OpsOpenAITokenStatsParams, OpsOpenAITokenStatsTimeRange } from '@/features/admin-ops/data/requests_models/opsOpenAITokenStatsParams'
 import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
 const queryStore = useAdminOpsQueryStore()
 import { formatCompactNumber, formatDurationMs, formatExactDurationMs, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
@@ -25,7 +26,7 @@ const { t } = useI18n()
 
 const loading = ref(false)
 const errorMessage = ref('')
-const response = ref<OpsOpenAITokenStatsResponse | null>(null)
+const response = ref<OpsOpenAITokenStats | null>(null)
 
 const timeRange = ref<OpsOpenAITokenStatsTimeRange>('30d')
 const viewMode = ref<ViewMode>('topn')
@@ -76,8 +77,8 @@ function formatInt(v?: number | null): string {
   return formatCompactNumber(v == null ? v : Math.round(v))
 }
 
-function buildParams() {
-  const params: Record<string, any> = {
+function buildParams(): OpsOpenAITokenStatsParams {
+  const params: OpsOpenAITokenStatsParams = {
     time_range: timeRange.value,
     platform: props.platformFilter || undefined,
     group_id: typeof props.groupIdFilter === 'number' && props.groupIdFilter > 0 ? props.groupIdFilter : undefined
@@ -230,12 +231,12 @@ function onNextPage() {
                 class="border-b border-gray-100 text-gray-700 last:border-b-0 dark:border-dark-800 dark:text-gray-200"
               >
                 <td class="px-2 py-2 font-medium">{{ row.model }}</td>
-                <td class="px-2 py-2 tabular-nums" :title="formatExactNumber(row.request_count)">{{ formatInt(row.request_count) }}</td>
-                <td class="px-2 py-2 tabular-nums" :title="formatExactNumber(row.avg_tokens_per_sec)">{{ formatRate(row.avg_tokens_per_sec) }}</td>
-                <td class="px-2 py-2 tabular-nums" :title="formatExactDurationMs(row.avg_first_token_ms)">{{ formatDurationMs(row.avg_first_token_ms) }}</td>
-                <td class="px-2 py-2 tabular-nums" :title="formatExactNumber(row.total_output_tokens)">{{ formatInt(row.total_output_tokens) }}</td>
-                <td class="px-2 py-2 tabular-nums" :title="formatExactDurationMs(row.avg_duration_ms)">{{ formatDurationMs(row.avg_duration_ms) }}</td>
-                <td class="px-2 py-2 tabular-nums" :title="formatExactNumber(row.requests_with_first_token)">{{ formatInt(row.requests_with_first_token) }}</td>
+                <td class="px-2 py-2 tabular-nums" :title="formatExactNumber(row.requestCount)">{{ formatInt(row.requestCount) }}</td>
+                <td class="px-2 py-2 tabular-nums" :title="formatExactNumber(row.avgTokensPerSec)">{{ formatRate(row.avgTokensPerSec) }}</td>
+                <td class="px-2 py-2 tabular-nums" :title="formatExactDurationMs(row.avgFirstTokenMs)">{{ formatDurationMs(row.avgFirstTokenMs) }}</td>
+                <td class="px-2 py-2 tabular-nums" :title="formatExactNumber(row.totalOutputTokens)">{{ formatInt(row.totalOutputTokens) }}</td>
+                <td class="px-2 py-2 tabular-nums" :title="formatExactDurationMs(row.avgDurationMs)">{{ formatDurationMs(row.avgDurationMs) }}</td>
+                <td class="px-2 py-2 tabular-nums" :title="formatExactNumber(row.requestsWithFirstToken)">{{ formatInt(row.requestsWithFirstToken) }}</td>
               </tr>
             </tbody>
           </table>

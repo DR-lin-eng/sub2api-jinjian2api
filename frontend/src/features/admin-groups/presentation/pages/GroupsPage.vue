@@ -3975,17 +3975,15 @@ import { ref, reactive, computed, onMounted, onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAppStore } from "@/core/stores/appStore";
 import { useOnboardingStore } from "@/core/stores/onboardingStore";
-import type {
-  AdminGroup,
-  CompositeModelRoute,
-  CompositeModelRouteInput,
-  CompositeRouteDecision,
-  CompositeRouteEndpoint,
-  CompositeRouteMatchType,
-  GroupPlatform,
-  SubscriptionType,
-} from "@/types";
-import type { Column } from "@/common/types/uiTypes";
+import type { AdminGroup } from "@/features/admin-groups/domain/models/adminGroup";
+import type { CompositeModelRoute } from "@/features/admin-groups/domain/models/compositeModelRoute";
+import type { CompositeRouteDecision } from "@/features/admin-groups/domain/models/compositeRouteDecision";
+import type { CreateCompositeRouteRequest } from "@/features/admin-groups/data/requests_models/createCompositeRouteRequest";
+import type { CompositeRouteEndpoint } from "@/features/admin-groups/enums/compositeRouteEndpoint";
+import type { CompositeRouteMatchType } from "@/features/admin-groups/enums/compositeRouteMatchType";
+import type { GroupPlatform } from "@/core/enums/groupPlatform";
+import type { SubscriptionType } from "@/core/enums/subscriptionType";
+import type { Column } from "@/common/widgets/types";
 import AppLayout from "@/common/widgets/layout/AppLayout.vue";
 import TablePageLayout from "@/common/widgets/layout/TablePageLayout.vue";
 import DataTable from "@/common/widgets/data/DataTable.vue";
@@ -4416,7 +4414,13 @@ const capacityMap = ref<
   >
 >(new Map());
 const searchQuery = ref("");
-const filters = reactive({
+type GroupStatusFilter = '' | 'active' | 'inactive'
+type GroupExclusiveFilter = '' | 'true' | 'false'
+const filters = reactive<{
+  platform: '' | GroupPlatform
+  status: GroupStatusFilter
+  is_exclusive: GroupExclusiveFilter
+}>({
   platform: "",
   status: "",
   is_exclusive: "",
@@ -5091,8 +5095,8 @@ const loadGroups = async () => {
       pagination.page,
       pagination.page_size,
       {
-        platform: (filters.platform as GroupPlatform) || undefined,
-        status: filters.status as any,
+        platform: filters.platform || undefined,
+        status: filters.status || undefined,
         is_exclusive: filters.is_exclusive
           ? filters.is_exclusive === "true"
           : undefined,
@@ -5691,11 +5695,11 @@ const resetCompositeRouteForm = () => {
   compositeRouteForm.notes = "";
 };
 
-const toCompositeRouteInput = (): CompositeModelRouteInput => ({
-  publicModel: compositeRouteForm.public_model.trim(),
-  matchType: compositeRouteForm.match_type,
-  targetPlatform: compositeRouteForm.target_platform,
-  upstreamModel: compositeRouteForm.upstream_model.trim(),
+const toCompositeRouteInput = (): CreateCompositeRouteRequest => ({
+  public_model: compositeRouteForm.public_model.trim(),
+  match_type: compositeRouteForm.match_type,
+  target_platform: compositeRouteForm.target_platform,
+  upstream_model: compositeRouteForm.upstream_model.trim(),
   endpoint: compositeRouteForm.endpoint,
   priority: Number(compositeRouteForm.priority) || 100,
   enabled: compositeRouteForm.enabled,

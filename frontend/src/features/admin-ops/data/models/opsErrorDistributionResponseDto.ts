@@ -1,6 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import { OpsErrorDistributionItem, OpsErrorDistributionResponse } from '@/features/admin-ops/domain/models/opsErrorDistributionResponse'
+import { OpsErrorDistributionResponse } from '@/features/admin-ops/domain/models/opsErrorDistributionResponse'
+import { OpsErrorDistributionItem } from '@/features/admin-ops/domain/models/opsErrorDistributionItem'
 
 export class OpsErrorDistributionItemDto {
   @Expose({ name: 'status_code' }) @Transform(({ value }) => value ?? 0) statusCode!: number

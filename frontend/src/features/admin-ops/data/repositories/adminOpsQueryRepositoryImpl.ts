@@ -11,6 +11,7 @@ import type { EmailNotificationConfig } from '@/features/admin-ops/domain/models
 import type { OpsAlertRuntimeSettings } from '@/features/admin-ops/domain/models/opsAlertRuntimeSettings'
 import type { OpsRuntimeLogConfig } from '@/features/admin-ops/domain/models/opsRuntimeLogConfig'
 import type { OpsAdvancedSettings } from '@/features/admin-ops/domain/models/opsAdvancedSettings'
+import type { OpsSettingsSnapshot } from '@/features/admin-ops/domain/models/opsSettingsSnapshot'
 import type { OpsDashboardOverview } from '@/features/admin-ops/domain/models/opsDashboardOverview'
 import type { OpsDashboardSnapshotV2 } from '@/features/admin-ops/domain/models/opsDashboardSnapshotV2'
 import type { OpsThroughputTrendResponse } from '@/features/admin-ops/domain/models/opsThroughputTrendResponse'
@@ -136,8 +137,8 @@ export class AdminOpsQueryRepositoryImpl implements AdminOpsQueryRepository {
     return (await this.ds.getEmailNotificationConfig()).toEntity()
   }
 
-  async getSettingsSnapshot(): Promise<unknown> {
-    return this.ds.getSettingsSnapshot()
+  async getSettingsSnapshot(): Promise<OpsSettingsSnapshot> {
+    return (await this.ds.getSettingsSnapshot()).toEntity()
   }
 
   async getAlertRuntimeSettings(): Promise<OpsAlertRuntimeSettings> {

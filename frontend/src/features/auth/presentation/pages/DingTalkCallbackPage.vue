@@ -244,7 +244,7 @@ import PendingOAuthCreateAccountForm, {
 } from '@/features/auth/presentation/widgets/PendingOAuthCreateAccountForm.vue'
 import { apiClient } from '@/core/networks/client'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import {
   getOAuthCompletionKind,
   isOAuthLoginCompletion,
@@ -266,6 +266,7 @@ const { t, te } = useI18n()
 
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const authActionStore = useAuthActionStore()
 
 const isProcessing = ref(true)
 const errorMessage = ref('')
@@ -663,7 +664,9 @@ async function handleSubmitInvitation() {
 async function handleContinueLogin() {
   isSubmitting.value = true
   try {
-    const completion = await exchangePendingOAuthCompletion(currentAdoptionDecision()) as DingTalkPendingActionResponse
+    const completion = await authActionStore.completePendingOAuthBindLogin(
+      serializeAdoptionDecision(currentAdoptionDecision())
+    ) as DingTalkPendingActionResponse
     await finalizePendingAccountResponse(completion)
   } catch (e: unknown) {
     errorMessage.value = getRequestErrorMessage(e, t('auth.loginFailed'))
@@ -727,9 +730,9 @@ async function handleSubmitTotpChallenge() {
 
   isSubmitting.value = true
   try {
-    const completion = await login2FA({
-      tempToken: totpTempToken.value,
-      totpCode: code
+    const completion = await authActionStore.login2FA({
+      temp_token: totpTempToken.value,
+      totp_code: code
     })
     await authStore.setToken(completion.accessToken)
     clearAllAffiliateReferralCodes()
@@ -777,7 +780,7 @@ onMounted(async () => {
       return
     }
 
-    const completion = await exchangePendingOAuthCompletion()
+    const completion = await authActionStore.completePendingOAuthBindLogin() as PendingOAuthExchangeResponse
     const completionRedirect = sanitizeRedirectPath(
       completion.redirect || (route.query.redirect as string | undefined) || '/dashboard'
     )

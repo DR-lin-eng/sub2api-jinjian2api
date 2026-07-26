@@ -1,11 +1,11 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import type { AccountPlatform } from '@/features/admin-accounts/enums/accountPlatform'
-import type { AccountType } from '@/features/admin-accounts/enums/accountType'
-import { Account } from '@/features/admin-accounts/domain/models/account'
-import { AccountSchedulerScoreDto } from '@/features/admin-accounts/data/models/accountSchedulerScoreDto'
-import { AccountSchedulerGroupScoreDto } from '@/features/admin-accounts/data/models/accountSchedulerGroupScoreDto'
-import { AccountHourlyUsageStatsDto } from '@/features/admin-accounts/data/models/accountHourlyUsageStatsDto'
+import type { AccountPlatform } from '@/core/enums/accountPlatform'
+import type { AccountType } from '@/core/enums/accountType'
+import { Account } from '@/core/models/domain/account'
+import { AccountSchedulerScoreDto } from '@/core/models/data/accountSchedulerScoreDto'
+import { AccountSchedulerGroupScoreDto } from '@/core/models/data/accountSchedulerGroupScoreDto'
+import { AccountHourlyUsageStatsDto } from '@/core/models/data/accountHourlyUsageStatsDto'
 
 export class AccountDto {
   @Expose() @Transform(({ value }) => value ?? 0) id!: number

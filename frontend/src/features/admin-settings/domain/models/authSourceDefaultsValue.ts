@@ -1,5 +1,5 @@
 import type { DefaultSubscriptionSetting } from './defaultSubscriptionSetting'
-import type { DefaultPlatformQuotasMap } from './webSearchProviderConfig'
+import type { DefaultPlatformQuotasMap } from './adminSettings'
 
 export class AuthSourceDefaultsValue {
   balance!: number

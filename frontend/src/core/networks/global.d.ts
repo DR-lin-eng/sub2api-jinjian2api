@@ -1,4 +1,4 @@
-import type { PublicSettings } from '@/features/auth/domain/models/publicSettings'
+import type { PublicSettings } from '@/core/models/domain/publicSettings'
 
 declare global {
   interface Window {

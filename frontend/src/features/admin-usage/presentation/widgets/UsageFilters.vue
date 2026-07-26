@@ -190,10 +190,13 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, toRef, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { adminAPI } from '@/api/admin'
 import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
+import { useAdminUsageQueryStore } from '@/features/admin-usage/presentation/stores/adminUsageQueryStore'
+import { useAdminGroupsQueryStore } from '@/features/admin-groups/presentation/stores/adminGroupsQueryStore'
 
 const adminAccountsQueryStore = useAdminAccountsQueryStore()
+const adminUsageQueryStore = useAdminUsageQueryStore()
+const adminGroupsQueryStore = useAdminGroupsQueryStore()
 import Select, { type SelectOption } from '@/common/widgets/forms/Select.vue'
 import { COMMON_ERROR_STATUS_CODES } from '@/core/utils/errorBadges'
 import type { SimpleApiKey } from '@/features/admin-usage/domain/models/simpleApiKey'
@@ -319,7 +322,7 @@ const debounceUserSearch = () => {
       return
     }
     try {
-      const results = await adminAPI.usage.searchUsers(userKeyword.value)
+      const results = await adminUsageQueryStore.searchUsers(userKeyword.value)
       userResults.value = results.sort((a: any, b: any) => Number(a.deleted) - Number(b.deleted))
     } catch {
       userResults.value = []
@@ -331,7 +334,7 @@ const debounceApiKeySearch = () => {
   if (apiKeySearchTimeout) clearTimeout(apiKeySearchTimeout)
   apiKeySearchTimeout = setTimeout(async () => {
     try {
-      apiKeyResults.value = await adminAPI.usage.searchApiKeys(
+      apiKeyResults.value = await adminUsageQueryStore.searchApiKeys(
         filters.value.userId,
         apiKeyKeyword.value || ''
       )
@@ -349,7 +352,7 @@ const selectUser = async (u: SimpleUser) => {
 
   // Auto-load API keys for this user
   try {
-    apiKeyResults.value = await adminAPI.usage.searchApiKeys(u.id, '')
+    apiKeyResults.value = await adminUsageQueryStore.searchApiKeys(u.id, '')
   } catch {
     apiKeyResults.value = []
   }
@@ -486,7 +489,7 @@ watch(
 onMounted(async () => {
   document.addEventListener('click', onDocumentClick)
   try {
-    const gs = await adminAPI.groups.list(1, 1000)
+    const gs = await adminGroupsQueryStore.list(1, 1000)
     groupOptions.value.push(...gs.items.map((g: any) => ({ value: g.id, label: g.name })))
   } catch {
     // Ignore filter option loading errors (page still usable)

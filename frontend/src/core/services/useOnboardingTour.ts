@@ -1,7 +1,11 @@
+// TODO(spec-exception): This composable violates spec §3 R2 (core/** MUST NOT import features/**).
+// It depends on features/auth authStore for user role/simple-mode gating.
+// Migrate to `src/features/onboarding/presentation/composables/useOnboardingTour.ts` once
+// a dedicated `features/onboarding` module is created.
 import { onMounted, onUnmounted, nextTick } from 'vue'
 import { driver, type Driver, type DriveStep } from 'driver.js'
 import 'driver.js/dist/driver.css'
-import { useAuthStore as useUserStore } from '@/core/stores/authStore'
+import { useAuthStore as useUserStore } from '@/features/auth/presentation/stores/authStore'
 import { useOnboardingStore } from '@/core/stores/onboardingStore'
 import { useI18n } from 'vue-i18n'
 import { getAdminSteps, getUserSteps } from '@/core/services/guide/steps'

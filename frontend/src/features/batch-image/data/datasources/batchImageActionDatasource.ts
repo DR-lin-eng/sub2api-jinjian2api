@@ -1,22 +1,24 @@
 import { buildGatewayUrl } from '@/core/networks/client'
 import { BatchImageJobDto } from '@/features/batch-image/data/models/batchImageJobDto'
 import type { SubmitBatchImageJobRequest } from '@/features/batch-image/data/requests_models/submitBatchImageJobRequest'
+import { BatchImageError } from '@/features/batch-image/data/errors/batchImageError'
 
-async function parseBatchImageError(response: Response): Promise<Error> {
+async function parseBatchImageError(response: Response): Promise<BatchImageError> {
+  const requestId = response.headers.get('X-Request-Id') || ''
   try {
     const body = await response.json()
     const message = body?.error?.message || body?.message || response.statusText
-    const error = new Error(message)
-    ;(error as any).code = body?.error?.code || response.status
-    ;(error as any).status = response.status
-    ;(error as any).requestId = response.headers.get('X-Request-Id') || ''
-    return error
+    return new BatchImageError(message, {
+      code: body?.error?.code || response.status,
+      status: response.status,
+      requestId,
+    })
   } catch {
-    const error = new Error(response.statusText || `HTTP ${response.status}`)
-    ;(error as any).code = response.status
-    ;(error as any).status = response.status
-    ;(error as any).requestId = response.headers.get('X-Request-Id') || ''
-    return error
+    return new BatchImageError(response.statusText || `HTTP ${response.status}`, {
+      code: response.status,
+      status: response.status,
+      requestId,
+    })
   }
 }
 

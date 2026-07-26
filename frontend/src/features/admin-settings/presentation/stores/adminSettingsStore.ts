@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { adminSettingsQueryRepository } from '@/features/admin-settings/data/repositories/adminSettingsQueryRepositoryImpl'
 import { adminOrdersQueryRepository } from '@/features/admin-orders/data/repositories/adminOrdersQueryRepositoryImpl'
-import type { CustomMenuItem } from '@/features/auth/domain/models/customMenuItem'
+import type { CustomMenuItem } from '@/core/models/domain/customMenuItem'
 
 export const useAdminSettingsStore = defineStore('adminSettings', () => {
   const loaded = ref(false)

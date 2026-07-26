@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
-import { AccountSchedulerGroupScore } from '@/features/admin-accounts/domain/models/accountSchedulerGroupScore'
+import { AccountSchedulerGroupScore } from '@/core/models/domain/accountSchedulerGroupScore'
 
 export class AccountSchedulerGroupScoreDto {
   @Expose({ name: 'group_id' }) @Transform(({ value }) => value ?? 0) groupId!: number

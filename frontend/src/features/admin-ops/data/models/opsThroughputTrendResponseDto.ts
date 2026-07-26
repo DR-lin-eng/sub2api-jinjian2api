@@ -1,6 +1,8 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import { OpsThroughputPlatformBreakdown, OpsThroughputGroupBreakdown, OpsThroughputTrendResponse } from '@/features/admin-ops/domain/models/opsThroughputTrendResponse'
+import { OpsThroughputTrendResponse } from '@/features/admin-ops/domain/models/opsThroughputTrendResponse'
+import { OpsThroughputPlatformBreakdown } from '@/features/admin-ops/domain/models/opsThroughputPlatformBreakdown'
+import { OpsThroughputGroupBreakdown } from '@/features/admin-ops/domain/models/opsThroughputGroupBreakdown'
 import { OpsThroughputTrendPointDto } from './opsThroughputTrendPointDto'
 
 export class OpsThroughputPlatformBreakdownDto {

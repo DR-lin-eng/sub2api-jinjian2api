@@ -3,7 +3,7 @@ import {
   OPENAI_CC_SWITCH_CODEX_MODEL,
   buildCcSwitchImportDeeplink
 } from '@/core/utils/ccswitchImport'
-import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
+import type { GroupPlatform } from '@/core/enums/groupPlatform'
 
 function paramsFromDeeplink(deeplink: string): URLSearchParams {
   const query = deeplink.split('?')[1] || ''

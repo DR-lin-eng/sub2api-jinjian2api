@@ -88,9 +88,11 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import { adminAPI } from '@/api/admin'
+import { useAdminProxiesActionStore } from '@/features/admin-proxies/presentation/stores/adminProxiesActionStore'
 import { useAppStore } from '@/core/stores/appStore'
 import type { AdminDataImportResult } from '@/features/admin-accounts/domain/models/adminDataPayload'
+
+const $proxies = useAdminProxiesActionStore()
 interface Props {
   show: boolean
 }
@@ -171,7 +173,7 @@ const handleImport = async () => {
     const text = await readFileAsText(file.value)
     const dataPayload = JSON.parse(text)
 
-    const res = await adminAPI.proxies.importData({ data: dataPayload })
+    const res = await $proxies.importData({ data: dataPayload })
 
     result.value = res
 

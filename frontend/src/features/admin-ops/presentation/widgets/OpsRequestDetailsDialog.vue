@@ -15,9 +15,6 @@ export interface OpsRequestDetailsPreset {
   title: string
   kind?: OpsRequestDetailsParams['kind']
   sort?: OpsRequestDetailsParams['sort']
-  min_duration_ms?: number
-  max_duration_ms?: number
-  ttft_only?: boolean
 }
 
 interface Props {
@@ -43,7 +40,7 @@ const items = ref<OpsRequestDetail[]>([])
 const total = ref(0)
 const page = ref(1)
 const pageSize = ref(10)
-const showsTTFT = computed(() => props.preset.sort === 'ttft_desc')
+const showsTTFT = computed(() => props.preset.sort === 'first_token_ms')
 
 const close = () => emit('update:modelValue', false)
 
@@ -72,19 +69,16 @@ const fetchData = async () => {
       page: page.value,
       page_size: pageSize.value,
       kind: props.preset.kind ?? 'all',
-      sort: props.preset.sort ?? 'created_at_desc'
+      sort: props.preset.sort ?? 'created_at',
+      sort_dir: 'desc'
     }
 
     const platform = (props.platform || '').trim()
     if (platform) params.platform = platform
-    if (typeof props.groupId === 'number' && props.groupId > 0) params.groupId = props.groupId
-
-    if (typeof props.preset.min_duration_ms === 'number') params.min_duration_ms = props.preset.min_duration_ms
-    if (typeof props.preset.max_duration_ms === 'number') params.max_duration_ms = props.preset.max_duration_ms
-    if (props.preset.ttft_only) params.ttft_only = true
+    if (typeof props.groupId === 'number' && props.groupId > 0) params.group_id = props.groupId
 
     const res = await queryStore.listRequestDetails(params)
-    items.value = res.items || []
+    items.value = (res.items ?? []) as OpsRequestDetail[]
     total.value = res.total || 0
   } catch (e: any) {
     console.error('[OpsRequestDetailsModal] Failed to fetch request details', e)
@@ -113,10 +107,7 @@ watch(
     props.platform,
     props.groupId,
     props.preset.kind,
-    props.preset.sort,
-    props.preset.min_duration_ms,
-    props.preset.max_duration_ms,
-    props.preset.ttft_only
+    props.preset.sort
   ],
   () => {
     if (!props.modelValue) return
@@ -243,9 +234,9 @@ const kindBadgeClass = (kind: string) => {
                   </td>
                   <td
                     class="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-gray-600 dark:text-gray-300"
-                    :title="formatExactDurationMs(showsTTFT ? row.first_token_ms : row.duration_ms)"
+                    :title="formatExactDurationMs(showsTTFT ? row.firstTokenMs : row.durationMs)"
                   >
-                    {{ formatDurationMs(showsTTFT ? row.first_token_ms : row.duration_ms) }}
+                    {{ formatDurationMs(showsTTFT ? row.firstTokenMs : row.durationMs) }}
                   </td>
                   <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-600 dark:text-gray-300">
                     {{ row.statusCode ?? '-' }}
@@ -266,9 +257,9 @@ const kindBadgeClass = (kind: string) => {
                   </td>
                   <td class="whitespace-nowrap px-4 py-3 text-right">
                     <button
-                      v-if="row.kind === 'error' && row.error_id"
+                      v-if="row.kind === 'error' && row.errorId"
                       class="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/30"
-                      @click="openErrorDetail(row.error_id)"
+                      @click="openErrorDetail(row.errorId)"
                     >
                       {{ t('admin.ops.requestDetails.viewError') }}
                     </button>

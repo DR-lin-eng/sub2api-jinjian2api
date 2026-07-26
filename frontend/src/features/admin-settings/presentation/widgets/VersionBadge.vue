@@ -234,8 +234,8 @@
               <!-- Priority 3: Update available for source build - show git pull hint -->
               <div v-else-if="hasUpdate && !isReleaseBuild" class="space-y-2">
                 <a
-                  v-if="releaseInfo?.html_url && releaseInfo.html_url !== '#'"
-                  :href="releaseInfo.html_url"
+                  v-if="releaseInfo?.htmlUrl && releaseInfo.htmlUrl !== '#'"
+                  :href="releaseInfo.htmlUrl"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="group flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 transition-colors hover:bg-amber-100 dark:border-amber-800/50 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
@@ -344,8 +344,8 @@
 
                 <!-- View release link -->
                 <a
-                  v-if="releaseInfo?.html_url && releaseInfo.html_url !== '#'"
-                  :href="releaseInfo.html_url"
+                  v-if="releaseInfo?.htmlUrl && releaseInfo.htmlUrl !== '#'"
+                  :href="releaseInfo.htmlUrl"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="flex items-center justify-center gap-1 text-xs text-gray-500 transition-colors hover:text-gray-700 dark:text-dark-400 dark:hover:text-dark-200"
@@ -358,8 +358,8 @@
               <!-- Priority 5: Up to date - GitHub link + version rollback -->
               <div v-else class="space-y-2">
                 <a
-                  v-if="releaseInfo?.html_url && releaseInfo.html_url !== '#'"
-                  :href="releaseInfo.html_url"
+                  v-if="releaseInfo?.htmlUrl && releaseInfo.htmlUrl !== '#'"
+                  :href="releaseInfo.htmlUrl"
                   target="_blank"
                   rel="noopener noreferrer"
                   class="flex items-center justify-center gap-2 py-2 text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-dark-400 dark:hover:text-dark-200"
@@ -510,7 +510,7 @@
                             >
                           </span>
                           <span class="text-[11px] tabular-nums text-gray-400 dark:text-dark-500">
-                            {{ formatPublishedAt(item.published_at) }}
+                            {{ formatPublishedAt(item.publishedAt) }}
                           </span>
                         </button>
 
@@ -641,7 +641,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useAdminSettingsActionStore } from '@/features/admin-settings/presentation/stores/adminSettingsActionStore'
 import { useAdminSettingsQueryStore } from '@/features/admin-settings/presentation/stores/adminSettingsQueryStore'
 import type { RollbackVersionInfo } from '@/features/admin-settings/domain/models/rollbackVersionInfo'
@@ -764,7 +764,7 @@ async function handleUpdate() {
     const result = await performUpdate()
     successKind.value = 'update'
     updateSuccess.value = true
-    needRestart.value = result.need_restart
+    needRestart.value = result.needRestart
     // Clear version cache to reflect update completed
     appStore.clearVersionCache()
   } catch (error: unknown) {
@@ -804,7 +804,7 @@ async function loadRollbackVersions() {
   rollbackVersionsError.value = ''
   try {
     const data = await getRollbackVersions()
-    rollbackVersions.value = data.versions || []
+    rollbackVersions.value = data || []
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } }; message?: string }
     rollbackVersionsError.value =
@@ -838,7 +838,7 @@ async function handleRollback() {
     const result = await rollbackAPI(selectedRollbackVersion.value)
     successKind.value = 'rollback'
     updateSuccess.value = true
-    needRestart.value = result.need_restart
+    needRestart.value = result.needRestart
     rollbackPanelOpen.value = false
     // Clear version cache so the next check reflects the rolled-back version
     appStore.clearVersionCache()

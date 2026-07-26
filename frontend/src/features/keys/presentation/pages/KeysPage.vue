@@ -1140,8 +1140,11 @@ import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 
 const { t } = useI18n()
 import { useUsageQueryStore } from '@/features/usage/presentation/stores/usageQueryStore'
-import { useAppStore } from '@/core/stores/appStore'
+import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
 import { useGroupsUserQueryStore } from '@/features/groups-user/presentation/stores/groupsUserQueryStore'
+
+const usageQueryStore = useUsageQueryStore()
+const authQueryStore = useAuthQueryStore()
 import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
 import { useKeysActionStore } from '@/features/keys/presentation/stores/keysActionStore'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
@@ -1166,10 +1169,10 @@ import {
   buildCcSwitchImportDeeplink,
   type CcSwitchClientType
 } from '@/core/utils/ccswitchImport'
-import type { ApiKey } from '@/features/keys/domain/models/apiKey'
+import type { ApiKey } from '@/core/models/domain/apiKey'
 import type { UpdateApiKeyRequest } from '@/features/keys/data/requests_models/updateApiKeyRequest'
 import type { Group, SubscriptionType, GroupPlatform } from '@/features/admin-groups/domain/models/adminGroups'
-import type { PublicSettings } from '@/features/auth/domain/models/publicSettings'
+import type { PublicSettings } from '@/core/models/domain/publicSettings'
 
 // Helper to format date for datetime-local input
 const formatDateTimeLocal = (isoDate: string): string => {
@@ -1508,7 +1511,7 @@ const loadApiKeys = async () => {
     if (response.items.length > 0) {
       const keyIds = response.items.map((k: ApiKey) => k.id)
       try {
-        const usageResponse = await usageQueryRepository.getDashboardApiKeysUsage({ api_key_ids: keyIds }, { signal })
+        const usageResponse = await usageQueryStore.getDashboardApiKeysUsage({ api_key_ids: keyIds }, { signal })
         if (signal.aborted) return
         usageStats.value = usageResponse.stats
       } catch (e) {
@@ -1547,7 +1550,7 @@ const loadUserGroupRates = async () => {
 
 const loadPublicSettings = async () => {
   try {
-    publicSettings.value = await authQueryRepository.getPublicSettings()
+    publicSettings.value = await authQueryStore.getPublicSettings()
   } catch (error) {
     console.error('Failed to load public settings:', error)
   }

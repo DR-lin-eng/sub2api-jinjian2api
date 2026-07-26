@@ -629,7 +629,7 @@ import AccountQuotaInfo from './AccountQuotaInfo.vue'
 import OpenAIQuotaResetCell from './OpenAIQuotaResetCell.vue'
 import GrokQuotaProbeCell from './GrokQuotaProbeCell.vue'
 import type { GeminiCredentials } from '@/features/admin-accounts/domain/models/geminiCredentials'
-import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { Account } from '@/core/models/domain/account'
 import type { AccountUsageInfo } from '@/features/admin-accounts/domain/models/accountUsageInfo'
 import type { WindowStats } from '@/features/admin-accounts/domain/models/windowStats'
 
@@ -1281,8 +1281,8 @@ const loadUsage = async (options?: { source?: 'passive' | 'active'; bypassCache?
       : queryStore.getUsage(props.account.id)
     const result = await enqueueUsageRequest(props.account, fetchFn)
     if (!unmounted.value) {
-      usageInfo.value = result as any
-      _usageCache.set(props.account.id, { data: result as any, ts: Date.now() })
+      usageInfo.value = result
+      _usageCache.set(props.account.id, { data: result, ts: Date.now() })
     }
   } catch (e: any) {
     if (!unmounted.value) {

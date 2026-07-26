@@ -32,7 +32,7 @@ import PendingOAuthCreateAccountForm, {
 } from '@/features/auth/presentation/widgets/PendingOAuthCreateAccountForm.vue'
 import { apiClient } from '@/core/networks/client'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import {
   persistOAuthTokenContext,
   type PendingOAuthExchangeResponse,

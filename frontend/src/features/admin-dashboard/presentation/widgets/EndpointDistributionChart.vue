@@ -140,7 +140,7 @@ import { Doughnut } from 'vue-chartjs'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import UserBreakdownSubTable from './UserBreakdownSubTable.vue'
 import { useAdminDashboardQueryStore } from '@/features/admin-dashboard/presentation/stores/adminDashboardQueryStore'
-import type { EndpointStat } from '@/features/admin-dashboard/domain/models/endpointStat'
+import type { EndpointStat } from '@/core/models/domain/endpointStat'
 import type { UserBreakdownItem } from '@/features/admin-dashboard/domain/models/userBreakdownItem'
 
 ChartJS.register(ArcElement, Tooltip, Legend)

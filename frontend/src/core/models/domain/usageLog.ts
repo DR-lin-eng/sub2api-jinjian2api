@@ -1,5 +1,5 @@
-import type { ApiKey } from '@/features/keys/domain/models/apiKey'
-import type { Group } from '@/features/admin-groups/domain/models/group'
+import type { ApiKey } from '@/core/models/domain/apiKey'
+import type { Group } from '@/core/models/domain/group'
 import type { User } from '@/core/models/domain/user'
 
 export type UsageRequestType = 'unknown' | 'sync' | 'stream' | 'ws_v2' | 'cyber'

@@ -1,5 +1,5 @@
 import { apiClient } from '@/core/networks/client'
-import { VersionInfoDto } from '@/features/admin-settings/data/models/versionInfoDto'
+import { VersionInfoDto } from '@/core/models/data/versionInfoDto'
 import { RollbackVersionInfoDto } from '@/features/admin-settings/data/models/rollbackVersionInfoDto'
 
 export class SystemQueryDatasource {

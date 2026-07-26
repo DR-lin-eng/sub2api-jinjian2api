@@ -97,7 +97,7 @@
                 <Select
                   :model-value="cond.type"
                   :options="conditionTypeOptions"
-                  @update:model-value="(v) => setConditionType(groupIndex, condIndex, v as any)"
+                  @update:model-value="(v) => handleConditionTypeChange(groupIndex, condIndex, v)"
                 />
               </div>
 
@@ -115,7 +115,7 @@
                   <Select
                     :model-value="cond.operator"
                     :options="balanceOperatorOptions"
-                    @update:model-value="(v) => setOperator(groupIndex, condIndex, v as any)"
+                    @update:model-value="(v) => handleOperatorChange(groupIndex, condIndex, v)"
                   />
                 </div>
                 <div class="w-full sm:flex-1">
@@ -174,7 +174,8 @@ import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGrou
 import type { AnnouncementTargeting } from '@/features/announcements/domain/models/announcementTargeting'
 import type { AnnouncementCondition } from '@/features/announcements/domain/models/announcementCondition'
 import type { AnnouncementConditionGroup } from '@/features/announcements/domain/models/announcementConditionGroup'
-import type { AnnouncementConditionType, AnnouncementOperator } from '@/features/announcements/domain/models/announcementCondition'
+import type { AnnouncementConditionType } from '@/features/announcements/enums/announcementConditionType'
+import type { AnnouncementOperator } from '@/features/announcements/enums/announcementOperator'
 
 const { t } = useI18n()
 
@@ -270,6 +271,24 @@ function removeAndCondition(groupIndex: number, condIndex: number) {
     if (!group?.allOf) return
     group.allOf.splice(condIndex, 1)
   })
+}
+
+function isAnnouncementConditionType(v: unknown): v is AnnouncementConditionType {
+  return v === 'subscription' || v === 'balance'
+}
+
+function isAnnouncementOperator(v: unknown): v is AnnouncementOperator {
+  return v === 'in' || v === 'gt' || v === 'gte' || v === 'lt' || v === 'lte' || v === 'eq'
+}
+
+function handleConditionTypeChange(groupIndex: number, condIndex: number, v: string | number | boolean | null) {
+  if (!isAnnouncementConditionType(v)) return
+  setConditionType(groupIndex, condIndex, v)
+}
+
+function handleOperatorChange(groupIndex: number, condIndex: number, v: string | number | boolean | null) {
+  if (!isAnnouncementOperator(v)) return
+  setOperator(groupIndex, condIndex, v)
 }
 
 function setConditionType(groupIndex: number, condIndex: number, nextType: AnnouncementConditionType) {

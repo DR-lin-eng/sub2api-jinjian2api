@@ -1,4 +1,4 @@
-import type { EndpointStat } from '@/features/admin-dashboard/domain/models/endpointStat'
+import type { EndpointStat } from '@/core/models/domain/endpointStat'
 
 export class AdminUsageStatsResponse {
   totalRequests!: number

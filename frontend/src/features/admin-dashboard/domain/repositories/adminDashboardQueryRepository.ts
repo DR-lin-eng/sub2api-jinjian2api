@@ -19,6 +19,7 @@ import type { AdminDashboardUserTrendRequest } from '@/features/admin-dashboard/
 import type { AdminDashboardUserSpendingRankingRequest } from '@/features/admin-dashboard/data/requests_models/adminDashboardUserSpendingRankingRequest'
 import type { AdminDashboardBatchUsersUsageRequest } from '@/features/admin-dashboard/data/requests_models/adminDashboardBatchUsersUsageRequest'
 import type { AdminDashboardBatchApiKeysUsageRequest } from '@/features/admin-dashboard/data/requests_models/adminDashboardBatchApiKeysUsageRequest'
+import type { AdminDashboardSnapshotV2Response } from '@/features/admin-dashboard/domain/models/adminDashboardSnapshotV2Response'
 
 export interface AdminDashboardQueryRepository {
   getStats(): Promise<DashboardStats>
@@ -27,7 +28,7 @@ export interface AdminDashboardQueryRepository {
   getModelStats(params?: AdminDashboardModelStatsRequest): Promise<ModelStatsResponse>
   getGroupStats(params?: AdminDashboardGroupStatsRequest): Promise<GroupStatsResponse>
   getUserBreakdown(params: AdminDashboardUserBreakdownRequest): Promise<UserBreakdownResponse>
-  getSnapshotV2(params?: AdminDashboardSnapshotV2Request): Promise<unknown>
+  getSnapshotV2(params?: AdminDashboardSnapshotV2Request): Promise<AdminDashboardSnapshotV2Response>
   getApiKeyUsageTrend(params?: AdminDashboardApiKeyTrendRequest): Promise<ApiKeyTrendResponse>
   getUserUsageTrend(params?: AdminDashboardUserTrendRequest): Promise<UserTrendResponse>
   getUserSpendingRanking(params?: AdminDashboardUserSpendingRankingRequest): Promise<UserSpendingRankingResponse>

@@ -1,4 +1,4 @@
-import type { Group } from '@/features/admin-groups/domain/models/group'
+import type { Group } from '@/core/models/domain/group'
 
 // Pure domain entity — camelCase, no null/undefined for scalar fields.
 // Defaults are populated by ApiKeyDto's @Transform decorators.

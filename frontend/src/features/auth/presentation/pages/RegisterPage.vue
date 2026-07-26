@@ -325,7 +325,7 @@ import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptch
 import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import {
   clearCredentialKeyPrefetch,
   prefetchCredentialKey,
@@ -353,7 +353,7 @@ import {
   clearPendingRegistrationCredentials,
   setPendingRegistrationCredentials
 } from '@/core/utils/pendingRegistrationCredentials'
-import type { LoginAgreementDocument } from '@/features/auth/domain/models/auth'
+import type { LoginAgreementDocument } from '@/core/models/domain/loginAgreementDocument'
 const { t, locale } = useI18n()
 const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'
 
@@ -363,6 +363,8 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const authActionStore = useAuthActionStore()
+const authQueryStore = useAuthQueryStore()
 
 // ==================== State ====================
 
@@ -494,7 +496,7 @@ onMounted(async () => {
   syncAffiliateReferralCode()
 
   try {
-    const settings = await getPublicSettings()
+    const settings = await authQueryStore.getPublicSettings()
     registrationEnabled.value = settings.registrationEnabled
     emailVerifyEnabled.value = settings.emailVerifyEnabled
     promoCodeEnabled.value = settings.promoCodeEnabled
@@ -646,7 +648,7 @@ async function validatePromoCodeDebounced(code: string): Promise<void> {
   promoValidating.value = true
 
   try {
-    const result = await validatePromoCode(code)
+    const result = await authActionStore.validatePromoCode(code)
 
     if (result.valid) {
       promoValidation.valid = true
@@ -716,7 +718,7 @@ async function validateInvitationCodeDebounced(code: string): Promise<void> {
   invitationValidating.value = true
 
   try {
-    const result = await validateInvitationCode(code)
+    const result = await authActionStore.validateInvitationCode(code)
 
     if (result.valid) {
       invitationValidation.valid = true
@@ -938,12 +940,12 @@ async function handleRegister(): Promise<void> {
     await authStore.register({
       email: formData.email,
       password: formData.password,
-      captchaToken: turnstileEnabled.value ? turnstileToken.value : undefined,
-      captchaId: localCaptchaRequired.value ? localCaptchaId.value : undefined,
-      captchaCode: localCaptchaRequired.value ? localCaptchaCode.value : undefined,
-      promoCode: formData.promo_code || undefined,
-      invitationCode: formData.invitation_code || undefined,
-      ...(affCode ? { affCode } : {})
+      captcha_token: turnstileEnabled.value ? turnstileToken.value : undefined,
+      captcha_id: localCaptchaRequired.value ? localCaptchaId.value : undefined,
+      captcha_code: localCaptchaRequired.value ? localCaptchaCode.value : undefined,
+      promo_code: formData.promo_code || undefined,
+      invitation_code: formData.invitation_code || undefined,
+      ...(affCode ? { aff_code: affCode } : {})
     })
     clearAffiliateReferralCode()
 

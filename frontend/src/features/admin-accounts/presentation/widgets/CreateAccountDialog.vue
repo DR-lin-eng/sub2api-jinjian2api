@@ -3525,7 +3525,7 @@ import {
   fetchAntigravityDefaultMappings,
   isValidWildcardPattern
 } from '@/features/admin-accounts/presentation/composables/useModelWhitelist'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
 import { useAdminSettingsQueryStore } from '@/features/admin-settings/presentation/stores/adminSettingsQueryStore'
 
@@ -3546,7 +3546,7 @@ import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import ProxySelector from '@/common/widgets/data/ProxySelector.vue'
+import ProxySelector from '@/features/admin-proxies/presentation/widgets/ProxySelector.vue'
 import ProxyAdBanner from '@/common/widgets/data/ProxyAdBanner.vue'
 import GroupSelector from '@/common/widgets/data/GroupSelector.vue'
 import ModelWhitelistSelector from '@/features/admin-accounts/presentation/widgets/ModelWhitelistSelector.vue'
@@ -3577,8 +3577,8 @@ import {
 import OAuthAuthorizationFlow from './OAuthAuthorizationFlow.vue'
 import type { Proxy } from '@/features/admin-proxies/domain/models/proxy'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
-import type { AccountPlatform } from '@/features/admin-accounts/enums/accountPlatform'
-import type { AccountType } from '@/features/admin-accounts/enums/accountType'
+import type { AccountPlatform } from '@/core/enums/accountPlatform'
+import type { AccountType } from '@/core/enums/accountType'
 import type { CodexSessionImportMessage } from '@/features/admin-accounts/domain/models/codexSessionImportMessage'
 import type { OpenAICompactMode } from '@/features/admin-accounts/enums/openAICompactMode'
 import type { OpenAIEndpointCapability } from '@/features/admin-accounts/enums/openAIEndpointCapability'
@@ -4140,7 +4140,7 @@ watch(
   (newVal) => {
     if (newVal) {
       // Load TLS fingerprint profiles
-      adminSettingsQueryStore.tlsFingerprintProfile_list()
+      adminSettingsQueryStore.listTlsProfiles()
         .then((profiles: any) => { tlsFingerprintProfiles.value = profiles.map((p: any) => ({ id: p.id, name: p.name })) })
         .catch(() => { tlsFingerprintProfiles.value = [] })
       // Modal opened - fill related models

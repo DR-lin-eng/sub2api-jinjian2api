@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { resolveHumanVerification } from '@/core/services/humanVerification'
-import type { PublicSettings } from '@/features/auth/domain/models/publicSettings'
+import type { PublicSettings } from '@/core/models/domain/publicSettings'
 
 function settings(overrides: Partial<PublicSettings>): PublicSettings {
   return {

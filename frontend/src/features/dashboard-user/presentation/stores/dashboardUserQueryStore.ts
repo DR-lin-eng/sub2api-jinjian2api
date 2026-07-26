@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, reactive } from 'vue'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { usageQueryRepository } from '@/features/usage/data/repositories/usageQueryRepositoryImpl'
-import { profileQueryDatasource } from '@/features/profile/data/datasources/profileQueryDatasource'
+import { profileQueryRepository } from '@/features/profile/data/repositories/profileQueryRepositoryImpl'
 import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
 import { formatDateLocalInput } from '@/core/utils/format'
 import { mapWithConcurrency } from '@/features/dashboard-user/presentation/utils/mapWithConcurrency'
@@ -11,7 +11,8 @@ import type { TrendDataPoint } from '@/features/admin-dashboard/domain/models/tr
 import type { ModelStat } from '@/features/admin-dashboard/domain/models/modelStat'
 import type { UsageLog } from '@/core/models/domain/usageLog'
 import type { PlatformQuotaItem } from '@/features/admin-users/domain/models/platformQuotaItem'
-import type { ApiKey } from '@/features/keys/domain/models/apiKey'
+import type { ApiKey } from '@/core/models/domain/apiKey'
+import type { BatchApiKeyUsageStats } from '@/features/usage/domain/models/batchApiKeyUsageStats'
 
 export interface ApiKeyUsageRow {
   id: number
@@ -111,7 +112,7 @@ export function createDashboardUserQueryStore() {
       loading.platformQuotas = true
       errors.platformQuotas = null
       try {
-        const data = await profileQueryDatasource.getMyPlatformQuotas()
+        const data = await profileQueryRepository.getMyPlatformQuotas()
         platformQuotas.value = data.platform_quotas ?? []
       } catch (e) {
         errors.platformQuotas = e
@@ -142,7 +143,7 @@ export function createDashboardUserQueryStore() {
         const keys: ApiKey[] = [firstPage, ...pageResponses].flatMap(r => r.items)
         if (generation !== apiKeyUsageGeneration) return
 
-        const statsMap = new Map<number, { total_tokens: number; total_actual_cost: number }>()
+        const statsMap = new Map<number, BatchApiKeyUsageStats>()
         const idBatches = Array.from(
           { length: Math.ceil(keys.length / 100) },
           (_, i) => keys.slice(i * 100, i * 100 + 100).map(k => k.id),
@@ -150,7 +151,7 @@ export function createDashboardUserQueryStore() {
         const usageResponses = await mapWithConcurrency(
           idBatches,
           CONCURRENCY,
-          ids => usageAPI.getDashboardApiKeysUsage({
+          ids => usageQueryRepository.getDashboardApiKeysUsage({
             api_key_ids: ids,
             start_date: range.startDate,
             end_date: range.endDate,

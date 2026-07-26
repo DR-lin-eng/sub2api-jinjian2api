@@ -1,5 +1,5 @@
 import { groupsUserQueryDatasource } from '@/features/groups-user/data/datasources/groupsUserQueryDatasource'
-import type { Group } from '@/features/admin-groups/domain/models/group'
+import type { Group } from '@/core/models/domain/group'
 import type { GroupsUserQueryRepository } from '@/features/groups-user/domain/repositories/groupsUserQueryRepository'
 
 export class GroupsUserQueryRepositoryImpl implements GroupsUserQueryRepository {

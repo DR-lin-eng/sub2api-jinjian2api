@@ -11,6 +11,7 @@ import type { UserTrendResponse } from '@/features/admin-dashboard/domain/models
 import type { UserSpendingRankingResponse } from '@/features/admin-dashboard/domain/models/userSpendingRankingResponse'
 import type { BatchUsersUsageResponse } from '@/features/admin-dashboard/domain/models/batchUsersUsageResponse'
 import type { BatchApiKeysUsageResponse } from '@/features/admin-dashboard/domain/models/batchApiKeysUsageResponse'
+import type { AdminDashboardSnapshotV2Response } from '@/features/admin-dashboard/domain/models/adminDashboardSnapshotV2Response'
 import type { AdminDashboardTrendRequest } from '@/features/admin-dashboard/data/requests_models/adminDashboardTrendRequest'
 import type { AdminDashboardModelStatsRequest } from '@/features/admin-dashboard/data/requests_models/adminDashboardModelStatsRequest'
 import type { AdminDashboardGroupStatsRequest } from '@/features/admin-dashboard/data/requests_models/adminDashboardGroupStatsRequest'
@@ -49,8 +50,8 @@ class AdminDashboardQueryRepositoryImpl implements AdminDashboardQueryRepository
     return (await this.ds.getUserBreakdown(params)).toEntity()
   }
 
-  async getSnapshotV2(params?: AdminDashboardSnapshotV2Request): Promise<unknown> {
-    return this.ds.getSnapshotV2(params)
+  async getSnapshotV2(params?: AdminDashboardSnapshotV2Request): Promise<AdminDashboardSnapshotV2Response> {
+    return (await this.ds.getSnapshotV2(params)).toEntity()
   }
 
   async getApiKeyUsageTrend(params?: AdminDashboardApiKeyTrendRequest): Promise<ApiKeyTrendResponse> {

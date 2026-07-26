@@ -170,9 +170,11 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { adminAPI } from '@/api/admin'
+import { useAdminProxiesActionStore } from '@/features/admin-proxies/presentation/stores/adminProxiesActionStore'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import type { Proxy } from '@/features/admin-proxies/domain/models/proxy'
+
+const $proxies = useAdminProxiesActionStore()
 const { t } = useI18n()
 
 interface ProxyTestResult {
@@ -255,7 +257,7 @@ const handleTestProxy = async (proxy: Proxy) => {
 
   testingProxyIds.add(proxy.id)
   try {
-    const result = await adminAPI.proxies.testProxy(proxy.id)
+    const result = await $proxies.testProxy(proxy.id)
     testResults[proxy.id] = result
   } catch (error: any) {
     testResults[proxy.id] = {
@@ -276,7 +278,7 @@ const handleBatchTest = async () => {
   const testPromises = props.proxies.map(async (proxy) => {
     testingProxyIds.add(proxy.id)
     try {
-      const result = await adminAPI.proxies.testProxy(proxy.id)
+      const result = await $proxies.testProxy(proxy.id)
       testResults[proxy.id] = result
     } catch (error: any) {
       testResults[proxy.id] = {

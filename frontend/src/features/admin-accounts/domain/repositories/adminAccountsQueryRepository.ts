@@ -1,6 +1,6 @@
 import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import type { ClaudeModel } from '@/features/admin-accounts/domain/models/claudeModel'
-import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { Account } from '@/core/models/domain/account'
 import type { AccountUsageInfo } from '@/features/admin-accounts/domain/models/accountUsageInfo'
 import type { WindowStats } from '@/features/admin-accounts/domain/models/windowStats'
 import type { AccountUsageStatsResponse } from '@/features/admin-accounts/domain/models/accountUsageStatsResponse'

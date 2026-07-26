@@ -5,7 +5,7 @@ import type { CompositeModelRoute } from '@/features/admin-groups/domain/models/
 import type { CompositeRouteDecision } from '@/features/admin-groups/domain/models/compositeRouteDecision'
 import type { GroupRateMultiplier } from '@/features/admin-groups/domain/models/groupRateMultiplier'
 import type { GroupRPMOverride } from '@/features/admin-groups/domain/models/groupRPMOverride'
-import type { GroupPlatform } from '@/features/admin-groups/enums/groupPlatform'
+import type { GroupPlatform } from '@/core/enums/groupPlatform'
 import type { PreviewCompositeRouteRequest } from '@/features/admin-groups/data/requests_models/previewCompositeRouteRequest'
 import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 

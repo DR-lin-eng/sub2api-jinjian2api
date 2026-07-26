@@ -1,6 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
 import { AffiliateRebateRecord } from '@/features/affiliate/domain/models/affiliateRebateRecord'
+import type { OrderStatus } from '@/features/admin-orders/enums/orderTypes'
 
 export class AffiliateRebateRecordDto {
   @Expose({ name: 'order_id' })
@@ -52,8 +53,8 @@ export class AffiliateRebateRecordDto {
   paymentType!: string
 
   @Expose({ name: 'order_status' })
-  @Transform(({ value }) => value ?? '')
-  orderStatus!: string
+  @Transform(({ value }) => (value ?? '') as OrderStatus)
+  orderStatus!: OrderStatus
 
   @Expose({ name: 'created_at' })
   @Transform(({ value }) => value ?? '')

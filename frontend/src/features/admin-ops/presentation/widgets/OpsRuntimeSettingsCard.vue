@@ -108,13 +108,13 @@ function validateRuntimeSettings(settings: OpsAlertRuntimeSettings): ValidationR
         errors.push(t('admin.ops.runtime.silencing.entries.validation.untilFormat'))
         break
       }
-      const ruleId = (entry as any)?.ruleId
+      const ruleId = entry?.ruleId
       if (typeof ruleId === 'number' && (!Number.isFinite(ruleId) || ruleId <= 0)) {
         errors.push(t('admin.ops.runtime.silencing.entries.validation.ruleIdPositive'))
         break
       }
-      if ((entry as any)?.severities) {
-        const raw = (entry as any).severities
+      if (entry?.severities) {
+        const raw = entry.severities
         const normalized = normalizeSeverities(Array.isArray(raw) ? raw : [raw])
         if (Array.isArray(raw) && raw.length > 0 && normalized.length === 0) {
           errors.push(t('admin.ops.runtime.silencing.entries.validation.severitiesFormat'))
@@ -181,7 +181,7 @@ function addSilenceEntry() {
     draftAlert.value.silencing.entries = []
   }
   draftAlert.value.silencing.entries.push({
-    ruleId: undefined,
+    ruleId: 0,
     severities: [],
     untilRfc3339: '',
     reason: ''
@@ -198,11 +198,11 @@ function updateSilenceEntryRuleId(index: number, raw: string) {
   if (!entries || !entries[index]) return
   const trimmed = raw.trim()
   if (!trimmed) {
-    delete (entries[index] as any).ruleId
+    delete entries[index].ruleId
     return
   }
   const n = Number.parseInt(trimmed, 10)
-  ;(entries[index] as any).ruleId = Number.isFinite(n) ? n : undefined
+  entries[index].ruleId = Number.isFinite(n) ? n : undefined
 }
 
 function updateSilenceEntrySeverities(index: number, raw: string) {
@@ -212,7 +212,7 @@ function updateSilenceEntrySeverities(index: number, raw: string) {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
-  ;(entries[index] as any).severities = normalizeSeverities(parts)
+  entries[index].severities = normalizeSeverities(parts)
 }
 
 async function saveAlertSettings() {
@@ -484,7 +484,7 @@ onMounted(() => {
                   <div>
                     <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.silencing.entries.ruleId') }}</div>
                     <input
-                      :value="typeof (entry as any).ruleId === 'number' ? String((entry as any).ruleId) : ''"
+                      :value="typeof entry.ruleId === 'number' ? String(entry.ruleId) : ''"
                       type="text"
                       class="input font-mono text-sm"
                       :placeholder="t('admin.ops.runtime.silencing.entries.ruleIdPlaceholder')"
@@ -495,7 +495,7 @@ onMounted(() => {
                   <div>
                     <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.silencing.entries.severities') }}</div>
                     <input
-                      :value="Array.isArray((entry as any).severities) ? (entry as any).severities.join(', ') : ''"
+                      :value="Array.isArray(entry.severities) ? entry.severities.join(', ') : ''"
                       type="text"
                       class="input font-mono text-sm"
                       :placeholder="t('admin.ops.runtime.silencing.entries.severitiesPlaceholder')"
@@ -506,7 +506,7 @@ onMounted(() => {
                   <div>
                     <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.silencing.entries.until') }}</div>
                     <input
-                      v-model="(entry as any).untilRfc3339"
+                      v-model="entry.untilRfc3339"
                       type="text"
                       class="input font-mono text-sm"
               placeholder="2026-01-05T00:00:00Z"
@@ -516,7 +516,7 @@ onMounted(() => {
                   <div>
                     <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.silencing.entries.reason') }}</div>
                     <input
-                      v-model="(entry as any).reason"
+                      v-model="entry.reason"
                       type="text"
                       class="input"
                       :placeholder="t('admin.ops.runtime.silencing.reasonPlaceholder')"

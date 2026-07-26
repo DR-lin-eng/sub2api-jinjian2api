@@ -1249,7 +1249,7 @@ const actionStore = useAdminAccountsActionStore()
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
-import ProxySelector from '@/common/widgets/data/ProxySelector.vue'
+import ProxySelector from '@/features/admin-proxies/presentation/widgets/ProxySelector.vue'
 import GroupSelector from '@/common/widgets/data/GroupSelector.vue'
 import ModelWhitelistSelector from '@/features/admin-accounts/presentation/widgets/ModelWhitelistSelector.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
@@ -1278,8 +1278,8 @@ import {
 import type { OpenAIWSMode } from '@/core/utils/openaiWsMode'
 import type { Proxy as ProxyConfig } from '@/features/admin-proxies/domain/models/proxy'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
-import type { AccountPlatform } from '@/features/admin-accounts/enums/accountPlatform'
-import type { AccountType } from '@/features/admin-accounts/enums/accountType'
+import type { AccountPlatform } from '@/core/enums/accountPlatform'
+import type { AccountType } from '@/core/enums/accountType'
 import type { OpenAICompactMode } from '@/features/admin-accounts/enums/openAICompactMode'
 interface Props {
   show: boolean

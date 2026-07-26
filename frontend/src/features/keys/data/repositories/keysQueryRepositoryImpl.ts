@@ -1,6 +1,6 @@
 import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import { keysQueryDatasource } from '@/features/keys/data/datasources/keysQueryDatasource'
-import type { ApiKey } from '@/features/keys/domain/models/apiKey'
+import type { ApiKey } from '@/core/models/domain/apiKey'
 import type { KeysQueryRepository } from '@/features/keys/domain/repositories/keysQueryRepository'
 
 export class KeysQueryRepositoryImpl implements KeysQueryRepository {

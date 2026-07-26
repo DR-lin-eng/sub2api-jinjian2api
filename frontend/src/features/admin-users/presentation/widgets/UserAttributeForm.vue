@@ -93,10 +93,12 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
-import { adminAPI } from '@/api/admin'
+import { useAdminUsers } from '@/features/admin-users/presentation/composables/useAdminUsers'
 import Select from '@/common/widgets/forms/Select.vue'
 import type { UserAttributeDefinition } from '@/features/admin-users/domain/models/userAttributeDefinition'
 import type { UserAttributeValuesMap } from '@/features/admin-users/domain/models/userAttributeValue'
+
+const $adminUsers = useAdminUsers()
 
 interface Props {
   userId?: number
@@ -117,7 +119,7 @@ const localValues = ref<UserAttributeValuesMap>({})
 const loadAttributes = async () => {
   loading.value = true
   try {
-    attributes.value = await adminAPI.userAttributes.listEnabledDefinitions()
+    attributes.value = await $adminUsers.listEnabledDefinitions()
   } catch (error) {
     console.error('Failed to load attributes:', error)
   } finally {
@@ -129,7 +131,7 @@ const loadUserValues = async () => {
   if (!props.userId) return
 
   try {
-    const values = await adminAPI.userAttributes.getUserAttributeValues(props.userId)
+    const values = await $adminUsers.getUserAttributeValues(props.userId)
     const valuesMap: UserAttributeValuesMap = {}
     values.forEach(v => {
       valuesMap[v.attributeId] = v.value

@@ -232,16 +232,19 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { adminAPI } from "@/api";
+import { useAdminSettingsQueryStore } from "@/features/admin-settings/presentation/stores/adminSettingsQueryStore";
+import { useAdminSettingsActionStore } from "@/features/admin-settings/presentation/stores/adminSettingsActionStore";
 import type {
   EmailTemplateEventOption,
   EmailTemplateOption,
 } from "@/features/admin-settings/enums/emailTemplateEventOption";
-import { useAppStore } from "@/stores";
+import { useAppStore } from "@/core/stores/appStore";
 import { extractApiErrorMessage } from "@/core/utils/apiError";
 
 const { t, locale } = useI18n();
 const appStore = useAppStore();
+const adminSettingsQueryStore = useAdminSettingsQueryStore();
+const adminSettingsActionStore = useAdminSettingsActionStore();
 
 const fallbackPlaceholders = [
   "{{site_name}}",
@@ -467,7 +470,7 @@ const eventDisplayMetaEn: Record<string, EventDisplayMeta> = {
 
 function normalizeEventOption(option: EmailTemplateEventOption): EmailTemplateOption {
   if (typeof option === "string") {
-    return { value: option };
+    return { value: option, label: option, description: "", category: "", optional: false };
   }
   return option;
 }
@@ -601,7 +604,7 @@ async function loadTemplate() {
   if (!selectedEvent.value || !selectedLocale.value) return;
   loadingTemplate.value = true;
   try {
-    const template = await adminAPI.settings.getEmailTemplate(
+    const template = await adminSettingsQueryStore.getEmailTemplate(
       selectedEvent.value,
       selectedLocale.value,
     );
@@ -617,7 +620,11 @@ async function loadTemplate() {
 async function loadTemplateList() {
   loadingList.value = true;
   try {
-    const response = await adminAPI.settings.getEmailTemplates();
+    const response = await adminSettingsQueryStore.getEmailTemplates() as {
+      events: EmailTemplateEventOption[]
+      locales: string[]
+      placeholders?: string[]
+    };
     eventOptions.value = response.events.map(normalizeEventOption);
     localeOptions.value = response.locales;
     placeholders.value = response.placeholders || [];
@@ -641,7 +648,7 @@ async function saveTemplate() {
   }
   saving.value = true;
   try {
-    const template = await adminAPI.settings.updateEmailTemplate(
+    const template = await adminSettingsActionStore.updateEmailTemplate(
       selectedEvent.value,
       selectedLocale.value,
       {
@@ -667,7 +674,7 @@ async function refreshPreview() {
   }
   previewing.value = true;
   try {
-    const preview = await adminAPI.settings.previewEmailTemplate({
+    const preview = await adminSettingsActionStore.previewEmailTemplate({
       event: selectedEvent.value,
       locale: selectedLocale.value,
       subject: subject.value,
@@ -688,7 +695,7 @@ async function restoreOfficial() {
 
   restoring.value = true;
   try {
-    const template = await adminAPI.settings.restoreOfficialEmailTemplate(
+    const template = await adminSettingsActionStore.restoreOfficialEmailTemplate(
       selectedEvent.value,
       selectedLocale.value,
     );

@@ -3,7 +3,7 @@
  * Accepts requests_models (snake_case) directly, returns Dto instances (via Dto.fromJson).
  */
 import { apiClient } from '@/core/networks/client'
-import { ApiKeyDto } from '@/features/keys/data/models/apiKeyDto'
+import { ApiKeyDto } from '@/core/models/data/apiKeyDto'
 import type { CreateApiKeyRequest } from '@/features/keys/data/requests_models/createApiKeyRequest'
 import type { UpdateApiKeyRequest } from '@/features/keys/data/requests_models/updateApiKeyRequest'
 

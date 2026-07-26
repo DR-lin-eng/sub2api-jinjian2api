@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
 import type { ModelStat } from '@/features/admin-dashboard/domain/models/modelStat'
-import type { EndpointStat } from '@/features/admin-dashboard/domain/models/endpointStat'
+import type { EndpointStat } from '@/core/models/domain/endpointStat'
 import { AccountUsageStatsResponse } from '@/features/admin-accounts/domain/models/accountUsageStatsResponse'
 import { AccountUsageSummary } from '@/features/admin-accounts/domain/models/accountUsageSummary'
 import { AccountUsageHistoryDto } from '@/features/admin-accounts/data/models/accountUsageHistoryDto'

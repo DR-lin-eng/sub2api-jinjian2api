@@ -10,6 +10,7 @@ import { UserTrendResponseDto } from '@/features/admin-dashboard/data/models/use
 import { UserSpendingRankingResponseDto } from '@/features/admin-dashboard/data/models/userSpendingRankingResponseDto'
 import { BatchUsersUsageResponseDto } from '@/features/admin-dashboard/data/models/batchUsersUsageResponseDto'
 import { BatchApiKeysUsageResponseDto } from '@/features/admin-dashboard/data/models/batchApiKeysUsageResponseDto'
+import { AdminDashboardSnapshotV2ResponseDto } from '@/features/admin-dashboard/data/models/adminDashboardSnapshotV2ResponseDto'
 import type { AdminDashboardTrendRequest } from '@/features/admin-dashboard/data/requests_models/adminDashboardTrendRequest'
 import type { AdminDashboardModelStatsRequest } from '@/features/admin-dashboard/data/requests_models/adminDashboardModelStatsRequest'
 import type { AdminDashboardGroupStatsRequest } from '@/features/admin-dashboard/data/requests_models/adminDashboardGroupStatsRequest'
@@ -52,9 +53,9 @@ export class AdminDashboardQueryDatasource {
     return UserBreakdownResponseDto.fromJson(data)
   }
 
-  async getSnapshotV2(params?: AdminDashboardSnapshotV2Request): Promise<unknown> {
+  async getSnapshotV2(params?: AdminDashboardSnapshotV2Request): Promise<AdminDashboardSnapshotV2ResponseDto> {
     const { data } = await apiClient.get<unknown>('/admin/dashboard/snapshot-v2', { params })
-    return data
+    return AdminDashboardSnapshotV2ResponseDto.fromJson(data)
   }
 
   async getApiKeyUsageTrend(params?: AdminDashboardApiKeyTrendRequest): Promise<ApiKeyTrendResponseDto> {

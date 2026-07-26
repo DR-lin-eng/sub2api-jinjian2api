@@ -1,12 +1,9 @@
-// TODO(spec-exception): This file violates spec §3 R2 (core/** MUST NOT import features/**).
-// Logic spans keys + batch-image features and has no legal home under current spec.
-// Remove this file once backend exposes canUseBatchImage on /auth/me or /settings;
-// consumers should then read the flag from authStore.
-// Corresponding eslint override lives in .eslintrc.cjs.
+// TODO: Remove this composable once backend exposes canUseBatchImage on /auth/me or /settings;
+// consumers should then read the flag from authStore directly.
 import { computed, ref } from 'vue'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
-import type { ApiKey } from '@/features/keys/domain/models/apiKey'
+import type { ApiKey } from '@/core/models/domain/apiKey'
 const loaded = ref(false)
 const loading = ref(false)
 const hasAllowedBatchImageKey = ref(false)

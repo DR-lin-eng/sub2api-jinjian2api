@@ -73,7 +73,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/common/widgets/icons/Icon.vue'
 // TODO(spec-exception): useBatchImageAccess is a temporary cross-feature service; see .eslintrc.cjs override.
-import { useBatchImageAccess } from '@/core/services/useBatchImageAccess'
+import { useBatchImageAccess } from '@/features/batch-image/presentation/composables/useBatchImageAccess'
 const router = useRouter()
 const { t } = useI18n()
 const { canUseBatchImage, refreshBatchImageAccess } = useBatchImageAccess()

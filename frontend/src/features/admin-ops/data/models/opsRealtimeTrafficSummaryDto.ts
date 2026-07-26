@@ -1,6 +1,8 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import { OpsRateSummary, OpsRealtimeTrafficSummary, OpsRealtimeTrafficSummaryResponse } from '@/features/admin-ops/domain/models/opsRealtimeTrafficSummaryResponse'
+import { OpsRealtimeTrafficSummaryResponse } from '@/features/admin-ops/domain/models/opsRealtimeTrafficSummaryResponse'
+import { OpsRealtimeTrafficSummary } from '@/features/admin-ops/domain/models/opsRealtimeTrafficSummary'
+import { OpsRateSummary } from '@/features/admin-ops/domain/models/opsRateSummary'
 
 export class OpsRateSummaryDto {
   @Expose() @Transform(({ value }) => value ?? 0) current!: number

@@ -143,23 +143,23 @@
                 <tbody class="divide-y divide-gray-100 dark:divide-dark-600">
                   <tr
                     v-for="entry in paginatedLocalEntries"
-                    :key="entry.user_id"
+                    :key="entry.userId"
                     class="hover:bg-gray-50 dark:hover:bg-dark-700/50"
                   >
-                    <td class="px-3 py-2 text-gray-600 dark:text-gray-400">{{ entry.user_email }}</td>
-                    <td class="whitespace-nowrap px-3 py-2 text-gray-400 dark:text-gray-500">{{ entry.user_id }}</td>
-                    <td class="whitespace-nowrap px-3 py-2 text-gray-900 dark:text-white">{{ entry.user_name || '-' }}</td>
-                    <td class="max-w-[160px] truncate px-3 py-2 text-gray-500 dark:text-gray-400" :title="entry.user_notes">{{ entry.user_notes || '-' }}</td>
+                    <td class="px-3 py-2 text-gray-600 dark:text-gray-400">{{ entry.userEmail }}</td>
+                    <td class="whitespace-nowrap px-3 py-2 text-gray-400 dark:text-gray-500">{{ entry.userId }}</td>
+                    <td class="whitespace-nowrap px-3 py-2 text-gray-900 dark:text-white">{{ entry.userName || '-' }}</td>
+                    <td class="max-w-[160px] truncate px-3 py-2 text-gray-500 dark:text-gray-400" :title="entry.userNotes">{{ entry.userNotes || '-' }}</td>
                     <td class="whitespace-nowrap px-3 py-2">
                       <span
                         :class="[
                           'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
-                          entry.user_status === 'active'
+                          entry.userStatus === 'active'
                             ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                             : 'bg-gray-100 text-gray-600 dark:bg-dark-600 dark:text-gray-400'
                         ]"
                       >
-                        {{ entry.user_status }}
+                        {{ entry.userStatus }}
                       </span>
                     </td>
                     <td class="whitespace-nowrap px-3 py-2">
@@ -168,20 +168,20 @@
                         step="0.001"
                         min="0.001"
                         autocomplete="off"
-                        :value="entry.rate_multiplier ?? ''"
+                        :value="entry.rateMultiplier ?? ''"
                         :placeholder="String(props.group?.rateMultiplier ?? 1)"
                         class="hide-spinner w-20 rounded border border-gray-200 bg-white px-2 py-1 text-center text-sm font-medium transition-colors focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/20 dark:border-dark-500 dark:bg-dark-700 dark:focus:border-primary-500"
-                        @change="updateLocalRate(entry.user_id, ($event.target as HTMLInputElement).value)"
+                        @change="updateLocalRate(entry.userId, ($event.target as HTMLInputElement).value)"
                       />
                     </td>
                     <td v-if="showFinalRate" class="whitespace-nowrap px-3 py-2 font-medium text-primary-600 dark:text-primary-400">
-                      {{ computeFinalRate(entry.rate_multiplier) }}
+                      {{ computeFinalRate(entry.rateMultiplier) }}
                     </td>
                     <td class="px-2 py-2">
                       <button
                         type="button"
                         class="rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                        @click="removeLocal(entry.user_id)"
+                        @click="removeLocal(entry.userId)"
                       >
                         <Icon name="trash" size="sm" />
                       </button>
@@ -244,6 +244,7 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAdminGroupsQueryStore } from '@/features/admin-groups/presentation/stores/adminGroupsQueryStore'
 import { useAdminGroupsActionStore } from '@/features/admin-groups/presentation/stores/adminGroupsActionStore'
+import { useAdminUsersQueryStore } from '@/features/admin-users/presentation/stores/adminUsersQueryStore'
 import type { GroupRateMultiplier } from '@/features/admin-groups/domain/models/groupRateMultiplier'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
@@ -252,7 +253,9 @@ import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
 import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 
-interface LocalEntry extends GroupRateMultiplier {}
+interface LocalEntry extends Omit<GroupRateMultiplier, 'rateMultiplier'> {
+  rateMultiplier: number | null
+}
 
 const props = defineProps<{
   show: boolean
@@ -266,6 +269,9 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const adminGroupsQueryStore = useAdminGroupsQueryStore()
+const adminGroupsActionStore = useAdminGroupsActionStore()
+const adminUsersQueryStore = useAdminUsersQueryStore()
 
 const loading = ref(false)
 const saving = ref(false)
@@ -306,8 +312,8 @@ const computeFinalRate = (rate: number | null | undefined) => {
 // 检测是否有未保存的修改
 const isDirty = computed(() => {
   if (localEntries.value.length !== serverEntries.value.length) return true
-  const serverMap = new Map(serverEntries.value.map(e => [e.user_id, e.rate_multiplier ?? null]))
-  return localEntries.value.some(e => serverMap.get(e.user_id) !== (e.rate_multiplier ?? null))
+  const serverMap = new Map(serverEntries.value.map(e => [e.userId, e.rateMultiplier ?? null]))
+  return localEntries.value.some(e => serverMap.get(e.userId) !== (e.rateMultiplier ?? null))
 })
 
 const paginatedLocalEntries = computed(() => {
@@ -323,7 +329,7 @@ const loadEntries = async () => {
   if (!props.group) return
   loading.value = true
   try {
-    const raw = await adminAPI.groups.getGroupRateMultipliers(props.group.id)
+    const raw = await adminGroupsQueryStore.getGroupRateMultipliers(props.group.id)
     // 仅显示已设置 rate_multiplier 的条目；rpm_override 在另一个弹窗管理，保留不动
     serverEntries.value = raw.filter((e: any) => e.rateMultiplier != null)
     localEntries.value = cloneEntries(serverEntries.value)
@@ -370,7 +376,7 @@ const handleSearchUsers = () => {
   }
   searchTimeout = setTimeout(async () => {
     try {
-      const res = await adminAPI.users.list(1, 10, { search: searchQuery.value.trim() })
+      const res = await adminUsersQueryStore.list(1, 10, { search: searchQuery.value.trim() })
       searchResults.value = res.items
       showDropdown.value = true
     } catch {
@@ -390,15 +396,14 @@ const selectUser = (user: AdminUser) => {
 const handleAddLocal = () => {
   if (!selectedUser.value || !newRate.value) return
   const user = selectedUser.value
-  const idx = localEntries.value.findIndex(e => e.user_id === user.id)
+  const idx = localEntries.value.findIndex(e => e.userId === user.id)
   const entry: LocalEntry = {
-    user_id: user.id,
-    user_name: user.username || '',
-    user_email: user.email,
-    user_notes: user.notes || '',
-    user_status: user.status || 'active',
-    rate_multiplier: newRate.value,
-    rpm_override: null
+    userId: user.id,
+    userName: user.username || '',
+    userEmail: user.email,
+    userNotes: user.notes || '',
+    userStatus: user.status || 'active',
+    rateMultiplier: newRate.value
   }
   if (idx >= 0) {
     localEntries.value[idx] = entry
@@ -413,20 +418,20 @@ const handleAddLocal = () => {
 
 // 本地修改倍率
 const updateLocalRate = (userId: number, value: string) => {
-  const entry = localEntries.value.find(e => e.user_id === userId)
+  const entry = localEntries.value.find(e => e.userId === userId)
   if (!entry) return
   if (value.trim() === '') {
-    entry.rate_multiplier = null
+    entry.rateMultiplier = null
     return
   }
   const num = parseFloat(value)
   if (isNaN(num)) return
-  entry.rate_multiplier = num
+  entry.rateMultiplier = num
 }
 
 // 本地删除
 const removeLocal = (userId: number) => {
-  localEntries.value = localEntries.value.filter(e => e.user_id !== userId)
+  localEntries.value = localEntries.value.filter(e => e.userId !== userId)
   adjustPage()
 }
 
@@ -434,8 +439,8 @@ const removeLocal = (userId: number) => {
 const applyBatchFactor = () => {
   if (!batchFactor.value || batchFactor.value <= 0) return
   for (const entry of localEntries.value) {
-    if (entry.rate_multiplier != null) {
-      entry.rate_multiplier = parseFloat((entry.rate_multiplier * batchFactor.value).toFixed(6))
+    if (entry.rateMultiplier != null) {
+      entry.rateMultiplier = parseFloat((entry.rateMultiplier * batchFactor.value).toFixed(6))
     }
   }
   batchFactor.value = null
@@ -459,12 +464,12 @@ const handleSave = async () => {
   saving.value = true
   try {
     const entries = localEntries.value
-      .filter(e => e.rate_multiplier != null)
+      .filter(e => e.rateMultiplier != null)
       .map(e => ({
-        user_id: e.user_id,
-        rate_multiplier: e.rate_multiplier as number
+        user_id: e.userId,
+        rate_multiplier: e.rateMultiplier as number
       }))
-    await adminAPI.groups.batchSetGroupRateMultipliers(props.group.id, entries)
+    await adminGroupsActionStore.batchSetGroupRateMultipliers(props.group.id, entries)
     appStore.showSuccess(t('admin.groups.rateSaved'))
     emit('success')
     emit('close')

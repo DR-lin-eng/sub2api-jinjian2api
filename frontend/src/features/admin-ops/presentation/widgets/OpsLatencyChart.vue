@@ -26,7 +26,7 @@ const colors = computed(() => ({
   text: isDarkMode.value ? '#9ca3af' : '#6b7280'
 }))
 
-const hasData = computed(() => (props.latencyData?.total_requests ?? 0) > 0)
+const hasData = computed(() => (props.latencyData?.totalRequests ?? 0) > 0)
 
 const state = computed<ChartState>(() => {
   if (hasData.value) return 'ready'

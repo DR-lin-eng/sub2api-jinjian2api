@@ -40,7 +40,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import CapacityBadge from '@/features/admin-accounts/presentation/widgets/CapacityBadge.vue'
 import QuotaBadge from '@/features/admin-accounts/presentation/widgets/QuotaBadge.vue'
-import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { Account } from '@/core/models/domain/account'
 
 const props = defineProps<{
   account: Account

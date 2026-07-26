@@ -88,6 +88,26 @@ function close() {
   emit('update:show', false)
 }
 
+function handleStatusCodeChange(v: string | number | boolean | null) {
+  if (v === null) {
+    statusCode.value = null
+    return
+  }
+  if (v === 'other') {
+    statusCode.value = 'other'
+    return
+  }
+  if (typeof v === 'number') {
+    statusCode.value = v
+  }
+}
+
+function handleViewModeChange(v: string | number | boolean | null) {
+  if (v === 'errors' || v === 'excluded' || v === 'all') {
+    viewMode.value = v
+  }
+}
+
 const sortBy = ref('created_at')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
@@ -230,7 +250,7 @@ watch(
           </div>
 
           <div class="compact-select">
-            <Select :model-value="statusCode" :options="statusCodeSelectOptions" @update:model-value="statusCode = $event as any" />
+            <Select :model-value="statusCode" :options="statusCodeSelectOptions" @update:model-value="handleStatusCodeChange" />
           </div>
 
           <div class="compact-select">
@@ -244,7 +264,7 @@ watch(
 
 
           <div class="compact-select">
-            <Select :model-value="viewMode" :options="viewModeSelectOptions" @update:model-value="viewMode = $event as any" />
+            <Select :model-value="viewMode" :options="viewModeSelectOptions" @update:model-value="handleViewModeChange" />
           </div>
 
           <div class="flex items-center justify-end">

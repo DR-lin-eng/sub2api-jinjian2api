@@ -109,14 +109,20 @@
 import { ref, computed, watch, onMounted, onUnmounted, type ComponentPublicInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
+import { useAdminUsers } from '@/features/admin-users/presentation/composables/useAdminUsers'
+import { useAdminGroupsQueryStore } from '@/features/admin-groups/presentation/stores/adminGroupsQueryStore'
+import { useAdminUsageActionStore } from '@/features/admin-usage/presentation/stores/adminUsageActionStore'
 import { formatDateTime } from '@/core/utils/format'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import GroupOptionItem from '@/common/widgets/data/GroupOptionItem.vue'
 import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
-import type { ApiKey } from '@/features/keys/domain/models/apiKey'
+import type { ApiKey } from '@/core/models/domain/apiKey'
+
+const $adminUsers = useAdminUsers()
+const $adminGroups = useAdminGroupsQueryStore()
+const $adminUsage = useAdminUsageActionStore()
 
 const props = defineProps<{ show: boolean; user: AdminUser | null }>()
 const emit = defineEmits(['close'])
@@ -160,7 +166,7 @@ const load = async () => {
   loading.value = true
   groupButtonRefs.value.clear()
   try {
-    const res = await adminAPI.users.getUserApiKeys(props.user.id)
+    const res = await $adminUsers.getUserApiKeys(props.user.id)
     apiKeys.value = res.items || []
   } catch (error) {
     console.error('Failed to load API keys:', error)
@@ -171,7 +177,7 @@ const load = async () => {
 
 const loadGroups = async () => {
   try {
-    const groups = await adminAPI.groups.getAll()
+    const groups = await $adminGroups.getAll()
     allGroups.value = groups
   } catch (error) {
     console.error('Failed to load groups:', error)
@@ -210,14 +216,14 @@ const changeGroup = async (key: ApiKey, newGroupId: number | null) => {
 
   updatingKeyIds.value.add(key.id)
   try {
-    const result = await adminAPI.apiKeys.updateApiKeyGroup(key.id, newGroupId)
+    const result = await $adminUsage.updateApiKeyGroup(key.id, { group_id: newGroupId ?? 0 })
     // Update local data
     const idx = apiKeys.value.findIndex((k) => k.id === key.id)
     if (idx !== -1) {
-      apiKeys.value[idx] = result.api_key
+      apiKeys.value[idx].groupId = newGroupId ?? 0
     }
-    if (result.auto_granted_group_access && result.granted_group_name) {
-      appStore.showSuccess(t('admin.users.groupChangedWithGrant', { group: result.granted_group_name }))
+    if (result.autoGrantedGroupAccess && result.grantedGroupName) {
+      appStore.showSuccess(t('admin.users.groupChangedWithGrant', { group: result.grantedGroupName }))
     } else {
       appStore.showSuccess(t('admin.users.groupChangedSuccess'))
     }

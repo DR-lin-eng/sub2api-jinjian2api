@@ -57,7 +57,9 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 import AvailableChannelsTable from '@/features/channels-user/presentation/widgets/AvailableChannelsTable.vue'
 import type { UserAvailableChannel } from '@/features/channels-user/domain/models/userAvailableChannel'
 import { useChannelsUser } from '@/features/channels-user/presentation/composables/useChannelsUser'
-import userGroupsAPI from '@/features/groups-user/presentation/api'
+import { useGroupsUserQueryStore } from '@/features/groups-user/presentation/stores/groupsUserQueryStore'
+
+const groupsUserQueryStore = useGroupsUserQueryStore()
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 
@@ -111,7 +113,7 @@ async function loadChannels() {
     // 失败时只是无法渲染专属倍率角标，降级为仅显示默认倍率。
     const [list, rates] = await Promise.all([
       getAvailable(),
-      userGroupsAPI.getUserGroupRates().catch((err: unknown) => {
+      groupsUserQueryStore.getUserGroupRates().catch((err: unknown) => {
         console.error('Failed to load user group rates:', err)
         return {} as Record<number, number>
       }),

@@ -9,6 +9,7 @@ import type { EmailNotificationConfig } from '@/features/admin-ops/domain/models
 import type { OpsAlertRuntimeSettings } from '@/features/admin-ops/domain/models/opsAlertRuntimeSettings'
 import type { OpsRuntimeLogConfig } from '@/features/admin-ops/domain/models/opsRuntimeLogConfig'
 import type { OpsAdvancedSettings } from '@/features/admin-ops/domain/models/opsAdvancedSettings'
+import type { OpsSettingsSnapshot } from '@/features/admin-ops/domain/models/opsSettingsSnapshot'
 import type { OpsDashboardOverview } from '@/features/admin-ops/domain/models/opsDashboardOverview'
 import type { OpsDashboardSnapshotV2 } from '@/features/admin-ops/domain/models/opsDashboardSnapshotV2'
 import type { OpsThroughputTrendResponse } from '@/features/admin-ops/domain/models/opsThroughputTrendResponse'
@@ -59,7 +60,7 @@ export interface AdminOpsQueryRepository {
   listAlertEvents(params?: AlertEventsQuery): Promise<AlertEvent[]>
   getAlertEvent(id: number): Promise<AlertEvent>
   getEmailNotificationConfig(): Promise<EmailNotificationConfig>
-  getSettingsSnapshot(): Promise<unknown>
+  getSettingsSnapshot(): Promise<OpsSettingsSnapshot>
   getAlertRuntimeSettings(): Promise<OpsAlertRuntimeSettings>
   getRuntimeLogConfig(): Promise<OpsRuntimeLogConfig>
   listSystemLogs(params: OpsSystemLogQuery): Promise<PaginatedResponse<OpsSystemLog>>

@@ -109,7 +109,7 @@ vi.mock("@/stores", () => ({
   }),
 }));
 
-vi.mock("@/core/stores/adminSettingsStore", () => ({
+vi.mock("@/features/admin-settings/presentation/stores/adminSettingsStore", () => ({
   useAdminSettingsStore: () => ({
     fetch: adminSettingsFetch,
   }),

@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
-import { CustomEndpoint } from '@/features/auth/domain/models/customEndpoint'
+import { CustomEndpoint } from '@/core/models/domain/customEndpoint'
 
 export class CustomEndpointDto {
   @Expose()

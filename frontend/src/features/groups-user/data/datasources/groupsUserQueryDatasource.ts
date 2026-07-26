@@ -1,5 +1,5 @@
 import { apiClient } from '@/core/networks/client'
-import { GroupDto } from '@/features/admin-groups/data/models/groupDto'
+import { GroupDto } from '@/core/models/data/groupDto'
 
 export class GroupsUserQueryDatasource {
   async getAvailable(): Promise<GroupDto[]> {

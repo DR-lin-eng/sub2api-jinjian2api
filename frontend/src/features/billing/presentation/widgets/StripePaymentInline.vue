@@ -92,6 +92,7 @@ const emit = defineEmits<{ success: []; done: []; back: []; redirect: [orderId: 
 
 const { t } = useI18n()
 const router = useRouter()
+const billingAction = useBillingActionStore()
 const appStore = useAppStore()
 
 const stripeMount = ref<HTMLElement | null>(null)
@@ -200,7 +201,7 @@ async function handleCancel() {
   if (!props.orderId || cancelling.value) return
   cancelling.value = true
   try {
-    await paymentAPI.cancelOrder(props.orderId)
+    await billingAction.cancelOrder(props.orderId)
     emit('back')
   } catch (err: unknown) {
     appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error')))

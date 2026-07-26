@@ -1,5 +1,5 @@
 import { keysActionDatasource } from '@/features/keys/data/datasources/keysActionDatasource'
-import type { ApiKey } from '@/features/keys/domain/models/apiKey'
+import type { ApiKey } from '@/core/models/domain/apiKey'
 import type { CreateApiKeyRequest } from '@/features/keys/data/requests_models/createApiKeyRequest'
 import type { UpdateApiKeyRequest } from '@/features/keys/data/requests_models/updateApiKeyRequest'
 import type { KeysActionRepository } from '@/features/keys/domain/repositories/keysActionRepository'

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useAppStore } from '@/core/stores/appStore'
 import { getPublicSettings } from '@/features/auth/data/datasources/authQueryDatasource'
-import type { PublicSettings } from '@/features/auth/domain/models/publicSettings'
+import type { PublicSettings } from '@/core/models/domain/publicSettings'
 
 function createDeferred<T>() {
   let resolve!: (value: T | PromiseLike<T>) => void

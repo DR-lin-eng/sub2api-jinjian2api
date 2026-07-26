@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import type { OpsImageGenerationStats } from '@/features/admin-ops/domain/models/opsImageGenerationStats'
+import type { OpsImageGenerationStatsParams } from '@/features/admin-ops/data/requests_models/opsImageGenerationStatsParams'
 import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
 const queryStore = useAdminOpsQueryStore()
 import { formatCompactNumber, formatDurationMs, formatExactDurationMs, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
@@ -26,14 +27,14 @@ const props = withDefaults(defineProps<Props>(), {
 const { t } = useI18n()
 const loading = ref(false)
 const errorMessage = ref('')
-const response = ref<OpsImageGenerationStatsResponse | null>(null)
+const response = ref<OpsImageGenerationStats | null>(null)
 let requestController: AbortController | null = null
 let requestSequence = 0
 
-const rows = computed(() => response.value?.by_resolution ?? [])
+const rows = computed(() => response.value?.byResolution ?? [])
 
-function buildParams() {
-  const params: Record<string, string | number | undefined> = {
+function buildParams(): OpsImageGenerationStatsParams {
+  const params: OpsImageGenerationStatsParams = {
     platform: props.platformFilter || undefined,
     group_id: typeof props.groupIdFilter === 'number' && props.groupIdFilter > 0 ? props.groupIdFilter : undefined
   }
@@ -121,44 +122,44 @@ onBeforeUnmount(() => requestController?.abort())
       <div class="mb-5 grid grid-cols-2 border-y border-gray-200 py-3 dark:border-dark-700 md:grid-cols-4 xl:grid-cols-8">
         <div class="min-w-0 px-3 py-2">
           <div class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.ops.imageGeneration.images') }}</div>
-          <div class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-white" :title="formatExactNumber(response.image_count)">
-            {{ formatMetric(response.image_count) }}
+          <div class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-white" :title="formatExactNumber(response.imageCount)">
+            {{ formatMetric(response.imageCount) }}
           </div>
         </div>
         <div class="min-w-0 border-l border-gray-200 px-3 py-2 dark:border-dark-700">
           <div class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.ops.imageGeneration.requests') }}</div>
-          <div class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-white" :title="formatExactNumber(response.request_count)">
-            {{ formatMetric(response.request_count) }}
+          <div class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-white" :title="formatExactNumber(response.requestCount)">
+            {{ formatMetric(response.requestCount) }}
           </div>
         </div>
         <div class="min-w-0 border-l border-gray-200 px-3 py-2 dark:border-dark-700">
           <div class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.ops.imageGeneration.avgDuration') }}</div>
-          <div class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-white" :title="formatExactDurationMs(response.avg_duration_ms)">
-            {{ formatDurationMs(response.avg_duration_ms) }}
+          <div class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-white" :title="formatExactDurationMs(response.avgDurationMs)">
+            {{ formatDurationMs(response.avgDurationMs) }}
           </div>
         </div>
         <div class="min-w-0 border-l border-gray-200 px-3 py-2 dark:border-dark-700">
           <div class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.ops.imageGeneration.p95Duration') }}</div>
-          <div class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-white" :title="formatExactDurationMs(response.p95_duration_ms)">
-            {{ formatDurationMs(response.p95_duration_ms) }}
+          <div class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-white" :title="formatExactDurationMs(response.p95DurationMs)">
+            {{ formatDurationMs(response.p95DurationMs) }}
           </div>
         </div>
         <div class="min-w-0 px-3 py-2 md:border-l md:border-gray-200 md:dark:border-dark-700">
           <div class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.ops.imageGeneration.requestsPerMinute') }}</div>
-          <div class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-white" :title="formatExactNumber(response.requests_per_minute)">
-            {{ formatMetric(response.requests_per_minute, 2) }}
+          <div class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-white" :title="formatExactNumber(response.requestsPerMinute)">
+            {{ formatMetric(response.requestsPerMinute, 2) }}
           </div>
         </div>
         <div class="min-w-0 border-l border-gray-200 px-3 py-2 dark:border-dark-700">
           <div class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.ops.imageGeneration.windowConcurrency') }}</div>
           <div class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-white">
-            {{ formatMetric(response.average_concurrent, 2) }} / {{ formatMetric(response.peak_concurrent) }}
+            {{ formatMetric(response.averageConcurrent, 2) }} / {{ formatMetric(response.peakConcurrent) }}
           </div>
         </div>
         <div class="min-w-0 border-l border-gray-200 px-3 py-2 dark:border-dark-700">
           <div class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.ops.imageGeneration.instanceConcurrency') }}</div>
           <div class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-white">
-            {{ response.realtime.available ? `${response.realtime.current_concurrent} / ${response.realtime.limit || t('admin.ops.imageGeneration.unlimited')}` : '-' }}
+            {{ response.realtime.available ? `${response.realtime.currentConcurrent} / ${response.realtime.limit || t('admin.ops.imageGeneration.unlimited')}` : '-' }}
           </div>
         </div>
         <div class="min-w-0 border-l border-gray-200 px-3 py-2 dark:border-dark-700">
@@ -192,16 +193,16 @@ onBeforeUnmount(() => requestController?.abort())
             <tbody>
               <tr
                 v-for="row in rows"
-                :key="`${row.resolution}:${row.billing_tier}`"
+                :key="`${row.resolution}:${row.billingTier}`"
                 class="border-b border-gray-100 text-gray-700 last:border-0 dark:border-dark-800 dark:text-gray-200"
               >
                 <td class="px-3 py-2 font-medium">{{ formatResolution(row.resolution) }}</td>
-                <td class="px-3 py-2">{{ formatTier(row.billing_tier) }}</td>
-                <td class="px-3 py-2 tabular-nums" :title="formatExactNumber(row.request_count)">{{ formatMetric(row.request_count) }}</td>
-                <td class="px-3 py-2 tabular-nums" :title="formatExactNumber(row.image_count)">{{ formatMetric(row.image_count) }}</td>
-                <td class="px-3 py-2 tabular-nums" :title="formatExactDurationMs(row.avg_duration_ms)">{{ formatDurationMs(row.avg_duration_ms) }}</td>
-                <td class="px-3 py-2 tabular-nums" :title="formatExactDurationMs(row.p95_duration_ms)">{{ formatDurationMs(row.p95_duration_ms) }}</td>
-                <td class="px-3 py-2 tabular-nums" :title="formatExactDurationMs(row.max_duration_ms)">{{ formatDurationMs(row.max_duration_ms) }}</td>
+                <td class="px-3 py-2">{{ formatTier(row.billingTier) }}</td>
+                <td class="px-3 py-2 tabular-nums" :title="formatExactNumber(row.requestCount)">{{ formatMetric(row.requestCount) }}</td>
+                <td class="px-3 py-2 tabular-nums" :title="formatExactNumber(row.imageCount)">{{ formatMetric(row.imageCount) }}</td>
+                <td class="px-3 py-2 tabular-nums" :title="formatExactDurationMs(row.avgDurationMs)">{{ formatDurationMs(row.avgDurationMs) }}</td>
+                <td class="px-3 py-2 tabular-nums" :title="formatExactDurationMs(row.p95DurationMs)">{{ formatDurationMs(row.p95DurationMs) }}</td>
+                <td class="px-3 py-2 tabular-nums" :title="formatExactDurationMs(row.maxDurationMs)">{{ formatDurationMs(row.maxDurationMs) }}</td>
               </tr>
             </tbody>
           </table>

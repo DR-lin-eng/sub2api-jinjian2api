@@ -1,6 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import { OpsOpenAITokenStatsItem, OpsOpenAITokenStats } from '@/features/admin-ops/domain/models/opsOpenAITokenStats'
+import { OpsOpenAITokenStats } from '@/features/admin-ops/domain/models/opsOpenAITokenStats'
+import { OpsOpenAITokenStatsItem } from '@/features/admin-ops/domain/models/opsOpenAITokenStatsItem'
 
 export class OpsOpenAITokenStatsItemDto {
   @Expose() @Transform(({ value }) => value ?? '') model!: string

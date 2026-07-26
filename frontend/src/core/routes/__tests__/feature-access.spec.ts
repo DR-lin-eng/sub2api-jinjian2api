@@ -41,7 +41,7 @@ vi.mock('vue-router', () => ({
   })),
 }))
 
-vi.mock('@/core/stores/authStore', () => ({
+vi.mock('@/features/auth/presentation/stores/authStore', () => ({
   useAuthStore: () => authStore,
 }))
 
@@ -49,11 +49,11 @@ vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => appStore,
 }))
 
-vi.mock('@/core/stores/adminSettingsStore', () => ({
+vi.mock('@/features/admin-settings/presentation/stores/adminSettingsStore', () => ({
   useAdminSettingsStore: () => ({ customMenuItems: [] }),
 }))
 
-vi.mock('@/core/stores/adminComplianceStore', () => ({
+vi.mock('@/features/admin-settings/presentation/stores/adminComplianceStore', () => ({
   useAdminComplianceStore: () => ({
     initialized: true,
     fetchStatus: vi.fn(),

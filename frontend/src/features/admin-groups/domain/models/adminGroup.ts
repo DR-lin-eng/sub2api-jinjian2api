@@ -1,6 +1,6 @@
-import type { Group } from './group'
+import type { Group } from '@/core/models/domain/group'
 import type { ModelsListConfig } from './modelsListConfig'
-import type { OpenAIMessagesDispatchModelConfig } from './openAIMessagesDispatchModelConfig'
+import type { OpenAIMessagesDispatchModelConfig } from '@/core/models/domain/openAIMessagesDispatchModelConfig'
 
 export class AdminGroup implements Group {
   id!: number

@@ -139,7 +139,7 @@ import type { OpenAIQuotaResetResult } from '@/features/admin-accounts/domain/mo
 import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
 import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
-import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { Account } from '@/core/models/domain/account'
 
 const queryStore = useAdminAccountsQueryStore()
 const actionStore = useAdminAccountsActionStore()
@@ -165,10 +165,10 @@ const showResetCreditDetails = ref(false)
 // 重置必须在母账号上进行。前端据此禁用影子的重置入口(外审 F6)。
 const isShadow = computed(() => props.account.parentAccountId > 0)
 
-const availableResetCount = computed(() => data.value?.rate_limit_reset_credits?.available_count ?? 0)
+const availableResetCount = computed(() => data.value?.rateLimitResetCredits?.availableCount ?? 0)
 const resetCreditExpirations = computed(() =>
-  (data.value?.rate_limit_reset_credits?.credits ?? [])
-    .map((credit) => credit.expires_at?.trim() ?? '')
+  (data.value?.rateLimitResetCredits?.credits ?? [])
+    .map((credit) => credit.expiresAt?.trim() ?? '')
     .filter((expiresAt) => expiresAt.length > 0)
     .sort(compareResetCreditExpiry)
 )

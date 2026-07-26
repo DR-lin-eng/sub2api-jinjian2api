@@ -3,7 +3,7 @@ import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 import type { AdminUserUsageStats } from '@/features/admin-users/domain/models/adminUserUsageStats'
 import type { BalanceHistoryPage } from '@/features/admin-users/domain/models/balanceHistoryPage'
 import type { PlatformQuotaItem } from '@/features/admin-users/domain/models/platformQuotaItem'
-import type { ApiKey } from '@/features/keys/domain/models/apiKey'
+import type { ApiKey } from '@/core/models/domain/apiKey'
 
 export interface AdminUsersQueryRepository {
   list(

@@ -257,7 +257,7 @@ module.exports = {
     // 逻辑跨 keys + batch-image 两个 feature，spec 无合法归属地。
     // 计划：待后端在 /auth/me 或 /settings 返回 canUseBatchImage 字段后消除此文件与所有豁免。
     {
-      files: ["src/core/services/useBatchImageAccess.ts"],
+      files: ["src/features/batch-image/presentation/composables/useBatchImageAccess.ts"],
       rules: { "no-restricted-imports": "off" },
     },
     {

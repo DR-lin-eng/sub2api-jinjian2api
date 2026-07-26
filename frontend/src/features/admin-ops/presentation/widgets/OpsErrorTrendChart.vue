@@ -13,7 +13,7 @@ import {
   Tooltip
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
-import type { OpsErrorTrendPoint } from '@/features/admin-ops/domain/models/opsErrorTrendResponse'
+import type { OpsErrorTrendPoint } from '@/features/admin-ops/domain/models/opsErrorTrendPoint'
 import type { ChartState } from '@/features/admin-ops/presentation/utils/opsFormatter'
 import { formatCompactNumber, formatHistoryLabel, sumNumbers } from '@/features/admin-ops/presentation/utils/opsFormatter'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
@@ -45,16 +45,16 @@ const colors = computed(() => ({
   text: isDarkMode.value ? '#9ca3af' : '#6b7280'
 }))
 
-const totalRequestErrors = computed(() => sumNumbers(props.points.map((p) => p.error_count_sla ?? 0)))
+const totalRequestErrors = computed(() => sumNumbers(props.points.map((p) => p.errorCountSla ?? 0)))
 
 const totalUpstreamErrors = computed(() =>
   sumNumbers(
-    props.points.map((p) => (p.upstream_error_count_excl_429_529 ?? 0) + (p.upstream_429_count ?? 0) + (p.upstream_529_count ?? 0))
+    props.points.map((p) => (p.upstreamErrorCountExcl429529 ?? 0) + (p.upstream429Count ?? 0) + (p.upstream529Count ?? 0))
   )
 )
 
 const totalDisplayed = computed(() =>
-  sumNumbers(props.points.map((p) => (p.error_count_sla ?? 0) + (p.upstream_error_count_excl_429_529 ?? 0) + (p.business_limited_count ?? 0)))
+  sumNumbers(props.points.map((p) => (p.errorCountSla ?? 0) + (p.upstreamErrorCountExcl429529 ?? 0) + (p.businessLimitedCount ?? 0)))
 )
 
 const hasRequestErrors = computed(() => totalRequestErrors.value > 0)
@@ -63,11 +63,11 @@ const hasUpstreamErrors = computed(() => totalUpstreamErrors.value > 0)
 const chartData = computed(() => {
   if (!props.points.length || totalDisplayed.value <= 0) return null
   return {
-    labels: props.points.map((p) => formatHistoryLabel(p.bucket_start, props.timeRange)),
+    labels: props.points.map((p) => formatHistoryLabel(p.bucketStart, props.timeRange)),
     datasets: [
       {
         label: t('admin.ops.errorsSla'),
-        data: props.points.map((p) => p.error_count_sla ?? 0),
+        data: props.points.map((p) => p.errorCountSla ?? 0),
         borderColor: colors.value.red,
         backgroundColor: colors.value.redAlpha,
         fill: true,
@@ -77,7 +77,7 @@ const chartData = computed(() => {
       },
       {
         label: t('admin.ops.upstreamExcl429529'),
-        data: props.points.map((p) => p.upstream_error_count_excl_429_529 ?? 0),
+        data: props.points.map((p) => p.upstreamErrorCountExcl429529 ?? 0),
         borderColor: colors.value.purple,
         backgroundColor: colors.value.purpleAlpha,
         fill: true,
@@ -87,7 +87,7 @@ const chartData = computed(() => {
       },
       {
         label: t('admin.ops.businessLimited'),
-        data: props.points.map((p) => p.business_limited_count ?? 0),
+        data: props.points.map((p) => p.businessLimitedCount ?? 0),
         borderColor: colors.value.gray,
         backgroundColor: 'transparent',
         borderDash: [6, 6],

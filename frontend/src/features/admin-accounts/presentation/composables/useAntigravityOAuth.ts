@@ -3,6 +3,8 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
 import type { AntigravityTokenInfo } from '@/features/admin-accounts/domain/models/antigravityTokenInfo'
+import type { AntigravityAuthUrlRequest } from '@/features/admin-accounts/data/requests_models/antigravityAuthUrlRequest'
+import type { AntigravityExchangeCodeRequest } from '@/features/admin-accounts/data/requests_models/antigravityExchangeCodeRequest'
 
 export function useAntigravityOAuth() {
   const appStore = useAppStore()
@@ -31,10 +33,10 @@ export function useAntigravityOAuth() {
     error.value = ''
 
     try {
-      const payload: Record<string, unknown> = {}
-      if (proxyId) payload.proxyId = proxyId
+      const payload: AntigravityAuthUrlRequest = {}
+      if (proxyId) payload.proxy_id = proxyId
 
-      const response = await actionStore.antigravity_generateAuthUrl(payload as any)
+      const response = await actionStore.antigravity_generateAuthUrl(payload)
       authUrl.value = response.authUrl
       sessionId.value = response.sessionId
       state.value = response.state
@@ -65,14 +67,14 @@ export function useAntigravityOAuth() {
     error.value = ''
 
     try {
-      const payload: Record<string, unknown> = {
+      const payload: AntigravityExchangeCodeRequest = {
         session_id: params.sessionId,
         state: params.state,
         code
       }
-      if (params.proxyId) payload.proxyId = params.proxyId
+      if (params.proxyId) payload.proxy_id = params.proxyId
 
-      const tokenInfo = await actionStore.antigravity_exchangeCode(payload as any)
+      const tokenInfo = await actionStore.antigravity_exchangeCode(payload)
       return tokenInfo as AntigravityTokenInfo
     } catch (err: any) {
       error.value =

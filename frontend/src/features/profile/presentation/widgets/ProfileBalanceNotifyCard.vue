@@ -159,7 +159,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useAppStore } from '@/core/stores/appStore'
 import { useProfileQueryStore } from '@/features/profile/presentation/stores/profileQueryStore'
 import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
@@ -257,7 +257,7 @@ async function handleEmailToggle(entry: NotifyEmailEntry) {
   try {
     const updated = await profileAction.toggleNotifyEmail(entry.email, newDisabled)
     authStore.user = updated
-    emailEntries.value = [...updated.balanceNotifyExtraEmails]
+    emailEntries.value = [...(updated.balanceNotifyExtraEmails ?? [])]
   } catch (err: unknown) {
     appStore.showError(extractApiErrorMessage(err, t('common.error')))
   }
@@ -311,7 +311,7 @@ async function verifyPending(idx: number) {
     appStore.showSuccess(t('profile.balanceNotify.verifySuccess'))
     const updated = await profileQuery.getProfile()
     authStore.user = updated
-    emailEntries.value = [...updated.balanceNotifyExtraEmails]
+    emailEntries.value = [...(updated.balanceNotifyExtraEmails ?? [])]
   } catch (err: unknown) {
     appStore.showError(extractApiErrorMessage(err, t('common.error')))
   } finally {
@@ -325,7 +325,7 @@ const handleRemoveEmail = async (email: string) => {
     appStore.showSuccess(t('profile.balanceNotify.removeSuccess'))
     const updated = await profileQuery.getProfile()
     authStore.user = updated
-    emailEntries.value = [...updated.balanceNotifyExtraEmails]
+    emailEntries.value = [...(updated.balanceNotifyExtraEmails ?? [])]
   } catch (err: unknown) {
     appStore.showError(extractApiErrorMessage(err, t('common.error')))
   }
@@ -365,7 +365,7 @@ async function verifySavedEmail(email: string) {
     appStore.showSuccess(t('profile.balanceNotify.verifySuccess'))
     const updated = await profileQuery.getProfile()
     authStore.user = updated
-    emailEntries.value = [...updated.balanceNotifyExtraEmails]
+    emailEntries.value = [...(updated.balanceNotifyExtraEmails ?? [])]
   } catch (err: unknown) {
     appStore.showError(extractApiErrorMessage(err, t('common.error')))
   } finally {

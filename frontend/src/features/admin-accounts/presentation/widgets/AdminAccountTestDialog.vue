@@ -256,7 +256,7 @@ import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentati
 
 const queryStore = useAdminAccountsQueryStore()
 import type { ClaudeModel } from '@/features/admin-accounts/domain/models/claudeModel'
-import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { Account } from '@/core/models/domain/account'
 const { t } = useI18n()
 const { copyToClipboard } = useClipboard()
 

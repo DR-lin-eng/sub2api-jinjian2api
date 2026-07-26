@@ -227,12 +227,11 @@ import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptch
 import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import {
   clearCredentialKeyPrefetch,
   prefetchCredentialKey,
 } from '@/core/networks/credentialEncryption'
-import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
 import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
 import { isTotp2FARequired } from '@/features/auth/presentation/utils/authUtils'
 import { isWeChatWebOAuthEnabled } from '@/features/auth/presentation/utils/wechatOAuthResolver'
@@ -242,7 +241,7 @@ import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
 } from '@/core/services/humanVerification'
-import type { LoginAgreementDocument } from '@/features/auth/domain/models/loginAgreementDocument'
+import type { LoginAgreementDocument } from '@/core/models/domain/loginAgreementDocument'
 import type { TotpLoginResponse } from '@/features/auth/domain/models/totpLoginResponse'
 
 const { t } = useI18n()
@@ -253,6 +252,7 @@ const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'
 const router = useRouter()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const authQueryStore = useAuthQueryStore()
 
 // ==================== State ====================
 
@@ -357,7 +357,7 @@ onMounted(async () => {
   }
 
   try {
-    const settings = await getPublicSettings()
+    const settings = await authQueryStore.getPublicSettings()
     const verification = resolveHumanVerification(settings)
     turnstileEnabled.value = verification.external
     turnstileSiteKey.value = verification.siteKey
@@ -532,9 +532,9 @@ async function handleLogin(): Promise<void> {
     const response = await authStore.login({
       email: formData.email,
       password: formData.password,
-      captchaToken: turnstileEnabled.value ? turnstileToken.value : undefined,
-      captchaId: localCaptchaRequired.value ? localCaptchaId.value : undefined,
-      captchaCode: localCaptchaRequired.value ? localCaptchaCode.value : undefined
+      captcha_token: turnstileEnabled.value ? turnstileToken.value : undefined,
+      captcha_id: localCaptchaRequired.value ? localCaptchaId.value : undefined,
+      captcha_code: localCaptchaRequired.value ? localCaptchaCode.value : undefined
     })
 
     // Check if 2FA is required

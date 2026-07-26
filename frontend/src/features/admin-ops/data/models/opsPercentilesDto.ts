@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
 import { OpsPercentiles } from '@/features/admin-ops/domain/models/opsPercentiles'
 
 export class OpsPercentilesDto {

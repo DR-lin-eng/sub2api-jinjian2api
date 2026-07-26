@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
 import { AdminUsageStatsResponse } from '@/features/admin-usage/domain/models/adminUsageStatsResponse'
-import type { EndpointStat } from '@/features/admin-dashboard/domain/models/endpointStat'
+import type { EndpointStat } from '@/core/models/domain/endpointStat'
 
 export class AdminUsageStatsResponseDto {
   @Expose({ name: 'total_requests' }) @Transform(({ value }) => value ?? 0) totalRequests!: number

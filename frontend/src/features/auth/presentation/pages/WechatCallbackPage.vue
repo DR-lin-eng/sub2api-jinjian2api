@@ -325,7 +325,7 @@ import PendingOAuthCreateAccountForm, {
 } from '@/features/auth/presentation/widgets/PendingOAuthCreateAccountForm.vue'
 import { apiClient } from '@/core/networks/client'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import {
   getOAuthCompletionKind,
   isOAuthLoginCompletion,
@@ -352,6 +352,7 @@ const { t } = useI18n()
 
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const authAction = useAuthActionStore()
 
 const isProcessing = ref(true)
 const errorMessage = ref('')
@@ -387,7 +388,7 @@ const showBackToChooser = computed(
 )
 const needsCreateAccount = computed(() => pendingAccountAction.value === 'create_account')
 const needsBindLogin = computed(() => pendingAccountAction.value === 'bind_login')
-const hasCurrentAuthToken = computed(() => Boolean(getAuthToken()))
+const hasCurrentAuthToken = computed(() => Boolean(getAccessToken()))
 
 watch(invitationError, value => {
   if (value) {
@@ -619,7 +620,7 @@ async function handleBindCurrentAccount() {
   }
 
   try {
-    await prepareOAuthBindAccessTokenCookie()
+    await authAction.prepareOAuthBindAccessTokenCookie()
     window.location.href = startURL
   } catch (e: unknown) {
     errorMessage.value = getRequestErrorMessage(e, t('auth.loginFailed'))
@@ -627,7 +628,7 @@ async function handleBindCurrentAccount() {
 }
 
 async function handleExistingAccountBinding() {
-  if (getAuthToken()) {
+  if (getAccessToken()) {
     await handleBindCurrentAccount()
     return
   }
@@ -880,8 +881,8 @@ async function handleSubmitInvitation() {
           })
         ).data
       : affCode
-        ? await completeWeChatOAuthRegistration(invitationCode.value.trim(), decision, affCode)
-        : await completeWeChatOAuthRegistration(invitationCode.value.trim(), decision)
+        ? await authAction.createPendingOAuthAccount('wechat', invitationCode.value.trim(), decision, affCode) as PendingWeChatCompletion
+        : await authAction.createPendingOAuthAccount('wechat', invitationCode.value.trim(), decision) as PendingWeChatCompletion
     await finalizePendingAccountResponse(completion)
   } catch (e: unknown) {
     const err = e as { message?: string; response?: { data?: { message?: string } } }
@@ -895,7 +896,7 @@ async function handleSubmitInvitation() {
 async function handleContinueLogin() {
   isSubmitting.value = true
   try {
-    const completion = await exchangePendingOAuthCompletion(currentAdoptionDecision()) as PendingWeChatCompletion
+    const completion = await authAction.completePendingOAuthBindLogin(currentAdoptionDecision()) as PendingWeChatCompletion
     await finalizePendingAccountResponse(completion)
   } catch (e: unknown) {
     errorMessage.value = getRequestErrorMessage(e, t('auth.loginFailed'))
@@ -959,9 +960,9 @@ async function handleSubmitTotpChallenge() {
 
   isSubmitting.value = true
   try {
-    const completion = await login2FA({
-      tempToken: totpTempToken.value,
-      totpCode: code
+    const completion = await authAction.login2FA({
+      temp_token: totpTempToken.value,
+      totp_code: code
     })
     await authStore.setToken(completion.accessToken)
     clearAllAffiliateReferralCodes()
@@ -989,7 +990,7 @@ onMounted(async () => {
   }
 
   if (route.query.wechat_bind_existing === '1') {
-    if (getAuthToken()) {
+    if (getAccessToken()) {
       await handleBindCurrentAccount()
       return
     }
@@ -1045,7 +1046,7 @@ onMounted(async () => {
       return
     }
 
-    const completion = await exchangePendingOAuthCompletion() as PendingWeChatCompletion
+    const completion = await authAction.completePendingOAuthBindLogin() as PendingWeChatCompletion
     const completionRedirect = sanitizeRedirectPath(
       completion.redirect || (route.query.redirect as string | undefined) || '/dashboard'
     )

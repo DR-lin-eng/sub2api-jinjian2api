@@ -48,7 +48,7 @@
                 <p class="truncate font-semibold text-gray-950 dark:text-white">{{ endpoint.name }}</p>
                 <span class="h-1.5 w-1.5 shrink-0 rounded-full" :class="endpoint.enabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-dark-500'" aria-hidden="true" />
               </div>
-              <p class="mt-0.5 truncate font-mono text-[11px] text-gray-500 dark:text-dark-400" :title="endpoint.base_url">{{ endpoint.base_url }}</p>
+              <p class="mt-0.5 truncate font-mono text-[11px] text-gray-500 dark:text-dark-400" :title="endpoint.baseUrl">{{ endpoint.baseUrl }}</p>
             </div>
           </div>
 

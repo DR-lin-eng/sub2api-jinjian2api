@@ -82,7 +82,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { User } from '@/core/models/domain/user'

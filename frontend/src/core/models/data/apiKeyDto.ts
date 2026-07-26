@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import {Expose, Transform, Type, plainToInstance} from 'class-transformer'
-import {ApiKey} from '@/features/keys/domain/models/apiKey'
-import { GroupDto } from '@/features/admin-groups/data/models/groupDto'
+import {ApiKey} from '@/core/models/domain/apiKey'
+import { GroupDto } from '@/core/models/data/groupDto'
 
 export class ApiKeyDto {
     @Expose() id!: number

@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
-import { LoginAgreementDocument } from '@/features/auth/domain/models/loginAgreementDocument'
+import { LoginAgreementDocument } from '@/core/models/domain/loginAgreementDocument'
 
 export class LoginAgreementDocumentDto {
   @Expose()

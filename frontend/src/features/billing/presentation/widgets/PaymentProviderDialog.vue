@@ -779,7 +779,7 @@ function validateEasyPayCustomMethods(): string | null {
 function emitValidationError(msg: string) {
   // Use a custom event or inject appStore — for now use window alert fallback
   // The parent handles this via the save event validation
-  import('@/stores').then(m => m.useAppStore().showError(msg))
+  import('@/core/stores/appStore').then(m => m.useAppStore().showError(msg))
 }
 
 // --- Public API for parent to call ---

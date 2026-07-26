@@ -33,9 +33,9 @@
           {{ item.isOther ? t('admin.users.platformOther') : platformLabel(item.platform) }}
         </span>
         <span class="font-mono">
-          ${{ item.today_actual_cost.toFixed(4) }}
+          ${{ item.todayActualCost.toFixed(4) }}
           <span class="opacity-50">/</span>
-          ${{ item.total_actual_cost.toFixed(4) }}
+          ${{ item.totalActualCost.toFixed(4) }}
         </span>
       </div>
     </div>
@@ -46,7 +46,11 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import type { PlatformDashboardStats as PlatformUsage } from '@/features/usage/domain/models/platformDashboardStats'
+interface PlatformUsage {
+  platform: string
+  todayActualCost: number
+  totalActualCost: number
+}
 
 const props = defineProps<{
   today: number
@@ -62,26 +66,26 @@ const OTHER_THRESHOLD = 0.0001
 
 interface BreakdownRow {
   platform: string
-  today_actual_cost: number
-  total_actual_cost: number
+  todayActualCost: number
+  totalActualCost: number
   isOther?: boolean
 }
 
 const sortedBreakdown = computed<BreakdownRow[]>(() => {
   const list = props.byPlatform ?? []
   const rows: BreakdownRow[] = [...list]
-    .sort((a, b) => b.total_actual_cost - a.total_actual_cost)
+    .sort((a, b) => b.totalActualCost - a.totalActualCost)
     .map((p) => ({ ...p }))
 
-  const sumTotal = rows.reduce((s, r) => s + r.total_actual_cost, 0)
-  const sumToday = rows.reduce((s, r) => s + r.today_actual_cost, 0)
+  const sumTotal = rows.reduce((s, r) => s + r.totalActualCost, 0)
+  const sumToday = rows.reduce((s, r) => s + r.todayActualCost, 0)
   const diffTotal = Math.max(0, props.total - sumTotal)
   const diffToday = Math.max(0, props.today - sumToday)
   if (diffTotal > OTHER_THRESHOLD || diffToday > OTHER_THRESHOLD) {
     rows.push({
       platform: '__other__',
-      today_actual_cost: diffToday,
-      total_actual_cost: diffTotal,
+      todayActualCost: diffToday,
+      totalActualCost: diffTotal,
       isOther: true
     })
   }

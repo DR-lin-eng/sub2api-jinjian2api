@@ -163,7 +163,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useClipboard } from '@/common/composables/useClipboard'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { apiClient } from '@/core/networks/client'
 import { buildApiUrl } from '@/core/networks/url'
 import {
@@ -183,6 +183,7 @@ const { t } = useI18n()
 const { copyToClipboard } = useClipboard()
 const appStore = useAppStore()
 const authStore = useAuthStore()
+const authActionStore = useAuthActionStore()
 const isProcessing = ref(false)
 const isSubmitting = ref(false)
 const needsRegistrationCompletion = ref(false)
@@ -310,7 +311,7 @@ function hasOAuthTokenResponse(value: Partial<OAuthTokenResponse>): value is OAu
 async function resumePendingEmailOAuth() {
   isProcessing.value = true
   try {
-    const completion = await exchangePendingOAuthCompletion() as EmailOAuthPendingCompletion
+    const completion = await authActionStore.completePendingOAuthBindLogin() as EmailOAuthPendingCompletion
     const completionRedirect = completion.redirect || '/dashboard'
     if (completion.requires_2fa === true && completion.temp_token) {
       needsTotpChallenge.value = true
@@ -358,7 +359,7 @@ async function handleSubmitTotpChallenge() {
   if (!totpTempToken.value || code.length !== 6) return
   isSubmitting.value = true
   try {
-    const completion = await login2FA({ tempToken: totpTempToken.value, totpCode: code })
+    const completion = await authActionStore.login2FA({ temp_token: totpTempToken.value, totp_code: code })
     await authStore.setToken(completion.accessToken)
     clearAllAffiliateReferralCodes()
     appStore.showSuccess(t('auth.loginSuccess'))

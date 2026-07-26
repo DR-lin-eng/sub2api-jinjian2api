@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import { Group } from '@/features/admin-groups/domain/models/group'
-import { OpenAIMessagesDispatchModelConfigDto } from './openAIMessagesDispatchModelConfigDto'
+import { Group } from '@/core/models/domain/group'
+import { OpenAIMessagesDispatchModelConfigDto } from '@/core/models/data/openAIMessagesDispatchModelConfigDto'
 
 export class GroupDto {
   @Expose()

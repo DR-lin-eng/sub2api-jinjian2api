@@ -1,5 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useSetupQueryStore } from '@/features/setup/presentation/stores/setupQueryStore'
 
 export const setupRoutes: RouteRecordRaw[] = [

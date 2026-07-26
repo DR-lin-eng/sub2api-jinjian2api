@@ -182,11 +182,13 @@
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
+import { useAdminGroupsQueryStore } from '@/features/admin-groups/presentation/stores/adminGroupsQueryStore'
+import { useAdminUsersActionStore } from '@/features/admin-users/presentation/stores/adminUsersActionStore'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
 import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
-import type { Group, GroupPlatform } from '@/features/admin-groups/domain/models/adminGroups'
+import type { Group } from '@/core/models/domain/group'
+import type { GroupPlatform } from '@/core/enums/groupPlatform'
 
 interface GroupRateConfig {
   groupId: number
@@ -202,6 +204,8 @@ const props = defineProps<{ show: boolean; user: AdminUser | null }>()
 const emit = defineEmits(['close', 'success'])
 const { t } = useI18n()
 const appStore = useAppStore()
+const adminGroupsQueryStore = useAdminGroupsQueryStore()
+const adminUsersActionStore = useAdminUsersActionStore()
 
 const groups = ref<Group[]>([])
 const groupConfigs = ref<GroupRateConfig[]>([])
@@ -228,7 +232,7 @@ watch(
 const load = async () => {
   loading.value = true
   try {
-    const res = await adminAPI.groups.list(1, 1000)
+    const res = await adminGroupsQueryStore.list(1, 1000)
     // 只显示标准类型且活跃的分组
     groups.value = res.items.filter((g: any) => g.subscriptionType === 'standard' && g.status === 'active')
 
@@ -300,7 +304,7 @@ const handleSave = async () => {
       }
     }
 
-    await adminAPI.users.update(props.user.id, {
+    await adminUsersActionStore.update(props.user.id, {
       allowed_groups: allowedGroups,
       group_rates: Object.keys(groupRates).length > 0 ? groupRates : undefined,
     })

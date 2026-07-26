@@ -3,6 +3,8 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
 import type { GrokTokenInfo } from '@/features/admin-accounts/domain/models/grokTokenInfo'
+import type { GrokAuthUrlRequest } from '@/features/admin-accounts/data/requests_models/grokAuthUrlRequest'
+import type { GrokExchangeCodeRequest } from '@/features/admin-accounts/data/requests_models/grokExchangeCodeRequest'
 import { extractApiErrorMessage, extractI18nErrorMessage } from '@/core/utils/apiError'
 
 export function useGrokOAuth() {
@@ -32,10 +34,10 @@ export function useGrokOAuth() {
     error.value = ''
 
     try {
-      const payload: Record<string, unknown> = {}
-      if (proxyId) payload.proxyId = proxyId
+      const payload: GrokAuthUrlRequest = {}
+      if (proxyId) payload.proxy_id = proxyId
 
-      const response = await actionStore.grok_generateAuthUrl(payload as any)
+      const response = await actionStore.grok_generateAuthUrl(payload)
       authUrl.value = response.authUrl
       sessionId.value = response.sessionId
       state.value = response.state
@@ -65,14 +67,14 @@ export function useGrokOAuth() {
     error.value = ''
 
     try {
-      const payload: Record<string, unknown> = {
+      const payload: GrokExchangeCodeRequest = {
         session_id: params.sessionId,
         state: params.state,
         code
       }
-      if (params.proxyId) payload.proxyId = params.proxyId
+      if (params.proxyId) payload.proxy_id = params.proxyId
 
-      return await actionStore.grok_exchangeCode(payload as any)
+      return await actionStore.grok_exchangeCode(payload)
     } catch (err: any) {
       error.value = extractI18nErrorMessage(
         err,

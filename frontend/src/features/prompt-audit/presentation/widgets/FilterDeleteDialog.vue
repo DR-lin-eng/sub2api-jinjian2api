@@ -21,11 +21,11 @@
         <div v-if="preset === 'custom'" class="mt-3 grid gap-3 sm:grid-cols-2" data-test="custom-range">
           <label class="text-xs text-gray-600 dark:text-dark-200">
             <span>{{ t('admin.promptAudit.events.startAt') }}</span>
-            <input v-model="local.start_at" type="datetime-local" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.startAt')" @change="criteriaChanged" />
+            <input v-model="local.startAt" type="datetime-local" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.startAt')" @change="criteriaChanged" />
           </label>
           <label class="text-xs text-gray-600 dark:text-dark-200">
             <span>{{ t('admin.promptAudit.events.endAt') }}</span>
-            <input v-model="local.end_at" type="datetime-local" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.endAt')" @change="criteriaChanged" />
+            <input v-model="local.endAt" type="datetime-local" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.endAt')" @change="criteriaChanged" />
           </label>
           <p v-if="!canPreview" class="text-xs text-red-600 dark:text-red-400 sm:col-span-2">{{ t('admin.promptAudit.events.customRangeInvalid') }}</p>
         </div>
@@ -43,7 +43,7 @@
         </label>
         <label class="text-xs text-gray-600 dark:text-dark-200">
           <span>{{ t('admin.promptAudit.events.risk') }}</span>
-          <select v-model="local.risk_level" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.risk')" data-test="delete-risk" @change="criteriaChanged">
+          <select v-model="local.riskLevel" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.risk')" data-test="delete-risk" @change="criteriaChanged">
             <option value="">{{ t('common.all') }}</option>
             <option value="low">{{ t('admin.promptAudit.riskLevels.low') }}</option>
             <option value="medium">{{ t('admin.promptAudit.riskLevels.medium') }}</option>
@@ -66,11 +66,11 @@
           </label>
           <label class="text-xs text-gray-600 dark:text-dark-200">
             <span>{{ t('admin.promptAudit.events.groupId') }}</span>
-            <input v-model="local.group_id" type="number" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.group_id')" @input="criteriaChanged" />
+            <input v-model="local.groupId" type="number" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.group_id')" @input="criteriaChanged" />
           </label>
           <label class="text-xs text-gray-600 dark:text-dark-200">
             <span>{{ t('admin.promptAudit.events.userId') }}</span>
-            <input v-model="local.user_id" type="number" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.user_id')" @input="criteriaChanged" />
+            <input v-model="local.userId" type="number" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.user_id')" @input="criteriaChanged" />
           </label>
         </div>
       </details>

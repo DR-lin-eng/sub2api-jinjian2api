@@ -1,6 +1,8 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import { OpsImageGenerationRealtime, OpsImageGenerationResolutionStats, OpsImageGenerationStats } from '@/features/admin-ops/domain/models/opsImageGenerationStats'
+import { OpsImageGenerationStats } from '@/features/admin-ops/domain/models/opsImageGenerationStats'
+import { OpsImageGenerationRealtime } from '@/features/admin-ops/domain/models/opsImageGenerationRealtime'
+import { OpsImageGenerationResolutionStats } from '@/features/admin-ops/domain/models/opsImageGenerationResolutionStats'
 
 export class OpsImageGenerationRealtimeDto {
   @Expose() @Transform(({ value }) => value ?? false) available!: boolean

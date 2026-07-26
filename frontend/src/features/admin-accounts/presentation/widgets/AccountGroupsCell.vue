@@ -81,7 +81,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
-import type { Group } from '@/features/admin-groups/domain/models/group'
+import type { Group } from '@/core/models/domain/group'
 interface Props {
   groups: Group[] | null | undefined
   maxDisplay?: number

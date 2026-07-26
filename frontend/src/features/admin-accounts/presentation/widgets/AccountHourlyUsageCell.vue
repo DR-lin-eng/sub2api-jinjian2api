@@ -26,7 +26,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { AccountHourlyUsageStats } from '@/features/admin-accounts/domain/models/accountHourlyUsageStats'
+import type { AccountHourlyUsageStats } from '@/core/models/domain/accountHourlyUsageStats'
 const props = defineProps<{
   stats?: AccountHourlyUsageStats | null
 }>()

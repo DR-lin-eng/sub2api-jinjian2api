@@ -187,7 +187,7 @@ const columns = computed<Column[]>(() =>
 )
 
 function requestTypeBadge(row: UserErrorRequest): { label: string; className: string } | null {
-  const kind = numericRequestTypeKind(row.requestType, row.stream)
+  const kind = numericRequestTypeKind(Number(row.requestType) || null, row.stream)
   if (!kind) return null
   return { label: t(requestTypeLabelKey(kind)), className: requestTypeBadgeClass(kind) }
 }

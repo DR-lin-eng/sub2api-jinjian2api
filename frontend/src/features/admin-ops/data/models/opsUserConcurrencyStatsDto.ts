@@ -1,6 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
-import { UserConcurrencyInfo, OpsUserConcurrencyStats } from '@/features/admin-ops/domain/models/opsUserConcurrencyStats'
+import { OpsUserConcurrencyStats } from '@/features/admin-ops/domain/models/opsUserConcurrencyStats'
+import { UserConcurrencyInfo } from '@/features/admin-ops/domain/models/userConcurrencyInfo'
 
 export class UserConcurrencyInfoDto {
   @Expose({ name: 'user_id' }) @Transform(({ value }) => value ?? 0) userId!: number

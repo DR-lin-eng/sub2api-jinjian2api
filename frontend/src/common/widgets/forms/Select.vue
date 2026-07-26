@@ -258,7 +258,7 @@ const hasValue = computed(
 )
 
 const filteredOptions = computed(() => {
-  let opts = props.options as any[]
+  let opts = props.options as Array<Record<string, unknown>>
   if (isSearchable.value && searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     opts = opts.filter((opt) => {

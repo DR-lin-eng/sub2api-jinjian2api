@@ -1,4 +1,4 @@
-import type { PublicSettings } from '@/features/auth/domain/models/publicSettings'
+import type { PublicSettings } from '@/core/models/domain/publicSettings'
 
 export type ExternalHumanVerificationProvider = 'turnstile' | 'recaptcha' | 'cap'
 export type HumanVerificationProvider = 'none' | 'local' | ExternalHumanVerificationProvider

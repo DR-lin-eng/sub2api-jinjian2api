@@ -477,7 +477,7 @@ import { ref, reactive, computed, onMounted, onUnmounted, toRaw, watch } from 'v
 import { useIntervalFn } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useTableLoader } from '@/common/composables/useTableLoader'
 import { useSwipeSelect, type SwipeSelectVirtualContext } from '@/common/composables/useSwipeSelect'
 import { useTableSelection } from '@/common/composables/useTableSelection'
@@ -523,11 +523,11 @@ import { sanitizeUrl } from '@/core/utils/url'
 import { useAdminAccounts } from '@/features/admin-accounts/presentation/composables/useAdminAccounts'
 import { useAdminProxies } from '@/features/admin-proxies/presentation/composables/useAdminProxies'
 import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
-import type { AccountPlatform } from '@/features/admin-accounts/enums/accountPlatform'
-import type { AccountType } from '@/features/admin-accounts/enums/accountType'
+import type { AccountPlatform } from '@/core/enums/accountPlatform'
+import type { AccountType } from '@/core/enums/accountType'
 import type { ClaudeModel } from '@/features/admin-accounts/domain/models/claudeModel'
-import type { Account } from '@/features/admin-accounts/domain/models/account'
-import type { AccountSchedulerGroupScore } from '@/features/admin-accounts/domain/models/accountSchedulerGroupScore'
+import type { Account } from '@/core/models/domain/account'
+import type { AccountSchedulerGroupScore } from '@/core/models/domain/accountSchedulerGroupScore'
 import type { WindowStats } from '@/features/admin-accounts/domain/models/windowStats'
 import type { UpstreamBillingProbeSnapshot } from '@/features/admin-accounts/domain/models/upstreamBillingProbeSnapshot'
 import type { Proxy as AccountProxy } from '@/features/admin-proxies/domain/models/proxy'
@@ -673,8 +673,11 @@ const showAutoRefreshDropdown = ref(false)
 const autoRefreshDropdownRef = ref<HTMLElement | null>(null)
 const AUTO_REFRESH_STORAGE_KEY = 'account-auto-refresh'
 const autoRefreshIntervals = [5, 10, 15, 30] as const
+type AutoRefreshInterval = (typeof autoRefreshIntervals)[number]
+const isAutoRefreshInterval = (value: number): value is AutoRefreshInterval =>
+  (autoRefreshIntervals as readonly number[]).includes(value)
 const autoRefreshEnabled = ref(false)
-const autoRefreshIntervalSeconds = ref<(typeof autoRefreshIntervals)[number]>(30)
+const autoRefreshIntervalSeconds = ref<AutoRefreshInterval>(30)
 const autoRefreshCountdown = ref(0)
 const autoRefreshETag = ref<string | null>(null)
 const autoRefreshFetching = ref(false)
@@ -829,8 +832,8 @@ const loadSavedAutoRefresh = () => {
     const parsed = JSON.parse(saved) as { enabled?: boolean; interval_seconds?: number }
     autoRefreshEnabled.value = parsed.enabled === true
     const interval = Number(parsed.interval_seconds)
-    if (autoRefreshIntervals.includes(interval as any)) {
-      autoRefreshIntervalSeconds.value = interval as any
+    if (isAutoRefreshInterval(interval)) {
+      autoRefreshIntervalSeconds.value = interval
     }
   } catch (e) {
     console.error('Failed to load saved auto refresh settings:', e)
@@ -901,11 +904,30 @@ const toggleColumn = (key: string) => {
 const isColumnVisible = (key: string) => !hiddenColumns.has(key)
 const shouldIncludeSchedulerScore = () => isColumnVisible('scheduler_score')
 const shouldIncludeHourlyUsage = () => isColumnVisible('hourly_usage')
+
+// Mirrors AdminAccountsQueryRepository.list()'s `filters` shape; kept mutable here so
+// the page can toggle include_* / lite / sort_* alongside the user-facing filters.
+interface AccountListParams {
+  platform: string
+  type: string
+  status: string
+  privacy_mode: string
+  group: string
+  search: string
+  include_scheduler_score?: string
+  include_hourly_usage?: string
+  lite?: string
+  sort_by: string
+  sort_order: AccountSortOrder
+  // Legacy alias historically written by handleSort and consumed by
+  // buildBulkEditFilterSnapshot; declared here to keep it typed.
+  sortOrder?: AccountSortOrder
+}
+
 const syncAccountListDerivedParams = () => {
   // Keep every load path, including auto-refresh and sorting, aligned with the current column visibility.
-  const requestParams = params as any
-  requestParams.include_scheduler_score = shouldIncludeSchedulerScore() ? '1' : '0'
-  requestParams.include_hourly_usage = shouldIncludeHourlyUsage() ? '1' : '0'
+  params.include_scheduler_score = shouldIncludeSchedulerScore() ? '1' : '0'
+  params.include_hourly_usage = shouldIncludeHourlyUsage() ? '1' : '0'
 }
 
 const {
@@ -918,7 +940,7 @@ const {
   debouncedReload: baseDebouncedReload,
   handlePageChange: baseHandlePageChange,
   handlePageSizeChange: baseHandlePageSizeChange
-} = useTableLoader<Account, any>({
+} = useTableLoader<Account, AccountListParams>({
   fetchFn: $accounts.list,
   initialParams: {
     platform: '',
@@ -977,19 +999,18 @@ function markUpstreamBillingSortRefresh() {
 }
 
 const load = async () => {
-  const requestParams = params as any
   markUpstreamBillingSortRefresh()
   syncAccountListDerivedParams()
   hasPendingListSync.value = false
   resetAutoRefreshCache()
   pendingTodayStatsRefresh.value = false
   if (isFirstLoad.value) {
-    requestParams.lite = '1'
+    params.lite = '1'
   }
   await baseLoad()
   if (isFirstLoad.value) {
     isFirstLoad.value = false
-    delete requestParams.lite
+    delete params.lite
   }
   await refreshTodayStatsBatch()
 }
@@ -1044,9 +1065,8 @@ const handlePageSizeChange = (size: number) => {
 const handleSort = (key: string, order: AccountSortOrder) => {
   sortState.sort_by = key
   sortState.sort_order = order
-  const requestParams = params as any
-  requestParams.sort_by = key
-  requestParams.sortOrder = order
+  params.sort_by = key
+  params.sortOrder = order
   syncAccountListDerivedParams()
   pagination.page = 1
   hasPendingListSync.value = false

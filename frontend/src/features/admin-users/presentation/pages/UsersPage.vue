@@ -540,9 +540,9 @@
 
           <template #cell-usage="{ row }">
             <PlatformUsageBreakdown
-              :today="usageStats[row.id]?.today_actual_cost ?? 0"
-              :total="usageStats[row.id]?.total_actual_cost ?? 0"
-              :by-platform="usageStats[row.id]?.by_platform"
+              :today="usageStats[row.id]?.todayActualCost ?? 0"
+              :total="usageStats[row.id]?.totalActualCost ?? 0"
+              :by-platform="usageStats[row.id]?.byPlatform"
             />
           </template>
 
@@ -781,7 +781,7 @@ import { formatDateTime } from '@/core/utils/format'
 import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()
-import type { BatchUserUsageStats } from '@/features/admin-dashboard/presentation/api'
+import type { BatchUserUsageStats } from '@/features/admin-dashboard/domain/models/batchUserUsageStats'
 import type { PlatformQuotaItem } from '@/features/admin-users/domain/models/platformQuotaItem'
 import type { Column } from '@/common/widgets/types'
 import type { SelectOption } from '@/common/widgets/forms/Select.vue'
@@ -1114,11 +1114,18 @@ const apiKeyGroupFilterOptions = computed(() =>
 )
 
 // Filter values (role, status, and custom attributes)
-const filters = reactive({
+type UserRoleFilter = '' | 'admin' | 'user'
+type UserStatusFilter = '' | 'active' | 'disabled'
+const filters = reactive<{
+  role: UserRoleFilter
+  status: UserStatusFilter
+  group: string
+  apiKeyGroup: number | null
+}>({
   role: '',
   status: '',
   group: '',  // group name for fuzzy match, '' = all
-  apiKeyGroup: null as number | null  // group id bound to the user's API keys, null = all
+  apiKeyGroup: null  // group id bound to the user's API keys, null = all
 })
 const activeAttributeFilters = reactive<Record<number, string>>({})
 
@@ -1204,7 +1211,7 @@ const usageStats = ref<Record<string, BatchUserUsageStats>>({})
 const platformQuotaStats = ref<Record<number, PlatformQuotaItem[]>>({})
 
 const getPlatformUsage = (userId: number, platform: string) =>
-  usageStats.value[userId]?.by_platform?.find((p) => p.platform === platform)
+  usageStats.value[userId]?.byPlatform?.find((p) => p.platform === platform)
 
 // 用量列前端排序：DataTable 工作在 server-side-sort 模式，所有 sortable
 // 字段都会触发后端查询，而用量列数据是异步批量拉取后再合并到当前页，
@@ -1276,11 +1283,11 @@ const getUsageValue = (userId: number, key: string, metric: UsageMetric): number
   if (!stats) return 0
   const platform = USAGE_COLUMN_PLATFORMS[key]
   if (platform === null) {
-    return metric === 'today' ? stats.today_actual_cost ?? 0 : stats.total_actual_cost ?? 0
+    return metric === 'today' ? stats.todayActualCost ?? 0 : stats.totalActualCost ?? 0
   }
-  const p = stats.by_platform?.find((x) => x.platform === platform)
+  const p = stats.byPlatform?.find((x) => x.platform === platform)
   if (!p) return 0
-  return metric === 'today' ? p.today_actual_cost ?? 0 : p.total_actual_cost ?? 0
+  return metric === 'today' ? p.todayActualCost ?? 0 : p.totalActualCost ?? 0
 }
 
 // 在 server-side 排序结果之上叠加用量列的本地排序；无 usageSort 时直接透传原数组。
@@ -1363,7 +1370,7 @@ const loadUsersSecondaryData = async (
     tasks.push(
       (async () => {
         try {
-          const usageResponse = await $dashboard.getBatchUsersUsage(userIds)
+          const usageResponse = await $dashboard.getBatchUsersUsage({ user_ids: userIds })
           if (signal?.aborted) return
           if (typeof expectedSeq === 'number' && expectedSeq !== secondaryDataSeq) return
           usageStats.value = usageResponse.stats
@@ -1382,7 +1389,7 @@ const loadUsersSecondaryData = async (
           const attrResponse = await $userAttributes.getBatchUserAttributes(userIds)
           if (signal?.aborted) return
           if (typeof expectedSeq === 'number' && expectedSeq !== secondaryDataSeq) return
-          userAttributeValues.value = attrResponse.attributes
+          userAttributeValues.value = attrResponse
         } catch (e) {
           if (signal?.aborted) return
           console.error('Failed to load user attribute values:', e)
@@ -1574,8 +1581,8 @@ const loadUsers = async () => {
       pagination.page,
       pagination.page_size,
       {
-        role: filters.role as any,
-        status: filters.status as any,
+        role: filters.role || undefined,
+        status: filters.status || undefined,
         search: searchQuery.value || undefined,
         group_name: filters.group || undefined,
         api_key_group_id: filters.apiKeyGroup ?? undefined,
@@ -1718,7 +1725,7 @@ const closeEditModal = () => {
 const handleToggleStatus = async (user: AdminUser) => {
   const newStatus = user.status === 'active' ? 'disabled' : 'active'
   try {
-    await $users.toggleStatus(user.id, newStatus)
+    await $users.update(user.id, { status: newStatus })
     appStore.showSuccess(
       newStatus === 'active' ? t('admin.users.userEnabled') : t('admin.users.userDisabled')
     )

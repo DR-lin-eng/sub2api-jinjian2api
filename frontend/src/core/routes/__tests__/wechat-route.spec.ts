@@ -13,7 +13,7 @@ const appStore = vi.hoisted(() => ({
   cachedPublicSettings: null as null | Record<string, unknown>,
 }))
 
-vi.mock('@/core/stores/authStore', () => ({
+vi.mock('@/features/auth/presentation/stores/authStore', () => ({
   useAuthStore: () => authStore,
 }))
 
@@ -21,7 +21,7 @@ vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => appStore,
 }))
 
-vi.mock('@/core/stores/adminSettingsStore', () => ({
+vi.mock('@/features/admin-settings/presentation/stores/adminSettingsStore', () => ({
   useAdminSettingsStore: () => ({
     customMenuItems: [],
   }),

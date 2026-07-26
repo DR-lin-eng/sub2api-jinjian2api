@@ -165,8 +165,7 @@ import { formatScaled } from '@/core/utils/pricing'
 import {
   BILLING_MODE_TOKEN,
   BILLING_MODE_PER_REQUEST,
-  BILLING_MODE_IMAGE,
-  type BillingMode
+  BILLING_MODE_IMAGE
 } from '@/core/constants/channel'
 // 复用 api/channels.ts 的用户侧最小形态 DTO。
 // admin 侧 ChannelModelPricing 字段更多，但结构上是用户 DTO 的超集，admin 视图传入可直接通过结构化子类型检查。
@@ -240,7 +239,7 @@ function formatRange(min: number, max: number | null): string {
   return `(${min}, ${maxLabel}]`
 }
 
-function formatInterval(iv: UserPricingInterval, mode: BillingMode): string {
+function formatInterval(iv: UserPricingInterval, mode: string): string {
   if (mode === BILLING_MODE_PER_REQUEST || mode === BILLING_MODE_IMAGE) {
     return formatScaled(iv.perRequestPrice, 1)
   }

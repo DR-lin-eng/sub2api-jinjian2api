@@ -295,16 +295,6 @@ function normalizeProvider(value: string): UserAuthProvider | null {
   return null
 }
 
-function readObjectString(source: Record<string, unknown>, ...keys: string[]): string {
-  for (const key of keys) {
-    const value = source[key]
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim()
-    }
-  }
-  return ''
-}
-
 function resolveThirdPartySource(
   rawSource: string | UserProfileSourceContext | null | undefined
 ): { provider: UserAuthProvider; label: string } | null {
@@ -323,21 +313,14 @@ function resolveThirdPartySource(
     }
   }
 
-  const sourceRecord = rawSource as Record<string, unknown>
   const provider = normalizeProvider(
-    readObjectString(sourceRecord, 'provider', 'source', 'provider_type', 'auth_provider')
+    (typeof rawSource.provider === 'string' ? rawSource.provider : rawSource.source) || ''
   )
   if (!provider || provider === 'email') {
     return null
   }
 
-  const explicitLabel = readObjectString(
-    sourceRecord,
-    'provider_label',
-    'label',
-    'provider_name',
-    'providerName'
-  )
+  const explicitLabel = rawSource.providerLabel?.trim() || rawSource.label?.trim() || ''
 
   return {
     provider,

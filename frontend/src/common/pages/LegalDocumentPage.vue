@@ -101,7 +101,7 @@ import { sanitizeUrl } from '@/core/utils/url'
 import { useAppStore } from '@/core/stores/appStore'
 import zhAdminCompliance from '../../../../docs/legal/admin-compliance.zh.md?raw'
 import enAdminCompliance from '../../../../docs/legal/admin-compliance.en.md?raw'
-import type { LoginAgreementDocument } from '@/features/auth/domain/models/auth'
+import type { LoginAgreementDocument } from '@/core/models/domain/loginAgreementDocument'
 
 type LegalDocumentIcon = 'document' | 'shield' | 'globe' | 'cog'
 

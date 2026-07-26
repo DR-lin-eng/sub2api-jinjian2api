@@ -90,8 +90,8 @@ export default defineConfig(({ mode }) => {
       // Vue SFC <script setup lang="ts"> is still handled by @vitejs/plugin-vue; the SFC compiler
       // preserves decorator syntax but esbuild strips metadata, so we place SWC before vue().
       swc.vite({
-        include: [/\.ts$/],
-        exclude: [/node_modules/],
+        include: [/\.ts$/] as unknown as string[],
+        exclude: [/node_modules/] as unknown as string[],
         jsc: {
           parser: { syntax: 'typescript', decorators: true },
           transform: { legacyDecorator: true, decoratorMetadata: true },

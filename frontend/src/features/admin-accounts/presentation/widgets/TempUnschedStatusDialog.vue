@@ -153,7 +153,7 @@ const queryStore = useAdminAccountsQueryStore()
 const actionStore = useAdminAccountsActionStore()
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import { formatDateTime } from '@/core/utils/format'
-import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { Account } from '@/core/models/domain/account'
 import type { TempUnschedulableStatus } from '@/features/admin-accounts/domain/models/tempUnschedulableStatus'
 
 const props = defineProps<{

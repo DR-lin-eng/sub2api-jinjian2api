@@ -52,7 +52,7 @@ import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentati
 const queryStore = useAdminAccountsQueryStore()
 import type { GrokQuotaWindow } from '@/features/admin-accounts/domain/models/grokQuotaWindow'
 import type { GrokQuotaProbeResult } from '@/features/admin-accounts/domain/models/grokQuotaProbeResult'
-import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { Account } from '@/core/models/domain/account'
 const props = defineProps<{
   account: Account
 }>()
@@ -130,8 +130,8 @@ const handleProbe = async () => {
   error.value = null
   try {
     data.value = await queryStore.queryQuota(props.account.id)
-    error.value = (data.value as any)?.probe_error || null
-    emit('probed', data.value as any)
+    error.value = data.value?.probeError || null
+    emit('probed', data.value)
   } catch (e) {
     error.value = extractErrorMessage(e)
   } finally {

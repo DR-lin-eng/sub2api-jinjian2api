@@ -170,7 +170,7 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
 import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptchaWidget.vue'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import {
   persistOAuthTokenContext,
   isOAuthLoginCompletion,
@@ -183,6 +183,7 @@ import {
 } from '@/core/networks/credentialEncryption'
 import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
 import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
+import type { EncryptedRegisterRequest } from '@/features/auth/data/requests_models/encryptedRegisterRequest'
 import { apiClient } from '@/core/networks/client'
 import { buildAuthErrorMessage } from '@/core/utils/authError'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
@@ -204,7 +205,6 @@ import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
 } from '@/core/services/humanVerification'
-import type { EncryptedRegisterRequest } from '@/features/auth/domain/models/auth'
 
 const { t, locale } = useI18n()
 
@@ -213,6 +213,8 @@ const { t, locale } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const authActionStore = useAuthActionStore()
+const authQueryStore = useAuthQueryStore()
 
 // ==================== State ====================
 
@@ -350,7 +352,7 @@ onMounted(async () => {
 
   // Load public settings
   try {
-    const settings = await getPublicSettings()
+    const settings = await authQueryStore.getPublicSettings()
     const verification = resolveHumanVerification(settings)
     turnstileEnabled.value = verification.external
     turnstileSiteKey.value = verification.siteKey
@@ -476,10 +478,10 @@ async function sendCode(): Promise<void> {
       captcha_token: resendTurnstileToken.value || initialTurnstileToken.value || undefined,
       captcha_id: resendLocalCaptchaId.value || initialLocalCaptchaId.value || undefined,
       captcha_code: resendLocalCaptchaCode.value || initialLocalCaptchaCode.value || undefined
-    } as Parameters<typeof sendVerifyCode>[0]
+    } as Parameters<typeof authActionStore.sendVerifyCode>[0]
     const response = isPendingOAuthFlow()
-      ? await sendPendingOAuthVerifyCode(requestPayload)
-      : await sendVerifyCode(requestPayload)
+      ? await authActionStore.sendPendingOAuthVerifyCode(requestPayload)
+      : await authActionStore.sendVerifyCode(requestPayload)
 
     const pendingSendCodeSession = isPendingOAuthFlow()
       ? getPendingOAuthSendCodeSessionResponse(response as PendingOAuthSendVerifyCodeResponse)
@@ -626,11 +628,11 @@ async function handleVerify(): Promise<void> {
       // Register with verification code
       const encryptedCredentials = await createCredentialEnvelope(email.value, password.value)
       const request: EncryptedRegisterRequest = {
-        credentialEnvelope: encryptedCredentials,
-        verifyCode: verifyCode.value.trim(),
-        captchaToken: initialTurnstileToken.value || undefined,
-        promoCode: promoCode.value || undefined,
-        invitationCode: invitationCode.value || undefined,
+        credential_envelope: encryptedCredentials,
+        verify_code: verifyCode.value.trim(),
+        captcha_token: initialTurnstileToken.value || undefined,
+        promo_code: promoCode.value || undefined,
+        invitation_code: invitationCode.value || undefined,
         ...(affCode.value ? { aff_code: affCode.value } : {})
       }
       await authStore.register(request)

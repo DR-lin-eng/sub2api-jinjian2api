@@ -30,6 +30,7 @@ import { EmailNotificationConfigDto } from '@/features/admin-ops/data/models/ema
 import { OpsAlertRuntimeSettingsDto } from '@/features/admin-ops/data/models/opsAlertRuntimeSettingsDto'
 import { OpsRuntimeLogConfigDto } from '@/features/admin-ops/data/models/opsRuntimeLogConfigDto'
 import { OpsAdvancedSettingsDto } from '@/features/admin-ops/data/models/opsAdvancedSettingsDto'
+import { OpsSettingsSnapshotDto } from '@/features/admin-ops/data/models/opsSettingsSnapshotDto'
 import { OpsSystemLogDto } from '@/features/admin-ops/data/models/opsSystemLogDto'
 import { OpsSystemLogSinkHealthDto } from '@/features/admin-ops/data/models/opsSystemLogSinkHealthDto'
 
@@ -249,9 +250,9 @@ export class AdminOpsQueryDatasource {
     return EmailNotificationConfigDto.fromJson(data)
   }
 
-  async getSettingsSnapshot(): Promise<unknown> {
+  async getSettingsSnapshot(): Promise<OpsSettingsSnapshotDto> {
     const { data } = await apiClient.get<unknown>('/admin/ops/settings/snapshot')
-    return data
+    return OpsSettingsSnapshotDto.fromJson(data)
   }
 
   async getAlertRuntimeSettings(): Promise<OpsAlertRuntimeSettingsDto> {

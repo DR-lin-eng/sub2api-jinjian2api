@@ -134,6 +134,8 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const authActionStore = useAuthActionStore()
+const authQueryStore = useAuthQueryStore()
 
 const email = ref('')
 const password = ref('')
@@ -248,7 +250,7 @@ async function handleSendCode() {
   sendCodeSuccess.value = false
 
   try {
-    const response = await sendPendingOAuthVerifyCode({
+    const response = await authActionStore.sendPendingOAuthVerifyCode({
       email: trimmedEmail,
       ...(turnstileEnabled.value ? { captcha_token: turnstileToken.value } : {}),
       ...(localCaptchaEnabled.value
@@ -290,7 +292,7 @@ function emitSwitchToBind() {
 
 onMounted(async () => {
   try {
-    const settings = await getPublicSettings()
+    const settings = await authQueryStore.getPublicSettings()
     invitationCodeEnabled.value = settings.invitationCodeEnabled === true
     emailVerifyEnabled.value = settings.emailVerifyEnabled !== false
     const verification = resolveHumanVerification(settings)

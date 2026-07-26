@@ -1,6 +1,6 @@
 import { systemQueryDatasource } from '@/features/admin-settings/data/datasources/systemQueryDatasource'
 import type { SystemQueryRepository } from '@/features/admin-settings/domain/repositories/systemQueryRepository'
-import type { VersionInfo } from '@/features/admin-settings/domain/models/versionInfo'
+import type { VersionInfo } from '@/core/models/domain/versionInfo'
 import type { RollbackVersionInfo } from '@/features/admin-settings/domain/models/rollbackVersionInfo'
 
 class SystemQueryRepositoryImpl implements SystemQueryRepository {

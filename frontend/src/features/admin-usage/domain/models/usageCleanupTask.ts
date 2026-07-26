@@ -1,3 +1,5 @@
+import type { UsageCleanupFilters } from './usageCleanupFilters'
+
 export class UsageCleanupTask {
   id!: number
   status!: string
@@ -10,4 +12,5 @@ export class UsageCleanupTask {
   finishedAt!: string
   createdAt!: string
   updatedAt!: string
+  filters?: { start_time?: string; end_time?: string } & Partial<UsageCleanupFilters>
 }

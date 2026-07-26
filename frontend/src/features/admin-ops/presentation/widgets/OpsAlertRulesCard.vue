@@ -9,7 +9,8 @@ import { useAdminGroupsQueryStore } from '@/features/admin-groups/presentation/s
 import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
 const queryStore = useAdminOpsQueryStore()
 import { useAdminOpsActionStore } from '@/features/admin-ops/presentation/stores/adminOpsActionStore'
-import type { AlertRule, MetricType, Operator } from '@/features/admin-ops/domain/models/alertRule'
+import { AlertRule } from '@/features/admin-ops/domain/models/alertRule'
+import type { MetricType, Operator } from '@/features/admin-ops/enums/alertEnums'
 import type { OpsSeverity } from '@/features/admin-ops/presentation/utils/opsFormatter'
 import type { CreateAlertRuleRequest } from '@/features/admin-ops/data/requests_models/createAlertRuleRequest'
 import type { UpdateAlertRuleRequest } from '@/features/admin-ops/data/requests_models/updateAlertRuleRequest'
@@ -100,9 +101,6 @@ const draftGroupId = computed<number | null>({
     if (value == null) {
       if (!draft.value.filters) return
       delete draft.value.filters.groupId
-      if (Object.keys(draft.value.filters).length === 0) {
-        delete draft.value.filters
-      }
       return
     }
     if (!draft.value.filters) draft.value.filters = {}
@@ -286,19 +284,24 @@ const windowOptions = computed(() => {
 })
 
 function newRuleDraft(): AlertRule {
-  return {
-    name: '',
-    description: '',
-    enabled: true,
-    metric_type: 'error_rate',
-    operator: '>',
-    threshold: 1,
-    window_minutes: 1,
-    sustained_minutes: 2,
-    severity: 'P1',
-    cooldown_minutes: 10,
-    notify_email: true
-  }
+  const r = new AlertRule()
+  r.id = 0
+  r.name = ''
+  r.description = ''
+  r.enabled = true
+  r.metricType = 'error_rate'
+  r.operator = '>'
+  r.threshold = 1
+  r.windowMinutes = 1
+  r.sustainedMinutes = 2
+  r.severity = 'P1'
+  r.cooldownMinutes = 10
+  r.notifyEmail = true
+  r.filters = {}
+  r.createdAt = ''
+  r.updatedAt = ''
+  r.lastTriggeredAt = ''
+  return r
 }
 
 function openCreate() {

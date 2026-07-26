@@ -88,7 +88,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { Account } from '@/core/models/domain/account'
 import type { UpstreamBillingProbeSnapshot } from '@/features/admin-accounts/domain/models/upstreamBillingProbeResult'
 const props = withDefaults(defineProps<{
   account: Account

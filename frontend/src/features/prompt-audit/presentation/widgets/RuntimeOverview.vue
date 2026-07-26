@@ -62,7 +62,7 @@
           </p>
           <div v-if="Object.keys(runtime.endpoints).length" class="mt-3 flex flex-wrap gap-2">
             <span v-for="(probe, id) in runtime.endpoints" :key="id" class="rounded-md px-2 py-1 text-xs" :class="probe.ok ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300'">
-              {{ id }} · {{ probe.status }} · {{ probe.latency_ms }} ms
+              {{ id }} · {{ probe.status }} · {{ probe.latencyMs }} ms
             </span>
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { apiClient } from '@/core/networks/client'
 import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
 import type { UsageLog } from '@/core/models/domain/usageLog'
-import type { UsageQueryParams } from '@/features/admin-usage/domain/models/adminUsageQueryParams'
+import type { AdminUsageQueryParams } from '@/features/admin-usage/domain/models/adminUsageQueryParams'
 import type { UsageStatsResponse } from '@/core/models/domain/usageStatsResponse'
 import { UserDashboardStatsDto } from '@/features/usage/data/models/userDashboardStatsDto'
 import { TrendResponseDto } from '@/features/admin-dashboard/data/models/trendResponseDto'
@@ -9,7 +9,9 @@ import { ModelStatsResponseDto } from '@/features/admin-dashboard/data/models/mo
 import { ApiKeyDailyUsageResponseDto } from '@/features/usage/data/models/apiKeyDailyUsageResponseDto'
 import { UsageDashboardSnapshotV2ResponseDto } from '@/features/usage/data/models/usageDashboardSnapshotV2ResponseDto'
 import { BatchApiKeysUsageResponseDto } from '@/features/usage/data/models/batchApiKeysUsageResponseDto'
-import type { UserErrorRequest, UserErrorRequestDetail, UserErrorListParams } from '@/features/admin-ops/domain/models/userErrorTypes'
+import type { UserErrorRequest } from '@/features/admin-ops/domain/models/userErrorRequest'
+import type { UserErrorRequestDetail } from '@/features/admin-ops/domain/models/userErrorRequestDetail'
+import type { UserErrorListParams } from '@/features/admin-ops/domain/models/userErrorListParams'
 import type { UsageTrendParams } from '@/features/usage/data/requests_models/usageTrendParams'
 import type { UsageDashboardSnapshotV2Params } from '@/features/usage/data/requests_models/usageDashboardSnapshotV2Params'
 import type { UsageDashboardApiKeysUsageRequest } from '@/features/usage/data/requests_models/usageDashboardApiKeysUsageRequest'
@@ -27,7 +29,7 @@ export class UsageQueryDatasource {
   }
 
   async query(
-    params: UsageQueryParams & { sort_by?: string; sort_order?: 'asc' | 'desc' },
+    params: AdminUsageQueryParams & { sort_by?: string; sort_order?: 'asc' | 'desc' },
     config: { signal?: AbortSignal } = {},
   ): Promise<PaginatedResponse<UsageLog>> {
     const { data } = await apiClient.get<PaginatedResponse<UsageLog>>('/usage', { ...config, params })
@@ -35,7 +37,7 @@ export class UsageQueryDatasource {
   }
 
   async getStats(
-    paramsOrPeriod: (UsageQueryParams & { period?: string; timezone?: string }) | string = 'today',
+    paramsOrPeriod: (AdminUsageQueryParams & { period?: string; timezone?: string }) | string = 'today',
     apiKeyId?: number,
   ): Promise<UsageStatsResponse> {
     const params: Record<string, unknown> = typeof paramsOrPeriod === 'string'

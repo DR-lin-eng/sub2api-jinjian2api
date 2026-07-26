@@ -118,8 +118,10 @@
 import { ref, reactive, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { PlatformQuotaItem, PlatformQuotaPlatform, PlatformQuotaWindow } from '@/features/admin-users/domain/models/platformQuotaItem'
+import { useAdminUsersQueryStore } from '@/features/admin-users/presentation/stores/adminUsersQueryStore'
+import { useAdminUsersActionStore } from '@/features/admin-users/presentation/stores/adminUsersActionStore'
+import type { PlatformQuotaItem } from '@/features/admin-users/domain/models/platformQuotaItem'
+import type { PlatformQuotaPlatform } from '@/features/admin-users/enums/platformQuotaEnums'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 
@@ -128,6 +130,8 @@ const emit = defineEmits(['close', 'success'])
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const adminUsersQueryStore = useAdminUsersQueryStore()
+const adminUsersActionStore = useAdminUsersActionStore()
 
 const PLATFORMS: PlatformQuotaPlatform[] = ['anthropic', 'openai', 'gemini', 'antigravity', 'grok']
 
@@ -189,7 +193,7 @@ async function load() {
   if (!props.user) return
   loading.value = true
   try {
-    const data = await adminAPI.users.getPlatformQuotas(props.user.id)
+    const data = await adminUsersQueryStore.getPlatformQuotas(props.user.id)
     quotas.value = normalize(data || [])
   } catch {
     appStore.showError(t('admin.users.platformQuota.loadFailed'))
@@ -243,7 +247,7 @@ async function onSave() {
       weekly_limit_usd: normalizeLimit(r.weekly_limit_usd),
       monthly_limit_usd: normalizeLimit(r.monthly_limit_usd),
     }))
-    await adminAPI.users.updatePlatformQuotas(props.user.id, { quotas: payload })
+    await adminUsersActionStore.updatePlatformQuotas(props.user.id, { quotas: payload })
     appStore.showSuccess(t('admin.users.platformQuota.updateSuccess'))
     emit('success')
     emit('close')
@@ -262,7 +266,7 @@ function normalizeLimit(v: number | null | undefined): number | null {
   return null
 }
 
-async function onReset(platform: PlatformQuotaPlatform, quotaWindow: PlatformQuotaWindow) {
+async function onReset(platform: PlatformQuotaPlatform, quotaWindow: 'daily' | 'weekly' | 'monthly') {
   if (!props.user) return
   const windowLabel = t(`admin.users.platformQuota.window${quotaWindow.charAt(0).toUpperCase() + quotaWindow.slice(1)}`)
   const confirmed = window.confirm(
@@ -272,7 +276,7 @@ async function onReset(platform: PlatformQuotaPlatform, quotaWindow: PlatformQuo
   const key = `${platform}.${quotaWindow}`
   resetting[key] = true
   try {
-    const data = await adminAPI.users.resetPlatformQuotaWindow(props.user.id, { platform, window: quotaWindow })
+    const data = await adminUsersActionStore.resetPlatformQuotaWindow(props.user.id, { platform, window: quotaWindow })
     quotas.value = normalize(data || [])
     appStore.showSuccess(t('admin.users.platformQuota.reset.success', { platform, window: windowLabel }))
   } catch (e: any) {

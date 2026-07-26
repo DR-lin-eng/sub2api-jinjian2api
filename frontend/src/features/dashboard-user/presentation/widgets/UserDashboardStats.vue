@@ -25,8 +25,8 @@
         </div>
         <div>
           <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('dashboard.apiKeys') }}</p>
-          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ stats?.total_api_keys || 0 }}</p>
-          <p class="text-xs text-green-600 dark:text-green-400">{{ stats?.active_api_keys || 0 }} {{ t('common.active') }}</p>
+          <p class="text-xl font-bold text-gray-900 dark:text-white">{{ stats?.totalApiKeys || 0 }}</p>
+          <p class="text-xs text-green-600 dark:text-green-400">{{ stats?.activeApiKeys || 0 }} {{ t('common.active') }}</p>
         </div>
       </div>
     </div>
@@ -184,9 +184,9 @@
             {{ t('dashboard.platformQuota.title') }}
           </p>
           <template v-for="w in (['daily', 'weekly', 'monthly'] as const)" :key="w">
-            <div v-if="quotaVal(item.quota, `${w}_limit_usd`) != null" class="space-y-0.5">
+            <div v-if="quotaVal(item.quota, `${w}LimitUsd`) != null" class="space-y-0.5">
               <!-- limit=0：完全禁用 -->
-              <template v-if="(quotaVal(item.quota, `${w}_limit_usd`) as number) === 0">
+              <template v-if="(quotaVal(item.quota, `${w}LimitUsd`) as number) === 0">
                 <div class="flex items-center justify-between text-xs">
                   <span class="text-gray-600 dark:text-gray-300">{{ t(`dashboard.platformQuota.${w}`) }}</span>
                   <span class="font-mono text-red-500">{{ t('dashboard.platformQuota.disabled') }}</span>
@@ -200,18 +200,18 @@
                 <div class="flex items-center justify-between text-xs">
                   <span class="text-gray-600 dark:text-gray-300">{{ t(`dashboard.platformQuota.${w}`) }}</span>
                   <span class="font-mono text-gray-700 dark:text-gray-200">
-                    ${{ formatUsd((quotaVal(item.quota, `${w}_usage_usd`) as number) ?? 0) }} / ${{ formatUsd(quotaVal(item.quota, `${w}_limit_usd`) as number) }}
+                    ${{ formatUsd((quotaVal(item.quota, `${w}UsageUsd`) as number) ?? 0) }} / ${{ formatUsd(quotaVal(item.quota, `${w}LimitUsd`) as number) }}
                   </span>
                 </div>
                 <div class="h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-dark-700">
                   <div
                     class="h-full rounded-full transition-all"
-                    :class="quotaBarClass(calcPercent((quotaVal(item.quota, `${w}_usage_usd`) as number) ?? 0, quotaVal(item.quota, `${w}_limit_usd`) as number))"
-                    :style="{ width: calcPercent((quotaVal(item.quota, `${w}_usage_usd`) as number) ?? 0, quotaVal(item.quota, `${w}_limit_usd`) as number) + '%' }"
+                    :class="quotaBarClass(calcPercent((quotaVal(item.quota, `${w}UsageUsd`) as number) ?? 0, quotaVal(item.quota, `${w}LimitUsd`) as number))"
+                    :style="{ width: calcPercent((quotaVal(item.quota, `${w}UsageUsd`) as number) ?? 0, quotaVal(item.quota, `${w}LimitUsd`) as number) + '%' }"
                   />
                 </div>
-                <p v-if="quotaVal(item.quota, `${w}_window_resets_at`)" class="text-[10px] text-gray-400">
-                  {{ t('dashboard.platformQuota.resetsAt', { time: formatResetTime(quotaVal(item.quota, `${w}_window_resets_at`) as string) }) }}
+                <p v-if="quotaVal(item.quota, `${w}WindowResetsAt`)" class="text-[10px] text-gray-400">
+                  {{ t('dashboard.platformQuota.resetsAt', { time: formatResetTime(quotaVal(item.quota, `${w}WindowResetsAt`) as string) }) }}
                 </p>
               </template>
             </div>
@@ -319,15 +319,18 @@ const platformCards = computed<FusedPlatformCard[]>(() => {
 // Quota helpers
 
 type QuotaWindow = 'daily' | 'weekly' | 'monthly'
-type QuotaField = `${QuotaWindow}_limit_usd` | `${QuotaWindow}_usage_usd` | `${QuotaWindow}_window_resets_at`
+type QuotaField =
+  | `${QuotaWindow}LimitUsd`
+  | `${QuotaWindow}UsageUsd`
+  | `${QuotaWindow}WindowResetsAt`
 
-function quotaVal(q: PlatformQuotaItem | undefined, key: QuotaField): PlatformQuotaItem[QuotaField] {
+function quotaVal(q: PlatformQuotaItem | undefined, key: QuotaField): PlatformQuotaItem[QuotaField] | undefined {
   return q?.[key]
 }
 
 function hasAnyLimit(q: PlatformQuotaItem | undefined): boolean {
   if (!q) return false
-  return q.daily_limit_usd != null || q.weekly_limit_usd != null || q.monthly_limit_usd != null
+  return q.dailyLimitUsd != null || q.weeklyLimitUsd != null || q.monthlyLimitUsd != null
 }
 
 function calcPercent(usage: number, limit: number): number {

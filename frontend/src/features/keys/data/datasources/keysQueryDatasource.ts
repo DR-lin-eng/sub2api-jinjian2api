@@ -4,7 +4,7 @@
  */
 import { apiClient } from '@/core/networks/client'
 import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
-import { ApiKeyDto } from '@/features/keys/data/models/apiKeyDto'
+import { ApiKeyDto } from '@/core/models/data/apiKeyDto'
 
 export class KeysQueryDatasource {
   async list(

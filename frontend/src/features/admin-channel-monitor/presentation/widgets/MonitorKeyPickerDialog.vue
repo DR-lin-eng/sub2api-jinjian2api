@@ -75,7 +75,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { ApiKey } from '@/features/keys/domain/models/apiKey'
+import type { ApiKey } from '@/core/models/domain/apiKey'
 import type { Provider } from '@/core/constants/channelMonitor'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'

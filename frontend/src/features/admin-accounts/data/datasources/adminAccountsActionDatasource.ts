@@ -4,7 +4,7 @@
  */
 
 import { apiClient } from '@/core/networks/client'
-import { AccountDto } from '@/features/admin-accounts/data/models/accountDto'
+import { AccountDto } from '@/core/models/data/accountDto'
 import { UpstreamBillingProbeSettingsDto } from '@/features/admin-accounts/data/models/upstreamBillingProbeSettingsDto'
 import { UpstreamBillingProbeResultDto } from '@/features/admin-accounts/data/models/upstreamBillingProbeResultDto'
 import { AdminDataImportResultDto } from '@/features/admin-accounts/data/models/adminDataImportResultDto'

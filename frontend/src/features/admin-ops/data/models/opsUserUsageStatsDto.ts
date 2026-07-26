@@ -1,6 +1,7 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import { OpsUserUsageStatsItem, OpsUserUsageStats } from '@/features/admin-ops/domain/models/opsUserUsageStats'
+import { OpsUserUsageStats } from '@/features/admin-ops/domain/models/opsUserUsageStats'
+import { OpsUserUsageStatsItem } from '@/features/admin-ops/domain/models/opsUserUsageStatsItem'
 
 export class OpsUserUsageStatsItemDto {
   @Expose({ name: 'user_id' }) @Transform(({ value }) => value ?? 0) userId!: number

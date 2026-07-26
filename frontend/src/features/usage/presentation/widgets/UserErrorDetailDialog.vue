@@ -76,7 +76,7 @@ import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import { useUsageQueryStore } from '@/features/usage/presentation/stores/usageQueryStore'
 import { formatDateTime } from '@/core/utils/format'
-import type { UserErrorRequestDetail } from '@/features/admin-ops/domain/models/userErrorTypes'
+import type { UserErrorRequestDetail } from '@/features/admin-ops/domain/models/userErrorRequestDetail'
 
 const props = defineProps<{
   show: boolean

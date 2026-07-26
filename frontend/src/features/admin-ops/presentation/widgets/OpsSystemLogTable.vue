@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import {
-  opsAPI,
-  type OpsRuntimeLogConfig,
-  type OpsSystemLog,
-  type OpsSystemLogSinkHealth
-} from '@/features/admin-ops/domain/models/opsSystemLog'
-import type { OpsSystemLogSinkHealth } from '@/features/admin-ops/domain/models/opsSystemLogSinkHealth'
+import { OpsSystemLog } from '@/features/admin-ops/domain/models/opsSystemLog'
+import { OpsRuntimeLogConfig } from '@/features/admin-ops/domain/models/opsRuntimeLogConfig'
+import { OpsSystemLogSinkHealth } from '@/features/admin-ops/domain/models/opsSystemLogSinkHealth'
 import { useAdminOpsActionStore } from '@/features/admin-ops/presentation/stores/adminOpsActionStore'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
 import type { UpdateRuntimeLogConfigRequest } from '@/features/admin-ops/data/requests_models/updateRuntimeLogConfigRequest'
 import type { CleanupSystemLogsRequest } from '@/features/admin-ops/data/requests_models/cleanupSystemLogsRequest'
 import Pagination from '@/common/widgets/data/Pagination.vue'
@@ -20,6 +17,7 @@ import { formatCompactNumber, formatExactNumber } from '@/features/admin-ops/pre
 const appStore = useAppStore()
 const { t } = useI18n()
 const actionStore = useAdminOpsActionStore()
+const queryStore = useAdminOpsQueryStore()
 
 const props = withDefaults(defineProps<{
   platformFilter?: string
@@ -36,25 +34,29 @@ const page = ref(1)
 const pageSize = ref(20)
 
 const health = ref<OpsSystemLogSinkHealth>({
-  queue_depth: 0,
-  queue_capacity: 0,
-  dropped_count: 0,
-  write_failed_count: 0,
-  written_count: 0,
-  avg_write_delay_ms: 0
+  queueDepth: 0,
+  queueCapacity: 0,
+  droppedCount: 0,
+  writeFailedCount: 0,
+  writtenCount: 0,
+  avgWriteDelayMs: 0,
+  lastError: ''
 })
 
 const runtimeLoading = ref(false)
 const runtimeSaving = ref(false)
 const runtimeConfig = reactive<OpsRuntimeLogConfig>({
   level: 'info',
-  enable_sampling: false,
-  sampling_initial: 100,
-  sampling_thereafter: 100,
+  enableSampling: false,
+  samplingInitial: 100,
+  samplingThereafter: 100,
   caller: true,
-  stacktrace_level: 'error',
-  retention_days: 30,
-  redis_only: false
+  stacktraceLevel: 'error',
+  retentionDays: 30,
+  redisOnly: false,
+  source: '',
+  updatedAt: '',
+  updatedByUserId: 0
 })
 
 const filters = reactive({
@@ -192,18 +194,18 @@ const buildQuery = () => {
   if (filters.host.trim()) query.host = filters.host.trim()
   if (filters.level.trim()) query.level = filters.level.trim()
   if (filters.component.trim()) query.component = filters.component.trim()
-  if (filters.requestId.trim()) query.requestId = filters.requestId.trim()
-  if (filters.clientRequestId.trim()) query.clientRequestId = filters.clientRequestId.trim()
-  if (filters.userId.trim()) {
-    const v = Number.parseInt(filters.userId.trim(), 10)
+  if (filters.request_id.trim()) query.requestId = filters.request_id.trim()
+  if (filters.client_request_id.trim()) query.clientRequestId = filters.client_request_id.trim()
+  if (filters.user_id.trim()) {
+    const v = Number.parseInt(filters.user_id.trim(), 10)
     if (Number.isFinite(v) && v > 0) query.userId = v
   }
-  if (filters.apiKeyId.trim()) {
-    const v = Number.parseInt(filters.apiKeyId.trim(), 10)
+  if (filters.api_key_id.trim()) {
+    const v = Number.parseInt(filters.api_key_id.trim(), 10)
     if (Number.isFinite(v) && v > 0) query.apiKeyId = v
   }
-  if (filters.accountId.trim()) {
-    const v = Number.parseInt(filters.accountId.trim(), 10)
+  if (filters.account_id.trim()) {
+    const v = Number.parseInt(filters.account_id.trim(), 10)
     if (Number.isFinite(v) && v > 0) query.accountId = v
   }
   if (filters.platform.trim()) query.platform = filters.platform.trim()
@@ -315,11 +317,11 @@ const hasCleanupFilter = computed(() => Boolean(
   filters.host.trim() ||
   filters.level.trim() ||
   filters.component.trim() ||
-  filters.requestId.trim() ||
-  filters.clientRequestId.trim() ||
-  filters.userId.trim() ||
-  filters.apiKeyId.trim() ||
-  filters.accountId.trim() ||
+  filters.request_id.trim() ||
+  filters.client_request_id.trim() ||
+  filters.user_id.trim() ||
+  filters.api_key_id.trim() ||
+  filters.account_id.trim() ||
   filters.platform.trim() ||
   filters.model.trim() ||
   filters.q.trim()
@@ -342,11 +344,11 @@ const cleanupCurrentFilter = async () => {
       host: filters.host.trim() || undefined,
       level: filters.level.trim() || undefined,
       component: filters.component.trim() || undefined,
-      request_id: filters.requestId.trim() || undefined,
-      client_request_id: filters.clientRequestId.trim() || undefined,
-      user_id: filters.userId.trim() ? Number.parseInt(filters.userId.trim(), 10) : undefined,
-      api_key_id: filters.apiKeyId.trim() ? Number.parseInt(filters.apiKeyId.trim(), 10) : undefined,
-      account_id: filters.accountId.trim() ? Number.parseInt(filters.accountId.trim(), 10) : undefined,
+      request_id: filters.request_id.trim() || undefined,
+      client_request_id: filters.client_request_id.trim() || undefined,
+      user_id: filters.user_id.trim() ? Number.parseInt(filters.user_id.trim(), 10) : undefined,
+      api_key_id: filters.api_key_id.trim() ? Number.parseInt(filters.api_key_id.trim(), 10) : undefined,
+      account_id: filters.account_id.trim() ? Number.parseInt(filters.account_id.trim(), 10) : undefined,
       platform: filters.platform.trim() || undefined,
       model: filters.model.trim() || undefined,
       q: filters.q.trim() || undefined
@@ -368,11 +370,11 @@ const resetFilters = () => {
   filters.host = ''
   filters.level = ''
   filters.component = ''
-  filters.requestId = ''
-  filters.clientRequestId = ''
-  filters.userId = ''
-  filters.apiKeyId = ''
-  filters.accountId = ''
+  filters.request_id = ''
+  filters.client_request_id = ''
+  filters.user_id = ''
+  filters.api_key_id = ''
+  filters.account_id = ''
   filters.platform = props.platformFilter || ''
   filters.model = ''
   filters.q = ''
@@ -520,23 +522,23 @@ onMounted(async () => {
       </label>
       <label class="text-xs text-gray-600 dark:text-gray-300">
         request_id
-        <input v-model="filters.requestId" type="text" class="input mt-1" />
+        <input v-model="filters.request_id" type="text" class="input mt-1" />
       </label>
       <label class="text-xs text-gray-600 dark:text-gray-300">
         client_request_id
-        <input v-model="filters.clientRequestId" type="text" class="input mt-1" />
+        <input v-model="filters.client_request_id" type="text" class="input mt-1" />
       </label>
       <label class="text-xs text-gray-600 dark:text-gray-300">
         user_id
-        <input v-model="filters.userId" type="text" class="input mt-1" />
+        <input v-model="filters.user_id" type="text" class="input mt-1" />
       </label>
       <label class="text-xs text-gray-600 dark:text-gray-300">
         {{ t('admin.ops.systemLogs.keyId') }}
-        <input v-model="filters.apiKeyId" type="text" class="input mt-1" />
+        <input v-model="filters.api_key_id" type="text" class="input mt-1" />
       </label>
       <label class="text-xs text-gray-600 dark:text-gray-300">
         account_id
-        <input v-model="filters.accountId" type="text" class="input mt-1" />
+        <input v-model="filters.account_id" type="text" class="input mt-1" />
       </label>
       <label class="text-xs text-gray-600 dark:text-gray-300">
         {{ t('admin.ops.systemLogs.platform') }}

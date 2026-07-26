@@ -55,8 +55,8 @@
         <div v-if="showThroughputTrend" class="h-[360px]" :class="throughputPanelGridClass">
           <OpsThroughputTrendChart
             :points="throughputTrend?.points ?? []"
-            :by-platform="throughputTrend?.by_platform ?? []"
-            :top-groups="throughputTrend?.top_groups ?? []"
+            :by-platform="throughputTrend?.byPlatform ?? []"
+            :top-groups="throughputTrend?.topGroups ?? []"
             :loading="loadingTrend"
             :time-range="timeRange"
             :fullscreen="isFullscreen"
@@ -170,17 +170,15 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import {
-  opsAPI,
-  type OpsDashboardOverview,
-  type OpsErrorDistributionResponse,
-  type OpsErrorTrendResponse,
-  type OpsLatencyHistogramResponse,
-  type OpsThroughputTrendResponse,
-  type OpsMetricThresholds
-} from '@/features/admin-ops/domain/models/opsMetricThresholds'
+import type { OpsDashboardOverview } from '@/features/admin-ops/domain/models/opsDashboardOverview'
+import type { OpsErrorDistributionResponse } from '@/features/admin-ops/domain/models/opsErrorDistributionResponse'
+import type { OpsErrorTrendResponse } from '@/features/admin-ops/domain/models/opsErrorTrendResponse'
+import type { OpsLatencyHistogramResponse } from '@/features/admin-ops/domain/models/opsLatencyHistogramResponse'
+import type { OpsThroughputTrendResponse } from '@/features/admin-ops/domain/models/opsThroughputTrendResponse'
+import type { OpsMetricThresholds } from '@/features/admin-ops/domain/models/opsMetricThresholds'
 import type { OpsAdvancedSettings } from '@/features/admin-ops/domain/models/opsAdvancedSettings'
-import { useAdminSettingsStore } from '@/core/stores/adminSettingsStore'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
 import { useAppStore } from '@/core/stores/appStore'
 import OpsDashboardHeader from '@/features/admin-ops/presentation/widgets/OpsDashboardHeader.vue'
 import OpsDashboardSkeleton from '@/features/admin-ops/presentation/widgets/OpsDashboardSkeleton.vue'
@@ -205,6 +203,7 @@ const route = useRoute()
 const router = useRouter()
 const appStore = useAppStore()
 const adminSettingsStore = useAdminSettingsStore()
+const queryStore = useAdminOpsQueryStore()
 const { t } = useI18n()
 
 const opsEnabled = computed(() => adminSettingsStore.opsMonitoringEnabled)
@@ -403,7 +402,7 @@ const showRequestDetails = ref(false)
 const requestDetailsPreset = ref<OpsRequestDetailsPreset>({
   title: '',
   kind: 'all',
-  sort: 'created_at_desc'
+  sort: 'created_at'
 })
 
 const showSettingsDialog = ref(false)
@@ -521,7 +520,7 @@ async function loadDashboardSettingsSnapshot() {
   try {
     const settings = await queryStore.getSettingsSnapshot()
     applyDashboardAdvancedSettings(settings.advanced)
-    metricThresholds.value = settings.metric_thresholds || null
+    metricThresholds.value = settings.metricThresholds || null
   } catch (err) {
     console.warn('[OpsDashboard] Failed to load settings snapshot, using split endpoints', err)
     await Promise.all([loadDashboardAdvancedSettings(), loadThresholds()])
@@ -542,7 +541,7 @@ function handleOpenRequestDetails(preset?: OpsRequestDetailsPreset) {
   const basePreset: OpsRequestDetailsPreset = {
     title: t('admin.ops.requestDetails.title'),
     kind: 'all',
-    sort: 'created_at_desc'
+    sort: 'created_at'
   }
 
   requestDetailsPreset.value = { ...basePreset, ...(preset ?? {}) }
@@ -714,16 +713,16 @@ async function refreshCoreSnapshotWithCancel(fetchSeq: number, signal: AbortSign
     const data = await queryStore.getDashboardSnapshotV2(buildSnapshotApiParams(), { signal })
     if (fetchSeq !== dashboardFetchSeq) return
     overview.value = data.overview
-    throughputTrend.value = showThroughputTrend.value ? data.throughput_trend ?? null : null
-    errorTrend.value = showErrorTrend.value ? data.error_trend ?? null : null
-    latencyHistogram.value = showLatencyHistogram.value ? data.latency_histogram ?? null : null
-    errorDistribution.value = showErrorDistribution.value ? data.error_distribution ?? null : null
+    throughputTrend.value = showThroughputTrend.value ? data.throughputTrend ?? null : null
+    errorTrend.value = showErrorTrend.value ? data.errorTrend ?? null : null
+    latencyHistogram.value = showLatencyHistogram.value ? data.latencyHistogram ?? null : null
+    errorDistribution.value = showErrorDistribution.value ? data.errorDistribution ?? null : null
 
     const missingRequests: Array<Promise<void>> = []
-    if (showThroughputTrend.value && !data.throughput_trend) missingRequests.push(refreshThroughputTrendWithCancel(fetchSeq, signal))
-    if (showLatencyHistogram.value && !data.latency_histogram) missingRequests.push(refreshLatencyHistogramWithCancel(fetchSeq, signal))
-    if (showErrorTrend.value && !data.error_trend) missingRequests.push(refreshErrorTrendWithCancel(fetchSeq, signal))
-    if (showErrorDistribution.value && !data.error_distribution) missingRequests.push(refreshErrorDistributionWithCancel(fetchSeq, signal))
+    if (showThroughputTrend.value && !data.throughputTrend) missingRequests.push(refreshThroughputTrendWithCancel(fetchSeq, signal))
+    if (showLatencyHistogram.value && !data.latencyHistogram) missingRequests.push(refreshLatencyHistogramWithCancel(fetchSeq, signal))
+    if (showErrorTrend.value && !data.errorTrend) missingRequests.push(refreshErrorTrendWithCancel(fetchSeq, signal))
+    if (showErrorDistribution.value && !data.errorDistribution) missingRequests.push(refreshErrorDistributionWithCancel(fetchSeq, signal))
     if (missingRequests.length > 0) await Promise.all(missingRequests)
   } catch (err: any) {
     if (fetchSeq !== dashboardFetchSeq || isCanceledRequest(err)) return
@@ -907,8 +906,8 @@ onMounted(async () => {
 
 async function loadThresholds() {
   try {
-    const thresholds = await queryStore.getMetricThresholds()
-    metricThresholds.value = thresholds || null
+    const runtime = await queryStore.getAlertRuntimeSettings()
+    metricThresholds.value = runtime?.thresholds || null
   } catch (err) {
     console.warn('[OpsDashboard] Failed to load thresholds', err)
     metricThresholds.value = null

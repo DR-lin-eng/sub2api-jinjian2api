@@ -12,8 +12,8 @@ export interface UpdateAlertRuntimeSettingsRequest {
     entries?: Array<{
       rule_id?: number
       severities?: string[]
-      until_rfc3339: string
-      reason: string
+      until_rfc3339?: string
+      reason?: string
     }>
   }
   thresholds: {

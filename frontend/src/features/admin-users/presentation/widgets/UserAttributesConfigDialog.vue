@@ -240,16 +240,21 @@
 import { ref, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
+import { useAdminUsersQueryStore } from '@/features/admin-users/presentation/stores/adminUsersQueryStore'
+import { useAdminUsersActionStore } from '@/features/admin-users/presentation/stores/adminUsersActionStore'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import { createStableObjectKeyResolver } from '@/core/utils/stableObjectKey'
-import type { UserAttributeDefinition, UserAttributeType, UserAttributeOption } from '@/features/admin-users/domain/models/userAttributeDefinition'
+import type { UserAttributeDefinition } from '@/features/admin-users/domain/models/userAttributeDefinition'
+import type { UserAttributeType } from '@/features/admin-users/enums/userAttributeType'
+import type { UserAttributeOption } from '@/features/admin-users/domain/models/userAttributeOption'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const adminUsersQueryStore = useAdminUsersQueryStore()
+const adminUsersActionStore = useAdminUsersActionStore()
 
 interface Props {
   show: boolean
@@ -287,7 +292,7 @@ const form = reactive({
 const loadAttributes = async () => {
   loading.value = true
   try {
-    attributes.value = await adminAPI.userAttributes.listDefinitions()
+    attributes.value = await adminUsersQueryStore.listDefinitions()
   } catch (error: any) {
     appStore.showError(error.response?.data?.detail || t('admin.users.attributes.failedToLoad'))
   } finally {
@@ -361,10 +366,10 @@ const handleSave = async () => {
     }
 
     if (editingAttribute.value) {
-      await adminAPI.userAttributes.updateDefinition(editingAttribute.value.id, data)
+      await adminUsersActionStore.updateDefinition(editingAttribute.value.id, data)
       appStore.showSuccess(t('admin.users.attributes.updated'))
     } else {
-      await adminAPI.userAttributes.createDefinition(data)
+      await adminUsersActionStore.createDefinition(data)
       appStore.showSuccess(t('admin.users.attributes.created'))
     }
 
@@ -389,7 +394,7 @@ const handleDelete = async () => {
   if (!deletingAttribute.value) return
 
   try {
-    await adminAPI.userAttributes.deleteDefinition(deletingAttribute.value.id)
+    await adminUsersActionStore.deleteDefinition(deletingAttribute.value.id)
     appStore.showSuccess(t('admin.users.attributes.deleted'))
     showDeleteDialog.value = false
     deletingAttribute.value = null

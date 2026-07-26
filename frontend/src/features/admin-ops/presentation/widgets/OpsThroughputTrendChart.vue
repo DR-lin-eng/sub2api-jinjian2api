@@ -4,7 +4,9 @@ import { useI18n } from 'vue-i18n'
 import { Chart as ChartJS, CategoryScale, Filler, Legend, LineElement, LinearScale, PointElement, Title, Tooltip } from 'chart.js'
 import { Line } from 'vue-chartjs'
 import type { ChartComponentRef } from 'vue-chartjs'
-import type { OpsThroughputTrendPoint, OpsThroughputPlatformBreakdown, OpsThroughputGroupBreakdown } from '@/features/admin-ops/domain/models/opsThroughputTrendResponse'
+import type { OpsThroughputTrendPoint } from '@/features/admin-ops/domain/models/opsThroughputTrendPoint'
+import type { OpsThroughputPlatformBreakdown } from '@/features/admin-ops/domain/models/opsThroughputPlatformBreakdown'
+import type { OpsThroughputGroupBreakdown } from '@/features/admin-ops/domain/models/opsThroughputGroupBreakdown'
 import type { ChartState } from '@/features/admin-ops/presentation/utils/opsFormatter'
 import { formatCompactNumber, formatExactNumber, formatHistoryLabel, sumNumbers } from '@/features/admin-ops/presentation/utils/opsFormatter'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
@@ -16,8 +18,8 @@ interface Props {
   points: OpsThroughputTrendPoint[]
   loading: boolean
   timeRange: string
-  byPlatform?: OpsThroughputPlatformBreakdownItem[]
-  topGroups?: OpsThroughputGroupBreakdownItem[]
+  byPlatform?: OpsThroughputPlatformBreakdown[]
+  topGroups?: OpsThroughputGroupBreakdown[]
   fullscreen?: boolean
 }
 
@@ -52,12 +54,12 @@ const colors = computed(() => ({
   text: isDarkMode.value ? '#9ca3af' : '#6b7280'
 }))
 
-const totalRequests = computed(() => sumNumbers(props.points.map((p) => p.request_count)))
+const totalRequests = computed(() => sumNumbers(props.points.map((p) => p.requestCount)))
 
 const chartData = computed(() => {
   if (!props.points.length || totalRequests.value <= 0) return null
   return {
-    labels: props.points.map((p) => formatHistoryLabel(p.bucket_start, props.timeRange)),
+    labels: props.points.map((p) => formatHistoryLabel(p.bucketStart, props.timeRange)),
     datasets: [
       {
         label: 'QPS',
@@ -234,7 +236,7 @@ function downloadChart() {
         @click="emit('selectGroup', g.groupId)"
       >
         <span class="max-w-[180px] truncate">{{ g.groupName || `#${g.groupId}` }}</span>
-        <span class="tabular-nums text-gray-400 dark:text-gray-500" :title="formatExactNumber(g.request_count)">{{ formatCompactNumber(g.request_count) }}</span>
+        <span class="tabular-nums text-gray-400 dark:text-gray-500" :title="formatExactNumber(g.requestCount)">{{ formatCompactNumber(g.requestCount) }}</span>
       </button>
     </div>
 
@@ -247,7 +249,7 @@ function downloadChart() {
         @click="emit('selectPlatform', p.platform)"
       >
         <span class="uppercase">{{ p.platform }}</span>
-        <span class="tabular-nums text-gray-400 dark:text-gray-500" :title="formatExactNumber(p.request_count)">{{ formatCompactNumber(p.request_count) }}</span>
+        <span class="tabular-nums text-gray-400 dark:text-gray-500" :title="formatExactNumber(p.requestCount)">{{ formatCompactNumber(p.requestCount) }}</span>
       </button>
     </div>
 

@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
-import { AccountHourlyUsageStats } from '@/features/admin-accounts/domain/models/accountHourlyUsageStats'
+import { AccountHourlyUsageStats } from '@/core/models/domain/accountHourlyUsageStats'
 
 export class AccountHourlyUsageStatsDto {
   @Expose({ name: 'total_requests' }) @Transform(({ value }) => value ?? 0) totalRequests!: number

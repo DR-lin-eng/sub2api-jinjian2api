@@ -1,6 +1,6 @@
 import type { CodexSessionImportRequest } from '@/features/admin-accounts/data/requests_models/codexSessionImportRequest'
 import type { OpenAICodexPATCreateRequest } from '@/features/admin-accounts/data/requests_models/openAICodexPATCreateRequest'
-import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { Account } from '@/core/models/domain/account'
 import type { CreateAccountRequest } from '@/features/admin-accounts/data/requests_models/createAccountRequest'
 import type { UpdateAccountRequest } from '@/features/admin-accounts/data/requests_models/updateAccountRequest'
 import type { AdminDataPayload } from '@/features/admin-accounts/domain/models/adminDataPayload'

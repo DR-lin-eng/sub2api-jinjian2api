@@ -27,7 +27,7 @@
       </label>
       <label class="text-xs text-gray-600 dark:text-dark-200">
         <span>{{ t('admin.promptAudit.events.risk') }}</span>
-        <select v-model="localFilters.risk_level" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.risk')" @change="filtersChanged">
+        <select v-model="localFilters.riskLevel" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.risk')" @change="filtersChanged">
           <option value="">{{ t('common.all') }}</option>
           <option value="low">{{ t('admin.promptAudit.riskLevels.low') }}</option>
           <option value="medium">{{ t('admin.promptAudit.riskLevels.medium') }}</option>
@@ -36,19 +36,19 @@
         </select>
       </label>
       <FilterInput v-model="localFilters.endpoint" :label="t('admin.promptAudit.events.endpoint')" @change="filtersChanged" />
-      <FilterInput v-model="localFilters.group_id" :label="t('admin.promptAudit.events.group_id')" type="number" @change="filtersChanged" />
-      <FilterInput v-model="localFilters.user_id" :label="t('admin.promptAudit.events.user_id')" type="number" @change="filtersChanged" />
-      <FilterInput v-model="localFilters.api_key_id" :label="t('admin.promptAudit.events.api_key_id')" type="number" @change="filtersChanged" />
-      <FilterInput v-model="localFilters.request_id" :label="t('admin.promptAudit.events.request_id')" @change="filtersChanged" />
-      <FilterInput v-model="localFilters.prompt_hash" :label="t('admin.promptAudit.events.promptHash')" @change="filtersChanged" />
+      <FilterInput v-model="localFilters.groupId" :label="t('admin.promptAudit.events.group_id')" type="number" @change="filtersChanged" />
+      <FilterInput v-model="localFilters.userId" :label="t('admin.promptAudit.events.user_id')" type="number" @change="filtersChanged" />
+      <FilterInput v-model="localFilters.apiKeyId" :label="t('admin.promptAudit.events.api_key_id')" type="number" @change="filtersChanged" />
+      <FilterInput v-model="localFilters.requestId" :label="t('admin.promptAudit.events.request_id')" @change="filtersChanged" />
+      <FilterInput v-model="localFilters.promptHash" :label="t('admin.promptAudit.events.promptHash')" @change="filtersChanged" />
       <FilterInput v-model="localFilters.keyword" :label="t('admin.promptAudit.events.keyword')" @change="filtersChanged" />
       <label class="text-xs text-gray-600 dark:text-dark-200">
         <span>{{ t('admin.promptAudit.events.startAt') }}</span>
-        <input v-model="localFilters.start_at" type="datetime-local" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.startAt')" @change="filtersChanged" />
+        <input v-model="localFilters.startAt" type="datetime-local" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.startAt')" @change="filtersChanged" />
       </label>
       <label class="text-xs text-gray-600 dark:text-dark-200">
         <span>{{ t('admin.promptAudit.events.endAt') }}</span>
-        <input v-model="localFilters.end_at" type="datetime-local" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.endAt')" @change="filtersChanged" />
+        <input v-model="localFilters.endAt" type="datetime-local" class="input mt-1 w-full" :aria-label="t('admin.promptAudit.events.endAt')" @change="filtersChanged" />
       </label>
       <div class="flex items-end gap-2 sm:col-span-2">
         <button type="submit" class="btn btn-primary btn-sm">{{ t('common.search') }}</button>

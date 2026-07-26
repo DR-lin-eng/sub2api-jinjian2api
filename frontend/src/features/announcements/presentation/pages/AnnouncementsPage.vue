@@ -268,6 +268,8 @@ import { useAdminGroups } from '@/features/admin-groups/presentation/composables
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
 import type { Announcement } from '@/features/announcements/domain/models/announcement'
 import type { AnnouncementTargeting } from '@/features/announcements/domain/models/announcementTargeting'
+import type { AnnouncementStatus } from '@/features/announcements/enums/announcementStatus'
+import type { AnnouncementNotifyMode } from '@/features/announcements/enums/announcementNotifyMode'
 const $announcements = useAnnouncements()
 const $groups = useAdminGroups()
 
@@ -418,14 +420,22 @@ const editingAnnouncement = ref<Announcement | null>(null)
 
 const isEditing = computed(() => !!editingAnnouncement.value)
 
-const form = reactive({
+const form = reactive<{
+  title: string
+  content: string
+  status: AnnouncementStatus
+  notify_mode: AnnouncementNotifyMode
+  starts_at_str: string
+  ends_at_str: string
+  targeting: AnnouncementTargeting
+}>({
   title: '',
   content: '',
   status: 'draft',
   notify_mode: 'silent',
   starts_at_str: '',
   ends_at_str: '',
-  targeting: { any_of: [] } as AnnouncementTargeting
+  targeting: { anyOf: [] }
 })
 
 const subscriptionGroups = ref<AdminGroup[]>([])
@@ -460,7 +470,7 @@ function fillFormFromAnnouncement(a: Announcement) {
   form.starts_at_str = a.startsAt ? formatDateTimeLocalInput(Math.floor(new Date(a.startsAt).getTime() / 1000)) : ''
   form.ends_at_str = a.endsAt ? formatDateTimeLocalInput(Math.floor(new Date(a.endsAt).getTime() / 1000)) : ''
 
-  form.targeting = a.targeting ?? { any_of: [] }
+  form.targeting = a.targeting ?? { anyOf: [] }
 }
 
 function openCreateDialog() {
@@ -487,8 +497,8 @@ function buildCreatePayload() {
   return {
     title: form.title,
     content: form.content,
-    status: form.status as any,
-    notify_mode: form.notify_mode as any,
+    status: form.status,
+    notify_mode: form.notify_mode,
     targeting: form.targeting,
     starts_at: startsAt ?? undefined,
     ends_at: endsAt ?? undefined

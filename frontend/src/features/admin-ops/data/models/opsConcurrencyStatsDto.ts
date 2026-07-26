@@ -1,6 +1,9 @@
 import 'reflect-metadata'
-import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import { PlatformConcurrencyInfo, GroupConcurrencyInfo, AccountConcurrencyInfo, OpsConcurrencyStats } from '@/features/admin-ops/domain/models/opsConcurrencyStats'
+import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { OpsConcurrencyStats } from '@/features/admin-ops/domain/models/opsConcurrencyStats'
+import { PlatformConcurrencyInfo } from '@/features/admin-ops/domain/models/platformConcurrencyInfo'
+import { GroupConcurrencyInfo } from '@/features/admin-ops/domain/models/groupConcurrencyInfo'
+import { AccountConcurrencyInfo } from '@/features/admin-ops/domain/models/accountConcurrencyInfo'
 
 export class PlatformConcurrencyInfoDto {
   @Expose() @Transform(({ value }) => value ?? '') platform!: string

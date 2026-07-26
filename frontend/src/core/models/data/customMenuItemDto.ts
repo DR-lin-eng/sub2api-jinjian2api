@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
-import { CustomMenuItem } from '@/features/auth/domain/models/customMenuItem'
+import { CustomMenuItem } from '@/core/models/domain/customMenuItem'
 
 export class CustomMenuItemDto {
   @Expose()

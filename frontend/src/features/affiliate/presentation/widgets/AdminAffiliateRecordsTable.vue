@@ -53,50 +53,50 @@
               @open="openUserOverview"
             />
           </template>
-          <template #cell-aff_code="{ row }">
-            <span class="font-mono text-sm text-gray-700 dark:text-gray-300">{{ (row as any).affCode || '-' }}</span>
+          <template #cell-aff_code="{ row }: { row: AffiliateInviteRecord }">
+            <span class="font-mono text-sm text-gray-700 dark:text-gray-300">{{ row.affCode || '-' }}</span>
           </template>
-          <template #cell-order="{ row }">
+          <template #cell-order="{ row }: { row: AffiliateRebateRecord }">
             <div class="space-y-0.5">
-              <div class="font-mono text-sm text-gray-900 dark:text-white">#{{ (row as any).orderId }}</div>
-              <div class="max-w-56 truncate text-sm text-gray-500 dark:text-dark-400">{{ (row as any).outTradeNo }}</div>
+              <div class="font-mono text-sm text-gray-900 dark:text-white">#{{ row.orderId }}</div>
+              <div class="max-w-56 truncate text-sm text-gray-500 dark:text-dark-400">{{ row.outTradeNo }}</div>
             </div>
           </template>
-          <template #cell-payment_type="{ row }">
-            {{ t('payment.methods.' + (row as any).paymentType, (row as any).paymentType || '-') }}
+          <template #cell-payment_type="{ row }: { row: AffiliateRebateRecord }">
+            {{ t('payment.methods.' + row.paymentType, row.paymentType || '-') }}
           </template>
-          <template #cell-order_status="{ row }">
-            <OrderStatusBadge :status="(row as any).orderStatus" />
+          <template #cell-order_status="{ row }: { row: AffiliateRebateRecord }">
+            <OrderStatusBadge :status="row.orderStatus" />
           </template>
-          <template #cell-total_rebate="{ row }">
-            <AmountText :value="(row as any).totalRebate" />
+          <template #cell-total_rebate="{ row }: { row: AffiliateInviteRecord }">
+            <AmountText :value="row.totalRebate" />
           </template>
-          <template #cell-order_amount="{ row }">
-            <AmountText :value="(row as any).orderAmount" />
+          <template #cell-order_amount="{ row }: { row: AffiliateRebateRecord }">
+            <AmountText :value="row.orderAmount" />
           </template>
-          <template #cell-pay_amount="{ row }">
-            <span class="text-sm text-gray-900 dark:text-white">¥{{ formatAmount((row as any).payAmount) }}</span>
+          <template #cell-pay_amount="{ row }: { row: AffiliateRebateRecord }">
+            <span class="text-sm text-gray-900 dark:text-white">¥{{ formatAmount(row.payAmount) }}</span>
           </template>
-          <template #cell-rebate_amount="{ row }">
-            <AmountText :value="(row as any).rebateAmount" strong />
+          <template #cell-rebate_amount="{ row }: { row: AffiliateRebateRecord }">
+            <AmountText :value="row.rebateAmount" strong />
           </template>
-          <template #cell-amount="{ row }">
-            <AmountText :value="(row as any).amount" strong />
+          <template #cell-amount="{ row }: { row: AffiliateTransferRecord }">
+            <AmountText :value="row.amount" strong />
           </template>
-          <template #cell-balance_after="{ row }">
-            <NullableAmountText :value="(row as any).balanceAfter" />
+          <template #cell-balance_after="{ row }: { row: AffiliateTransferRecord }">
+            <NullableAmountText :value="row.balanceAfter" />
           </template>
-          <template #cell-available_quota_after="{ row }">
-            <NullableAmountText :value="(row as any).availableQuotaAfter" />
+          <template #cell-available_quota_after="{ row }: { row: AffiliateTransferRecord }">
+            <NullableAmountText :value="row.availableQuotaAfter" />
           </template>
-          <template #cell-frozen_quota_after="{ row }">
-            <NullableAmountText :value="(row as any).frozenQuotaAfter" />
+          <template #cell-frozen_quota_after="{ row }: { row: AffiliateTransferRecord }">
+            <NullableAmountText :value="row.frozenQuotaAfter" />
           </template>
-          <template #cell-history_quota_after="{ row }">
-            <NullableAmountText :value="(row as any).historyQuotaAfter" />
+          <template #cell-history_quota_after="{ row }: { row: AffiliateTransferRecord }">
+            <NullableAmountText :value="row.historyQuotaAfter" />
           </template>
-          <template #cell-created_at="{ row }">
-            <span class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime((row as any).createdAt) }}</span>
+          <template #cell-created_at="{ row }: { row: AffiliateRecord }">
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(row.createdAt) }}</span>
           </template>
         </DataTable>
       </template>

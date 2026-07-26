@@ -201,7 +201,7 @@ import UsageCleanupDialog from '@/features/admin-usage/presentation/widgets/Usag
 import UserBalanceHistoryModal from '@/features/admin-users/presentation/widgets/UserBalanceHistoryDialog.vue'
 import OpsErrorLogTable from '@/features/admin-ops/presentation/widgets/OpsErrorLogTable.vue'
 import OpsErrorDetailModal from '@/features/admin-ops/presentation/widgets/OpsErrorDetailDialog.vue'
-import { listErrorLogs } from '@/features/admin-ops/presentation/api'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
 import type { OpsErrorLog } from '@/features/admin-ops/domain/models/opsErrorLog'
 import ModelDistributionChart from '@/features/admin-dashboard/presentation/widgets/ModelDistributionChart.vue'; import GroupDistributionChart from '@/features/admin-dashboard/presentation/widgets/GroupDistributionChart.vue'; import TokenUsageTrend from '@/features/admin-dashboard/presentation/widgets/TokenUsageTrend.vue'
 import EndpointDistributionChart from '@/features/admin-dashboard/presentation/widgets/EndpointDistributionChart.vue'
@@ -214,11 +214,12 @@ import type { AdminUsageQueryParams } from '@/features/admin-usage/domain/models
 import type { TrendDataPoint } from '@/features/admin-dashboard/domain/models/trendDataPoint'
 import type { ModelStat } from '@/features/admin-dashboard/domain/models/modelStat'
 import type { GroupStat } from '@/features/admin-dashboard/domain/models/groupStat'
-import type { EndpointStat } from '@/features/admin-dashboard/domain/models/endpointStat'
+import type { EndpointStat } from '@/core/models/domain/endpointStat'
 import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 const $users = useAdminUsers()
 const $usage = useAdminUsage()
 const $dashboard = useAdminDashboard()
+const $adminOpsQuery = useAdminOpsQueryStore()
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -296,7 +297,7 @@ const getGranularityForRange = (start: string, end: string): 'day' | 'hour' => {
 }
 const defaultRange = getLast24HourRange()
 const startDate = ref(defaultRange.start); const endDate = ref(defaultRange.end)
-const filters = ref<AdminUsageQueryParams>({ userId: undefined, model: undefined, groupId: undefined, requestType: undefined, billingType: null, startDate: startDate.value, endDate: endDate.value })
+const filters = ref<AdminUsageQueryParams>({ startDate: startDate.value, endDate: endDate.value })
 const pagination = reactive({ page: 1, page_size: getPersistedPageSize(), total: 0 })
 const sortState = reactive({
   sort_by: 'created_at',
@@ -356,10 +357,10 @@ const buildUsageListParams = (
   const requestType = filters.value.requestType
   const legacyStream = requestType ? requestTypeToLegacyStream(requestType) : filters.value.stream
   return {
-    page,
-    pageSize: pageSize,
-    exactTotal: exactTotal,
     ...filters.value,
+    page,
+    pageSize,
+    exactTotal,
     stream: legacyStream === null ? undefined : legacyStream,
     sortBy: sortState.sort_by,
     sortOrder: sortState.sort_order
@@ -428,7 +429,7 @@ const loadModelStats = async (source: ModelDistributionSource, force = false) =>
       api_key_id: filters.value.apiKeyId,
       account_id: filters.value.accountId,
       group_id: filters.value.groupId,
-      request_type: requestType,
+      request_type: requestType || undefined,
       stream: legacyStream === null ? undefined : legacyStream,
       billing_type: filters.value.billingType,
     }
@@ -477,7 +478,7 @@ const loadChartData = async () => {
       api_key_id: filters.value.apiKeyId,
       account_id: filters.value.accountId,
       group_id: filters.value.groupId,
-      request_type: requestType,
+      request_type: requestType || undefined,
       stream: legacyStream === null ? undefined : legacyStream,
       billing_type: filters.value.billingType,
       include_stats: false,
@@ -518,7 +519,7 @@ const resetFilters = () => {
   const range = getLast24HourRange()
   startDate.value = range.start
   endDate.value = range.end
-  filters.value = { startDate: startDate.value, endDate: endDate.value, requestType: undefined, billingType: null, billingMode: undefined }
+  filters.value = { startDate: startDate.value, endDate: endDate.value }
   granularity.value = getGranularityForRange(startDate.value, endDate.value)
   applyFilters()
 }
@@ -779,7 +780,7 @@ const toRFC3339 = (d: string | undefined, endOfDay = false): string | undefined 
 const loadAdminErrors = async () => {
   errLoading.value = true
   try {
-    const resp = await listErrorLogs({
+    const resp = await $adminOpsQuery.listErrorLogs({
       page: errPage.value,
       page_size: errPageSize.value,
       view: 'all',

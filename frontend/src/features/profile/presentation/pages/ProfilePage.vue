@@ -37,7 +37,7 @@
       <ProfileBalanceNotifyCard
         v-if="user && balanceLowNotifyEnabled"
         :enabled="user.balanceNotifyEnabled ?? true"
-        :threshold="user.balanceNotifyThreshold"
+        :threshold="user.balanceNotifyThreshold ?? null"
         :extra-emails="user.balanceNotifyExtraEmails ?? []"
         :system-default-threshold="systemDefaultThreshold"
         :user-email="user.email"
@@ -59,7 +59,7 @@ import ProfilePasswordForm from '@/features/profile/presentation/widgets/Profile
 import ProfileTotpCard from '@/features/profile/presentation/widgets/ProfileTotpCard.vue'
 import { isWeChatWebOAuthEnabled } from '@/features/auth/presentation/utils/wechatOAuthResolver'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 
 const { t } = useI18n()
 const appStore = useAppStore()

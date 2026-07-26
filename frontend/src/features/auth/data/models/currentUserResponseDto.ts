@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { Expose, Transform, plainToInstance } from 'class-transformer'
+import { Expose, plainToInstance } from 'class-transformer'
 import { UserDto } from '@/core/models/data/userDto'
 import { CurrentUserResponse } from '@/features/auth/domain/models/currentUserResponse'
 

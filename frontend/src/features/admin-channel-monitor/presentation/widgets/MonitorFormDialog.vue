@@ -257,6 +257,8 @@ import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { useAdminChannelMonitor } from '@/features/admin-channel-monitor/presentation/composables/useAdminChannelMonitor'
 import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
 import { useGroupsUserQueryStore } from '@/features/groups-user/presentation/stores/groupsUserQueryStore'
+import { useAdminChannelsQueryStore } from '@/features/admin-channels/presentation/stores/adminChannelsQueryStore'
+import { useAdminGroupsQueryStore } from '@/features/admin-groups/presentation/stores/adminGroupsQueryStore'
 import type { APIMode, BodyOverrideMode, MonitorMode, Provider } from '@/core/constants/channelMonitor'
 import type { ChannelMonitor } from '@/features/admin-channel-monitor/domain/models/channelMonitor'
 import type { CreateChannelMonitorRequest } from '@/features/admin-channel-monitor/data/requests_models/createChannelMonitorRequest'
@@ -264,7 +266,7 @@ import type { UpdateChannelMonitorRequest } from '@/features/admin-channel-monit
 import type { ChannelMonitorTemplate } from '@/features/admin-channel-monitor/domain/models/channelMonitorTemplate'
 import type { Channel } from '@/features/admin-channels/domain/models/channel'
 import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
-import type { ApiKey } from '@/features/keys/domain/models/apiKey'
+import type { ApiKey } from '@/core/models/domain/apiKey'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
 import Select from '@/common/widgets/forms/Select.vue'
@@ -302,6 +304,8 @@ const { t } = useI18n()
 const appStore = useAppStore()
 const { providerPickerClass } = useChannelMonitorFormat()
 const channelMonitor = useAdminChannelMonitor()
+const $channels = useAdminChannelsQueryStore()
+const $groups = useAdminGroupsQueryStore()
 
 // System-configured default interval for new monitors. Falls back to the static
 // constant when public settings haven't loaded yet or store the legacy 0 value.
@@ -408,7 +412,7 @@ function selectPassiveTarget(target: 'channel' | 'group') {
 async function loadChannels() {
   if (channelsCache.value.length > 0) return
   try {
-    const response = await adminAPI.channels.list(1, 1000)
+    const response = await $channels.list(1, 1000)
     channelsCache.value = response.items || []
   } catch (err: unknown) {
     appStore.showError(extractApiErrorMessage(err, t('admin.channelMonitor.form.channelLoadError')))
@@ -418,7 +422,7 @@ async function loadChannels() {
 async function loadGroups() {
   if (groupsCache.value.length > 0) return
   try {
-    groupsCache.value = await adminAPI.groups.getAll()
+    groupsCache.value = await $groups.getAll()
   } catch (err: unknown) {
     appStore.showError(extractApiErrorMessage(err, t('admin.channelMonitor.form.groupLoadError')))
   }

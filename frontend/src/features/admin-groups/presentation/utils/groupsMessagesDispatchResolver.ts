@@ -1,4 +1,4 @@
-import type { OpenAIMessagesDispatchModelConfig } from '@/features/admin-groups/domain/models/openAIMessagesDispatchModelConfig'
+import type { OpenAIMessagesDispatchModelConfig } from '@/core/models/domain/openAIMessagesDispatchModelConfig'
 
 export interface MessagesDispatchMappingRow {
   claude_model: string;
@@ -11,6 +11,13 @@ export interface MessagesDispatchFormState {
   sonnet_mapped_model: string;
   haiku_mapped_model: string;
   exact_model_mappings: MessagesDispatchMappingRow[];
+}
+
+export interface MessagesDispatchModelConfigRequest {
+  opus_mapped_model: string;
+  sonnet_mapped_model: string;
+  haiku_mapped_model: string;
+  exact_model_mappings: Record<string, string>;
 }
 
 export function createDefaultMessagesDispatchFormState(): MessagesDispatchFormState {
@@ -45,7 +52,7 @@ export function messagesDispatchConfigToFormState(
 
 export function messagesDispatchFormStateToConfig(
   state: MessagesDispatchFormState,
-): OpenAIMessagesDispatchModelConfig {
+): MessagesDispatchModelConfigRequest {
   const exactModelMappings = Object.fromEntries(
     state.exact_model_mappings
       .map((row) => [row.claude_model.trim(), row.target_model.trim()] as const)
@@ -53,10 +60,10 @@ export function messagesDispatchFormStateToConfig(
   );
 
   return {
-    opusMappedModel: state.opus_mapped_model.trim(),
-    sonnetMappedModel: state.sonnet_mapped_model.trim(),
-    haikuMappedModel: state.haiku_mapped_model.trim(),
-    exactModelMappings: exactModelMappings,
+    opus_mapped_model: state.opus_mapped_model.trim(),
+    sonnet_mapped_model: state.sonnet_mapped_model.trim(),
+    haiku_mapped_model: state.haiku_mapped_model.trim(),
+    exact_model_mappings: exactModelMappings,
   };
 }
 

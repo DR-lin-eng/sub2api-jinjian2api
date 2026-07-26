@@ -8,11 +8,11 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 import { useAdminGroupsQueryStore } from '@/features/admin-groups/presentation/stores/adminGroupsQueryStore'
 import type { OpsDashboardOverview } from '@/features/admin-ops/domain/models/opsDashboardOverview'
 import type { OpsMetricThresholds } from '@/features/admin-ops/domain/models/opsMetricThresholds'
-import type { OpsRealtimeTrafficSummaryResponse } from '@/features/admin-ops/domain/models/opsRealtimeTrafficSummaryResponse'
+import type { OpsRealtimeTrafficSummary } from '@/features/admin-ops/domain/models/opsRealtimeTrafficSummary'
 import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
 const queryStore = useAdminOpsQueryStore()
 import type { OpsRequestDetailsPreset } from '@/features/admin-ops/presentation/widgets/OpsRequestDetailsDialog.vue'
-import { useAdminSettingsStore } from '@/core/stores/adminSettingsStore'
+import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
 import { formatBytes } from '@/core/utils/format'
 import {
   formatCompactNumber,
@@ -63,7 +63,7 @@ const adminSettingsStore = useAdminSettingsStore()
 const realtimeWindow = ref<RealtimeWindow>('1min')
 
 const overview = computed(() => props.overview ?? null)
-const systemMetrics = computed(() => overview.value?.system_metrics ?? null)
+const systemMetrics = computed(() => overview.value?.systemMetrics ?? null)
 
 const REALTIME_WINDOW_MINUTES: Record<RealtimeWindow, number> = {
   '1min': 1,
@@ -285,8 +285,8 @@ function getThresholdColorClass(level: ThresholdLevel): string {
 
 // --- Realtime / Overview labels ---
 
-const totalRequestsLabel = computed(() => formatCompactNumber(overview.value?.request_count_total ?? 0))
-const totalTokensLabel = computed(() => formatCompactNumber(overview.value?.token_consumed ?? 0))
+const totalRequestsLabel = computed(() => formatCompactNumber(overview.value?.requestCountTotal ?? 0))
+const totalTokensLabel = computed(() => formatCompactNumber(overview.value?.tokenConsumed ?? 0))
 
 const realtimeTrafficSummary = ref<OpsRealtimeTrafficSummary | null>(null)
 const realtimeTrafficLoading = ref(false)
@@ -295,10 +295,10 @@ function makeZeroRealtimeTrafficSummary(): OpsRealtimeTrafficSummary {
   const now = new Date().toISOString()
   return {
     window: realtimeWindow.value,
-    start_time: now,
-    end_time: now,
+    startTime: now,
+    endTime: now,
     platform: props.platform,
-    group_id: props.groupId,
+    groupId: props.groupId ?? 0,
     qps: { current: 0, peak: 0, avg: 0 },
     tps: { current: 0, peak: 0, avg: 0 }
   }
@@ -392,60 +392,60 @@ const realtimeTpsAvgLabel = computed(() => {
 })
 
 const qpsAvgLabel = computed(() => {
-  const v = overview.value?.qps?.avg
+  const v = overview.value?.qpsAvg
   return formatCompactNumber(v)
 })
 
 const tpsAvgLabel = computed(() => {
-  const v = overview.value?.tps?.avg
+  const v = overview.value?.tpsAvg
   return formatCompactNumber(v)
 })
 
 const slaPercent = computed(() => {
   const v = overview.value?.sla
   if (typeof v !== 'number') return null
-  if ((overview.value?.request_count_sla ?? 0) <= 0) return null
+  if ((overview.value?.requestCountSla ?? 0) <= 0) return null
   return v * 100
 })
 
 const errorRatePercent = computed(() => {
-  const v = overview.value?.error_rate
+  const v = overview.value?.errorRate
   if (typeof v !== 'number') return null
   return v * 100
 })
 
 const upstreamErrorRatePercent = computed(() => {
-  const v = overview.value?.upstream_error_rate
+  const v = overview.value?.upstreamErrorRate
   if (typeof v !== 'number') return null
   return v * 100
 })
 
-const durationP99Ms = computed(() => overview.value?.duration?.p99_ms ?? null)
-const durationP95Ms = computed(() => overview.value?.duration?.p95_ms ?? null)
-const durationP90Ms = computed(() => overview.value?.duration?.p90_ms ?? null)
-const durationP50Ms = computed(() => overview.value?.duration?.p50_ms ?? null)
-const durationAvgMs = computed(() => overview.value?.duration?.avg_ms ?? null)
-const durationMaxMs = computed(() => overview.value?.duration?.max_ms ?? null)
+const durationP99Ms = computed(() => overview.value?.duration?.p99Ms ?? null)
+const durationP95Ms = computed(() => overview.value?.duration?.p95Ms ?? null)
+const durationP90Ms = computed(() => overview.value?.duration?.p90Ms ?? null)
+const durationP50Ms = computed(() => overview.value?.duration?.p50Ms ?? null)
+const durationAvgMs = computed(() => overview.value?.duration?.avgMs ?? null)
+const durationMaxMs = computed(() => overview.value?.duration?.maxMs ?? null)
 
-const ttftP99Ms = computed(() => overview.value?.ttft?.p99_ms ?? null)
-const ttftP95Ms = computed(() => overview.value?.ttft?.p95_ms ?? null)
-const ttftP90Ms = computed(() => overview.value?.ttft?.p90_ms ?? null)
-const ttftP50Ms = computed(() => overview.value?.ttft?.p50_ms ?? null)
-const ttftAvgMs = computed(() => overview.value?.ttft?.avg_ms ?? null)
-const ttftMaxMs = computed(() => overview.value?.ttft?.max_ms ?? null)
+const ttftP99Ms = computed(() => overview.value?.ttft?.p99Ms ?? null)
+const ttftP95Ms = computed(() => overview.value?.ttft?.p95Ms ?? null)
+const ttftP90Ms = computed(() => overview.value?.ttft?.p90Ms ?? null)
+const ttftP50Ms = computed(() => overview.value?.ttft?.p50Ms ?? null)
+const ttftAvgMs = computed(() => overview.value?.ttft?.avgMs ?? null)
+const ttftMaxMs = computed(() => overview.value?.ttft?.maxMs ?? null)
 
 // --- Health Score & Diagnosis (primary) ---
 
 const isSystemIdle = computed(() => {
   const ov = overview.value
   if (!ov) return true
-  const qps = ov.qps?.current
-  const errorRate = ov.error_rate ?? 0
+  const qps = ov.qpsCurrent
+  const errorRate = ov.errorRate ?? 0
   return (qps ?? 0) === 0 && errorRate === 0
 })
 
 const healthScoreValue = computed<number | null>(() => {
-  const v = overview.value?.health_score
+  const v = overview.value?.healthScore
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 })
 
@@ -501,9 +501,9 @@ const diagnosisReport = computed<DiagnosisItem[]>(() => {
   }
 
   // Resource diagnostics (highest priority)
-  const sm = ov.system_metrics
+  const sm = ov.systemMetrics
   if (sm) {
-    if (sm.db_ok === false) {
+    if (sm.dbOk === false) {
       report.push({
         type: 'critical',
         message: t('admin.ops.diagnosis.dbDown'),
@@ -511,7 +511,7 @@ const diagnosisReport = computed<DiagnosisItem[]>(() => {
         action: t('admin.ops.diagnosis.dbDownAction')
       })
     }
-    if (sm.redis_ok === false) {
+    if (sm.redisOk === false) {
       report.push({
         type: 'warning',
         message: t('admin.ops.diagnosis.redisDown'),
@@ -520,7 +520,7 @@ const diagnosisReport = computed<DiagnosisItem[]>(() => {
       })
     }
 
-    const cpuPct = sm.cpu_usage_percent ?? 0
+    const cpuPct = sm.cpuUsagePercent ?? 0
     if (cpuPct > 90) {
       report.push({
         type: 'critical',
@@ -537,7 +537,7 @@ const diagnosisReport = computed<DiagnosisItem[]>(() => {
       })
     }
 
-    const memPct = sm.memory_usage_percent ?? 0
+    const memPct = sm.memoryUsagePercent ?? 0
     if (memPct > 90) {
       report.push({
         type: 'critical',
@@ -555,7 +555,7 @@ const diagnosisReport = computed<DiagnosisItem[]>(() => {
     }
   }
 
-  const ttftP99 = ov.ttft?.p99_ms ?? 0
+  const ttftP99 = ov.ttft?.p99Ms ?? 0
   if (ttftP99 > 500) {
     report.push({
       type: 'warning',
@@ -566,7 +566,7 @@ const diagnosisReport = computed<DiagnosisItem[]>(() => {
   }
 
   // Error rate diagnostics (adjusted thresholds)
-  const upstreamRatePct = (ov.upstream_error_rate ?? 0) * 100
+  const upstreamRatePct = (ov.upstreamErrorRate ?? 0) * 100
   if (upstreamRatePct > 5) {
     report.push({
       type: 'critical',
@@ -583,7 +583,7 @@ const diagnosisReport = computed<DiagnosisItem[]>(() => {
     })
   }
 
-  const errorPct = (ov.error_rate ?? 0) * 100
+  const errorPct = (ov.errorRate ?? 0) * 100
   if (errorPct > 3) {
     report.push({
       type: 'critical',
@@ -658,7 +658,7 @@ function formatTimeShort(ts?: string | null): string {
 }
 
 const cpuPercentValue = computed<number | null>(() => {
-  const v = systemMetrics.value?.cpu_usage_percent
+  const v = systemMetrics.value?.cpuUsagePercent
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 })
 
@@ -671,7 +671,7 @@ const cpuPercentClass = computed(() => {
 })
 
 const memPercentValue = computed<number | null>(() => {
-  const v = systemMetrics.value?.memory_usage_percent
+  const v = systemMetrics.value?.memoryUsagePercent
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 })
 
@@ -684,17 +684,17 @@ const memPercentClass = computed(() => {
 })
 
 const dbConnActiveValue = computed<number | null>(() => {
-  const v = systemMetrics.value?.db_conn_active
+  const v = systemMetrics.value?.dbConnActive
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 })
 
 const dbConnIdleValue = computed<number | null>(() => {
-  const v = systemMetrics.value?.db_conn_idle
+  const v = systemMetrics.value?.dbConnIdle
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 })
 
 const dbConnWaitingValue = computed<number | null>(() => {
-  const v = systemMetrics.value?.db_conn_waiting
+  const v = systemMetrics.value?.dbConnWaiting
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 })
 
@@ -704,7 +704,7 @@ const dbConnOpenValue = computed<number | null>(() => {
 })
 
 const dbMaxOpenConnsValue = computed<number | null>(() => {
-  const v = systemMetrics.value?.db_max_open_conns
+  const v = systemMetrics.value?.dbMaxOpenConns
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 })
 
@@ -714,30 +714,30 @@ const dbUsagePercent = computed<number | null>(() => {
 })
 
 const dbMiddleLabel = computed(() => {
-  if (systemMetrics.value?.db_ok === false) return 'FAIL'
+  if (systemMetrics.value?.dbOk === false) return 'FAIL'
   if (dbUsagePercent.value != null) return `${dbUsagePercent.value.toFixed(0)}%`
-  if (systemMetrics.value?.db_ok === true) return t('admin.ops.ok')
+  if (systemMetrics.value?.dbOk === true) return t('admin.ops.ok')
   return t('admin.ops.noData')
 })
 
 const dbMiddleClass = computed(() => {
-  if (systemMetrics.value?.db_ok === false) return 'text-rose-600 dark:text-rose-400'
+  if (systemMetrics.value?.dbOk === false) return 'text-rose-600 dark:text-rose-400'
   if (dbUsagePercent.value != null) {
     if (dbUsagePercent.value >= 90) return 'text-rose-600 dark:text-rose-400'
     if (dbUsagePercent.value >= 70) return 'text-yellow-600 dark:text-yellow-400'
     return 'text-emerald-600 dark:text-emerald-400'
   }
-  if (systemMetrics.value?.db_ok === true) return 'text-emerald-600 dark:text-emerald-400'
+  if (systemMetrics.value?.dbOk === true) return 'text-emerald-600 dark:text-emerald-400'
   return 'text-gray-900 dark:text-white'
 })
 
 const redisConnTotalValue = computed<number | null>(() => {
-  const v = systemMetrics.value?.redis_conn_total
+  const v = systemMetrics.value?.redisConnTotal
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 })
 
 const redisConnIdleValue = computed<number | null>(() => {
-  const v = systemMetrics.value?.redis_conn_idle
+  const v = systemMetrics.value?.redisConnIdle
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 })
 
@@ -747,7 +747,7 @@ const redisConnActiveValue = computed<number | null>(() => {
 })
 
 const redisPoolSizeValue = computed<number | null>(() => {
-  const v = systemMetrics.value?.redis_pool_size
+  const v = systemMetrics.value?.redisPoolSize
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 })
 
@@ -757,25 +757,25 @@ const redisUsagePercent = computed<number | null>(() => {
 })
 
 const redisMiddleLabel = computed(() => {
-  if (systemMetrics.value?.redis_ok === false) return 'FAIL'
+  if (systemMetrics.value?.redisOk === false) return 'FAIL'
   if (redisUsagePercent.value != null) return `${redisUsagePercent.value.toFixed(0)}%`
-  if (systemMetrics.value?.redis_ok === true) return t('admin.ops.ok')
+  if (systemMetrics.value?.redisOk === true) return t('admin.ops.ok')
   return t('admin.ops.noData')
 })
 
 const redisMiddleClass = computed(() => {
-  if (systemMetrics.value?.redis_ok === false) return 'text-rose-600 dark:text-rose-400'
+  if (systemMetrics.value?.redisOk === false) return 'text-rose-600 dark:text-rose-400'
   if (redisUsagePercent.value != null) {
     if (redisUsagePercent.value >= 90) return 'text-rose-600 dark:text-rose-400'
     if (redisUsagePercent.value >= 70) return 'text-yellow-600 dark:text-yellow-400'
     return 'text-emerald-600 dark:text-emerald-400'
   }
-  if (systemMetrics.value?.redis_ok === true) return 'text-emerald-600 dark:text-emerald-400'
+  if (systemMetrics.value?.redisOk === true) return 'text-emerald-600 dark:text-emerald-400'
   return 'text-gray-900 dark:text-white'
 })
 
 const goroutineCountValue = computed<number | null>(() => {
-  const v = systemMetrics.value?.goroutine_count
+  const v = systemMetrics.value?.goroutineCount
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 })
 
@@ -816,14 +816,14 @@ const goroutineStatusClass = computed(() => {
   }
 })
 
-const jobHeartbeats = computed(() => overview.value?.job_heartbeats ?? [])
+const jobHeartbeats = computed(() => overview.value?.jobHeartbeats ?? [])
 
 const jobsStatus = computed<'ok' | 'warn' | 'unknown'>(() => {
   const list = jobHeartbeats.value
   if (!list.length) return 'unknown'
   for (const hb of list) {
     if (!hb) continue
-    if (hb.lastError_at && (!hb.last_success_at || hb.lastError_at > hb.last_success_at)) return 'warn'
+    if (hb.lastErrorAt && (!hb.lastSuccessAt || hb.lastErrorAt > hb.lastSuccessAt)) return 'warn'
   }
   return 'ok'
 })
@@ -832,7 +832,7 @@ const jobsWarnCount = computed(() => {
   let warn = 0
   for (const hb of jobHeartbeats.value) {
     if (!hb) continue
-    if (hb.lastError_at && (!hb.last_success_at || hb.lastError_at > hb.last_success_at)) warn++
+    if (hb.lastErrorAt && (!hb.lastSuccessAt || hb.lastErrorAt > hb.lastSuccessAt)) warn++
   }
   return warn
 })
@@ -1091,7 +1091,7 @@ function handleToolbarRefresh() {
 
               <div class="absolute flex flex-col items-center">
                 <span :class="[props.fullscreen ? 'text-5xl' : 'text-3xl', 'font-black', healthScoreClass]">
-                  {{ isSystemIdle ? t('admin.ops.idleStatus') : (overview.health_score ?? '--') }}
+                  {{ isSystemIdle ? t('admin.ops.idleStatus') : (overview.healthScore ?? '--') }}
                 </span>
                 <span :class="[props.fullscreen ? 'text-xs' : 'text-[10px]', 'font-bold uppercase tracking-wider text-gray-400']">{{ t('admin.ops.health') }}</span>
               </div>
@@ -1106,7 +1106,7 @@ function handleToolbarRefresh() {
                 {{
                   isSystemIdle
                     ? t('admin.ops.idleStatus')
-                    : typeof overview.health_score === 'number' && overview.health_score >= 90
+                    : typeof overview.healthScore === 'number' && overview.healthScore >= 90
                       ? t('admin.ops.healthyStatus')
                       : t('admin.ops.riskyStatus')
                 }}
@@ -1246,19 +1246,19 @@ function handleToolbarRefresh() {
           <div class="mt-2 space-y-2 text-xs">
             <div class="flex justify-between">
               <span class="text-gray-500">{{ t('admin.ops.requests') }}:</span>
-              <span class="tabular-nums font-bold text-gray-900 dark:text-white" :title="formatExactNumber(overview.request_count_total)">{{ totalRequestsLabel }}</span>
+              <span class="tabular-nums font-bold text-gray-900 dark:text-white" :title="formatExactNumber(overview.requestCountTotal)">{{ totalRequestsLabel }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-500">{{ t('admin.ops.tokens') }}:</span>
-              <span class="tabular-nums font-bold text-gray-900 dark:text-white" :title="formatExactNumber(overview.token_consumed)">{{ totalTokensLabel }}</span>
+              <span class="tabular-nums font-bold text-gray-900 dark:text-white" :title="formatExactNumber(overview.tokenConsumed)">{{ totalTokensLabel }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-500">{{ t('admin.ops.avgQps') }}:</span>
-              <span class="tabular-nums font-bold text-gray-900 dark:text-white" :title="formatExactNumber(overview.qps?.avg)">{{ qpsAvgLabel }}</span>
+              <span class="tabular-nums font-bold text-gray-900 dark:text-white" :title="formatExactNumber(overview.qpsAvg)">{{ qpsAvgLabel }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-500">{{ t('admin.ops.avgTps') }}:</span>
-              <span class="tabular-nums font-bold text-gray-900 dark:text-white" :title="formatExactNumber(overview.tps?.avg)">{{ tpsAvgLabel }}</span>
+              <span class="tabular-nums font-bold text-gray-900 dark:text-white" :title="formatExactNumber(overview.tpsAvg)">{{ tpsAvgLabel }}</span>
             </div>
           </div>
         </div>
@@ -1289,7 +1289,7 @@ function handleToolbarRefresh() {
           <div class="mt-3 text-xs">
             <div class="flex justify-between">
               <span class="text-gray-500">{{ t('admin.ops.exceptions') }}:</span>
-              <span class="tabular-nums font-bold text-gray-900 dark:text-white">{{ formatCompactNumber((overview.request_count_sla ?? 0) - (overview.success_count ?? 0)) }}</span>
+              <span class="tabular-nums font-bold text-gray-900 dark:text-white">{{ formatCompactNumber((overview.requestCountSla ?? 0) - (overview.successCount ?? 0)) }}</span>
             </div>
           </div>
         </div>
@@ -1305,7 +1305,7 @@ function handleToolbarRefresh() {
               v-if="!props.fullscreen"
               class="text-[10px] font-bold text-blue-500 hover:underline"
               type="button"
-              @click="openDetails({ title: t('admin.ops.latencyDuration'), sort: 'duration_desc' })"
+              @click="openDetails({ title: t('admin.ops.latencyDuration'), sort: 'duration_ms' })"
             >
               {{ t('admin.ops.requestDetails.details') }}
             </button>
@@ -1351,7 +1351,7 @@ function handleToolbarRefresh() {
               v-if="!props.fullscreen"
               class="text-[10px] font-bold text-blue-500 hover:underline"
               type="button"
-              @click="openDetails({ title: t('admin.ops.ttftLabel'), kind: 'success', sort: 'ttft_desc', ttft_only: true })"
+              @click="openDetails({ title: t('admin.ops.ttftLabel'), kind: 'success', sort: 'first_token_ms' })"
             >
               {{ t('admin.ops.requestDetails.details') }}
             </button>
@@ -1407,11 +1407,11 @@ function handleToolbarRefresh() {
           <div class="mt-3 space-y-1 text-xs">
             <div class="flex justify-between">
               <span class="text-gray-500">{{ t('admin.ops.errorCount') }}:</span>
-              <span class="tabular-nums font-bold text-gray-900 dark:text-white">{{ formatCompactNumber(overview.error_count_sla ?? 0) }}</span>
+              <span class="tabular-nums font-bold text-gray-900 dark:text-white">{{ formatCompactNumber(overview.errorCountSla ?? 0) }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-500">{{ t('admin.ops.businessLimited') }}:</span>
-              <span class="tabular-nums font-bold text-gray-900 dark:text-white">{{ formatCompactNumber(overview.business_limited_count ?? 0) }}</span>
+              <span class="tabular-nums font-bold text-gray-900 dark:text-white">{{ formatCompactNumber(overview.businessLimitedCount ?? 0) }}</span>
             </div>
           </div>
         </div>
@@ -1433,11 +1433,11 @@ function handleToolbarRefresh() {
           <div class="mt-3 space-y-1 text-xs">
             <div class="flex justify-between">
               <span class="text-gray-500">{{ t('admin.ops.errorCountExcl429529') }}:</span>
-              <span class="tabular-nums font-bold text-gray-900 dark:text-white">{{ formatCompactNumber(overview.upstream_error_count_excl_429_529 ?? 0) }}</span>
+              <span class="tabular-nums font-bold text-gray-900 dark:text-white">{{ formatCompactNumber(overview.upstreamErrorCountExcl429529 ?? 0) }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-500">429/529:</span>
-              <span class="tabular-nums font-bold text-gray-900 dark:text-white">{{ formatCompactNumber((overview.upstream_429_count ?? 0) + (overview.upstream_529_count ?? 0)) }}</span>
+              <span class="tabular-nums font-bold text-gray-900 dark:text-white">{{ formatCompactNumber((overview.upstream429Count ?? 0) + (overview.upstream529Count ?? 0)) }}</span>
             </div>
           </div>
         </div>
@@ -1472,9 +1472,9 @@ function handleToolbarRefresh() {
           </div>
           <div v-if="!props.fullscreen" class="mt-1 text-[10px] text-gray-500 dark:text-gray-400">
             {{
-              systemMetrics?.memory_used_mb == null || systemMetrics?.memory_total_mb == null
+              systemMetrics?.memoryUsedMb == null || systemMetrics?.memoryTotalMb == null
                 ? '-'
-                : `${formatBytes(systemMetrics.memory_used_mb * 1024 * 1024, 1)} / ${formatBytes(systemMetrics.memory_total_mb * 1024 * 1024, 1)}`
+                : `${formatBytes(systemMetrics.memoryUsedMb * 1024 * 1024, 1)} / ${formatBytes(systemMetrics.memoryTotalMb * 1024 * 1024, 1)}`
             }}
           </div>
         </div>
@@ -1525,8 +1525,8 @@ function handleToolbarRefresh() {
             {{ t('admin.ops.current') }} <span class="font-mono">{{ formatCompactNumber(goroutineCountValue) }}</span>
             · {{ t('common.warning') }} <span class="font-mono">{{ formatCompactNumber(goroutinesWarnThreshold) }}</span>
             · {{ t('common.critical') }} <span class="font-mono">{{ formatCompactNumber(goroutinesCriticalThreshold) }}</span>
-            <span v-if="systemMetrics?.concurrency_queue_depth != null">
-              · {{ t('admin.ops.queue') }} <span class="font-mono">{{ formatCompactNumber(systemMetrics.concurrency_queue_depth) }}</span>
+            <span v-if="systemMetrics?.concurrencyQueueDepth != null">
+              · {{ t('admin.ops.queue') }} <span class="font-mono">{{ formatCompactNumber(systemMetrics.concurrencyQueueDepth) }}</span>
             </span>
           </div>
         </div>
@@ -1564,30 +1564,30 @@ function handleToolbarRefresh() {
       <div v-else class="space-y-3">
         <div
           v-for="hb in jobHeartbeats"
-          :key="hb.job_name"
+          :key="hb.jobName"
           class="rounded-xl border border-gray-100 bg-white p-4 dark:border-dark-700 dark:bg-dark-900"
         >
           <div class="flex items-center justify-between gap-3">
-            <div class="truncate text-sm font-semibold text-gray-900 dark:text-white">{{ hb.job_name }}</div>
+            <div class="truncate text-sm font-semibold text-gray-900 dark:text-white">{{ hb.jobName }}</div>
             <div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
               <span
-                v-if="hb.last_duration_ms != null"
+                v-if="hb.lastDurationMs != null"
                 class="font-mono tabular-nums"
-                :title="formatExactDurationMs(hb.last_duration_ms)"
-              >{{ formatDurationMs(hb.last_duration_ms) }}</span>
+                :title="formatExactDurationMs(hb.lastDurationMs)"
+              >{{ formatDurationMs(hb.lastDurationMs) }}</span>
               <span>{{ formatTimeShort(hb.updatedAt) }}</span>
             </div>
           </div>
 
           <div class="mt-2 grid grid-cols-1 gap-2 text-xs text-gray-600 dark:text-gray-300 sm:grid-cols-2">
             <div>
-              {{ t('admin.ops.lastSuccess') }} <span class="font-mono">{{ formatTimeShort(hb.last_success_at) }}</span>
+              {{ t('admin.ops.lastSuccess') }} <span class="font-mono">{{ formatTimeShort(hb.lastSuccessAt) }}</span>
             </div>
             <div>
-              {{ t('admin.ops.lastError') }} <span class="font-mono">{{ formatTimeShort(hb.lastError_at) }}</span>
+              {{ t('admin.ops.lastError') }} <span class="font-mono">{{ formatTimeShort(hb.lastErrorAt) }}</span>
             </div>
             <div>
-              {{ t('admin.ops.result') }} <span class="font-mono">{{ hb.last_result || '-' }}</span>
+              {{ t('admin.ops.result') }} <span class="font-mono">{{ hb.lastResult || '-' }}</span>
             </div>
           </div>
 

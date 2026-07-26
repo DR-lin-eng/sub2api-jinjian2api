@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
-import { AccountSchedulerScore } from '@/features/admin-accounts/domain/models/accountSchedulerScore'
+import { AccountSchedulerScore } from '@/core/models/domain/accountSchedulerScore'
 
 export class AccountSchedulerScoreDto {
   @Expose({ name: 'base_score' }) @Transform(({ value }) => value ?? 0) baseScore!: number

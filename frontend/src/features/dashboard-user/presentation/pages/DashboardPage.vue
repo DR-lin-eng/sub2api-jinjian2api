@@ -32,7 +32,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import UserDashboardStats from '@/features/dashboard-user/presentation/widgets/UserDashboardStats.vue'

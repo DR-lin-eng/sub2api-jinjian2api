@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
-import { ReleaseInfo } from '@/features/admin-settings/domain/models/releaseInfo'
+import { ReleaseInfo } from '@/core/models/domain/releaseInfo'
 
 export class ReleaseInfoDto {
   @Expose() @Transform(({ value }) => value ?? '') name!: string

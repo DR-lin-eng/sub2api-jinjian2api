@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { Expose, Transform, plainToInstance } from 'class-transformer'
-import { EndpointStat } from '@/features/admin-dashboard/domain/models/endpointStat'
+import { EndpointStat } from '@/core/models/domain/endpointStat'
 
 export class EndpointStatDto {
   @Expose()

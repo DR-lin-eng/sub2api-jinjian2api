@@ -942,11 +942,17 @@ const showUserDropdown = ref(false)
 const selectedUser = ref<SimpleUser | null>(null)
 let userSearchTimeout: ReturnType<typeof setTimeout> | null = null
 
-const filters = reactive({
+type SubscriptionStatusFilter = '' | 'active' | 'expired' | 'revoked' | 'suspended'
+const filters = reactive<{
+  status: SubscriptionStatusFilter
+  group_id: string
+  platform: '' | GroupPlatform
+  user_id: number | null
+}>({
   status: 'active',
   group_id: '',
   platform: '',
-  user_id: null as number | null
+  user_id: null
 })
 
 // Sorting state
@@ -1031,7 +1037,7 @@ const loadSubscriptions = async () => {
       pagination.page,
       pagination.page_size,
       {
-        status: (filters.status as any) || undefined,
+        status: filters.status || undefined,
         group_id: filters.group_id ? parseInt(filters.group_id) : undefined,
         platform: filters.platform || undefined,
         user_id: filters.user_id || undefined,

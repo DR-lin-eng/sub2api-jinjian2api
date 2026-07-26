@@ -202,7 +202,7 @@ import { useGrokOAuth } from '@/features/admin-accounts/presentation/composables
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import OAuthAuthorizationFlow from '@/features/admin-accounts/presentation/widgets/OAuthAuthorizationFlow.vue'
-import type { Account } from '@/features/admin-accounts/domain/models/account'
+import type { Account } from '@/core/models/domain/account'
 
 // Type for exposed OAuthAuthorizationFlow component
 // Note: defineExpose automatically unwraps refs, so we use the unwrapped types
@@ -414,7 +414,7 @@ const handleExchangeCode = async () => {
       state: stateToUse,
       proxyId: props.account.proxyId,
       oauthType: geminiOAuthType.value,
-      tierId: typeof (props.account.credentials as any)?.tier_id === 'string' ? ((props.account.credentials as any).tier_id as string) : undefined
+      tierId: typeof props.account.credentials?.tier_id === 'string' ? props.account.credentials.tier_id : undefined
     })
     if (!tokenInfo) return
 

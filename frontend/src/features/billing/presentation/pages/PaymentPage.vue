@@ -255,7 +255,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { usePaymentStore } from '@/features/billing/presentation/stores/paymentStore'
 import { useSubscriptionStore } from '@/features/subscriptions/presentation/stores/subscriptionsStore'
 import { useAppStore } from '@/core/stores/appStore'

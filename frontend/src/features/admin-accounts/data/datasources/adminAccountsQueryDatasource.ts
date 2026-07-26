@@ -5,7 +5,7 @@
 
 import { apiClient } from '@/core/networks/client'
 import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
-import { AccountDto } from '@/features/admin-accounts/data/models/accountDto'
+import { AccountDto } from '@/core/models/data/accountDto'
 import { AccountUsageInfoDto } from '@/features/admin-accounts/data/models/accountUsageInfoDto'
 import { WindowStatsDto } from '@/features/admin-accounts/data/models/windowStatsDto'
 import { TempUnschedulableStatusDto } from '@/features/admin-accounts/data/models/tempUnschedulableStatusDto'

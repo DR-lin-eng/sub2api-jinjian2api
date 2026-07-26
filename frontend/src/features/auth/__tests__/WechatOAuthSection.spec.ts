@@ -3,7 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import WechatOAuthSection from '@/features/auth/presentation/widgets/WechatOAuthSection.vue'
 import { useAppStore } from '@/core/stores/appStore'
-import type { PublicSettings } from '@/features/auth/domain/models/publicSettings'
+import type { PublicSettings } from '@/core/models/domain/publicSettings'
 
 const routeState = vi.hoisted(() => ({
   query: {} as Record<string, unknown>,

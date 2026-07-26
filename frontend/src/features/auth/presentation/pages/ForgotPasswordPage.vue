@@ -153,6 +153,8 @@ const { t } = useI18n()
 // ==================== Stores ====================
 
 const appStore = useAppStore()
+const authActionStore = useAuthActionStore()
+const authQueryStore = useAuthQueryStore()
 
 // ==================== State ====================
 
@@ -195,7 +197,7 @@ watch(validationToastMessage, (value, previousValue) => {
 
 onMounted(async () => {
   try {
-    const settings = await getPublicSettings()
+    const settings = await authQueryStore.getPublicSettings()
     const verification = resolveHumanVerification(settings)
     turnstileEnabled.value = verification.external
     turnstileSiteKey.value = verification.siteKey
@@ -267,7 +269,7 @@ async function handleSubmit(): Promise<void> {
   isLoading.value = true
 
   try {
-    await forgotPassword({
+    await authActionStore.forgotPassword({
       email: formData.email,
       captcha_token: turnstileEnabled.value ? turnstileToken.value : undefined,
       captcha_id: localCaptchaEnabled.value ? localCaptchaId.value : undefined,

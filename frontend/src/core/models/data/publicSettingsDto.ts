@@ -1,9 +1,9 @@
 import 'reflect-metadata'
 import { Expose, Transform, Type, plainToInstance } from 'class-transformer'
-import { PublicSettings } from '@/features/auth/domain/models/publicSettings'
-import { CustomMenuItemDto } from './customMenuItemDto'
-import { CustomEndpointDto } from './customEndpointDto'
-import { LoginAgreementDocumentDto } from './loginAgreementDocumentDto'
+import { PublicSettings } from '@/core/models/domain/publicSettings'
+import { CustomMenuItemDto } from '@/core/models/data/customMenuItemDto'
+import { CustomEndpointDto } from '@/core/models/data/customEndpointDto'
+import { LoginAgreementDocumentDto } from '@/core/models/data/loginAgreementDocumentDto'
 
 export class PublicSettingsDto {
   @Expose({ name: 'registration_enabled' })

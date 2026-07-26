@@ -127,6 +127,8 @@ import { useI18n } from 'vue-i18n'
 import { usePaymentStore } from '@/features/billing/presentation/stores/paymentStore'
 import { useAppStore } from '@/core/stores/appStore'
 import { useBillingActionStore } from '@/features/billing/presentation/stores/billingActionStore'
+
+const billingActionStore = useBillingActionStore()
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import { getPaymentPopupFeatures, isBuiltInAlipayMethod, isBuiltInWxpayMethod } from '@/features/billing/presentation/utils/providerConfigSignals'
 import { currencySymbol, formatPaymentAmount, normalizePaymentCurrency } from '@/features/billing/presentation/utils/currencyFormatter'
@@ -268,8 +270,8 @@ async function tryRecoverPendingOrder(order: PaymentOrder): Promise<PaymentOrder
   lastVerifyAt = now
   verifyAttempts += 1
   try {
-    const result = await paymentAPI.verifyOrder(outTradeNo)
-    return result.data ?? order
+    const result = await billingActionStore.verifyOrder(outTradeNo)
+    return (result.data as PaymentOrder | undefined) ?? order
   } catch {
     return order
   }
@@ -318,7 +320,7 @@ async function handleCancel() {
   if (!props.orderId || cancelling.value) return
   cancelling.value = true
   try {
-    await paymentAPI.cancelOrder(props.orderId)
+    await billingActionStore.cancelOrder(props.orderId)
     cleanup()
     setOutcome('cancelled')
   } catch (err: unknown) {

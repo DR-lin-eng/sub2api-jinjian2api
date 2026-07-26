@@ -34,12 +34,15 @@ import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
-import {
-  list as listChannelMonitorViews,
-  statusBatch as fetchChannelMonitorDetails,
-  type UserMonitorView,
-  type UserMonitorDetail,
-} from '@/features/channel-monitor-user/presentation/api'
+import { useChannelMonitorUserQueryStore } from '@/features/channel-monitor-user/presentation/stores/channelMonitorUserQueryStore'
+import { useChannelMonitorUserActionStore } from '@/features/channel-monitor-user/presentation/stores/channelMonitorUserActionStore'
+import type { UserMonitorView } from '@/features/channel-monitor-user/domain/models/userMonitorView'
+import type { UserMonitorDetail } from '@/features/channel-monitor-user/domain/models/userMonitorDetail'
+
+const channelMonitorUserQueryStore = useChannelMonitorUserQueryStore()
+const channelMonitorUserActionStore = useChannelMonitorUserActionStore()
+const listChannelMonitorViews = channelMonitorUserQueryStore.list
+const fetchChannelMonitorDetails = channelMonitorUserActionStore.statusBatch
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import MonitorHero, {
   type MonitorWindow,
@@ -76,8 +79,8 @@ const countdown = autoRefresh.countdown
 const overallStatus = computed<OverallStatus>(() => {
   if (items.value.length === 0) return 'operational'
   for (const it of items.value) {
-    if (it.primary_status === 'failed' || it.primary_status === 'error') return 'degraded'
-    if (it.primary_status !== STATUS_OPERATIONAL) return 'degraded'
+    if (it.primaryStatus === 'failed' || it.primaryStatus === 'error') return 'degraded'
+    if (it.primaryStatus !== STATUS_OPERATIONAL) return 'degraded'
   }
   return 'operational'
 })
@@ -95,7 +98,7 @@ async function reload(silent = false) {
   try {
     const res = await listChannelMonitorViews({ signal: ctrl.signal })
     if (ctrl.signal.aborted || abortController !== ctrl) return
-    items.value = res.items || []
+    items.value = res || []
   } catch (err: unknown) {
     const e = err as { name?: string; code?: string }
     if (e?.name === 'AbortError' || e?.code === 'ERR_CANCELED') return
@@ -127,7 +130,7 @@ async function loadDetails(ids: number[], force = false) {
   const missing = force ? ids : ids.filter(id => !detailCache[id])
   if (missing.length === 0) return
   try {
-    const details = await fetchChannelMonitorDetails(missing)
+    const details = await fetchChannelMonitorDetails({ ids: missing })
     for (const detail of details) detailCache[detail.id] = detail
   } catch (err: unknown) {
     appStore.showError(extractApiErrorMessage(err, t('channelStatus.detailLoadError')))

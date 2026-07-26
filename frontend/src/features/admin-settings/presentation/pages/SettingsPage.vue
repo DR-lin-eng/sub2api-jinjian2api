@@ -4,7 +4,7 @@
       <!-- Loading State -->
       <div v-if="loading" class="flex items-center justify-center py-12">
         <div
-          class="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"
+            class="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"
         ></div>
       </div>
 
@@ -13,32 +13,32 @@
         <!-- Tab Navigation -->
         <div class="settings-tabs-shell">
           <nav
-            class="settings-tabs-scroll"
-            role="tablist"
-            :aria-label="t('admin.settings.title')"
+              class="settings-tabs-scroll"
+              role="tablist"
+              :aria-label="t('admin.settings.title')"
           >
             <div class="settings-tabs">
               <button
-                v-for="tab in settingsTabs"
-                :key="tab.key"
-                :id="`settings-tab-${tab.key}`"
-                type="button"
-                role="tab"
-                :aria-selected="activeTab === tab.key"
-                :tabindex="activeTab === tab.key ? 0 : -1"
-                :class="[
+                  v-for="tab in settingsTabs"
+                  :key="tab.key"
+                  :id="`settings-tab-${tab.key}`"
+                  type="button"
+                  role="tab"
+                  :aria-selected="activeTab === tab.key"
+                  :tabindex="activeTab === tab.key ? 0 : -1"
+                  :class="[
                   'settings-tab',
                   activeTab === tab.key && 'settings-tab-active',
                 ]"
-                @click="selectSettingsTab(tab.key)"
-                @keydown="handleSettingsTabKeydown($event, tab.key)"
+                  @click="selectSettingsTab(tab.key)"
+                  @keydown="handleSettingsTabKeydown($event, tab.key)"
               >
                 <span class="settings-tab-icon">
-                  <Icon :name="tab.icon" size="sm" />
+                  <Icon :name="tab.icon" size="sm"/>
                 </span>
                 <span class="settings-tab-label">{{
-                  t(`admin.settings.tabs.${tab.key}`)
-                }}</span>
+                    t(`admin.settings.tabs.${tab.key}`)
+                  }}</span>
               </button>
             </div>
           </nav>
@@ -58,30 +58,94 @@
             </div>
             <div class="space-y-5 p-6">
               <div class="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
-                <input v-model="adminApiKeyForm.name" class="input" type="text" maxlength="100" :placeholder="t('admin.settings.adminApiKey.namePlaceholder')" />
-                <input v-model="adminApiKeyForm.expires_at" class="input" type="datetime-local" :min="adminApiKeyMinExpiry" />
-                <button type="button" class="btn btn-primary" :disabled="adminApiKeyPanelOperating || !adminApiKeyForm.name.trim()" @click="createScopedAdminApiKey">
-                  {{ editingAdminApiKeyId ? t("admin.settings.adminApiKey.saveScoped") : t("admin.settings.adminApiKey.createScoped") }}
+                <input v-model="adminApiKeyForm.name" class="input" type="text" maxlength="100"
+                       :placeholder="t('admin.settings.adminApiKey.namePlaceholder')"/>
+                <input v-model="adminApiKeyForm.expires_at" class="input" type="datetime-local"
+                       :min="adminApiKeyMinExpiry"/>
+                <button type="button" class="btn btn-primary"
+                        :disabled="adminApiKeyPanelOperating || !adminApiKeyForm.name.trim()"
+                        @click="createScopedAdminApiKey">
+                  {{
+                    editingAdminApiKeyId ? t("admin.settings.adminApiKey.saveScoped") : t("admin.settings.adminApiKey.createScoped")
+                  }}
                 </button>
-                <button v-if="editingAdminApiKeyId" type="button" class="btn btn-secondary" @click="cancelEditScopedAdminApiKey">{{ t("admin.settings.adminApiKey.cancel") }}</button>
+                <button v-if="editingAdminApiKeyId" type="button" class="btn btn-secondary"
+                        @click="cancelEditScopedAdminApiKey">{{ t("admin.settings.adminApiKey.cancel") }}
+                </button>
               </div>
               <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                <label v-for="scope in adminApiKeyScopeOptions" :key="scope.value" class="flex items-start gap-2 rounded border border-gray-200 p-2 text-xs dark:border-dark-600">
-                  <input v-model="adminApiKeyForm.scopes" type="checkbox" :value="scope.value" class="mt-0.5" />
-                  <span><strong class="block text-gray-800 dark:text-gray-100">{{ scope.label }}</strong><span class="text-gray-500 dark:text-gray-400">{{ scope.value }}</span></span>
+                <label v-for="scope in adminApiKeyScopeOptions" :key="scope.value"
+                       class="flex items-start gap-2 rounded border border-gray-200 p-2 text-xs dark:border-dark-600">
+                  <input v-model="adminApiKeyForm.scopes" type="checkbox" :value="scope.value" class="mt-0.5"/>
+                  <span><strong class="block text-gray-800 dark:text-gray-100">{{ scope.label }}</strong><span
+                      class="text-gray-500 dark:text-gray-400">{{ scope.value }}</span></span>
                 </label>
               </div>
-              <div v-if="adminApiKeyPanelSecret" class="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
-                <p class="text-sm font-medium text-green-700 dark:text-green-300">{{ t("admin.settings.adminApiKey.secretOnce") }}</p>
-                <div class="mt-2 flex gap-2"><code class="flex-1 select-all break-all rounded bg-white px-3 py-2 font-mono text-sm dark:bg-dark-800">{{ adminApiKeyPanelSecret }}</code><button type="button" class="btn btn-primary btn-sm" @click="copyScopedAdminApiKey">{{ t("admin.settings.adminApiKey.copyKey") }}</button></div>
+              <div v-if="adminApiKeyPanelSecret"
+                   class="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
+                <p class="text-sm font-medium text-green-700 dark:text-green-300">
+                  {{ t("admin.settings.adminApiKey.secretOnce") }}</p>
+                <div class="mt-2 flex gap-2"><code
+                    class="flex-1 select-all break-all rounded bg-white px-3 py-2 font-mono text-sm dark:bg-dark-800">{{
+                    adminApiKeyPanelSecret
+                  }}</code>
+                  <button type="button" class="btn btn-primary btn-sm" @click="copyScopedAdminApiKey">
+                    {{ t("admin.settings.adminApiKey.copyKey") }}
+                  </button>
+                </div>
               </div>
               <div v-if="adminApiKeyPanelLoading" class="text-sm text-gray-500">{{ t("common.loading") }}</div>
               <div v-else class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                  <thead><tr class="border-b border-gray-200 text-xs text-gray-500 dark:border-dark-700"><th class="py-2">{{ t("admin.settings.adminApiKey.name") }}</th><th>{{ t("admin.settings.adminApiKey.scopes") }}</th><th>{{ t("admin.settings.adminApiKey.status") }}</th><th>{{ t("admin.settings.adminApiKey.lastUsed") }}</th><th class="text-right">{{ t("admin.settings.adminApiKey.actions") }}</th></tr></thead>
-                  <tbody><tr v-for="key in scopedAdminApiKeys" :key="key.id" class="border-b border-gray-100 dark:border-dark-800"><td class="py-3"><div class="font-medium">{{ key.name }}</div><code class="text-xs text-gray-500">{{ key.key_prefix }}...{{ key.last_four }}</code></td><td><div class="flex max-w-md flex-wrap gap-1"><span v-for="scope in key.scopes" :key="scope" class="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] dark:bg-dark-700">{{ scope }}</span></div></td><td><span :class="key.status === 'active' ? 'text-green-600' : 'text-red-500'">{{ key.status }}</span><span v-if="key.expires_at" class="ml-1 text-xs text-gray-500">{{ formatAdminApiKeyDate(key.expires_at) }}</span></td><td class="text-xs text-gray-500">{{ key.last_used_at ? formatAdminApiKeyDate(key.last_used_at) : '—' }}</td><td class="whitespace-nowrap text-right"><button v-if="key.id !== 'legacy' && key.status === 'active'" type="button" class="btn btn-secondary btn-sm mr-1" :disabled="adminApiKeyPanelOperating" @click="editScopedAdminApiKey(key)">{{ t("admin.settings.adminApiKey.edit") }}</button><button v-if="key.id !== 'legacy' && key.status === 'active'" type="button" class="btn btn-secondary btn-sm mr-1" :disabled="adminApiKeyPanelOperating" @click="rotateScopedAdminApiKey(key.id)">{{ t("admin.settings.adminApiKey.rotate") }}</button><button v-if="key.id !== 'legacy' && key.status === 'active'" type="button" class="btn btn-secondary btn-sm text-red-600" :disabled="adminApiKeyPanelOperating" @click="revokeScopedAdminApiKey(key.id)">{{ t("admin.settings.adminApiKey.revoke") }}</button></td></tr></tbody>
+                  <thead>
+                  <tr class="border-b border-gray-200 text-xs text-gray-500 dark:border-dark-700">
+                    <th class="py-2">{{ t("admin.settings.adminApiKey.name") }}</th>
+                    <th>{{ t("admin.settings.adminApiKey.scopes") }}</th>
+                    <th>{{ t("admin.settings.adminApiKey.status") }}</th>
+                    <th>{{ t("admin.settings.adminApiKey.lastUsed") }}</th>
+                    <th class="text-right">{{ t("admin.settings.adminApiKey.actions") }}</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr v-for="key in scopedAdminApiKeys" :key="key.id"
+                      class="border-b border-gray-100 dark:border-dark-800">
+                    <td class="py-3">
+                      <div class="font-medium">{{ key.name }}</div>
+                      <code class="text-xs text-gray-500">{{ key.keyPrefix }}...{{ key.lastFour }}</code></td>
+                    <td>
+                      <div class="flex max-w-md flex-wrap gap-1"><span v-for="scope in key.scopes" :key="scope"
+                                                                       class="rounded bg-gray-100 px-1.5 py-0.5 text-[11px] dark:bg-dark-700">{{
+                          scope
+                        }}</span></div>
+                    </td>
+                    <td><span :class="key.status === 'active' ? 'text-green-600' : 'text-red-500'">{{
+                        key.status
+                      }}</span><span v-if="key.expiresAt" class="ml-1 text-xs text-gray-500">{{
+                        formatAdminApiKeyDate(key.expiresAt)
+                      }}</span></td>
+                    <td class="text-xs text-gray-500">{{
+                        key.lastUsedAt ? formatAdminApiKeyDate(key.lastUsedAt) : '—'
+                      }}
+                    </td>
+                    <td class="whitespace-nowrap text-right">
+                      <button v-if="key.id !== 'legacy' && key.status === 'active'" type="button"
+                              class="btn btn-secondary btn-sm mr-1" :disabled="adminApiKeyPanelOperating"
+                              @click="editScopedAdminApiKey(key)">{{ t("admin.settings.adminApiKey.edit") }}
+                      </button>
+                      <button v-if="key.id !== 'legacy' && key.status === 'active'" type="button"
+                              class="btn btn-secondary btn-sm mr-1" :disabled="adminApiKeyPanelOperating"
+                              @click="rotateScopedAdminApiKey(key.id)">{{ t("admin.settings.adminApiKey.rotate") }}
+                      </button>
+                      <button v-if="key.id !== 'legacy' && key.status === 'active'" type="button"
+                              class="btn btn-secondary btn-sm text-red-600" :disabled="adminApiKeyPanelOperating"
+                              @click="revokeScopedAdminApiKey(key.id)">{{ t("admin.settings.adminApiKey.revoke") }}
+                      </button>
+                    </td>
+                  </tr>
+                  </tbody>
                 </table>
-                <p v-if="!scopedAdminApiKeys.length" class="py-5 text-center text-sm text-gray-500">{{ t("admin.settings.adminApiKey.noScopedKeys") }}</p>
+                <p v-if="!scopedAdminApiKeys.length" class="py-5 text-center text-sm text-gray-500">
+                  {{ t("admin.settings.adminApiKey.noScopedKeys") }}</p>
               </div>
             </div>
           </div>
@@ -89,7 +153,7 @@
           <!-- Admin API Key Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.adminApiKey.title") }}
@@ -101,13 +165,13 @@
             <div class="space-y-4 p-6">
               <!-- Security Warning -->
               <div
-                class="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
+                  class="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
               >
                 <div class="flex items-start">
                   <Icon
-                    name="exclamationTriangle"
-                    size="md"
-                    class="mt-0.5 flex-shrink-0 text-amber-500"
+                      name="exclamationTriangle"
+                      size="md"
+                      class="mt-0.5 flex-shrink-0 text-amber-500"
                   />
                   <p class="ml-3 text-sm text-amber-700 dark:text-amber-300">
                     {{ t("admin.settings.adminApiKey.securityWarning") }}
@@ -117,53 +181,53 @@
 
               <!-- Loading State -->
               <div
-                v-if="adminApiKeyLoading"
-                class="flex items-center gap-2 text-gray-500"
+                  v-if="adminApiKeyLoading"
+                  class="flex items-center gap-2 text-gray-500"
               >
                 <div
-                  class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"
+                    class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"
                 ></div>
                 {{ t("common.loading") }}
               </div>
 
               <!-- No Key Configured -->
               <div
-                v-else-if="!adminApiKeyExists"
-                class="flex items-center justify-between"
+                  v-else-if="!adminApiKeyExists"
+                  class="flex items-center justify-between"
               >
                 <span class="text-gray-500 dark:text-gray-400">
                   {{ t("admin.settings.adminApiKey.notConfigured") }}
                 </span>
                 <button
-                  type="button"
-                  @click="createAdminApiKey"
-                  :disabled="adminApiKeyOperating"
-                  class="btn btn-primary btn-sm"
+                    type="button"
+                    @click="createAdminApiKey"
+                    :disabled="adminApiKeyOperating"
+                    class="btn btn-primary btn-sm"
                 >
                   <svg
-                    v-if="adminApiKeyOperating"
-                    class="mr-1 h-4 w-4 animate-spin"
-                    fill="none"
-                    viewBox="0 0 24 24"
+                      v-if="adminApiKeyOperating"
+                      class="mr-1 h-4 w-4 animate-spin"
+                      fill="none"
+                      viewBox="0 0 24 24"
                   >
                     <circle
-                      class="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      stroke-width="4"
+                        class="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        stroke-width="4"
                     ></circle>
                     <path
-                      class="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        class="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
                   {{
                     adminApiKeyOperating
-                      ? t("admin.settings.adminApiKey.creating")
-                      : t("admin.settings.adminApiKey.create")
+                        ? t("admin.settings.adminApiKey.creating")
+                        : t("admin.settings.adminApiKey.create")
                   }}
                 </button>
               </div>
@@ -173,34 +237,34 @@
                 <div class="flex items-center justify-between">
                   <div>
                     <label
-                      class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.adminApiKey.currentKey") }}
                     </label>
                     <code
-                      class="rounded bg-gray-100 px-2 py-1 font-mono text-sm text-gray-900 dark:bg-dark-700 dark:text-gray-100"
+                        class="rounded bg-gray-100 px-2 py-1 font-mono text-sm text-gray-900 dark:bg-dark-700 dark:text-gray-100"
                     >
                       {{ adminApiKeyMasked }}
                     </code>
                   </div>
                   <div class="flex gap-2">
                     <button
-                      type="button"
-                      @click="regenerateAdminApiKey"
-                      :disabled="adminApiKeyOperating"
-                      class="btn btn-secondary btn-sm"
+                        type="button"
+                        @click="regenerateAdminApiKey"
+                        :disabled="adminApiKeyOperating"
+                        class="btn btn-secondary btn-sm"
                     >
                       {{
                         adminApiKeyOperating
-                          ? t("admin.settings.adminApiKey.regenerating")
-                          : t("admin.settings.adminApiKey.regenerate")
+                            ? t("admin.settings.adminApiKey.regenerating")
+                            : t("admin.settings.adminApiKey.regenerate")
                       }}
                     </button>
                     <button
-                      type="button"
-                      @click="deleteAdminApiKey"
-                      :disabled="adminApiKeyOperating"
-                      class="btn btn-secondary btn-sm text-red-600 hover:text-red-700 dark:text-red-400"
+                        type="button"
+                        @click="deleteAdminApiKey"
+                        :disabled="adminApiKeyOperating"
+                        class="btn btn-secondary btn-sm text-red-600 hover:text-red-700 dark:text-red-400"
                     >
                       {{ t("admin.settings.adminApiKey.delete") }}
                     </button>
@@ -209,24 +273,24 @@
 
                 <!-- Newly Generated Key Display -->
                 <div
-                  v-if="newAdminApiKey"
-                  class="space-y-3 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20"
+                    v-if="newAdminApiKey"
+                    class="space-y-3 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20"
                 >
                   <p
-                    class="text-sm font-medium text-green-700 dark:text-green-300"
+                      class="text-sm font-medium text-green-700 dark:text-green-300"
                   >
                     {{ t("admin.settings.adminApiKey.keyWarning") }}
                   </p>
                   <div class="flex items-center gap-2">
                     <code
-                      class="flex-1 select-all break-all rounded border border-green-300 bg-white px-3 py-2 font-mono text-sm dark:border-green-700 dark:bg-dark-800"
+                        class="flex-1 select-all break-all rounded border border-green-300 bg-white px-3 py-2 font-mono text-sm dark:border-green-700 dark:bg-dark-800"
                     >
                       {{ newAdminApiKey }}
                     </code>
                     <button
-                      type="button"
-                      @click="copyNewKey"
-                      class="btn btn-primary btn-sm flex-shrink-0"
+                        type="button"
+                        @click="copyNewKey"
+                        class="btn btn-primary btn-sm flex-shrink-0"
                     >
                       {{ t("admin.settings.adminApiKey.copyKey") }}
                     </button>
@@ -246,7 +310,7 @@
           <!-- Global Temporary Unschedulable Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.globalTempUnschedulable.title") }}
@@ -257,8 +321,8 @@
             </div>
             <div class="space-y-5 p-6">
               <div
-                v-if="globalTempUnschedulableLoading"
-                class="flex items-center gap-2 text-gray-500"
+                  v-if="globalTempUnschedulableLoading"
+                  class="flex items-center gap-2 text-gray-500"
               >
                 {{ t("common.loading") }}
               </div>
@@ -273,29 +337,29 @@
                       {{ t("admin.settings.globalTempUnschedulable.enabledHint") }}
                     </p>
                   </div>
-                  <Toggle v-model="globalTempUnschedulableForm.enabled" />
+                  <Toggle v-model="globalTempUnschedulableForm.enabled"/>
                 </div>
 
                 <div
-                  v-if="!globalTempUnschedulableForm.enabled"
-                  class="border-t border-gray-100 pt-4 text-sm text-amber-700 dark:border-dark-700 dark:text-amber-300"
+                    v-if="!globalTempUnschedulableForm.enabled"
+                    class="border-t border-gray-100 pt-4 text-sm text-amber-700 dark:border-dark-700 dark:text-amber-300"
                 >
                   {{ t("admin.settings.globalTempUnschedulable.disabledHint") }}
                 </div>
 
                 <div
-                  class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700"
+                    class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700"
                 >
                   <button
-                    type="button"
-                    @click="saveGlobalTempUnschedulableSettings"
-                    :disabled="globalTempUnschedulableSaving"
-                    class="btn btn-primary btn-sm"
+                      type="button"
+                      @click="saveGlobalTempUnschedulableSettings"
+                      :disabled="globalTempUnschedulableSaving"
+                      class="btn btn-primary btn-sm"
                   >
                     {{
                       globalTempUnschedulableSaving
-                        ? t("common.saving")
-                        : t("common.save")
+                          ? t("common.saving")
+                          : t("common.save")
                     }}
                   </button>
                 </div>
@@ -306,7 +370,7 @@
           <!-- Overload Cooldown (529) Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.overloadCooldown.title") }}
@@ -317,11 +381,11 @@
             </div>
             <div class="space-y-5 p-6">
               <div
-                v-if="overloadCooldownLoading"
-                class="flex items-center gap-2 text-gray-500"
+                  v-if="overloadCooldownLoading"
+                  class="flex items-center gap-2 text-gray-500"
               >
                 <div
-                  class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"
+                    class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"
                 ></div>
                 {{ t("common.loading") }}
               </div>
@@ -330,31 +394,31 @@
                 <div class="flex items-center justify-between">
                   <div>
                     <label class="font-medium text-gray-900 dark:text-white">{{
-                      t("admin.settings.overloadCooldown.enabled")
-                    }}</label>
+                        t("admin.settings.overloadCooldown.enabled")
+                      }}</label>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
                       {{ t("admin.settings.overloadCooldown.enabledHint") }}
                     </p>
                   </div>
-                  <Toggle v-model="overloadCooldownForm.enabled" />
+                  <Toggle v-model="overloadCooldownForm.enabled"/>
                 </div>
 
                 <div
-                  v-if="overloadCooldownForm.enabled"
-                  class="space-y-4 border-t border-gray-100 pt-4 dark:border-dark-700"
+                    v-if="overloadCooldownForm.enabled"
+                    class="space-y-4 border-t border-gray-100 pt-4 dark:border-dark-700"
                 >
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.overloadCooldown.cooldownMinutes") }}
                     </label>
                     <input
-                      v-model.number="overloadCooldownForm.cooldown_minutes"
-                      type="number"
-                      min="1"
-                      max="120"
-                      class="input w-32"
+                        v-model.number="overloadCooldownForm.cooldown_minutes"
+                        type="number"
+                        min="1"
+                        max="120"
+                        class="input w-32"
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{
@@ -365,38 +429,38 @@
                 </div>
 
                 <div
-                  class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700"
+                    class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700"
                 >
                   <button
-                    type="button"
-                    @click="saveOverloadCooldownSettings"
-                    :disabled="overloadCooldownSaving"
-                    class="btn btn-primary btn-sm"
+                      type="button"
+                      @click="saveOverloadCooldownSettings"
+                      :disabled="overloadCooldownSaving"
+                      class="btn btn-primary btn-sm"
                   >
                     <svg
-                      v-if="overloadCooldownSaving"
-                      class="mr-1 h-4 w-4 animate-spin"
-                      fill="none"
-                      viewBox="0 0 24 24"
+                        v-if="overloadCooldownSaving"
+                        class="mr-1 h-4 w-4 animate-spin"
+                        fill="none"
+                        viewBox="0 0 24 24"
                     >
                       <circle
-                        class="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        stroke-width="4"
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
                       ></circle>
                       <path
-                        class="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
                     {{
                       overloadCooldownSaving
-                        ? t("common.saving")
-                        : t("common.save")
+                          ? t("common.saving")
+                          : t("common.save")
                     }}
                   </button>
                 </div>
@@ -407,7 +471,7 @@
           <!-- Rate Limit Cooldown (429) Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.rateLimit429Cooldown.title") }}
@@ -418,11 +482,11 @@
             </div>
             <div class="space-y-5 p-6">
               <div
-                v-if="rateLimit429CooldownLoading"
-                class="flex items-center gap-2 text-gray-500"
+                  v-if="rateLimit429CooldownLoading"
+                  class="flex items-center gap-2 text-gray-500"
               >
                 <div
-                  class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"
+                    class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"
                 ></div>
                 {{ t("common.loading") }}
               </div>
@@ -431,40 +495,40 @@
                 <div class="flex items-center justify-between">
                   <div>
                     <label class="font-medium text-gray-900 dark:text-white">{{
-                      t("admin.settings.rateLimit429Cooldown.enabled")
-                    }}</label>
+                        t("admin.settings.rateLimit429Cooldown.enabled")
+                      }}</label>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
                       {{ t("admin.settings.rateLimit429Cooldown.enabledHint") }}
                     </p>
                   </div>
-                  <Toggle v-model="rateLimit429CooldownForm.enabled" />
+                  <Toggle v-model="rateLimit429CooldownForm.enabled"/>
                 </div>
 
                 <div
-                  v-if="rateLimit429CooldownForm.enabled"
-                  class="space-y-4 border-t border-gray-100 pt-4 dark:border-dark-700"
+                    v-if="rateLimit429CooldownForm.enabled"
+                    class="space-y-4 border-t border-gray-100 pt-4 dark:border-dark-700"
                 >
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{
                         t(
-                          "admin.settings.rateLimit429Cooldown.cooldownSeconds",
+                            "admin.settings.rateLimit429Cooldown.cooldownSeconds",
                         )
                       }}
                     </label>
                     <input
-                      v-model.number="rateLimit429CooldownForm.cooldown_seconds"
-                      type="number"
-                      min="1"
-                      max="7200"
-                      class="input w-32"
+                        v-model.number="rateLimit429CooldownForm.cooldown_seconds"
+                        type="number"
+                        min="1"
+                        max="7200"
+                        class="input w-32"
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{
                         t(
-                          "admin.settings.rateLimit429Cooldown.cooldownSecondsHint",
+                            "admin.settings.rateLimit429Cooldown.cooldownSecondsHint",
                         )
                       }}
                     </p>
@@ -472,38 +536,38 @@
                 </div>
 
                 <div
-                  class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700"
+                    class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700"
                 >
                   <button
-                    type="button"
-                    @click="saveRateLimit429CooldownSettings"
-                    :disabled="rateLimit429CooldownSaving"
-                    class="btn btn-primary btn-sm"
+                      type="button"
+                      @click="saveRateLimit429CooldownSettings"
+                      :disabled="rateLimit429CooldownSaving"
+                      class="btn btn-primary btn-sm"
                   >
                     <svg
-                      v-if="rateLimit429CooldownSaving"
-                      class="mr-1 h-4 w-4 animate-spin"
-                      fill="none"
-                      viewBox="0 0 24 24"
+                        v-if="rateLimit429CooldownSaving"
+                        class="mr-1 h-4 w-4 animate-spin"
+                        fill="none"
+                        viewBox="0 0 24 24"
                     >
                       <circle
-                        class="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        stroke-width="4"
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
                       ></circle>
                       <path
-                        class="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
                     {{
                       rateLimit429CooldownSaving
-                        ? t("common.saving")
-                        : t("common.save")
+                          ? t("common.saving")
+                          : t("common.save")
                     }}
                   </button>
                 </div>
@@ -514,7 +578,7 @@
           <!-- Stream Timeout Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.streamTimeout.title") }}
@@ -526,11 +590,11 @@
             <div class="space-y-5 p-6">
               <!-- Loading State -->
               <div
-                v-if="streamTimeoutLoading"
-                class="flex items-center gap-2 text-gray-500"
+                  v-if="streamTimeoutLoading"
+                  class="flex items-center gap-2 text-gray-500"
               >
                 <div
-                  class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"
+                    class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"
                 ></div>
                 {{ t("common.loading") }}
               </div>
@@ -540,30 +604,30 @@
                 <div class="flex items-center justify-between">
                   <div>
                     <label class="font-medium text-gray-900 dark:text-white">{{
-                      t("admin.settings.streamTimeout.enabled")
-                    }}</label>
+                        t("admin.settings.streamTimeout.enabled")
+                      }}</label>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
                       {{ t("admin.settings.streamTimeout.enabledHint") }}
                     </p>
                   </div>
-                  <Toggle v-model="streamTimeoutForm.enabled" />
+                  <Toggle v-model="streamTimeoutForm.enabled"/>
                 </div>
 
                 <!-- Settings - Only show when enabled -->
                 <div
-                  v-if="streamTimeoutForm.enabled"
-                  class="space-y-4 border-t border-gray-100 pt-4 dark:border-dark-700"
+                    v-if="streamTimeoutForm.enabled"
+                    class="space-y-4 border-t border-gray-100 pt-4 dark:border-dark-700"
                 >
                   <!-- Action -->
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.streamTimeout.action") }}
                     </label>
                     <select
-                      v-model="streamTimeoutForm.action"
-                      class="input w-64"
+                        v-model="streamTimeoutForm.action"
+                        class="input w-64"
                     >
                       <option value="temp_unsched">
                         {{
@@ -585,16 +649,16 @@
                   <!-- Temp Unsched Minutes (only show when action is temp_unsched) -->
                   <div v-if="streamTimeoutForm.action === 'temp_unsched'">
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.streamTimeout.tempUnschedMinutes") }}
                     </label>
                     <input
-                      v-model.number="streamTimeoutForm.temp_unsched_minutes"
-                      type="number"
-                      min="1"
-                      max="60"
-                      class="input w-32"
+                        v-model.number="streamTimeoutForm.temp_unsched_minutes"
+                        type="number"
+                        min="1"
+                        max="60"
+                        class="input w-32"
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{
@@ -606,16 +670,16 @@
                   <!-- Threshold Count -->
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.streamTimeout.thresholdCount") }}
                     </label>
                     <input
-                      v-model.number="streamTimeoutForm.threshold_count"
-                      type="number"
-                      min="1"
-                      max="10"
-                      class="input w-32"
+                        v-model.number="streamTimeoutForm.threshold_count"
+                        type="number"
+                        min="1"
+                        max="10"
+                        class="input w-32"
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{ t("admin.settings.streamTimeout.thresholdCountHint") }}
@@ -625,25 +689,25 @@
                   <!-- Threshold Window Minutes -->
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{
                         t("admin.settings.streamTimeout.thresholdWindowMinutes")
                       }}
                     </label>
                     <input
-                      v-model.number="
+                        v-model.number="
                         streamTimeoutForm.threshold_window_minutes
                       "
-                      type="number"
-                      min="1"
-                      max="60"
-                      class="input w-32"
+                        type="number"
+                        min="1"
+                        max="60"
+                        class="input w-32"
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{
                         t(
-                          "admin.settings.streamTimeout.thresholdWindowMinutesHint",
+                            "admin.settings.streamTimeout.thresholdWindowMinutesHint",
                         )
                       }}
                     </p>
@@ -652,38 +716,38 @@
 
                 <!-- Save Button -->
                 <div
-                  class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700"
+                    class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700"
                 >
                   <button
-                    type="button"
-                    @click="saveStreamTimeoutSettings"
-                    :disabled="streamTimeoutSaving"
-                    class="btn btn-primary btn-sm"
+                      type="button"
+                      @click="saveStreamTimeoutSettings"
+                      :disabled="streamTimeoutSaving"
+                      class="btn btn-primary btn-sm"
                   >
                     <svg
-                      v-if="streamTimeoutSaving"
-                      class="mr-1 h-4 w-4 animate-spin"
-                      fill="none"
-                      viewBox="0 0 24 24"
+                        v-if="streamTimeoutSaving"
+                        class="mr-1 h-4 w-4 animate-spin"
+                        fill="none"
+                        viewBox="0 0 24 24"
                     >
                       <circle
-                        class="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        stroke-width="4"
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
                       ></circle>
                       <path
-                        class="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
                     {{
                       streamTimeoutSaving
-                        ? t("common.saving")
-                        : t("common.save")
+                          ? t("common.saving")
+                          : t("common.save")
                     }}
                   </button>
                 </div>
@@ -694,7 +758,7 @@
           <!-- Request Rectifier Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.rectifier.title") }}
@@ -706,11 +770,11 @@
             <div class="space-y-5 p-6">
               <!-- Loading State -->
               <div
-                v-if="rectifierLoading"
-                class="flex items-center gap-2 text-gray-500"
+                  v-if="rectifierLoading"
+                  class="flex items-center gap-2 text-gray-500"
               >
                 <div
-                  class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"
+                    class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"
                 ></div>
                 {{ t("common.loading") }}
               </div>
@@ -720,26 +784,26 @@
                 <div class="flex items-center justify-between">
                   <div>
                     <label class="font-medium text-gray-900 dark:text-white">{{
-                      t("admin.settings.rectifier.enabled")
-                    }}</label>
+                        t("admin.settings.rectifier.enabled")
+                      }}</label>
                     <p class="text-sm text-gray-500 dark:text-gray-400">
                       {{ t("admin.settings.rectifier.enabledHint") }}
                     </p>
                   </div>
-                  <Toggle v-model="rectifierForm.enabled" />
+                  <Toggle v-model="rectifierForm.enabled"/>
                 </div>
 
                 <!-- Sub-toggles (only show when master is enabled) -->
                 <div
-                  v-if="rectifierForm.enabled"
-                  class="space-y-4 border-t border-gray-100 pt-4 dark:border-dark-700"
+                    v-if="rectifierForm.enabled"
+                    class="space-y-4 border-t border-gray-100 pt-4 dark:border-dark-700"
                 >
                   <!-- Thinking Signature Rectifier -->
                   <div class="flex items-center justify-between">
                     <div>
                       <label
-                        class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >{{
+                          class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      >{{
                           t("admin.settings.rectifier.thinkingSignature")
                         }}</label
                       >
@@ -750,7 +814,7 @@
                       </p>
                     </div>
                     <Toggle
-                      v-model="rectifierForm.thinking_signature_enabled"
+                        v-model="rectifierForm.thinking_signature_enabled"
                     />
                   </div>
 
@@ -758,8 +822,8 @@
                   <div class="flex items-center justify-between">
                     <div>
                       <label
-                        class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >{{
+                          class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      >{{
                           t("admin.settings.rectifier.thinkingBudget")
                         }}</label
                       >
@@ -767,19 +831,19 @@
                         {{ t("admin.settings.rectifier.thinkingBudgetHint") }}
                       </p>
                     </div>
-                    <Toggle v-model="rectifierForm.thinking_budget_enabled" />
+                    <Toggle v-model="rectifierForm.thinking_budget_enabled"/>
                   </div>
 
                   <!-- Thinking Summary Visibility -->
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.rectifier.thinkingDisplay") }}
                     </label>
                     <select
-                      v-model="rectifierForm.thinking_display_mode"
-                      class="input w-64"
+                        v-model="rectifierForm.thinking_display_mode"
+                        class="input w-64"
                     >
                       <option value="off">
                         {{ t("admin.settings.rectifier.thinkingDisplayOff") }}
@@ -797,8 +861,8 @@
                       {{ t("admin.settings.rectifier.thinkingDisplayHint") }}
                     </p>
                     <p
-                      v-if="rectifierForm.thinking_display_mode === 'force'"
-                      class="mt-1.5 text-xs text-amber-600 dark:text-amber-400"
+                        v-if="rectifierForm.thinking_display_mode === 'force'"
+                        class="mt-1.5 text-xs text-amber-600 dark:text-amber-400"
                     >
                       {{
                         t("admin.settings.rectifier.thinkingDisplayForceWarning")
@@ -810,8 +874,8 @@
                   <div class="flex items-center justify-between">
                     <div>
                       <label
-                        class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >{{
+                          class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      >{{
                           t("admin.settings.rectifier.apikeySignature")
                         }}</label
                       >
@@ -819,18 +883,18 @@
                         {{ t("admin.settings.rectifier.apikeySignatureHint") }}
                       </p>
                     </div>
-                    <Toggle v-model="rectifierForm.apikey_signature_enabled" />
+                    <Toggle v-model="rectifierForm.apikey_signature_enabled"/>
                   </div>
 
                   <!-- Custom Patterns (only when apikey_signature_enabled) -->
                   <div
-                    v-if="rectifierForm.apikey_signature_enabled"
-                    class="ml-4 space-y-3 border-l-2 border-gray-200 pl-4 dark:border-dark-600"
+                      v-if="rectifierForm.apikey_signature_enabled"
+                      class="ml-4 space-y-3 border-l-2 border-gray-200 pl-4 dark:border-dark-600"
                   >
                     <div>
                       <label
-                        class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >{{
+                          class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      >{{
                           t("admin.settings.rectifier.apikeyPatterns")
                         }}</label
                       >
@@ -839,49 +903,49 @@
                       </p>
                     </div>
                     <div
-                      v-for="(
+                        v-for="(
                         _, index
                       ) in rectifierForm.apikey_signature_patterns"
-                      :key="index"
-                      class="flex items-center gap-2"
+                        :key="index"
+                        class="flex items-center gap-2"
                     >
                       <input
-                        v-model="rectifierForm.apikey_signature_patterns[index]"
-                        type="text"
-                        class="input input-sm flex-1"
-                        :placeholder="
+                          v-model="rectifierForm.apikey_signature_patterns[index]"
+                          type="text"
+                          class="input input-sm flex-1"
+                          :placeholder="
                           t('admin.settings.rectifier.apikeyPatternPlaceholder')
                         "
                       />
                       <button
-                        type="button"
-                        @click="
+                          type="button"
+                          @click="
                           rectifierForm.apikey_signature_patterns.splice(
                             index,
                             1,
                           )
                         "
-                        class="btn btn-ghost btn-xs text-red-500 hover:text-red-700"
+                          class="btn btn-ghost btn-xs text-red-500 hover:text-red-700"
                       >
                         <svg
-                          class="h-4 w-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                            class="h-4 w-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                         >
                           <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M6 18L18 6M6 6l12 12"
                           />
                         </svg>
                       </button>
                     </div>
                     <button
-                      type="button"
-                      @click="rectifierForm.apikey_signature_patterns.push('')"
-                      class="btn btn-ghost btn-xs text-primary-600 dark:text-primary-400"
+                        type="button"
+                        @click="rectifierForm.apikey_signature_patterns.push('')"
+                        class="btn btn-ghost btn-xs text-primary-600 dark:text-primary-400"
                     >
                       + {{ t("admin.settings.rectifier.addPattern") }}
                     </button>
@@ -890,32 +954,32 @@
 
                 <!-- Save Button -->
                 <div
-                  class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700"
+                    class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700"
                 >
                   <button
-                    type="button"
-                    @click="saveRectifierSettings"
-                    :disabled="rectifierSaving"
-                    class="btn btn-primary btn-sm"
+                      type="button"
+                      @click="saveRectifierSettings"
+                      :disabled="rectifierSaving"
+                      class="btn btn-primary btn-sm"
                   >
                     <svg
-                      v-if="rectifierSaving"
-                      class="mr-1 h-4 w-4 animate-spin"
-                      fill="none"
-                      viewBox="0 0 24 24"
+                        v-if="rectifierSaving"
+                        class="mr-1 h-4 w-4 animate-spin"
+                        fill="none"
+                        viewBox="0 0 24 24"
                     >
                       <circle
-                        class="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        stroke-width="4"
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
                       ></circle>
                       <path
-                        class="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
                     {{
@@ -929,7 +993,7 @@
           <!-- Beta Policy Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.betaPolicy.title") }}
@@ -941,11 +1005,11 @@
             <div class="space-y-5 p-6">
               <!-- Loading State -->
               <div
-                v-if="betaPolicyLoading"
-                class="flex items-center gap-2 text-gray-500"
+                  v-if="betaPolicyLoading"
+                  class="flex items-center gap-2 text-gray-500"
               >
                 <div
-                  class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"
+                    class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"
                 ></div>
                 {{ t("common.loading") }}
               </div>
@@ -953,20 +1017,20 @@
               <template v-else>
                 <!-- Rule Cards -->
                 <div
-                  v-for="rule in betaPolicyForm.rules"
-                  :key="rule.beta_token"
-                  class="rounded-lg border border-gray-200 p-4 dark:border-dark-600"
+                    v-for="rule in betaPolicyForm.rules"
+                    :key="rule.betaToken"
+                    class="rounded-lg border border-gray-200 p-4 dark:border-dark-600"
                 >
                   <div class="mb-3 flex items-center gap-2">
                     <span
-                      class="text-sm font-medium text-gray-900 dark:text-white"
+                        class="text-sm font-medium text-gray-900 dark:text-white"
                     >
-                      {{ getBetaDisplayName(rule.beta_token) }}
+                      {{ getBetaDisplayName(rule.betaToken) }}
                     </span>
                     <span
-                      class="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-dark-700 dark:text-gray-400"
+                        class="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-500 dark:bg-dark-700 dark:text-gray-400"
                     >
-                      {{ rule.beta_token }}
+                      {{ rule.betaToken }}
                     </span>
                   </div>
 
@@ -974,28 +1038,36 @@
                     <!-- Action -->
                     <div>
                       <label
-                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                          class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                       >
                         {{ t("admin.settings.betaPolicy.action") }}
                       </label>
                       <Select
-                        :modelValue="rule.action"
-                        @update:modelValue="rule.action = $event as any"
-                        :options="betaPolicyActionOptions"
+                          :modelValue="rule.action"
+                          @update:modelValue="
+                          rule.action = $event as 'pass' | 'filter' | 'block'
+                        "
+                          :options="betaPolicyActionOptions"
                       />
                     </div>
 
                     <!-- Scope -->
                     <div>
                       <label
-                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                          class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                       >
                         {{ t("admin.settings.betaPolicy.scope") }}
                       </label>
                       <Select
-                        :modelValue="rule.scope"
-                        @update:modelValue="rule.scope = $event as any"
-                        :options="betaPolicyScopeOptions"
+                          :modelValue="rule.scope"
+                          @update:modelValue="
+                          rule.scope = $event as
+                            | 'all'
+                            | 'oauth'
+                            | 'apikey'
+                            | 'bedrock'
+                        "
+                          :options="betaPolicyScopeOptions"
                       />
                     </div>
                   </div>
@@ -1003,15 +1075,15 @@
                   <!-- Error Message (only when action=block) -->
                   <div v-if="rule.action === 'block'" class="mt-3">
                     <label
-                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                     >
                       {{ t("admin.settings.betaPolicy.errorMessage") }}
                     </label>
                     <input
-                      v-model="rule.error_message"
-                      type="text"
-                      class="input"
-                      :placeholder="
+                        v-model="rule.errorMessage"
+                        type="text"
+                        class="input"
+                        :placeholder="
                         t('admin.settings.betaPolicy.errorMessagePlaceholder')
                       "
                     />
@@ -1021,20 +1093,20 @@
                   </div>
 
                   <!-- Quick Presets (only for tokens with presets) -->
-                  <div v-if="betaPresets[rule.beta_token]?.length" class="mt-3">
+                  <div v-if="betaPresets[rule.betaToken]?.length" class="mt-3">
                     <label
-                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                     >
                       {{ t("admin.settings.betaPolicy.quickPresets") }}
                     </label>
                     <div class="flex flex-wrap gap-2">
                       <button
-                        v-for="preset in betaPresets[rule.beta_token]"
-                        :key="preset.label"
-                        type="button"
-                        class="inline-flex items-center gap-1 rounded-md border border-primary-200 bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 dark:border-primary-800 dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
-                        @click="applyBetaPreset(rule, preset)"
-                        :title="preset.description"
+                          v-for="preset in betaPresets[rule.betaToken]"
+                          :key="preset.label"
+                          type="button"
+                          class="inline-flex items-center gap-1 rounded-md border border-primary-200 bg-primary-50 px-2.5 py-1 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 dark:border-primary-800 dark:bg-primary-900/30 dark:text-primary-300 dark:hover:bg-primary-900/50"
+                          @click="applyBetaPreset(rule, preset)"
+                          :title="preset.description"
                       >
                         {{ preset.label }}
                       </button>
@@ -1044,7 +1116,7 @@
                   <!-- Model Whitelist -->
                   <div class="mt-3">
                     <label
-                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                     >
                       {{ t("admin.settings.betaPolicy.modelWhitelist") }}
                     </label>
@@ -1053,58 +1125,59 @@
                     </p>
                     <!-- Existing patterns -->
                     <div
-                      v-for="(_, index) in rule.model_whitelist || []"
-                      :key="index"
-                      class="mb-1.5 flex items-center gap-2"
+                        v-for="(_, index) in rule.modelWhitelist || []"
+                        :key="index"
+                        class="mb-1.5 flex items-center gap-2"
                     >
                       <input
-                        v-model="rule.model_whitelist![index]"
-                        type="text"
-                        class="input input-sm flex-1"
-                        :placeholder="
+                          v-model="rule.modelWhitelist![index]"
+                          type="text"
+                          class="input input-sm flex-1"
+                          :placeholder="
                           t('admin.settings.betaPolicy.modelPatternPlaceholder')
                         "
                       />
                       <button
-                        type="button"
-                        @click="rule.model_whitelist!.splice(index, 1)"
-                        class="shrink-0 rounded p-1 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                          type="button"
+                          @click="rule.modelWhitelist!.splice(index, 1)"
+                          class="shrink-0 rounded p-1 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
                       >
                         <svg
-                          class="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          stroke-width="2"
+                            class="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="2"
                         >
                           <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M6 18L18 6M6 6l12 12"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M6 18L18 6M6 6l12 12"
                           />
                         </svg>
                       </button>
                     </div>
                     <!-- Add pattern button -->
                     <button
-                      type="button"
-                      @click="
-                        if (!rule.model_whitelist) rule.model_whitelist = [];
-                        rule.model_whitelist.push('');
+                        type="button"
+                        @click="
+                        if (!rule.modelWhitelist)
+                          rule.modelWhitelist = [];
+                        rule.modelWhitelist.push('');
                       "
-                      class="mb-2 inline-flex items-center gap-1 text-xs text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                        class="mb-2 inline-flex items-center gap-1 text-xs text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                     >
                       <svg
-                        class="h-3.5 w-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
+                          class="h-3.5 w-3.5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          stroke-width="2"
                       >
                         <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M12 4v16m8-8H4"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 4v16m8-8H4"
                         />
                       </svg>
                       {{ t("admin.settings.betaPolicy.addModelPattern") }}
@@ -1112,16 +1185,16 @@
                     <!-- Common pattern chips -->
                     <div class="flex flex-wrap items-center gap-1.5">
                       <span class="text-xs text-gray-400 dark:text-gray-500"
-                        >{{
+                      >{{
                           t("admin.settings.betaPolicy.commonPatterns")
                         }}:</span
                       >
                       <button
-                        v-for="pattern in commonModelPatterns"
-                        :key="pattern"
-                        type="button"
-                        class="rounded border border-gray-200 px-2 py-0.5 text-xs text-gray-600 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 dark:border-dark-600 dark:text-gray-400 dark:hover:border-primary-700 dark:hover:bg-primary-900/30 dark:hover:text-primary-300"
-                        @click="addQuickPattern(rule, pattern)"
+                          v-for="pattern in commonModelPatterns"
+                          :key="pattern"
+                          type="button"
+                          class="rounded border border-gray-200 px-2 py-0.5 text-xs text-gray-600 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 dark:border-dark-600 dark:text-gray-400 dark:hover:border-primary-700 dark:hover:bg-primary-900/30 dark:hover:text-primary-300"
+                          @click="addQuickPattern(rule, pattern)"
                       >
                         {{ pattern }}
                       </button>
@@ -1130,31 +1203,36 @@
 
                   <!-- Fallback Action (only when model_whitelist is non-empty) -->
                   <div
-                    v-if="
-                      rule.model_whitelist && rule.model_whitelist.length > 0
+                      v-if="
+                      rule.modelWhitelist && rule.modelWhitelist.length > 0
                     "
-                    class="mt-3"
+                      class="mt-3"
                   >
                     <label
-                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                     >
                       {{ t("admin.settings.betaPolicy.fallbackAction") }}
                     </label>
                     <Select
-                      :modelValue="rule.fallback_action || 'pass'"
-                      @update:modelValue="rule.fallback_action = $event as any"
-                      :options="betaPolicyActionOptions"
+                        :modelValue="rule.fallbackAction || 'pass'"
+                        @update:modelValue="
+                        rule.fallbackAction = $event as
+                          | 'pass'
+                          | 'filter'
+                          | 'block'
+                      "
+                        :options="betaPolicyActionOptions"
                     />
                     <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
                       {{ t("admin.settings.betaPolicy.fallbackActionHint") }}
                     </p>
                     <!-- Fallback Error Message (only when fallback_action=block) -->
-                    <div v-if="rule.fallback_action === 'block'" class="mt-2">
+                    <div v-if="rule.fallbackAction === 'block'" class="mt-2">
                       <input
-                        v-model="rule.fallback_error_message"
-                        type="text"
-                        class="input"
-                        :placeholder="
+                          v-model="rule.fallbackErrorMessage"
+                          type="text"
+                          class="input"
+                          :placeholder="
                           t(
                             'admin.settings.betaPolicy.fallbackErrorMessagePlaceholder',
                           )
@@ -1169,32 +1247,32 @@
 
                 <!-- Save Button -->
                 <div
-                  class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700"
+                    class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700"
                 >
                   <button
-                    type="button"
-                    @click="saveBetaPolicySettings"
-                    :disabled="betaPolicySaving"
-                    class="btn btn-primary btn-sm"
+                      type="button"
+                      @click="saveBetaPolicySettings"
+                      :disabled="betaPolicySaving"
+                      class="btn btn-primary btn-sm"
                   >
                     <svg
-                      v-if="betaPolicySaving"
-                      class="mr-1 h-4 w-4 animate-spin"
-                      fill="none"
-                      viewBox="0 0 24 24"
+                        v-if="betaPolicySaving"
+                        class="mr-1 h-4 w-4 animate-spin"
+                        fill="none"
+                        viewBox="0 0 24 24"
                     >
                       <circle
-                        class="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        stroke-width="4"
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
                       ></circle>
                       <path
-                        class="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
                     {{
@@ -1208,7 +1286,7 @@
           <!-- OpenAI Fast/Flex Policy Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.openaiFastPolicy.title") }}
@@ -1220,21 +1298,21 @@
             <div class="space-y-5 p-6">
               <!-- Empty state -->
               <div
-                v-if="openaiFastPolicyForm.rules.length === 0"
-                class="rounded-lg border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500 dark:border-dark-600 dark:text-gray-400"
+                  v-if="openaiFastPolicyForm.rules.length === 0"
+                  class="rounded-lg border border-dashed border-gray-200 p-6 text-center text-sm text-gray-500 dark:border-dark-600 dark:text-gray-400"
               >
                 {{ t("admin.settings.openaiFastPolicy.empty") }}
               </div>
 
               <!-- Rule Cards -->
               <div
-                v-for="(rule, ruleIndex) in openaiFastPolicyForm.rules"
-                :key="ruleIndex"
-                class="rounded-lg border border-gray-200 p-4 dark:border-dark-600"
+                  v-for="(rule, ruleIndex) in openaiFastPolicyForm.rules"
+                  :key="ruleIndex"
+                  class="rounded-lg border border-gray-200 p-4 dark:border-dark-600"
               >
                 <div class="mb-3 flex items-center justify-between">
                   <span
-                    class="text-sm font-medium text-gray-900 dark:text-white"
+                      class="text-sm font-medium text-gray-900 dark:text-white"
                   >
                     {{
                       t("admin.settings.openaiFastPolicy.ruleHeader", {
@@ -1243,22 +1321,22 @@
                     }}
                   </span>
                   <button
-                    type="button"
-                    @click="removeOpenAIFastPolicyRule(ruleIndex)"
-                    class="rounded p-1 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
-                    :title="t('admin.settings.openaiFastPolicy.removeRule')"
+                      type="button"
+                      @click="removeOpenAIFastPolicyRule(ruleIndex)"
+                      class="rounded p-1 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                      :title="t('admin.settings.openaiFastPolicy.removeRule')"
                   >
                     <svg
-                      class="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      stroke-width="2"
+                        class="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2"
                     >
                       <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M6 18L18 6M6 6l12 12"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
                       />
                     </svg>
                   </button>
@@ -1268,59 +1346,59 @@
                   <!-- Service Tier -->
                   <div>
                     <label
-                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                     >
                       {{ t("admin.settings.openaiFastPolicy.serviceTier") }}
                     </label>
                     <Select
-                      :modelValue="rule.service_tier"
-                      @update:modelValue="
-                        rule.service_tier = $event as
+                        :modelValue="rule.serviceTier"
+                        @update:modelValue="
+                        rule.serviceTier = $event as
                           | 'all'
                           | 'priority'
                           | 'flex'
                       "
-                      :options="openaiFastPolicyTierOptions"
+                        :options="openaiFastPolicyTierOptions"
                     />
                   </div>
 
                   <!-- Action -->
                   <div>
                     <label
-                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                     >
                       {{ t("admin.settings.openaiFastPolicy.action") }}
                     </label>
                     <Select
-                      :modelValue="rule.action"
-                      @update:modelValue="
+                        :modelValue="rule.action"
+                        @update:modelValue="
                         rule.action = $event as
                           | 'pass'
                           | 'filter'
                           | 'block'
                           | 'force_priority'
                       "
-                      :options="openaiFastPolicyActionOptions"
+                        :options="openaiFastPolicyActionOptions"
                     />
                   </div>
 
                   <!-- Scope -->
                   <div>
                     <label
-                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                     >
                       {{ t("admin.settings.openaiFastPolicy.scope") }}
                     </label>
                     <Select
-                      :modelValue="rule.scope"
-                      @update:modelValue="
+                        :modelValue="rule.scope"
+                        @update:modelValue="
                         rule.scope = $event as
                           | 'all'
                           | 'oauth'
                           | 'apikey'
                           | 'bedrock'
                       "
-                      :options="openaiFastPolicyScopeOptions"
+                        :options="openaiFastPolicyScopeOptions"
                     />
                   </div>
                 </div>
@@ -1328,7 +1406,7 @@
                 <!-- User Scope -->
                 <div class="mt-3">
                   <label
-                    class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                   >
                     {{ t("admin.settings.openaiFastPolicy.userIds") }}
                   </label>
@@ -1336,23 +1414,23 @@
                     {{ t("admin.settings.openaiFastPolicy.userIdsHint") }}
                   </p>
                   <OpenAIFastPolicyUserSelector
-                    :model-value="rule.user_ids || []"
-                    @update:model-value="rule.user_ids = $event"
+                      :model-value="rule.userIds || []"
+                      @update:model-value="rule.userIds = $event"
                   />
                 </div>
 
                 <!-- Error Message (only when action=block) -->
                 <div v-if="rule.action === 'block'" class="mt-3">
                   <label
-                    class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                   >
                     {{ t("admin.settings.openaiFastPolicy.errorMessage") }}
                   </label>
                   <input
-                    v-model="rule.error_message"
-                    type="text"
-                    class="input"
-                    :placeholder="
+                      v-model="rule.errorMessage"
+                      type="text"
+                      class="input"
+                      :placeholder="
                       t(
                         'admin.settings.openaiFastPolicy.errorMessagePlaceholder',
                       )
@@ -1366,7 +1444,7 @@
                 <!-- Model Whitelist -->
                 <div class="mt-3">
                   <label
-                    class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                   >
                     {{ t("admin.settings.openaiFastPolicy.modelWhitelist") }}
                   </label>
@@ -1376,58 +1454,58 @@
                     }}
                   </p>
                   <div
-                    v-for="(_, patternIdx) in rule.model_whitelist || []"
-                    :key="patternIdx"
-                    class="mb-1.5 flex items-center gap-2"
+                      v-for="(_, patternIdx) in rule.modelWhitelist || []"
+                      :key="patternIdx"
+                      class="mb-1.5 flex items-center gap-2"
                   >
                     <input
-                      v-model="rule.model_whitelist![patternIdx]"
-                      type="text"
-                      class="input input-sm flex-1"
-                      :placeholder="
+                        v-model="rule.modelWhitelist![patternIdx]"
+                        type="text"
+                        class="input input-sm flex-1"
+                        :placeholder="
                         t(
                           'admin.settings.openaiFastPolicy.modelPatternPlaceholder',
                         )
                       "
                     />
                     <button
-                      type="button"
-                      @click="
+                        type="button"
+                        @click="
                         removeOpenAIFastPolicyModelPattern(rule, patternIdx)
                       "
-                      class="shrink-0 rounded p-1 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                        class="shrink-0 rounded p-1 text-red-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
                     >
                       <svg
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
+                          class="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          stroke-width="2"
                       >
                         <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M6 18L18 6M6 6l12 12"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M6 18L18 6M6 6l12 12"
                         />
                       </svg>
                     </button>
                   </div>
                   <button
-                    type="button"
-                    @click="addOpenAIFastPolicyModelPattern(rule)"
-                    class="mb-2 inline-flex items-center gap-1 text-xs text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                      type="button"
+                      @click="addOpenAIFastPolicyModelPattern(rule)"
+                      class="mb-2 inline-flex items-center gap-1 text-xs text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                   >
                     <svg
-                      class="h-3.5 w-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      stroke-width="2"
+                        class="h-3.5 w-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2"
                     >
                       <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M12 4v16m8-8H4"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M12 4v16m8-8H4"
                       />
                     </svg>
                     {{ t("admin.settings.openaiFastPolicy.addModelPattern") }}
@@ -1436,38 +1514,38 @@
 
                 <!-- Fallback Action (only when model_whitelist is non-empty) -->
                 <div
-                  v-if="
-                    rule.model_whitelist && rule.model_whitelist.length > 0
+                    v-if="
+                    rule.modelWhitelist && rule.modelWhitelist.length > 0
                   "
-                  class="mt-3"
+                    class="mt-3"
                 >
                   <label
-                    class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                   >
                     {{ t("admin.settings.openaiFastPolicy.fallbackAction") }}
                   </label>
                   <Select
-                    :modelValue="rule.fallback_action || 'pass'"
-                    @update:modelValue="
-                      rule.fallback_action = $event as
+                      :modelValue="rule.fallbackAction || 'pass'"
+                      @update:modelValue="
+                      rule.fallbackAction = $event as
                         | 'pass'
                         | 'filter'
                         | 'block'
                         | 'force_priority'
                     "
-                    :options="openaiFastPolicyActionOptions"
+                      :options="openaiFastPolicyActionOptions"
                   />
                   <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
                     {{
                       t("admin.settings.openaiFastPolicy.fallbackActionHint")
                     }}
                   </p>
-                  <div v-if="rule.fallback_action === 'block'" class="mt-2">
+                  <div v-if="rule.fallbackAction === 'block'" class="mt-2">
                     <input
-                      v-model="rule.fallback_error_message"
-                      type="text"
-                      class="input"
-                      :placeholder="
+                        v-model="rule.fallbackErrorMessage"
+                        type="text"
+                        class="input"
+                        :placeholder="
                         t(
                           'admin.settings.openaiFastPolicy.fallbackErrorMessagePlaceholder',
                         )
@@ -1480,21 +1558,21 @@
               <!-- Add Rule Button -->
               <div>
                 <button
-                  type="button"
-                  @click="addOpenAIFastPolicyRule"
-                  class="btn btn-secondary btn-sm inline-flex items-center gap-1"
+                    type="button"
+                    @click="addOpenAIFastPolicyRule"
+                    class="btn btn-secondary btn-sm inline-flex items-center gap-1"
                 >
                   <svg
-                    class="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="2"
+                      class="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
                   >
                     <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M12 4v16m8-8H4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 4v16m8-8H4"
                     />
                   </svg>
                   {{ t("admin.settings.openaiFastPolicy.addRule") }}
@@ -1513,7 +1591,7 @@
           <!-- Registration Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.registration.title") }}
@@ -1527,88 +1605,88 @@
               <div class="flex items-center justify-between">
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.registration.enableRegistration")
-                  }}</label>
+                      t("admin.settings.registration.enableRegistration")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{
                       t("admin.settings.registration.enableRegistrationHint")
                     }}
                   </p>
                 </div>
-                <Toggle v-model="form.registration_enabled" />
+                <Toggle v-model="form.registrationEnabled"/>
               </div>
 
               <!-- Email Verification -->
               <div
-                class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
+                  class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.registration.emailVerification")
-                  }}</label>
+                      t("admin.settings.registration.emailVerification")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.registration.emailVerificationHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.email_verify_enabled" />
+                <Toggle v-model="form.emailVerifyEnabled"/>
               </div>
 
               <!-- Email Suffix Whitelist -->
               <div class="border-t border-gray-100 pt-4 dark:border-dark-700">
                 <label class="font-medium text-gray-900 dark:text-white">{{
-                  t("admin.settings.registration.emailSuffixWhitelist")
-                }}</label>
+                    t("admin.settings.registration.emailSuffixWhitelist")
+                  }}</label>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   {{
                     t("admin.settings.registration.emailSuffixWhitelistHint")
                   }}
                 </p>
                 <div
-                  class="mt-3 rounded-lg border border-gray-300 bg-white p-2 dark:border-dark-500 dark:bg-dark-700"
+                    class="mt-3 rounded-lg border border-gray-300 bg-white p-2 dark:border-dark-500 dark:bg-dark-700"
                 >
                   <div class="flex flex-wrap items-center gap-2">
                     <span
-                      v-for="suffix in registrationEmailSuffixWhitelistTags"
-                      :key="suffix"
-                      class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-xs font-mono text-gray-700 dark:bg-dark-600 dark:text-gray-200"
+                        v-for="suffix in registrationEmailSuffixWhitelistTags"
+                        :key="suffix"
+                        class="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-xs font-mono text-gray-700 dark:bg-dark-600 dark:text-gray-200"
                     >
                       <span>{{ suffix }}</span>
                       <button
-                        type="button"
-                        class="rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-dark-500 dark:hover:text-white"
-                        @click="
+                          type="button"
+                          class="rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:text-gray-300 dark:hover:bg-dark-500 dark:hover:text-white"
+                          @click="
                           removeRegistrationEmailSuffixWhitelistTag(suffix)
                         "
                       >
                         <Icon
-                          name="x"
-                          size="xs"
-                          class="h-3.5 w-3.5"
-                          :stroke-width="2"
+                            name="x"
+                            size="xs"
+                            class="h-3.5 w-3.5"
+                            :stroke-width="2"
                         />
                       </button>
                     </span>
 
                     <div
-                      class="flex min-w-[220px] flex-1 items-center gap-1 rounded border border-transparent px-2 py-1 focus-within:border-primary-300 dark:focus-within:border-primary-700"
+                        class="flex min-w-[220px] flex-1 items-center gap-1 rounded border border-transparent px-2 py-1 focus-within:border-primary-300 dark:focus-within:border-primary-700"
                     >
                       <input
-                        v-model="registrationEmailSuffixWhitelistDraft"
-                        type="text"
-                        class="w-full bg-transparent text-sm font-mono text-gray-900 outline-none placeholder:text-gray-400 dark:text-white dark:placeholder:text-gray-500"
-                        :placeholder="
+                          v-model="registrationEmailSuffixWhitelistDraft"
+                          type="text"
+                          class="w-full bg-transparent text-sm font-mono text-gray-900 outline-none placeholder:text-gray-400 dark:text-white dark:placeholder:text-gray-500"
+                          :placeholder="
                           t(
                             'admin.settings.registration.emailSuffixWhitelistPlaceholder',
                           )
                         "
-                        @input="
+                          @input="
                           handleRegistrationEmailSuffixWhitelistDraftInput
                         "
-                        @keydown="
+                          @keydown="
                           handleRegistrationEmailSuffixWhitelistDraftKeydown
                         "
-                        @blur="commitRegistrationEmailSuffixWhitelistDraft"
-                        @paste="handleRegistrationEmailSuffixWhitelistPaste"
+                          @blur="commitRegistrationEmailSuffixWhitelistDraft"
+                          @paste="handleRegistrationEmailSuffixWhitelistPaste"
                       />
                     </div>
                   </div>
@@ -1616,7 +1694,7 @@
                 <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
                   {{
                     t(
-                      "admin.settings.registration.emailSuffixWhitelistInputHint",
+                        "admin.settings.registration.emailSuffixWhitelistInputHint",
                     )
                   }}
                 </p>
@@ -1624,63 +1702,63 @@
 
               <!-- Promo Code -->
               <div
-                class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
+                  class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.registration.promoCode")
-                  }}</label>
+                      t("admin.settings.registration.promoCode")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.registration.promoCodeHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.promo_code_enabled" />
+                <Toggle v-model="form.promoCodeEnabled"/>
               </div>
 
               <!-- Invitation Code -->
               <div
-                class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
+                  class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.registration.invitationCode")
-                  }}</label>
+                      t("admin.settings.registration.invitationCode")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.registration.invitationCodeHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.invitation_code_enabled" />
+                <Toggle v-model="form.invitationCodeEnabled"/>
               </div>
               <!-- Password Reset - Only show when email verification is enabled -->
               <div
-                v-if="form.email_verify_enabled"
-                class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
+                  v-if="form.emailVerifyEnabled"
+                  class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.registration.passwordReset")
-                  }}</label>
+                      t("admin.settings.registration.passwordReset")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.registration.passwordResetHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.password_reset_enabled" />
+                <Toggle v-model="form.passwordResetEnabled"/>
               </div>
               <!-- Frontend URL - Only show when password reset is enabled -->
               <div
-                v-if="form.email_verify_enabled && form.password_reset_enabled"
-                class="border-t border-gray-100 pt-4 dark:border-dark-700"
+                  v-if="form.emailVerifyEnabled && form.passwordResetEnabled"
+                  class="border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {{ t("admin.settings.registration.frontendUrl") }}
                 </label>
                 <input
-                  v-model="form.frontend_url"
-                  type="url"
-                  class="input"
-                  :placeholder="
+                    v-model="form.frontendUrl"
+                    type="url"
+                    class="input"
+                    :placeholder="
                     t('admin.settings.registration.frontendUrlPlaceholder')
                   "
                 />
@@ -1691,76 +1769,76 @@
 
               <!-- TOTP 2FA -->
               <div
-                class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
+                  class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.registration.totp")
-                  }}</label>
+                      t("admin.settings.registration.totp")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.registration.totpHint") }}
                   </p>
                   <!-- Warning when encryption key not configured -->
                   <p
-                    v-if="!form.totp_encryption_key_configured"
-                    class="mt-2 text-sm text-amber-600 dark:text-amber-400"
+                      v-if="!form.totpEncryptionKeyConfigured"
+                      class="mt-2 text-sm text-amber-600 dark:text-amber-400"
                   >
                     {{ t("admin.settings.registration.totpKeyNotConfigured") }}
                   </p>
                 </div>
                 <Toggle
-                  v-model="form.totp_enabled"
-                  :disabled="!form.totp_encryption_key_configured"
+                    v-model="form.totpEnabled"
+                    :disabled="!form.totpEncryptionKeyConfigured"
                 />
               </div>
 
               <!-- 敏感操作 step-up 2FA -->
               <div
-                class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
+                  class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.security.stepUp")
-                  }}</label>
+                      t("admin.settings.security.stepUp")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.security.stepUpHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.step_up_enabled" />
+                <Toggle v-model="form.stepUpEnabled"/>
               </div>
 
               <!-- 会话 IP/UA 绑定 -->
               <div
-                class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
+                  class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.security.sessionBinding")
-                  }}</label>
+                      t("admin.settings.security.sessionBinding")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.security.sessionBindingHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.session_binding_enabled" />
+                <Toggle v-model="form.sessionBindingEnabled"/>
               </div>
 
               <!-- 审计日志保留天数 -->
               <div
-                class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
+                  class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.security.auditRetention")
-                  }}</label>
+                      t("admin.settings.security.auditRetention")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.security.auditRetentionHint") }}
                   </p>
                 </div>
                 <input
-                  v-model.number="form.audit_log_retention_days"
-                  type="number"
-                  min="0"
-                  class="input w-28 text-right"
+                    v-model.number="form.auditLogRetentionDays"
+                    type="number"
+                    min="0"
+                    class="input w-28 text-right"
                 />
               </div>
             </div>
@@ -1769,7 +1847,7 @@
           <!-- API Key IP ACL Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.apiKeyAcl.title") }}
@@ -1789,22 +1867,22 @@
                   </p>
                 </div>
                 <Select
-                  :modelValue="form.client_ip_resolution_mode"
-                  @update:modelValue="form.client_ip_resolution_mode = $event as ClientIPResolutionMode"
-                  :options="clientIPResolutionModeOptions"
-                  :searchable="false"
+                    :modelValue="form.clientIpResolutionMode"
+                    @update:modelValue="form.clientIpResolutionMode = $event as ClientIPResolutionMode"
+                    :options="clientIPResolutionModeOptions"
+                    :searchable="false"
                 />
               </div>
 
-              <div v-if="form.client_ip_resolution_mode !== 'direct'">
+              <div v-if="form.clientIpResolutionMode !== 'direct'">
                 <label class="mb-1 block text-sm font-medium text-gray-900 dark:text-white">
                   {{ t("admin.settings.apiKeyAcl.trustedProxies") }}
                 </label>
                 <textarea
-                  v-model="clientIPTrustedProxiesText"
-                  class="input min-h-24 font-mono text-sm"
-                  :placeholder="t('admin.settings.apiKeyAcl.trustedProxiesPlaceholder')"
-                  spellcheck="false"
+                    v-model="clientIPTrustedProxiesText"
+                    class="input min-h-24 font-mono text-sm"
+                    :placeholder="t('admin.settings.apiKeyAcl.trustedProxiesPlaceholder')"
+                    spellcheck="false"
                 ></textarea>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   {{ t("admin.settings.apiKeyAcl.trustedProxiesHint") }}
@@ -1815,33 +1893,37 @@
                 <div>
                   <dt class="text-gray-500 dark:text-gray-400">{{ t("admin.settings.apiKeyAcl.activeMode") }}</dt>
                   <dd class="mt-1 font-medium text-gray-900 dark:text-white">
-                    {{ t(`admin.settings.apiKeyAcl.modes.${form.client_ip_resolution_status.mode || form.client_ip_resolution_mode}`) }}
+                    {{
+                      t(`admin.settings.apiKeyAcl.modes.${form.clientIpResolutionStatus.mode || form.clientIpResolutionMode}`)
+                    }}
                   </dd>
                 </div>
                 <div>
                   <dt class="text-gray-500 dark:text-gray-400">{{ t("admin.settings.apiKeyAcl.customRules") }}</dt>
                   <dd class="mt-1 font-medium text-gray-900 dark:text-white">
-                    {{ form.client_ip_resolution_status.custom_prefix_count }}
+                    {{ form.clientIpResolutionStatus.customPrefixCount }}
                   </dd>
                 </div>
                 <div>
                   <dt class="text-gray-500 dark:text-gray-400">{{ t("admin.settings.apiKeyAcl.cloudflareRules") }}</dt>
                   <dd class="mt-1 font-medium text-gray-900 dark:text-white">
-                    {{ form.client_ip_resolution_status.cloudflare_prefix_count }}
+                    {{ form.clientIpResolutionStatus.cloudflarePrefixCount }}
                   </dd>
                 </div>
                 <div>
                   <dt class="text-gray-500 dark:text-gray-400">{{ t("admin.settings.apiKeyAcl.cloudflareSource") }}</dt>
                   <dd class="mt-1 font-medium text-gray-900 dark:text-white">
-                    {{ t(`admin.settings.apiKeyAcl.sources.${form.client_ip_resolution_status.cloudflare_ranges_source || 'embedded'}`) }}
+                    {{
+                      t(`admin.settings.apiKeyAcl.sources.${form.clientIpResolutionStatus.cloudflareRangesSource || 'embedded'}`)
+                    }}
                   </dd>
                 </div>
               </dl>
               <p
-                v-if="form.client_ip_resolution_status.cloudflare_last_success_at"
-                class="text-xs text-gray-500 dark:text-gray-400"
+                  v-if="form.clientIpResolutionStatus.cloudflareLastSuccessAt"
+                  class="text-xs text-gray-500 dark:text-gray-400"
               >
-                {{ t("admin.settings.apiKeyAcl.lastRefresh", { time: clientIPLastRefreshText }) }}
+                {{ t("admin.settings.apiKeyAcl.lastRefresh", {time: clientIPLastRefreshText}) }}
               </p>
             </div>
           </div>
@@ -1849,7 +1931,7 @@
           <!-- Authentication bot protection settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.turnstile.title") }}
@@ -1860,9 +1942,9 @@
             </div>
             <div class="space-y-5 p-6">
               <div
-                v-for="provider in humanVerificationProviders"
-                :key="provider.key"
-                class="flex items-center justify-between gap-4 border-b border-gray-100 pb-4 last:border-0 last:pb-0 dark:border-dark-700"
+                  v-for="provider in humanVerificationProviders"
+                  :key="provider.key"
+                  class="flex items-center justify-between gap-4 border-b border-gray-100 pb-4 last:border-0 last:pb-0 dark:border-dark-700"
               >
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">
@@ -1873,36 +1955,36 @@
                   </p>
                 </div>
                 <Toggle
-                  :model-value="form[provider.key]"
-                  @update:model-value="setHumanVerificationProvider(provider.key, $event)"
+                    :model-value="form[provider.key]"
+                    @update:model-value="setHumanVerificationProvider(provider.key, $event)"
                 />
               </div>
 
               <!-- Turnstile Keys - Only show when enabled -->
               <div
-                v-if="form.turnstile_enabled"
-                class="border-t border-gray-100 pt-4 dark:border-dark-700"
+                  v-if="form.turnstileEnabled"
+                  class="border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div class="grid grid-cols-1 gap-6">
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.turnstile.siteKey") }}
                     </label>
                     <input
-                      v-model="form.turnstile_site_key"
-                      type="text"
-                      class="input font-mono text-sm"
-                      placeholder="0x4AAAAAAA..."
+                        v-model="form.turnstileSiteKey"
+                        type="text"
+                        class="input font-mono text-sm"
+                        placeholder="0x4AAAAAAA..."
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{ t("admin.settings.turnstile.siteKeyHint") }}
                       <a
-                        href="https://dash.cloudflare.com/"
-                        target="_blank"
-                        class="text-primary-600 hover:text-primary-500"
-                        >{{
+                          href="https://dash.cloudflare.com/"
+                          target="_blank"
+                          class="text-primary-600 hover:text-primary-500"
+                      >{{
                           t("admin.settings.turnstile.cloudflareDashboard")
                         }}</a
                       >
@@ -1910,23 +1992,23 @@
                   </div>
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.turnstile.secretKey") }}
                     </label>
                     <input
-                      v-model="form.turnstile_secret_key"
-                      type="password"
-                      class="input font-mono text-sm"
-                      placeholder="0x4AAAAAAA..."
+                        v-model="form.turnstile_secret_key"
+                        type="password"
+                        class="input font-mono text-sm"
+                        placeholder="0x4AAAAAAA..."
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{
-                        form.turnstile_secret_key_configured
-                          ? t(
-                              "admin.settings.turnstile.secretKeyConfiguredHint",
+                        form.turnstileSecretKeyConfigured
+                            ? t(
+                                "admin.settings.turnstile.secretKeyConfiguredHint",
                             )
-                          : t("admin.settings.turnstile.secretKeyHint")
+                            : t("admin.settings.turnstile.secretKeyHint")
                       }}
                     </p>
                   </div>
@@ -1934,8 +2016,8 @@
               </div>
 
               <div
-                v-if="form.recaptcha_enabled"
-                class="border-t border-gray-100 pt-4 dark:border-dark-700"
+                  v-if="form.recaptchaEnabled"
+                  class="border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div class="grid grid-cols-1 gap-6">
                   <div>
@@ -1943,10 +2025,10 @@
                       {{ t("admin.settings.turnstile.siteKey") }}
                     </label>
                     <input
-                      v-model="form.recaptcha_site_key"
-                      type="text"
-                      class="input font-mono text-sm"
-                      placeholder="6Lc..."
+                        v-model="form.recaptchaSiteKey"
+                        type="text"
+                        class="input font-mono text-sm"
+                        placeholder="6Lc..."
                     />
                   </div>
                   <div>
@@ -1954,16 +2036,16 @@
                       {{ t("admin.settings.turnstile.secretKey") }}
                     </label>
                     <input
-                      v-model="form.recaptcha_secret_key"
-                      type="password"
-                      class="input font-mono text-sm"
-                      placeholder="6Lc..."
+                        v-model="form.recaptcha_secret_key"
+                        type="password"
+                        class="input font-mono text-sm"
+                        placeholder="6Lc..."
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{
-                        form.recaptcha_secret_key_configured
-                          ? t("admin.settings.turnstile.secretKeyConfiguredHint")
-                          : t("admin.settings.turnstile.secretKeyHint")
+                        form.recaptchaSecretKeyConfigured
+                            ? t("admin.settings.turnstile.secretKeyConfiguredHint")
+                            : t("admin.settings.turnstile.secretKeyHint")
                       }}
                     </p>
                   </div>
@@ -1971,8 +2053,8 @@
               </div>
 
               <div
-                v-if="form.cap_enabled"
-                class="border-t border-gray-100 pt-4 dark:border-dark-700"
+                  v-if="form.capEnabled"
+                  class="border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div class="grid grid-cols-1 gap-6">
                   <div>
@@ -1980,10 +2062,10 @@
                       {{ t("admin.settings.turnstile.capEndpoint") }}
                     </label>
                     <input
-                      v-model="form.cap_api_endpoint"
-                      type="url"
-                      class="input font-mono text-sm"
-                      placeholder="https://cap.example.com/site-key"
+                        v-model="form.capApiEndpoint"
+                        type="url"
+                        class="input font-mono text-sm"
+                        placeholder="https://cap.example.com/site-key"
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{ t("admin.settings.turnstile.capEndpointHint") }}
@@ -1994,15 +2076,15 @@
                       {{ t("admin.settings.turnstile.secretKey") }}
                     </label>
                     <input
-                      v-model="form.cap_secret_key"
-                      type="password"
-                      class="input font-mono text-sm"
+                        v-model="form.cap_secret_key"
+                        type="password"
+                        class="input font-mono text-sm"
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{
-                        form.cap_secret_key_configured
-                          ? t("admin.settings.turnstile.secretKeyConfiguredHint")
-                          : t("admin.settings.turnstile.secretKeyHint")
+                        form.capSecretKeyConfigured
+                            ? t("admin.settings.turnstile.secretKeyConfiguredHint")
+                            : t("admin.settings.turnstile.secretKeyHint")
                       }}
                     </p>
                   </div>
@@ -2014,7 +2096,7 @@
           <!-- LinuxDo Connect OAuth 登录 -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.linuxdo.title") }}
@@ -2027,31 +2109,31 @@
               <div class="flex items-center justify-between">
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.linuxdo.enable")
-                  }}</label>
+                      t("admin.settings.linuxdo.enable")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.linuxdo.enableHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.linuxdo_connect_enabled" />
+                <Toggle v-model="form.linuxdoConnectEnabled"/>
               </div>
 
               <div
-                v-if="form.linuxdo_connect_enabled"
-                class="border-t border-gray-100 pt-4 dark:border-dark-700"
+                  v-if="form.linuxdoConnectEnabled"
+                  class="border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div class="grid grid-cols-1 gap-6">
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.linuxdo.clientId") }}
                     </label>
                     <input
-                      v-model="form.linuxdo_connect_client_id"
-                      type="text"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.linuxdoConnectClientId"
+                        type="text"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.linuxdo.clientIdPlaceholder')
                       "
                     />
@@ -2062,16 +2144,16 @@
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.linuxdo.clientSecret") }}
                     </label>
                     <input
-                      v-model="form.linuxdo_connect_client_secret"
-                      type="password"
-                      class="input font-mono text-sm"
-                      :placeholder="
-                        form.linuxdo_connect_client_secret_configured
+                        v-model="form.linuxdo_connect_client_secret"
+                        type="password"
+                        class="input font-mono text-sm"
+                        :placeholder="
+                        form.linuxdoConnectClientSecretConfigured
                           ? t(
                               'admin.settings.linuxdo.clientSecretConfiguredPlaceholder',
                             )
@@ -2080,42 +2162,42 @@
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{
-                        form.linuxdo_connect_client_secret_configured
-                          ? t(
-                              "admin.settings.linuxdo.clientSecretConfiguredHint",
+                        form.linuxdoConnectClientSecretConfigured
+                            ? t(
+                                "admin.settings.linuxdo.clientSecretConfiguredHint",
                             )
-                          : t("admin.settings.linuxdo.clientSecretHint")
+                            : t("admin.settings.linuxdo.clientSecretHint")
                       }}
                     </p>
                   </div>
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.linuxdo.redirectUrl") }}
                     </label>
                     <input
-                      v-model="form.linuxdo_connect_redirect_url"
-                      type="url"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.linuxdoConnectRedirectUrl"
+                        type="url"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.linuxdo.redirectUrlPlaceholder')
                       "
                     />
                     <div
-                      class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3"
+                        class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3"
                     >
                       <button
-                        type="button"
-                        class="btn btn-secondary btn-sm w-fit"
-                        @click="setAndCopyLinuxdoRedirectUrl"
+                          type="button"
+                          class="btn btn-secondary btn-sm w-fit"
+                          @click="setAndCopyLinuxdoRedirectUrl"
                       >
                         {{ t("admin.settings.linuxdo.quickSetCopy") }}
                       </button>
                       <code
-                        v-if="linuxdoRedirectUrlSuggestion"
-                        class="select-all break-all rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-600 dark:bg-dark-800 dark:text-gray-300"
+                          v-if="linuxdoRedirectUrlSuggestion"
+                          class="select-all break-all rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-600 dark:bg-dark-800 dark:text-gray-300"
                       >
                         {{ linuxdoRedirectUrlSuggestion }}
                       </code>
@@ -2132,7 +2214,7 @@
           <!-- GitHub / Google 邮箱快捷登录 -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ localText("邮箱快捷登录", "Email OAuth Sign-in") }}
@@ -2140,8 +2222,8 @@
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 {{
                   localText(
-                    "开启 GitHub 或 Google 邮箱授权登录后，系统会读取已验证邮箱，存在则直接登录，不存在则自动注册。",
-                    "After GitHub or Google email OAuth is enabled, the system reads a verified email, signs in matching users, and auto-registers missing users.",
+                      "开启 GitHub 或 Google 邮箱授权登录后，系统会读取已验证邮箱，存在则直接登录，不存在则自动注册。",
+                      "After GitHub or Google email OAuth is enabled, the system reads a verified email, signs in matching users, and auto-registers missing users.",
                   )
                 }}
               </p>
@@ -2157,38 +2239,40 @@
                       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         {{
                           localText(
-                            "GitHub OAuth App 需要 read:user user:email 权限，回调地址填写下方后端地址。",
-                            "GitHub OAuth App needs read:user user:email scopes. Use the backend callback URL below.",
+                              "GitHub OAuth App 需要 read:user user:email 权限，回调地址填写下方后端地址。",
+                              "GitHub OAuth App needs read:user user:email scopes. Use the backend callback URL below.",
                           )
                         }}
                       </p>
                     </div>
-                    <Toggle v-model="form.github_oauth_enabled" />
+                    <Toggle v-model="form.githubOauthEnabled"/>
                   </div>
 
-                  <div v-if="form.github_oauth_enabled" class="mt-4 space-y-4">
-                    <div class="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:bg-dark-800 dark:text-gray-300">
+                  <div v-if="form.githubOauthEnabled" class="mt-4 space-y-4">
+                    <div
+                        class="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:bg-dark-800 dark:text-gray-300">
                       <template v-if="isZhLocale">
                         开通引导：GitHub Settings → Developer settings →
                         <a
-                          data-testid="github-oauth-apps-guide-link"
-                          href="https://github.com/settings/developers"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="font-medium text-primary-600 hover:underline dark:text-primary-400"
+                            data-testid="github-oauth-apps-guide-link"
+                            href="https://github.com/settings/developers"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="font-medium text-primary-600 hover:underline dark:text-primary-400"
                         >OAuth Apps</a>
                         → New OAuth App；Homepage URL 填站点域名，Authorization callback URL 填下面的后端回调地址。
                       </template>
                       <template v-else>
                         Setup guide: GitHub Settings → Developer settings →
                         <a
-                          data-testid="github-oauth-apps-guide-link"
-                          href="https://github.com/settings/developers"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          class="font-medium text-primary-600 hover:underline dark:text-primary-400"
+                            data-testid="github-oauth-apps-guide-link"
+                            href="https://github.com/settings/developers"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="font-medium text-primary-600 hover:underline dark:text-primary-400"
                         >OAuth Apps</a>
-                        → New OAuth App. Use your site origin as Homepage URL and the backend callback URL below as Authorization callback URL.
+                        → New OAuth App. Use your site origin as Homepage URL and the backend callback URL below as
+                        Authorization callback URL.
                       </template>
                     </div>
 
@@ -2196,20 +2280,21 @@
                       <div>
                         <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Client ID</label>
                         <input
-                          v-model="form.github_oauth_client_id"
-                          type="text"
-                          class="input font-mono text-sm"
-                          placeholder="GitHub OAuth Client ID"
+                            v-model="form.githubOauthClientId"
+                            type="text"
+                            class="input font-mono text-sm"
+                            placeholder="GitHub OAuth Client ID"
                         />
                       </div>
                       <div>
-                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Client Secret</label>
+                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Client
+                          Secret</label>
                         <input
-                          v-model="form.github_oauth_client_secret"
-                          type="password"
-                          class="input font-mono text-sm"
-                          :placeholder="
-                            form.github_oauth_client_secret_configured
+                            v-model="form.github_oauth_client_secret"
+                            type="password"
+                            class="input font-mono text-sm"
+                            :placeholder="
+                            form.githubOauthClientSecretConfigured
                               ? localText('密钥已配置，留空以保留当前值。', 'Secret configured. Leave empty to keep the current value.')
                               : 'GitHub OAuth Client Secret'
                           "
@@ -2222,22 +2307,22 @@
                         {{ localText("后端回调地址", "Backend Callback URL") }}
                       </label>
                       <input
-                        v-model="form.github_oauth_redirect_url"
-                        type="url"
-                        class="input font-mono text-sm"
-                        placeholder="https://your-domain.com/api/v1/auth/oauth/github/callback"
+                          v-model="form.githubOauthRedirectUrl"
+                          type="url"
+                          class="input font-mono text-sm"
+                          placeholder="https://your-domain.com/api/v1/auth/oauth/github/callback"
                       />
                       <div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                         <button
-                          type="button"
-                          class="btn btn-secondary btn-sm w-fit"
-                          @click="setAndCopyEmailOAuthRedirectUrl('github')"
+                            type="button"
+                            class="btn btn-secondary btn-sm w-fit"
+                            @click="setAndCopyEmailOAuthRedirectUrl('github')"
                         >
                           {{ localText("生成并复制", "Generate and copy") }}
                         </button>
                         <code
-                          v-if="githubOAuthRedirectUrlSuggestion"
-                          class="select-all break-all rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-600 dark:bg-dark-800 dark:text-gray-300"
+                            v-if="githubOAuthRedirectUrlSuggestion"
+                            class="select-all break-all rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-600 dark:bg-dark-800 dark:text-gray-300"
                         >
                           {{ githubOAuthRedirectUrlSuggestion }}
                         </code>
@@ -2249,10 +2334,10 @@
                         {{ localText("前端回跳地址", "Frontend Callback URL") }}
                       </label>
                       <input
-                        v-model="form.github_oauth_frontend_redirect_url"
-                        type="text"
-                        class="input font-mono text-sm"
-                        placeholder="/auth/oauth/callback"
+                          v-model="form.githubOauthFrontendRedirectUrl"
+                          type="text"
+                          class="input font-mono text-sm"
+                          placeholder="/auth/oauth/callback"
                       />
                     </div>
                   </div>
@@ -2267,21 +2352,22 @@
                       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                         {{
                           localText(
-                            "Google OAuth 客户端需要 openid email profile 范围，并在凭据里登记后端回调地址。",
-                            "Google OAuth client needs openid email profile scopes and the backend callback URL registered in credentials.",
+                              "Google OAuth 客户端需要 openid email profile 范围，并在凭据里登记后端回调地址。",
+                              "Google OAuth client needs openid email profile scopes and the backend callback URL registered in credentials.",
                           )
                         }}
                       </p>
                     </div>
-                    <Toggle v-model="form.google_oauth_enabled" />
+                    <Toggle v-model="form.googleOauthEnabled"/>
                   </div>
 
-                  <div v-if="form.google_oauth_enabled" class="mt-4 space-y-4">
-                    <div class="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:bg-dark-800 dark:text-gray-300">
+                  <div v-if="form.googleOauthEnabled" class="mt-4 space-y-4">
+                    <div
+                        class="rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:bg-dark-800 dark:text-gray-300">
                       {{
                         localText(
-                          "开通引导：Google Cloud Console → APIs & Services → OAuth consent screen 完成同意屏幕；Credentials → Create Credentials → OAuth client ID，类型选择 Web application，并把下面地址加入 Authorized redirect URIs。",
-                          "Setup guide: Google Cloud Console → APIs & Services → OAuth consent screen, then Credentials → Create Credentials → OAuth client ID, choose Web application, and add the URL below to Authorized redirect URIs.",
+                            "开通引导：Google Cloud Console → APIs & Services → OAuth consent screen 完成同意屏幕；Credentials → Create Credentials → OAuth client ID，类型选择 Web application，并把下面地址加入 Authorized redirect URIs。",
+                            "Setup guide: Google Cloud Console → APIs & Services → OAuth consent screen, then Credentials → Create Credentials → OAuth client ID, choose Web application, and add the URL below to Authorized redirect URIs.",
                         )
                       }}
                     </div>
@@ -2290,20 +2376,21 @@
                       <div>
                         <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Client ID</label>
                         <input
-                          v-model="form.google_oauth_client_id"
-                          type="text"
-                          class="input font-mono text-sm"
-                          placeholder="Google OAuth Client ID"
+                            v-model="form.googleOauthClientId"
+                            type="text"
+                            class="input font-mono text-sm"
+                            placeholder="Google OAuth Client ID"
                         />
                       </div>
                       <div>
-                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Client Secret</label>
+                        <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Client
+                          Secret</label>
                         <input
-                          v-model="form.google_oauth_client_secret"
-                          type="password"
-                          class="input font-mono text-sm"
-                          :placeholder="
-                            form.google_oauth_client_secret_configured
+                            v-model="form.google_oauth_client_secret"
+                            type="password"
+                            class="input font-mono text-sm"
+                            :placeholder="
+                            form.googleOauthClientSecretConfigured
                               ? localText('密钥已配置，留空以保留当前值。', 'Secret configured. Leave empty to keep the current value.')
                               : 'Google OAuth Client Secret'
                           "
@@ -2316,22 +2403,22 @@
                         {{ localText("后端回调地址", "Backend Callback URL") }}
                       </label>
                       <input
-                        v-model="form.google_oauth_redirect_url"
-                        type="url"
-                        class="input font-mono text-sm"
-                        placeholder="https://your-domain.com/api/v1/auth/oauth/google/callback"
+                          v-model="form.googleOauthRedirectUrl"
+                          type="url"
+                          class="input font-mono text-sm"
+                          placeholder="https://your-domain.com/api/v1/auth/oauth/google/callback"
                       />
                       <div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                         <button
-                          type="button"
-                          class="btn btn-secondary btn-sm w-fit"
-                          @click="setAndCopyEmailOAuthRedirectUrl('google')"
+                            type="button"
+                            class="btn btn-secondary btn-sm w-fit"
+                            @click="setAndCopyEmailOAuthRedirectUrl('google')"
                         >
                           {{ localText("生成并复制", "Generate and copy") }}
                         </button>
                         <code
-                          v-if="googleOAuthRedirectUrlSuggestion"
-                          class="select-all break-all rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-600 dark:bg-dark-800 dark:text-gray-300"
+                            v-if="googleOAuthRedirectUrlSuggestion"
+                            class="select-all break-all rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-600 dark:bg-dark-800 dark:text-gray-300"
                         >
                           {{ googleOAuthRedirectUrlSuggestion }}
                         </code>
@@ -2343,10 +2430,10 @@
                         {{ localText("前端回跳地址", "Frontend Callback URL") }}
                       </label>
                       <input
-                        v-model="form.google_oauth_frontend_redirect_url"
-                        type="text"
-                        class="input font-mono text-sm"
-                        placeholder="/auth/oauth/callback"
+                          v-model="form.googleOauthFrontendRedirectUrl"
+                          type="text"
+                          class="input font-mono text-sm"
+                          placeholder="/auth/oauth/callback"
                       />
                     </div>
                   </div>
@@ -2358,7 +2445,7 @@
           <!-- WeChat Connect OAuth 登录 -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.wechatConnect.title") }}
@@ -2371,25 +2458,25 @@
               <div class="flex items-center justify-between">
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.wechatConnect.enabledLabel")
-                  }}</label>
+                      t("admin.settings.wechatConnect.enabledLabel")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.wechatConnect.enabledHint") }}
                   </p>
                 </div>
                 <Toggle
-                  v-model="form.wechat_connect_enabled"
-                  data-testid="wechat-connect-enabled"
+                    v-model="form.wechatConnectEnabled"
+                    data-testid="wechat-connect-enabled"
                 />
               </div>
 
               <div
-                v-if="form.wechat_connect_enabled"
-                class="space-y-6 border-t border-gray-100 pt-4 dark:border-dark-700"
+                  v-if="form.wechatConnectEnabled"
+                  class="space-y-6 border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div class="space-y-4">
                   <div
-                    class="rounded-lg border border-gray-200 p-4 dark:border-dark-700"
+                      class="rounded-lg border border-gray-200 p-4 dark:border-dark-700"
                   >
                     <div class="flex items-start justify-between gap-4">
                       <div>
@@ -2399,34 +2486,34 @@
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                           {{
                             localText(
-                              "桌面浏览器通过微信开放平台扫码登录。可与公众号或移动应用同时存在。",
-                              "Desktop browsers sign in through WeChat Open Platform QR login. This can coexist with Official Account or Mobile App.",
+                                "桌面浏览器通过微信开放平台扫码登录。可与公众号或移动应用同时存在。",
+                                "Desktop browsers sign in through WeChat Open Platform QR login. This can coexist with Official Account or Mobile App.",
                             )
                           }}
                         </p>
                       </div>
                       <Toggle
-                        :model-value="form.wechat_connect_open_enabled"
-                        data-testid="wechat-connect-open-enabled"
-                        @update:model-value="handleWeChatOpenEnabledChange"
+                          :model-value="form.wechat_connect_open_enabled"
+                          data-testid="wechat-connect-open-enabled"
+                          @update:model-value="handleWeChatOpenEnabledChange"
                       />
                     </div>
                     <div
-                      v-if="form.wechat_connect_open_enabled"
-                      class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2"
+                        v-if="form.wechat_connect_open_enabled"
+                        class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2"
                     >
                       <div>
                         <label
-                          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                         >
                           {{ localText("PC AppID", "PC App ID") }}
                         </label>
                         <input
-                          v-model="form.wechat_connect_open_app_id"
-                          data-testid="wechat-connect-open-app-id"
-                          type="text"
-                          class="input font-mono text-sm"
-                          :placeholder="
+                            v-model="form.wechatConnectOpenAppId"
+                            data-testid="wechat-connect-open-app-id"
+                            type="text"
+                            class="input font-mono text-sm"
+                            :placeholder="
                             localText(
                               '微信开放平台 PC 应用 AppID',
                               'WeChat Open Platform PC App ID',
@@ -2436,17 +2523,17 @@
                       </div>
                       <div>
                         <label
-                          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                         >
                           {{ localText("PC AppSecret", "PC App Secret") }}
                         </label>
                         <input
-                          v-model="form.wechat_connect_open_app_secret"
-                          data-testid="wechat-connect-open-app-secret"
-                          type="password"
-                          class="input font-mono text-sm"
-                          :placeholder="
-                            form.wechat_connect_open_app_secret_configured
+                            v-model="form.wechat_connect_open_app_secret"
+                            data-testid="wechat-connect-open-app-secret"
+                            type="password"
+                            class="input font-mono text-sm"
+                            :placeholder="
+                            form.wechatConnectOpenAppSecretConfigured
                               ? localText(
                                   '密钥已配置，留空以保留当前值。',
                                   'Secret configured. Leave empty to keep the current value.',
@@ -2462,7 +2549,7 @@
                   </div>
 
                   <div
-                    class="rounded-lg border border-gray-200 p-4 dark:border-dark-700"
+                      class="rounded-lg border border-gray-200 p-4 dark:border-dark-700"
                   >
                     <div class="flex items-start justify-between gap-4">
                       <div>
@@ -2472,34 +2559,34 @@
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                           {{
                             localText(
-                              "仅在微信内浏览器可用；非微信环境下会显示不可用。",
-                              "Only available inside the WeChat browser. It is shown as unavailable outside WeChat.",
+                                "仅在微信内浏览器可用；非微信环境下会显示不可用。",
+                                "Only available inside the WeChat browser. It is shown as unavailable outside WeChat.",
                             )
                           }}
                         </p>
                       </div>
                       <Toggle
-                        :model-value="form.wechat_connect_mp_enabled"
-                        data-testid="wechat-connect-mp-enabled"
-                        @update:model-value="handleWeChatMPEnabledChange"
+                          :model-value="form.wechat_connect_mp_enabled"
+                          data-testid="wechat-connect-mp-enabled"
+                          @update:model-value="handleWeChatMPEnabledChange"
                       />
                     </div>
                     <div
-                      v-if="form.wechat_connect_mp_enabled"
-                      class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2"
+                        v-if="form.wechat_connect_mp_enabled"
+                        class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2"
                     >
                       <div>
                         <label
-                          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                         >
                           {{ localText("公众号 AppID", "Official Account App ID") }}
                         </label>
                         <input
-                          v-model="form.wechat_connect_mp_app_id"
-                          data-testid="wechat-connect-mp-app-id"
-                          type="text"
-                          class="input font-mono text-sm"
-                          :placeholder="
+                            v-model="form.wechatConnectMpAppId"
+                            data-testid="wechat-connect-mp-app-id"
+                            type="text"
+                            class="input font-mono text-sm"
+                            :placeholder="
                             localText(
                               '公众号 AppID',
                               'Official Account App ID',
@@ -2509,22 +2596,22 @@
                       </div>
                       <div>
                         <label
-                          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                         >
                           {{
                             localText(
-                              "公众号 AppSecret",
-                              "Official Account App Secret",
+                                "公众号 AppSecret",
+                                "Official Account App Secret",
                             )
                           }}
                         </label>
                         <input
-                          v-model="form.wechat_connect_mp_app_secret"
-                          data-testid="wechat-connect-mp-app-secret"
-                          type="password"
-                          class="input font-mono text-sm"
-                          :placeholder="
-                            form.wechat_connect_mp_app_secret_configured
+                            v-model="form.wechat_connect_mp_app_secret"
+                            data-testid="wechat-connect-mp-app-secret"
+                            type="password"
+                            class="input font-mono text-sm"
+                            :placeholder="
+                            form.wechatConnectMpAppSecretConfigured
                               ? localText(
                                   '密钥已配置，留空以保留当前值。',
                                   'Secret configured. Leave empty to keep the current value.',
@@ -2540,7 +2627,7 @@
                   </div>
 
                   <div
-                    class="rounded-lg border border-gray-200 p-4 dark:border-dark-700"
+                      class="rounded-lg border border-gray-200 p-4 dark:border-dark-700"
                   >
                     <div class="flex items-start justify-between gap-4">
                       <div>
@@ -2550,34 +2637,34 @@
                         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                           {{
                             localText(
-                              "原生移动端通过微信 SDK 唤起授权，网页端不会直接发起该流程。",
-                              "Native mobile clients start authorization through the WeChat SDK. The web UI does not launch this flow directly.",
+                                "原生移动端通过微信 SDK 唤起授权，网页端不会直接发起该流程。",
+                                "Native mobile clients start authorization through the WeChat SDK. The web UI does not launch this flow directly.",
                             )
                           }}
                         </p>
                       </div>
                       <Toggle
-                        :model-value="form.wechat_connect_mobile_enabled"
-                        data-testid="wechat-connect-mobile-enabled"
-                        @update:model-value="handleWeChatMobileEnabledChange"
+                          :model-value="form.wechat_connect_mobile_enabled"
+                          data-testid="wechat-connect-mobile-enabled"
+                          @update:model-value="handleWeChatMobileEnabledChange"
                       />
                     </div>
                     <div
-                      v-if="form.wechat_connect_mobile_enabled"
-                      class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2"
+                        v-if="form.wechat_connect_mobile_enabled"
+                        class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2"
                     >
                       <div>
                         <label
-                          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                         >
                           {{ localText("移动应用 AppID", "Mobile App ID") }}
                         </label>
                         <input
-                          v-model="form.wechat_connect_mobile_app_id"
-                          data-testid="wechat-connect-mobile-app-id"
-                          type="text"
-                          class="input font-mono text-sm"
-                          :placeholder="
+                            v-model="form.wechatConnectMobileAppId"
+                            data-testid="wechat-connect-mobile-app-id"
+                            type="text"
+                            class="input font-mono text-sm"
+                            :placeholder="
                             localText(
                               '移动应用 AppID',
                               'Mobile App ID',
@@ -2587,17 +2674,17 @@
                       </div>
                       <div>
                         <label
-                          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                         >
                           {{ localText("移动应用 AppSecret", "Mobile App Secret") }}
                         </label>
                         <input
-                          v-model="form.wechat_connect_mobile_app_secret"
-                          data-testid="wechat-connect-mobile-app-secret"
-                          type="password"
-                          class="input font-mono text-sm"
-                          :placeholder="
-                            form.wechat_connect_mobile_app_secret_configured
+                            v-model="form.wechat_connect_mobile_app_secret"
+                            data-testid="wechat-connect-mobile-app-secret"
+                            type="password"
+                            class="input font-mono text-sm"
+                            :placeholder="
+                            form.wechatConnectMobileAppSecretConfigured
                               ? localText(
                                   '密钥已配置，留空以保留当前值。',
                                   'Secret configured. Leave empty to keep the current value.',
@@ -2614,17 +2701,17 @@
                 </div>
 
                 <div
-                  v-if="
+                    v-if="
                     form.wechat_connect_open_enabled &&
                     (form.wechat_connect_mp_enabled ||
                       form.wechat_connect_mobile_enabled)
                   "
-                  class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/10 dark:text-amber-300"
+                    class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-900/10 dark:text-amber-300"
                 >
                   {{
                     localText(
-                      "如果同时启用 PC 应用和公众号/移动应用，这些应用需要挂在同一个微信开放平台主体下，否则 UnionID 无法稳定归并账号。",
-                      "When PC App is enabled together with Official Account or Mobile App, they should belong to the same WeChat Open Platform account so UnionID can merge identities reliably.",
+                        "如果同时启用 PC 应用和公众号/移动应用，这些应用需要挂在同一个微信开放平台主体下，否则 UnionID 无法稳定归并账号。",
+                        "When PC App is enabled together with Official Account or Mobile App, they should belong to the same WeChat Open Platform account so UnionID can merge identities reliably.",
                     )
                   }}
                 </div>
@@ -2632,43 +2719,43 @@
                 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{
                         localText(
-                          "浏览器回调地址",
-                          "Browser Redirect URL",
+                            "浏览器回调地址",
+                            "Browser Redirect URL",
                         )
                       }}
                     </label>
                     <input
-                      data-testid="wechat-connect-redirect-url"
-                      v-model="form.wechat_connect_redirect_url"
-                      type="url"
-                      class="input font-mono text-sm"
-                      :placeholder="t('admin.settings.wechatConnect.redirectUrlPlaceholder')"
+                        data-testid="wechat-connect-redirect-url"
+                        v-model="form.wechatConnectRedirectUrl"
+                        type="url"
+                        class="input font-mono text-sm"
+                        :placeholder="t('admin.settings.wechatConnect.redirectUrlPlaceholder')"
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{
                         localText(
-                          "用于 PC 应用和公众号的网页回调。移动应用走原生 SDK 时不直接使用这个浏览器回调。",
-                          "Used by PC App and Official Account browser callbacks. Native mobile SDK flows do not start from this browser callback directly.",
+                            "用于 PC 应用和公众号的网页回调。移动应用走原生 SDK 时不直接使用这个浏览器回调。",
+                            "Used by PC App and Official Account browser callbacks. Native mobile SDK flows do not start from this browser callback directly.",
                         )
                       }}
                     </p>
                     <div
-                      class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3"
+                        class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3"
                     >
                       <button
-                        type="button"
-                        class="btn btn-secondary btn-sm w-fit"
-                        @click="setAndCopyWeChatRedirectUrl"
+                          type="button"
+                          class="btn btn-secondary btn-sm w-fit"
+                          @click="setAndCopyWeChatRedirectUrl"
                       >
                         {{ t("admin.settings.wechatConnect.generateAndCopy") }}
                       </button>
                       <code
-                        v-if="wechatRedirectUrlSuggestion"
-                        class="select-all break-all rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-600 dark:bg-dark-800 dark:text-gray-300"
+                          v-if="wechatRedirectUrlSuggestion"
+                          class="select-all break-all rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-600 dark:bg-dark-800 dark:text-gray-300"
                       >
                         {{ wechatRedirectUrlSuggestion }}
                       </code>
@@ -2678,16 +2765,16 @@
 
                 <div>
                   <label
-                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.wechatConnect.frontendRedirectUrlLabel") }}
                   </label>
                   <input
-                    data-testid="wechat-connect-frontend-redirect-url"
-                    v-model="form.wechat_connect_frontend_redirect_url"
-                    type="text"
-                    class="input font-mono text-sm"
-                    :placeholder="t('admin.settings.wechatConnect.frontendRedirectUrlPlaceholder')"
+                      data-testid="wechat-connect-frontend-redirect-url"
+                      v-model="form.wechatConnectFrontendRedirectUrl"
+                      type="text"
+                      class="input font-mono text-sm"
+                      :placeholder="t('admin.settings.wechatConnect.frontendRedirectUrlPlaceholder')"
                   />
                   <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.wechatConnect.frontendRedirectUrlHint") }}
@@ -2700,7 +2787,7 @@
           <!-- DingTalk Connect OAuth 登录 -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.dingtalk.title") }}
@@ -2713,31 +2800,31 @@
               <div class="flex items-center justify-between">
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.dingtalk.enable")
-                  }}</label>
+                      t("admin.settings.dingtalk.enable")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.dingtalk.enableHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.dingtalk_connect_enabled" />
+                <Toggle v-model="form.dingtalkConnectEnabled"/>
               </div>
 
               <div
-                v-if="form.dingtalk_connect_enabled"
-                class="border-t border-gray-100 pt-4 dark:border-dark-700"
+                  v-if="form.dingtalkConnectEnabled"
+                  class="border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div class="grid grid-cols-1 gap-6">
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.dingtalk.clientId") }}
                     </label>
                     <input
-                      v-model="form.dingtalk_connect_client_id"
-                      type="text"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.dingtalkConnectClientId"
+                        type="text"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.dingtalk.clientIdPlaceholder')
                       "
                     />
@@ -2748,16 +2835,16 @@
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.dingtalk.clientSecret") }}
                     </label>
                     <input
-                      v-model="form.dingtalk_connect_client_secret"
-                      type="password"
-                      class="input font-mono text-sm"
-                      :placeholder="
-                        form.dingtalk_connect_client_secret_configured
+                        v-model="form.dingtalk_connect_client_secret"
+                        type="password"
+                        class="input font-mono text-sm"
+                        :placeholder="
+                        form.dingtalkConnectClientSecretConfigured
                           ? t(
                               'admin.settings.dingtalk.clientSecretConfiguredPlaceholder',
                             )
@@ -2766,26 +2853,26 @@
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{
-                        form.dingtalk_connect_client_secret_configured
-                          ? t(
-                              "admin.settings.dingtalk.clientSecretConfiguredHint",
+                        form.dingtalkConnectClientSecretConfigured
+                            ? t(
+                                "admin.settings.dingtalk.clientSecretConfiguredHint",
                             )
-                          : t("admin.settings.dingtalk.clientSecretHint")
+                            : t("admin.settings.dingtalk.clientSecretHint")
                       }}
                     </p>
                   </div>
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.dingtalk.redirectUrl") }}
                     </label>
                     <input
-                      v-model="form.dingtalk_connect_redirect_url"
-                      type="url"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.dingtalkConnectRedirectUrl"
+                        type="url"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.dingtalk.redirectUrlPlaceholder')
                       "
                     />
@@ -2805,10 +2892,10 @@
                     <div class="space-y-2">
                       <label class="flex cursor-pointer items-center gap-3">
                         <input
-                          v-model="form.dingtalk_connect_corp_restriction_policy"
-                          type="radio"
-                          value="none"
-                          class="h-4 w-4 text-primary-600"
+                            v-model="form.dingtalkConnectCorpRestrictionPolicy"
+                            type="radio"
+                            value="none"
+                            class="h-4 w-4 text-primary-600"
                         />
                         <span class="text-sm text-gray-700 dark:text-gray-300">
                           {{ t("admin.settings.dingtalk.corpPolicy.none") }}
@@ -2816,10 +2903,10 @@
                       </label>
                       <label class="flex cursor-pointer items-center gap-3">
                         <input
-                          v-model="form.dingtalk_connect_corp_restriction_policy"
-                          type="radio"
-                          value="internal_only"
-                          class="h-4 w-4 text-primary-600"
+                            v-model="form.dingtalkConnectCorpRestrictionPolicy"
+                            type="radio"
+                            value="internal_only"
+                            class="h-4 w-4 text-primary-600"
                         />
                         <span class="text-sm text-gray-700 dark:text-gray-300">
                           {{ t("admin.settings.dingtalk.corpPolicy.internalOnly") }}
@@ -2830,46 +2917,46 @@
 
                   <!-- bypass_registration toggle（仅 internal_only 模式下可见可用） -->
                   <div
-                    v-if="form.dingtalk_connect_corp_restriction_policy === 'internal_only'"
-                    class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-dark-700"
+                      v-if="form.dingtalkConnectCorpRestrictionPolicy === 'internal_only'"
+                      class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-dark-700"
                   >
                     <div>
                       <label class="font-medium text-gray-900 dark:text-white">{{
-                        t("admin.settings.dingtalk.bypassRegistration")
-                      }}</label>
+                          t("admin.settings.dingtalk.bypassRegistration")
+                        }}</label>
                       <p class="text-sm text-gray-500 dark:text-gray-400">
                         {{ t("admin.settings.dingtalk.bypassRegistrationHint") }}
                       </p>
                     </div>
-                    <Toggle v-model="form.dingtalk_connect_bypass_registration" />
+                    <Toggle v-model="form.dingtalkConnectBypassRegistration"/>
                   </div>
 
                   <!-- 身份同步开关（仅 internal_only 模式下可见） -->
                   <div
-                    v-if="form.dingtalk_connect_corp_restriction_policy === 'internal_only'"
-                    class="pt-4 border-t border-gray-100 dark:border-dark-700 space-y-2"
+                      v-if="form.dingtalkConnectCorpRestrictionPolicy === 'internal_only'"
+                      class="pt-4 border-t border-gray-100 dark:border-dark-700 space-y-2"
                   >
                     <div class="flex items-center justify-between">
                       <div>
                         <label class="font-medium text-gray-900 dark:text-white">{{
-                          t("admin.settings.dingtalk.syncDisplayName")
-                        }}</label>
+                            t("admin.settings.dingtalk.syncDisplayName")
+                          }}</label>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
                           {{ t("admin.settings.dingtalk.syncDisplayNameHint") }}
                         </p>
                       </div>
-                      <Toggle v-model="form.dingtalk_connect_sync_display_name" />
+                      <Toggle v-model="form.dingtalkConnectSyncDisplayName"/>
                     </div>
-                    <div v-if="form.dingtalk_connect_sync_display_name" class="space-y-2">
+                    <div v-if="form.dingtalkConnectSyncDisplayName" class="space-y-2">
                       <div class="flex items-center gap-2">
                         <label class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap min-w-[5rem]">
                           {{ t("admin.settings.dingtalk.syncDisplayNameTarget") }}
                         </label>
                         <input
-                          v-model="form.dingtalk_connect_sync_display_name_attr_key"
-                          type="text"
-                          placeholder="dingtalk_name"
-                          class="input text-sm flex-1 max-w-xs"
+                            v-model="form.dingtalkConnectSyncDisplayNameAttrKey"
+                            type="text"
+                            placeholder="dingtalk_name"
+                            class="input text-sm flex-1 max-w-xs"
                         />
                       </div>
                       <div class="flex items-center gap-2">
@@ -2877,26 +2964,26 @@
                           {{ t("admin.settings.dingtalk.syncAttrDisplayName") }}
                         </label>
                         <input
-                          v-model="form.dingtalk_connect_sync_display_name_attr_name"
-                          type="text"
-                          :placeholder="localText('钉钉姓名', 'DingTalk Name')"
-                          class="input text-sm flex-1 max-w-xs"
+                            v-model="form.dingtalkConnectSyncDisplayNameAttrName"
+                            type="text"
+                            :placeholder="localText('钉钉姓名', 'DingTalk Name')"
+                            class="input text-sm flex-1 max-w-xs"
                         />
                       </div>
                     </div>
-                    <p v-if="form.dingtalk_connect_sync_display_name" class="text-xs text-gray-400 dark:text-gray-500">
+                    <p v-if="form.dingtalkConnectSyncDisplayName" class="text-xs text-gray-400 dark:text-gray-500">
                       {{ t("admin.settings.dingtalk.syncDisplayNameTargetHint") }}
                     </p>
                   </div>
                   <div
-                    v-if="form.dingtalk_connect_corp_restriction_policy === 'internal_only'"
-                    class="pt-4 border-t border-gray-100 dark:border-dark-700 space-y-2"
+                      v-if="form.dingtalkConnectCorpRestrictionPolicy === 'internal_only'"
+                      class="pt-4 border-t border-gray-100 dark:border-dark-700 space-y-2"
                   >
                     <div class="flex items-center justify-between">
                       <div>
                         <label class="font-medium text-gray-900 dark:text-white">{{
-                          t("admin.settings.dingtalk.syncCorpEmail")
-                        }}</label>
+                            t("admin.settings.dingtalk.syncCorpEmail")
+                          }}</label>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
                           {{ t("admin.settings.dingtalk.syncCorpEmailHint") }}
                         </p>
@@ -2904,18 +2991,18 @@
                           {{ t("admin.settings.dingtalk.syncCorpEmailPermissionHint") }}
                         </p>
                       </div>
-                      <Toggle v-model="form.dingtalk_connect_sync_corp_email" />
+                      <Toggle v-model="form.dingtalkConnectSyncCorpEmail"/>
                     </div>
-                    <div v-if="form.dingtalk_connect_sync_corp_email" class="space-y-2">
+                    <div v-if="form.dingtalkConnectSyncCorpEmail" class="space-y-2">
                       <div class="flex items-center gap-2">
                         <label class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap min-w-[5rem]">
                           {{ t("admin.settings.dingtalk.syncCorpEmailTarget") }}
                         </label>
                         <input
-                          v-model="form.dingtalk_connect_sync_corp_email_attr_key"
-                          type="text"
-                          placeholder="dingtalk_email"
-                          class="input text-sm flex-1 max-w-xs"
+                            v-model="form.dingtalkConnectSyncCorpEmailAttrKey"
+                            type="text"
+                            placeholder="dingtalk_email"
+                            class="input text-sm flex-1 max-w-xs"
                         />
                       </div>
                       <div class="flex items-center gap-2">
@@ -2923,26 +3010,26 @@
                           {{ t("admin.settings.dingtalk.syncAttrDisplayName") }}
                         </label>
                         <input
-                          v-model="form.dingtalk_connect_sync_corp_email_attr_name"
-                          type="text"
-                          :placeholder="localText('钉钉企业邮箱', 'DingTalk Corporate Email')"
-                          class="input text-sm flex-1 max-w-xs"
+                            v-model="form.dingtalkConnectSyncCorpEmailAttrName"
+                            type="text"
+                            :placeholder="localText('钉钉企业邮箱', 'DingTalk Corporate Email')"
+                            class="input text-sm flex-1 max-w-xs"
                         />
                       </div>
                     </div>
-                    <p v-if="form.dingtalk_connect_sync_corp_email" class="text-xs text-gray-400 dark:text-gray-500">
+                    <p v-if="form.dingtalkConnectSyncCorpEmail" class="text-xs text-gray-400 dark:text-gray-500">
                       {{ t("admin.settings.dingtalk.syncCorpEmailTargetHint") }}
                     </p>
                   </div>
                   <div
-                    v-if="form.dingtalk_connect_corp_restriction_policy === 'internal_only'"
-                    class="pt-4 border-t border-gray-100 dark:border-dark-700 space-y-2"
+                      v-if="form.dingtalkConnectCorpRestrictionPolicy === 'internal_only'"
+                      class="pt-4 border-t border-gray-100 dark:border-dark-700 space-y-2"
                   >
                     <div class="flex items-center justify-between">
                       <div>
                         <label class="font-medium text-gray-900 dark:text-white">{{
-                          t("admin.settings.dingtalk.syncDept")
-                        }}</label>
+                            t("admin.settings.dingtalk.syncDept")
+                          }}</label>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
                           {{ t("admin.settings.dingtalk.syncDeptHint") }}
                         </p>
@@ -2950,18 +3037,18 @@
                           {{ t("admin.settings.dingtalk.syncDeptPermissionHint") }}
                         </p>
                       </div>
-                      <Toggle v-model="form.dingtalk_connect_sync_dept" />
+                      <Toggle v-model="form.dingtalkConnectSyncDept"/>
                     </div>
-                    <div v-if="form.dingtalk_connect_sync_dept" class="space-y-2">
+                    <div v-if="form.dingtalkConnectSyncDept" class="space-y-2">
                       <div class="flex items-center gap-2">
                         <label class="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap min-w-[5rem]">
                           {{ t("admin.settings.dingtalk.syncDeptTarget") }}
                         </label>
                         <input
-                          v-model="form.dingtalk_connect_sync_dept_attr_key"
-                          type="text"
-                          placeholder="dingtalk_department"
-                          class="input text-sm flex-1 max-w-xs"
+                            v-model="form.dingtalkConnectSyncDeptAttrKey"
+                            type="text"
+                            placeholder="dingtalk_department"
+                            class="input text-sm flex-1 max-w-xs"
                         />
                       </div>
                       <div class="flex items-center gap-2">
@@ -2969,14 +3056,14 @@
                           {{ t("admin.settings.dingtalk.syncAttrDisplayName") }}
                         </label>
                         <input
-                          v-model="form.dingtalk_connect_sync_dept_attr_name"
-                          type="text"
-                          :placeholder="localText('钉钉部门', 'DingTalk Department')"
-                          class="input text-sm flex-1 max-w-xs"
+                            v-model="form.dingtalkConnectSyncDeptAttrName"
+                            type="text"
+                            :placeholder="localText('钉钉部门', 'DingTalk Department')"
+                            class="input text-sm flex-1 max-w-xs"
                         />
                       </div>
                     </div>
-                    <p v-if="form.dingtalk_connect_sync_dept" class="text-xs text-gray-400 dark:text-gray-500">
+                    <p v-if="form.dingtalkConnectSyncDept" class="text-xs text-gray-400 dark:text-gray-500">
                       {{ t("admin.settings.dingtalk.syncDeptTargetHint") }}
                     </p>
                   </div>
@@ -2988,7 +3075,7 @@
           <!-- Generic OIDC OAuth 登录 -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.oidc.title") }}
@@ -3001,31 +3088,31 @@
               <div class="flex items-center justify-between">
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.oidc.enable")
-                  }}</label>
+                      t("admin.settings.oidc.enable")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.oidc.enableHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.oidc_connect_enabled" />
+                <Toggle v-model="form.oidcConnectEnabled"/>
               </div>
 
               <div
-                v-if="form.oidc_connect_enabled"
-                class="space-y-6 border-t border-gray-100 pt-4 dark:border-dark-700"
+                  v-if="form.oidcConnectEnabled"
+                  class="space-y-6 border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.providerName") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_provider_name"
-                      type="text"
-                      class="input"
-                      :placeholder="
+                        v-model="form.oidcConnectProviderName"
+                        type="text"
+                        class="input"
+                        :placeholder="
                         t('admin.settings.oidc.providerNamePlaceholder')
                       "
                     />
@@ -3033,15 +3120,15 @@
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.clientId") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_client_id"
-                      type="text"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.oidcConnectClientId"
+                        type="text"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.oidc.clientIdPlaceholder')
                       "
                     />
@@ -3049,16 +3136,16 @@
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.clientSecret") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_client_secret"
-                      type="password"
-                      class="input font-mono text-sm"
-                      :placeholder="
-                        form.oidc_connect_client_secret_configured
+                        v-model="form.oidc_connect_client_secret"
+                        type="password"
+                        class="input font-mono text-sm"
+                        :placeholder="
+                        form.oidcConnectClientSecretConfigured
                           ? t(
                               'admin.settings.oidc.clientSecretConfiguredPlaceholder',
                             )
@@ -3067,9 +3154,9 @@
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{
-                        form.oidc_connect_client_secret_configured
-                          ? t("admin.settings.oidc.clientSecretConfiguredHint")
-                          : t("admin.settings.oidc.clientSecretHint")
+                        form.oidcConnectClientSecretConfigured
+                            ? t("admin.settings.oidc.clientSecretConfiguredHint")
+                            : t("admin.settings.oidc.clientSecretHint")
                       }}
                     </p>
                   </div>
@@ -3078,15 +3165,15 @@
                 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.issuerUrl") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_issuer_url"
-                      type="url"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.oidcConnectIssuerUrl"
+                        type="url"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.oidc.issuerUrlPlaceholder')
                       "
                     />
@@ -3094,15 +3181,15 @@
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.discoveryUrl") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_discovery_url"
-                      type="url"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.oidcConnectDiscoveryUrl"
+                        type="url"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.oidc.discoveryUrlPlaceholder')
                       "
                     />
@@ -3110,15 +3197,15 @@
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.authorizeUrl") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_authorize_url"
-                      type="url"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.oidcConnectAuthorizeUrl"
+                        type="url"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.oidc.authorizeUrlPlaceholder')
                       "
                     />
@@ -3126,15 +3213,15 @@
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.tokenUrl") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_token_url"
-                      type="url"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.oidcConnectTokenUrl"
+                        type="url"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.oidc.tokenUrlPlaceholder')
                       "
                     />
@@ -3142,15 +3229,15 @@
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.userinfoUrl") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_userinfo_url"
-                      type="url"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.oidcConnectUserinfoUrl"
+                        type="url"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.oidc.userinfoUrlPlaceholder')
                       "
                     />
@@ -3158,15 +3245,15 @@
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.jwksUrl") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_jwks_url"
-                      type="url"
-                      class="input font-mono text-sm"
-                      :placeholder="t('admin.settings.oidc.jwksUrlPlaceholder')"
+                        v-model="form.oidcConnectJwksUrl"
+                        type="url"
+                        class="input font-mono text-sm"
+                        :placeholder="t('admin.settings.oidc.jwksUrlPlaceholder')"
                     />
                   </div>
                 </div>
@@ -3174,15 +3261,15 @@
                 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.scopes") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_scopes"
-                      type="text"
-                      class="input font-mono text-sm"
-                      :placeholder="t('admin.settings.oidc.scopesPlaceholder')"
+                        v-model="form.oidcConnectScopes"
+                        type="text"
+                        class="input font-mono text-sm"
+                        :placeholder="t('admin.settings.oidc.scopesPlaceholder')"
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{ t("admin.settings.oidc.scopesHint") }}
@@ -3191,31 +3278,31 @@
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.redirectUrl") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_redirect_url"
-                      type="url"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.oidcConnectRedirectUrl"
+                        type="url"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.oidc.redirectUrlPlaceholder')
                       "
                     />
                     <div
-                      class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3"
+                        class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3"
                     >
                       <button
-                        type="button"
-                        class="btn btn-secondary btn-sm w-fit"
-                        @click="setAndCopyOIDCRedirectUrl"
+                          type="button"
+                          class="btn btn-secondary btn-sm w-fit"
+                          @click="setAndCopyOIDCRedirectUrl"
                       >
                         {{ t("admin.settings.oidc.quickSetCopy") }}
                       </button>
                       <code
-                        v-if="oidcRedirectUrlSuggestion"
-                        class="select-all break-all rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-600 dark:bg-dark-800 dark:text-gray-300"
+                          v-if="oidcRedirectUrlSuggestion"
+                          class="select-all break-all rounded bg-gray-50 px-2 py-1 font-mono text-xs text-gray-600 dark:bg-dark-800 dark:text-gray-300"
                       >
                         {{ oidcRedirectUrlSuggestion }}
                       </code>
@@ -3227,15 +3314,15 @@
 
                   <div class="lg:col-span-2">
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.frontendRedirectUrl") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_frontend_redirect_url"
-                      type="text"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.oidcConnectFrontendRedirectUrl"
+                        type="text"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.oidc.frontendRedirectUrlPlaceholder')
                       "
                     />
@@ -3248,13 +3335,13 @@
                 <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.tokenAuthMethod") }}
                     </label>
                     <select
-                      v-model="form.oidc_connect_token_auth_method"
-                      class="input font-mono text-sm"
+                        v-model="form.oidcConnectTokenAuthMethod"
+                        class="input font-mono text-sm"
                     >
                       <option value="client_secret_post">
                         client_secret_post
@@ -3268,30 +3355,30 @@
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.clockSkewSeconds") }}
                     </label>
                     <input
-                      v-model.number="form.oidc_connect_clock_skew_seconds"
-                      type="number"
-                      min="0"
-                      max="600"
-                      class="input"
+                        v-model.number="form.oidcConnectClockSkewSeconds"
+                        type="number"
+                        min="0"
+                        max="600"
+                        class="input"
                     />
                   </div>
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.allowedSigningAlgs") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_allowed_signing_algs"
-                      type="text"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.oidcConnectAllowedSigningAlgs"
+                        type="text"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.oidc.allowedSigningAlgsPlaceholder')
                       "
                     />
@@ -3300,7 +3387,7 @@
 
                 <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                   <div
-                    class="flex items-center justify-between rounded border border-gray-200 px-4 py-3 dark:border-dark-700"
+                      class="flex items-center justify-between rounded border border-gray-200 px-4 py-3 dark:border-dark-700"
                   >
                     <div>
                       <label class="font-medium text-gray-900 dark:text-white">
@@ -3308,13 +3395,13 @@
                       </label>
                     </div>
                     <Toggle
-                      v-model="form.oidc_connect_use_pkce"
-                      data-testid="oidc-connect-use-pkce"
+                        v-model="form.oidcConnectUsePkce"
+                        data-testid="oidc-connect-use-pkce"
                     />
                   </div>
 
                   <div
-                    class="flex items-center justify-between rounded border border-gray-200 px-4 py-3 dark:border-dark-700"
+                      class="flex items-center justify-between rounded border border-gray-200 px-4 py-3 dark:border-dark-700"
                   >
                     <div>
                       <label class="font-medium text-gray-900 dark:text-white">
@@ -3322,13 +3409,13 @@
                       </label>
                     </div>
                     <Toggle
-                      v-model="form.oidc_connect_validate_id_token"
-                      data-testid="oidc-connect-validate-id-token"
+                        v-model="form.oidcConnectValidateIdToken"
+                        data-testid="oidc-connect-validate-id-token"
                     />
                   </div>
 
                   <div
-                    class="flex items-center justify-between rounded border border-gray-200 px-4 py-3 dark:border-dark-700"
+                      class="flex items-center justify-between rounded border border-gray-200 px-4 py-3 dark:border-dark-700"
                   >
                     <div>
                       <label class="font-medium text-gray-900 dark:text-white">
@@ -3336,7 +3423,7 @@
                       </label>
                     </div>
                     <Toggle
-                      v-model="form.oidc_connect_require_email_verified"
+                        v-model="form.oidcConnectRequireEmailVerified"
                     />
                   </div>
                 </div>
@@ -3344,15 +3431,15 @@
                 <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.userinfoEmailPath") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_userinfo_email_path"
-                      type="text"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.oidcConnectUserinfoEmailPath"
+                        type="text"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.oidc.userinfoEmailPathPlaceholder')
                       "
                     />
@@ -3360,15 +3447,15 @@
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.userinfoIdPath") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_userinfo_id_path"
-                      type="text"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.oidcConnectUserinfoIdPath"
+                        type="text"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.oidc.userinfoIdPathPlaceholder')
                       "
                     />
@@ -3376,15 +3463,15 @@
 
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.oidc.userinfoUsernamePath") }}
                     </label>
                     <input
-                      v-model="form.oidc_connect_userinfo_username_path"
-                      type="text"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="form.oidcConnectUserinfoUsernamePath"
+                        type="text"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.oidc.userinfoUsernamePathPlaceholder')
                       "
                     />
@@ -3401,7 +3488,7 @@
           <!-- Default Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.defaults.title") }}
@@ -3414,17 +3501,17 @@
               <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <label
-                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.defaults.defaultBalance") }}
                   </label>
                   <input
-                    v-model.number="form.default_balance"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    class="input"
-                    placeholder="0.00"
+                      v-model.number="form.defaultBalance"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      class="input"
+                      placeholder="0.00"
                   />
                   <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.defaults.defaultBalanceHint") }}
@@ -3432,16 +3519,16 @@
                 </div>
                 <div>
                   <label
-                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.defaults.defaultConcurrency") }}
                   </label>
                   <input
-                    v-model.number="form.default_concurrency"
-                    type="number"
-                    min="1"
-                    class="input"
-                    placeholder="1"
+                      v-model.number="form.defaultConcurrency"
+                      type="number"
+                      min="1"
+                      class="input"
+                      placeholder="1"
                   />
                   <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.defaults.defaultConcurrencyHint") }}
@@ -3449,17 +3536,17 @@
                 </div>
                 <div>
                   <label
-                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.defaults.defaultUserRpmLimit") }}
                   </label>
                   <input
-                    v-model.number="form.default_user_rpm_limit"
-                    type="number"
-                    min="0"
-                    step="1"
-                    class="input"
-                    placeholder="0"
+                      v-model.number="form.defaultUserRpmLimit"
+                      type="number"
+                      min="0"
+                      step="1"
+                      class="input"
+                      placeholder="0"
                   />
                   <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.defaults.defaultUserRpmLimitHint") }}
@@ -3480,61 +3567,61 @@
                     </p>
                   </div>
                   <button
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    @click="addDefaultSubscription"
-                    :disabled="subscriptionGroups.length === 0"
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      @click="addDefaultSubscription"
+                      :disabled="subscriptionGroups.length === 0"
                   >
                     {{ t("admin.settings.defaults.addDefaultSubscription") }}
                   </button>
                 </div>
 
                 <div
-                  v-if="form.default_subscriptions.length === 0"
-                  class="rounded border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 dark:border-dark-600 dark:text-gray-400"
+                    v-if="form.defaultSubscriptions.length === 0"
+                    class="rounded border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 dark:border-dark-600 dark:text-gray-400"
                 >
                   {{ t("admin.settings.defaults.defaultSubscriptionsEmpty") }}
                 </div>
 
                 <div v-else class="space-y-3">
                   <div
-                    v-for="(item, index) in form.default_subscriptions"
-                    :key="`default-sub-${index}`"
-                    class="grid grid-cols-1 gap-3 rounded border border-gray-200 p-3 md:grid-cols-[1fr_160px_auto] dark:border-dark-600"
+                      v-for="(item, index) in form.defaultSubscriptions"
+                      :key="`default-sub-${index}`"
+                      class="grid grid-cols-1 gap-3 rounded border border-gray-200 p-3 md:grid-cols-[1fr_160px_auto] dark:border-dark-600"
                   >
                     <div>
                       <label
-                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                          class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                       >
                         {{ t("admin.settings.defaults.subscriptionGroup") }}
                       </label>
                       <Select
-                        v-model="item.group_id"
-                        class="default-sub-group-select"
-                        :options="defaultSubscriptionGroupOptions"
-                        :placeholder="
+                          v-model="item.groupId"
+                          class="default-sub-group-select"
+                          :options="defaultSubscriptionGroupOptions"
+                          :placeholder="
                           t('admin.settings.defaults.subscriptionGroup')
                         "
                       >
                         <template #selected="{ option }">
                           <GroupBadge
-                            v-if="option"
-                            :name="
+                              v-if="option"
+                              :name="
                               (
                                 option as unknown as DefaultSubscriptionGroupOption
                               ).label
                             "
-                            :platform="
+                              :platform="
                               (
                                 option as unknown as DefaultSubscriptionGroupOption
                               ).platform
                             "
-                            :subscription-type="
+                              :subscription-type="
                               (
                                 option as unknown as DefaultSubscriptionGroupOption
                               ).subscriptionType
                             "
-                            :rate-multiplier="
+                              :rate-multiplier="
                               (
                                 option as unknown as DefaultSubscriptionGroupOption
                               ).rate
@@ -3546,57 +3633,57 @@
                         </template>
                         <template #option="{ option, selected }">
                           <GroupOptionItem
-                            :name="
+                              :name="
                               (
                                 option as unknown as DefaultSubscriptionGroupOption
                               ).label
                             "
-                            :platform="
+                              :platform="
                               (
                                 option as unknown as DefaultSubscriptionGroupOption
                               ).platform
                             "
-                            :subscription-type="
+                              :subscription-type="
                               (
                                 option as unknown as DefaultSubscriptionGroupOption
                               ).subscriptionType
                             "
-                            :rate-multiplier="
+                              :rate-multiplier="
                               (
                                 option as unknown as DefaultSubscriptionGroupOption
                               ).rate
                             "
-                            :description="
+                              :description="
                               (
                                 option as unknown as DefaultSubscriptionGroupOption
                               ).description
                             "
-                            :selected="selected"
+                              :selected="selected"
                           />
                         </template>
                       </Select>
                     </div>
                     <div>
                       <label
-                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                          class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                       >
                         {{
                           t("admin.settings.defaults.subscriptionValidityDays")
                         }}
                       </label>
                       <input
-                        v-model.number="item.validity_days"
-                        type="number"
-                        min="1"
-                        max="36500"
-                        class="input h-[42px]"
+                          v-model.number="item.validityDays"
+                          type="number"
+                          min="1"
+                          max="36500"
+                          class="input h-[42px]"
                       />
                     </div>
                     <div class="flex items-end">
                       <button
-                        type="button"
-                        class="btn btn-secondary default-sub-delete-btn w-full text-red-600 hover:text-red-700 dark:text-red-400"
-                        @click="removeDefaultSubscription(index)"
+                          type="button"
+                          class="btn btn-secondary default-sub-delete-btn w-full text-red-600 hover:text-red-700 dark:text-red-400"
+                          @click="removeDefaultSubscription(index)"
                       >
                         {{ t("common.delete") }}
                       </button>
@@ -3621,49 +3708,50 @@
                 <div class="overflow-x-auto">
                   <table class="min-w-full text-sm">
                     <thead>
-                      <tr class="text-left text-xs text-gray-500 dark:text-gray-400">
-                        <th class="pb-2 pr-4 font-medium">{{ t("admin.settings.platformQuota.platform") }}</th>
-                        <th class="pb-2 pr-4 font-medium">{{ t("admin.settings.platformQuota.daily") }}</th>
-                        <th class="pb-2 pr-4 font-medium">{{ t("admin.settings.platformQuota.weekly") }}</th>
-                        <th class="pb-2 font-medium">{{ t("admin.settings.platformQuota.monthly") }}</th>
-                      </tr>
+                    <tr class="text-left text-xs text-gray-500 dark:text-gray-400">
+                      <th class="pb-2 pr-4 font-medium">{{ t("admin.settings.platformQuota.platform") }}</th>
+                      <th class="pb-2 pr-4 font-medium">{{ t("admin.settings.platformQuota.daily") }}</th>
+                      <th class="pb-2 pr-4 font-medium">{{ t("admin.settings.platformQuota.weekly") }}</th>
+                      <th class="pb-2 font-medium">{{ t("admin.settings.platformQuota.monthly") }}</th>
+                    </tr>
                     </thead>
                     <tbody class="space-y-2">
-                      <tr v-for="p in (['anthropic', 'openai', 'gemini', 'antigravity', 'grok'] as const)" :key="p" class="align-top">
-                        <td class="pr-4 py-1">
-                          <span class="font-mono text-xs text-gray-700 dark:text-gray-300">{{ p }}</span>
-                        </td>
-                        <td class="pr-4 py-1">
-                          <input
+                    <tr v-for="p in (['anthropic', 'openai', 'gemini', 'antigravity', 'grok'] as const)" :key="p"
+                        class="align-top">
+                      <td class="pr-4 py-1">
+                        <span class="font-mono text-xs text-gray-700 dark:text-gray-300">{{ p }}</span>
+                      </td>
+                      <td class="pr-4 py-1">
+                        <input
                             v-model.number="form.default_platform_quotas[p]!.daily"
                             type="number"
                             step="0.01"
                             min="0"
                             class="input h-8 w-28 text-sm"
                             :placeholder="t('admin.settings.platformQuota.placeholder')"
-                          />
-                        </td>
-                        <td class="pr-4 py-1">
-                          <input
+                        />
+                      </td>
+                      <td class="pr-4 py-1">
+                        <input
                             v-model.number="form.default_platform_quotas[p]!.weekly"
                             type="number"
                             step="0.01"
                             min="0"
                             class="input h-8 w-28 text-sm"
                             :placeholder="t('admin.settings.platformQuota.placeholder')"
-                          />
-                        </td>
-                        <td class="py-1">
-                          <input
+                        />
+                      </td>
+                      <td class="py-1">
+                        <input
                             v-model.number="form.default_platform_quotas[p]!.monthly"
                             type="number"
                             step="0.01"
                             min="0"
                             class="input h-8 w-28 text-sm"
                             :placeholder="t('admin.settings.platformQuota.placeholder')"
-                          />
-                        </td>
-                      </tr>
+                        />
+                      </td>
+                    </tr>
                     </tbody>
                   </table>
                 </div>
@@ -3674,7 +3762,7 @@
 
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.authSourceDefaults.title") }}
@@ -3685,7 +3773,7 @@
             </div>
             <div class="space-y-6 p-6">
               <div
-                class="flex items-center justify-between rounded border border-gray-200 px-4 py-3 dark:border-dark-700"
+                  class="flex items-center justify-between rounded border border-gray-200 px-4 py-3 dark:border-dark-700"
               >
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">
@@ -3695,14 +3783,14 @@
                     {{ t("admin.settings.authSourceDefaults.requireEmailHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.force_email_on_third_party_signup" />
+                <Toggle v-model="form.force_email_on_third_party_signup"/>
               </div>
 
               <div class="space-y-4">
                 <div
-                  v-for="authSource in authSourceDefaultsMeta"
-                  :key="authSource.source"
-                  class="rounded-xl border border-gray-200 p-4 dark:border-dark-700"
+                    v-for="authSource in authSourceDefaultsMeta"
+                    :key="authSource.source"
+                    class="rounded-xl border border-gray-200 p-4 dark:border-dark-700"
                 >
                   <div class="flex items-center justify-between gap-4">
                     <div>
@@ -3714,17 +3802,17 @@
                       </p>
                     </div>
                     <Toggle
-                      v-model="
-                        authSourceDefaults[authSource.source].grant_on_signup
+                        v-model="
+                        authSourceDefaults[authSource.source].grantOnSignup
                       "
-                      :data-testid="`auth-source-${authSource.source}-enabled`"
+                        :data-testid="`auth-source-${authSource.source}-enabled`"
                     />
                   </div>
 
                   <div
-                    v-if="authSourceDefaults[authSource.source].grant_on_signup"
-                    :data-testid="`auth-source-${authSource.source}-panel`"
-                    class="mt-4 space-y-4 border-t border-gray-100 pt-4 dark:border-dark-700"
+                      v-if="authSourceDefaults[authSource.source].grantOnSignup"
+                      :data-testid="`auth-source-${authSource.source}-panel`"
+                      class="mt-4 space-y-4 border-t border-gray-100 pt-4 dark:border-dark-700"
                   >
                     <p class="text-sm text-gray-500 dark:text-gray-400">
                       {{ t("admin.settings.authSourceDefaults.enabledHint") }}
@@ -3733,58 +3821,58 @@
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div>
                         <label
-                          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                         >
                           {{ t("admin.settings.defaults.defaultBalance") }}
                         </label>
                         <input
-                          v-model.number="
+                            v-model.number="
                             authSourceDefaults[authSource.source].balance
                           "
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          class="input"
-                          placeholder="0.00"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            class="input"
+                            placeholder="0.00"
                         />
                       </div>
                       <div>
                         <label
-                          class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                            class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                         >
                           {{ t("admin.settings.defaults.defaultConcurrency") }}
                         </label>
                         <input
-                          v-model.number="
+                            v-model.number="
                             authSourceDefaults[authSource.source].concurrency
                           "
-                          type="number"
-                          min="1"
-                          class="input"
-                          placeholder="5"
+                            type="number"
+                            min="1"
+                            class="input"
+                            placeholder="5"
                         />
                       </div>
                     </div>
 
                     <div
-                      class="flex items-center justify-between rounded border border-gray-200 px-4 py-3 dark:border-dark-700"
+                        class="flex items-center justify-between rounded border border-gray-200 px-4 py-3 dark:border-dark-700"
                     >
                       <div>
                         <label
-                          class="font-medium text-gray-900 dark:text-white"
+                            class="font-medium text-gray-900 dark:text-white"
                         >
                           {{ t("admin.settings.authSourceDefaults.grantOnFirstBindLabel") }}
                         </label>
                         <p
-                          class="mt-0.5 text-xs text-gray-500 dark:text-gray-400"
+                            class="mt-0.5 text-xs text-gray-500 dark:text-gray-400"
                         >
                           {{ t("admin.settings.authSourceDefaults.grantOnFirstBindHint") }}
                         </p>
                       </div>
                       <Toggle
-                        v-model="
+                          v-model="
                           authSourceDefaults[authSource.source]
-                            .grant_on_first_bind
+                            .grantOnFirstBind
                         "
                       />
                     </div>
@@ -3792,7 +3880,7 @@
                     <div class="mb-3 flex items-center justify-between">
                       <div>
                         <label
-                          class="font-medium text-gray-900 dark:text-white"
+                            class="font-medium text-gray-900 dark:text-white"
                         >
                           {{ t("admin.settings.authSourceDefaults.defaultSubscriptionsLabel") }}
                         </label>
@@ -3801,12 +3889,12 @@
                         </p>
                       </div>
                       <button
-                        type="button"
-                        class="btn btn-secondary btn-sm"
-                        @click="
+                          type="button"
+                          class="btn btn-secondary btn-sm"
+                          @click="
                           addAuthSourceDefaultSubscription(authSource.source)
                         "
-                        :disabled="subscriptionGroups.length === 0"
+                          :disabled="subscriptionGroups.length === 0"
                       >
                         {{
                           t("admin.settings.defaults.addDefaultSubscription")
@@ -3815,56 +3903,56 @@
                     </div>
 
                     <div
-                      v-if="
+                        v-if="
                         authSourceDefaults[authSource.source].subscriptions
                           .length === 0
                       "
-                      class="rounded border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 dark:border-dark-600 dark:text-gray-400"
+                        class="rounded border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-500 dark:border-dark-600 dark:text-gray-400"
                     >
                       {{ t("admin.settings.authSourceDefaults.noSourceSubscriptions") }}
                     </div>
 
                     <div v-else class="space-y-3">
                       <div
-                        v-for="(item, index) in authSourceDefaults[
+                          v-for="(item, index) in authSourceDefaults[
                           authSource.source
                         ].subscriptions"
-                        :key="`${authSource.source}-sub-${index}`"
-                        class="grid grid-cols-1 gap-3 rounded border border-gray-200 p-3 md:grid-cols-[1fr_160px_auto] dark:border-dark-600"
+                          :key="`${authSource.source}-sub-${index}`"
+                          class="grid grid-cols-1 gap-3 rounded border border-gray-200 p-3 md:grid-cols-[1fr_160px_auto] dark:border-dark-600"
                       >
                         <div>
                           <label
-                            class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                              class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                           >
                             {{ t("admin.settings.defaults.subscriptionGroup") }}
                           </label>
                           <Select
-                            v-model="item.group_id"
-                            class="default-sub-group-select"
-                            :options="defaultSubscriptionGroupOptions"
-                            :placeholder="
+                              v-model="item.groupId"
+                              class="default-sub-group-select"
+                              :options="defaultSubscriptionGroupOptions"
+                              :placeholder="
                               t('admin.settings.defaults.subscriptionGroup')
                             "
                           >
                             <template #selected="{ option }">
                               <GroupBadge
-                                v-if="option"
-                                :name="
+                                  v-if="option"
+                                  :name="
                                   (
                                     option as unknown as DefaultSubscriptionGroupOption
                                   ).label
                                 "
-                                :platform="
+                                  :platform="
                                   (
                                     option as unknown as DefaultSubscriptionGroupOption
                                   ).platform
                                 "
-                                :subscription-type="
+                                  :subscription-type="
                                   (
                                     option as unknown as DefaultSubscriptionGroupOption
                                   ).subscriptionType
                                 "
-                                :rate-multiplier="
+                                  :rate-multiplier="
                                   (
                                     option as unknown as DefaultSubscriptionGroupOption
                                   ).rate
@@ -3878,59 +3966,59 @@
                             </template>
                             <template #option="{ option, selected }">
                               <GroupOptionItem
-                                :name="
+                                  :name="
                                   (
                                     option as unknown as DefaultSubscriptionGroupOption
                                   ).label
                                 "
-                                :platform="
+                                  :platform="
                                   (
                                     option as unknown as DefaultSubscriptionGroupOption
                                   ).platform
                                 "
-                                :subscription-type="
+                                  :subscription-type="
                                   (
                                     option as unknown as DefaultSubscriptionGroupOption
                                   ).subscriptionType
                                 "
-                                :rate-multiplier="
+                                  :rate-multiplier="
                                   (
                                     option as unknown as DefaultSubscriptionGroupOption
                                   ).rate
                                 "
-                                :description="
+                                  :description="
                                   (
                                     option as unknown as DefaultSubscriptionGroupOption
                                   ).description
                                 "
-                                :selected="selected"
+                                  :selected="selected"
                               />
                             </template>
                           </Select>
                         </div>
                         <div>
                           <label
-                            class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                              class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                           >
                             {{
                               t(
-                                "admin.settings.defaults.subscriptionValidityDays",
+                                  "admin.settings.defaults.subscriptionValidityDays",
                               )
                             }}
                           </label>
                           <input
-                            v-model.number="item.validity_days"
-                            type="number"
-                            min="1"
-                            max="36500"
-                            class="input h-[42px]"
+                              v-model.number="item.validityDays"
+                              type="number"
+                              min="1"
+                              max="36500"
+                              class="input h-[42px]"
                           />
                         </div>
                         <div class="flex items-end">
                           <button
-                            type="button"
-                            class="btn btn-secondary w-full text-red-600 hover:text-red-700 dark:text-red-400"
-                            @click="
+                              type="button"
+                              class="btn btn-secondary w-full text-red-600 hover:text-red-700 dark:text-red-400"
+                              @click="
                               removeAuthSourceDefaultSubscription(
                                 authSource.source,
                                 index,
@@ -3956,49 +4044,50 @@
                       <div class="overflow-x-auto">
                         <table class="min-w-full text-sm">
                           <thead>
-                            <tr class="text-left text-xs text-gray-500 dark:text-gray-400">
-                              <th class="pb-2 pr-4 font-medium">{{ t("admin.settings.platformQuota.platform") }}</th>
-                              <th class="pb-2 pr-4 font-medium">{{ t("admin.settings.platformQuota.daily") }}</th>
-                              <th class="pb-2 pr-4 font-medium">{{ t("admin.settings.platformQuota.weekly") }}</th>
-                              <th class="pb-2 font-medium">{{ t("admin.settings.platformQuota.monthly") }}</th>
-                            </tr>
+                          <tr class="text-left text-xs text-gray-500 dark:text-gray-400">
+                            <th class="pb-2 pr-4 font-medium">{{ t("admin.settings.platformQuota.platform") }}</th>
+                            <th class="pb-2 pr-4 font-medium">{{ t("admin.settings.platformQuota.daily") }}</th>
+                            <th class="pb-2 pr-4 font-medium">{{ t("admin.settings.platformQuota.weekly") }}</th>
+                            <th class="pb-2 font-medium">{{ t("admin.settings.platformQuota.monthly") }}</th>
+                          </tr>
                           </thead>
                           <tbody>
-                            <tr v-for="p in (['anthropic', 'openai', 'gemini', 'antigravity', 'grok'] as const)" :key="`${authSource.source}-pq-${p}`" class="align-top">
-                              <td class="pr-4 py-1">
-                                <span class="font-mono text-xs text-gray-700 dark:text-gray-300">{{ p }}</span>
-                              </td>
-                              <td class="pr-4 py-1">
-                                <input
-                                  v-model.number="authSourceDefaults[authSource.source].platform_quotas[p]!.daily"
+                          <tr v-for="p in (['anthropic', 'openai', 'gemini', 'antigravity', 'grok'] as const)"
+                              :key="`${authSource.source}-pq-${p}`" class="align-top">
+                            <td class="pr-4 py-1">
+                              <span class="font-mono text-xs text-gray-700 dark:text-gray-300">{{ p }}</span>
+                            </td>
+                            <td class="pr-4 py-1">
+                              <input
+                                  v-model.number="authSourceDefaults[authSource.source].platformQuotas[p]!.daily"
                                   type="number"
                                   step="0.01"
                                   min="0"
                                   class="input h-8 w-28 text-sm"
                                   :placeholder="t('admin.settings.platformQuota.placeholder')"
-                                />
-                              </td>
-                              <td class="pr-4 py-1">
-                                <input
-                                  v-model.number="authSourceDefaults[authSource.source].platform_quotas[p]!.weekly"
+                              />
+                            </td>
+                            <td class="pr-4 py-1">
+                              <input
+                                  v-model.number="authSourceDefaults[authSource.source].platformQuotas[p]!.weekly"
                                   type="number"
                                   step="0.01"
                                   min="0"
                                   class="input h-8 w-28 text-sm"
                                   :placeholder="t('admin.settings.platformQuota.placeholder')"
-                                />
-                              </td>
-                              <td class="py-1">
-                                <input
-                                  v-model.number="authSourceDefaults[authSource.source].platform_quotas[p]!.monthly"
+                              />
+                            </td>
+                            <td class="py-1">
+                              <input
+                                  v-model.number="authSourceDefaults[authSource.source].platformQuotas[p]!.monthly"
                                   type="number"
                                   step="0.01"
                                   min="0"
                                   class="input h-8 w-28 text-sm"
                                   :placeholder="t('admin.settings.platformQuota.placeholder')"
-                                />
-                              </td>
-                            </tr>
+                              />
+                            </td>
+                          </tr>
                           </tbody>
                         </table>
                       </div>
@@ -4017,7 +4106,7 @@
           <!-- Claude Code Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.claudeCode.title") }}
@@ -4029,15 +4118,15 @@
             <div class="p-6">
               <div>
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {{ t("admin.settings.claudeCode.minVersion") }}
                 </label>
                 <input
-                  v-model="form.min_claude_code_version"
-                  type="text"
-                  class="input max-w-xs font-mono text-sm"
-                  :placeholder="
+                    v-model="form.minClaudeCodeVersion"
+                    type="text"
+                    class="input max-w-xs font-mono text-sm"
+                    :placeholder="
                     t('admin.settings.claudeCode.minVersionPlaceholder')
                   "
                 />
@@ -4047,15 +4136,15 @@
               </div>
               <div class="mt-4">
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {{ t("admin.settings.claudeCode.maxVersion") }}
                 </label>
                 <input
-                  v-model="form.max_claude_code_version"
-                  type="text"
-                  class="input max-w-xs font-mono text-sm"
-                  :placeholder="
+                    v-model="form.maxClaudeCodeVersion"
+                    type="text"
+                    class="input max-w-xs font-mono text-sm"
+                    :placeholder="
                     t('admin.settings.claudeCode.maxVersionPlaceholder')
                   "
                 />
@@ -4069,30 +4158,30 @@
           <!-- Codex Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.gatewayForwarding.codexHardeningTitle") }}
               </h2>
             </div>
             <div class="p-6 space-y-4">
+              <div>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                  {{ t("admin.settings.gatewayForwarding.codexClientRestrictionTitle") }}
+                </h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  {{ t("admin.settings.gatewayForwarding.codexHardeningDesc") }}
+                </p>
+              </div>
+              <div class="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <h3 class="text-base font-semibold text-gray-900 dark:text-white">
-                    {{ t("admin.settings.gatewayForwarding.codexClientRestrictionTitle") }}
-                  </h3>
-                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {{ t("admin.settings.gatewayForwarding.codexHardeningDesc") }}
-                  </p>
-                </div>
-                <div class="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label
+                  <label
                       class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      {{ t("admin.settings.gatewayForwarding.minCodexVersion") }}
-                    </label>
-                    <input
-                      v-model="form.min_codex_version"
+                  >
+                    {{ t("admin.settings.gatewayForwarding.minCodexVersion") }}
+                  </label>
+                  <input
+                      v-model="form.minCodexVersion"
                       type="text"
                       class="input w-full font-mono text-sm"
                       :placeholder="
@@ -4100,16 +4189,16 @@
                           'admin.settings.gatewayForwarding.minCodexVersionPlaceholder',
                         )
                       "
-                    />
-                  </div>
-                  <div>
-                    <label
+                  />
+                </div>
+                <div>
+                  <label
                       class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      {{ t("admin.settings.gatewayForwarding.maxCodexVersion") }}
-                    </label>
-                    <input
-                      v-model="form.max_codex_version"
+                  >
+                    {{ t("admin.settings.gatewayForwarding.maxCodexVersion") }}
+                  </label>
+                  <input
+                      v-model="form.maxCodexVersion"
                       type="text"
                       class="input w-full font-mono text-sm"
                       :placeholder="
@@ -4117,96 +4206,102 @@
                           'admin.settings.gatewayForwarding.maxCodexVersionPlaceholder',
                         )
                       "
-                    />
-                  </div>
+                  />
                 </div>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ t("admin.settings.gatewayForwarding.codexVersionHint") }}
-                </p>
+              </div>
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                {{ t("admin.settings.gatewayForwarding.codexVersionHint") }}
+              </p>
 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {{ t("admin.settings.gatewayForwarding.codexFingerprintSignals") }}
-                  </label>
-                  <p class="mb-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {{ t("admin.settings.gatewayForwarding.codexFingerprintSignalsDesc") }}
-                  </p>
-                  <div
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {{ t("admin.settings.gatewayForwarding.codexFingerprintSignals") }}
+                </label>
+                <p class="mb-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t("admin.settings.gatewayForwarding.codexFingerprintSignalsDesc") }}
+                </p>
+                <div
                     v-for="(row, i) in codexFingerprintRows"
                     :key="`codex-fp-${i}`"
                     class="mb-2 flex items-center gap-2"
-                  >
-                    <select v-model="row.type" class="input w-32 text-sm">
-                      <option value="header_exact">{{ t("admin.settings.gatewayForwarding.codexFpTypeHeaderExact") }}</option>
-                      <option value="header_prefix">{{ t("admin.settings.gatewayForwarding.codexFpTypeHeaderPrefix") }}</option>
-                      <option value="body_path">{{ t("admin.settings.gatewayForwarding.codexFpTypeBodyPath") }}</option>
-                    </select>
-                    <input
+                >
+                  <select v-model="row.type" class="input w-32 text-sm">
+                    <option value="header_exact">{{
+                        t("admin.settings.gatewayForwarding.codexFpTypeHeaderExact")
+                      }}
+                    </option>
+                    <option value="header_prefix">{{
+                        t("admin.settings.gatewayForwarding.codexFpTypeHeaderPrefix")
+                      }}
+                    </option>
+                    <option value="body_path">{{ t("admin.settings.gatewayForwarding.codexFpTypeBodyPath") }}</option>
+                  </select>
+                  <input
                       v-model="row.match"
                       type="text"
                       class="input flex-1 font-mono text-sm"
                       :placeholder="t('admin.settings.gatewayForwarding.codexFpMatchPlaceholder')"
-                    />
-                    <label class="flex shrink-0 items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
-                      <input v-model="row.required" type="checkbox" />
-                      {{ t("admin.settings.gatewayForwarding.codexFpRequired") }}
-                    </label>
-                    <button
+                  />
+                  <label class="flex shrink-0 items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                    <input v-model="row.required" type="checkbox"/>
+                    {{ t("admin.settings.gatewayForwarding.codexFpRequired") }}
+                  </label>
+                  <button
                       type="button"
                       class="btn btn-secondary btn-sm shrink-0 text-red-600 hover:text-red-700 dark:text-red-400"
                       @click="removeCodexFingerprintRow(i)"
-                    >
-                      {{ t("admin.settings.gatewayForwarding.codexRemoveRow") }}
-                    </button>
-                  </div>
-                  <button type="button" class="btn btn-secondary btn-sm" @click="addCodexFingerprintRow">
-                    {{ t("admin.settings.gatewayForwarding.codexAddRow") }}
+                  >
+                    {{ t("admin.settings.gatewayForwarding.codexRemoveRow") }}
                   </button>
-                  <p
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" @click="addCodexFingerprintRow">
+                  {{ t("admin.settings.gatewayForwarding.codexAddRow") }}
+                </button>
+                <p
                     v-if="codexFingerprintNoRequired"
                     class="mt-2 text-xs text-amber-600 dark:text-amber-500"
-                  >
-                    {{ t("admin.settings.gatewayForwarding.codexFingerprintNoRequiredWarn") }}
-                  </p>
-                </div>
+                >
+                  {{ t("admin.settings.gatewayForwarding.codexFingerprintNoRequiredWarn") }}
+                </p>
+              </div>
 
-                <div class="flex items-center justify-between">
-                  <div class="pr-4">
-                    <label
-                      class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                    >
-                      {{
-                        t("admin.settings.gatewayForwarding.codexAllowAppServer")
-                      }}
-                    </label>
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {{
-                        t(
-                          "admin.settings.gatewayForwarding.codexAllowAppServerDesc",
-                        )
-                      }}
-                    </p>
-                  </div>
-                  <Toggle
-                    v-model="form.codex_cli_only_allow_app_server_clients"
-                  />
-                </div>
-
-                <div>
+              <div class="flex items-center justify-between">
+                <div class="pr-4">
                   <label
-                    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
-                    {{ t("admin.settings.gatewayForwarding.codexBlacklist") }}
+                    {{
+                      t("admin.settings.gatewayForwarding.codexAllowAppServer")
+                    }}
                   </label>
-                  <p class="mb-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {{ t("admin.settings.gatewayForwarding.codexBlacklistDesc") }}
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    {{
+                      t(
+                          "admin.settings.gatewayForwarding.codexAllowAppServerDesc",
+                      )
+                    }}
                   </p>
-                  <div
+                </div>
+                <Toggle
+                    v-model="form.codexCliOnlyAllowAppServerClients"
+                />
+              </div>
+
+              <div>
+                <label
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  {{ t("admin.settings.gatewayForwarding.codexBlacklist") }}
+                </label>
+                <p class="mb-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t("admin.settings.gatewayForwarding.codexBlacklistDesc") }}
+                </p>
+                <div
                     v-for="(row, i) in codexBlacklistRows"
                     :key="`codex-bl-${i}`"
                     class="mb-2 flex gap-2"
-                  >
-                    <input
+                >
+                  <input
                       v-model="row.originator"
                       type="text"
                       class="input w-1/3 font-mono text-sm"
@@ -4215,8 +4310,8 @@
                           'admin.settings.gatewayForwarding.codexOriginatorPlaceholder',
                         )
                       "
-                    />
-                    <input
+                  />
+                  <input
                       v-model="row.uaContains"
                       type="text"
                       class="input flex-1 font-mono text-sm"
@@ -4225,39 +4320,39 @@
                           'admin.settings.gatewayForwarding.codexUaContainsPlaceholder',
                         )
                       "
-                    />
-                    <button
+                  />
+                  <button
                       type="button"
                       class="btn btn-secondary btn-sm shrink-0 text-red-600 hover:text-red-700 dark:text-red-400"
                       @click="removeCodexBlacklistRow(i)"
-                    >
-                      {{ t("admin.settings.gatewayForwarding.codexRemoveRow") }}
-                    </button>
-                  </div>
-                  <button
+                  >
+                    {{ t("admin.settings.gatewayForwarding.codexRemoveRow") }}
+                  </button>
+                </div>
+                <button
                     type="button"
                     class="btn btn-secondary btn-sm"
                     @click="addCodexBlacklistRow"
-                  >
-                    {{ t("admin.settings.gatewayForwarding.codexAddRow") }}
-                  </button>
-                </div>
+                >
+                  {{ t("admin.settings.gatewayForwarding.codexAddRow") }}
+                </button>
+              </div>
 
-                <div>
-                  <label
+              <div>
+                <label
                     class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    {{ t("admin.settings.gatewayForwarding.codexWhitelist") }}
-                  </label>
-                  <p class="mb-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {{ t("admin.settings.gatewayForwarding.codexWhitelistDesc") }}
-                  </p>
-                  <div
+                >
+                  {{ t("admin.settings.gatewayForwarding.codexWhitelist") }}
+                </label>
+                <p class="mb-2 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t("admin.settings.gatewayForwarding.codexWhitelistDesc") }}
+                </p>
+                <div
                     v-for="(row, i) in codexWhitelistRows"
                     :key="`codex-wl-${i}`"
                     class="mb-2 flex gap-2"
-                  >
-                    <input
+                >
+                  <input
                       v-model="row.originator"
                       type="text"
                       class="input w-1/3 font-mono text-sm"
@@ -4266,8 +4361,8 @@
                           'admin.settings.gatewayForwarding.codexOriginatorPlaceholder',
                         )
                       "
-                    />
-                    <input
+                  />
+                  <input
                       v-model="row.uaContains"
                       type="text"
                       class="input flex-1 font-mono text-sm"
@@ -4276,48 +4371,48 @@
                           'admin.settings.gatewayForwarding.codexUaContainsPlaceholder',
                         )
                       "
-                    />
-                    <label
+                  />
+                  <label
                       class="flex shrink-0 items-center gap-1 text-xs text-gray-600 dark:text-gray-400"
                       :title="
                         t(
                           'admin.settings.gatewayForwarding.codexWhitelistSkipFingerprintTooltip',
                         )
                       "
-                    >
-                      <input
+                  >
+                    <input
                         v-model="row.skipEngineFingerprint"
                         type="checkbox"
-                      />
-                      {{
-                        t(
+                    />
+                    {{
+                      t(
                           'admin.settings.gatewayForwarding.codexWhitelistSkipFingerprint',
-                        )
-                      }}
-                    </label>
-                    <button
+                      )
+                    }}
+                  </label>
+                  <button
                       type="button"
                       class="btn btn-secondary btn-sm shrink-0 text-red-600 hover:text-red-700 dark:text-red-400"
                       @click="removeCodexWhitelistRow(i)"
-                    >
-                      {{ t("admin.settings.gatewayForwarding.codexRemoveRow") }}
-                    </button>
-                  </div>
-                  <button
+                  >
+                    {{ t("admin.settings.gatewayForwarding.codexRemoveRow") }}
+                  </button>
+                </div>
+                <button
                     type="button"
                     class="btn btn-secondary btn-sm"
                     @click="addCodexWhitelistRow"
-                  >
-                    {{ t("admin.settings.gatewayForwarding.codexAddRow") }}
-                  </button>
-                </div>
+                >
+                  {{ t("admin.settings.gatewayForwarding.codexAddRow") }}
+                </button>
+              </div>
             </div>
           </div>
 
           <!-- Upstream Billing Probe Settings -->
           <div class="card" data-testid="upstream-billing-probe-settings">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.upstreamBillingProbe.title") }}
@@ -4328,11 +4423,11 @@
             </div>
             <div class="space-y-5 p-6">
               <div
-                v-if="upstreamBillingProbeLoading"
-                class="flex items-center gap-2 text-gray-500"
+                  v-if="upstreamBillingProbeLoading"
+                  class="flex items-center gap-2 text-gray-500"
               >
                 <div
-                  class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"
+                    class="h-4 w-4 animate-spin rounded-full border-b-2 border-primary-600"
                 ></div>
                 {{ t("common.loading") }}
               </div>
@@ -4348,31 +4443,31 @@
                     </p>
                   </div>
                   <Toggle
-                    v-model="upstreamBillingProbeForm.enabled"
-                    :aria-label="t('admin.settings.upstreamBillingProbe.enabled')"
-                    data-testid="upstream-billing-probe-enabled"
+                      v-model="upstreamBillingProbeForm.enabled"
+                      :aria-label="t('admin.settings.upstreamBillingProbe.enabled')"
+                      data-testid="upstream-billing-probe-enabled"
                   />
                 </div>
 
                 <div
-                  v-if="upstreamBillingProbeForm.enabled"
-                  class="border-t border-gray-100 pt-4 dark:border-dark-700"
+                    v-if="upstreamBillingProbeForm.enabled"
+                    class="border-t border-gray-100 pt-4 dark:border-dark-700"
                 >
                   <label
-                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                    for="upstream-billing-probe-interval"
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      for="upstream-billing-probe-interval"
                   >
                     {{ t("admin.settings.upstreamBillingProbe.intervalMinutes") }}
                   </label>
                   <input
-                    id="upstream-billing-probe-interval"
-                    v-model.number="upstreamBillingProbeForm.intervalMinutes"
-                    type="number"
-                    min="5"
-                    max="1440"
-                    class="input w-32"
-                    data-testid="upstream-billing-probe-interval"
-                    @keydown.enter.prevent="saveUpstreamBillingProbeSettings"
+                      id="upstream-billing-probe-interval"
+                      v-model.number="upstreamBillingProbeForm.intervalMinutes"
+                      type="number"
+                      min="5"
+                      max="1440"
+                      class="input w-32"
+                      data-testid="upstream-billing-probe-interval"
+                      @keydown.enter.prevent="saveUpstreamBillingProbeSettings"
                   />
                   <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.upstreamBillingProbe.intervalHint") }}
@@ -4380,19 +4475,19 @@
                 </div>
 
                 <div
-                  class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700"
+                    class="flex justify-end border-t border-gray-100 pt-4 dark:border-dark-700"
                 >
                   <button
-                    type="button"
-                    class="btn btn-primary btn-sm"
-                    :disabled="upstreamBillingProbeSaving"
-                    data-testid="upstream-billing-probe-save"
-                    @click="saveUpstreamBillingProbeSettings"
+                      type="button"
+                      class="btn btn-primary btn-sm"
+                      :disabled="upstreamBillingProbeSaving"
+                      data-testid="upstream-billing-probe-save"
+                      @click="saveUpstreamBillingProbeSettings"
                   >
                     {{
                       upstreamBillingProbeSaving
-                        ? t("common.saving")
-                        : t("common.save")
+                          ? t("common.saving")
+                          : t("common.save")
                     }}
                   </button>
                 </div>
@@ -4403,7 +4498,7 @@
           <!-- Gateway Scheduling Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.scheduling.title") }}
@@ -4416,7 +4511,7 @@
               <div class="flex items-center justify-between">
                 <div>
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.scheduling.allowUngroupedKey") }}
                   </label>
@@ -4424,16 +4519,16 @@
                     {{ t("admin.settings.scheduling.allowUngroupedKeyHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.allow_ungrouped_key_scheduling" />
+                <Toggle v-model="form.allowUngroupedKeyScheduling"/>
               </div>
 
               <div
-                v-if="!form.openai_advanced_scheduler_enabled"
-                class="flex items-center justify-between border-t border-gray-100 pt-5 dark:border-dark-700"
+                  v-if="!form.openai_advanced_scheduler_enabled"
+                  class="flex items-center justify-between border-t border-gray-100 pt-5 dark:border-dark-700"
               >
                 <div>
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.openaiExperimentalScheduler.lowRatePriorityTitle") }}
                   </label>
@@ -4444,19 +4539,19 @@
                   </p>
                 </div>
                 <Toggle
-                  v-model="form.openai_low_upstream_rate_priority_enabled"
-                  data-testid="openai-low-rate-priority-toggle"
+                    v-model="form.openai_low_upstream_rate_priority_enabled"
+                    data-testid="openai-low-rate-priority-toggle"
                 />
               </div>
 
               <div
-                v-if="!form.openai_advanced_scheduler_enabled && form.openai_low_upstream_rate_priority_enabled"
-                class="flex flex-col items-stretch gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:items-start sm:justify-between sm:gap-6 dark:border-dark-700"
+                  v-if="!form.openai_advanced_scheduler_enabled && form.openai_low_upstream_rate_priority_enabled"
+                  class="flex flex-col items-stretch gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:items-start sm:justify-between sm:gap-6 dark:border-dark-700"
               >
                 <div class="min-w-0">
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                    for="openai-oauth-scheduling-rate-multiplier"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      for="openai-oauth-scheduling-rate-multiplier"
                   >
                     {{ t("admin.settings.openaiExperimentalScheduler.oauthRateTitle") }}
                   </label>
@@ -4466,17 +4561,17 @@
                 </div>
                 <div class="relative w-full shrink-0 sm:w-32">
                   <input
-                    id="openai-oauth-scheduling-rate-multiplier"
-                    v-model.number="form.openai_oauth_scheduling_rate_multiplier"
-                    class="input pr-8"
-                    data-testid="openai-oauth-scheduling-rate-multiplier"
-                    min="0"
-                    required
-                    step="0.01"
-                    type="number"
+                      id="openai-oauth-scheduling-rate-multiplier"
+                      v-model.number="form.openai_oauth_scheduling_rate_multiplier"
+                      class="input pr-8"
+                      data-testid="openai-oauth-scheduling-rate-multiplier"
+                      min="0"
+                      required
+                      step="0.01"
+                      type="number"
                   />
                   <span
-                    class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400"
+                      class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400"
                   >x</span>
                 </div>
               </div>
@@ -4486,7 +4581,7 @@
                   <div class="min-w-0 pr-4">
                     <div class="flex flex-wrap items-center gap-2">
                       <label
-                        class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                          class="text-sm font-medium text-gray-700 dark:text-gray-300"
                       >
                         {{ t("admin.settings.schedulerV2.title") }}
                       </label>
@@ -4498,33 +4593,33 @@
                       {{ t("admin.settings.schedulerV2.description") }}
                     </p>
                     <p
-                      v-if="form.scheduler_v2_error"
-                      class="mt-1 break-words text-xs text-red-600 dark:text-red-400"
+                        v-if="form.scheduler_v2_error"
+                        class="mt-1 break-words text-xs text-red-600 dark:text-red-400"
                     >
                       {{ form.scheduler_v2_error }}
                     </p>
                   </div>
                   <Toggle
-                    v-model="form.scheduler_v2_enabled"
-                    data-testid="scheduler-v2-toggle"
+                      v-model="form.scheduler_v2_enabled"
+                      data-testid="scheduler-v2-toggle"
                   />
                 </div>
                 <div
-                  v-if="form.scheduler_v2_enabled"
-                  class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2"
+                    v-if="form.scheduler_v2_enabled"
+                    class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2"
                 >
                   <label class="block">
                     <span class="input-label">{{
-                      t("admin.settings.schedulerV2.candidateLimit")
-                    }}</span>
+                        t("admin.settings.schedulerV2.candidateLimit")
+                      }}</span>
                     <input
-                      v-model.number="form.scheduler_v2_candidate_limit"
-                      type="number"
-                      min="1"
-                      max="4096"
-                      required
-                      class="input"
-                      data-testid="scheduler-v2-candidate-limit"
+                        v-model.number="form.scheduler_v2_candidate_limit"
+                        type="number"
+                        min="1"
+                        max="4096"
+                        required
+                        class="input"
+                        data-testid="scheduler-v2-candidate-limit"
                     />
                     <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">
                       {{ t("admin.settings.schedulerV2.candidateLimitHelp") }}
@@ -4532,16 +4627,16 @@
                   </label>
                   <label class="block">
                     <span class="input-label">{{
-                      t("admin.settings.schedulerV2.scanLimit")
-                    }}</span>
+                        t("admin.settings.schedulerV2.scanLimit")
+                      }}</span>
                     <input
-                      v-model.number="form.scheduler_v2_scan_limit"
-                      type="number"
-                      :min="Math.max(1, Number(form.scheduler_v2_candidate_limit) || 1)"
-                      max="65536"
-                      required
-                      class="input"
-                      data-testid="scheduler-v2-scan-limit"
+                        v-model.number="form.scheduler_v2_scan_limit"
+                        type="number"
+                        :min="Math.max(1, Number(form.scheduler_v2_candidate_limit) || 1)"
+                        max="65536"
+                        required
+                        class="input"
+                        data-testid="scheduler-v2-scan-limit"
                     />
                     <span class="mt-1 block text-xs text-gray-500 dark:text-gray-400">
                       {{ t("admin.settings.schedulerV2.scanLimitHelp") }}
@@ -4551,11 +4646,11 @@
               </div>
 
               <div
-                class="flex items-center justify-between border-t border-gray-100 pt-5 dark:border-dark-700"
+                  class="flex items-center justify-between border-t border-gray-100 pt-5 dark:border-dark-700"
               >
                 <div>
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.openaiExperimentalScheduler.title") }}
                   </label>
@@ -4566,18 +4661,18 @@
                   </p>
                 </div>
                 <Toggle
-                  v-model="form.openai_advanced_scheduler_enabled"
-                  data-testid="openai-advanced-scheduler-toggle"
+                    v-model="form.openai_advanced_scheduler_enabled"
+                    data-testid="openai-advanced-scheduler-toggle"
                 />
               </div>
 
               <div
-                v-if="form.openai_advanced_scheduler_enabled"
-                class="flex items-center justify-between border-t border-gray-100 pt-5 dark:border-dark-700"
+                  v-if="form.openai_advanced_scheduler_enabled"
+                  class="flex items-center justify-between border-t border-gray-100 pt-5 dark:border-dark-700"
               >
                 <div>
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.openaiExperimentalScheduler.stickyWeightedTitle") }}
                   </label>
@@ -4587,16 +4682,16 @@
                     }}
                   </p>
                 </div>
-                <Toggle v-model="form.openai_advanced_scheduler_sticky_weighted_enabled" />
+                <Toggle v-model="form.openai_advanced_scheduler_sticky_weighted_enabled"/>
               </div>
 
               <div
-                v-if="form.openai_advanced_scheduler_enabled"
-                class="flex items-center justify-between border-t border-gray-100 pt-5 dark:border-dark-700"
+                  v-if="form.openai_advanced_scheduler_enabled"
+                  class="flex items-center justify-between border-t border-gray-100 pt-5 dark:border-dark-700"
               >
                 <div>
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.openaiExperimentalScheduler.subscriptionPriorityTitle") }}
                   </label>
@@ -4606,17 +4701,17 @@
                     }}
                   </p>
                 </div>
-                <Toggle v-model="form.openai_advanced_scheduler_subscription_priority_enabled" />
+                <Toggle v-model="form.openai_advanced_scheduler_subscription_priority_enabled"/>
               </div>
 
               <div
-                v-if="form.openai_advanced_scheduler_enabled"
-                class="flex flex-col items-stretch gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:items-start sm:justify-between sm:gap-6 dark:border-dark-700"
+                  v-if="form.openai_advanced_scheduler_enabled"
+                  class="flex flex-col items-stretch gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:items-start sm:justify-between sm:gap-6 dark:border-dark-700"
               >
                 <div class="min-w-0">
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
-                    for="openai-oauth-scheduling-rate-multiplier"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      for="openai-oauth-scheduling-rate-multiplier"
                   >
                     {{ t("admin.settings.openaiExperimentalScheduler.oauthRateTitle") }}
                   </label>
@@ -4626,28 +4721,28 @@
                 </div>
                 <div class="relative w-full shrink-0 sm:w-32">
                   <input
-                    id="openai-oauth-scheduling-rate-multiplier"
-                    v-model.number="form.openai_oauth_scheduling_rate_multiplier"
-                    class="input pr-8"
-                    data-testid="openai-oauth-scheduling-rate-multiplier"
-                    min="0"
-                    required
-                    step="0.01"
-                    type="number"
+                      id="openai-oauth-scheduling-rate-multiplier"
+                      v-model.number="form.openai_oauth_scheduling_rate_multiplier"
+                      class="input pr-8"
+                      data-testid="openai-oauth-scheduling-rate-multiplier"
+                      min="0"
+                      required
+                      step="0.01"
+                      type="number"
                   />
                   <span
-                    class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400"
+                      class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400"
                   >x</span>
                 </div>
               </div>
 
               <div
-                v-if="form.openai_advanced_scheduler_enabled"
-                class="border-t border-gray-100 pt-5 dark:border-dark-700"
+                  v-if="form.openai_advanced_scheduler_enabled"
+                  class="border-t border-gray-100 pt-5 dark:border-dark-700"
               >
                 <div>
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.openaiExperimentalScheduler.weightsTitle") }}
                   </label>
@@ -4660,19 +4755,19 @@
 
                 <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
                   <label
-                    v-for="field in openAIAdvancedSchedulerWeightFields"
-                    :key="field.key"
-                    class="block"
+                      v-for="field in openAIAdvancedSchedulerWeightFields"
+                      :key="field.key"
+                      class="block"
                   >
                     <span class="text-xs font-medium text-gray-600 dark:text-gray-400">
                       {{ field.label }}
                     </span>
                     <input
-                      v-model="form[field.key]"
-                      class="input mt-1"
-                      inputmode="decimal"
-                      :placeholder="field.placeholder"
-                      type="text"
+                        v-model="form[field.key]"
+                        class="input mt-1"
+                        inputmode="decimal"
+                        :placeholder="field.placeholder"
+                        type="text"
                     />
                   </label>
                 </div>
@@ -4683,7 +4778,7 @@
           <!-- Gateway Forwarding Behavior -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.gatewayForwarding.title") }}
@@ -4697,30 +4792,30 @@
               <div class="flex items-center justify-between">
                 <div>
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{
                       t(
-                        "admin.settings.gatewayForwarding.fingerprintUnification",
+                          "admin.settings.gatewayForwarding.fingerprintUnification",
                       )
                     }}
                   </label>
                   <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                     {{
                       t(
-                        "admin.settings.gatewayForwarding.fingerprintUnificationHint",
+                          "admin.settings.gatewayForwarding.fingerprintUnificationHint",
                       )
                     }}
                   </p>
                 </div>
-                <Toggle v-model="form.enable_fingerprint_unification" />
+                <Toggle v-model="form.enableFingerprintUnification"/>
               </div>
 
               <!-- Metadata Passthrough -->
               <div class="flex items-center justify-between">
                 <div>
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{
                       t("admin.settings.gatewayForwarding.metadataPassthrough")
@@ -4729,19 +4824,19 @@
                   <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                     {{
                       t(
-                        "admin.settings.gatewayForwarding.metadataPassthroughHint",
+                          "admin.settings.gatewayForwarding.metadataPassthroughHint",
                       )
                     }}
                   </p>
                 </div>
-                <Toggle v-model="form.enable_metadata_passthrough" />
+                <Toggle v-model="form.enableMetadataPassthrough"/>
               </div>
 
               <!-- CCH Signing -->
               <div class="flex items-center justify-between">
                 <div>
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.gatewayForwarding.cchSigning") }}
                   </label>
@@ -4749,78 +4844,78 @@
                     {{ t("admin.settings.gatewayForwarding.cchSigningHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.enable_cch_signing" />
+                <Toggle v-model="form.enableCchSigning"/>
               </div>
 
               <!-- Claude OAuth System Prompt Injection -->
               <div class="flex items-center justify-between">
                 <div>
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{
                       t(
-                        "admin.settings.gatewayForwarding.claudeOAuthSystemPromptInjection",
+                          "admin.settings.gatewayForwarding.claudeOAuthSystemPromptInjection",
                       )
                     }}
                   </label>
                   <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                     {{
                       t(
-                        "admin.settings.gatewayForwarding.claudeOAuthSystemPromptInjectionHint",
+                          "admin.settings.gatewayForwarding.claudeOAuthSystemPromptInjectionHint",
                       )
                     }}
                   </p>
                 </div>
                 <Toggle
-                  v-model="form.enable_claude_oauth_system_prompt_injection"
+                    v-model="form.enableClaudeOauthSystemPromptInjection"
                 />
               </div>
 
               <div>
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {{
                     t(
-                      "admin.settings.gatewayForwarding.claudeOAuthSystemPromptBlocks",
+                        "admin.settings.gatewayForwarding.claudeOAuthSystemPromptBlocks",
                     )
                   }}
                 </label>
                 <div class="space-y-3">
                   <div
-                    v-for="(block, index) in claudeOAuthSystemPromptBlocks"
-                    :key="block.id"
-                    class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-dark-700 dark:bg-dark-800/60"
+                      v-for="(block, index) in claudeOAuthSystemPromptBlocks"
+                      :key="block.id"
+                      class="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-dark-700 dark:bg-dark-800/60"
                   >
                     <div
-                      :class="[
+                        :class="[
                         'flex flex-wrap items-center justify-between gap-3',
                         block.expanded && 'mb-3',
                       ]"
                     >
                       <div class="min-w-0">
                         <div
-                          class="text-sm font-medium text-gray-900 dark:text-white"
+                            class="text-sm font-medium text-gray-900 dark:text-white"
                         >
                           {{
                             t(
-                              "admin.settings.gatewayForwarding.systemBlockTitle",
-                              { index: index + 1 },
+                                "admin.settings.gatewayForwarding.systemBlockTitle",
+                                {index: index + 1},
                             )
                           }}
                         </div>
                         <div
-                          class="mt-0.5 text-xs text-gray-500 dark:text-gray-400"
+                            class="mt-0.5 text-xs text-gray-500 dark:text-gray-400"
                         >
                           {{ getClaudeOAuthPresetLabel(block.preset) }}
                         </div>
                       </div>
                       <div class="flex items-center gap-2">
                         <button
-                          type="button"
-                          class="btn btn-secondary btn-sm px-2"
-                          :title="
+                            type="button"
+                            class="btn btn-secondary btn-sm px-2"
+                            :title="
                             block.expanded
                               ? t(
                                   'admin.settings.gatewayForwarding.systemBlockHide',
@@ -4829,7 +4924,7 @@
                                   'admin.settings.gatewayForwarding.systemBlockShow',
                                 )
                           "
-                          :aria-label="
+                            :aria-label="
                             block.expanded
                               ? t(
                                   'admin.settings.gatewayForwarding.systemBlockHide',
@@ -4838,38 +4933,38 @@
                                   'admin.settings.gatewayForwarding.systemBlockShow',
                                 )
                           "
-                          @click="toggleClaudeOAuthSystemPromptBlock(index)"
+                            @click="toggleClaudeOAuthSystemPromptBlock(index)"
                         >
                           <Icon
-                            :name="block.expanded ? 'eyeOff' : 'eye'"
-                            size="xs"
+                              :name="block.expanded ? 'eyeOff' : 'eye'"
+                              size="xs"
                           />
                         </button>
                         <button
-                          type="button"
-                          class="btn btn-secondary btn-sm px-2"
-                          :disabled="index === 0"
-                          @click="moveClaudeOAuthSystemPromptBlock(index, -1)"
+                            type="button"
+                            class="btn btn-secondary btn-sm px-2"
+                            :disabled="index === 0"
+                            @click="moveClaudeOAuthSystemPromptBlock(index, -1)"
                         >
-                          <Icon name="arrowUp" size="xs" />
+                          <Icon name="arrowUp" size="xs"/>
                         </button>
                         <button
-                          type="button"
-                          class="btn btn-secondary btn-sm px-2"
-                          :disabled="
+                            type="button"
+                            class="btn btn-secondary btn-sm px-2"
+                            :disabled="
                             index === claudeOAuthSystemPromptBlocks.length - 1
                           "
-                          @click="moveClaudeOAuthSystemPromptBlock(index, 1)"
+                            @click="moveClaudeOAuthSystemPromptBlock(index, 1)"
                         >
-                          <Icon name="arrowDown" size="xs" />
+                          <Icon name="arrowDown" size="xs"/>
                         </button>
-                        <Toggle v-model="block.enabled" />
+                        <Toggle v-model="block.enabled"/>
                         <button
-                          type="button"
-                          class="btn btn-secondary btn-sm px-2 text-red-600 hover:text-red-700 dark:text-red-400"
-                          @click="removeClaudeOAuthSystemPromptBlock(index)"
+                            type="button"
+                            class="btn btn-secondary btn-sm px-2 text-red-600 hover:text-red-700 dark:text-red-400"
+                            @click="removeClaudeOAuthSystemPromptBlock(index)"
                         >
-                          <Icon name="trash" size="xs" />
+                          <Icon name="trash" size="xs"/>
                         </button>
                       </div>
                     </div>
@@ -4878,18 +4973,18 @@
                       <div class="grid gap-3 md:grid-cols-2">
                         <div>
                           <label
-                            class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300"
+                              class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300"
                           >
                             {{
                               t(
-                                "admin.settings.gatewayForwarding.systemBlockPreset",
+                                  "admin.settings.gatewayForwarding.systemBlockPreset",
                               )
                             }}
                           </label>
                           <Select
-                            v-model="block.preset"
-                            :options="claudeOAuthSystemPromptPresetOptions"
-                            @change="
+                              v-model="block.preset"
+                              :options="claudeOAuthSystemPromptPresetOptions"
+                              @change="
                               (value) =>
                                 applyClaudeOAuthSystemPromptPreset(index, value)
                             "
@@ -4897,56 +4992,56 @@
                         </div>
                         <div>
                           <label
-                            class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300"
+                              class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300"
                           >
                             {{
                               t(
-                                "admin.settings.gatewayForwarding.systemBlockType",
+                                  "admin.settings.gatewayForwarding.systemBlockType",
                               )
                             }}
                           </label>
                           <Select
-                            v-model="block.type"
-                            :options="claudeOAuthSystemPromptBlockTypeOptions"
+                              v-model="block.type"
+                              :options="claudeOAuthSystemPromptBlockTypeOptions"
                           />
                         </div>
                       </div>
 
                       <div class="mt-3">
                         <label
-                          class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300"
+                            class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-300"
                         >
                           {{ t("admin.settings.gatewayForwarding.systemBlockText") }}
                         </label>
                         <textarea
-                          v-model="block.text"
-                          rows="6"
-                          class="input w-full resize-y font-mono text-xs leading-5"
-                          @input="markClaudeOAuthSystemPromptBlockCustom(block)"
+                            v-model="block.text"
+                            rows="6"
+                            class="input w-full resize-y font-mono text-xs leading-5"
+                            @input="markClaudeOAuthSystemPromptBlockCustom(block)"
                         />
                       </div>
 
                       <div
-                        class="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_160px]"
+                          class="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_160px]"
                       >
                         <div class="flex items-center justify-between gap-4">
                           <div>
                             <label
-                              class="text-xs font-medium text-gray-600 dark:text-gray-300"
+                                class="text-xs font-medium text-gray-600 dark:text-gray-300"
                             >
                               {{
                                 t(
-                                  "admin.settings.gatewayForwarding.systemBlockCacheControl",
+                                    "admin.settings.gatewayForwarding.systemBlockCacheControl",
                                 )
                               }}
                             </label>
                           </div>
-                          <Toggle v-model="block.cacheControlEnabled" />
+                          <Toggle v-model="block.cacheControlEnabled"/>
                         </div>
                         <div v-if="block.cacheControlEnabled">
                           <Select
-                            v-model="block.cacheControlTTL"
-                            :options="claudeOAuthSystemPromptCacheTTLOptions"
+                              v-model="block.cacheControlTTL"
+                              :options="claudeOAuthSystemPromptCacheTTLOptions"
                           />
                         </div>
                       </div>
@@ -4956,19 +5051,19 @@
 
                 <div class="mt-3 flex flex-wrap gap-2">
                   <button
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    @click="addClaudeOAuthSystemPromptBlock"
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      @click="addClaudeOAuthSystemPromptBlock"
                   >
-                    <Icon name="plus" size="xs" />
+                    <Icon name="plus" size="xs"/>
                     {{ t("admin.settings.gatewayForwarding.addSystemBlock") }}
                   </button>
                   <button
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    @click="resetClaudeOAuthSystemPromptBlocks"
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      @click="resetClaudeOAuthSystemPromptBlocks"
                   >
-                    <Icon name="refresh" size="xs" />
+                    <Icon name="refresh" size="xs"/>
                     {{
                       t("admin.settings.gatewayForwarding.resetSystemBlocks")
                     }}
@@ -4977,7 +5072,7 @@
                 <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                   {{
                     t(
-                      "admin.settings.gatewayForwarding.claudeOAuthSystemPromptBlocksHint",
+                        "admin.settings.gatewayForwarding.claudeOAuthSystemPromptBlocksHint",
                     )
                   }}
                 </p>
@@ -4987,24 +5082,24 @@
               <div class="flex items-center justify-between">
                 <div>
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{
                       t(
-                        "admin.settings.gatewayForwarding.anthropicCacheTTL1hInjection",
+                          "admin.settings.gatewayForwarding.anthropicCacheTTL1hInjection",
                       )
                     }}
                   </label>
                   <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                     {{
                       t(
-                        "admin.settings.gatewayForwarding.anthropicCacheTTL1hInjectionHint",
+                          "admin.settings.gatewayForwarding.anthropicCacheTTL1hInjectionHint",
                       )
                     }}
                   </p>
                 </div>
                 <Toggle
-                  v-model="form.enable_anthropic_cache_ttl_1h_injection"
+                    v-model="form.enableAnthropicCacheTtl1hInjection"
                 />
               </div>
 
@@ -5012,66 +5107,66 @@
               <div class="flex items-center justify-between">
                 <div>
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{
                       t(
-                        "admin.settings.gatewayForwarding.rewriteMessageCacheControl",
+                          "admin.settings.gatewayForwarding.rewriteMessageCacheControl",
                       )
                     }}
                   </label>
                   <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                     {{
                       t(
-                        "admin.settings.gatewayForwarding.rewriteMessageCacheControlHint",
+                          "admin.settings.gatewayForwarding.rewriteMessageCacheControlHint",
                       )
                     }}
                   </p>
                 </div>
-                <Toggle v-model="form.rewrite_message_cache_control" />
+                <Toggle v-model="form.rewriteMessageCacheControl"/>
               </div>
 
               <!-- 客户端 dateline 归一化（仅 Anthropic OAuth/SetupToken） -->
               <div class="flex items-center justify-between">
                 <div>
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{
                       t(
-                        "admin.settings.gatewayForwarding.clientDatelineNormalization",
+                          "admin.settings.gatewayForwarding.clientDatelineNormalization",
                       )
                     }}
                   </label>
                   <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                     {{
                       t(
-                        "admin.settings.gatewayForwarding.clientDatelineNormalizationHint",
+                          "admin.settings.gatewayForwarding.clientDatelineNormalizationHint",
                       )
                     }}
                   </p>
                 </div>
                 <Toggle
-                  v-model="form.enable_client_dateline_normalization"
+                    v-model="form.enableClientDatelineNormalization"
                 />
               </div>
 
               <!-- Antigravity UA 版本 -->
               <div>
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {{
                     t(
-                      "admin.settings.gatewayForwarding.antigravityUserAgentVersion",
+                        "admin.settings.gatewayForwarding.antigravityUserAgentVersion",
                     )
                   }}
                 </label>
                 <input
-                  v-model="form.antigravity_user_agent_version"
-                  type="text"
-                  class="input max-w-xs font-mono text-sm"
-                  :placeholder="
+                    v-model="form.antigravityUserAgentVersion"
+                    type="text"
+                    class="input max-w-xs font-mono text-sm"
+                    :placeholder="
                     t(
                       'admin.settings.gatewayForwarding.antigravityUserAgentVersionPlaceholder',
                     )
@@ -5080,7 +5175,7 @@
                 <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                   {{
                     t(
-                      "admin.settings.gatewayForwarding.antigravityUserAgentVersionHint",
+                        "admin.settings.gatewayForwarding.antigravityUserAgentVersionHint",
                     )
                   }}
                 </p>
@@ -5089,19 +5184,19 @@
               <!-- OpenAI Codex UA -->
               <div>
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {{
                     t(
-                      "admin.settings.gatewayForwarding.openaiCodexUserAgent",
+                        "admin.settings.gatewayForwarding.openaiCodexUserAgent",
                     )
                   }}
                 </label>
                 <input
-                  v-model="form.openai_codex_user_agent"
-                  type="text"
-                  class="input w-full font-mono text-sm"
-                  :placeholder="
+                    v-model="form.openaiCodexUserAgent"
+                    type="text"
+                    class="input w-full font-mono text-sm"
+                    :placeholder="
                     t(
                       'admin.settings.gatewayForwarding.openaiCodexUserAgentPlaceholder',
                     )
@@ -5110,7 +5205,7 @@
                 <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                   {{
                     t(
-                      "admin.settings.gatewayForwarding.openaiCodexUserAgentHint",
+                        "admin.settings.gatewayForwarding.openaiCodexUserAgentHint",
                     )
                   }}
                 </p>
@@ -5122,7 +5217,7 @@
           <!-- Web Search Emulation -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.webSearchEmulation.title") }}
@@ -5136,7 +5231,7 @@
               <div class="flex items-center justify-between">
                 <div>
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.webSearchEmulation.enabled") }}
                   </label>
@@ -5144,95 +5239,95 @@
                     {{ t("admin.settings.webSearchEmulation.enabledHint") }}
                   </p>
                 </div>
-                <Toggle v-model="webSearchConfig.enabled" />
+                <Toggle v-model="webSearchConfig.enabled"/>
               </div>
 
               <!-- Providers -->
               <div v-if="webSearchConfig.enabled" class="space-y-4">
                 <div class="flex items-center justify-between">
                   <label
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.webSearchEmulation.providers") }}
                   </label>
                   <button
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    @click="addWebSearchProvider"
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      @click="addWebSearchProvider"
                   >
                     {{ t("admin.settings.webSearchEmulation.addProvider") }}
                   </button>
                 </div>
 
                 <div
-                  v-if="webSearchConfig.providers.length === 0"
-                  class="rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-400 dark:border-dark-600"
+                    v-if="webSearchConfig.providers.length === 0"
+                    class="rounded-lg border border-dashed border-gray-300 p-4 text-center text-sm text-gray-400 dark:border-dark-600"
                 >
                   {{ t("admin.settings.webSearchEmulation.noProviders") }}
                 </div>
 
                 <div
-                  v-for="(provider, pIdx) in webSearchConfig.providers"
-                  :key="pIdx"
-                  class="rounded-lg border border-gray-200 dark:border-dark-600"
+                    v-for="(provider, pIdx) in webSearchConfig.providers"
+                    :key="pIdx"
+                    class="rounded-lg border border-gray-200 dark:border-dark-600"
                 >
                   <!-- Collapsible header -->
                   <div
-                    class="flex cursor-pointer items-center justify-between px-4 py-3"
-                    @click="toggleProviderExpand(pIdx)"
+                      class="flex cursor-pointer items-center justify-between px-4 py-3"
+                      @click="toggleProviderExpand(pIdx)"
                   >
                     <div class="flex items-center gap-3">
                       <svg
-                        class="h-4 w-4 text-gray-400 transition-transform"
-                        :class="{ 'rotate-90': expandedProviders[pIdx] }"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                          class="h-4 w-4 text-gray-400 transition-transform"
+                          :class="{ 'rotate-90': expandedProviders[pIdx] }"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
                       >
                         <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M9 5l7 7-7 7"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M9 5l7 7-7 7"
                         />
                       </svg>
                       <Select
-                        v-model="provider.type"
-                        :options="[
+                          v-model="provider.type"
+                          :options="[
                           { value: 'brave', label: 'Brave Search' },
                           { value: 'tavily', label: 'Tavily' },
                         ]"
-                        class="w-36"
-                        @click.stop
+                          class="w-36"
+                          @click.stop
                       />
                       <!-- Quota summary (always visible) -->
                       <span class="text-xs text-gray-400">
-                        {{ provider.quota_used ?? 0 }} /
+                        {{ provider.quotaUsed ?? 0 }} /
                         {{
-                          provider.quota_limit != null &&
-                          provider.quota_limit > 0
-                            ? provider.quota_limit
-                            : "∞"
+                          provider.quotaLimit != null &&
+                          provider.quotaLimit > 0
+                              ? provider.quotaLimit
+                              : "∞"
                         }}
                       </span>
                       <span
-                        v-if="
+                          v-if="
                           !expandedProviders[pIdx] &&
-                          provider.api_key_configured
+                          provider.apiKeyConfigured
                         "
-                        class="text-xs text-green-500"
+                          class="text-xs text-green-500"
                       >
                         {{
                           t(
-                            "admin.settings.webSearchEmulation.apiKeyConfigured",
+                              "admin.settings.webSearchEmulation.apiKeyConfigured",
                           )
                         }}
                       </span>
                     </div>
                     <button
-                      type="button"
-                      class="text-red-500 hover:text-red-700 text-xs"
-                      @click.stop="removeWebSearchProvider(pIdx)"
+                        type="button"
+                        class="text-red-500 hover:text-red-700 text-xs"
+                        @click.stop="removeWebSearchProvider(pIdx)"
                     >
                       {{
                         t("admin.settings.webSearchEmulation.removeProvider")
@@ -5242,26 +5337,26 @@
 
                   <!-- Expanded content -->
                   <div
-                    v-if="expandedProviders[pIdx]"
-                    class="space-y-3 border-t border-gray-100 px-4 pb-4 pt-3 dark:border-dark-700"
+                      v-if="expandedProviders[pIdx]"
+                      class="space-y-3 border-t border-gray-100 px-4 pb-4 pt-3 dark:border-dark-700"
                   >
                     <!-- API Key with inline show/copy -->
                     <div>
                       <label class="text-xs text-gray-500">{{
-                        t("admin.settings.webSearchEmulation.apiKey")
-                      }}</label>
+                          t("admin.settings.webSearchEmulation.apiKey")
+                        }}</label>
                       <div class="relative">
                         <input
-                          v-model="provider.api_key"
-                          :type="apiKeyVisible[pIdx] ? 'text' : 'password'"
-                          class="input w-full text-sm"
-                          :class="
-                            provider.api_key || provider.api_key_configured
+                            v-model="provider.apiKey"
+                            :type="apiKeyVisible[pIdx] ? 'text' : 'password'"
+                            class="input w-full text-sm"
+                            :class="
+                            provider.apiKey || provider.apiKeyConfigured
                               ? 'pr-16'
                               : ''
                           "
-                          :placeholder="
-                            provider.api_key_configured
+                            :placeholder="
+                            provider.apiKeyConfigured
                               ? '••••••••'
                               : t(
                                   'admin.settings.webSearchEmulation.apiKeyPlaceholder',
@@ -5269,13 +5364,13 @@
                           "
                         />
                         <div
-                          v-if="provider.api_key || provider.api_key_configured"
-                          class="absolute inset-y-0 right-0 flex items-center pr-1.5"
+                            v-if="provider.apiKey || provider.apiKeyConfigured"
+                            class="absolute inset-y-0 right-0 flex items-center pr-1.5"
                         >
                           <button
-                            type="button"
-                            class="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                            :title="
+                              type="button"
+                              class="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                              :title="
                               apiKeyVisible[pIdx]
                                 ? t(
                                     'admin.settings.webSearchEmulation.hideApiKey',
@@ -5284,67 +5379,67 @@
                                     'admin.settings.webSearchEmulation.showApiKey',
                                   )
                             "
-                            @click="apiKeyVisible[pIdx] = !apiKeyVisible[pIdx]"
+                              @click="apiKeyVisible[pIdx] = !apiKeyVisible[pIdx]"
                           >
                             <svg
-                              v-if="!apiKeyVisible[pIdx]"
-                              class="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
+                                v-if="!apiKeyVisible[pIdx]"
+                                class="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
                             >
                               <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                               />
                               <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                               />
                             </svg>
                             <svg
-                              v-else
-                              class="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
+                                v-else
+                                class="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
                             >
                               <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
                               />
                             </svg>
                           </button>
                           <button
-                            type="button"
-                            class="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                            :class="{
+                              type="button"
+                              class="rounded p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                              :class="{
                               'opacity-30 cursor-not-allowed':
-                                !provider.api_key,
+                                !provider.apiKey,
                             }"
-                            :title="
+                              :title="
                               t('admin.settings.webSearchEmulation.copyApiKey')
                             "
-                            :disabled="!provider.api_key"
-                            @click="copyApiKey(pIdx)"
+                              :disabled="!provider.apiKey"
+                              @click="copyApiKey(pIdx)"
                           >
                             <svg
-                              class="h-4 w-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
+                                class="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
                             >
                               <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                               />
                             </svg>
                           </button>
@@ -5356,33 +5451,33 @@
                     <div class="grid grid-cols-2 gap-3">
                       <div>
                         <label class="text-xs text-gray-500">{{
-                          t("admin.settings.webSearchEmulation.quotaLimit")
-                        }}</label>
+                            t("admin.settings.webSearchEmulation.quotaLimit")
+                          }}</label>
                         <input
-                          v-model="provider.quota_limit"
-                          type="number"
-                          min="1"
-                          class="input text-sm"
-                          :placeholder="'∞'"
+                            v-model="provider.quotaLimit"
+                            type="number"
+                            min="1"
+                            class="input text-sm"
+                            :placeholder="'∞'"
                         />
                         <p class="mt-0.5 text-xs text-gray-400">
                           {{
                             t(
-                              "admin.settings.webSearchEmulation.quotaLimitHint",
+                                "admin.settings.webSearchEmulation.quotaLimitHint",
                             )
                           }}
                         </p>
                       </div>
                       <div>
                         <label class="text-xs text-gray-500">{{
-                          t("admin.settings.webSearchEmulation.subscribedAt")
-                        }}</label>
+                            t("admin.settings.webSearchEmulation.subscribedAt")
+                          }}</label>
                         <input
-                          :value="formatSubscribedAt(provider.subscribed_at)"
-                          type="date"
-                          class="input text-sm"
-                          @input="
-                            provider.subscribed_at = parseSubscribedAt(
+                            :value="formatSubscribedAt(provider.subscribedAt)"
+                            type="date"
+                            class="input text-sm"
+                            @input="
+                            provider.subscribedAt = parseSubscribedAt(
                               ($event.target as HTMLInputElement).value,
                             )
                           "
@@ -5390,7 +5485,7 @@
                         <p class="mt-0.5 text-xs text-gray-400">
                           {{
                             t(
-                              "admin.settings.webSearchEmulation.subscribedAtHint",
+                                "admin.settings.webSearchEmulation.subscribedAtHint",
                             )
                           }}
                         </p>
@@ -5400,48 +5495,48 @@
                     <!-- Usage display -->
                     <div class="flex items-center gap-2">
                       <span class="text-xs text-gray-500"
-                        >{{
+                      >{{
                           t("admin.settings.webSearchEmulation.quotaUsage")
                         }}:</span
                       >
                       <div
-                        v-if="
-                          provider.quota_limit != null &&
-                          provider.quota_limit > 0
+                          v-if="
+                          provider.quotaLimit != null &&
+                          provider.quotaLimit > 0
                         "
-                        class="flex-1 rounded-full bg-gray-200 dark:bg-dark-600"
-                        style="height: 6px"
+                          class="flex-1 rounded-full bg-gray-200 dark:bg-dark-600"
+                          style="height: 6px"
                       >
                         <div
-                          class="h-full rounded-full transition-all"
-                          :class="
+                            class="h-full rounded-full transition-all"
+                            :class="
                             quotaPercentage(provider) > 90
                               ? 'bg-red-500'
                               : quotaPercentage(provider) > 70
                                 ? 'bg-yellow-500'
                                 : 'bg-green-500'
                           "
-                          :style="{
+                            :style="{
                             width:
                               Math.min(quotaPercentage(provider), 100) + '%',
                           }"
                         />
                       </div>
-                      <div v-else class="flex-1" />
+                      <div v-else class="flex-1"/>
                       <span class="text-xs text-gray-500"
-                        >{{ provider.quota_used ?? 0 }} /
+                      >{{ provider.quotaUsed ?? 0 }} /
                         {{
-                          provider.quota_limit != null &&
-                          provider.quota_limit > 0
-                            ? provider.quota_limit
-                            : "∞"
+                          provider.quotaLimit != null &&
+                          provider.quotaLimit > 0
+                              ? provider.quotaLimit
+                              : "∞"
                         }}</span
                       >
                       <button
-                        v-if="(provider.quota_used ?? 0) > 0"
-                        type="button"
-                        class="text-xs text-primary-600 hover:text-primary-700"
-                        @click="resetWebSearchUsage(pIdx)"
+                          v-if="(provider.quotaUsed ?? 0) > 0"
+                          type="button"
+                          class="text-xs text-primary-600 hover:text-primary-700"
+                          @click="resetWebSearchUsage(pIdx)"
                       >
                         {{ t("admin.settings.webSearchEmulation.resetUsage") }}
                       </button>
@@ -5451,17 +5546,17 @@
                     <div class="flex items-end gap-3">
                       <div class="flex-1">
                         <label class="text-xs text-gray-500">{{
-                          t("admin.settings.webSearchEmulation.proxy")
-                        }}</label>
+                            t("admin.settings.webSearchEmulation.proxy")
+                          }}</label>
                         <ProxySelector
-                          v-model="provider.proxy_id"
-                          :proxies="webSearchProxies"
+                            v-model="provider.proxyId"
+                            :proxies="webSearchProxies"
                         />
                       </div>
                       <button
-                        type="button"
-                        class="btn btn-secondary btn-sm whitespace-nowrap"
-                        @click="openTestDialog()"
+                          type="button"
+                          class="btn btn-secondary btn-sm whitespace-nowrap"
+                          @click="openTestDialog()"
                       >
                         {{ t("admin.settings.webSearchEmulation.test") }}
                       </button>
@@ -5474,69 +5569,69 @@
 
           <!-- Web Search Test Dialog -->
           <div
-            v-if="wsTestDialogOpen"
-            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-            @click.self="wsTestDialogOpen = false"
+              v-if="wsTestDialogOpen"
+              class="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+              @click.self="wsTestDialogOpen = false"
           >
             <div
-              class="mx-4 w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-dark-800"
+                class="mx-4 w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-dark-800"
             >
               <h3
-                class="mb-4 text-lg font-semibold text-gray-900 dark:text-white"
+                  class="mb-4 text-lg font-semibold text-gray-900 dark:text-white"
               >
                 {{ t("admin.settings.webSearchEmulation.testResultTitle") }}
               </h3>
               <div class="flex items-center gap-2">
                 <input
-                  v-model="wsTestQuery"
-                  type="text"
-                  class="input flex-1 text-sm"
-                  :placeholder="
+                    v-model="wsTestQuery"
+                    type="text"
+                    class="input flex-1 text-sm"
+                    :placeholder="
                     t('admin.settings.webSearchEmulation.testDefaultQuery')
                   "
-                  @keyup.enter="testWebSearchProvider()"
+                    @keyup.enter="testWebSearchProvider()"
                 />
                 <button
-                  type="button"
-                  class="btn btn-primary btn-sm"
-                  :disabled="wsTestLoading"
-                  @click="testWebSearchProvider()"
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    :disabled="wsTestLoading"
+                    @click="testWebSearchProvider()"
                 >
                   {{
                     wsTestLoading
-                      ? t("admin.settings.webSearchEmulation.testing")
-                      : t("admin.settings.webSearchEmulation.test")
+                        ? t("admin.settings.webSearchEmulation.testing")
+                        : t("admin.settings.webSearchEmulation.test")
                   }}
                 </button>
               </div>
               <!-- Test results -->
               <div
-                v-if="wsTestResult"
-                class="mt-4 max-h-80 overflow-y-auto rounded-lg bg-gray-50 p-4 dark:bg-dark-700"
+                  v-if="wsTestResult"
+                  class="mt-4 max-h-80 overflow-y-auto rounded-lg bg-gray-50 p-4 dark:bg-dark-700"
               >
                 <p
-                  class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {{
                     t("admin.settings.webSearchEmulation.testResultProvider")
                   }}: {{ wsTestResult.provider }}
                 </p>
                 <div
-                  v-if="wsTestResult.results.length === 0"
-                  class="text-sm text-gray-400"
+                    v-if="wsTestResult.results.length === 0"
+                    class="text-sm text-gray-400"
                 >
                   {{ t("admin.settings.webSearchEmulation.testNoResults") }}
                 </div>
                 <div
-                  v-for="(r, rIdx) in wsTestResult.results"
-                  :key="rIdx"
-                  class="mt-2 border-t border-gray-200 pt-2 first:mt-0 first:border-0 first:pt-0 dark:border-dark-600"
+                    v-for="(r, rIdx) in wsTestResult.results"
+                    :key="rIdx"
+                    class="mt-2 border-t border-gray-200 pt-2 first:mt-0 first:border-0 first:pt-0 dark:border-dark-600"
                 >
                   <a
-                    :href="r.url"
-                    target="_blank"
-                    class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
-                    >{{ r.title }}</a
+                      :href="r.url"
+                      target="_blank"
+                      class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                  >{{ r.title }}</a
                   >
                   <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                     {{ r.snippet }}
@@ -5545,9 +5640,9 @@
               </div>
               <div class="mt-4 flex justify-end">
                 <button
-                  type="button"
-                  class="btn btn-secondary btn-sm"
-                  @click="wsTestDialogOpen = false"
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    @click="wsTestDialogOpen = false"
                 >
                   {{ t("common.close") }}
                 </button>
@@ -5555,53 +5650,53 @@
             </div>
           </div>
 
-        <!-- Usage Records Settings -->
-        <div class="card">
-          <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('admin.settings.usageRecords.title') }}
-            </h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {{ t('admin.settings.usageRecords.description') }}
-            </p>
-          </div>
-          <div class="space-y-4 p-6">
-            <!-- User usage details visibility -->
-            <div class="flex items-center justify-between gap-4">
-              <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {{ t('admin.settings.user_usage_detail_view.label') }}
-                </label>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ t('admin.settings.user_usage_detail_view.description') }}
-                </p>
-              </div>
-              <label class="toggle shrink-0">
-                <input
-                  v-model="form.allow_user_view_usage_details"
-                  data-testid="allow-user-view-usage-details"
-                  type="checkbox"
-                />
-                <span class="toggle-slider"></span>
-              </label>
+          <!-- Usage Records Settings -->
+          <div class="card">
+            <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ t('admin.settings.usageRecords.title') }}
+              </h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {{ t('admin.settings.usageRecords.description') }}
+              </p>
             </div>
-            <!-- User error requests visibility -->
-            <div class="flex items-center justify-between gap-4 border-t border-gray-100 pt-4 dark:border-dark-700">
-              <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {{ t('admin.settings.user_error_view.label') }}
+            <div class="space-y-4 p-6">
+              <!-- User usage details visibility -->
+              <div class="flex items-center justify-between gap-4">
+                <div>
+                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('admin.settings.user_usage_detail_view.label') }}
+                  </label>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.user_usage_detail_view.description') }}
+                  </p>
+                </div>
+                <label class="toggle shrink-0">
+                  <input
+                      v-model="form.allowUserViewUsageDetails"
+                      data-testid="allow-user-view-usage-details"
+                      type="checkbox"
+                  />
+                  <span class="toggle-slider"></span>
                 </label>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ t('admin.settings.user_error_view.description') }}
-                </p>
               </div>
-              <label class="toggle shrink-0">
-                <input v-model="form.allow_user_view_error_requests" type="checkbox" />
-                <span class="toggle-slider"></span>
-              </label>
+              <!-- User error requests visibility -->
+              <div class="flex items-center justify-between gap-4 border-t border-gray-100 pt-4 dark:border-dark-700">
+                <div>
+                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('admin.settings.user_error_view.label') }}
+                  </label>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.user_error_view.description') }}
+                  </p>
+                </div>
+                <label class="toggle shrink-0">
+                  <input v-model="form.allowUserViewErrorRequests" type="checkbox"/>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
             </div>
           </div>
-        </div>
         </div>
         <!-- /Tab: Gateway — Claude Code, Scheduling -->
 
@@ -5627,12 +5722,13 @@
                   </p>
                 </div>
                 <Toggle
-                  v-model="form.stream_mode_performance_enabled"
-                  data-testid="stream-mode-performance-toggle"
+                    v-model="form.streamModePerformanceEnabled"
+                    data-testid="stream-mode-performance-toggle"
                 />
               </div>
-              <div class="flex items-start gap-2 border-t border-gray-100 pt-4 text-sm text-gray-500 dark:border-dark-700 dark:text-gray-400">
-                <Icon name="infoCircle" size="sm" class="mt-0.5 flex-shrink-0" />
+              <div
+                  class="flex items-start gap-2 border-t border-gray-100 pt-4 text-sm text-gray-500 dark:border-dark-700 dark:text-gray-400">
+                <Icon name="infoCircle" size="sm" class="mt-0.5 flex-shrink-0"/>
                 <span>{{ t("admin.settings.performance.streamMode.dockerNote") }}</span>
               </div>
             </div>
@@ -5645,7 +5741,7 @@
           <!-- Site Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.site.title") }}
@@ -5657,7 +5753,7 @@
             <div class="space-y-6 p-6">
               <!-- Backend Mode -->
               <div
-                class="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
+                  class="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20"
               >
                 <div>
                   <h3 class="text-sm font-medium text-gray-900 dark:text-white">
@@ -5666,22 +5762,22 @@
                   <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.site.backendModeDescription") }}
                   </p>
-	                </div>
-	                <Toggle v-model="form.backend_mode_enabled" />
-	              </div>
+                </div>
+                <Toggle v-model="form.backendModeEnabled"/>
+              </div>
 
-	              <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <label
-                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.site.siteName") }}
                   </label>
                   <input
-                    v-model="form.site_name"
-                    type="text"
-                    class="input"
-                    :placeholder="t('admin.settings.site.siteNamePlaceholder')"
+                      v-model="form.siteName"
+                      type="text"
+                      class="input"
+                      :placeholder="t('admin.settings.site.siteNamePlaceholder')"
                   />
                   <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.site.siteNameHint") }}
@@ -5689,15 +5785,15 @@
                 </div>
                 <div>
                   <label
-                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.site.siteSubtitle") }}
                   </label>
                   <input
-                    v-model="form.site_subtitle"
-                    type="text"
-                    class="input"
-                    :placeholder="
+                      v-model="form.siteSubtitle"
+                      type="text"
+                      class="input"
+                      :placeholder="
                       t('admin.settings.site.siteSubtitlePlaceholder')
                     "
                   />
@@ -5710,15 +5806,15 @@
               <!-- API Base URL -->
               <div>
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {{ t("admin.settings.site.apiBaseUrl") }}
                 </label>
                 <input
-                  v-model="form.api_base_url"
-                  type="text"
-                  class="input font-mono text-sm"
-                  :placeholder="t('admin.settings.site.apiBaseUrlPlaceholder')"
+                    v-model="form.apiBaseUrl"
+                    type="text"
+                    class="input font-mono text-sm"
+                    :placeholder="t('admin.settings.site.apiBaseUrlPlaceholder')"
                 />
                 <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                   {{ t("admin.settings.site.apiBaseUrlHint") }}
@@ -5736,17 +5832,17 @@
                 <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.site.tableDefaultPageSize") }}
                     </label>
                     <input
-                      v-model.number="form.table_default_page_size"
-                      type="number"
-                      min="5"
-                      max="1000"
-                      step="1"
-                      class="input w-40"
+                        v-model.number="form.tableDefaultPageSize"
+                        type="number"
+                        min="5"
+                        max="1000"
+                        step="1"
+                        class="input w-40"
                     />
                     <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                       {{ t("admin.settings.site.tableDefaultPageSizeHint") }}
@@ -5754,15 +5850,15 @@
                   </div>
                   <div>
                     <label
-                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
                       {{ t("admin.settings.site.tablePageSizeOptions") }}
                     </label>
                     <input
-                      v-model="tablePageSizeOptionsInput"
-                      type="text"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="tablePageSizeOptionsInput"
+                        type="text"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.site.tablePageSizeOptionsPlaceholder')
                       "
                     />
@@ -5776,7 +5872,7 @@
               <!-- Custom Endpoints -->
               <div>
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {{ t("admin.settings.site.customEndpoints.title") }}
                 </label>
@@ -5786,13 +5882,13 @@
 
                 <div class="space-y-3">
                   <div
-                    v-for="(ep, index) in form.custom_endpoints"
-                    :key="index"
-                    class="rounded-lg border border-gray-200 p-4 dark:border-dark-600"
+                      v-for="(ep, index) in form.customEndpoints"
+                      :key="index"
+                      class="rounded-lg border border-gray-200 p-4 dark:border-dark-600"
                   >
                     <div class="mb-3 flex items-center justify-between">
                       <span
-                        class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                          class="text-sm font-medium text-gray-700 dark:text-gray-300"
                       >
                         {{
                           t("admin.settings.site.customEndpoints.itemLabel", {
@@ -5801,21 +5897,21 @@
                         }}
                       </span>
                       <button
-                        type="button"
-                        class="rounded p-1 text-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
-                        @click="removeEndpoint(index)"
+                          type="button"
+                          class="rounded p-1 text-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                          @click="removeEndpoint(index)"
                       >
                         <svg
-                          class="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          stroke-width="2"
+                            class="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="2"
                         >
                           <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                           />
                         </svg>
                       </button>
@@ -5823,34 +5919,34 @@
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div>
                         <label
-                          class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                            class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                         >
-                          {{ t("admin.settings.site.customEndpoint(s as any).name") }}
+                          {{ t("admin.settings.site.customEndpoints.name") }}
                         </label>
                         <input
-                          v-model="ep.name"
-                          type="text"
-                          class="input text-sm"
-                          :placeholder="
+                            v-model="ep.name"
+                            type="text"
+                            class="input text-sm"
+                            :placeholder="
                             t(
-                              'admin.settings.site.customEndpoint(s as any).namePlaceholder',
+                              'admin.settings.site.customEndpoints.namePlaceholder',
                             )
                           "
                         />
                       </div>
                       <div>
                         <label
-                          class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                            class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                         >
                           {{
                             t("admin.settings.site.customEndpoints.endpointUrl")
                           }}
                         </label>
                         <input
-                          v-model="ep.endpoint"
-                          type="url"
-                          class="input font-mono text-sm"
-                          :placeholder="
+                            v-model="ep.endpoint"
+                            type="url"
+                            class="input font-mono text-sm"
+                            :placeholder="
                             t(
                               'admin.settings.site.customEndpoints.endpointUrlPlaceholder',
                             )
@@ -5859,19 +5955,19 @@
                       </div>
                       <div class="sm:col-span-2">
                         <label
-                          class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                            class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                         >
                           {{
                             t(
-                              "admin.settings.site.customEndpoints.descriptionLabel",
+                                "admin.settings.site.customEndpoints.descriptionLabel",
                             )
                           }}
                         </label>
                         <input
-                          v-model="ep.description"
-                          type="text"
-                          class="input text-sm"
-                          :placeholder="
+                            v-model="ep.description"
+                            type="text"
+                            class="input text-sm"
+                            :placeholder="
                             t(
                               'admin.settings.site.customEndpoints.descriptionPlaceholder',
                             )
@@ -5883,21 +5979,21 @@
                 </div>
 
                 <button
-                  type="button"
-                  class="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-2.5 text-sm text-gray-500 transition-colors hover:border-primary-400 hover:text-primary-600 dark:border-dark-600 dark:text-gray-400 dark:hover:border-primary-500 dark:hover:text-primary-400"
-                  @click="addEndpoint"
+                    type="button"
+                    class="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 px-4 py-2.5 text-sm text-gray-500 transition-colors hover:border-primary-400 hover:text-primary-600 dark:border-dark-600 dark:text-gray-400 dark:hover:border-primary-500 dark:hover:text-primary-400"
+                    @click="addEndpoint"
                 >
                   <svg
-                    class="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="2"
+                      class="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
                   >
                     <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M12 4v16m8-8H4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 4v16m8-8H4"
                     />
                   </svg>
                   {{ t("admin.settings.site.customEndpoints.add") }}
@@ -5907,15 +6003,15 @@
               <!-- Contact Info -->
               <div>
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {{ t("admin.settings.site.contactInfo") }}
                 </label>
                 <input
-                  v-model="form.contact_info"
-                  type="text"
-                  class="input"
-                  :placeholder="t('admin.settings.site.contactInfoPlaceholder')"
+                    v-model="form.contactInfo"
+                    type="text"
+                    class="input"
+                    :placeholder="t('admin.settings.site.contactInfoPlaceholder')"
                 />
                 <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                   {{ t("admin.settings.site.contactInfoHint") }}
@@ -5925,15 +6021,15 @@
               <!-- Doc URL -->
               <div>
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {{ t("admin.settings.site.docUrl") }}
                 </label>
                 <input
-                  v-model="form.doc_url"
-                  type="url"
-                  class="input font-mono text-sm"
-                  :placeholder="t('admin.settings.site.docUrlPlaceholder')"
+                    v-model="form.docUrl"
+                    type="url"
+                    class="input font-mono text-sm"
+                    :placeholder="t('admin.settings.site.docUrlPlaceholder')"
                 />
                 <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                   {{ t("admin.settings.site.docUrlHint") }}
@@ -5943,32 +6039,32 @@
               <!-- Site Logo Upload -->
               <div>
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {{ t("admin.settings.site.siteLogo") }}
                 </label>
                 <ImageUpload
-                  v-model="form.site_logo"
-                  mode="image"
-                  :upload-label="t('admin.settings.site.uploadImage')"
-                  :remove-label="t('admin.settings.site.remove')"
-                  :hint="t('admin.settings.site.logoHint')"
-                  :max-size="300 * 1024"
+                    v-model="form.siteLogo"
+                    mode="image"
+                    :upload-label="t('admin.settings.site.uploadImage')"
+                    :remove-label="t('admin.settings.site.remove')"
+                    :hint="t('admin.settings.site.logoHint')"
+                    :max-size="300 * 1024"
                 />
               </div>
 
               <!-- Home Content -->
               <div>
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {{ t("admin.settings.site.homeContent") }}
                 </label>
                 <textarea
-                  v-model="form.home_content"
-                  rows="6"
-                  class="input font-mono text-sm"
-                  :placeholder="t('admin.settings.site.homeContentPlaceholder')"
+                    v-model="form.homeContent"
+                    rows="6"
+                    class="input font-mono text-sm"
+                    :placeholder="t('admin.settings.site.homeContentPlaceholder')"
                 ></textarea>
                 <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                   {{ t("admin.settings.site.homeContentHint") }}
@@ -5981,17 +6077,17 @@
 
               <!-- Hide CCS Import Button -->
               <div
-                class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
+                  class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.site.hideCcsImportButton")
-                  }}</label>
+                      t("admin.settings.site.hideCcsImportButton")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.site.hideCcsImportButtonHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.hide_ccs_import_button" />
+                <Toggle v-model="form.hideCcsImportButton"/>
               </div>
             </div>
           </div>
@@ -5999,7 +6095,7 @@
           <!-- Custom Menu Items -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.customMenu.title") }}
@@ -6011,81 +6107,81 @@
             <div class="space-y-4 p-6">
               <!-- Existing menu items -->
               <div
-                v-for="(item, index) in form.custom_menu_items"
-                :key="item.id || index"
-                class="rounded-lg border border-gray-200 p-4 dark:border-dark-600"
+                  v-for="(item, index) in form.customMenuItems"
+                  :key="item.id || index"
+                  class="rounded-lg border border-gray-200 p-4 dark:border-dark-600"
               >
                 <div class="mb-3 flex items-center justify-between">
                   <span
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{
-                      t("admin.settings.customMenu.itemLabel", { n: index + 1 })
+                      t("admin.settings.customMenu.itemLabel", {n: index + 1})
                     }}
                   </span>
                   <div class="flex items-center gap-2">
                     <!-- Move up -->
                     <button
-                      v-if="index > 0"
-                      type="button"
-                      class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-dark-700"
-                      :title="t('admin.settings.customMenu.moveUp')"
-                      @click="moveMenuItem(index, -1)"
+                        v-if="index > 0"
+                        type="button"
+                        class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-dark-700"
+                        :title="t('admin.settings.customMenu.moveUp')"
+                        @click="moveMenuItem(index, -1)"
                     >
                       <svg
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
+                          class="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          stroke-width="2"
                       >
                         <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M5 15l7-7 7 7"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M5 15l7-7 7 7"
                         />
                       </svg>
                     </button>
                     <!-- Move down -->
                     <button
-                      v-if="index < form.custom_menu_items.length - 1"
-                      type="button"
-                      class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-dark-700"
-                      :title="t('admin.settings.customMenu.moveDown')"
-                      @click="moveMenuItem(index, 1)"
+                        v-if="index < form.customMenuItems.length - 1"
+                        type="button"
+                        class="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-dark-700"
+                        :title="t('admin.settings.customMenu.moveDown')"
+                        @click="moveMenuItem(index, 1)"
                     >
                       <svg
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
+                          class="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          stroke-width="2"
                       >
                         <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M19 9l-7 7-7-7"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M19 9l-7 7-7-7"
                         />
                       </svg>
                     </button>
                     <!-- Delete -->
                     <button
-                      type="button"
-                      class="rounded p-1 text-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
-                      :title="t('admin.settings.customMenu.remove')"
-                      @click="removeMenuItem(index)"
+                        type="button"
+                        class="rounded p-1 text-red-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20"
+                        :title="t('admin.settings.customMenu.remove')"
+                        @click="removeMenuItem(index)"
                     >
                       <svg
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
+                          class="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          stroke-width="2"
                       >
                         <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                         />
                       </svg>
                     </button>
@@ -6096,15 +6192,15 @@
                   <!-- Label -->
                   <div>
                     <label
-                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                     >
                       {{ t("admin.settings.customMenu.name") }}
                     </label>
                     <input
-                      v-model="item.label"
-                      type="text"
-                      class="input text-sm"
-                      :placeholder="
+                        v-model="item.label"
+                        type="text"
+                        class="input text-sm"
+                        :placeholder="
                         t('admin.settings.customMenu.namePlaceholder')
                       "
                     />
@@ -6113,7 +6209,7 @@
                   <!-- Visibility -->
                   <div>
                     <label
-                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                     >
                       {{ t("admin.settings.customMenu.visibility") }}
                     </label>
@@ -6130,15 +6226,15 @@
                   <!-- URL (full width) -->
                   <div class="sm:col-span-2">
                     <label
-                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                     >
                       {{ t("admin.settings.customMenu.url") }}
                     </label>
                     <input
-                      v-model="item.url"
-                      type="url"
-                      class="input font-mono text-sm"
-                      :placeholder="
+                        v-model="item.url"
+                        type="url"
+                        class="input font-mono text-sm"
+                        :placeholder="
                         t('admin.settings.customMenu.urlPlaceholder')
                       "
                     />
@@ -6147,17 +6243,17 @@
                   <!-- SVG Icon (full width) -->
                   <div class="sm:col-span-2">
                     <label
-                      class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+                        class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
                     >
                       {{ t("admin.settings.customMenu.iconSvg") }}
                     </label>
                     <ImageUpload
-                      :model-value="item.iconSvg"
-                      mode="svg"
-                      size="sm"
-                      :upload-label="t('admin.settings.customMenu.uploadSvg')"
-                      :remove-label="t('admin.settings.customMenu.removeSvg')"
-                      @update:model-value="(v: string) => (item.iconSvg = v)"
+                        :model-value="item.iconSvg"
+                        mode="svg"
+                        size="sm"
+                        :upload-label="t('admin.settings.customMenu.uploadSvg')"
+                        :remove-label="t('admin.settings.customMenu.removeSvg')"
+                        @update:model-value="(v: string) => (item.iconSvg = v)"
                     />
                   </div>
                 </div>
@@ -6165,96 +6261,98 @@
 
               <!-- Add button -->
               <button
-                type="button"
-                class="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 text-sm text-gray-500 transition-colors hover:border-primary-400 hover:text-primary-600 dark:border-dark-600 dark:text-gray-400 dark:hover:border-primary-500 dark:hover:text-primary-400"
-                @click="addMenuItem"
+                  type="button"
+                  class="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 py-3 text-sm text-gray-500 transition-colors hover:border-primary-400 hover:text-primary-600 dark:border-dark-600 dark:text-gray-400 dark:hover:border-primary-500 dark:hover:text-primary-400"
+                  @click="addMenuItem"
               >
                 <svg
-                  class="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
+                    class="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
                 >
                   <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M12 4v16m8-8H4"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M12 4v16m8-8H4"
                   />
                 </svg>
                 {{ t("admin.settings.customMenu.add") }}
               </button>
             </div>
           </div>
-	        </div>
-	        <!-- /Tab: General -->
+        </div>
+        <!-- /Tab: General -->
 
-	        <!-- Tab: Login Agreement -->
-	        <div v-show="activeTab === 'agreement'" class="space-y-6">
-	          <div class="card">
-	            <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-	              <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-	                <div>
-	                  <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-	                    {{ localText("登录条款确认", "Login agreement") }}
-	                  </h2>
-	                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-	                    {{
-	                      localText(
-	                        "控制登录页是否要求用户先阅读并同意服务条款、隐私政策或其他 Markdown 文档。",
-	                        "Control whether the login page requires users to accept Markdown policy documents first.",
-	                      )
-	                    }}
-	                  </p>
-	                </div>
-	                <div class="flex items-center gap-3">
+        <!-- Tab: Login Agreement -->
+        <div v-show="activeTab === 'agreement'" class="space-y-6">
+          <div class="card">
+            <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+              <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                  <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    {{ localText("登录条款确认", "Login agreement") }}
+                  </h2>
+                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {{
+                      localText(
+                          "控制登录页是否要求用户先阅读并同意服务条款、隐私政策或其他 Markdown 文档。",
+                          "Control whether the login page requires users to accept Markdown policy documents first.",
+                      )
+                    }}
+                  </p>
+                </div>
+                <div class="flex items-center gap-3">
 	                  <span class="text-sm text-gray-600 dark:text-gray-300">
-	                    {{ form.login_agreement_enabled ? localText("已启用", "Enabled") : localText("未启用", "Disabled") }}
+	                    {{
+                        form.loginAgreementEnabled ? localText("已启用", "Enabled") : localText("未启用", "Disabled")
+                      }}
 	                  </span>
-	                  <Toggle v-model="form.login_agreement_enabled" />
-	                </div>
-	              </div>
-	            </div>
+                  <Toggle v-model="form.loginAgreementEnabled"/>
+                </div>
+              </div>
+            </div>
 
-	            <div class="space-y-6 p-6">
-	              <div class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
-	                <div>
-	                  <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-	                    {{ localText("展示形式", "Display mode") }}
-	                  </label>
-	                  <div class="grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1 dark:bg-dark-700">
+            <div class="space-y-6 p-6">
+              <div class="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_220px]">
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ localText("展示形式", "Display mode") }}
+                  </label>
+                  <div class="grid grid-cols-2 gap-2 rounded-lg bg-gray-100 p-1 dark:bg-dark-700">
                     <button
-                      type="button"
-                      class="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition"
-                      :class="
-                        form.login_agreement_mode === 'modal'
+                        type="button"
+                        class="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition"
+                        :class="
+                        form.loginAgreementMode === 'modal'
                           ? 'bg-white text-primary-700 shadow-sm dark:bg-dark-800 dark:text-primary-300'
                           : 'text-gray-600 hover:text-gray-900 dark:text-dark-300 dark:hover:text-white'
                       "
-                      @click="form.login_agreement_mode = 'modal'"
+                        @click="form.loginAgreementMode = 'modal'"
                     >
-                      <Icon name="shield" size="sm" />
+                      <Icon name="shield" size="sm"/>
                       {{ localText("弹窗", "Modal") }}
                     </button>
                     <button
-                      type="button"
-                      class="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition"
-                      :class="
-                        form.login_agreement_mode === 'checkbox'
+                        type="button"
+                        class="inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition"
+                        :class="
+                        form.loginAgreementMode === 'checkbox'
                           ? 'bg-white text-primary-700 shadow-sm dark:bg-dark-800 dark:text-primary-300'
                           : 'text-gray-600 hover:text-gray-900 dark:text-dark-300 dark:hover:text-white'
                       "
-                      @click="form.login_agreement_mode = 'checkbox'"
+                        @click="form.loginAgreementMode = 'checkbox'"
                     >
-                      <Icon name="checkCircle" size="sm" />
+                      <Icon name="checkCircle" size="sm"/>
                       {{ localText("复选框", "Checkbox") }}
                     </button>
                   </div>
                   <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                     {{
-                      form.login_agreement_mode === "checkbox"
-                        ? localText("复选框会显示在登录按钮下方，未勾选前所有登录入口禁用。", "The checkbox appears below the login button and gates all login actions.")
-                        : localText("弹窗会在登录页打开，用户拒绝后所有登录入口保持禁用。", "The modal opens on the login page and gates all login actions until accepted.")
+                      form.loginAgreementMode === "checkbox"
+                          ? localText("复选框会显示在登录按钮下方，未勾选前所有登录入口禁用。", "The checkbox appears below the login button and gates all login actions.")
+                          : localText("弹窗会在登录页打开，用户拒绝后所有登录入口保持禁用。", "The modal opens on the login page and gates all login actions until accepted.")
                     }}
                   </p>
                 </div>
@@ -6264,12 +6362,14 @@
                     {{ localText("条款更新日期", "Updated date") }}
                   </label>
                   <input
-                    v-model="form.login_agreement_updated_at"
-                    type="date"
-                    class="input"
+                      v-model="form.loginAgreementUpdatedAt"
+                      type="date"
+                      class="input"
                   />
                   <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                    {{ localText("日期或文档内容变化后，用户需要重新同意。", "Changing the date or content requires fresh consent.") }}
+                    {{
+                      localText("日期或文档内容变化后，用户需要重新同意。", "Changing the date or content requires fresh consent.")
+                    }}
                   </p>
                 </div>
               </div>
@@ -6283,33 +6383,34 @@
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       {{
                         localText(
-                          "文档名称可自定义，内容按 Markdown 保存。可参考：服务条款、使用政策、支持的国家和地区、服务特定条款。",
-                          "Document titles are customizable and content is saved as Markdown.",
+                            "文档名称可自定义，内容按 Markdown 保存。可参考：服务条款、使用政策、支持的国家和地区、服务特定条款。",
+                            "Document titles are customizable and content is saved as Markdown.",
                         )
                       }}
                     </p>
                   </div>
                   <button
-                    type="button"
-                    class="btn btn-primary btn-sm inline-flex items-center gap-1.5"
-                    @click="addLoginAgreementDocument"
+                      type="button"
+                      class="btn btn-primary btn-sm inline-flex items-center gap-1.5"
+                      @click="addLoginAgreementDocument"
                   >
-                    <Icon name="plus" size="sm" />
+                    <Icon name="plus" size="sm"/>
                     {{ localText("添加文档", "Add document") }}
                   </button>
                 </div>
 
                 <div class="mt-4 space-y-3">
                   <div
-                    v-for="(doc, index) in form.login_agreement_documents"
-                    :key="doc.id || index"
-                    class="rounded-lg border border-gray-200 bg-white p-4 dark:border-dark-700 dark:bg-dark-800/60"
+                      v-for="(doc, index) in form.loginAgreementDocuments"
+                      :key="doc.id || index"
+                      class="rounded-lg border border-gray-200 bg-white p-4 dark:border-dark-700 dark:bg-dark-800/60"
                   >
                     <div class="mb-3 flex items-center justify-between gap-3">
                       <div class="flex min-w-0 items-center gap-3">
-                        <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-700 dark:bg-dark-700 dark:text-dark-200">
+                        <span
+                            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-700 dark:bg-dark-700 dark:text-dark-200">
                           <Icon
-                            :name="
+                              :name="
                               index === 1
                                 ? 'shield'
                                 : index === 2
@@ -6318,7 +6419,7 @@
                                     ? 'cog'
                                     : 'document'
                             "
-                            size="sm"
+                              size="sm"
                           />
                         </span>
                         <div class="min-w-0">
@@ -6331,15 +6432,15 @@
                         </div>
                       </div>
                       <button
-                        type="button"
-                        class="rounded-md p-2 text-red-400 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-red-900/20"
-                        :disabled="
-                          form.login_agreement_enabled &&
-                          form.login_agreement_documents.length <= 1
+                          type="button"
+                          class="rounded-md p-2 text-red-400 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-red-900/20"
+                          :disabled="
+                          form.loginAgreementEnabled &&
+                          form.loginAgreementDocuments.length <= 1
                         "
-                        @click="removeLoginAgreementDocument(index)"
+                          @click="removeLoginAgreementDocument(index)"
                       >
-                        <Icon name="trash" size="sm" />
+                        <Icon name="trash" size="sm"/>
                       </button>
                     </div>
 
@@ -6349,25 +6450,27 @@
                           {{ localText("文档名称", "Document title") }}
                         </label>
                         <input
-                          v-model="doc.title"
-                          type="text"
-                          class="input text-sm"
-                          :placeholder="localText('例如：服务条款', 'Example: Terms of Service')"
+                            v-model="doc.title"
+                            type="text"
+                            class="input text-sm"
+                            :placeholder="localText('例如：服务条款', 'Example: Terms of Service')"
                         />
                       </div>
                       <div>
                         <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
                           {{ localText("路由标识", "Route slug") }}
                         </label>
-                        <div class="flex overflow-hidden rounded-lg border border-gray-300 bg-white focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500 dark:border-dark-600 dark:bg-dark-900">
-                          <span class="inline-flex flex-shrink-0 items-center border-r border-gray-200 bg-gray-50 px-3 text-sm text-gray-500 dark:border-dark-700 dark:bg-dark-800 dark:text-dark-400">
+                        <div
+                            class="flex overflow-hidden rounded-lg border border-gray-300 bg-white focus-within:border-primary-500 focus-within:ring-1 focus-within:ring-primary-500 dark:border-dark-600 dark:bg-dark-900">
+                          <span
+                              class="inline-flex flex-shrink-0 items-center border-r border-gray-200 bg-gray-50 px-3 text-sm text-gray-500 dark:border-dark-700 dark:bg-dark-800 dark:text-dark-400">
                             /legal/
                           </span>
                           <input
-                            v-model="doc.id"
-                            type="text"
-                            class="min-w-0 flex-1 border-0 bg-transparent px-3 py-2 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:ring-0 dark:text-white dark:placeholder:text-dark-500"
-                            placeholder="usage-policy"
+                              v-model="doc.id"
+                              type="text"
+                              class="min-w-0 flex-1 border-0 bg-transparent px-3 py-2 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:ring-0 dark:text-white dark:placeholder:text-dark-500"
+                              placeholder="usage-policy"
                           />
                         </div>
                       </div>
@@ -6376,12 +6479,12 @@
                       <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
                         {{ localText("Markdown 内容", "Markdown content") }}
                       </label>
-                        <textarea
+                      <textarea
                           v-model="doc.contentMd"
                           rows="8"
                           class="input font-mono text-sm"
                           :placeholder="localText('在这里填写正式 Markdown 内容。', 'Write the final Markdown content here.')"
-                        ></textarea>
+                      ></textarea>
                     </div>
                   </div>
                 </div>
@@ -6391,314 +6494,326 @@
         </div>
         <!-- /Tab: Login Agreement -->
 
-	        <!-- Tab: Features (功能开关) -->
+        <!-- Tab: Features (功能开关) -->
         <div v-show="activeTab === 'features'" class="space-y-6">
 
-        <div class="card">
-          <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('admin.settings.features.channelMonitor.title') }}
-            </h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {{ t('admin.settings.features.channelMonitor.description') }}
-            </p>
-            <p class="mt-1.5 text-xs">
-              <router-link
-                to="/admin/channels/monitor"
-                class="inline-flex items-center gap-1 text-primary-600 hover:underline dark:text-primary-400"
-              >
-                {{ t('admin.settings.features.channelMonitor.configureLink') }}
-                <span aria-hidden="true">→</span>
-              </router-link>
-            </p>
-          </div>
-          <div class="space-y-5 p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {{ t('admin.settings.features.channelMonitor.enabled') }}
-                </label>
-                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                  {{ t('admin.settings.features.channelMonitor.enabledHint') }}
-                </p>
-              </div>
-              <Toggle v-model="form.channel_monitor_enabled" />
-            </div>
-
-            <div v-if="form.channel_monitor_enabled">
-              <label class="input-label">
-                {{ t('admin.settings.features.channelMonitor.defaultInterval') }}
-                <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model.number="form.channel_monitor_default_interval_seconds"
-                type="number"
-                min="15"
-                max="3600"
-                class="input"
-              />
-              <p class="mt-1 text-xs text-gray-400">
-                {{ t('admin.settings.features.channelMonitor.defaultIntervalHint') }}
+          <div class="card">
+            <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ t('admin.settings.features.channelMonitor.title') }}
+              </h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {{ t('admin.settings.features.channelMonitor.description') }}
+              </p>
+              <p class="mt-1.5 text-xs">
+                <router-link
+                    to="/admin/channels/monitor"
+                    class="inline-flex items-center gap-1 text-primary-600 hover:underline dark:text-primary-400"
+                >
+                  {{ t('admin.settings.features.channelMonitor.configureLink') }}
+                  <span aria-hidden="true">→</span>
+                </router-link>
               </p>
             </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('admin.settings.features.availableChannels.title') }}
-            </h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {{ t('admin.settings.features.availableChannels.description') }}
-            </p>
-            <p class="mt-1.5 text-xs">
-              <router-link
-                to="/admin/channels/pricing"
-                class="inline-flex items-center gap-1 text-primary-600 hover:underline dark:text-primary-400"
-              >
-                {{ t('admin.settings.features.availableChannels.configureLink') }}
-                <span aria-hidden="true">→</span>
-              </router-link>
-            </p>
-          </div>
-          <div class="space-y-5 p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {{ t('admin.settings.features.availableChannels.enabled') }}
-                </label>
-                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                  {{ t('admin.settings.features.availableChannels.enabledHint') }}
-                </p>
-              </div>
-              <Toggle v-model="form.available_channels_enabled" />
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('admin.settings.features.riskControl.title') }}
-            </h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {{ t('admin.settings.features.riskControl.description') }}
-            </p>
-            <p class="mt-1.5 text-xs">
-              <router-link
-                to="/admin/risk-control"
-                class="inline-flex items-center gap-1 text-primary-600 hover:underline dark:text-primary-400"
-              >
-                {{ t('admin.settings.features.riskControl.configureLink') }}
-                <span aria-hidden="true">→</span>
-              </router-link>
-            </p>
-          </div>
-          <div class="space-y-5 p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {{ t('admin.settings.features.riskControl.enabled') }}
-                </label>
-                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                  {{ t('admin.settings.features.riskControl.enabledHint') }}
-                </p>
-              </div>
-              <Toggle v-model="form.risk_control_enabled" />
-            </div>
-
-            <div class="flex items-center justify-between">
-              <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {{ t('admin.settings.features.riskControl.cyberSessionBlock') }}
-                </label>
-                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                  {{ t('admin.settings.features.riskControl.cyberSessionBlockHint') }}
-                </p>
-              </div>
-              <Toggle v-model="form.cyber_session_block_enabled" />
-            </div>
-
-            <div v-if="form.cyber_session_block_enabled">
-              <label class="input-label">
-                {{ t('admin.settings.features.riskControl.cyberSessionBlockTTL') }}
-                <span class="text-red-500">*</span>
-              </label>
-              <input
-                v-model.number="form.cyber_session_block_ttl_seconds"
-                type="number"
-                min="1"
-                class="input"
-              />
-            </div>
-          </div>
-        </div>
-
-        <!-- Affiliate (邀请返利) feature card -->
-        <div class="card">
-          <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-              {{ t('admin.settings.features.affiliate.title') }}
-            </h2>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {{ t('admin.settings.features.affiliate.description') }}
-            </p>
-          </div>
-          <div class="space-y-5 p-6">
-            <div class="flex items-center justify-between">
-              <div>
-                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {{ t('admin.settings.features.affiliate.enabled') }}
-                </label>
-                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                  {{ t('admin.settings.features.affiliate.enabledHint') }}
-                </p>
-              </div>
-              <Toggle v-model="form.affiliate_enabled" />
-            </div>
-
-            <div v-if="form.affiliate_enabled" class="space-y-6">
+            <div class="space-y-5 p-6">
               <div class="flex items-center justify-between">
                 <div>
                   <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    {{ t('admin.settings.features.affiliate.adminRechargeRebate') }}
+                    {{ t('admin.settings.features.channelMonitor.enabled') }}
                   </label>
                   <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    {{ t('admin.settings.features.affiliate.adminRechargeRebateHint') }}
+                    {{ t('admin.settings.features.channelMonitor.enabledHint') }}
                   </p>
                 </div>
-                <Toggle v-model="form.affiliate_admin_recharge_enabled" />
+                <Toggle v-model="form.channelMonitorEnabled"/>
               </div>
 
-              <div>
+              <div v-if="form.channelMonitorEnabled">
                 <label class="input-label">
-                  {{ t('admin.settings.features.affiliate.rebateRate') }}
+                  {{ t('admin.settings.features.channelMonitor.defaultInterval') }}
+                  <span class="text-red-500">*</span>
                 </label>
-                <div class="relative">
-                  <input
-                    v-model.number="form.affiliate_rebate_rate"
+                <input
+                    v-model.number="form.channelMonitorDefaultIntervalSeconds"
                     type="number"
-                    step="0.01"
-                    min="0"
-                    max="100"
-                    class="input pr-8"
-                    placeholder="20"
-                  />
-                  <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
+                    min="15"
+                    max="3600"
+                    class="input"
+                />
+                <p class="mt-1 text-xs text-gray-400">
+                  {{ t('admin.settings.features.channelMonitor.defaultIntervalHint') }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ t('admin.settings.features.availableChannels.title') }}
+              </h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {{ t('admin.settings.features.availableChannels.description') }}
+              </p>
+              <p class="mt-1.5 text-xs">
+                <router-link
+                    to="/admin/channels/pricing"
+                    class="inline-flex items-center gap-1 text-primary-600 hover:underline dark:text-primary-400"
+                >
+                  {{ t('admin.settings.features.availableChannels.configureLink') }}
+                  <span aria-hidden="true">→</span>
+                </router-link>
+              </p>
+            </div>
+            <div class="space-y-5 p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('admin.settings.features.availableChannels.enabled') }}
+                  </label>
+                  <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.features.availableChannels.enabledHint') }}
+                  </p>
                 </div>
-                <p class="mt-1 text-xs text-gray-400">
-                  {{ t('admin.settings.features.affiliate.rebateRateHint') }}
-                </p>
+                <Toggle v-model="form.availableChannelsEnabled"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ t('admin.settings.features.riskControl.title') }}
+              </h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {{ t('admin.settings.features.riskControl.description') }}
+              </p>
+              <p class="mt-1.5 text-xs">
+                <router-link
+                    to="/admin/risk-control"
+                    class="inline-flex items-center gap-1 text-primary-600 hover:underline dark:text-primary-400"
+                >
+                  {{ t('admin.settings.features.riskControl.configureLink') }}
+                  <span aria-hidden="true">→</span>
+                </router-link>
+              </p>
+            </div>
+            <div class="space-y-5 p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('admin.settings.features.riskControl.enabled') }}
+                  </label>
+                  <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.features.riskControl.enabledHint') }}
+                  </p>
+                </div>
+                <Toggle v-model="form.riskControlEnabled"/>
               </div>
 
-              <div>
+              <div class="flex items-center justify-between">
+                <div>
+                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('admin.settings.features.riskControl.cyberSessionBlock') }}
+                  </label>
+                  <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.features.riskControl.cyberSessionBlockHint') }}
+                  </p>
+                </div>
+                <Toggle v-model="form.cyberSessionBlockEnabled"/>
+              </div>
+
+              <div v-if="form.cyberSessionBlockEnabled">
                 <label class="input-label">
-                  {{ t('admin.settings.features.affiliate.freezeHours') }}
+                  {{ t('admin.settings.features.riskControl.cyberSessionBlockTTL') }}
+                  <span class="text-red-500">*</span>
                 </label>
                 <input
-                  v-model.number="form.affiliate_rebate_freeze_hours"
-                  type="number"
-                  step="1"
-                  min="0"
-                  max="720"
-                  class="input"
+                    v-model.number="form.cyberSessionBlockTtlSeconds"
+                    type="number"
+                    min="1"
+                    class="input"
                 />
-                <p class="mt-1 text-xs text-gray-400">
-                  {{ t('admin.settings.features.affiliate.freezeHoursDesc') }}
-                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Affiliate (邀请返利) feature card -->
+          <div class="card">
+            <div class="border-b border-gray-100 px-6 py-4 dark:border-dark-700">
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ t('admin.settings.features.affiliate.title') }}
+              </h2>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {{ t('admin.settings.features.affiliate.description') }}
+              </p>
+            </div>
+            <div class="space-y-5 p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {{ t('admin.settings.features.affiliate.enabled') }}
+                  </label>
+                  <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t('admin.settings.features.affiliate.enabledHint') }}
+                  </p>
+                </div>
+                <Toggle v-model="form.affiliateEnabled"/>
               </div>
 
-              <div>
-                <label class="input-label">
-                  {{ t('admin.settings.features.affiliate.durationDays') }}
-                </label>
-                <input
-                  v-model.number="form.affiliate_rebate_duration_days"
-                  type="number"
-                  step="1"
-                  min="0"
-                  max="3650"
-                  class="input"
-                />
-                <p class="mt-1 text-xs text-gray-400">
-                  {{ t('admin.settings.features.affiliate.durationDaysDesc') }}
-                </p>
-              </div>
-
-              <div>
-                <label class="input-label">
-                  {{ t('admin.settings.features.affiliate.perInviteeCap') }}
-                </label>
-                <input
-                  v-model.number="form.affiliate_rebate_per_invitee_cap"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  class="input"
-                />
-                <p class="mt-1 text-xs text-gray-400">
-                  {{ t('admin.settings.features.affiliate.perInviteeCapDesc') }}
-                </p>
-              </div>
-
-              <!-- 专属用户管理 -->
-              <div class="border-t border-gray-100 pt-6 dark:border-dark-700">
-                <div class="mb-3 flex items-center justify-between">
+              <div v-if="form.affiliateEnabled" class="space-y-6">
+                <div class="flex items-center justify-between">
                   <div>
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
-                      {{ t('admin.settings.features.affiliate.customUsers.title') }}
-                    </h3>
+                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {{ t('admin.settings.features.affiliate.adminRechargeRebate') }}
+                    </label>
                     <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                      {{ t('admin.settings.features.affiliate.customUsers.description') }}
+                      {{ t('admin.settings.features.affiliate.adminRechargeRebateHint') }}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    class="btn btn-primary btn-sm"
-                    @click="openAffiliateModal(null)"
-                  >
-                    + {{ t('admin.settings.features.affiliate.customUsers.addButton') }}
-                  </button>
+                  <Toggle v-model="form.affiliateAdminRechargeEnabled"/>
                 </div>
 
-                <div class="mb-3 flex items-center gap-2">
+                <div>
+                  <label class="input-label">
+                    {{ t('admin.settings.features.affiliate.rebateRate') }}
+                  </label>
+                  <div class="relative">
+                    <input
+                        v-model.number="form.affiliateRebateRate"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        class="input pr-8"
+                        placeholder="20"
+                    />
+                    <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
+                  </div>
+                  <p class="mt-1 text-xs text-gray-400">
+                    {{ t('admin.settings.features.affiliate.rebateRateHint') }}
+                  </p>
+                </div>
+
+                <div>
+                  <label class="input-label">
+                    {{ t('admin.settings.features.affiliate.freezeHours') }}
+                  </label>
                   <input
-                    v-model="affiliateState.search"
-                    type="text"
-                    class="input flex-1"
-                    :placeholder="t('admin.settings.features.affiliate.customUsers.searchPlaceholder')"
-                    @input="onAffiliateSearchInput"
+                      v-model.number="form.affiliateRebateFreezeHours"
+                      type="number"
+                      step="1"
+                      min="0"
+                      max="720"
+                      class="input"
                   />
-                  <button
-                    v-if="affiliateState.selected.length > 0"
-                    type="button"
-                    class="btn btn-secondary btn-sm"
-                    @click="openAffiliateBatchModal"
-                  >
-                    {{ t('admin.settings.features.affiliate.customUsers.batchButton', { count: affiliateState.selected.length }) }}
-                  </button>
+                  <p class="mt-1 text-xs text-gray-400">
+                    {{ t('admin.settings.features.affiliate.freezeHoursDesc') }}
+                  </p>
                 </div>
 
-                <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-dark-700">
-                  <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
-                    <thead class="bg-gray-50 dark:bg-dark-800">
+                <div>
+                  <label class="input-label">
+                    {{ t('admin.settings.features.affiliate.durationDays') }}
+                  </label>
+                  <input
+                      v-model.number="form.affiliateRebateDurationDays"
+                      type="number"
+                      step="1"
+                      min="0"
+                      max="3650"
+                      class="input"
+                  />
+                  <p class="mt-1 text-xs text-gray-400">
+                    {{ t('admin.settings.features.affiliate.durationDaysDesc') }}
+                  </p>
+                </div>
+
+                <div>
+                  <label class="input-label">
+                    {{ t('admin.settings.features.affiliate.perInviteeCap') }}
+                  </label>
+                  <input
+                      v-model.number="form.affiliateRebatePerInviteeCap"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      class="input"
+                  />
+                  <p class="mt-1 text-xs text-gray-400">
+                    {{ t('admin.settings.features.affiliate.perInviteeCapDesc') }}
+                  </p>
+                </div>
+
+                <!-- 专属用户管理 -->
+                <div class="border-t border-gray-100 pt-6 dark:border-dark-700">
+                  <div class="mb-3 flex items-center justify-between">
+                    <div>
+                      <h3 class="text-sm font-semibold text-gray-900 dark:text-white">
+                        {{ t('admin.settings.features.affiliate.customUsers.title') }}
+                      </h3>
+                      <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        {{ t('admin.settings.features.affiliate.customUsers.description') }}
+                      </p>
+                    </div>
+                    <button
+                        type="button"
+                        class="btn btn-primary btn-sm"
+                        @click="openAffiliateModal(null)"
+                    >
+                      + {{ t('admin.settings.features.affiliate.customUsers.addButton') }}
+                    </button>
+                  </div>
+
+                  <div class="mb-3 flex items-center gap-2">
+                    <input
+                        v-model="affiliateState.search"
+                        type="text"
+                        class="input flex-1"
+                        :placeholder="t('admin.settings.features.affiliate.customUsers.searchPlaceholder')"
+                        @input="onAffiliateSearchInput"
+                    />
+                    <button
+                        v-if="affiliateState.selected.length > 0"
+                        type="button"
+                        class="btn btn-secondary btn-sm"
+                        @click="openAffiliateBatchModal"
+                    >
+                      {{
+                        t('admin.settings.features.affiliate.customUsers.batchButton', {count: affiliateState.selected.length})
+                      }}
+                    </button>
+                  </div>
+
+                  <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-dark-700">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
+                      <thead class="bg-gray-50 dark:bg-dark-800">
                       <tr>
                         <th class="px-3 py-2 text-left">
                           <input
-                            type="checkbox"
-                            :checked="affiliateState.entries.length > 0 && affiliateState.selected.length === affiliateState.entries.length"
-                            @change="toggleAffiliateSelectAll"
+                              type="checkbox"
+                              :checked="affiliateState.entries.length > 0 && affiliateState.selected.length === affiliateState.entries.length"
+                              @change="toggleAffiliateSelectAll"
                           />
                         </th>
-                        <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{{ t('admin.settings.features.affiliate.customUsers.col.email') }}</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{{ t('admin.settings.features.affiliate.customUsers.col.username') }}</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{{ t('admin.settings.features.affiliate.customUsers.col.code') }}</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{{ t('admin.settings.features.affiliate.customUsers.col.rate') }}</th>
-                        <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">{{ t('admin.settings.features.affiliate.customUsers.col.actions') }}</th>
+                        <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                          {{ t('admin.settings.features.affiliate.customUsers.col.email') }}
+                        </th>
+                        <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                          {{ t('admin.settings.features.affiliate.customUsers.col.username') }}
+                        </th>
+                        <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                          {{ t('admin.settings.features.affiliate.customUsers.col.code') }}
+                        </th>
+                        <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                          {{ t('admin.settings.features.affiliate.customUsers.col.rate') }}
+                        </th>
+                        <th class="px-3 py-2 text-left text-xs font-medium uppercase text-gray-500">
+                          {{ t('admin.settings.features.affiliate.customUsers.col.actions') }}
+                        </th>
                       </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white dark:divide-dark-700 dark:bg-dark-900">
+                      </thead>
+                      <tbody class="divide-y divide-gray-200 bg-white dark:divide-dark-700 dark:bg-dark-900">
                       <tr v-if="affiliateState.loading">
                         <td colspan="6" class="px-3 py-6 text-center text-sm text-gray-500">
                           {{ t('common.loading') }}
@@ -6709,243 +6824,253 @@
                           {{ t('admin.settings.features.affiliate.customUsers.empty') }}
                         </td>
                       </tr>
-                      <tr v-for="entry in affiliateState.entries" :key="entry.user_id">
+                      <tr v-for="entry in affiliateState.entries" :key="entry.userId">
                         <td class="px-3 py-2">
                           <input
-                            type="checkbox"
-                            :checked="affiliateState.selected.includes(entry.user_id)"
-                            @change="toggleAffiliateSelect(entry.user_id)"
+                              type="checkbox"
+                              :checked="affiliateState.selected.includes(entry.userId)"
+                              @change="toggleAffiliateSelect(entry.userId)"
                           />
                         </td>
                         <td class="px-3 py-2 text-sm text-gray-900 dark:text-white">{{ entry.email }}</td>
                         <td class="px-3 py-2 text-sm text-gray-600 dark:text-gray-300">{{ entry.username }}</td>
                         <td class="px-3 py-2 text-sm font-mono">
-                          {{ entry.aff_code }}
+                          {{ entry.affCode }}
                           <span
-                            v-if="entry.aff_code_custom"
-                            class="ml-1 inline-block rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
+                              v-if="entry.affCodeCustom"
+                              class="ml-1 inline-block rounded bg-primary-100 px-1.5 py-0.5 text-[10px] font-medium text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
                           >{{ t('admin.settings.features.affiliate.customUsers.customBadge') }}</span>
                         </td>
                         <td class="px-3 py-2 text-sm">
-                          <span v-if="entry.aff_rebate_rate_percent != null">{{ entry.aff_rebate_rate_percent }}%</span>
-                          <span v-else class="text-gray-400">{{ t('admin.settings.features.affiliate.customUsers.useGlobal') }}</span>
+                          <span v-if="entry.affRebateRatePercent != null">{{ entry.affRebateRatePercent }}%</span>
+                          <span v-else class="text-gray-400">{{
+                              t('admin.settings.features.affiliate.customUsers.useGlobal')
+                            }}</span>
                         </td>
                         <td class="px-3 py-2 text-sm">
                           <div class="flex items-center gap-2">
-                            <button type="button" class="text-primary-600 hover:underline" @click="openAffiliateModal(entry)">
+                            <button type="button" class="text-primary-600 hover:underline"
+                                    @click="openAffiliateModal(entry)">
                               {{ t('common.edit') }}
                             </button>
                             <button
-                              type="button"
-                              class="text-red-600 hover:underline"
-                              @click="askResetAffiliateUser(entry)"
+                                type="button"
+                                class="text-red-600 hover:underline"
+                                @click="askResetAffiliateUser(entry)"
                             >
                               {{ t('common.delete') }}
                             </button>
                           </div>
                         </td>
                       </tr>
-                    </tbody>
-                  </table>
-                </div>
+                      </tbody>
+                    </table>
+                  </div>
 
-                <div v-if="affiliateState.total > affiliateState.pageSize" class="mt-3 flex items-center justify-between text-sm">
+                  <div v-if="affiliateState.total > affiliateState.pageSize"
+                       class="mt-3 flex items-center justify-between text-sm">
                   <span class="text-gray-500">
-                    {{ t('admin.settings.features.affiliate.customUsers.totalLabel', { total: affiliateState.total }) }}
+                    {{ t('admin.settings.features.affiliate.customUsers.totalLabel', {total: affiliateState.total}) }}
                   </span>
-                  <div class="flex items-center gap-2">
-                    <button
-                      type="button"
-                      class="btn btn-secondary btn-sm"
-                      :disabled="affiliateState.page <= 1"
-                      @click="changeAffiliatePage(affiliateState.page - 1)"
-                    >
-                      {{ t('pagination.previous') }}
-                    </button>
-                    <span class="text-gray-500">{{ affiliateState.page }} / {{ Math.max(1, Math.ceil(affiliateState.total / affiliateState.pageSize)) }}</span>
-                    <button
-                      type="button"
-                      class="btn btn-secondary btn-sm"
-                      :disabled="affiliateState.page >= Math.ceil(affiliateState.total / affiliateState.pageSize)"
-                      @click="changeAffiliatePage(affiliateState.page + 1)"
-                    >
-                      {{ t('pagination.next') }}
-                    </button>
+                    <div class="flex items-center gap-2">
+                      <button
+                          type="button"
+                          class="btn btn-secondary btn-sm"
+                          :disabled="affiliateState.page <= 1"
+                          @click="changeAffiliatePage(affiliateState.page - 1)"
+                      >
+                        {{ t('pagination.previous') }}
+                      </button>
+                      <span class="text-gray-500">{{
+                          affiliateState.page
+                        }} / {{ Math.max(1, Math.ceil(affiliateState.total / affiliateState.pageSize)) }}</span>
+                      <button
+                          type="button"
+                          class="btn btn-secondary btn-sm"
+                          :disabled="affiliateState.page >= Math.ceil(affiliateState.total / affiliateState.pageSize)"
+                          @click="changeAffiliatePage(affiliateState.page + 1)"
+                      >
+                        {{ t('pagination.next') }}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Affiliate add/edit modal -->
-        <div
-          v-if="affiliateModal.open"
-          class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          @click.self="closeAffiliateModal"
-        >
-          <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-dark-900">
-            <h3 class="mb-4 text-lg font-semibold">
-              {{ affiliateModal.mode === 'add' ? t('admin.settings.features.affiliate.modal.addTitle') : t('admin.settings.features.affiliate.modal.editTitle') }}
-            </h3>
-            <div class="space-y-4">
-              <div v-if="affiliateModal.mode === 'add'">
-                <label class="input-label">{{ t('admin.settings.features.affiliate.modal.userLabel') }}</label>
-                <!-- Chip showing the picked user; clicking it re-opens the search -->
-                <div
-                  v-if="affiliateModal.selectedUser"
-                  class="flex items-center justify-between rounded-md border border-primary-200 bg-primary-50 px-3 py-2 dark:border-primary-700/50 dark:bg-primary-900/20"
-                >
-                  <div class="text-sm">
-                    <span class="font-medium text-gray-900 dark:text-white">{{ affiliateModal.selectedUser.email }}</span>
-                    <span class="ml-1 text-xs text-gray-500">({{ affiliateModal.selectedUser.username }})</span>
-                  </div>
-                  <button
-                    type="button"
-                    class="text-lg leading-none text-gray-400 hover:text-red-600"
-                    :title="t('admin.settings.features.affiliate.modal.changeUser')"
-                    @click="clearSelectedAffiliateUser"
-                  >
-                    ×
-                  </button>
-                </div>
-                <!-- Search input + result dropdown — hidden once a selection is made -->
-                <template v-else>
-                  <input
-                    v-model="affiliateModal.userQuery"
-                    type="text"
-                    class="input"
-                    :placeholder="t('admin.settings.features.affiliate.modal.userPlaceholder')"
-                    @input="onAffiliateUserSearchInput"
-                  />
+          <!-- Affiliate add/edit modal -->
+          <div
+              v-if="affiliateModal.open"
+              class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+              @click.self="closeAffiliateModal"
+          >
+            <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-dark-900">
+              <h3 class="mb-4 text-lg font-semibold">
+                {{
+                  affiliateModal.mode === 'add' ? t('admin.settings.features.affiliate.modal.addTitle') : t('admin.settings.features.affiliate.modal.editTitle')
+                }}
+              </h3>
+              <div class="space-y-4">
+                <div v-if="affiliateModal.mode === 'add'">
+                  <label class="input-label">{{ t('admin.settings.features.affiliate.modal.userLabel') }}</label>
+                  <!-- Chip showing the picked user; clicking it re-opens the search -->
                   <div
-                    v-if="affiliateModal.userResults.length > 0"
-                    class="mt-1 max-h-40 overflow-y-auto rounded border border-gray-200 dark:border-dark-700"
+                      v-if="affiliateModal.selectedUser"
+                      class="flex items-center justify-between rounded-md border border-primary-200 bg-primary-50 px-3 py-2 dark:border-primary-700/50 dark:bg-primary-900/20"
                   >
+                    <div class="text-sm">
+                      <span class="font-medium text-gray-900 dark:text-white">{{
+                          affiliateModal.selectedUser.email
+                        }}</span>
+                      <span class="ml-1 text-xs text-gray-500">({{ affiliateModal.selectedUser.username }})</span>
+                    </div>
                     <button
-                      v-for="u in affiliateModal.userResults"
-                      :key="u.id"
-                      type="button"
-                      class="w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-dark-800"
-                      @click="selectAffiliateUser(u)"
+                        type="button"
+                        class="text-lg leading-none text-gray-400 hover:text-red-600"
+                        :title="t('admin.settings.features.affiliate.modal.changeUser')"
+                        @click="clearSelectedAffiliateUser"
                     >
-                      {{ u.email }} <span class="text-xs text-gray-500">({{ u.username }})</span>
+                      ×
                     </button>
                   </div>
-                </template>
-              </div>
-              <div v-else>
-                <label class="input-label">{{ t('admin.settings.features.affiliate.modal.userLabel') }}</label>
-                <input
-                  type="text"
-                  class="input"
-                  :value="affiliateModal.editingEntry ? affiliateModal.editingEntry.email : ''"
-                  disabled
-                />
-              </div>
-
-              <div>
-                <label class="input-label">{{ t('admin.settings.features.affiliate.modal.codeLabel') }}</label>
-                <input
-                  v-model="affiliateModal.code"
-                  type="text"
-                  class="input font-mono"
-                  :placeholder="t('admin.settings.features.affiliate.modal.codePlaceholder')"
-                  maxlength="32"
-                />
-                <p class="mt-1 text-xs text-gray-400">
-                  {{ t('admin.settings.features.affiliate.modal.codeHint') }}
-                </p>
-              </div>
-
-              <div>
-                <label class="input-label">{{ t('admin.settings.features.affiliate.modal.rateLabel') }}</label>
-                <div class="relative">
+                  <!-- Search input + result dropdown — hidden once a selection is made -->
+                  <template v-else>
+                    <input
+                        v-model="affiliateModal.userQuery"
+                        type="text"
+                        class="input"
+                        :placeholder="t('admin.settings.features.affiliate.modal.userPlaceholder')"
+                        @input="onAffiliateUserSearchInput"
+                    />
+                    <div
+                        v-if="affiliateModal.userResults.length > 0"
+                        class="mt-1 max-h-40 overflow-y-auto rounded border border-gray-200 dark:border-dark-700"
+                    >
+                      <button
+                          v-for="u in affiliateModal.userResults"
+                          :key="u.id"
+                          type="button"
+                          class="w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-dark-800"
+                          @click="selectAffiliateUser(u)"
+                      >
+                        {{ u.email }} <span class="text-xs text-gray-500">({{ u.username }})</span>
+                      </button>
+                    </div>
+                  </template>
+                </div>
+                <div v-else>
+                  <label class="input-label">{{ t('admin.settings.features.affiliate.modal.userLabel') }}</label>
                   <input
-                    v-model="affiliateModal.rate"
+                      type="text"
+                      class="input"
+                      :value="affiliateModal.editingEntry ? affiliateModal.editingEntry.email : ''"
+                      disabled
+                  />
+                </div>
+
+                <div>
+                  <label class="input-label">{{ t('admin.settings.features.affiliate.modal.codeLabel') }}</label>
+                  <input
+                      v-model="affiliateModal.code"
+                      type="text"
+                      class="input font-mono"
+                      :placeholder="t('admin.settings.features.affiliate.modal.codePlaceholder')"
+                      maxlength="32"
+                  />
+                  <p class="mt-1 text-xs text-gray-400">
+                    {{ t('admin.settings.features.affiliate.modal.codeHint') }}
+                  </p>
+                </div>
+
+                <div>
+                  <label class="input-label">{{ t('admin.settings.features.affiliate.modal.rateLabel') }}</label>
+                  <div class="relative">
+                    <input
+                        v-model="affiliateModal.rate"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="100"
+                        class="input pr-8"
+                        :placeholder="t('admin.settings.features.affiliate.modal.ratePlaceholder')"
+                    />
+                    <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
+                  </div>
+                  <p class="mt-1 text-xs text-gray-400">
+                    {{ t('admin.settings.features.affiliate.modal.rateHint') }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="mt-6 flex items-center justify-between gap-3">
+                <p
+                    v-if="!affiliateModalCanSubmit"
+                    class="text-xs text-gray-500 dark:text-gray-400"
+                >
+                  {{ t('admin.settings.features.affiliate.modal.errorEmpty') }}
+                </p>
+                <span v-else></span>
+                <div class="flex gap-2">
+                  <button type="button" class="btn btn-secondary" @click="closeAffiliateModal">
+                    {{ t('common.cancel') }}
+                  </button>
+                  <button
+                      type="button"
+                      class="btn btn-primary"
+                      :disabled="affiliateModal.saving || !affiliateModalCanSubmit"
+                      @click="submitAffiliateModal"
+                  >
+                    {{ affiliateModal.saving ? t('common.saving') : t('common.save') }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Affiliate batch rate modal -->
+          <div
+              v-if="affiliateBatchModal.open"
+              class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+              @click.self="affiliateBatchModal.open = false"
+          >
+            <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-dark-900">
+              <h3 class="mb-4 text-lg font-semibold">
+                {{ t('admin.settings.features.affiliate.batchModal.title', {count: affiliateState.selected.length}) }}
+              </h3>
+              <p class="mb-4 text-sm text-gray-500">
+                {{ t('admin.settings.features.affiliate.batchModal.hint') }}
+              </p>
+              <div class="relative">
+                <input
+                    v-model="affiliateBatchModal.rate"
                     type="number"
                     step="0.01"
                     min="0"
                     max="100"
                     class="input pr-8"
-                    :placeholder="t('admin.settings.features.affiliate.modal.ratePlaceholder')"
-                  />
-                  <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
-                </div>
-                <p class="mt-1 text-xs text-gray-400">
-                  {{ t('admin.settings.features.affiliate.modal.rateHint') }}
-                </p>
+                    :placeholder="t('admin.settings.features.affiliate.batchModal.placeholder')"
+                />
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
               </div>
-            </div>
-
-            <div class="mt-6 flex items-center justify-between gap-3">
-              <p
-                v-if="!affiliateModalCanSubmit"
-                class="text-xs text-gray-500 dark:text-gray-400"
-              >
-                {{ t('admin.settings.features.affiliate.modal.errorEmpty') }}
+              <p class="mt-2 text-xs text-gray-400">
+                {{ t('admin.settings.features.affiliate.batchModal.clearHint') }}
               </p>
-              <span v-else></span>
-              <div class="flex gap-2">
-                <button type="button" class="btn btn-secondary" @click="closeAffiliateModal">
+              <div class="mt-6 flex justify-end gap-2">
+                <button type="button" class="btn btn-secondary" @click="affiliateBatchModal.open = false">
                   {{ t('common.cancel') }}
                 </button>
                 <button
-                  type="button"
-                  class="btn btn-primary"
-                  :disabled="affiliateModal.saving || !affiliateModalCanSubmit"
-                  @click="submitAffiliateModal"
+                    type="button"
+                    class="btn btn-primary"
+                    :disabled="affiliateBatchModal.saving"
+                    @click="submitAffiliateBatchModal"
                 >
-                  {{ affiliateModal.saving ? t('common.saving') : t('common.save') }}
+                  {{ affiliateBatchModal.saving ? t('common.saving') : t('common.save') }}
                 </button>
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- Affiliate batch rate modal -->
-        <div
-          v-if="affiliateBatchModal.open"
-          class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          @click.self="affiliateBatchModal.open = false"
-        >
-          <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-dark-900">
-            <h3 class="mb-4 text-lg font-semibold">
-              {{ t('admin.settings.features.affiliate.batchModal.title', { count: affiliateState.selected.length }) }}
-            </h3>
-            <p class="mb-4 text-sm text-gray-500">
-              {{ t('admin.settings.features.affiliate.batchModal.hint') }}
-            </p>
-            <div class="relative">
-              <input
-                v-model="affiliateBatchModal.rate"
-                type="number"
-                step="0.01"
-                min="0"
-                max="100"
-                class="input pr-8"
-                :placeholder="t('admin.settings.features.affiliate.batchModal.placeholder')"
-              />
-              <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
-            </div>
-            <p class="mt-2 text-xs text-gray-400">
-              {{ t('admin.settings.features.affiliate.batchModal.clearHint') }}
-            </p>
-            <div class="mt-6 flex justify-end gap-2">
-              <button type="button" class="btn btn-secondary" @click="affiliateBatchModal.open = false">
-                {{ t('common.cancel') }}
-              </button>
-              <button
-                type="button"
-                class="btn btn-primary"
-                :disabled="affiliateBatchModal.saving"
-                @click="submitAffiliateBatchModal"
-              >
-                {{ affiliateBatchModal.saving ? t('common.saving') : t('common.save') }}
-              </button>
-            </div>
-          </div>
-        </div>
 
         </div><!-- /Tab: Features -->
 
@@ -6955,7 +7080,7 @@
           <!-- Payment System Settings -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.payment.title") }}
@@ -6963,22 +7088,22 @@
               <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 {{ t("admin.settings.payment.description") }}
                 <a
-                  :href="paymentGuideHref"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="ml-2 inline-flex items-center text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                    :href="paymentGuideHref"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="ml-2 inline-flex items-center text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                 >
                   <svg
-                    class="mr-0.5 h-3.5 w-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                      class="mr-0.5 h-3.5 w-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                   >
                     <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                     />
                   </svg>
                   {{ t("admin.settings.payment.configGuide") }}
@@ -6990,50 +7115,50 @@
               <div class="flex items-center justify-between">
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.payment.enabled")
-                  }}</label>
+                      t("admin.settings.payment.enabled")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.payment.enabledHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.payment_enabled" />
+                <Toggle v-model="form.paymentEnabled"/>
               </div>
-              <template v-if="form.payment_enabled">
+              <template v-if="form.paymentEnabled">
                 <!-- Row 1: Product name -->
                 <div class="grid grid-cols-3 gap-3">
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.productNamePrefix")
-                    }}</label
+                        t("admin.settings.payment.productNamePrefix")
+                      }}</label
                     ><input
-                      v-model="form.payment_product_name_prefix"
+                      v-model="form.paymentProductNamePrefix"
                       type="text"
                       class="input"
                       placeholder="Sub2API"
-                    />
+                  />
                   </div>
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.productNameSuffix")
-                    }}</label
+                        t("admin.settings.payment.productNameSuffix")
+                      }}</label
                     ><input
-                      v-model="form.payment_product_name_suffix"
+                      v-model="form.paymentProductNameSuffix"
                       type="text"
                       class="input"
                       placeholder="CNY"
-                    />
+                  />
                   </div>
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.preview")
-                    }}</label>
+                        t("admin.settings.payment.preview")
+                      }}</label>
                     <div
-                      class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-dark-600 dark:bg-dark-800 dark:text-gray-300"
+                        class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-dark-600 dark:bg-dark-800 dark:text-gray-300"
                     >
                       {{
-                        (form.payment_product_name_prefix || "Sub2API") +
+                        (form.paymentProductNamePrefix || "Sub2API") +
                         " 100 " +
-                        (form.payment_product_name_suffix || "CNY")
+                        (form.paymentProductNameSuffix || "CNY")
                       }}
                     </div>
                   </div>
@@ -7042,12 +7167,12 @@
                 <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.minAmount")
-                    }}</label
+                        t("admin.settings.payment.minAmount")
+                      }}</label
                     ><input
-                      :value="form.payment_min_amount || ''"
+                      :value="form.paymentMinAmount || ''"
                       @input="
-                        form.payment_min_amount =
+                        form.paymentMinAmount =
                           parseFloat(
                             ($event.target as HTMLInputElement).value,
                           ) || 0
@@ -7057,16 +7182,16 @@
                       min="0"
                       class="input"
                       :placeholder="t('admin.settings.payment.noLimit')"
-                    />
+                  />
                   </div>
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.maxAmount")
-                    }}</label
+                        t("admin.settings.payment.maxAmount")
+                      }}</label
                     ><input
-                      :value="form.payment_max_amount || ''"
+                      :value="form.paymentMaxAmount || ''"
                       @input="
-                        form.payment_max_amount =
+                        form.paymentMaxAmount =
                           parseFloat(
                             ($event.target as HTMLInputElement).value,
                           ) || 0
@@ -7076,16 +7201,16 @@
                       min="0"
                       class="input"
                       :placeholder="t('admin.settings.payment.noLimit')"
-                    />
+                  />
                   </div>
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.dailyLimit")
-                    }}</label
+                        t("admin.settings.payment.dailyLimit")
+                      }}</label
                     ><input
-                      :value="form.payment_daily_limit || ''"
+                      :value="form.paymentDailyLimit || ''"
                       @input="
-                        form.payment_daily_limit =
+                        form.paymentDailyLimit =
                           parseFloat(
                             ($event.target as HTMLInputElement).value,
                           ) || 0
@@ -7095,40 +7220,40 @@
                       min="0"
                       class="input"
                       :placeholder="t('admin.settings.payment.noLimit')"
-                    />
+                  />
                   </div>
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.balanceRechargeMultiplier")
-                    }}</label>
+                        t("admin.settings.payment.balanceRechargeMultiplier")
+                      }}</label>
                     <input
-                      :value="form.payment_balance_recharge_multiplier || ''"
-                      @input="
-                        form.payment_balance_recharge_multiplier =
+                        :value="form.paymentBalanceRechargeMultiplier || ''"
+                        @input="
+                        form.paymentBalanceRechargeMultiplier =
                           parseFloat(
                             ($event.target as HTMLInputElement).value,
                           ) || 1
                       "
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      class="input"
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        class="input"
                     />
                     <p class="mt-0.5 text-xs text-gray-400">
                       {{
                         t(
-                          "admin.settings.payment.balanceRechargeMultiplierHint",
+                            "admin.settings.payment.balanceRechargeMultiplierHint",
                         )
                       }}
                     </p>
                     <p
-                      class="mt-1 text-xs font-medium text-primary-600 dark:text-primary-400"
+                        class="mt-1 text-xs font-medium text-primary-600 dark:text-primary-400"
                     >
                       {{
                         t("admin.settings.payment.balanceRechargePreview", {
                           usd: (
-                            Number(form.payment_balance_recharge_multiplier) ||
-                            1
+                              Number(form.paymentBalanceRechargeMultiplier) ||
+                              1
                           ).toFixed(2),
                         })
                       }}
@@ -7136,21 +7261,21 @@
                   </div>
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.subscriptionUsdToCnyRate")
-                    }}</label>
+                        t("admin.settings.payment.subscriptionUsdToCnyRate")
+                      }}</label>
                     <input
-                      :value="form.payment_subscription_usd_to_cny_rate || ''"
-                      @input="
-                        form.payment_subscription_usd_to_cny_rate =
+                        :value="form.paymentSubscriptionUsdToCnyRate || ''"
+                        @input="
+                        form.paymentSubscriptionUsdToCnyRate =
                           parseFloat(
                             ($event.target as HTMLInputElement).value,
                           ) || 0
                       "
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      class="input"
-                      :placeholder="
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        class="input"
+                        :placeholder="
                         t(
                           'admin.settings.payment.subscriptionUsdToCnyRateDisabled',
                         )
@@ -7164,13 +7289,13 @@
                   </div>
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.rechargeFeeRate")
-                    }}</label>
+                        t("admin.settings.payment.rechargeFeeRate")
+                      }}</label>
                     <div class="relative">
                       <input
-                        :value="form.payment_recharge_fee_rate ?? ''"
-                        @input="
-                          form.payment_recharge_fee_rate = Math.min(
+                          :value="form.paymentRechargeFeeRate ?? ''"
+                          @input="
+                          form.paymentRechargeFeeRate = Math.min(
                             100,
                             Math.max(
                               0,
@@ -7183,28 +7308,28 @@
                             ),
                           )
                         "
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="100"
-                        class="input pr-8"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          class="input pr-8"
                       />
                       <span
-                        class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400"
-                        >%</span
+                          class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400"
+                      >%</span
                       >
                     </div>
                     <p class="mt-0.5 text-xs text-gray-400">
                       {{ t("admin.settings.payment.rechargeFeeRateHint") }}
                     </p>
                     <p
-                      v-if="(Number(form.payment_recharge_fee_rate) || 0) > 0"
-                      class="mt-1 text-xs font-medium text-primary-600 dark:text-primary-400"
+                        v-if="(Number(form.paymentRechargeFeeRate) || 0) > 0"
+                        class="mt-1 text-xs font-medium text-primary-600 dark:text-primary-400"
                     >
                       {{
                         t("admin.settings.payment.rechargeFeePreview", {
                           fee: (
-                            Number(form.payment_recharge_fee_rate) || 0
+                              Number(form.paymentRechargeFeeRate) || 0
                           ).toFixed(2),
                         })
                       }}
@@ -7212,15 +7337,15 @@
                   </div>
                   <div>
                     <label class="input-label"
-                      >{{ t("admin.settings.payment.orderTimeout") }}
+                    >{{ t("admin.settings.payment.orderTimeout") }}
                       <span class="text-red-500">*</span></label
                     ><input
-                      v-model.number="form.payment_order_timeout_minutes"
+                      v-model.number="form.paymentOrderTimeoutMinutes"
                       type="number"
                       min="1"
                       class="input"
                       required
-                    />
+                  />
                     <p class="mt-0.5 text-xs text-gray-400">
                       {{ t("admin.settings.payment.orderTimeoutHint") }}
                     </p>
@@ -7230,110 +7355,110 @@
                 <div class="flex flex-wrap items-end gap-4">
                   <div class="w-28">
                     <label class="input-label">{{
-                      t("admin.settings.payment.maxPendingOrders")
-                    }}</label
+                        t("admin.settings.payment.maxPendingOrders")
+                      }}</label
                     ><input
-                      v-model.number="form.payment_max_pending_orders"
+                      v-model.number="form.paymentMaxPendingOrders"
                       type="number"
                       min="1"
                       class="input"
-                    />
+                  />
                   </div>
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.loadBalanceStrategy")
-                    }}</label>
+                        t("admin.settings.payment.loadBalanceStrategy")
+                      }}</label>
                     <Select
-                      v-model="form.payment_load_balance_strategy"
-                      :options="loadBalanceOptions"
-                      class="w-40"
+                        v-model="form.paymentLoadBalanceStrategy"
+                        :options="loadBalanceOptions"
+                        class="w-40"
                     />
                   </div>
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.cancelRateLimit")
-                    }}</label>
+                        t("admin.settings.payment.cancelRateLimit")
+                      }}</label>
                     <div class="flex items-center gap-2">
                       <button
-                        type="button"
-                        :class="[
+                          type="button"
+                          :class="[
                           'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                          form.payment_cancel_rate_limit_enabled
+                          form.paymentCancelRateLimitEnabled
                             ? 'bg-primary-500'
                             : 'bg-gray-300 dark:bg-dark-600',
                         ]"
-                        @click="
-                          form.payment_cancel_rate_limit_enabled =
-                            !form.payment_cancel_rate_limit_enabled
+                          @click="
+                          form.paymentCancelRateLimitEnabled =
+                            !form.paymentCancelRateLimitEnabled
                         "
                       >
                         <span
-                          :class="[
+                            :class="[
                             'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                            form.payment_cancel_rate_limit_enabled
+                            form.paymentCancelRateLimitEnabled
                               ? 'translate-x-5'
                               : 'translate-x-0',
                           ]"
                         />
                       </button>
                       <Select
-                        v-model="form.payment_cancel_rate_limit_window_mode"
-                        :options="cancelRateLimitModeOptions"
-                        class="w-24"
-                        :disabled="!form.payment_cancel_rate_limit_enabled"
+                          v-model="form.paymentCancelRateLimitWindowMode"
+                          :options="cancelRateLimitModeOptions"
+                          class="w-24"
+                          :disabled="!form.paymentCancelRateLimitEnabled"
                       />
                       <span
-                        :class="[
+                          :class="[
                           'text-sm whitespace-nowrap',
-                          form.payment_cancel_rate_limit_enabled
+                          form.paymentCancelRateLimitEnabled
                             ? 'text-gray-700 dark:text-gray-300'
                             : 'text-gray-400 dark:text-gray-600',
                         ]"
-                        >{{
+                      >{{
                           t("admin.settings.payment.cancelRateLimitEvery")
                         }}</span
                       >
                       <input
-                        v-model.number="form.payment_cancel_rate_limit_window"
-                        type="number"
-                        min="1"
-                        required
-                        class="input w-14 text-center"
-                        :disabled="!form.payment_cancel_rate_limit_enabled"
+                          v-model.number="form.paymentCancelRateLimitWindow"
+                          type="number"
+                          min="1"
+                          required
+                          class="input w-14 text-center"
+                          :disabled="!form.paymentCancelRateLimitEnabled"
                       />
                       <Select
-                        v-model="form.payment_cancel_rate_limit_unit"
-                        :options="cancelRateLimitUnitOptions"
-                        class="w-28"
-                        :disabled="!form.payment_cancel_rate_limit_enabled"
+                          v-model="form.paymentCancelRateLimitUnit"
+                          :options="cancelRateLimitUnitOptions"
+                          class="w-28"
+                          :disabled="!form.paymentCancelRateLimitEnabled"
                       />
                       <span
-                        :class="[
+                          :class="[
                           'text-sm whitespace-nowrap',
-                          form.payment_cancel_rate_limit_enabled
+                          form.paymentCancelRateLimitEnabled
                             ? 'text-gray-700 dark:text-gray-300'
                             : 'text-gray-400 dark:text-gray-600',
                         ]"
-                        >{{
+                      >{{
                           t("admin.settings.payment.cancelRateLimitAllowMax")
                         }}</span
                       >
                       <input
-                        v-model.number="form.payment_cancel_rate_limit_max"
-                        type="number"
-                        min="1"
-                        required
-                        class="input w-14 text-center"
-                        :disabled="!form.payment_cancel_rate_limit_enabled"
+                          v-model.number="form.paymentCancelRateLimitMax"
+                          type="number"
+                          min="1"
+                          required
+                          class="input w-14 text-center"
+                          :disabled="!form.paymentCancelRateLimitEnabled"
                       />
                       <span
-                        :class="[
+                          :class="[
                           'text-sm whitespace-nowrap',
-                          form.payment_cancel_rate_limit_enabled
+                          form.paymentCancelRateLimitEnabled
                             ? 'text-gray-700 dark:text-gray-300'
                             : 'text-gray-400 dark:text-gray-600',
                         ]"
-                        >{{
+                      >{{
                           t("admin.settings.payment.cancelRateLimitTimes")
                         }}</span
                       >
@@ -7341,49 +7466,49 @@
                   </div>
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.alipayForceQRCode")
-                    }}</label>
+                        t("admin.settings.payment.alipayForceQRCode")
+                      }}</label>
                     <div class="flex items-center gap-2">
                       <button
-                        type="button"
-                        :class="[
+                          type="button"
+                          :class="[
                           'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                          form.payment_alipay_force_qrcode
+                          form.paymentAlipayForceQrcode
                             ? 'bg-primary-500'
                             : 'bg-gray-300 dark:bg-dark-600',
                         ]"
-                        @click="
-                          form.payment_alipay_force_qrcode =
-                            !form.payment_alipay_force_qrcode
+                          @click="
+                          form.paymentAlipayForceQrcode =
+                            !form.paymentAlipayForceQrcode
                         "
                       >
                         <span
-                          :class="[
+                            :class="[
                             'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                            form.payment_alipay_force_qrcode
+                            form.paymentAlipayForceQrcode
                               ? 'translate-x-5'
                               : 'translate-x-0',
                           ]"
                         />
                       </button>
                       <span class="text-sm text-gray-500 dark:text-gray-400">{{
-                        t("admin.settings.payment.alipayForceQRCodeHint")
-                      }}</span>
+                          t("admin.settings.payment.alipayForceQRCodeHint")
+                        }}</span>
                     </div>
                   </div>
                 </div>
                 <!-- Row 4: Enabled payment types (provider badges like sub2apipay) -->
                 <div>
                   <label class="input-label">{{
-                    t("admin.settings.payment.enabledPaymentTypes")
-                  }}</label>
+                      t("admin.settings.payment.enabledPaymentTypes")
+                    }}</label>
                   <div class="mt-1.5 flex flex-wrap gap-2">
                     <button
-                      v-for="pt in allPaymentTypes"
-                      :key="pt.value"
-                      type="button"
-                      @click="togglePaymentType(pt.value)"
-                      :class="[
+                        v-for="pt in allPaymentTypes"
+                        :key="pt.value"
+                        type="button"
+                        @click="togglePaymentType(pt.value)"
+                        :class="[
                         'rounded-lg border px-3 py-1.5 text-sm font-medium transition-all',
                         isPaymentTypeEnabled(pt.value)
                           ? 'border-primary-500 bg-primary-500 text-white shadow-sm'
@@ -7396,23 +7521,23 @@
                   <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">
                     {{ t("admin.settings.payment.enabledPaymentTypesHint") }}
                     <a
-                      :href="paymentMethodsHref"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="ml-1 text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300"
+                        :href="paymentMethodsHref"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="ml-1 text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300"
                     >
                       {{ t("admin.settings.payment.findProvider") }}
                       <svg
-                        class="mb-0.5 ml-0.5 inline h-3 w-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                          class="mb-0.5 ml-0.5 inline h-3 w-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
                       >
                         <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                         />
                       </svg>
                     </a>
@@ -7422,26 +7547,26 @@
                 <div class="grid grid-cols-2 gap-3">
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.helpImage")
-                    }}</label>
+                        t("admin.settings.payment.helpImage")
+                      }}</label>
                     <ImageUpload
-                      v-model="form.payment_help_image_url"
-                      :upload-label="t('admin.settings.site.uploadImage')"
-                      :remove-label="t('admin.settings.site.remove')"
-                      :placeholder="
+                        v-model="form.paymentHelpImageUrl"
+                        :upload-label="t('admin.settings.site.uploadImage')"
+                        :remove-label="t('admin.settings.site.remove')"
+                        :placeholder="
                         t('admin.settings.payment.helpImagePlaceholder')
                       "
                     />
                   </div>
                   <div>
                     <label class="input-label">{{
-                      t("admin.settings.payment.helpText")
-                    }}</label>
+                        t("admin.settings.payment.helpText")
+                      }}</label>
                     <textarea
-                      v-model="form.payment_help_text"
-                      rows="3"
-                      class="input"
-                      :placeholder="
+                        v-model="form.paymentHelpText"
+                        rows="3"
+                        class="input"
+                        :placeholder="
                         t('admin.settings.payment.helpTextPlaceholder')
                       "
                     ></textarea>
@@ -7453,32 +7578,32 @@
 
           <!-- Provider Management -->
           <PaymentProviderList
-            v-if="form.payment_enabled"
-            :providers="providers"
-            :loading="providersLoading"
-            :can-create="hasAnyPaymentTypeEnabled"
-            :enabled-payment-types="form.payment_enabled_types"
-            :all-payment-types="allPaymentTypes"
-            :redirect-label="t('admin.settings.payment.easypayRedirect')"
-            @refresh="loadProviders"
-            @create="openCreateProvider"
-            @edit="openEditProvider"
-            @delete="confirmDeleteProvider"
-            @toggle-field="handleToggleField"
-            @toggle-type="handleToggleType"
-            @reorder="handleReorderProviders"
+              v-if="form.paymentEnabled"
+              :providers="providers"
+              :loading="providersLoading"
+              :can-create="hasAnyPaymentTypeEnabled"
+              :enabled-payment-types="form.paymentEnabledTypes"
+              :all-payment-types="allPaymentTypes"
+              :redirect-label="t('admin.settings.payment.easypayRedirect')"
+              @refresh="loadProviders"
+              @create="openCreateProvider"
+              @edit="openEditProvider"
+              @delete="confirmDeleteProvider"
+              @toggle-field="handleToggleField"
+              @toggle-type="handleToggleType"
+              @reorder="handleReorderProviders"
           />
         </div>
 
         <div v-show="activeTab === 'email'" class="space-y-6">
           <!-- Email disabled hint - show when email_verify_enabled is off -->
-          <div v-if="!form.email_verify_enabled" class="card">
+          <div v-if="!form.emailVerifyEnabled" class="card">
             <div class="p-6">
               <div class="flex items-start gap-3">
                 <Icon
-                  name="mail"
-                  size="md"
-                  class="mt-0.5 flex-shrink-0 text-gray-400 dark:text-gray-500"
+                    name="mail"
+                    size="md"
+                    class="mt-0.5 flex-shrink-0 text-gray-400 dark:text-gray-500"
                 />
                 <div>
                   <h3 class="font-medium text-gray-900 dark:text-white">
@@ -7493,9 +7618,9 @@
           </div>
 
           <!-- SMTP Settings - Only show when email verification is enabled -->
-          <div v-if="form.email_verify_enabled" class="card">
+          <div v-if="form.emailVerifyEnabled" class="card">
             <div
-              class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <div>
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -7506,35 +7631,35 @@
                 </p>
               </div>
               <button
-                type="button"
-                @click="testSmtpConnection"
-                :disabled="testingSmtp || loadFailed"
-                class="btn btn-secondary btn-sm"
+                  type="button"
+                  @click="testSmtpConnection"
+                  :disabled="testingSmtp || loadFailed"
+                  class="btn btn-secondary btn-sm"
               >
                 <svg
-                  v-if="testingSmtp"
-                  class="h-4 w-4 animate-spin"
-                  fill="none"
-                  viewBox="0 0 24 24"
+                    v-if="testingSmtp"
+                    class="h-4 w-4 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
                 >
                   <circle
-                    class="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    stroke-width="4"
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
                   ></circle>
                   <path
-                    class="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
                 {{
                   testingSmtp
-                    ? t("admin.settings.smtp.testing")
-                    : t("admin.settings.smtp.testConnection")
+                      ? t("admin.settings.smtp.testing")
+                      : t("admin.settings.smtp.testConnection")
                 }}
               </button>
             </div>
@@ -7542,123 +7667,123 @@
               <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
                   <label
-                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.smtp.host") }}
                   </label>
                   <input
-                    v-model="form.smtp_host"
-                    type="text"
-                    class="input"
-                    :placeholder="t('admin.settings.smtp.hostPlaceholder')"
+                      v-model="form.smtpHost"
+                      type="text"
+                      class="input"
+                      :placeholder="t('admin.settings.smtp.hostPlaceholder')"
                   />
                 </div>
                 <div>
                   <label
-                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.smtp.port") }}
                   </label>
                   <input
-                    v-model.number="form.smtp_port"
-                    type="number"
-                    min="1"
-                    max="65535"
-                    class="input"
-                    :placeholder="t('admin.settings.smtp.portPlaceholder')"
+                      v-model.number="form.smtpPort"
+                      type="number"
+                      min="1"
+                      max="65535"
+                      class="input"
+                      :placeholder="t('admin.settings.smtp.portPlaceholder')"
                   />
                 </div>
                 <div>
                   <label
-                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.smtp.username") }}
                   </label>
                   <input
-                    v-model="form.smtp_username"
-                    type="text"
-                    class="input"
-                    :placeholder="t('admin.settings.smtp.usernamePlaceholder')"
+                      v-model="form.smtpUsername"
+                      type="text"
+                      class="input"
+                      :placeholder="t('admin.settings.smtp.usernamePlaceholder')"
                   />
                 </div>
                 <div>
                   <label
-                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.smtp.password") }}
                   </label>
                   <input
-                    v-model="form.smtp_password"
-                    type="password"
-                    class="input"
-                    autocomplete="new-password"
-                    autocapitalize="off"
-                    spellcheck="false"
-                    @keydown="smtpPasswordManuallyEdited = true"
-                    @paste="smtpPasswordManuallyEdited = true"
-                    :placeholder="
-                      form.smtp_password_configured
+                      v-model="form.smtp_password"
+                      type="password"
+                      class="input"
+                      autocomplete="new-password"
+                      autocapitalize="off"
+                      spellcheck="false"
+                      @keydown="smtpPasswordManuallyEdited = true"
+                      @paste="smtpPasswordManuallyEdited = true"
+                      :placeholder="
+                      form.smtpPasswordConfigured
                         ? t('admin.settings.smtp.passwordConfiguredPlaceholder')
                         : t('admin.settings.smtp.passwordPlaceholder')
                     "
                   />
                   <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                     {{
-                      form.smtp_password_configured
-                        ? t("admin.settings.smtp.passwordConfiguredHint")
-                        : t("admin.settings.smtp.passwordHint")
+                      form.smtpPasswordConfigured
+                          ? t("admin.settings.smtp.passwordConfiguredHint")
+                          : t("admin.settings.smtp.passwordHint")
                     }}
                   </p>
                 </div>
                 <div>
                   <label
-                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.smtp.fromEmail") }}
                   </label>
                   <input
-                    v-model="form.smtp_from_email"
-                    type="email"
-                    class="input"
-                    :placeholder="t('admin.settings.smtp.fromEmailPlaceholder')"
+                      v-model="form.smtpFromEmail"
+                      type="email"
+                      class="input"
+                      :placeholder="t('admin.settings.smtp.fromEmailPlaceholder')"
                   />
                 </div>
                 <div>
                   <label
-                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.smtp.fromName") }}
                   </label>
                   <input
-                    v-model="form.smtp_from_name"
-                    type="text"
-                    class="input"
-                    :placeholder="t('admin.settings.smtp.fromNamePlaceholder')"
+                      v-model="form.smtpFromName"
+                      type="text"
+                      class="input"
+                      :placeholder="t('admin.settings.smtp.fromNamePlaceholder')"
                   />
                 </div>
               </div>
 
               <!-- Use TLS Toggle -->
               <div
-                class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
+                  class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
               >
                 <div>
                   <label class="font-medium text-gray-900 dark:text-white">{{
-                    t("admin.settings.smtp.useTls")
-                  }}</label>
+                      t("admin.settings.smtp.useTls")
+                    }}</label>
                   <p class="text-sm text-gray-500 dark:text-gray-400">
                     {{ t("admin.settings.smtp.useTlsHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.smtp_use_tls" />
+                <Toggle v-model="form.smtpUseTls"/>
               </div>
             </div>
           </div>
 
           <!-- Send Test Email - Only show when email verification is enabled -->
-          <div v-if="form.email_verify_enabled" class="card">
+          <div v-if="form.emailVerifyEnabled" class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                 {{ t("admin.settings.testEmail.title") }}
@@ -7671,51 +7796,51 @@
               <div class="flex items-end gap-4">
                 <div class="flex-1">
                   <label
-                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.testEmail.recipientEmail") }}
                   </label>
                   <input
-                    v-model="testEmailAddress"
-                    type="email"
-                    class="input"
-                    :placeholder="
+                      v-model="testEmailAddress"
+                      type="email"
+                      class="input"
+                      :placeholder="
                       t('admin.settings.testEmail.recipientEmailPlaceholder')
                     "
                   />
                 </div>
                 <button
-                  type="button"
-                  @click="sendTestEmail"
-                  :disabled="
+                    type="button"
+                    @click="sendTestEmail"
+                    :disabled="
                     sendingTestEmail || !testEmailAddress || loadFailed
                   "
-                  class="btn btn-secondary"
+                    class="btn btn-secondary"
                 >
                   <svg
-                    v-if="sendingTestEmail"
-                    class="h-4 w-4 animate-spin"
-                    fill="none"
-                    viewBox="0 0 24 24"
+                      v-if="sendingTestEmail"
+                      class="h-4 w-4 animate-spin"
+                      fill="none"
+                      viewBox="0 0 24 24"
                   >
                     <circle
-                      class="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      stroke-width="4"
+                        class="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        stroke-width="4"
                     ></circle>
                     <path
-                      class="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        class="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
                   {{
                     sendingTestEmail
-                      ? t("admin.settings.testEmail.sending")
-                      : t("admin.settings.testEmail.sendTestEmail")
+                        ? t("admin.settings.testEmail.sending")
+                        : t("admin.settings.testEmail.sendTestEmail")
                   }}
                 </button>
               </div>
@@ -7725,7 +7850,7 @@
           <!-- 订阅到期提醒 -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h3 class="text-base font-medium text-gray-900 dark:text-white">
                 {{ t("admin.settings.subscriptionExpiryNotify.title") }}
@@ -7738,7 +7863,7 @@
               <div class="flex items-center justify-between gap-4">
                 <div>
                   <label
-                    class="mb-0 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      class="mb-0 block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
                     {{ t("admin.settings.subscriptionExpiryNotify.enabled") }}
                   </label>
@@ -7746,17 +7871,17 @@
                     {{ t("admin.settings.subscriptionExpiryNotify.enabledHint") }}
                   </p>
                 </div>
-                <Toggle v-model="form.subscription_expiry_notify_enabled" />
+                <Toggle v-model="form.subscriptionExpiryNotifyEnabled"/>
               </div>
             </div>
           </div>
 
-          <EmailTemplateEditor />
+          <EmailTemplateEditor/>
 
           <!-- Balance Low Notification -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h3 class="text-base font-medium text-gray-900 dark:text-white">
                 {{ t("admin.settings.balanceNotify.title") }}
@@ -7768,27 +7893,27 @@
             <div class="px-6 py-6 space-y-4">
               <div class="flex items-center justify-between">
                 <label
-                  class="mb-0 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >{{ t("admin.settings.balanceNotify.enabled") }}</label
+                    class="mb-0 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >{{ t("admin.settings.balanceNotify.enabled") }}</label
                 >
-                <Toggle v-model="form.balance_low_notify_enabled" />
+                <Toggle v-model="form.balanceLowNotifyEnabled"/>
               </div>
-              <div v-if="form.balance_low_notify_enabled">
+              <div v-if="form.balanceLowNotifyEnabled">
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >{{ t("admin.settings.balanceNotify.threshold") }}</label
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >{{ t("admin.settings.balanceNotify.threshold") }}</label
                 >
                 <div class="relative">
                   <span
-                    class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    >$</span
+                      class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  >$</span
                   >
                   <input
-                    v-model.number="form.balance_low_notify_threshold"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    class="input pl-7"
+                      v-model.number="form.balanceLowNotifyThreshold"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      class="input pl-7"
                   />
                 </div>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -7797,14 +7922,14 @@
               </div>
               <div>
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >{{ t("admin.settings.balanceNotify.rechargeUrl") }}</label
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >{{ t("admin.settings.balanceNotify.rechargeUrl") }}</label
                 >
                 <input
-                  v-model="form.balance_low_notify_recharge_url"
-                  type="url"
-                  class="input"
-                  :placeholder="currentOrigin"
+                    v-model="form.balanceLowNotifyRechargeUrl"
+                    type="url"
+                    class="input"
+                    :placeholder="currentOrigin"
                 />
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   {{ t("admin.settings.balanceNotify.rechargeUrlHint") }}
@@ -7816,7 +7941,7 @@
           <!-- Account Quota Notification -->
           <div class="card">
             <div
-              class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
+                class="border-b border-gray-100 px-6 py-4 dark:border-dark-700"
             >
               <h3 class="text-base font-medium text-gray-900 dark:text-white">
                 {{ t("admin.settings.quotaNotify.title") }}
@@ -7828,56 +7953,56 @@
             <div class="px-6 py-6 space-y-4">
               <div class="flex items-center justify-between">
                 <label
-                  class="mb-0 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >{{ t("admin.settings.quotaNotify.enabled") }}</label
+                    class="mb-0 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >{{ t("admin.settings.quotaNotify.enabled") }}</label
                 >
-                <Toggle v-model="form.account_quota_notify_enabled" />
+                <Toggle v-model="form.accountQuotaNotifyEnabled"/>
               </div>
-              <div v-if="form.account_quota_notify_enabled">
+              <div v-if="form.accountQuotaNotifyEnabled">
                 <label
-                  class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >{{ t("admin.settings.quotaNotify.emails") }}</label
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >{{ t("admin.settings.quotaNotify.emails") }}</label
                 >
                 <div class="space-y-2">
                   <div
-                    v-for="(entry, index) in form.account_quota_notify_emails ||
+                      v-for="(entry, index) in form.accountQuotaNotifyEmails ||
                     []"
-                    :key="index"
-                    class="flex items-center gap-2"
+                      :key="index"
+                      class="flex items-center gap-2"
                   >
                     <label
-                      class="relative inline-flex items-center cursor-pointer shrink-0"
+                        class="relative inline-flex items-center cursor-pointer shrink-0"
                     >
                       <input
-                        type="checkbox"
-                        :checked="!entry.disabled"
-                        @change="entry.disabled = !entry.disabled"
-                        class="sr-only peer"
+                          type="checkbox"
+                          :checked="!entry.disabled"
+                          @change="entry.disabled = !entry.disabled"
+                          class="sr-only peer"
                       />
                       <div
-                        class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-gray-500 peer-checked:bg-primary-600"
+                          class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:after:border-gray-500 peer-checked:bg-primary-600"
                       ></div>
                     </label>
                     <input
-                      v-model="entry.email"
-                      type="email"
-                      class="input flex-1"
-                      :placeholder="
+                        v-model="entry.email"
+                        type="email"
+                        class="input flex-1"
+                        :placeholder="
                         t('admin.settings.quotaNotify.emailPlaceholder')
                       "
                     />
                     <button
-                      @click="form.account_quota_notify_emails.splice(index, 1)"
-                      class="btn btn-secondary px-2"
-                      type="button"
+                        @click="form.accountQuotaNotifyEmails.splice(index, 1)"
+                        class="btn btn-secondary px-2"
+                        type="button"
                     >
-                      <Icon name="x" size="xs" class="h-4 w-4" />
+                      <Icon name="x" size="xs" class="h-4 w-4"/>
                     </button>
                   </div>
                   <button
-                    @click="addQuotaNotifyEmail"
-                    class="btn btn-secondary btn-sm"
-                    type="button"
+                      @click="addQuotaNotifyEmail"
+                      class="btn btn-secondary btn-sm"
+                      type="button"
                   >
                     + {{ t("admin.settings.quotaNotify.addEmail") }}
                   </button>
@@ -7893,40 +8018,40 @@
 
         <!-- Tab: Backup -->
         <div v-show="activeTab === 'backup'">
-          <BackupSettings />
+          <BackupSettings/>
         </div>
 
         <!-- Save Button -->
         <div v-show="activeTab !== 'backup'" class="flex justify-end">
           <button
-            type="submit"
-            :disabled="saving || loadFailed"
-            class="btn btn-primary"
+              type="submit"
+              :disabled="saving || loadFailed"
+              class="btn btn-primary"
           >
             <svg
-              v-if="saving"
-              class="h-4 w-4 animate-spin"
-              fill="none"
-              viewBox="0 0 24 24"
+                v-if="saving"
+                class="h-4 w-4 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
             >
               <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
               ></circle>
               <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               ></path>
             </svg>
             {{
               saving
-                ? t("admin.settings.saving")
-                : t("admin.settings.saveSettings")
+                  ? t("admin.settings.saving")
+                  : t("admin.settings.saveSettings")
             }}
           </button>
         </div>
@@ -7934,44 +8059,44 @@
 
       <!-- Provider dialogs placed outside the settings form to prevent form submission bubbling -->
       <PaymentProviderDialog
-        ref="providerDialogRef"
-        :show="showProviderDialog"
-        :saving="providerSaving"
-        :editing="editingProvider"
-        :all-key-options="providerKeyOptions"
-        :enabled-key-options="enabledProviderKeyOptions"
-        :all-payment-types="allPaymentTypes"
-        :redirect-label="t('admin.settings.payment.easypayRedirect')"
-        @close="showProviderDialog = false"
-        @save="handleSaveProvider"
+          ref="providerDialogRef"
+          :show="showProviderDialog"
+          :saving="providerSaving"
+          :editing="editingProvider"
+          :all-key-options="providerKeyOptions"
+          :enabled-key-options="enabledProviderKeyOptions"
+          :all-payment-types="allPaymentTypes"
+          :redirect-label="t('admin.settings.payment.easypayRedirect')"
+          @close="showProviderDialog = false"
+          @save="handleSaveProvider"
       />
       <ConfirmDialog
-        :show="showDeleteProviderDialog"
-        :title="t('admin.settings.payment.deleteProvider')"
-        :message="t('admin.settings.payment.deleteProviderConfirm')"
-        :confirm-text="t('common.delete')"
-        danger
-        @confirm="handleDeleteProvider"
-        @cancel="showDeleteProviderDialog = false"
+          :show="showDeleteProviderDialog"
+          :title="t('admin.settings.payment.deleteProvider')"
+          :message="t('admin.settings.payment.deleteProviderConfirm')"
+          :confirm-text="t('common.delete')"
+          danger
+          @confirm="handleDeleteProvider"
+          @cancel="showDeleteProviderDialog = false"
       />
       <ConfirmDialog
-        :show="affiliateConfirmDialog.show"
-        :title="affiliateConfirmDialog.title"
-        :message="affiliateConfirmDialog.message"
-        :confirm-text="affiliateConfirmDialog.confirmText"
-        danger
-        @confirm="handleAffiliateConfirm"
-        @cancel="cancelAffiliateConfirm"
+          :show="affiliateConfirmDialog.show"
+          :title="affiliateConfirmDialog.title"
+          :message="affiliateConfirmDialog.message"
+          :confirm-text="affiliateConfirmDialog.confirmText"
+          danger
+          @confirm="handleAffiliateConfirm"
+          @cancel="cancelAffiliateConfirm"
       />
       <!-- 关闭 step-up 开关等敏感保存操作触发的 TOTP 二次验证 -->
-      <TotpStepUpDialog :controller="settingsStepUp" />
+      <TotpStepUpDialog :controller="settingsStepUp"/>
     </div>
   </AppLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from "vue";
-import { useI18n } from "vue-i18n";
+import {ref, reactive, computed, onMounted, watch} from "vue";
+import {useI18n} from "vue-i18n";
 import {
   appendAuthSourceDefaultsToUpdateRequest,
   buildAuthSourceDefaultsState,
@@ -7982,30 +8107,43 @@ import {
   normalizeDefaultSubscriptionSettings,
   resolveWeChatConnectModeCapabilities,
 } from "@/features/admin-settings/presentation/utils/adminSettingsUtils";
+import {
+  SystemSettings,
+} from "@/features/admin-settings/domain/models/adminSettings";
 import type {
   AuthSourceDefaultsState,
-  AuthSourceType,
-  ClientIpResolutionMode as ClientIPResolutionMode,
-  SystemSettings,
   DefaultPlatformQuotasMap,
-  OpenAIFastPolicySettings,
 } from "@/features/admin-settings/domain/models/adminSettings";
-import type { DefaultSubscriptionSetting } from "@/features/admin-settings/domain/models/defaultSubscriptionSetting";
-import type { UpdateSettingsRequest } from "@/features/admin-settings/data/requests_models/updateSettingsRequest";
-import type { OpenAIFastPolicyRule } from "@/features/admin-settings/domain/models/openAIFastPolicyRule";
-import type { ThinkingDisplayMode } from "@/features/admin-settings/domain/models/streamTimeoutSettings";
-import type { AdminApiKey, AdminApiKeyScope } from "@/features/admin-settings/domain/models/adminApiKey";
-import type { WebSearchEmulationConfig } from "@/features/admin-settings/domain/models/webSearchEmulationConfig";
-import type { WebSearchProviderConfig } from "@/features/admin-settings/domain/models/webSearchProviderConfig";
-import type { WebSearchTestResult } from "@/features/admin-settings/domain/models/webSearchTestResult";
-import type { WeChatConnectMode } from "@/features/admin-settings/presentation/utils/adminSettingsUtils";
+import type {AuthSourceType} from "@/features/admin-settings/enums/authSourceType";
 import type {
-  AdminGroup,
-  LoginAgreementDocument,
-  NotifyEmailEntry,
-  Proxy,
-} from "@/types";
-import type { ProviderInstance } from "@/types/payment";
+  ClientIpResolutionMode as ClientIPResolutionMode
+} from "@/features/admin-settings/enums/clientIpResolutionMode";
+import type {BetaPolicyRule} from "@/features/admin-settings/domain/models/betaPolicyRule";
+import type {DefaultSubscriptionSetting} from "@/features/admin-settings/domain/models/defaultSubscriptionSetting";
+import type {UpdateSettingsRequest} from "@/features/admin-settings/data/requests_models/updateSettingsRequest";
+import type {OpenAIFastPolicyRule} from "@/features/admin-settings/domain/models/openAIFastPolicyRule";
+import type {ThinkingDisplayMode} from "@/features/admin-settings/domain/models/streamTimeoutSettings";
+import type {AdminApiKey} from "@/features/admin-settings/domain/models/adminApiKey";
+import type {AdminApiKeyScope} from "@/features/admin-settings/enums/adminApiKeyScope";
+import type {WebSearchEmulationConfig} from "@/features/admin-settings/domain/models/webSearchEmulationConfig";
+import type {WebSearchProviderConfig} from "@/features/admin-settings/domain/models/webSearchProviderConfig";
+import type {WebSearchTestResult} from "@/features/admin-settings/domain/models/webSearchTestResult";
+import type {WeChatConnectMode} from "@/features/admin-settings/presentation/utils/adminSettingsUtils";
+import type {AdminGroup} from "@/features/admin-groups/domain/models/adminGroup";
+import type {LoginAgreementDocument} from "@/core/models/domain/loginAgreementDocument";
+import type {NotifyEmailEntry} from "@/core/models/domain/notifyEmailEntry";
+import type {Proxy} from "@/features/admin-proxies/domain/models/proxy";
+import type {ProviderInstance} from "@/features/admin-orders/domain/models/providerInstance";
+import type {
+  CreateProviderInstanceRequest
+} from "@/features/admin-orders/data/requests_models/createProviderInstanceRequest";
+import type {
+  UpdateProviderInstanceRequest
+} from "@/features/admin-orders/data/requests_models/updateProviderInstanceRequest";
+import type {AffiliateAdminEntry} from "@/features/affiliate/domain/models/affiliateAdminEntry";
+import type {SimpleUser as AffiliateSimpleUser} from "@/features/affiliate/domain/models/simpleUser";
+import type {UpdateAffiliateUserRequest} from "@/features/affiliate/data/requests_models/updateAffiliateUserRequest";
+import type {BatchSetRateRequest} from "@/features/affiliate/data/requests_models/batchSetRateRequest";
 import AppLayout from "@/common/widgets/layout/AppLayout.vue";
 import Icon from "@/common/widgets/icons/Icon.vue";
 import Select from "@/common/widgets/forms/Select.vue";
@@ -8015,12 +8153,13 @@ import PaymentProviderDialog from "@/features/billing/presentation/widgets/Payme
 import GroupBadge from "@/common/widgets/data/GroupBadge.vue";
 import GroupOptionItem from "@/common/widgets/data/GroupOptionItem.vue";
 import Toggle from "@/common/widgets/forms/Toggle.vue";
-import ProxySelector from "@/common/widgets/data/ProxySelector.vue";
+import ProxySelector from "@/features/admin-proxies/presentation/widgets/ProxySelector.vue";
 import ImageUpload from "@/common/widgets/data/ImageUpload.vue";
 import BackupSettings from "@/features/admin-backup/presentation/pages/BackupPage.vue";
 import EmailTemplateEditor from "@/features/admin-settings/presentation/widgets/EmailTemplateEditor.vue";
-import OpenAIFastPolicyUserSelector from "@/features/admin-settings/presentation/widgets/OpenAIFastPolicyUserSelector.vue";
-import { useClipboard } from "@/common/composables/useClipboard";
+import OpenAIFastPolicyUserSelector
+  from "@/features/admin-settings/presentation/widgets/OpenAIFastPolicyUserSelector.vue";
+import {useClipboard} from "@/common/composables/useClipboard";
 import {
   useStepUp,
   isStepUpCancelled,
@@ -8028,11 +8167,14 @@ import {
   stepUpBlockReason,
 } from "@/common/composables/useStepUp";
 import TotpStepUpDialog from "@/features/auth/presentation/widgets/TotpStepUpDialog.vue";
-import { affiliatesAPI, type AffiliateAdminEntry, type SimpleUser as AffiliateSimpleUser } from "@/features/affiliate/presentation/api";
-import { extractApiErrorMessage, extractI18nErrorMessage } from "@/core/utils/apiError";
-import { useAppStore } from "@/stores";
-import { useAdminSettingsStore } from "@/core/stores/adminSettingsStore";
-import { normalizeVisibleMethod } from "@/features/billing/presentation/utils/paymentFlowResolver";
+import {useAffiliateQueryStore} from "@/features/affiliate/presentation/stores/affiliateQueryStore";
+import {useAffiliateActionStore} from "@/features/affiliate/presentation/stores/affiliateActionStore";
+import {extractApiErrorMessage, extractI18nErrorMessage} from "@/core/utils/apiError";
+import {useAppStore} from "@/core/stores/appStore";
+import {useAdminSettingsStore} from "@/features/admin-settings/presentation/stores/adminSettingsStore";
+import {useAdminOrdersQueryStore} from "@/features/admin-orders/presentation/stores/adminOrdersQueryStore";
+import {useAdminOrdersActionStore} from "@/features/admin-orders/presentation/stores/adminOrdersActionStore";
+import {normalizeVisibleMethod} from "@/features/billing/presentation/utils/paymentFlowResolver";
 import {
   isRegistrationEmailSuffixDomainValid,
   normalizeRegistrationEmailSuffixDomain,
@@ -8045,17 +8187,36 @@ import {
   defaultFingerprintSignalRows,
   type FingerprintSignalRow,
 } from "@/features/admin-accounts/presentation/utils/codexFingerprintSignals";
-import { useAdminSettings } from '@/features/admin-settings/presentation/composables/useAdminSettings'
-import { useAdminProxies } from '@/features/admin-proxies/presentation/composables/useAdminProxies'
-import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
-import { useAdminAccounts } from '@/features/admin-accounts/presentation/composables/useAdminAccounts'
-import { adminAPI } from '@/api/admin'
+import {useAdminSettings} from '@/features/admin-settings/presentation/composables/useAdminSettings'
+import {useAdminProxies} from '@/features/admin-proxies/presentation/composables/useAdminProxies'
+import {useAdminGroups} from '@/features/admin-groups/presentation/composables/useAdminGroups'
+import {useAdminAccounts} from '@/features/admin-accounts/presentation/composables/useAdminAccounts'
+
 const $settings = useAdminSettings()
 const $proxies = useAdminProxies()
 const $groups = useAdminGroups()
 const $accounts = useAdminAccounts()
+const affiliateQueryStore = useAffiliateQueryStore()
+const affiliateActionStore = useAffiliateActionStore()
+const adminOrdersQueryStore = useAdminOrdersQueryStore()
+const adminOrdersActionStore = useAdminOrdersActionStore()
 
-const { t, locale } = useI18n();
+// SystemSettings 是强类型 class；某些 util 期望 Record<string, unknown> 以做动态键索引。
+// 通过 Object.entries 转换绕开 TS 对 class 到 index-signature 的兼容性检查（不使用 as 断言）。
+function toRecord(obj: object): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(obj))
+}
+
+// normalizeDefaultSubscriptionSettings 期望 snake_case 数组（后端载荷格式）；
+// 前端 domain Entity 使用 camelCase，此处显式做键名转换。
+function toSubscriptionRequestList(
+    list: DefaultSubscriptionSetting[] | null | undefined,
+): Array<{ group_id: number; validity_days: number }> {
+  if (!Array.isArray(list)) return []
+  return list.map((item) => ({group_id: item.groupId, validity_days: item.validityDays}))
+}
+
+const {t, locale} = useI18n();
 const appStore = useAppStore();
 // 关闭 step-up 开关是敏感操作：后端返回 STEP_UP_REQUIRED 时弹 TOTP 码重试
 const settingsStepUp = useStepUp();
@@ -8067,40 +8228,40 @@ function localText(zh: string, en: string): string {
 }
 
 const paymentGuideHref = computed(() =>
-  locale.value.startsWith("zh")
-    ? "https://github.com/Wei-Shaw/sub2api/blob/main/docs/PAYMENT_CN.md"
-    : "https://github.com/Wei-Shaw/sub2api/blob/main/docs/PAYMENT.md",
+    locale.value.startsWith("zh")
+        ? "https://github.com/Wei-Shaw/sub2api/blob/main/docs/PAYMENT_CN.md"
+        : "https://github.com/Wei-Shaw/sub2api/blob/main/docs/PAYMENT.md",
 );
 
 const paymentMethodsHref = computed(() =>
-  locale.value.startsWith("zh")
-    ? "https://github.com/Wei-Shaw/sub2api/blob/main/docs/PAYMENT_CN.md#支持的支付方式"
-    : "https://github.com/Wei-Shaw/sub2api/blob/main/docs/PAYMENT.md#supported-payment-methods",
+    locale.value.startsWith("zh")
+        ? "https://github.com/Wei-Shaw/sub2api/blob/main/docs/PAYMENT_CN.md#支持的支付方式"
+        : "https://github.com/Wei-Shaw/sub2api/blob/main/docs/PAYMENT.md#supported-payment-methods",
 );
 
 type SettingsTab =
-  | "general"
-  | "agreement"
-  | "features"
-  | "security"
-  | "users"
-  | "gateway"
-  | "performance"
-  | "payment"
-  | "email"
-  | "backup";
+    | "general"
+    | "agreement"
+    | "features"
+    | "security"
+    | "users"
+    | "gateway"
+    | "performance"
+    | "payment"
+    | "email"
+    | "backup";
 const activeTab = ref<SettingsTab>("general");
 const settingsTabs = [
-  { key: "general" as SettingsTab, icon: "home" as const },
-  { key: "agreement" as SettingsTab, icon: "document" as const },
-  { key: "features" as SettingsTab, icon: "bolt" as const },
-  { key: "security" as SettingsTab, icon: "shield" as const },
-  { key: "users" as SettingsTab, icon: "user" as const },
-  { key: "gateway" as SettingsTab, icon: "server" as const },
-  { key: "performance" as SettingsTab, icon: "bolt" as const },
-  { key: "payment" as SettingsTab, icon: "creditCard" as const },
-  { key: "email" as SettingsTab, icon: "mail" as const },
-  { key: "backup" as SettingsTab, icon: "database" as const },
+  {key: "general" as SettingsTab, icon: "home" as const},
+  {key: "agreement" as SettingsTab, icon: "document" as const},
+  {key: "features" as SettingsTab, icon: "bolt" as const},
+  {key: "security" as SettingsTab, icon: "shield" as const},
+  {key: "users" as SettingsTab, icon: "user" as const},
+  {key: "gateway" as SettingsTab, icon: "server" as const},
+  {key: "performance" as SettingsTab, icon: "bolt" as const},
+  {key: "payment" as SettingsTab, icon: "creditCard" as const},
+  {key: "email" as SettingsTab, icon: "mail" as const},
+  {key: "backup" as SettingsTab, icon: "database" as const},
 ];
 
 const settingsTabKeyboardActions = {
@@ -8124,9 +8285,9 @@ function focusSettingsTab(tab: SettingsTab): void {
 
 function handleSettingsTabKeydown(event: KeyboardEvent, tab: SettingsTab): void {
   const action =
-    settingsTabKeyboardActions[
-      event.key as keyof typeof settingsTabKeyboardActions
-    ];
+      settingsTabKeyboardActions[
+          event.key as keyof typeof settingsTabKeyboardActions
+          ];
   if (action === undefined) {
     return;
   }
@@ -8141,7 +8302,7 @@ function handleSettingsTabKeydown(event: KeyboardEvent, tab: SettingsTab): void 
     nextIndex = settingsTabs.length - 1;
   } else {
     nextIndex =
-      (nextIndex + action + settingsTabs.length) % settingsTabs.length;
+        (nextIndex + action + settingsTabs.length) % settingsTabs.length;
   }
 
   const nextTab = settingsTabs[nextIndex]?.key;
@@ -8153,7 +8314,7 @@ function handleSettingsTabKeydown(event: KeyboardEvent, tab: SettingsTab): void 
   focusSettingsTab(nextTab);
 }
 
-const { copyToClipboard } = useClipboard();
+const {copyToClipboard} = useClipboard();
 
 const loading = ref(true);
 const loadFailed = ref(false);
@@ -8185,22 +8346,22 @@ const adminApiKeyForm = reactive<{ name: string; scopes: AdminApiKeyScope[]; exp
   expires_at: "",
 });
 const adminApiKeyScopeOptions: Array<{ value: AdminApiKeyScope; label: string }> = [
-  { value: "admin.read", label: "全部只读" },
-  { value: "admin.write", label: "全部写入" },
-  { value: "admin.users.read", label: "用户读取" },
-  { value: "admin.users.write", label: "用户修改" },
-  { value: "admin.accounts.read", label: "账号读取" },
-  { value: "admin.accounts.write", label: "账号修改" },
-  { value: "admin.settings.read", label: "设置读取" },
-  { value: "admin.settings.write", label: "设置修改" },
-  { value: "admin.backups.read", label: "备份读取" },
-  { value: "admin.backups.write", label: "备份操作" },
-  { value: "admin.system.read", label: "系统读取" },
-  { value: "admin.system.write", label: "系统操作" },
-  { value: "admin.audit.read", label: "审计读取" },
-  { value: "admin.audit.write", label: "审计操作" },
-  { value: "admin.ops.read", label: "运维读取" },
-  { value: "admin.ops.write", label: "运维操作" },
+  {value: "admin.read", label: "全部只读"},
+  {value: "admin.write", label: "全部写入"},
+  {value: "admin.users.read", label: "用户读取"},
+  {value: "admin.users.write", label: "用户修改"},
+  {value: "admin.accounts.read", label: "账号读取"},
+  {value: "admin.accounts.write", label: "账号修改"},
+  {value: "admin.settings.read", label: "设置读取"},
+  {value: "admin.settings.write", label: "设置修改"},
+  {value: "admin.backups.read", label: "备份读取"},
+  {value: "admin.backups.write", label: "备份操作"},
+  {value: "admin.system.read", label: "系统读取"},
+  {value: "admin.system.write", label: "系统操作"},
+  {value: "admin.audit.read", label: "审计读取"},
+  {value: "admin.audit.write", label: "审计操作"},
+  {value: "admin.ops.read", label: "运维读取"},
+  {value: "admin.ops.write", label: "运维操作"},
 ];
 const subscriptionGroups = ref<AdminGroup[]>([]);
 
@@ -8264,15 +8425,7 @@ const rectifierForm = reactive({
 const betaPolicyLoading = ref(true);
 const betaPolicySaving = ref(false);
 const betaPolicyForm = reactive({
-  rules: [] as Array<{
-    beta_token: string;
-    action: "pass" | "filter" | "block";
-    scope: "all" | "oauth" | "apikey" | "bedrock";
-    error_message?: string;
-    model_whitelist?: string[];
-    fallback_action?: "pass" | "filter" | "block";
-    fallback_error_message?: string;
-  }>,
+  rules: [] as BetaPolicyRule[],
 });
 
 // OpenAI Fast/Flex Policy 状态
@@ -8314,27 +8467,27 @@ function defaultLoginAgreementDocuments(): LoginAgreementDocument[] {
 
 function normalizeLoginAgreementDocumentId(raw: string): string {
   return raw
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_-]+/g, "-")
-    .replace(/[-_]{2,}/g, "-")
-    .replace(/^[-_]+|[-_]+$/g, "");
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/[-_]{2,}/g, "-")
+      .replace(/^[-_]+|[-_]+$/g, "");
 }
 
 function loginAgreementRoutePath(
-  doc: LoginAgreementDocument,
-  index: number,
+    doc: LoginAgreementDocument,
+    index: number,
 ): string {
   const id =
-    normalizeLoginAgreementDocumentId(doc.id || doc.title) || `doc-${index + 1}`;
+      normalizeLoginAgreementDocumentId(doc.id || doc.title) || `doc-${index + 1}`;
   return `/legal/${id}`;
 }
 
 type ClaudeOAuthSystemPromptPreset =
-  | "billing"
-  | "system"
-  | "expansion"
-  | "custom";
+    | "billing"
+    | "system"
+    | "expansion"
+    | "custom";
 
 interface ClaudeOAuthSystemPromptBlock {
   id: string;
@@ -8355,7 +8508,7 @@ interface ClaudeOAuthSystemPromptRawBlock {
 }
 
 const defaultClaudeCodeSystemPrompt =
-  "You are Claude Code, Anthropic's official CLI for Claude.";
+    "You are Claude Code, Anthropic's official CLI for Claude.";
 
 const defaultClaudeCodeExpansionPrompt = `You are an interactive agent that helps users with software engineering tasks. Use the instructions below and the tools available to you to assist the user.
 
@@ -8381,21 +8534,21 @@ function normalizeClaudeOAuthSystemPromptCacheTTL(value: unknown): string {
 }
 
 function detectClaudeOAuthSystemPromptPreset(
-  text: string,
+    text: string,
 ): ClaudeOAuthSystemPromptPreset {
   const trimmed = text.trim();
   if (trimmed === "{billing_header}") {
     return "billing";
   }
   if (
-    trimmed === "{claude_code_system_prompt}" ||
-    trimmed === defaultClaudeCodeSystemPrompt
+      trimmed === "{claude_code_system_prompt}" ||
+      trimmed === defaultClaudeCodeSystemPrompt
   ) {
     return "system";
   }
   if (
-    trimmed === "{claude_code_expansion_prompt}" ||
-    trimmed === defaultClaudeCodeExpansionPrompt
+      trimmed === "{claude_code_expansion_prompt}" ||
+      trimmed === defaultClaudeCodeExpansionPrompt
   ) {
     return "expansion";
   }
@@ -8403,8 +8556,8 @@ function detectClaudeOAuthSystemPromptPreset(
 }
 
 function normalizeClaudeOAuthSystemPromptBlockText(
-  text: string,
-  expansionPrompt = "",
+    text: string,
+    expansionPrompt = "",
 ): string {
   const trimmed = text.trim();
   if (trimmed === "{claude_code_system_prompt}") {
@@ -8417,7 +8570,7 @@ function normalizeClaudeOAuthSystemPromptBlockText(
 }
 
 function createClaudeOAuthSystemPromptBlock(
-  overrides: Partial<ClaudeOAuthSystemPromptBlock> = {},
+    overrides: Partial<ClaudeOAuthSystemPromptBlock> = {},
 ): ClaudeOAuthSystemPromptBlock {
   const text = overrides.text ?? "";
   return {
@@ -8433,11 +8586,11 @@ function createClaudeOAuthSystemPromptBlock(
 }
 
 function createDefaultClaudeOAuthSystemPromptBlocks(
-  expansionPrompt = "",
+    expansionPrompt = "",
 ): ClaudeOAuthSystemPromptBlock[] {
   const normalizedExpansionPrompt = expansionPrompt.trim();
   const expansionText =
-    normalizedExpansionPrompt || defaultClaudeCodeExpansionPrompt;
+      normalizedExpansionPrompt || defaultClaudeCodeExpansionPrompt;
 
   return [
     createClaudeOAuthSystemPromptBlock({
@@ -8450,9 +8603,9 @@ function createDefaultClaudeOAuthSystemPromptBlocks(
     }),
     createClaudeOAuthSystemPromptBlock({
       preset:
-        expansionText === defaultClaudeCodeExpansionPrompt
-          ? "expansion"
-          : "custom",
+          expansionText === defaultClaudeCodeExpansionPrompt
+              ? "expansion"
+              : "custom",
       text: expansionText,
       cacheControlEnabled: true,
       cacheControlTTL: "5m",
@@ -8465,26 +8618,26 @@ function parseClaudeOAuthSystemPromptCacheControl(cacheControl: unknown): {
   ttl: string;
 } {
   if (cacheControl === true) {
-    return { enabled: true, ttl: "5m" };
+    return {enabled: true, ttl: "5m"};
   }
   if (
-    cacheControl &&
-    typeof cacheControl === "object" &&
-    !Array.isArray(cacheControl)
+      cacheControl &&
+      typeof cacheControl === "object" &&
+      !Array.isArray(cacheControl)
   ) {
     return {
       enabled: true,
       ttl: normalizeClaudeOAuthSystemPromptCacheTTL(
-        (cacheControl as Record<string, unknown>).ttl,
+          (cacheControl as Record<string, unknown>).ttl,
       ),
     };
   }
-  return { enabled: false, ttl: "5m" };
+  return {enabled: false, ttl: "5m"};
 }
 
 function parseClaudeOAuthSystemPromptBlocks(
-  raw: string,
-  expansionPrompt = "",
+    raw: string,
+    expansionPrompt = "",
 ): ClaudeOAuthSystemPromptBlock[] {
   const trimmed = raw.trim();
   if (!trimmed) {
@@ -8493,13 +8646,13 @@ function parseClaudeOAuthSystemPromptBlocks(
 
   try {
     const parsed = JSON.parse(trimmed) as
-      | ClaudeOAuthSystemPromptRawBlock[]
-      | { blocks?: ClaudeOAuthSystemPromptRawBlock[] };
+        | ClaudeOAuthSystemPromptRawBlock[]
+        | { blocks?: ClaudeOAuthSystemPromptRawBlock[] };
     const rawBlocks = Array.isArray(parsed)
-      ? parsed
-      : Array.isArray(parsed.blocks)
-        ? parsed.blocks
-        : [];
+        ? parsed
+        : Array.isArray(parsed.blocks)
+            ? parsed.blocks
+            : [];
 
     if (rawBlocks.length === 0) {
       return createDefaultClaudeOAuthSystemPromptBlocks(expansionPrompt);
@@ -8507,11 +8660,11 @@ function parseClaudeOAuthSystemPromptBlocks(
 
     return rawBlocks.map((block) => {
       const cacheControl = parseClaudeOAuthSystemPromptCacheControl(
-        block.cache_control,
+          block.cache_control,
       );
       const text = normalizeClaudeOAuthSystemPromptBlockText(
-        typeof block.text === "string" ? block.text : "",
-        expansionPrompt,
+          typeof block.text === "string" ? block.text : "",
+          expansionPrompt,
       );
       return createClaudeOAuthSystemPromptBlock({
         enabled: block.enabled !== false,
@@ -8528,18 +8681,18 @@ function parseClaudeOAuthSystemPromptBlocks(
 }
 
 function serializeClaudeOAuthSystemPromptBlocksToJSON(
-  blocks: ClaudeOAuthSystemPromptBlock[],
+    blocks: ClaudeOAuthSystemPromptBlock[],
 ): string {
   const source =
-    blocks.length > 0
-      ? blocks
-      : [
-          createClaudeOAuthSystemPromptBlock({
-            enabled: false,
-            preset: "custom",
-            text: "",
-          }),
-        ];
+      blocks.length > 0
+          ? blocks
+          : [
+            createClaudeOAuthSystemPromptBlock({
+              enabled: false,
+              preset: "custom",
+              text: "",
+            }),
+          ];
 
   const rawBlocks = source.map((block) => {
     const raw: ClaudeOAuthSystemPromptRawBlock = {
@@ -8560,12 +8713,12 @@ function serializeClaudeOAuthSystemPromptBlocksToJSON(
 }
 
 const defaultClaudeOAuthSystemPromptBlocks =
-  serializeClaudeOAuthSystemPromptBlocksToJSON(
-    createDefaultClaudeOAuthSystemPromptBlocks(),
-  );
+    serializeClaudeOAuthSystemPromptBlocksToJSON(
+        createDefaultClaudeOAuthSystemPromptBlocks(),
+    );
 
 const claudeOAuthSystemPromptBlocks = ref<ClaudeOAuthSystemPromptBlock[]>(
-  createDefaultClaudeOAuthSystemPromptBlocks(),
+    createDefaultClaudeOAuthSystemPromptBlocks(),
 );
 
 const claudeOAuthSystemPromptPresetOptions = computed(() => [
@@ -8595,34 +8748,34 @@ const claudeOAuthSystemPromptBlockTypeOptions = computed(() => [
 ]);
 
 const claudeOAuthSystemPromptCacheTTLOptions = computed(() => [
-  { value: "5m", label: t("admin.settings.gatewayForwarding.cacheTTL5m") },
-  { value: "1h", label: t("admin.settings.gatewayForwarding.cacheTTL1h") },
+  {value: "5m", label: t("admin.settings.gatewayForwarding.cacheTTL5m")},
+  {value: "1h", label: t("admin.settings.gatewayForwarding.cacheTTL1h")},
 ]);
 
 function getClaudeOAuthPresetLabel(
-  preset: ClaudeOAuthSystemPromptPreset,
+    preset: ClaudeOAuthSystemPromptPreset,
 ): string {
   return (
-    claudeOAuthSystemPromptPresetOptions.value.find(
-      (option) => option.value === preset,
-    )?.label || t("admin.settings.gatewayForwarding.systemBlockPresetCustom")
+      claudeOAuthSystemPromptPresetOptions.value.find(
+          (option) => option.value === preset,
+      )?.label || t("admin.settings.gatewayForwarding.systemBlockPresetCustom")
   );
 }
 
 function syncClaudeOAuthSystemPromptBlocksFormField(): void {
-  form.claude_oauth_system_prompt_blocks =
-    serializeClaudeOAuthSystemPromptBlocksToJSON(
-      claudeOAuthSystemPromptBlocks.value,
-    );
+  form.claudeOauthSystemPromptBlocks =
+      serializeClaudeOAuthSystemPromptBlocksToJSON(
+          claudeOAuthSystemPromptBlocks.value,
+      );
 }
 
 function addClaudeOAuthSystemPromptBlock(): void {
   claudeOAuthSystemPromptBlocks.value.push(
-    createClaudeOAuthSystemPromptBlock({
-      expanded: true,
-      preset: "custom",
-      text: "",
-    }),
+      createClaudeOAuthSystemPromptBlock({
+        expanded: true,
+        preset: "custom",
+        text: "",
+      }),
   );
   syncClaudeOAuthSystemPromptBlocksFormField();
 }
@@ -8641,13 +8794,13 @@ function removeClaudeOAuthSystemPromptBlock(index: number): void {
 }
 
 function moveClaudeOAuthSystemPromptBlock(
-  index: number,
-  direction: -1 | 1,
+    index: number,
+    direction: -1 | 1,
 ): void {
   const targetIndex = index + direction;
   if (
-    targetIndex < 0 ||
-    targetIndex >= claudeOAuthSystemPromptBlocks.value.length
+      targetIndex < 0 ||
+      targetIndex >= claudeOAuthSystemPromptBlocks.value.length
   ) {
     return;
   }
@@ -8659,8 +8812,8 @@ function moveClaudeOAuthSystemPromptBlock(
 }
 
 function applyClaudeOAuthSystemPromptPreset(
-  index: number,
-  value: string | number | boolean | null,
+    index: number,
+    value: string | number | boolean | null,
 ): void {
   const block = claudeOAuthSystemPromptBlocks.value[index];
   if (!block) {
@@ -8679,8 +8832,8 @@ function applyClaudeOAuthSystemPromptPreset(
     block.cacheControlTTL = "5m";
   } else if (preset === "expansion") {
     block.text =
-      form.claude_oauth_system_prompt.trim() ||
-      defaultClaudeCodeExpansionPrompt;
+        form.claudeOauthSystemPrompt.trim() ||
+        defaultClaudeCodeExpansionPrompt;
     block.cacheControlEnabled = true;
     block.cacheControlTTL = "5m";
   }
@@ -8688,7 +8841,7 @@ function applyClaudeOAuthSystemPromptPreset(
 }
 
 function markClaudeOAuthSystemPromptBlockCustom(
-  block: ClaudeOAuthSystemPromptBlock,
+    block: ClaudeOAuthSystemPromptBlock,
 ): void {
   block.preset = detectClaudeOAuthSystemPromptPreset(block.text);
   syncClaudeOAuthSystemPromptBlocksFormField();
@@ -8696,7 +8849,7 @@ function markClaudeOAuthSystemPromptBlockCustom(
 
 function resetClaudeOAuthSystemPromptBlocks(): void {
   claudeOAuthSystemPromptBlocks.value = createDefaultClaudeOAuthSystemPromptBlocks(
-    form.claude_oauth_system_prompt,
+      form.claudeOauthSystemPrompt,
   );
   syncClaudeOAuthSystemPromptBlocksFormField();
 }
@@ -8709,14 +8862,19 @@ interface DefaultSubscriptionGroupOption {
   platform: AdminGroup["platform"];
   subscriptionType: AdminGroup["subscriptionType"];
   rate: number;
+
   [key: string]: unknown;
 }
 
+// SettingsForm 沿用旧结构，SystemSettings 主字段为 required；表单在 reactive() 初始化时
+// 只预填 snake_case 兼容键（saveSettings 直接透传），camelCase 字段在 loadSettings 中通过
+// Object.assign(form, settings) 补齐。为了跳过 reactive() 初始 literal 的 excess-property 与
+// missing-required 检查，通过 buildInitialSettingsForm() 工厂函数以 Partial 层构造然后收窄。
 type SettingsForm = Omit<
-  SystemSettings,
-  | "wechat_connect_open_enabled"
-  | "wechat_connect_mp_enabled"
-  | "wechat_connect_mobile_enabled"
+    SystemSettings,
+    | "wechat_connect_open_enabled"
+    | "wechat_connect_mp_enabled"
+    | "wechat_connect_mobile_enabled"
 > & {
   smtp_password: string;
   turnstile_secret_key: string;
@@ -8758,13 +8916,217 @@ type SettingsForm = Omit<
   scheduler_v2_scan_limit: number;
   // 系统全局平台限额 map；form 内始终归一化为全 4 平台对象（模板非空绑定依赖此不变量）
   default_platform_quotas: DefaultPlatformQuotasMap;
+  // 以下 snake_case 字段是历史后端载荷键，saveSettings 直接透传；表单同时携带 camelCase
+  // （SystemSettings 主字段）与 snake_case 版本以覆盖模板与 saveSettings 两种消费方式。
+  password_reset_enabled: boolean;
+  totp_enabled: boolean;
+  totp_encryption_key_configured: boolean;
+  session_binding_enabled: boolean;
+  step_up_enabled: boolean;
+  audit_log_retention_days: number;
+  login_agreement_enabled: boolean;
+  login_agreement_mode: string;
+  login_agreement_updated_at: string;
+  login_agreement_documents: LoginAgreementDocument[];
+  default_balance: number;
+  affiliate_rebate_rate: number;
+  affiliate_rebate_freeze_hours: number;
+  affiliate_rebate_duration_days: number;
+  affiliate_rebate_per_invitee_cap: number;
+  affiliate_admin_recharge_enabled: boolean;
+  default_concurrency: number;
+  default_subscriptions: DefaultSubscriptionSetting[];
+  default_user_rpm_limit: number;
+  site_name: string;
+  site_logo: string;
+  site_subtitle: string;
+  api_base_url: string;
+  contact_info: string;
+  doc_url: string;
+  home_content: string;
+  backend_mode_enabled: boolean;
+  hide_ccs_import_button: boolean;
+  payment_enabled: boolean;
+  risk_control_enabled: boolean;
+  cyber_session_block_enabled: boolean;
+  cyber_session_block_ttl_seconds: number;
+  payment_min_amount: number;
+  payment_max_amount: number;
+  payment_daily_limit: number;
+  payment_max_pending_orders: number;
+  payment_order_timeout_minutes: number;
+  payment_balance_disabled: boolean;
+  payment_balance_recharge_multiplier: number;
+  payment_subscription_usd_to_cny_rate: number;
+  payment_recharge_fee_rate: number;
+  payment_enabled_types: string[];
+  payment_help_image_url: string;
+  payment_help_text: string;
+  payment_product_name_prefix: string;
+  payment_product_name_suffix: string;
+  payment_load_balance_strategy: string;
+  payment_cancel_rate_limit_enabled: boolean;
+  payment_cancel_rate_limit_max: number;
+  payment_cancel_rate_limit_window: number;
+  payment_cancel_rate_limit_unit: string;
+  payment_cancel_rate_limit_window_mode: string;
+  payment_alipay_force_qrcode: boolean;
+  table_default_page_size: number;
+  table_page_size_options: number[];
+  custom_menu_items: Array<{
+    id: string;
+    label: string;
+    iconSvg: string;
+    url: string;
+    visibility: "user" | "admin";
+    sortOrder: number
+  }>;
+  custom_endpoints: Array<{ name: string; endpoint: string; description: string }>;
+  frontend_url: string;
+  smtp_host: string;
+  smtp_port: number;
+  smtp_username: string;
+  smtp_password_configured: boolean;
+  smtp_from_email: string;
+  smtp_from_name: string;
+  smtp_use_tls: boolean;
+  turnstile_enabled: boolean;
+  turnstile_site_key: string;
+  turnstile_secret_key_configured: boolean;
+  recaptcha_enabled: boolean;
+  recaptcha_site_key: string;
+  recaptcha_secret_key_configured: boolean;
+  cap_enabled: boolean;
+  cap_api_endpoint: string;
+  cap_secret_key_configured: boolean;
+  local_captcha_enabled: boolean;
+  api_key_acl_trust_forwarded_ip: boolean;
+  client_ip_resolution_mode: string;
+  client_ip_trusted_proxies: string[];
+  client_ip_resolution_status: {
+    mode: string;
+    custom_prefix_count: number;
+    static_prefix_count: number;
+    cloudflare_prefix_count: number;
+    cloudflare_ranges_source: string;
+    cloudflare_last_success_at: string | null;
+  };
+  linuxdo_connect_enabled: boolean;
+  linuxdo_connect_client_id: string;
+  linuxdo_connect_client_secret_configured: boolean;
+  linuxdo_connect_redirect_url: string;
+  dingtalk_connect_enabled: boolean;
+  dingtalk_connect_client_id: string;
+  dingtalk_connect_client_secret_configured: boolean;
+  dingtalk_connect_redirect_url: string;
+  dingtalk_connect_corp_restriction_policy: string;
+  dingtalk_connect_internal_corp_id: string;
+  dingtalk_connect_bypass_registration: boolean;
+  dingtalk_connect_sync_corp_email: boolean;
+  dingtalk_connect_sync_display_name: boolean;
+  dingtalk_connect_sync_dept: boolean;
+  dingtalk_connect_sync_corp_email_attr_key: string;
+  dingtalk_connect_sync_display_name_attr_key: string;
+  dingtalk_connect_sync_dept_attr_key: string;
+  dingtalk_connect_sync_corp_email_attr_name: string;
+  dingtalk_connect_sync_display_name_attr_name: string;
+  dingtalk_connect_sync_dept_attr_name: string;
+  wechat_connect_enabled: boolean;
+  wechat_connect_app_id: string;
+  wechat_connect_app_secret_configured: boolean;
+  wechat_connect_open_app_id: string;
+  wechat_connect_open_app_secret_configured: boolean;
+  wechat_connect_mp_app_id: string;
+  wechat_connect_mp_app_secret_configured: boolean;
+  wechat_connect_mobile_app_id: string;
+  wechat_connect_mobile_app_secret_configured: boolean;
+  wechat_connect_mode: string;
+  wechat_connect_scopes: string;
+  wechat_connect_redirect_url: string;
+  wechat_connect_frontend_redirect_url: string;
+  oidc_connect_enabled: boolean;
+  oidc_connect_provider_name: string;
+  oidc_connect_client_id: string;
+  oidc_connect_client_secret_configured: boolean;
+  oidc_connect_issuer_url: string;
+  oidc_connect_discovery_url: string;
+  oidc_connect_authorize_url: string;
+  oidc_connect_token_url: string;
+  oidc_connect_userinfo_url: string;
+  oidc_connect_jwks_url: string;
+  oidc_connect_scopes: string;
+  oidc_connect_redirect_url: string;
+  oidc_connect_frontend_redirect_url: string;
+  oidc_connect_token_auth_method: string;
+  oidc_connect_use_pkce: boolean;
+  oidc_connect_validate_id_token: boolean;
+  oidc_connect_allowed_signing_algs: string;
+  oidc_connect_clock_skew_seconds: number;
+  oidc_connect_require_email_verified: boolean;
+  oidc_connect_userinfo_email_path: string;
+  oidc_connect_userinfo_id_path: string;
+  oidc_connect_userinfo_username_path: string;
+  github_oauth_enabled: boolean;
+  github_oauth_client_id: string;
+  github_oauth_client_secret_configured: boolean;
+  github_oauth_redirect_url: string;
+  github_oauth_frontend_redirect_url: string;
+  google_oauth_enabled: boolean;
+  google_oauth_client_id: string;
+  google_oauth_client_secret_configured: boolean;
+  google_oauth_redirect_url: string;
+  google_oauth_frontend_redirect_url: string;
+  enable_model_fallback: boolean;
+  fallback_model_anthropic: string;
+  fallback_model_openai: string;
+  fallback_model_gemini: string;
+  fallback_model_antigravity: string;
+  enable_identity_patch: boolean;
+  identity_patch_prompt: string;
+  ops_monitoring_enabled: boolean;
+  ops_realtime_monitoring_enabled: boolean;
+  ops_query_mode_default: string;
+  ops_metrics_interval_seconds: number;
+  min_claude_code_version: string;
+  max_claude_code_version: string;
+  allow_ungrouped_key_scheduling: boolean;
+  stream_mode_performance_enabled: boolean;
+  enable_fingerprint_unification: boolean;
+  enable_metadata_passthrough: boolean;
+  enable_cch_signing: boolean;
+  enable_claude_oauth_system_prompt_injection: boolean;
+  claude_oauth_system_prompt: string;
+  claude_oauth_system_prompt_blocks: string;
+  enable_anthropic_cache_ttl_1h_injection: boolean;
+  rewrite_message_cache_control: boolean;
+  enable_client_dateline_normalization: boolean;
+  antigravity_user_agent_version: string;
+  openai_codex_user_agent: string;
+  min_codex_version: string;
+  max_codex_version: string;
+  codex_cli_only_blacklist: string;
+  codex_cli_only_whitelist: string;
+  codex_cli_only_allow_app_server_clients: boolean;
+  codex_cli_only_engine_fingerprint_signals: string;
+  balance_low_notify_enabled: boolean;
+  balance_low_notify_threshold: number;
+  balance_low_notify_recharge_url: string;
+  subscription_expiry_notify_enabled: boolean;
+  account_quota_notify_enabled: boolean;
+  account_quota_notify_emails: NotifyEmailEntry[];
+  channel_monitor_enabled: boolean;
+  channel_monitor_default_interval_seconds: number;
+  available_channels_enabled: boolean;
+  affiliate_enabled: boolean;
+  allow_user_view_error_requests: boolean;
+  allow_user_view_usage_details: boolean;
 };
 
 type HumanVerificationEnabledKey =
-  | "turnstile_enabled"
-  | "recaptcha_enabled"
-  | "cap_enabled"
-  | "local_captcha_enabled";
+    | "turnstileEnabled"
+    | "recaptchaEnabled"
+    | "capEnabled"
+    | "localCaptchaEnabled";
 
 const humanVerificationProviders: Array<{
   key: HumanVerificationEnabledKey;
@@ -8772,22 +9134,22 @@ const humanVerificationProviders: Array<{
   hint: string;
 }> = [
   {
-    key: "turnstile_enabled",
+    key: "turnstileEnabled",
     label: "admin.settings.turnstile.enableTurnstile",
     hint: "admin.settings.turnstile.enableTurnstileHint",
   },
   {
-    key: "recaptcha_enabled",
+    key: "recaptchaEnabled",
     label: "admin.settings.turnstile.enableRecaptcha",
     hint: "admin.settings.turnstile.enableRecaptchaHint",
   },
   {
-    key: "cap_enabled",
+    key: "capEnabled",
     label: "admin.settings.turnstile.enableCap",
     hint: "admin.settings.turnstile.enableCapHint",
   },
   {
-    key: "local_captcha_enabled",
+    key: "localCaptchaEnabled",
     label: "admin.settings.turnstile.enableLocalCaptcha",
     hint: "admin.settings.turnstile.enableLocalCaptchaHint",
   },
@@ -8809,7 +9171,7 @@ const clientIPResolutionModeOptions = computed(() => [
 ]);
 
 const clientIPLastRefreshText = computed(() => {
-  const raw = form.client_ip_resolution_status.cloudflare_last_success_at;
+  const raw = form.clientIpResolutionStatus.cloudflareLastSuccessAt;
   if (!raw) return "";
   const value = new Date(raw);
   return Number.isNaN(value.getTime()) ? raw : value.toLocaleString();
@@ -8817,18 +9179,18 @@ const clientIPLastRefreshText = computed(() => {
 
 function parseClientIPTrustedProxies(value: string): string[] {
   return Array.from(
-    new Set(
-      value
-        .split(/[\n,]/)
-        .map((item) => item.trim())
-        .filter(Boolean),
-    ),
+      new Set(
+          value
+              .split(/[\n,]/)
+              .map((item) => item.trim())
+              .filter(Boolean),
+      ),
   );
 }
 
 function setHumanVerificationProvider(
-  provider: HumanVerificationEnabledKey,
-  enabled: boolean,
+    provider: HumanVerificationEnabledKey,
+    enabled: boolean,
 ): void {
   for (const option of humanVerificationProviders) {
     form[option.key] = enabled && option.key === provider;
@@ -8840,12 +9202,18 @@ function normalizeHumanVerificationProvider(): void {
   if (selected) setHumanVerificationProvider(selected.key, true);
 }
 
-const form = reactive<SettingsForm>({
-  registration_enabled: true,
-  email_verify_enabled: false,
-  registration_email_suffix_whitelist: [],
-  promo_code_enabled: true,
-  invitation_code_enabled: false,
+// 表单初始值同时携带 camelCase（SystemSettings 主字段，用于模板 v-model 强类型）与
+// snake_case（历史后端载荷键，saveSettings 直接透传）。基础 shape 用 new SystemSettings()
+// 提供已声明字段的强类型（对应 !: 定义），并叠加显式 camelCase 默认与 snake_case 兼容键。
+// loadSettings 中的 Object.assign(form, settings) 会用后端载荷覆盖运行时值。
+// 不显式标注 initialFormOverrides 的类型，让 TS 从 literal 推断具体 shape（用于合并后满足
+// SettingsForm 的 snake_case required 属性）。
+const initialFormOverrides = ({
+  registrationEnabled: true,
+  emailVerifyEnabled: false,
+  registrationEmailSuffixWhitelist: [],
+  promoCodeEnabled: true,
+  invitationCodeEnabled: false,
   password_reset_enabled: false,
   totp_enabled: false,
   totp_encryption_key_configured: false,
@@ -9110,46 +9478,49 @@ const form = reactive<SettingsForm>({
   // Allow user view usage details
   allow_user_view_usage_details: false,
 });
+// SystemSettings class 的 `!:` 声明使得 TS 认为字段已被初始化。运行时字段值由 loadSettings
+// 通过 Object.assign(form, settings) 补齐；此处仅提供 shape 满足 TS 的 required 约束。
+const form = reactive<SettingsForm>(Object.assign(new SystemSettings(), initialFormOverrides));
 
 type OpenAIAdvancedSchedulerOverrideKey =
-  | "openai_advanced_scheduler_lb_top_k"
-  | "openai_advanced_scheduler_weight_priority"
-  | "openai_advanced_scheduler_weight_load"
-  | "openai_advanced_scheduler_weight_queue"
-  | "openai_advanced_scheduler_weight_error_rate"
-  | "openai_advanced_scheduler_weight_ttft"
-  | "openai_advanced_scheduler_weight_reset"
-  | "openai_advanced_scheduler_weight_quota_headroom"
-  | "openai_advanced_scheduler_weight_upstream_cost"
-  | "openai_advanced_scheduler_weight_previous_response"
-  | "openai_advanced_scheduler_weight_session_sticky";
+    | "openai_advanced_scheduler_lb_top_k"
+    | "openai_advanced_scheduler_weight_priority"
+    | "openai_advanced_scheduler_weight_load"
+    | "openai_advanced_scheduler_weight_queue"
+    | "openai_advanced_scheduler_weight_error_rate"
+    | "openai_advanced_scheduler_weight_ttft"
+    | "openai_advanced_scheduler_weight_reset"
+    | "openai_advanced_scheduler_weight_quota_headroom"
+    | "openai_advanced_scheduler_weight_upstream_cost"
+    | "openai_advanced_scheduler_weight_previous_response"
+    | "openai_advanced_scheduler_weight_session_sticky";
 
 type OpenAIAdvancedSchedulerEffectiveKey =
-  | "openai_advanced_scheduler_effective_lb_top_k"
-  | "openai_advanced_scheduler_effective_weight_priority"
-  | "openai_advanced_scheduler_effective_weight_load"
-  | "openai_advanced_scheduler_effective_weight_queue"
-  | "openai_advanced_scheduler_effective_weight_error_rate"
-  | "openai_advanced_scheduler_effective_weight_ttft"
-  | "openai_advanced_scheduler_effective_weight_reset"
-  | "openai_advanced_scheduler_effective_weight_quota_headroom"
-  | "openai_advanced_scheduler_effective_weight_upstream_cost"
-  | "openai_advanced_scheduler_effective_weight_previous_response"
-  | "openai_advanced_scheduler_effective_weight_session_sticky";
+    | "openai_advanced_scheduler_effective_lb_top_k"
+    | "openai_advanced_scheduler_effective_weight_priority"
+    | "openai_advanced_scheduler_effective_weight_load"
+    | "openai_advanced_scheduler_effective_weight_queue"
+    | "openai_advanced_scheduler_effective_weight_error_rate"
+    | "openai_advanced_scheduler_effective_weight_ttft"
+    | "openai_advanced_scheduler_effective_weight_reset"
+    | "openai_advanced_scheduler_effective_weight_quota_headroom"
+    | "openai_advanced_scheduler_effective_weight_upstream_cost"
+    | "openai_advanced_scheduler_effective_weight_previous_response"
+    | "openai_advanced_scheduler_effective_weight_session_sticky";
 
 const openAIAdvancedSchedulerWeightFields = computed<
-  Array<{
-    key: OpenAIAdvancedSchedulerOverrideKey;
-    label: string;
-    placeholder: string;
-  }>
+    Array<{
+      key: OpenAIAdvancedSchedulerOverrideKey;
+      label: string;
+      placeholder: string;
+    }>
 >(() => {
   const placeholder = (
-    effectiveKey: OpenAIAdvancedSchedulerEffectiveKey,
-    fallbackValue: string,
+      effectiveKey: OpenAIAdvancedSchedulerEffectiveKey,
+      fallbackValue: string,
   ) => {
     const effectiveValue = String(
-      (form as Record<string, unknown>)[effectiveKey] ?? "",
+        (form as Record<string, unknown>)[effectiveKey] ?? "",
     ).trim();
     return t("admin.settings.openaiExperimentalScheduler.defaultPlaceholder", {
       value: effectiveValue || fallbackValue,
@@ -9243,7 +9614,7 @@ const schedulerV2StatusClass = computed(() => {
 });
 
 const authSourceDefaults = reactive<AuthSourceDefaultsState>(
-  buildAuthSourceDefaultsState({}),
+    buildAuthSourceDefaultsState({}),
 );
 
 const authSourceDefaultsMeta = computed(() => [
@@ -9271,24 +9642,24 @@ const authSourceDefaultsMeta = computed(() => [
     source: "github" as AuthSourceType,
     title: "GitHub",
     description: localText(
-      "通过 GitHub 已验证邮箱首次注册或首次绑定时应用。",
-      "Applied on first signup or first bind through a verified GitHub email.",
+        "通过 GitHub 已验证邮箱首次注册或首次绑定时应用。",
+        "Applied on first signup or first bind through a verified GitHub email.",
     ),
   },
   {
     source: "google" as AuthSourceType,
     title: "Google",
     description: localText(
-      "通过 Google 已验证邮箱首次注册或首次绑定时应用。",
-      "Applied on first signup or first bind through a verified Google email.",
+        "通过 Google 已验证邮箱首次注册或首次绑定时应用。",
+        "Applied on first signup or first bind through a verified Google email.",
     ),
   },
   {
     source: "dingtalk" as AuthSourceType,
     title: t("auth.dingtalkProviderName"),
     description: localText(
-      "通过钉钉首次注册或首次绑定时应用。",
-      "Applied on first signup or first bind through DingTalk.",
+        "通过钉钉首次注册或首次绑定时应用。",
+        "Applied on first signup or first bind through DingTalk.",
     ),
   },
 ]);
@@ -9331,7 +9702,7 @@ function removeWebSearchProvider(idx: number) {
     newVisible[i] = apiKeyVisible[oldIdx] ?? false;
   }
   Object.keys(expandedProviders).forEach(
-    (k) => delete expandedProviders[Number(k)],
+      (k) => delete expandedProviders[Number(k)],
   );
   Object.keys(apiKeyVisible).forEach((k) => delete apiKeyVisible[Number(k)]);
   Object.assign(expandedProviders, newExpanded);
@@ -9340,15 +9711,16 @@ function removeWebSearchProvider(idx: number) {
 
 function addWebSearchProvider() {
   const idx = webSearchConfig.providers.length;
-  webSearchConfig.providers.push({
+  const provider: WebSearchProviderConfig = {
     type: "brave",
-    api_key: "",
-    api_key_configured: false,
-    quota_limit: DEFAULT_WEB_SEARCH_QUOTA_LIMIT,
-    subscribed_at: null,
-    proxy_id: null,
-    expires_at: null,
-  } as WebSearchProviderConfig);
+    apiKey: "",
+    apiKeyConfigured: false,
+    quotaLimit: DEFAULT_WEB_SEARCH_QUOTA_LIMIT,
+    subscribedAt: null,
+    proxyId: null,
+    expiresAt: null,
+  };
+  webSearchConfig.providers.push(provider);
   expandedProviders[idx] = true;
 }
 
@@ -9369,8 +9741,8 @@ function parseSubscribedAt(dateStr: string): number | null {
 }
 
 function quotaPercentage(provider: WebSearchProviderConfig): number {
-  if (!provider.quota_limit || provider.quota_limit <= 0) return 0;
-  return ((provider.quota_used ?? 0) / provider.quota_limit) * 100;
+  if (!provider.quotaLimit || provider.quotaLimit <= 0) return 0;
+  return ((provider.quotaUsed ?? 0) / provider.quotaLimit) * 100;
 }
 
 async function resetWebSearchUsage(idx: number) {
@@ -9379,12 +9751,10 @@ async function resetWebSearchUsage(idx: number) {
   if (!confirm(t("admin.settings.webSearchEmulation.resetUsageConfirm")))
     return;
   try {
-    await $settings.resetWebSearchUsage({
-      provider_type: provider.type,
-    });
-    provider.quota_used = 0;
+    await $settings.resetWebSearchUsage(provider.type);
+    provider.quotaUsed = 0;
     appStore.showSuccess(
-      t("admin.settings.webSearchEmulation.resetUsageSuccess"),
+        t("admin.settings.webSearchEmulation.resetUsageSuccess"),
     );
   } catch (err: unknown) {
     appStore.showError(extractApiErrorMessage(err, t("common.error")));
@@ -9392,10 +9762,10 @@ async function resetWebSearchUsage(idx: number) {
 }
 
 async function copyApiKey(idx: number) {
-  const key = webSearchConfig.providers[idx]?.api_key;
+  const key = webSearchConfig.providers[idx]?.apiKey;
   if (!key) {
     appStore.showError(
-      t("admin.settings.webSearchEmulation.apiKeyPlaceholder"),
+        t("admin.settings.webSearchEmulation.apiKeyPlaceholder"),
     );
     return;
   }
@@ -9407,14 +9777,21 @@ async function copyApiKey(idx: number) {
   }
 }
 
+function isWebSearchTestResult(v: unknown): v is WebSearchTestResult {
+  if (!v || typeof v !== "object") return false;
+  const obj = v as { provider?: unknown; results?: unknown };
+  return typeof obj.provider === "string" && Array.isArray(obj.results);
+}
+
 async function testWebSearchProvider() {
   wsTestLoading.value = true;
   wsTestResult.value = null;
   try {
     const query =
-      wsTestQuery.value.trim() ||
-      t("admin.settings.webSearchEmulation.testDefaultQuery");
-    wsTestResult.value = await $settings.testWebSearchEmulation(query);
+        wsTestQuery.value.trim() ||
+        t("admin.settings.webSearchEmulation.testDefaultQuery");
+    const raw = await $settings.testWebSearchEmulation(query);
+    wsTestResult.value = isWebSearchTestResult(raw) ? raw : null;
   } catch (err: unknown) {
     appStore.showError(extractApiErrorMessage(err, t("common.error")));
   } finally {
@@ -9426,7 +9803,7 @@ async function loadWebSearchConfig() {
   try {
     const [resp, proxiesResp] = await Promise.all([
       $settings.getWebSearchEmulationConfig(),
-      $proxies.list().catch(() => ({ items: [] as Proxy[] })),
+      $proxies.list().catch(() => ({items: [] as Proxy[]})),
     ]);
     if (resp) {
       webSearchConfig.enabled = resp.enabled || false;
@@ -9445,19 +9822,19 @@ async function loadWebSearchConfig() {
 async function saveWebSearchConfig(): Promise<boolean> {
   try {
     for (const p of webSearchConfig.providers) {
-      const raw = p.quota_limit;
+      const raw = p.quotaLimit;
       if (raw != null && Number(raw) !== 0 && Number(raw) < 1) {
         appStore.showError(
-          t("admin.settings.webSearchEmulation.quotaLimitMustBePositive"),
+            t("admin.settings.webSearchEmulation.quotaLimitMustBePositive"),
         );
         return false;
       }
     }
     const providers = webSearchConfig.providers.map(
-      (p: WebSearchProviderConfig) => ({
-        ...p,
-        quota_limit: Number(p.quota_limit) > 0 ? Number(p.quota_limit) : null,
-      }),
+        (p: WebSearchProviderConfig) => ({
+          ...p,
+          quota_limit: Number(p.quotaLimit) > 0 ? Number(p.quotaLimit) : null,
+        }),
     );
     await $settings.updateWebSearchEmulationConfig({
       enabled: webSearchConfig.enabled,
@@ -9471,16 +9848,16 @@ async function saveWebSearchConfig(): Promise<boolean> {
 }
 
 const defaultSubscriptionGroupOptions = computed<
-  DefaultSubscriptionGroupOption[]
+    DefaultSubscriptionGroupOption[]
 >(() =>
-  subscriptionGroups.value.map((group: any) => ({
-    value: group.id,
-    label: group.name,
-    description: group.description,
-    platform: group.platform,
-    subscriptionType: group.subscriptionType,
-    rate: group.rateMultiplier,
-  })),
+    subscriptionGroups.value.map((group: any) => ({
+      value: group.id,
+      label: group.name,
+      description: group.description,
+      platform: group.platform,
+      subscriptionType: group.subscriptionType,
+      rate: group.rateMultiplier,
+    })),
 );
 
 const registrationEmailSuffixWhitelistSeparatorKeys = new Set([
@@ -9493,16 +9870,16 @@ const registrationEmailSuffixWhitelistSeparatorKeys = new Set([
 
 function removeRegistrationEmailSuffixWhitelistTag(suffix: string) {
   registrationEmailSuffixWhitelistTags.value =
-    registrationEmailSuffixWhitelistTags.value.filter(
-      (item) => item !== suffix,
-    );
+      registrationEmailSuffixWhitelistTags.value.filter(
+          (item) => item !== suffix,
+      );
 }
 
 function addRegistrationEmailSuffixWhitelistTag(raw: string) {
   const suffix = normalizeRegistrationEmailSuffixDomain(raw);
   if (
-    !isRegistrationEmailSuffixDomainValid(suffix) ||
-    registrationEmailSuffixWhitelistTags.value.includes(suffix)
+      !isRegistrationEmailSuffixDomainValid(suffix) ||
+      registrationEmailSuffixWhitelistTags.value.includes(suffix)
   ) {
     return;
   }
@@ -9517,20 +9894,20 @@ function commitRegistrationEmailSuffixWhitelistDraft() {
     return;
   }
   addRegistrationEmailSuffixWhitelistTag(
-    registrationEmailSuffixWhitelistDraft.value,
+      registrationEmailSuffixWhitelistDraft.value,
   );
   registrationEmailSuffixWhitelistDraft.value = "";
 }
 
 function handleRegistrationEmailSuffixWhitelistDraftInput() {
   registrationEmailSuffixWhitelistDraft.value =
-    normalizeRegistrationEmailSuffixDomain(
-      registrationEmailSuffixWhitelistDraft.value,
-    );
+      normalizeRegistrationEmailSuffixDomain(
+          registrationEmailSuffixWhitelistDraft.value,
+      );
 }
 
 function handleRegistrationEmailSuffixWhitelistDraftKeydown(
-  event: KeyboardEvent,
+    event: KeyboardEvent,
 ) {
   if (event.isComposing) {
     return;
@@ -9543,9 +9920,9 @@ function handleRegistrationEmailSuffixWhitelistDraftKeydown(
   }
 
   if (
-    event.key === "Backspace" &&
-    !registrationEmailSuffixWhitelistDraft.value &&
-    registrationEmailSuffixWhitelistTags.value.length > 0
+      event.key === "Backspace" &&
+      !registrationEmailSuffixWhitelistDraft.value &&
+      registrationEmailSuffixWhitelistTags.value.length > 0
   ) {
     registrationEmailSuffixWhitelistTags.value.pop();
   }
@@ -9565,10 +9942,10 @@ function handleRegistrationEmailSuffixWhitelistPaste(event: ClipboardEvent) {
 
 // Quota notify email helpers
 const addQuotaNotifyEmail = () => {
-  if (!form.account_quota_notify_emails) {
-    form.account_quota_notify_emails = [];
+  if (!form.accountQuotaNotifyEmails) {
+    form.accountQuotaNotifyEmails = [];
   }
-  form.account_quota_notify_emails.push({
+  form.accountQuotaNotifyEmails.push({
     email: "",
     disabled: false,
     verified: true,
@@ -9576,10 +9953,10 @@ const addQuotaNotifyEmail = () => {
 };
 
 const currentOrigin =
-  typeof window !== "undefined" ? window.location.origin : "";
+    typeof window !== "undefined" ? window.location.origin : "";
 
 function buildApiCallbackUrl(path: string): string {
-  const base = (form.api_base_url || currentOrigin).replace(/\/+$/, "");
+  const base = (form.apiBaseUrl || currentOrigin).replace(/\/+$/, "");
   const apiRoot = base.endsWith("/api/v1") ? base : `${base}/api/v1`;
   return `${apiRoot}${path.startsWith("/") ? path : `/${path}`}`;
 }
@@ -9593,10 +9970,10 @@ async function setAndCopyLinuxdoRedirectUrl() {
   const url = linuxdoRedirectUrlSuggestion.value;
   if (!url) return;
 
-  form.linuxdo_connect_redirect_url = url;
+  form.linuxdoConnectRedirectUrl = url;
   await copyToClipboard(
-    url,
-    t("admin.settings.linuxdo.redirectUrlSetAndCopied"),
+      url,
+      t("admin.settings.linuxdo.redirectUrlSetAndCopied"),
   );
 }
 
@@ -9612,19 +9989,19 @@ const googleOAuthRedirectUrlSuggestion = computed(() => {
 
 async function setAndCopyEmailOAuthRedirectUrl(provider: EmailOAuthProvider) {
   const url =
-    provider === "github"
-      ? githubOAuthRedirectUrlSuggestion.value
-      : googleOAuthRedirectUrlSuggestion.value;
+      provider === "github"
+          ? githubOAuthRedirectUrlSuggestion.value
+          : googleOAuthRedirectUrlSuggestion.value;
   if (!url) return;
 
   if (provider === "github") {
-    form.github_oauth_redirect_url = url;
+    form.githubOauthRedirectUrl = url;
   } else {
-    form.google_oauth_redirect_url = url;
+    form.googleOauthRedirectUrl = url;
   }
   await copyToClipboard(
-    url,
-    localText("回调地址已写入并复制。", "Callback URL set and copied."),
+      url,
+      localText("回调地址已写入并复制。", "Callback URL set and copied."),
   );
 }
 
@@ -9642,22 +10019,22 @@ function syncWeChatConnectMode(preferredMode?: WeChatConnectMode) {
   }
 
   const capabilities = resolveWeChatConnectModeCapabilities(
-    form.wechat_connect_open_enabled,
-    form.wechat_connect_mp_enabled,
-    form.wechat_connect_mobile_enabled,
-    form.wechat_connect_mode,
+      form.wechat_connect_open_enabled,
+      form.wechat_connect_mp_enabled,
+      form.wechat_connect_mobile_enabled,
+      form.wechatConnectMode,
   );
   form.wechat_connect_open_enabled = capabilities.openEnabled;
   form.wechat_connect_mp_enabled = capabilities.mpEnabled;
   form.wechat_connect_mobile_enabled = capabilities.mobileEnabled;
-  form.wechat_connect_mode = deriveWeChatConnectStoredMode(
-    capabilities.openEnabled,
-    capabilities.mpEnabled,
-    capabilities.mobileEnabled,
-    form.wechat_connect_mode,
+  form.wechatConnectMode = deriveWeChatConnectStoredMode(
+      capabilities.openEnabled,
+      capabilities.mpEnabled,
+      capabilities.mobileEnabled,
+      form.wechatConnectMode,
   );
-  form.wechat_connect_scopes = defaultWeChatConnectScopesForMode(
-    form.wechat_connect_mode,
+  form.wechatConnectScopes = defaultWeChatConnectScopesForMode(
+      form.wechatConnectMode,
   );
 }
 
@@ -9686,10 +10063,10 @@ async function setAndCopyWeChatRedirectUrl() {
   const url = wechatRedirectUrlSuggestion.value;
   if (!url) return;
 
-  form.wechat_connect_redirect_url = url;
+  form.wechatConnectRedirectUrl = url;
   await copyToClipboard(
-    url,
-    t("admin.settings.wechatConnect.redirectUrlSetAndCopied"),
+      url,
+      t("admin.settings.wechatConnect.redirectUrlSetAndCopied"),
   );
 }
 
@@ -9701,34 +10078,34 @@ async function setAndCopyOIDCRedirectUrl() {
   const url = oidcRedirectUrlSuggestion.value;
   if (!url) return;
 
-  form.oidc_connect_redirect_url = url;
+  form.oidcConnectRedirectUrl = url;
   await copyToClipboard(url, t("admin.settings.oidc.redirectUrlSetAndCopied"));
 }
 
 // Custom menu item management
 function addMenuItem() {
-  form.custom_menu_items.push({
+  form.customMenuItems.push({
     id: "",
     label: "",
     iconSvg: "",
     url: "",
     visibility: "user",
-    sortOrder: form.custom_menu_items.length,
+    sortOrder: form.customMenuItems.length,
   });
 }
 
 function removeMenuItem(index: number) {
-  form.custom_menu_items.splice(index, 1);
+  form.customMenuItems.splice(index, 1);
   // Re-index sort_order
-  form.custom_menu_items.forEach((item, i) => {
+  form.customMenuItems.forEach((item, i) => {
     item.sortOrder = i;
   });
 }
 
 function moveMenuItem(index: number, direction: -1 | 1) {
   const targetIndex = index + direction;
-  if (targetIndex < 0 || targetIndex >= form.custom_menu_items.length) return;
-  const items = form.custom_menu_items;
+  if (targetIndex < 0 || targetIndex >= form.customMenuItems.length) return;
+  const items = form.customMenuItems;
   const temp = items[index];
   items[index] = items[targetIndex];
   items[targetIndex] = temp;
@@ -9740,15 +10117,15 @@ function moveMenuItem(index: number, direction: -1 | 1) {
 
 // Custom endpoint management
 function addEndpoint() {
-  form.custom_endpoints.push({ name: "", endpoint: "", description: "" });
+  form.customEndpoints.push({name: "", endpoint: "", description: ""});
 }
 
 function removeEndpoint(index: number) {
-  form.custom_endpoints.splice(index, 1);
+  form.customEndpoints.splice(index, 1);
 }
 
 function addLoginAgreementDocument() {
-  form.login_agreement_documents.push({
+  form.loginAgreementDocuments.push({
     id: `custom-${Date.now().toString(36)}`,
     title: "",
     contentMd: "",
@@ -9756,23 +10133,23 @@ function addLoginAgreementDocument() {
 }
 
 function removeLoginAgreementDocument(index: number) {
-  form.login_agreement_documents.splice(index, 1);
+  form.loginAgreementDocuments.splice(index, 1);
 }
 
 function normalizeLoginAgreementDocumentsForSave(): LoginAgreementDocument[] {
-  return form.login_agreement_documents
-    .map((doc, index) => ({
-      id:
-        normalizeLoginAgreementDocumentId(doc.id || doc.title) ||
-        `doc-${index + 1}`,
-      title: doc.title.trim(),
-      contentMd: doc.contentMd.trim(),
-    }))
-    .filter((doc: any) => doc.title || doc.contentMd);
+  return form.loginAgreementDocuments
+      .map((doc, index) => ({
+        id:
+            normalizeLoginAgreementDocumentId(doc.id || doc.title) ||
+            `doc-${index + 1}`,
+        title: doc.title.trim(),
+        contentMd: doc.contentMd.trim(),
+      }))
+      .filter((doc: any) => doc.title || doc.contentMd);
 }
 
 function findDuplicateLoginAgreementDocumentId(
-  documents: LoginAgreementDocument[],
+    documents: LoginAgreementDocument[],
 ): string | null {
   const seen = new Set<string>();
   for (const doc of documents) {
@@ -9790,9 +10167,9 @@ function formatTablePageSizeOptions(options: number[]): string {
 
 function parseTablePageSizeOptionsInput(raw: string): number[] | null {
   const tokens = raw
-    .split(",")
-    .map((token) => token.trim())
-    .filter((token) => token.length > 0);
+      .split(",")
+      .map((token) => token.trim())
+      .filter((token) => token.length > 0);
 
   if (tokens.length === 0) {
     return null;
@@ -9805,9 +10182,9 @@ function parseTablePageSizeOptionsInput(raw: string): number[] | null {
 
   const deduped = Array.from(new Set(parsed)).sort((a, b) => a - b);
   if (
-    deduped.some(
-      (value) => value < tablePageSizeMin || value > tablePageSizeMax,
-    )
+      deduped.some(
+          (value) => value < tablePageSizeMin || value > tablePageSizeMax,
+      )
   ) {
     return null;
   }
@@ -9821,15 +10198,18 @@ interface CodexClientRow {
   uaContains: string; // 逗号分隔，序列化时拆成 ua_contains 数组
   skipEngineFingerprint?: boolean; // 仅白名单：命中即跳过引擎指纹门
 }
+
 const codexBlacklistRows = ref<CodexClientRow[]>([]);
 const codexWhitelistRows = ref<CodexClientRow[]>([]);
 const codexFingerprintRows = ref<FingerprintSignalRow[]>([]);
 const codexFingerprintNoRequired = computed(
-  () => !codexFingerprintRows.value.some((r: any) => r.required),
+    () => !codexFingerprintRows.value.some((r: any) => r.required),
 );
+
 function addCodexFingerprintRow(): void {
-  codexFingerprintRows.value.push({ type: "header_exact", match: "", required: false });
+  codexFingerprintRows.value.push({type: "header_exact", match: "", required: false});
 }
+
 function removeCodexFingerprintRow(i: number): void {
   codexFingerprintRows.value.splice(i, 1);
 }
@@ -9842,10 +10222,10 @@ function parseCodexEntriesToRows(raw: string): CodexClientRow[] {
     return arr.map((e) => ({
       originator: typeof e?.originator === "string" ? e.originator : "",
       uaContains: Array.isArray(e?.ua_contains)
-        ? e.ua_contains
-            .filter((x: unknown) => typeof x === "string")
-            .join(", ")
-        : "",
+          ? e.ua_contains
+              .filter((x: unknown) => typeof x === "string")
+              .join(", ")
+          : "",
       skipEngineFingerprint: e?.skip_engine_fingerprint === true,
     }));
   } catch {
@@ -9855,31 +10235,33 @@ function parseCodexEntriesToRows(raw: string): CodexClientRow[] {
 
 function serializeCodexRowsToJSON(rows: CodexClientRow[]): string {
   const entries = rows
-    .map((r: any) => {
-      const entry: {
-        originator: string;
-        ua_contains: string[];
-        skip_engine_fingerprint?: boolean;
-      } = {
-        originator: r.originator.trim(),
-        ua_contains: r.uaContains
-          .split(",")
-          .map((s: any) => (s as any).trim())
-          .filter((s: any) => (s as any).length > 0),
-      };
-      if (r.skipEngineFingerprint) entry.skip_engine_fingerprint = true;
-      return entry;
-    })
-    .filter((e) => e.originator !== "" || e.ua_contains.length > 0);
+      .map((r: any) => {
+        const entry: {
+          originator: string;
+          ua_contains: string[];
+          skip_engine_fingerprint?: boolean;
+        } = {
+          originator: r.originator.trim(),
+          ua_contains: r.uaContains
+              .split(",")
+              .map((s: string) => s.trim())
+              .filter((s: string) => s.length > 0),
+        };
+        if (r.skipEngineFingerprint) entry.skip_engine_fingerprint = true;
+        return entry;
+      })
+      .filter((e) => e.originator !== "" || e.ua_contains.length > 0);
   return entries.length > 0 ? JSON.stringify(entries) : "";
 }
 
 function addCodexBlacklistRow(): void {
-  codexBlacklistRows.value.push({ originator: "", uaContains: "" });
+  codexBlacklistRows.value.push({originator: "", uaContains: ""});
 }
+
 function removeCodexBlacklistRow(i: number): void {
   codexBlacklistRows.value.splice(i, 1);
 }
+
 function addCodexWhitelistRow(): void {
   codexWhitelistRows.value.push({
     originator: "",
@@ -9887,6 +10269,7 @@ function addCodexWhitelistRow(): void {
     skipEngineFingerprint: false,
   });
 }
+
 function removeCodexWhitelistRow(i: number): void {
   codexWhitelistRows.value.splice(i, 1);
 }
@@ -9896,8 +10279,8 @@ async function loadSettings() {
   loadFailed.value = false;
   try {
     const settings = await $settings.getSettings();
-    settings.payment_load_balance_strategy =
-      settings.payment_load_balance_strategy || "round-robin";
+    settings.paymentLoadBalanceStrategy =
+        settings.paymentLoadBalanceStrategy || "round-robin";
     // Only assign non-null values from backend (null means unconfigured, keep defaults)
     for (const [key, value] of Object.entries(settings)) {
       if (value !== null && value !== undefined) {
@@ -9906,53 +10289,53 @@ async function loadSettings() {
     }
     normalizeHumanVerificationProvider();
     clientIPTrustedProxiesText.value = (
-      settings.client_ip_trusted_proxies || []
+        settings.clientIpTrustedProxies || []
     ).join("\n");
-    if (!form.claude_oauth_system_prompt_blocks?.trim()) {
-      form.claude_oauth_system_prompt_blocks =
-        defaultClaudeOAuthSystemPromptBlocks;
+    if (!form.claudeOauthSystemPromptBlocks?.trim()) {
+      form.claudeOauthSystemPromptBlocks =
+          defaultClaudeOAuthSystemPromptBlocks;
     }
     claudeOAuthSystemPromptBlocks.value = parseClaudeOAuthSystemPromptBlocks(
-      form.claude_oauth_system_prompt_blocks,
-      form.claude_oauth_system_prompt,
+        form.claudeOauthSystemPromptBlocks,
+        form.claudeOauthSystemPrompt,
     );
     syncClaudeOAuthSystemPromptBlocksFormField();
     codexBlacklistRows.value = parseCodexEntriesToRows(
-      form.codex_cli_only_blacklist,
+        form.codexCliOnlyBlacklist,
     );
     codexWhitelistRows.value = parseCodexEntriesToRows(
-      form.codex_cli_only_whitelist,
+        form.codexCliOnlyWhitelist,
     );
-    codexFingerprintRows.value = form.codex_cli_only_engine_fingerprint_signals
-      ? parseFingerprintSignalsToRows(form.codex_cli_only_engine_fingerprint_signals)
-      : defaultFingerprintSignalRows();
-    form.login_agreement_mode =
-      settings.login_agreement_mode === "checkbox" ? "checkbox" : "modal";
-    form.login_agreement_updated_at =
-      settings.login_agreement_updated_at || "2026-03-31";
-    form.login_agreement_documents =
-      Array.isArray(settings.login_agreement_documents) &&
-      settings.login_agreement_documents.length > 0
-        ? settings.login_agreement_documents.map((doc: any) => ({
-            id: doc.id || "",
-            title: doc.title || "",
-            contentMd: doc.contentMd || "",
-          }))
-        : defaultLoginAgreementDocuments();
-    Object.assign(authSourceDefaults, buildAuthSourceDefaultsState(settings));
-    form.default_platform_quotas = normalizePlatformQuotasMap(settings.default_platform_quotas);
-    form.backend_mode_enabled = settings.backend_mode_enabled;
-    form.default_subscriptions = normalizeDefaultSubscriptionSettings(
-      settings.default_subscriptions,
+    codexFingerprintRows.value = form.codexCliOnlyEngineFingerprintSignals
+        ? parseFingerprintSignalsToRows(form.codexCliOnlyEngineFingerprintSignals)
+        : defaultFingerprintSignalRows();
+    form.loginAgreementMode =
+        settings.loginAgreementMode === "checkbox" ? "checkbox" : "modal";
+    form.loginAgreementUpdatedAt =
+        settings.loginAgreementUpdatedAt || "2026-03-31";
+    form.loginAgreementDocuments =
+        Array.isArray(settings.loginAgreementDocuments) &&
+        settings.loginAgreementDocuments.length > 0
+            ? settings.loginAgreementDocuments.map((doc: any) => ({
+              id: doc.id || "",
+              title: doc.title || "",
+              contentMd: doc.contentMd || "",
+            }))
+            : defaultLoginAgreementDocuments();
+    Object.assign(authSourceDefaults, buildAuthSourceDefaultsState(toRecord(settings)));
+    form.default_platform_quotas = normalizePlatformQuotasMap(settings.defaultPlatformQuotas);
+    form.backendModeEnabled = settings.backendModeEnabled;
+    form.defaultSubscriptions = normalizeDefaultSubscriptionSettings(
+        toSubscriptionRequestList(settings.defaultSubscriptions),
     );
     registrationEmailSuffixWhitelistTags.value =
-      normalizeRegistrationEmailSuffixDomains(
-        settings.registration_email_suffix_whitelist,
-      );
+        normalizeRegistrationEmailSuffixDomains(
+            settings.registrationEmailSuffixWhitelist,
+        );
     tablePageSizeOptionsInput.value = formatTablePageSizeOptions(
-      Array.isArray(settings.table_page_size_options)
-        ? settings.table_page_size_options
-        : [10, 20, 50, 100],
+        Array.isArray(settings.tablePageSizeOptions)
+            ? settings.tablePageSizeOptions
+            : [10, 20, 50, 100],
     );
     registrationEmailSuffixWhitelistDraft.value = "";
     form.smtp_password = "";
@@ -9969,55 +10352,55 @@ async function loadSettings() {
     form.wechat_connect_mp_app_secret = "";
     form.wechat_connect_mobile_app_secret = "";
     const wechatCapabilities = resolveWeChatConnectModeCapabilities(
-      settings.wechat_connect_open_enabled,
-      settings.wechat_connect_mp_enabled,
-      settings.wechat_connect_mobile_enabled,
-      settings.wechat_connect_mode,
+        settings.wechatConnectOpenEnabled,
+        settings.wechatConnectMpEnabled,
+        settings.wechatConnectMobileEnabled,
+        settings.wechatConnectMode,
     );
     form.wechat_connect_open_enabled = wechatCapabilities.openEnabled;
     form.wechat_connect_mp_enabled = wechatCapabilities.mpEnabled;
     form.wechat_connect_mobile_enabled = wechatCapabilities.mobileEnabled;
-    form.wechat_connect_mode = deriveWeChatConnectStoredMode(
-      wechatCapabilities.openEnabled,
-      wechatCapabilities.mpEnabled,
-      wechatCapabilities.mobileEnabled,
-      settings.wechat_connect_mode,
+    form.wechatConnectMode = deriveWeChatConnectStoredMode(
+        wechatCapabilities.openEnabled,
+        wechatCapabilities.mpEnabled,
+        wechatCapabilities.mobileEnabled,
+        settings.wechatConnectMode,
     );
-    const legacyWeChatAppID = String(settings.wechat_connect_app_id || "").trim();
+    const legacyWeChatAppID = String(settings.wechatConnectAppId || "").trim();
     const legacyWeChatSecretConfigured = Boolean(
-      settings.wechat_connect_app_secret_configured,
+        settings.wechatConnectAppSecretConfigured,
     );
-    if (!form.wechat_connect_open_app_id && wechatCapabilities.openEnabled) {
-      form.wechat_connect_open_app_id = legacyWeChatAppID;
+    if (!form.wechatConnectOpenAppId && wechatCapabilities.openEnabled) {
+      form.wechatConnectOpenAppId = legacyWeChatAppID;
     }
-    if (!form.wechat_connect_mp_app_id && wechatCapabilities.mpEnabled) {
-      form.wechat_connect_mp_app_id = legacyWeChatAppID;
+    if (!form.wechatConnectMpAppId && wechatCapabilities.mpEnabled) {
+      form.wechatConnectMpAppId = legacyWeChatAppID;
     }
-    if (!form.wechat_connect_mobile_app_id && wechatCapabilities.mobileEnabled) {
-      form.wechat_connect_mobile_app_id = legacyWeChatAppID;
-    }
-    if (
-      !form.wechat_connect_open_app_secret_configured &&
-      wechatCapabilities.openEnabled
-    ) {
-      form.wechat_connect_open_app_secret_configured =
-        legacyWeChatSecretConfigured;
+    if (!form.wechatConnectMobileAppId && wechatCapabilities.mobileEnabled) {
+      form.wechatConnectMobileAppId = legacyWeChatAppID;
     }
     if (
-      !form.wechat_connect_mp_app_secret_configured &&
-      wechatCapabilities.mpEnabled
+        !form.wechatConnectOpenAppSecretConfigured &&
+        wechatCapabilities.openEnabled
     ) {
-      form.wechat_connect_mp_app_secret_configured = legacyWeChatSecretConfigured;
+      form.wechatConnectOpenAppSecretConfigured =
+          legacyWeChatSecretConfigured;
     }
     if (
-      !form.wechat_connect_mobile_app_secret_configured &&
-      wechatCapabilities.mobileEnabled
+        !form.wechatConnectMpAppSecretConfigured &&
+        wechatCapabilities.mpEnabled
     ) {
-      form.wechat_connect_mobile_app_secret_configured =
-        legacyWeChatSecretConfigured;
+      form.wechatConnectMpAppSecretConfigured = legacyWeChatSecretConfigured;
     }
-    form.wechat_connect_scopes = defaultWeChatConnectScopesForMode(
-      form.wechat_connect_mode,
+    if (
+        !form.wechatConnectMobileAppSecretConfigured &&
+        wechatCapabilities.mobileEnabled
+    ) {
+      form.wechatConnectMobileAppSecretConfigured =
+          legacyWeChatSecretConfigured;
+    }
+    form.wechatConnectScopes = defaultWeChatConnectScopesForMode(
+        form.wechatConnectMode,
     );
     form.oidc_connect_client_secret = "";
 
@@ -10025,17 +10408,17 @@ async function loadSettings() {
     // 仅当 payload 真的包含该字段时填充并标记为已加载；否则保持表单空值，
     // 让 saveSettings 在未加载时跳过该字段，防止覆盖后端默认规则。
     if (
-      settings.openai_fast_policy_settings &&
-      Array.isArray(settings.openai_fast_policy_settings.rules)
+        settings.openaiAdvancedFastPolicySettings &&
+        Array.isArray(settings.openaiAdvancedFastPolicySettings.rules)
     ) {
       openaiFastPolicyForm.rules =
-        settings.openai_fast_policy_settings.rules.map((rule: any) => ({
-          ...rule,
-          user_ids: rule.user_ids ? [...rule.user_ids] : [],
-          model_whitelist: rule.model_whitelist
-            ? [...rule.model_whitelist]
-            : [],
-        }));
+          settings.openaiAdvancedFastPolicySettings.rules.map((rule) => ({
+            ...rule,
+            userIds: rule.userIds ? [...rule.userIds] : [],
+            modelWhitelist: rule.modelWhitelist
+                ? [...rule.modelWhitelist]
+                : [],
+          }));
       openaiFastPolicyLoaded.value = true;
     }
 
@@ -10044,7 +10427,7 @@ async function loadSettings() {
   } catch (error: unknown) {
     loadFailed.value = true;
     appStore.showError(
-      extractApiErrorMessage(error, t("admin.settings.failedToLoad")),
+        extractApiErrorMessage(error, t("admin.settings.failedToLoad")),
     );
   } finally {
     loading.value = false;
@@ -10055,8 +10438,8 @@ async function loadSubscriptionGroups() {
   try {
     const groups = await $groups.getAll();
     subscriptionGroups.value = groups.filter(
-      (group: any) =>
-        group.subscriptionType === "subscription" && group.status === "active",
+        (group: any) =>
+            group.subscriptionType === "subscription" && group.status === "active",
     );
   } catch (_error: unknown) {
     subscriptionGroups.value = [];
@@ -10064,7 +10447,7 @@ async function loadSubscriptionGroups() {
 }
 
 function findNextAvailableSubscriptionGroup(
-  existingGroupIDs: number[],
+    existingGroupIDs: number[],
 ): AdminGroup | undefined {
   const existing = new Set(existingGroupIDs);
   return subscriptionGroups.value.find((group: any) => !existing.has(group.id));
@@ -10073,48 +10456,48 @@ function findNextAvailableSubscriptionGroup(
 function addDefaultSubscription() {
   if (subscriptionGroups.value.length === 0) return;
   const candidate = findNextAvailableSubscriptionGroup(
-    form.default_subscriptions.map((item) => item.group_id),
+      form.defaultSubscriptions.map((item) => item.groupId),
   );
   if (!candidate) return;
-  form.default_subscriptions.push({
-    group_id: candidate.id,
-    validity_days: 30,
+  form.defaultSubscriptions.push({
+    groupId: candidate.id,
+    validityDays: 30,
   });
 }
 
 function removeDefaultSubscription(index: number) {
-  form.default_subscriptions.splice(index, 1);
+  form.defaultSubscriptions.splice(index, 1);
 }
 
 function addAuthSourceDefaultSubscription(source: AuthSourceType) {
   if (subscriptionGroups.value.length === 0) return;
   const candidate = findNextAvailableSubscriptionGroup(
-    authSourceDefaults[source].subscriptions.map((item) => item.group_id),
+      authSourceDefaults[source].subscriptions.map((item) => item.groupId),
   );
   if (!candidate) return;
   authSourceDefaults[source].subscriptions.push({
-    group_id: candidate.id,
-    validity_days: 30,
+    groupId: candidate.id,
+    validityDays: 30,
   });
 }
 
 function removeAuthSourceDefaultSubscription(
-  source: AuthSourceType,
-  index: number,
+    source: AuthSourceType,
+    index: number,
 ) {
   authSourceDefaults[source].subscriptions.splice(index, 1);
 }
 
 function findDuplicateDefaultSubscription(
-  subscriptions: DefaultSubscriptionSetting[],
+    subscriptions: DefaultSubscriptionSetting[],
 ): DefaultSubscriptionSetting | undefined {
   const seenGroupIDs = new Set<number>();
 
   return subscriptions.find((item) => {
-    if (seenGroupIDs.has(item.group_id)) {
+    if (seenGroupIDs.has(item.groupId)) {
       return true;
     }
-    seenGroupIDs.add(item.group_id);
+    seenGroupIDs.add(item.groupId);
     return false;
   });
 }
@@ -10123,106 +10506,106 @@ async function saveSettings() {
   saving.value = true;
   try {
     const normalizedTableDefaultPageSize = Math.floor(
-      Number(form.table_default_page_size),
+        Number(form.tableDefaultPageSize),
     );
     if (
-      !Number.isInteger(normalizedTableDefaultPageSize) ||
-      normalizedTableDefaultPageSize < tablePageSizeMin ||
-      normalizedTableDefaultPageSize > tablePageSizeMax
+        !Number.isInteger(normalizedTableDefaultPageSize) ||
+        normalizedTableDefaultPageSize < tablePageSizeMin ||
+        normalizedTableDefaultPageSize > tablePageSizeMax
     ) {
       appStore.showError(
-        t("admin.settings.site.tableDefaultPageSizeRangeError", {
-          min: tablePageSizeMin,
-          max: tablePageSizeMax,
-        }),
+          t("admin.settings.site.tableDefaultPageSizeRangeError", {
+            min: tablePageSizeMin,
+            max: tablePageSizeMax,
+          }),
       );
       return;
     }
 
     const normalizedTablePageSizeOptions = parseTablePageSizeOptionsInput(
-      tablePageSizeOptionsInput.value,
+        tablePageSizeOptionsInput.value,
     );
     if (!normalizedTablePageSizeOptions) {
       appStore.showError(
-        t("admin.settings.site.tablePageSizeOptionsFormatError", {
-          min: tablePageSizeMin,
-          max: tablePageSizeMax,
-        }),
+          t("admin.settings.site.tablePageSizeOptionsFormatError", {
+            min: tablePageSizeMin,
+            max: tablePageSizeMax,
+          }),
       );
       return;
     }
 
-    form.table_default_page_size = normalizedTableDefaultPageSize;
-    form.table_page_size_options = normalizedTablePageSizeOptions;
+    form.tableDefaultPageSize = normalizedTableDefaultPageSize;
+    form.tablePageSizeOptions = normalizedTablePageSizeOptions;
 
     const normalizedLoginAgreementDocuments =
-      normalizeLoginAgreementDocumentsForSave();
-    if (form.login_agreement_enabled && normalizedLoginAgreementDocuments.length === 0) {
+        normalizeLoginAgreementDocumentsForSave();
+    if (form.loginAgreementEnabled && normalizedLoginAgreementDocuments.length === 0) {
       appStore.showError(
-        localText(
-          "启用登录条款确认时，至少需要保留一份文档。",
-          "At least one document is required when login agreement is enabled.",
-        ),
+          localText(
+              "启用登录条款确认时，至少需要保留一份文档。",
+              "At least one document is required when login agreement is enabled.",
+          ),
       );
       return;
     }
     const emptyTitleDocument = normalizedLoginAgreementDocuments.find(
-      (doc: any) => !doc.title,
+        (doc: any) => !doc.title,
     );
     if (emptyTitleDocument) {
       appStore.showError(
-        localText(
-          "登录条款文档名称不能为空。",
-          "Login agreement document title cannot be empty.",
-        ),
+          localText(
+              "登录条款文档名称不能为空。",
+              "Login agreement document title cannot be empty.",
+          ),
       );
       return;
     }
     const duplicateLoginAgreementDocumentId =
-      findDuplicateLoginAgreementDocumentId(normalizedLoginAgreementDocuments);
+        findDuplicateLoginAgreementDocumentId(normalizedLoginAgreementDocuments);
     if (duplicateLoginAgreementDocumentId) {
       appStore.showError(
-        localText(
-          `登录条款文档路由不能重复：/legal/${duplicateLoginAgreementDocumentId}`,
-          `Login agreement document routes cannot be duplicated: /legal/${duplicateLoginAgreementDocumentId}`,
-        ),
+          localText(
+              `登录条款文档路由不能重复：/legal/${duplicateLoginAgreementDocumentId}`,
+              `Login agreement document routes cannot be duplicated: /legal/${duplicateLoginAgreementDocumentId}`,
+          ),
       );
       return;
     }
-    form.login_agreement_mode =
-      form.login_agreement_mode === "checkbox" ? "checkbox" : "modal";
-    form.login_agreement_documents = normalizedLoginAgreementDocuments;
+    form.loginAgreementMode =
+        form.loginAgreementMode === "checkbox" ? "checkbox" : "modal";
+    form.loginAgreementDocuments = normalizedLoginAgreementDocuments;
     const normalizedDefaultSubscriptions = normalizeDefaultSubscriptionSettings(
-      form.default_subscriptions,
+        toSubscriptionRequestList(form.defaultSubscriptions),
     );
     const duplicateDefaultSubscription = findDuplicateDefaultSubscription(
-      normalizedDefaultSubscriptions,
+        normalizedDefaultSubscriptions,
     );
     if (duplicateDefaultSubscription) {
       appStore.showError(
-        t("admin.settings.defaults.defaultSubscriptionsDuplicate", {
-          group_id: duplicateDefaultSubscription.group_id,
-        }),
+          t("admin.settings.defaults.defaultSubscriptionsDuplicate", {
+            group_id: duplicateDefaultSubscription.groupId,
+          }),
       );
       return;
     }
 
     for (const authSource of authSourceDefaultsMeta.value) {
       authSourceDefaults[authSource.source].subscriptions =
-        normalizeDefaultSubscriptionSettings(
-          authSourceDefaults[authSource.source].subscriptions,
-        );
+          normalizeDefaultSubscriptionSettings(
+              toSubscriptionRequestList(authSourceDefaults[authSource.source].subscriptions),
+          );
       const duplicate = findDuplicateDefaultSubscription(
-        authSourceDefaults[authSource.source].subscriptions,
+          authSourceDefaults[authSource.source].subscriptions,
       );
       if (duplicate) {
         appStore.showError(
-          `${authSource.title}: ${t(
-            "admin.settings.defaults.defaultSubscriptionsDuplicate",
-            {
-              group_id: duplicate.group_id,
-            },
-          )}`,
+            `${authSource.title}: ${t(
+                "admin.settings.defaults.defaultSubscriptionsDuplicate",
+                {
+                  group_id: duplicate.groupId,
+                },
+            )}`,
         );
         return;
       }
@@ -10230,10 +10613,10 @@ async function saveSettings() {
 
     if (form.wechat_connect_mp_enabled && form.wechat_connect_mobile_enabled) {
       appStore.showError(
-        localText(
-          "公众号和移动应用不能同时启用。",
-          "Official Account and Mobile App cannot be enabled at the same time.",
-        ),
+          localText(
+              "公众号和移动应用不能同时启用。",
+              "Official Account and Mobile App cannot be enabled at the same time.",
+          ),
       );
       return;
     }
@@ -10248,340 +10631,340 @@ async function saveSettings() {
       }
     };
     // Optional URL fields: auto-clear invalid values so they don't cause backend 400 errors
-    if (!isValidHttpUrl(form.frontend_url)) form.frontend_url = "";
-    if (!isValidHttpUrl(form.doc_url)) form.doc_url = "";
+    if (!isValidHttpUrl(form.frontendUrl)) form.frontendUrl = "";
+    if (!isValidHttpUrl(form.docUrl)) form.docUrl = "";
     syncWeChatConnectMode();
     const wechatStoredMode = deriveWeChatConnectStoredMode(
-      form.wechat_connect_open_enabled,
-      form.wechat_connect_mp_enabled,
-      form.wechat_connect_mobile_enabled,
-      form.wechat_connect_mode,
+        form.wechat_connect_open_enabled,
+        form.wechat_connect_mp_enabled,
+        form.wechat_connect_mobile_enabled,
+        form.wechatConnectMode,
     );
     const claudeOAuthSystemPromptBlocksJSON =
-      serializeClaudeOAuthSystemPromptBlocksToJSON(
-        claudeOAuthSystemPromptBlocks.value,
-      );
-    form.claude_oauth_system_prompt_blocks =
-      claudeOAuthSystemPromptBlocksJSON;
+        serializeClaudeOAuthSystemPromptBlocksToJSON(
+            claudeOAuthSystemPromptBlocks.value,
+        );
+    form.claudeOauthSystemPromptBlocks =
+        claudeOAuthSystemPromptBlocksJSON;
 
     const payload: UpdateSettingsRequest = {
-      registration_enabled: form.registration_enabled,
-      email_verify_enabled: form.email_verify_enabled,
+      registration_enabled: form.registrationEnabled,
+      email_verify_enabled: form.emailVerifyEnabled,
       registration_email_suffix_whitelist:
-        registrationEmailSuffixWhitelistTags.value.map((suffix) =>
-          suffix.startsWith("*.") ? suffix : `@${suffix}`,
-        ),
-      promo_code_enabled: form.promo_code_enabled,
-      invitation_code_enabled: form.invitation_code_enabled,
-      password_reset_enabled: form.password_reset_enabled,
-      totp_enabled: form.totp_enabled,
-      session_binding_enabled: form.session_binding_enabled,
-      step_up_enabled: form.step_up_enabled,
+          registrationEmailSuffixWhitelistTags.value.map((suffix) =>
+              suffix.startsWith("*.") ? suffix : `@${suffix}`,
+          ),
+      promo_code_enabled: form.promoCodeEnabled,
+      invitation_code_enabled: form.invitationCodeEnabled,
+      password_reset_enabled: form.passwordResetEnabled,
+      totp_enabled: form.totpEnabled,
+      session_binding_enabled: form.sessionBindingEnabled,
+      step_up_enabled: form.stepUpEnabled,
       // 清空数字框时 v-model.number 会得到空串，后端 int 字段解析空串会 400 拒绝整次保存；
       // 空/非法值回退默认 180（与后端 parseAuditLogRetentionDays("") 语义一致，0 仍表示永久保留）。
-      audit_log_retention_days: Number.isFinite(form.audit_log_retention_days)
-        ? form.audit_log_retention_days
-        : 180,
-      login_agreement_enabled: form.login_agreement_enabled,
-      login_agreement_mode: form.login_agreement_mode,
-      login_agreement_updated_at: form.login_agreement_updated_at,
-      login_agreement_documents: form.login_agreement_documents,
-      default_balance: form.default_balance,
+      audit_log_retention_days: Number.isFinite(form.auditLogRetentionDays)
+          ? form.auditLogRetentionDays
+          : 180,
+      login_agreement_enabled: form.loginAgreementEnabled,
+      login_agreement_mode: form.loginAgreementMode,
+      login_agreement_updated_at: form.loginAgreementUpdatedAt,
+      login_agreement_documents: form.loginAgreementDocuments,
+      default_balance: form.defaultBalance,
       affiliate_rebate_rate: Math.min(
-        100,
-        Math.max(0, Number(form.affiliate_rebate_rate) || 0),
+          100,
+          Math.max(0, Number(form.affiliateRebateRate) || 0),
       ),
-      affiliate_rebate_freeze_hours: Math.max(0, Math.min(720, Number(form.affiliate_rebate_freeze_hours) || 0)),
-      affiliate_rebate_duration_days: Math.max(0, Math.min(3650, Math.floor(Number(form.affiliate_rebate_duration_days) || 0))),
-      affiliate_rebate_per_invitee_cap: Math.max(0, Number(form.affiliate_rebate_per_invitee_cap) || 0),
-      affiliate_admin_recharge_enabled: form.affiliate_admin_recharge_enabled,
-      default_concurrency: form.default_concurrency,
+      affiliate_rebate_freeze_hours: Math.max(0, Math.min(720, Number(form.affiliateRebateFreezeHours) || 0)),
+      affiliate_rebate_duration_days: Math.max(0, Math.min(3650, Math.floor(Number(form.affiliateRebateDurationDays) || 0))),
+      affiliate_rebate_per_invitee_cap: Math.max(0, Number(form.affiliateRebatePerInviteeCap) || 0),
+      affiliate_admin_recharge_enabled: form.affiliateAdminRechargeEnabled,
+      default_concurrency: form.defaultConcurrency,
       default_subscriptions: normalizedDefaultSubscriptions,
       force_email_on_third_party_signup: form.force_email_on_third_party_signup,
-      default_user_rpm_limit: form.default_user_rpm_limit,
-      site_name: form.site_name,
-      site_logo: form.site_logo,
-      site_subtitle: form.site_subtitle,
-      api_base_url: form.api_base_url,
-      contact_info: form.contact_info,
-      doc_url: form.doc_url,
-      home_content: form.home_content,
-      backend_mode_enabled: form.backend_mode_enabled,
-      hide_ccs_import_button: form.hide_ccs_import_button,
-      table_default_page_size: form.table_default_page_size,
-      table_page_size_options: form.table_page_size_options,
-      custom_menu_items: form.custom_menu_items,
-      custom_endpoints: form.custom_endpoints,
-      frontend_url: form.frontend_url,
-      smtp_host: form.smtp_host,
-      smtp_port: form.smtp_port,
-      smtp_username: form.smtp_username,
+      default_user_rpm_limit: form.defaultUserRpmLimit,
+      site_name: form.siteName,
+      site_logo: form.siteLogo,
+      site_subtitle: form.siteSubtitle,
+      api_base_url: form.apiBaseUrl,
+      contact_info: form.contactInfo,
+      doc_url: form.docUrl,
+      home_content: form.homeContent,
+      backend_mode_enabled: form.backendModeEnabled,
+      hide_ccs_import_button: form.hideCcsImportButton,
+      table_default_page_size: form.tableDefaultPageSize,
+      table_page_size_options: form.tablePageSizeOptions,
+      custom_menu_items: form.customMenuItems,
+      custom_endpoints: form.customEndpoints,
+      frontend_url: form.frontendUrl,
+      smtp_host: form.smtpHost,
+      smtp_port: form.smtpPort,
+      smtp_username: form.smtpUsername,
       smtp_password: form.smtp_password || undefined,
-      smtp_from_email: form.smtp_from_email,
-      smtp_from_name: form.smtp_from_name,
-      smtp_use_tls: form.smtp_use_tls,
-      turnstile_enabled: form.turnstile_enabled,
-      turnstile_site_key: form.turnstile_site_key,
+      smtp_from_email: form.smtpFromEmail,
+      smtp_from_name: form.smtpFromName,
+      smtp_use_tls: form.smtpUseTls,
+      turnstile_enabled: form.turnstileEnabled,
+      turnstile_site_key: form.turnstileSiteKey,
       turnstile_secret_key: form.turnstile_secret_key || undefined,
-      recaptcha_enabled: form.recaptcha_enabled,
-      recaptcha_site_key: form.recaptcha_site_key,
+      recaptcha_enabled: form.recaptchaEnabled,
+      recaptcha_site_key: form.recaptchaSiteKey,
       recaptcha_secret_key: form.recaptcha_secret_key || undefined,
-      cap_enabled: form.cap_enabled,
-      cap_api_endpoint: form.cap_api_endpoint,
+      cap_enabled: form.capEnabled,
+      cap_api_endpoint: form.capApiEndpoint,
       cap_secret_key: form.cap_secret_key || undefined,
-      local_captcha_enabled: form.local_captcha_enabled,
-      client_ip_resolution_mode: form.client_ip_resolution_mode,
+      local_captcha_enabled: form.localCaptchaEnabled,
+      client_ip_resolution_mode: form.clientIpResolutionMode,
       client_ip_trusted_proxies: parseClientIPTrustedProxies(
-        clientIPTrustedProxiesText.value,
+          clientIPTrustedProxiesText.value,
       ),
-      linuxdo_connect_enabled: form.linuxdo_connect_enabled,
-      linuxdo_connect_client_id: form.linuxdo_connect_client_id,
+      linuxdo_connect_enabled: form.linuxdoConnectEnabled,
+      linuxdo_connect_client_id: form.linuxdoConnectClientId,
       linuxdo_connect_client_secret:
-        form.linuxdo_connect_client_secret || undefined,
-      linuxdo_connect_redirect_url: form.linuxdo_connect_redirect_url,
-      dingtalk_connect_enabled: form.dingtalk_connect_enabled,
-      dingtalk_connect_client_id: form.dingtalk_connect_client_id,
+          form.linuxdo_connect_client_secret || undefined,
+      linuxdo_connect_redirect_url: form.linuxdoConnectRedirectUrl,
+      dingtalk_connect_enabled: form.dingtalkConnectEnabled,
+      dingtalk_connect_client_id: form.dingtalkConnectClientId,
       dingtalk_connect_client_secret:
-        form.dingtalk_connect_client_secret || undefined,
-      dingtalk_connect_redirect_url: form.dingtalk_connect_redirect_url,
+          form.dingtalk_connect_client_secret || undefined,
+      dingtalk_connect_redirect_url: form.dingtalkConnectRedirectUrl,
       dingtalk_connect_corp_restriction_policy:
-        form.dingtalk_connect_corp_restriction_policy,
-      dingtalk_connect_internal_corp_id: form.dingtalk_connect_internal_corp_id,
-      dingtalk_connect_bypass_registration: form.dingtalk_connect_bypass_registration,
-      dingtalk_connect_sync_corp_email: form.dingtalk_connect_sync_corp_email,
-      dingtalk_connect_sync_display_name: form.dingtalk_connect_sync_display_name,
-      dingtalk_connect_sync_dept: form.dingtalk_connect_sync_dept,
-      dingtalk_connect_sync_corp_email_attr_key: form.dingtalk_connect_sync_corp_email_attr_key,
-      dingtalk_connect_sync_display_name_attr_key: form.dingtalk_connect_sync_display_name_attr_key,
-      dingtalk_connect_sync_dept_attr_key: form.dingtalk_connect_sync_dept_attr_key,
-      dingtalk_connect_sync_corp_email_attr_name: form.dingtalk_connect_sync_corp_email_attr_name,
-      dingtalk_connect_sync_display_name_attr_name: form.dingtalk_connect_sync_display_name_attr_name,
-      dingtalk_connect_sync_dept_attr_name: form.dingtalk_connect_sync_dept_attr_name,
-      wechat_connect_enabled: form.wechat_connect_enabled,
+      form.dingtalkConnectCorpRestrictionPolicy,
+      dingtalk_connect_internal_corp_id: form.dingtalkConnectInternalCorpId,
+      dingtalk_connect_bypass_registration: form.dingtalkConnectBypassRegistration,
+      dingtalk_connect_sync_corp_email: form.dingtalkConnectSyncCorpEmail,
+      dingtalk_connect_sync_display_name: form.dingtalkConnectSyncDisplayName,
+      dingtalk_connect_sync_dept: form.dingtalkConnectSyncDept,
+      dingtalk_connect_sync_corp_email_attr_key: form.dingtalkConnectSyncCorpEmailAttrKey,
+      dingtalk_connect_sync_display_name_attr_key: form.dingtalkConnectSyncDisplayNameAttrKey,
+      dingtalk_connect_sync_dept_attr_key: form.dingtalkConnectSyncDeptAttrKey,
+      dingtalk_connect_sync_corp_email_attr_name: form.dingtalkConnectSyncCorpEmailAttrName,
+      dingtalk_connect_sync_display_name_attr_name: form.dingtalkConnectSyncDisplayNameAttrName,
+      dingtalk_connect_sync_dept_attr_name: form.dingtalkConnectSyncDeptAttrName,
+      wechat_connect_enabled: form.wechatConnectEnabled,
       wechat_connect_app_id:
-        form.wechat_connect_open_app_id ||
-        form.wechat_connect_mp_app_id ||
-        form.wechat_connect_mobile_app_id ||
-        form.wechat_connect_app_id,
+          form.wechatConnectOpenAppId ||
+          form.wechatConnectMpAppId ||
+          form.wechatConnectMobileAppId ||
+          form.wechatConnectAppId,
       wechat_connect_app_secret: form.wechat_connect_app_secret || undefined,
-      wechat_connect_open_app_id: form.wechat_connect_open_app_id,
+      wechat_connect_open_app_id: form.wechatConnectOpenAppId,
       wechat_connect_open_app_secret:
-        form.wechat_connect_open_app_secret || undefined,
-      wechat_connect_mp_app_id: form.wechat_connect_mp_app_id,
+          form.wechat_connect_open_app_secret || undefined,
+      wechat_connect_mp_app_id: form.wechatConnectMpAppId,
       wechat_connect_mp_app_secret:
-        form.wechat_connect_mp_app_secret || undefined,
-      wechat_connect_mobile_app_id: form.wechat_connect_mobile_app_id,
+          form.wechat_connect_mp_app_secret || undefined,
+      wechat_connect_mobile_app_id: form.wechatConnectMobileAppId,
       wechat_connect_mobile_app_secret:
-        form.wechat_connect_mobile_app_secret || undefined,
+          form.wechat_connect_mobile_app_secret || undefined,
       wechat_connect_open_enabled: form.wechat_connect_open_enabled,
       wechat_connect_mp_enabled: form.wechat_connect_mp_enabled,
       wechat_connect_mobile_enabled: form.wechat_connect_mobile_enabled,
       wechat_connect_mode: wechatStoredMode,
       wechat_connect_scopes:
-        defaultWeChatConnectScopesForMode(wechatStoredMode),
-      wechat_connect_redirect_url: form.wechat_connect_redirect_url,
+          defaultWeChatConnectScopesForMode(wechatStoredMode),
+      wechat_connect_redirect_url: form.wechatConnectRedirectUrl,
       wechat_connect_frontend_redirect_url:
-        form.wechat_connect_frontend_redirect_url,
-      oidc_connect_enabled: form.oidc_connect_enabled,
-      oidc_connect_provider_name: form.oidc_connect_provider_name,
-      oidc_connect_client_id: form.oidc_connect_client_id,
+      form.wechatConnectFrontendRedirectUrl,
+      oidc_connect_enabled: form.oidcConnectEnabled,
+      oidc_connect_provider_name: form.oidcConnectProviderName,
+      oidc_connect_client_id: form.oidcConnectClientId,
       oidc_connect_client_secret: form.oidc_connect_client_secret || undefined,
-      oidc_connect_issuer_url: form.oidc_connect_issuer_url,
-      oidc_connect_discovery_url: form.oidc_connect_discovery_url,
-      oidc_connect_authorize_url: form.oidc_connect_authorize_url,
-      oidc_connect_token_url: form.oidc_connect_token_url,
-      oidc_connect_userinfo_url: form.oidc_connect_userinfo_url,
-      oidc_connect_jwks_url: form.oidc_connect_jwks_url,
-      oidc_connect_scopes: form.oidc_connect_scopes,
-      oidc_connect_redirect_url: form.oidc_connect_redirect_url,
+      oidc_connect_issuer_url: form.oidcConnectIssuerUrl,
+      oidc_connect_discovery_url: form.oidcConnectDiscoveryUrl,
+      oidc_connect_authorize_url: form.oidcConnectAuthorizeUrl,
+      oidc_connect_token_url: form.oidcConnectTokenUrl,
+      oidc_connect_userinfo_url: form.oidcConnectUserinfoUrl,
+      oidc_connect_jwks_url: form.oidcConnectJwksUrl,
+      oidc_connect_scopes: form.oidcConnectScopes,
+      oidc_connect_redirect_url: form.oidcConnectRedirectUrl,
       oidc_connect_frontend_redirect_url:
-        form.oidc_connect_frontend_redirect_url,
-      oidc_connect_token_auth_method: form.oidc_connect_token_auth_method,
-      oidc_connect_use_pkce: form.oidc_connect_use_pkce,
-      oidc_connect_validate_id_token: form.oidc_connect_validate_id_token,
-      oidc_connect_allowed_signing_algs: form.oidc_connect_allowed_signing_algs,
-      oidc_connect_clock_skew_seconds: form.oidc_connect_clock_skew_seconds,
+      form.oidcConnectFrontendRedirectUrl,
+      oidc_connect_token_auth_method: form.oidcConnectTokenAuthMethod,
+      oidc_connect_use_pkce: form.oidcConnectUsePkce,
+      oidc_connect_validate_id_token: form.oidcConnectValidateIdToken,
+      oidc_connect_allowed_signing_algs: form.oidcConnectAllowedSigningAlgs,
+      oidc_connect_clock_skew_seconds: form.oidcConnectClockSkewSeconds,
       oidc_connect_require_email_verified:
-        form.oidc_connect_require_email_verified,
-      oidc_connect_userinfo_email_path: form.oidc_connect_userinfo_email_path,
-      oidc_connect_userinfo_id_path: form.oidc_connect_userinfo_id_path,
+      form.oidcConnectRequireEmailVerified,
+      oidc_connect_userinfo_email_path: form.oidcConnectUserinfoEmailPath,
+      oidc_connect_userinfo_id_path: form.oidcConnectUserinfoIdPath,
       oidc_connect_userinfo_username_path:
-        form.oidc_connect_userinfo_username_path,
-      github_oauth_enabled: form.github_oauth_enabled,
-      github_oauth_client_id: form.github_oauth_client_id,
+      form.oidcConnectUserinfoUsernamePath,
+      github_oauth_enabled: form.githubOauthEnabled,
+      github_oauth_client_id: form.githubOauthClientId,
       github_oauth_client_secret:
-        form.github_oauth_client_secret || undefined,
-      github_oauth_redirect_url: form.github_oauth_redirect_url,
+          form.github_oauth_client_secret || undefined,
+      github_oauth_redirect_url: form.githubOauthRedirectUrl,
       github_oauth_frontend_redirect_url:
-        form.github_oauth_frontend_redirect_url,
-      google_oauth_enabled: form.google_oauth_enabled,
-      google_oauth_client_id: form.google_oauth_client_id,
+      form.githubOauthFrontendRedirectUrl,
+      google_oauth_enabled: form.googleOauthEnabled,
+      google_oauth_client_id: form.googleOauthClientId,
       google_oauth_client_secret:
-        form.google_oauth_client_secret || undefined,
-      google_oauth_redirect_url: form.google_oauth_redirect_url,
+          form.google_oauth_client_secret || undefined,
+      google_oauth_redirect_url: form.googleOauthRedirectUrl,
       google_oauth_frontend_redirect_url:
-        form.google_oauth_frontend_redirect_url,
-      enable_model_fallback: form.enable_model_fallback,
-      fallback_model_anthropic: form.fallback_model_anthropic,
-      fallback_model_openai: form.fallback_model_openai,
-      fallback_model_gemini: form.fallback_model_gemini,
-      fallback_model_antigravity: form.fallback_model_antigravity,
-      enable_identity_patch: form.enable_identity_patch,
-      identity_patch_prompt: form.identity_patch_prompt,
-      min_claude_code_version: form.min_claude_code_version,
-      max_claude_code_version: form.max_claude_code_version,
-      allow_ungrouped_key_scheduling: form.allow_ungrouped_key_scheduling,
+      form.googleOauthFrontendRedirectUrl,
+      enable_model_fallback: form.enableModelFallback,
+      fallback_model_anthropic: form.fallbackModelAnthropic,
+      fallback_model_openai: form.fallbackModelOpenai,
+      fallback_model_gemini: form.fallbackModelGemini,
+      fallback_model_antigravity: form.fallbackModelAntigravity,
+      enable_identity_patch: form.enableIdentityPatch,
+      identity_patch_prompt: form.identityPatchPrompt,
+      min_claude_code_version: form.minClaudeCodeVersion,
+      max_claude_code_version: form.maxClaudeCodeVersion,
+      allow_ungrouped_key_scheduling: form.allowUngroupedKeyScheduling,
       stream_mode_performance_enabled:
-        form.stream_mode_performance_enabled,
+      form.streamModePerformanceEnabled,
       scheduler_v2_enabled: form.scheduler_v2_enabled,
       scheduler_v2_candidate_limit: Number(form.scheduler_v2_candidate_limit),
       scheduler_v2_scan_limit: Number(form.scheduler_v2_scan_limit),
-      enable_fingerprint_unification: form.enable_fingerprint_unification,
-      enable_metadata_passthrough: form.enable_metadata_passthrough,
-      enable_cch_signing: form.enable_cch_signing,
+      enable_fingerprint_unification: form.enableFingerprintUnification,
+      enable_metadata_passthrough: form.enableMetadataPassthrough,
+      enable_cch_signing: form.enableCchSigning,
       enable_claude_oauth_system_prompt_injection:
-        form.enable_claude_oauth_system_prompt_injection,
-      claude_oauth_system_prompt: form.claude_oauth_system_prompt?.trim()
-        ? form.claude_oauth_system_prompt
-        : "",
+      form.enableClaudeOauthSystemPromptInjection,
+      claude_oauth_system_prompt: form.claudeOauthSystemPrompt?.trim()
+          ? form.claudeOauthSystemPrompt
+          : "",
       claude_oauth_system_prompt_blocks: claudeOAuthSystemPromptBlocksJSON,
       enable_anthropic_cache_ttl_1h_injection:
-        form.enable_anthropic_cache_ttl_1h_injection,
-      rewrite_message_cache_control: form.rewrite_message_cache_control,
+      form.enableAnthropicCacheTtl1hInjection,
+      rewrite_message_cache_control: form.rewriteMessageCacheControl,
       enable_client_dateline_normalization:
-        form.enable_client_dateline_normalization,
+      form.enableClientDatelineNormalization,
       antigravity_user_agent_version:
-        form.antigravity_user_agent_version?.trim() || "",
+          form.antigravityUserAgentVersion?.trim() || "",
       openai_codex_user_agent:
-        form.openai_codex_user_agent?.trim() || "",
-      min_codex_version: form.min_codex_version?.trim() || "",
-      max_codex_version: form.max_codex_version?.trim() || "",
+          form.openaiCodexUserAgent?.trim() || "",
+      min_codex_version: form.minCodexVersion?.trim() || "",
+      max_codex_version: form.maxCodexVersion?.trim() || "",
       codex_cli_only_allow_app_server_clients:
-        form.codex_cli_only_allow_app_server_clients,
+      form.codexCliOnlyAllowAppServerClients,
       codex_cli_only_engine_fingerprint_signals: serializeFingerprintRowsToJSON(
-        codexFingerprintRows.value,
+          codexFingerprintRows.value,
       ),
       codex_cli_only_blacklist: serializeCodexRowsToJSON(
-        codexBlacklistRows.value,
+          codexBlacklistRows.value,
       ),
       codex_cli_only_whitelist: serializeCodexRowsToJSON(
-        codexWhitelistRows.value,
+          codexWhitelistRows.value,
       ),
       // Payment configuration
-      payment_enabled: form.payment_enabled,
-      risk_control_enabled: form.risk_control_enabled,
-      cyber_session_block_enabled: form.cyber_session_block_enabled,
+      payment_enabled: form.paymentEnabled,
+      risk_control_enabled: form.riskControlEnabled,
+      cyber_session_block_enabled: form.cyberSessionBlockEnabled,
       cyber_session_block_ttl_seconds:
-        Number(form.cyber_session_block_ttl_seconds) || 3600,
-      payment_min_amount: Number(form.payment_min_amount) || 0,
-      payment_max_amount: Number(form.payment_max_amount) || 0,
-      payment_daily_limit: Number(form.payment_daily_limit) || 0,
-      payment_max_pending_orders: Number(form.payment_max_pending_orders) || 0,
+          Number(form.cyberSessionBlockTtlSeconds) || 3600,
+      payment_min_amount: Number(form.paymentMinAmount) || 0,
+      payment_max_amount: Number(form.paymentMaxAmount) || 0,
+      payment_daily_limit: Number(form.paymentDailyLimit) || 0,
+      payment_max_pending_orders: Number(form.paymentMaxPendingOrders) || 0,
       payment_order_timeout_minutes:
-        Number(form.payment_order_timeout_minutes) || 0,
-      payment_balance_disabled: form.payment_balance_disabled,
+          Number(form.paymentOrderTimeoutMinutes) || 0,
+      payment_balance_disabled: form.paymentBalanceDisabled,
       payment_balance_recharge_multiplier:
-        Number(form.payment_balance_recharge_multiplier) || 1,
+          Number(form.paymentBalanceRechargeMultiplier) || 1,
       payment_subscription_usd_to_cny_rate:
-        Number(form.payment_subscription_usd_to_cny_rate) || 0,
-      payment_recharge_fee_rate: Number(form.payment_recharge_fee_rate) || 0,
-      payment_enabled_types: form.payment_enabled_types,
-      payment_load_balance_strategy: form.payment_load_balance_strategy,
-      payment_product_name_prefix: form.payment_product_name_prefix,
-      payment_product_name_suffix: form.payment_product_name_suffix,
-      payment_help_image_url: form.payment_help_image_url,
-      payment_help_text: form.payment_help_text,
-      payment_cancel_rate_limit_enabled: form.payment_cancel_rate_limit_enabled,
+          Number(form.paymentSubscriptionUsdToCnyRate) || 0,
+      payment_recharge_fee_rate: Number(form.paymentRechargeFeeRate) || 0,
+      payment_enabled_types: form.paymentEnabledTypes,
+      payment_load_balance_strategy: form.paymentLoadBalanceStrategy,
+      payment_product_name_prefix: form.paymentProductNamePrefix,
+      payment_product_name_suffix: form.paymentProductNameSuffix,
+      payment_help_image_url: form.paymentHelpImageUrl,
+      payment_help_text: form.paymentHelpText,
+      payment_cancel_rate_limit_enabled: form.paymentCancelRateLimitEnabled,
       payment_cancel_rate_limit_max:
-        Number(form.payment_cancel_rate_limit_max) || 10,
+          Number(form.paymentCancelRateLimitMax) || 10,
       payment_cancel_rate_limit_window:
-        Number(form.payment_cancel_rate_limit_window) || 1,
-      payment_cancel_rate_limit_unit: form.payment_cancel_rate_limit_unit,
+          Number(form.paymentCancelRateLimitWindow) || 1,
+      payment_cancel_rate_limit_unit: form.paymentCancelRateLimitUnit,
       payment_cancel_rate_limit_window_mode:
-        form.payment_cancel_rate_limit_window_mode,
-      payment_alipay_force_qrcode: form.payment_alipay_force_qrcode,
+      form.paymentCancelRateLimitWindowMode,
+      payment_alipay_force_qrcode: form.paymentAlipayForceQrcode,
       openai_low_upstream_rate_priority_enabled:
-        form.openai_low_upstream_rate_priority_enabled,
+      form.openai_low_upstream_rate_priority_enabled,
       openai_oauth_scheduling_rate_multiplier:
-        form.openai_oauth_scheduling_rate_multiplier,
+      form.openai_oauth_scheduling_rate_multiplier,
       openai_advanced_scheduler_enabled: form.openai_advanced_scheduler_enabled,
       openai_advanced_scheduler_sticky_weighted_enabled:
-        form.openai_advanced_scheduler_sticky_weighted_enabled,
+      form.openai_advanced_scheduler_sticky_weighted_enabled,
       openai_advanced_scheduler_subscription_priority_enabled:
-        form.openai_advanced_scheduler_subscription_priority_enabled,
+      form.openai_advanced_scheduler_subscription_priority_enabled,
       openai_advanced_scheduler_lb_top_k:
-        form.openai_advanced_scheduler_lb_top_k.trim(),
+          form.openai_advanced_scheduler_lb_top_k.trim(),
       openai_advanced_scheduler_weight_priority:
-        form.openai_advanced_scheduler_weight_priority.trim(),
+          form.openai_advanced_scheduler_weight_priority.trim(),
       openai_advanced_scheduler_weight_load:
-        form.openai_advanced_scheduler_weight_load.trim(),
+          form.openai_advanced_scheduler_weight_load.trim(),
       openai_advanced_scheduler_weight_queue:
-        form.openai_advanced_scheduler_weight_queue.trim(),
+          form.openai_advanced_scheduler_weight_queue.trim(),
       openai_advanced_scheduler_weight_error_rate:
-        form.openai_advanced_scheduler_weight_error_rate.trim(),
+          form.openai_advanced_scheduler_weight_error_rate.trim(),
       openai_advanced_scheduler_weight_ttft:
-        form.openai_advanced_scheduler_weight_ttft.trim(),
+          form.openai_advanced_scheduler_weight_ttft.trim(),
       openai_advanced_scheduler_weight_reset:
-        form.openai_advanced_scheduler_weight_reset.trim(),
+          form.openai_advanced_scheduler_weight_reset.trim(),
       openai_advanced_scheduler_weight_quota_headroom:
-        form.openai_advanced_scheduler_weight_quota_headroom.trim(),
+          form.openai_advanced_scheduler_weight_quota_headroom.trim(),
       openai_advanced_scheduler_weight_upstream_cost:
-        form.openai_advanced_scheduler_weight_upstream_cost.trim(),
+          form.openai_advanced_scheduler_weight_upstream_cost.trim(),
       openai_advanced_scheduler_weight_previous_response:
-        form.openai_advanced_scheduler_weight_previous_response.trim(),
+          form.openai_advanced_scheduler_weight_previous_response.trim(),
       openai_advanced_scheduler_weight_session_sticky:
-        form.openai_advanced_scheduler_weight_session_sticky.trim(),
+          form.openai_advanced_scheduler_weight_session_sticky.trim(),
       // 余额、订阅到期与账号限额通知
-      balance_low_notify_enabled: form.balance_low_notify_enabled,
+      balance_low_notify_enabled: form.balanceLowNotifyEnabled,
       balance_low_notify_threshold:
-        Number(form.balance_low_notify_threshold) || 0,
-      balance_low_notify_recharge_url: (form.balance_low_notify_recharge_url =
-        form.balance_low_notify_recharge_url || currentOrigin),
+          Number(form.balanceLowNotifyThreshold) || 0,
+      balance_low_notify_recharge_url: (form.balanceLowNotifyRechargeUrl =
+          form.balanceLowNotifyRechargeUrl || currentOrigin),
       subscription_expiry_notify_enabled:
-        form.subscription_expiry_notify_enabled,
-      account_quota_notify_enabled: form.account_quota_notify_enabled,
+      form.subscriptionExpiryNotifyEnabled,
+      account_quota_notify_enabled: form.accountQuotaNotifyEnabled,
       account_quota_notify_emails: (
-        form.account_quota_notify_emails || []
+          form.accountQuotaNotifyEmails || []
       ).filter((e) => e.email.trim() !== ""),
       // Channel Monitor feature switch
-      channel_monitor_enabled: form.channel_monitor_enabled,
+      channel_monitor_enabled: form.channelMonitorEnabled,
       channel_monitor_default_interval_seconds:
-        Number(form.channel_monitor_default_interval_seconds) || 60,
+          Number(form.channelMonitorDefaultIntervalSeconds) || 60,
       // Available Channels feature switch
-      available_channels_enabled: form.available_channels_enabled,
+      available_channels_enabled: form.availableChannelsEnabled,
       // Affiliate (邀请返利) feature switch
-      affiliate_enabled: form.affiliate_enabled,
-      allow_user_view_error_requests: form.allow_user_view_error_requests,
-      allow_user_view_usage_details: form.allow_user_view_usage_details,
+      affiliate_enabled: form.affiliateEnabled,
+      allow_user_view_error_requests: form.allowUserViewErrorRequests,
+      allow_user_view_usage_details: form.allowUserViewUsageDetails,
     };
 
     // 仅当 openai_fast_policy_settings 已成功从后端加载时才回写，
     // 否则省略整个字段，让后端保留既有规则（含默认值）。
     if (openaiFastPolicyLoaded.value) {
       payload.openai_fast_policy_settings = {
-        rules: openaiFastPolicyForm.rules.map((rule: any) => {
-          const whitelist = (rule.model_whitelist || [])
-            .map((p: any) => p.trim())
-            .filter((p: any) => p !== "");
+        rules: openaiFastPolicyForm.rules.map((rule: OpenAIFastPolicyRule) => {
+          const whitelist = (rule.modelWhitelist || [])
+              .map((p: string) => p.trim())
+              .filter((p: string) => p !== "");
           const hasWhitelist = whitelist.length > 0;
           return {
             service_tier: rule.serviceTier,
             action: rule.action,
             scope: rule.scope,
             user_ids:
-              rule.user_ids && rule.user_ids.length > 0
-                ? [...rule.user_ids]
-                : undefined,
+                rule.userIds && rule.userIds.length > 0
+                    ? [...rule.userIds]
+                    : undefined,
             error_message:
-              rule.action === "block" ? rule.errorMessage : undefined,
+                rule.action === "block" ? rule.errorMessage : undefined,
             model_whitelist: hasWhitelist ? whitelist : undefined,
             fallback_action: hasWhitelist
-              ? rule.fallback_action || "pass"
-              : undefined,
-            fallback_error_message:
-              hasWhitelist && rule.fallback_action === "block"
-                ? rule.fallback_error_message
+                ? rule.fallbackAction || "pass"
                 : undefined,
+            fallback_error_message:
+                hasWhitelist && rule.fallbackAction === "block"
+                    ? rule.fallbackErrorMessage
+                    : undefined,
           };
         }),
       };
@@ -10591,7 +10974,7 @@ async function saveSettings() {
     appendAuthSourceDefaultsToUpdateRequest(payload, authSourceDefaults);
 
     const updated = await settingsStepUp.run(() =>
-      $settings.updateSettings(payload),
+        $settings.updateSettings(payload),
     ) as SystemSettings;
     for (const [key, value] of Object.entries(updated)) {
       if (key === "openai_fast_policy_settings") continue;
@@ -10601,18 +10984,18 @@ async function saveSettings() {
     }
     normalizeHumanVerificationProvider();
     clientIPTrustedProxiesText.value = (
-      updated.client_ip_trusted_proxies || []
+        updated.clientIpTrustedProxies || []
     ).join("\n");
-    Object.assign(authSourceDefaults, buildAuthSourceDefaultsState(updated));
-    form.default_platform_quotas = normalizePlatformQuotasMap(updated.default_platform_quotas);
+    Object.assign(authSourceDefaults, buildAuthSourceDefaultsState(toRecord(updated)));
+    form.default_platform_quotas = normalizePlatformQuotasMap(updated.defaultPlatformQuotas);
     registrationEmailSuffixWhitelistTags.value =
-      normalizeRegistrationEmailSuffixDomains(
-        updated.registration_email_suffix_whitelist,
-      );
+        normalizeRegistrationEmailSuffixDomains(
+            updated.registrationEmailSuffixWhitelist,
+        );
     tablePageSizeOptionsInput.value = formatTablePageSizeOptions(
-      Array.isArray(updated.table_page_size_options)
-        ? updated.table_page_size_options
-        : [10, 20, 50, 100],
+        Array.isArray(updated.tablePageSizeOptions)
+            ? updated.tablePageSizeOptions
+            : [10, 20, 50, 100],
     );
     registrationEmailSuffixWhitelistDraft.value = "";
     form.smtp_password = "";
@@ -10629,38 +11012,38 @@ async function saveSettings() {
     form.wechat_connect_mp_app_secret = "";
     form.wechat_connect_mobile_app_secret = "";
     const updatedWechatCapabilities = resolveWeChatConnectModeCapabilities(
-      updated.wechat_connect_open_enabled,
-      updated.wechat_connect_mp_enabled,
-      updated.wechat_connect_mobile_enabled,
-      updated.wechat_connect_mode,
+        updated.wechatConnectOpenEnabled,
+        updated.wechatConnectMpEnabled,
+        updated.wechatConnectMobileEnabled,
+        updated.wechatConnectMode,
     );
     form.wechat_connect_open_enabled = updatedWechatCapabilities.openEnabled;
     form.wechat_connect_mp_enabled = updatedWechatCapabilities.mpEnabled;
     form.wechat_connect_mobile_enabled =
-      updatedWechatCapabilities.mobileEnabled;
-    form.wechat_connect_mode = deriveWeChatConnectStoredMode(
-      updatedWechatCapabilities.openEnabled,
-      updatedWechatCapabilities.mpEnabled,
-      updatedWechatCapabilities.mobileEnabled,
-      updated.wechat_connect_mode,
+        updatedWechatCapabilities.mobileEnabled;
+    form.wechatConnectMode = deriveWeChatConnectStoredMode(
+        updatedWechatCapabilities.openEnabled,
+        updatedWechatCapabilities.mpEnabled,
+        updatedWechatCapabilities.mobileEnabled,
+        updated.wechatConnectMode,
     );
-    form.wechat_connect_scopes = defaultWeChatConnectScopesForMode(
-      form.wechat_connect_mode,
+    form.wechatConnectScopes = defaultWeChatConnectScopesForMode(
+        form.wechatConnectMode,
     );
     form.oidc_connect_client_secret = "";
     // Refresh OpenAI fast/flex policy from server response
     if (
-      updated.openai_fast_policy_settings &&
-      Array.isArray(updated.openai_fast_policy_settings.rules)
+        updated.openaiAdvancedFastPolicySettings &&
+        Array.isArray(updated.openaiAdvancedFastPolicySettings.rules)
     ) {
       openaiFastPolicyForm.rules =
-        updated.openai_fast_policy_settings.rules.map((rule: any) => ({
-          ...rule,
-          user_ids: rule.user_ids ? [...rule.user_ids] : [],
-          model_whitelist: rule.model_whitelist
-            ? [...rule.model_whitelist]
-            : [],
-        }));
+          updated.openaiAdvancedFastPolicySettings.rules.map((rule) => ({
+            ...rule,
+            userIds: rule.userIds ? [...rule.userIds] : [],
+            modelWhitelist: rule.modelWhitelist
+                ? [...rule.modelWhitelist]
+                : [],
+          }));
       openaiFastPolicyLoaded.value = true;
     }
     // Save web search emulation config separately (errors handled internally)
@@ -10678,21 +11061,21 @@ async function saveSettings() {
     }
     if (isStepUpBlocked(error)) {
       appStore.showError(
-        stepUpBlockReason(error) === "STEP_UP_ADMIN_API_KEY_FORBIDDEN"
-          ? t("stepUp.adminApiKeyForbidden")
-          : t("stepUp.notEnabled"),
+          stepUpBlockReason(error) === "STEP_UP_ADMIN_API_KEY_FORBIDDEN"
+              ? t("stepUp.adminApiKeyForbidden")
+              : t("stepUp.notEnabled"),
       );
       return;
     }
     // 开启 step-up 开关但本人未启用 2FA：给出可操作的专用提示
     if (
-      (error as { reason?: string })?.reason === "STEP_UP_ENABLE_REQUIRES_TOTP"
+        (error as { reason?: string })?.reason === "STEP_UP_ENABLE_REQUIRES_TOTP"
     ) {
       appStore.showError(t("admin.settings.security.stepUpEnableRequiresTotp"));
       return;
     }
     appStore.showError(
-      extractApiErrorMessage(error, t("admin.settings.failedToSave")),
+        extractApiErrorMessage(error, t("admin.settings.failedToSave")),
     );
   } finally {
     saving.value = false;
@@ -10703,22 +11086,22 @@ async function testSmtpConnection() {
   testingSmtp.value = true;
   try {
     const smtpPasswordForTest = smtpPasswordManuallyEdited.value
-      ? form.smtp_password
-      : "";
+        ? form.smtp_password
+        : "";
     const result = await $settings.testSmtpConnection({
-      smtp_host: form.smtp_host,
-      smtp_port: form.smtp_port,
-      smtp_username: form.smtp_username,
+      smtp_host: form.smtpHost,
+      smtp_port: form.smtpPort,
+      smtp_username: form.smtpUsername,
       smtp_password: smtpPasswordForTest,
-      smtp_use_tls: form.smtp_use_tls,
+      smtp_use_tls: form.smtpUseTls,
     });
     // API returns { message: "..." } on success, errors are thrown as exceptions
     appStore.showSuccess(
-      result.message || t("admin.settings.smtpConnectionSuccess"),
+        result.message || t("admin.settings.smtpConnectionSuccess"),
     );
   } catch (error: unknown) {
     appStore.showError(
-      extractApiErrorMessage(error, t("admin.settings.failedToTestSmtp")),
+        extractApiErrorMessage(error, t("admin.settings.failedToTestSmtp")),
     );
   } finally {
     testingSmtp.value = false;
@@ -10734,23 +11117,23 @@ async function sendTestEmail() {
   sendingTestEmail.value = true;
   try {
     const smtpPasswordForSend = smtpPasswordManuallyEdited.value
-      ? form.smtp_password
-      : "";
+        ? form.smtp_password
+        : "";
     const result = await $settings.sendTestEmail({
       email: testEmailAddress.value,
-      smtp_host: form.smtp_host,
-      smtp_port: form.smtp_port,
-      smtp_username: form.smtp_username,
+      smtp_host: form.smtpHost,
+      smtp_port: form.smtpPort,
+      smtp_username: form.smtpUsername,
       smtp_password: smtpPasswordForSend,
-      smtp_from_email: form.smtp_from_email,
-      smtp_from_name: form.smtp_from_name,
-      smtp_use_tls: form.smtp_use_tls,
+      smtp_from_email: form.smtpFromEmail,
+      smtp_from_name: form.smtpFromName,
+      smtp_use_tls: form.smtpUseTls,
     });
     // API returns { message: "..." } on success, errors are thrown as exceptions
     appStore.showSuccess(result.message || t("admin.settings.testEmailSent"));
   } catch (error: unknown) {
     appStore.showError(
-      extractApiErrorMessage(error, t("admin.settings.failedToSendTestEmail")),
+        extractApiErrorMessage(error, t("admin.settings.failedToSendTestEmail")),
     );
   } finally {
     sendingTestEmail.value = false;
@@ -10811,7 +11194,7 @@ function editScopedAdminApiKey(key: AdminApiKey) {
   editingAdminApiKeyId.value = key.id;
   adminApiKeyForm.name = key.name;
   adminApiKeyForm.scopes = [...key.scopes];
-  adminApiKeyForm.expires_at = key.expires_at ? new Date(key.expires_at).toISOString().slice(0, 16) : "";
+  adminApiKeyForm.expires_at = key.expiresAt ? new Date(key.expiresAt).toISOString().slice(0, 16) : "";
   adminApiKeyPanelSecret.value = "";
 }
 
@@ -10861,7 +11244,7 @@ async function loadAdminApiKey() {
   try {
     const status = await $settings.getAdminApiKey();
     adminApiKeyExists.value = status.exists;
-    adminApiKeyMasked.value = status.masked_key;
+    adminApiKeyMasked.value = status.maskedKey;
   } catch (_error: unknown) {
     // Silent fail - admin API key status is non-critical
   } finally {
@@ -10876,7 +11259,7 @@ async function createAdminApiKey() {
     newAdminApiKey.value = result.key;
     adminApiKeyExists.value = true;
     adminApiKeyMasked.value =
-      result.key.substring(0, 10) + "..." + result.key.slice(-4);
+        result.key.substring(0, 10) + "..." + result.key.slice(-4);
     appStore.showSuccess(t("admin.settings.adminApiKey.keyGenerated"));
   } catch (error: unknown) {
     appStore.showError(extractApiErrorMessage(error, t("common.error")));
@@ -10908,21 +11291,21 @@ async function deleteAdminApiKey() {
 
 function copyNewKey() {
   navigator.clipboard
-    .writeText(newAdminApiKey.value)
-    .then(() => {
-      appStore.showSuccess(t("admin.settings.adminApiKey.keyCopied"));
-    })
-    .catch(() => {
-      appStore.showError(t("common.copyFailed"));
-    });
+      .writeText(newAdminApiKey.value)
+      .then(() => {
+        appStore.showSuccess(t("admin.settings.adminApiKey.keyCopied"));
+      })
+      .catch(() => {
+        appStore.showError(t("common.copyFailed"));
+      });
 }
 
 async function loadUpstreamBillingProbeSettings() {
   upstreamBillingProbeLoading.value = true;
   try {
     Object.assign(
-      upstreamBillingProbeForm,
-      await $accounts.getUpstreamBillingProbeSettings(),
+        upstreamBillingProbeForm,
+        await $accounts.getUpstreamBillingProbeSettings(),
     );
   } catch (_error: unknown) {
     // Keep defaults when this optional setting cannot be loaded.
@@ -10941,10 +11324,10 @@ async function saveUpstreamBillingProbeSettings() {
     appStore.showSuccess(t("admin.settings.upstreamBillingProbe.saved"));
   } catch (error: unknown) {
     appStore.showError(
-      extractApiErrorMessage(
-        error,
-        t("admin.settings.upstreamBillingProbe.saveFailed"),
-      ),
+        extractApiErrorMessage(
+            error,
+            t("admin.settings.upstreamBillingProbe.saveFailed"),
+        ),
     );
   } finally {
     upstreamBillingProbeSaving.value = false;
@@ -10975,10 +11358,10 @@ async function saveOverloadCooldownSettings() {
     appStore.showSuccess(t("admin.settings.overloadCooldown.saved"));
   } catch (error: unknown) {
     appStore.showError(
-      extractApiErrorMessage(
-        error,
-        t("admin.settings.overloadCooldown.saveFailed"),
-      ),
+        extractApiErrorMessage(
+            error,
+            t("admin.settings.overloadCooldown.saveFailed"),
+        ),
     );
   } finally {
     overloadCooldownSaving.value = false;
@@ -11009,10 +11392,10 @@ async function saveRateLimit429CooldownSettings() {
     appStore.showSuccess(t("admin.settings.rateLimit429Cooldown.saved"));
   } catch (error: unknown) {
     appStore.showError(
-      extractApiErrorMessage(
-        error,
-        t("admin.settings.rateLimit429Cooldown.saveFailed"),
-      ),
+        extractApiErrorMessage(
+            error,
+            t("admin.settings.rateLimit429Cooldown.saveFailed"),
+        ),
     );
   } finally {
     rateLimit429CooldownSaving.value = false;
@@ -11024,7 +11407,7 @@ async function loadGlobalTempUnschedulableSettings() {
   globalTempUnschedulableLoading.value = true;
   try {
     const settings =
-      await $settings.getGlobalTempUnschedulableSettings();
+        await $settings.getGlobalTempUnschedulableSettings();
     Object.assign(globalTempUnschedulableForm, settings);
   } catch (_error: unknown) {
     // Silent fail - settings will use defaults
@@ -11037,19 +11420,19 @@ async function saveGlobalTempUnschedulableSettings() {
   globalTempUnschedulableSaving.value = true;
   try {
     const updated =
-      await $settings.updateGlobalTempUnschedulableSettings({
-        enabled: globalTempUnschedulableForm.enabled,
-      });
+        await $settings.updateGlobalTempUnschedulableSettings({
+          enabled: globalTempUnschedulableForm.enabled,
+        });
     Object.assign(globalTempUnschedulableForm, updated);
     appStore.showSuccess(
-      t("admin.settings.globalTempUnschedulable.saved"),
+        t("admin.settings.globalTempUnschedulable.saved"),
     );
   } catch (error: unknown) {
     appStore.showError(
-      extractApiErrorMessage(
-        error,
-        t("admin.settings.globalTempUnschedulable.saveFailed"),
-      ),
+        extractApiErrorMessage(
+            error,
+            t("admin.settings.globalTempUnschedulable.saveFailed"),
+        ),
     );
   } finally {
     globalTempUnschedulableSaving.value = false;
@@ -11083,10 +11466,10 @@ async function saveStreamTimeoutSettings() {
     appStore.showSuccess(t("admin.settings.streamTimeout.saved"));
   } catch (error: unknown) {
     appStore.showError(
-      extractApiErrorMessage(
-        error,
-        t("admin.settings.streamTimeout.saveFailed"),
-      ),
+        extractApiErrorMessage(
+            error,
+            t("admin.settings.streamTimeout.saveFailed"),
+        ),
     );
   } finally {
     streamTimeoutSaving.value = false;
@@ -11120,7 +11503,7 @@ async function saveRectifierSettings() {
       thinking_display_mode: rectifierForm.thinking_display_mode,
       apikey_signature_enabled: rectifierForm.apikey_signature_enabled,
       apikey_signature_patterns: rectifierForm.apikey_signature_patterns.filter(
-        (p: any) => p.trim() !== "",
+          (p: any) => p.trim() !== "",
       ),
     });
     Object.assign(rectifierForm, updated);
@@ -11130,7 +11513,7 @@ async function saveRectifierSettings() {
     appStore.showSuccess(t("admin.settings.rectifier.saved"));
   } catch (error: unknown) {
     appStore.showError(
-      extractApiErrorMessage(error, t("admin.settings.rectifier.saveFailed")),
+        extractApiErrorMessage(error, t("admin.settings.rectifier.saveFailed")),
     );
   } finally {
     rectifierSaving.value = false;
@@ -11138,16 +11521,16 @@ async function saveRectifierSettings() {
 }
 
 const betaPolicyActionOptions = computed(() => [
-  { value: "pass", label: t("admin.settings.betaPolicy.actionPass") },
-  { value: "filter", label: t("admin.settings.betaPolicy.actionFilter") },
-  { value: "block", label: t("admin.settings.betaPolicy.actionBlock") },
+  {value: "pass", label: t("admin.settings.betaPolicy.actionPass")},
+  {value: "filter", label: t("admin.settings.betaPolicy.actionFilter")},
+  {value: "block", label: t("admin.settings.betaPolicy.actionBlock")},
 ]);
 
 const betaPolicyScopeOptions = computed(() => [
-  { value: "all", label: t("admin.settings.betaPolicy.scopeAll") },
-  { value: "oauth", label: t("admin.settings.betaPolicy.scopeOAuth") },
-  { value: "apikey", label: t("admin.settings.betaPolicy.scopeAPIKey") },
-  { value: "bedrock", label: t("admin.settings.betaPolicy.scopeBedrock") },
+  {value: "all", label: t("admin.settings.betaPolicy.scopeAll")},
+  {value: "oauth", label: t("admin.settings.betaPolicy.scopeOAuth")},
+  {value: "apikey", label: t("admin.settings.betaPolicy.scopeAPIKey")},
+  {value: "bedrock", label: t("admin.settings.betaPolicy.scopeBedrock")},
 ]);
 
 // Beta Policy 方法
@@ -11158,14 +11541,14 @@ const betaDisplayNames: Record<string, string> = {
 
 // 快捷预设：按 beta_token 定义预设方案
 const betaPresets: Record<
-  string,
-  Array<{
-    label: string;
-    description: string;
-    action: "pass" | "filter" | "block";
-    model_whitelist: string[];
-    fallback_action: "pass" | "filter" | "block";
-  }>
+    string,
+    Array<{
+      label: string;
+      description: string;
+      action: "pass" | "filter" | "block";
+      model_whitelist: string[];
+      fallback_action: "pass" | "filter" | "block";
+    }>
 > = {
   "context-1m-2025-08-07": [
     {
@@ -11191,25 +11574,25 @@ function getBetaDisplayName(token: string): string {
 }
 
 function applyBetaPreset(
-  rule: (typeof betaPolicyForm.rules)[number],
-  preset: {
-    action: "pass" | "filter" | "block";
-    model_whitelist: string[];
-    fallback_action: "pass" | "filter" | "block";
-  },
+    rule: BetaPolicyRule,
+    preset: {
+      action: "pass" | "filter" | "block";
+      model_whitelist: string[];
+      fallback_action: "pass" | "filter" | "block";
+    },
 ) {
   rule.action = preset.action;
-  rule.model_whitelist = [...preset.model_whitelist];
-  rule.fallback_action = preset.fallback_action;
+  rule.modelWhitelist = [...preset.model_whitelist];
+  rule.fallbackAction = preset.fallback_action;
 }
 
 function addQuickPattern(
-  rule: (typeof betaPolicyForm.rules)[number],
-  pattern: string,
+    rule: BetaPolicyRule,
+    pattern: string,
 ) {
-  if (!rule.model_whitelist) rule.model_whitelist = [];
-  if (!rule.model_whitelist.includes(pattern)) {
-    rule.model_whitelist.push(pattern);
+  if (!rule.modelWhitelist) rule.modelWhitelist = [];
+  if (!rule.modelWhitelist.includes(pattern)) {
+    rule.modelWhitelist.push(pattern);
   }
 }
 
@@ -11228,28 +11611,28 @@ async function loadBetaPolicySettings() {
 // ==================== OpenAI Fast/Flex Policy ====================
 
 const openaiFastPolicyTierOptions = computed(() => [
-  { value: "all", label: t("admin.settings.openaiFastPolicy.tierAll") },
+  {value: "all", label: t("admin.settings.openaiFastPolicy.tierAll")},
   {
     value: "priority",
     label: t("admin.settings.openaiFastPolicy.tierPriority"),
   },
-  { value: "flex", label: t("admin.settings.openaiFastPolicy.tierFlex") },
+  {value: "flex", label: t("admin.settings.openaiFastPolicy.tierFlex")},
 ]);
 
 const openaiFastPolicyActionOptions = computed(() => [
-  { value: "pass", label: t("admin.settings.openaiFastPolicy.actionPass") },
-  { value: "filter", label: t("admin.settings.openaiFastPolicy.actionFilter") },
+  {value: "pass", label: t("admin.settings.openaiFastPolicy.actionPass")},
+  {value: "filter", label: t("admin.settings.openaiFastPolicy.actionFilter")},
   {
     value: "force_priority",
     label: t("admin.settings.openaiFastPolicy.actionForcePriority"),
   },
-  { value: "block", label: t("admin.settings.openaiFastPolicy.actionBlock") },
+  {value: "block", label: t("admin.settings.openaiFastPolicy.actionBlock")},
 ]);
 
 const openaiFastPolicyScopeOptions = computed(() => [
-  { value: "all", label: t("admin.settings.openaiFastPolicy.scopeAll") },
-  { value: "oauth", label: t("admin.settings.openaiFastPolicy.scopeOAuth") },
-  { value: "apikey", label: t("admin.settings.openaiFastPolicy.scopeAPIKey") },
+  {value: "all", label: t("admin.settings.openaiFastPolicy.scopeAll")},
+  {value: "oauth", label: t("admin.settings.openaiFastPolicy.scopeOAuth")},
+  {value: "apikey", label: t("admin.settings.openaiFastPolicy.scopeAPIKey")},
   {
     value: "bedrock",
     label: t("admin.settings.openaiFastPolicy.scopeBedrock"),
@@ -11258,14 +11641,14 @@ const openaiFastPolicyScopeOptions = computed(() => [
 
 function addOpenAIFastPolicyRule() {
   openaiFastPolicyForm.rules.push({
-    service_tier: "priority",
+    serviceTier: "priority",
     action: "filter",
     scope: "all",
-    user_ids: [],
-    error_message: "",
-    model_whitelist: [],
-    fallback_action: "pass",
-    fallback_error_message: "",
+    userIds: [],
+    errorMessage: "",
+    modelWhitelist: [],
+    fallbackAction: "pass",
+    fallbackErrorMessage: "",
   });
 }
 
@@ -11274,37 +11657,37 @@ function removeOpenAIFastPolicyRule(index: number) {
 }
 
 function addOpenAIFastPolicyModelPattern(rule: OpenAIFastPolicyRule) {
-  if (!rule.model_whitelist) rule.model_whitelist = [];
-  rule.model_whitelist.push("");
+  if (!rule.modelWhitelist) rule.modelWhitelist = [];
+  rule.modelWhitelist.push("");
 }
 
 function removeOpenAIFastPolicyModelPattern(
-  rule: OpenAIFastPolicyRule,
-  idx: number,
+    rule: OpenAIFastPolicyRule,
+    idx: number,
 ) {
-  rule.model_whitelist?.splice(idx, 1);
+  rule.modelWhitelist?.splice(idx, 1);
 }
 
 async function saveBetaPolicySettings() {
   betaPolicySaving.value = true;
   try {
     // Clean up empty patterns before saving
-    const cleanedRules = betaPolicyForm.rules.map((rule: any) => {
-      const whitelist = rule.model_whitelist?.filter((p: any) => p.trim() !== "");
-      const hasWhitelist = whitelist && whitelist.length > 0;
+    const cleanedRules = betaPolicyForm.rules.map((rule: BetaPolicyRule) => {
+      const whitelist = rule.modelWhitelist?.filter((p: string) => p.trim() !== "");
+      const hasWhitelist = !!whitelist && whitelist.length > 0;
       return {
-        beta_token: rule.beta_token,
+        beta_token: rule.betaToken,
         action: rule.action,
         scope: rule.scope,
         error_message: rule.errorMessage,
         model_whitelist: hasWhitelist ? whitelist : undefined,
         fallback_action: hasWhitelist
-          ? rule.fallback_action || "pass"
-          : undefined,
-        fallback_error_message:
-          hasWhitelist && rule.fallback_action === "block"
-            ? rule.fallback_error_message
+            ? rule.fallbackAction || "pass"
             : undefined,
+        fallback_error_message:
+            hasWhitelist && rule.fallbackAction === "block"
+                ? rule.fallbackErrorMessage
+                : undefined,
       };
     });
     const updated = await $settings.updateBetaPolicySettings({
@@ -11314,7 +11697,7 @@ async function saveBetaPolicySettings() {
     appStore.showSuccess(t("admin.settings.betaPolicy.saved"));
   } catch (error: unknown) {
     appStore.showError(
-      extractApiErrorMessage(error, t("admin.settings.betaPolicy.saveFailed")),
+        extractApiErrorMessage(error, t("admin.settings.betaPolicy.saveFailed")),
     );
   } finally {
     betaPolicySaving.value = false;
@@ -11324,40 +11707,40 @@ async function saveBetaPolicySettings() {
 // ==================== Provider Management ====================
 
 const allPaymentTypes = computed(() => [
-  { value: "easypay", label: t("payment.methods.easypay") },
-  { value: "alipay", label: t("payment.methods.alipay") },
-  { value: "wxpay", label: t("payment.methods.wxpay") },
-  { value: "stripe", label: t("payment.methods.stripe") },
-  { value: "airwallex", label: t("payment.methods.airwallex") },
+  {value: "easypay", label: t("payment.methods.easypay")},
+  {value: "alipay", label: t("payment.methods.alipay")},
+  {value: "wxpay", label: t("payment.methods.wxpay")},
+  {value: "stripe", label: t("payment.methods.stripe")},
+  {value: "airwallex", label: t("payment.methods.airwallex")},
 ]);
 
 function isPaymentTypeEnabled(type: string): boolean {
-  return form.payment_enabled_types.includes(type);
+  return form.paymentEnabledTypes.includes(type);
 }
 
 const hasAnyPaymentTypeEnabled = computed(
-  () => form.payment_enabled_types.length > 0,
+    () => form.paymentEnabledTypes.length > 0,
 );
 
 function togglePaymentType(type: string) {
-  if (form.payment_enabled_types.includes(type)) {
-    form.payment_enabled_types = form.payment_enabled_types.filter(
-      (t) => t !== type,
+  if (form.paymentEnabledTypes.includes(type)) {
+    form.paymentEnabledTypes = form.paymentEnabledTypes.filter(
+        (t) => t !== type,
     );
     // Disable all provider instances matching this type
     disableProvidersByType(type);
   } else {
-    form.payment_enabled_types = [...form.payment_enabled_types, type];
+    form.paymentEnabledTypes = [...form.paymentEnabledTypes, type];
   }
 }
 
 async function disableProvidersByType(type: string) {
   const matching = providers.value.filter(
-    (p) => p.providerKey === type && p.enabled,
+      (p) => p.providerKey === type && p.enabled,
   );
   for (const p of matching) {
     try {
-      await adminAPI.payment.updateProvider(p.id, { enabled: false });
+      await adminOrdersActionStore.updateProvider(p.id, {enabled: false});
       p.enabled = false;
     } catch (err: unknown) {
       slog("disable provider failed", p.id, err);
@@ -11377,19 +11760,19 @@ const showDeleteProviderDialog = ref(false);
 const editingProvider = ref<ProviderInstance | null>(null);
 const deletingProviderId = ref<number | null>(null);
 const providerDialogRef = ref<InstanceType<
-  typeof PaymentProviderDialog
+    typeof PaymentProviderDialog
 > | null>(null);
 
 const providerKeyOptions = computed(() => [
-  { value: "easypay", label: t("admin.settings.payment.providerEasypay") },
-  { value: "alipay", label: t("admin.settings.payment.providerAlipay") },
-  { value: "wxpay", label: t("admin.settings.payment.providerWxpay") },
-  { value: "stripe", label: t("admin.settings.payment.providerStripe") },
-  { value: "airwallex", label: t("admin.settings.payment.providerAirwallex") },
+  {value: "easypay", label: t("admin.settings.payment.providerEasypay")},
+  {value: "alipay", label: t("admin.settings.payment.providerAlipay")},
+  {value: "wxpay", label: t("admin.settings.payment.providerWxpay")},
+  {value: "stripe", label: t("admin.settings.payment.providerStripe")},
+  {value: "airwallex", label: t("admin.settings.payment.providerAirwallex")},
 ]);
 
 const enabledProviderKeyOptions = computed(() => {
-  const enabled = form.payment_enabled_types;
+  const enabled = form.paymentEnabledTypes;
   return providerKeyOptions.value.filter((opt) => enabled.includes(opt.value));
 });
 
@@ -11409,8 +11792,8 @@ const cancelRateLimitUnitOptions = computed(() => [
     value: "minute",
     label: t("admin.settings.payment.cancelRateLimitUnitMinute"),
   },
-  { value: "hour", label: t("admin.settings.payment.cancelRateLimitUnitHour") },
-  { value: "day", label: t("admin.settings.payment.cancelRateLimitUnitDay") },
+  {value: "hour", label: t("admin.settings.payment.cancelRateLimitUnitHour")},
+  {value: "day", label: t("admin.settings.payment.cancelRateLimitUnitDay")},
 ]);
 
 const cancelRateLimitModeOptions = computed(() => [
@@ -11425,20 +11808,20 @@ const cancelRateLimitModeOptions = computed(() => [
 ]);
 
 type ProviderEnablementCandidate = Pick<
-  ProviderInstance,
-  "id" | "providerKey" | "supportedTypes" | "enabled" | "name"
+    ProviderInstance,
+    "id" | "providerKey" | "supportedTypes" | "enabled" | "name"
 >;
 
 function getProviderVisibleMethods(
-  provider: ProviderEnablementCandidate,
+    provider: ProviderEnablementCandidate,
 ): Array<"alipay" | "wxpay"> {
   if (!provider.enabled) {
     return [];
   }
 
   const supportedTypes = Array.isArray(provider.supportedTypes)
-    ? provider.supportedTypes
-    : [];
+      ? provider.supportedTypes
+      : [];
   const methods = new Set<"alipay" | "wxpay">();
   const addMethod = (type: string) => {
     const method = normalizeVisibleMethod(type);
@@ -11475,7 +11858,7 @@ function getProviderVisibleMethods(
 }
 
 function findProviderEnablementConflict(
-  candidate: ProviderEnablementCandidate,
+    candidate: ProviderEnablementCandidate,
 ): { method: "alipay" | "wxpay"; conflicting: ProviderInstance } | null {
   const claimedMethods = getProviderVisibleMethods(candidate);
   if (claimedMethods.length === 0) {
@@ -11489,7 +11872,7 @@ function findProviderEnablementConflict(
 
     const otherMethods = getProviderVisibleMethods(other);
     const matchedMethod = claimedMethods.find((method) =>
-      otherMethods.includes(method),
+        otherMethods.includes(method),
     );
     if (matchedMethod) {
       return {
@@ -11503,28 +11886,28 @@ function findProviderEnablementConflict(
 }
 
 function showProviderEnablementConflict(
-  conflict: { method: "alipay" | "wxpay"; conflicting: ProviderInstance },
+    conflict: { method: "alipay" | "wxpay"; conflicting: ProviderInstance },
 ) {
   appStore.showError(
-    t("admin.settings.payment.enableConflict", {
-      method: t(`payment.methods.${conflict.method}`),
-      provider: conflict.conflicting.name,
-    }),
+      t("admin.settings.payment.enableConflict", {
+        method: t(`payment.methods.${conflict.method}`),
+        provider: conflict.conflicting.name,
+      }),
   );
 }
 
 async function loadProviders() {
   providersLoading.value = true;
   try {
-    const res = await adminAPI.payment.getProviders();
+    const res = await adminOrdersQueryStore.fetchProviders();
     // Normalize supported_types: backend returns null when the list is empty
     // (Go nil slice → JSON null). Without this, ProviderCard's isSelected()
     // throws TypeError on null.includes(), causing the card to vanish.
-    providers.value = (res.data || []).map((p: any) => ({
+    providers.value = (res || []).map((p) => ({
       ...p,
       supportedTypes: Array.isArray(p.supportedTypes)
-        ? p.supportedTypes
-        : [],
+          ? p.supportedTypes
+          : [],
     }));
   } catch (err: unknown) {
     appStore.showError(extractI18nErrorMessage(err, t, "payment.errors", t("common.error")));
@@ -11536,7 +11919,7 @@ async function loadProviders() {
 function openCreateProvider() {
   editingProvider.value = null;
   providerDialogRef.value?.reset(
-    enabledProviderKeyOptions.value[0]?.value || "easypay",
+      enabledProviderKeyOptions.value[0]?.value || "easypay",
   );
   showProviderDialog.value = true;
 }
@@ -11547,15 +11930,45 @@ function openEditProvider(provider: ProviderInstance) {
   showProviderDialog.value = true;
 }
 
+function toUpdateProviderRequest(payload: Partial<ProviderInstance>): UpdateProviderInstanceRequest {
+  const req: UpdateProviderInstanceRequest = {}
+  if (payload.providerKey !== undefined) req.provider_key = payload.providerKey
+  if (payload.name !== undefined) req.name = payload.name
+  if (payload.config !== undefined) req.config = payload.config
+  if (payload.supportedTypes !== undefined) req.supported_types = payload.supportedTypes
+  if (payload.enabled !== undefined) req.enabled = payload.enabled
+  if (payload.paymentMode !== undefined) req.payment_mode = payload.paymentMode
+  if (payload.refundEnabled !== undefined) req.refund_enabled = payload.refundEnabled
+  if (payload.allowUserRefund !== undefined) req.allow_user_refund = payload.allowUserRefund
+  if (payload.limits !== undefined) req.limits = payload.limits
+  if (payload.sortOrder !== undefined) req.sort_order = payload.sortOrder
+  return req
+}
+
+function toCreateProviderRequest(payload: Partial<ProviderInstance>): CreateProviderInstanceRequest {
+  return {
+    provider_key: payload.providerKey ?? "",
+    name: payload.name ?? "",
+    config: payload.config ?? {},
+    supported_types: payload.supportedTypes ?? [],
+    enabled: payload.enabled ?? false,
+    payment_mode: payload.paymentMode ?? "",
+    refund_enabled: payload.refundEnabled ?? false,
+    allow_user_refund: payload.allowUserRefund ?? false,
+    limits: payload.limits ?? "",
+    sort_order: payload.sortOrder ?? 0,
+  }
+}
+
 async function handleSaveProvider(payload: Partial<ProviderInstance>) {
   providerSaving.value = true;
   try {
     const candidate: ProviderEnablementCandidate = {
       id: editingProvider.value?.id ?? 0,
       providerKey:
-        payload.providerKey ?? editingProvider.value?.providerKey ?? "",
+          payload.providerKey ?? editingProvider.value?.providerKey ?? "",
       supportedTypes:
-        payload.supportedTypes ?? editingProvider.value?.supportedTypes ?? [],
+          payload.supportedTypes ?? editingProvider.value?.supportedTypes ?? [],
       enabled: payload.enabled ?? editingProvider.value?.enabled ?? false,
       name: payload.name ?? editingProvider.value?.name ?? "",
     };
@@ -11566,9 +11979,9 @@ async function handleSaveProvider(payload: Partial<ProviderInstance>) {
     }
 
     if (editingProvider.value) {
-      await adminAPI.payment.updateProvider(editingProvider.value.id, payload);
+      await adminOrdersActionStore.updateProvider(editingProvider.value.id, toUpdateProviderRequest(payload));
     } else {
-      await adminAPI.payment.createProvider(payload);
+      await adminOrdersActionStore.createProvider(toCreateProviderRequest(payload));
     }
     showProviderDialog.value = false;
     // Reload full list (API returns decrypted/formatted data with correct sort order)
@@ -11583,8 +11996,8 @@ async function handleSaveProvider(payload: Partial<ProviderInstance>) {
 }
 
 async function handleToggleField(
-  provider: ProviderInstance,
-  field: "enabled" | "refundEnabled" | "allowUserRefund",
+    provider: ProviderInstance,
+    field: "enabled" | "refundEnabled" | "allowUserRefund",
 ) {
   let newValue: boolean;
   if (field === "enabled") newValue = !provider.enabled;
@@ -11605,13 +12018,13 @@ async function handleToggleField(
     }
   }
 
-  const payload: Record<string, boolean> = { [field]: newValue };
+  const payload: Partial<ProviderInstance> = {[field]: newValue};
   // Cascade: turning off refundEnabled also turns off allowUserRefund
   if (field === "refundEnabled" && !newValue) {
     payload.allowUserRefund = false;
   }
   try {
-    await adminAPI.payment.updateProvider(provider.id, payload);
+    await adminOrdersActionStore.updateProvider(provider.id, toUpdateProviderRequest(payload));
     await loadProviders();
   } catch (err: unknown) {
     appStore.showError(extractI18nErrorMessage(err, t, "payment.errors", t("common.error")));
@@ -11620,11 +12033,11 @@ async function handleToggleField(
 
 async function handleToggleType(provider: ProviderInstance, type: string) {
   const currentTypes = Array.isArray(provider.supportedTypes)
-    ? provider.supportedTypes
-    : [];
+      ? provider.supportedTypes
+      : [];
   const updated = currentTypes.includes(type)
-    ? currentTypes.filter((t) => t !== type)
-    : [...currentTypes, type];
+      ? currentTypes.filter((t) => t !== type)
+      : [...currentTypes, type];
   const conflict = findProviderEnablementConflict({
     id: provider.id,
     providerKey: provider.providerKey,
@@ -11637,8 +12050,8 @@ async function handleToggleType(provider: ProviderInstance, type: string) {
     return;
   }
   try {
-    await adminAPI.payment.updateProvider(provider.id, {
-      supportedTypes: updated,
+    await adminOrdersActionStore.updateProvider(provider.id, {
+      supported_types: updated,
     });
     await loadProviders();
   } catch (err: unknown) {
@@ -11652,15 +12065,15 @@ function confirmDeleteProvider(provider: ProviderInstance) {
 }
 
 async function handleReorderProviders(
-  updates: { id: number; sortOrder: number }[],
+    updates: { id: number; sortOrder: number }[],
 ) {
   try {
     await Promise.all(
-      updates.map((u) =>
-        adminAPI.payment.updateProvider(u.id, {
-          sortOrder: u.sortOrder,
-        }),
-      ),
+        updates.map((u) =>
+            adminOrdersActionStore.updateProvider(u.id, {
+              sort_order: u.sortOrder,
+            }),
+        ),
     );
     await loadProviders();
   } catch (err: unknown) {
@@ -11672,7 +12085,7 @@ async function handleReorderProviders(
 async function handleDeleteProvider() {
   if (!deletingProviderId.value) return;
   try {
-    await adminAPI.payment.deleteProvider(deletingProviderId.value);
+    await adminOrdersActionStore.deleteProvider(deletingProviderId.value);
     appStore.showSuccess(t("common.deleted"));
     showDeleteProviderDialog.value = false;
     loadProviders();
@@ -11780,10 +12193,10 @@ const affiliateConfirmDialog = reactive<{
 });
 
 function openAffiliateConfirm(
-  title: string,
-  message: string,
-  confirmText: string,
-  fn: () => Promise<unknown>,
+    title: string,
+    message: string,
+    confirmText: string,
+    fn: () => Promise<unknown>,
 ) {
   affiliateConfirmDialog.title = title;
   affiliateConfirmDialog.message = message;
@@ -11840,7 +12253,7 @@ function parseRebateRate(raw: unknown): number | null | undefined {
 async function loadAffiliateUsers() {
   affiliateState.loading = true;
   try {
-    const res = await affiliatesAPI.listUsers({
+    const res = await affiliateQueryStore.listUsers({
       page: affiliateState.page,
       page_size: affiliateState.pageSize,
       search: affiliateState.search,
@@ -11848,7 +12261,7 @@ async function loadAffiliateUsers() {
     affiliateState.entries = res.items ?? [];
     affiliateState.total = res.total ?? 0;
     // Drop selections that are no longer visible.
-    const visibleIds = new Set(affiliateState.entries.map((e) => e.user_id));
+    const visibleIds = new Set(affiliateState.entries.map((e) => e.userId));
     affiliateState.selected = affiliateState.selected.filter((id) => visibleIds.has(id));
   } catch (err) {
     appStore.showError(extractApiErrorMessage(err, t("common.error")));
@@ -11872,7 +12285,7 @@ function changeAffiliatePage(page: number) {
 
 function toggleAffiliateSelectAll(e: Event) {
   const checked = (e.target as HTMLInputElement).checked;
-  affiliateState.selected = checked ? affiliateState.entries.map((entry) => entry.user_id) : [];
+  affiliateState.selected = checked ? affiliateState.entries.map((entry) => entry.userId) : [];
 }
 
 function toggleAffiliateSelect(userId: number) {
@@ -11890,9 +12303,9 @@ function openAffiliateModal(entry: AffiliateAdminEntry | null) {
   affiliateModal.userResults = [];
   affiliateModal.selectedUser = null;
   affiliateModal.editingEntry = entry;
-  affiliateModal.code = entry?.aff_code_custom ? entry.aff_code : "";
+  affiliateModal.code = entry?.affCodeCustom ? entry.affCode : "";
   affiliateModal.rate =
-    entry?.aff_rebate_rate_percent != null ? String(entry.aff_rebate_rate_percent) : "";
+      entry?.affRebateRatePercent != null ? String(entry.affRebateRatePercent) : "";
 }
 
 function closeAffiliateModal() {
@@ -11911,7 +12324,7 @@ function onAffiliateUserSearchInput() {
   }
   debounceTimer(affiliateModal, 300, async () => {
     try {
-      affiliateModal.userResults = await affiliatesAPI.lookupUsers(q);
+      affiliateModal.userResults = await affiliateActionStore.lookupUsers(q);
     } catch (err) {
       appStore.showError(extractApiErrorMessage(err, t("common.error")));
     }
@@ -11946,8 +12359,8 @@ const affiliateModalCanSubmit = computed(() => {
   // Edit mode + empty rate input is a meaningful "clear" only if the user
   // currently has an exclusive rate to clear.
   return (
-    affiliateModal.mode === "edit" &&
-    affiliateModal.editingEntry?.aff_rebate_rate_percent != null
+      affiliateModal.mode === "edit" &&
+      affiliateModal.editingEntry?.affRebateRatePercent != null
   );
 });
 
@@ -11962,17 +12375,17 @@ async function submitAffiliateModal() {
   if (affiliateModal.mode === "add") {
     userId = affiliateModal.selectedUser!.id;
   } else {
-    userId = affiliateModal.editingEntry!.user_id;
+    userId = affiliateModal.editingEntry!.userId;
   }
 
-  const payload: Parameters<typeof affiliatesAPI.updateUserSettings>[1] = {};
+  const payload: UpdateAffiliateUserRequest = {};
   const codeRaw = affiliateModal.code.trim();
   if (codeRaw) payload.aff_code = codeRaw.toUpperCase();
 
   const rateInput = parseRebateRate(affiliateModal.rate);
   if (rateInput === undefined) return; // toast already shown
   if (rateInput === null) {
-    if (affiliateModal.mode === "edit" && affiliateModal.editingEntry?.aff_rebate_rate_percent != null) {
+    if (affiliateModal.mode === "edit" && affiliateModal.editingEntry?.affRebateRatePercent != null) {
       payload.clear_rebate_rate = true;
     }
   } else {
@@ -11981,7 +12394,7 @@ async function submitAffiliateModal() {
 
   affiliateModal.saving = true;
   try {
-    await affiliatesAPI.updateUserSettings(userId, payload);
+    await affiliateActionStore.updateUserSettings(userId, payload);
     appStore.showSuccess(t("common.saved"));
     closeAffiliateModal();
     affiliateState.page = 1;
@@ -11998,12 +12411,12 @@ async function submitAffiliateModal() {
 // AND regenerates the invite code as a system random one.
 function askResetAffiliateUser(entry: AffiliateAdminEntry) {
   openAffiliateConfirm(
-    t("admin.settings.features.affiliate.customUsers.resetTitle"),
-    t("admin.settings.features.affiliate.customUsers.resetMessage", {
-      email: entry.email || `#${entry.user_id}`,
-    }),
-    t("common.delete"),
-    () => affiliatesAPI.clearUserSettings(entry.user_id),
+      t("admin.settings.features.affiliate.customUsers.resetTitle"),
+      t("admin.settings.features.affiliate.customUsers.resetMessage", {
+        email: entry.email || `#${entry.userId}`,
+      }),
+      t("common.delete"),
+      () => affiliateActionStore.clearUserSettings(entry.userId),
   );
 }
 
@@ -12017,14 +12430,14 @@ async function submitAffiliateBatchModal() {
   const rateInput = parseRebateRate(affiliateBatchModal.rate);
   if (rateInput === undefined) return;
   const userIDs = [...affiliateState.selected];
-  const payload: Parameters<typeof affiliatesAPI.batchSetRate>[0] =
-    rateInput === null
-      ? { user_ids: userIDs, clear: true }
-      : { user_ids: userIDs, aff_rebate_rate_percent: rateInput };
+  const payload: BatchSetRateRequest =
+      rateInput === null
+          ? {user_ids: userIDs, clear: true}
+          : {user_ids: userIDs, aff_rebate_rate_percent: rateInput};
 
   affiliateBatchModal.saving = true;
   try {
-    await affiliatesAPI.batchSetRate(payload);
+    await affiliateActionStore.batchSetRate(payload);
     appStore.showSuccess(t("common.saved"));
     affiliateBatchModal.open = false;
     affiliateState.selected = [];
@@ -12041,27 +12454,27 @@ async function submitAffiliateBatchModal() {
 // after the settings load — so this fires either when the saved value is
 // truthy on first paint, or when the admin manually toggles it on.
 watch(
-  () => form.affiliate_enabled,
-  (enabled, prev) => {
-    if (enabled && !prev) {
-      loadAffiliateUsers();
-    }
-  },
+    () => form.affiliateEnabled,
+    (enabled, prev) => {
+      if (enabled && !prev) {
+        loadAffiliateUsers();
+      }
+    },
 );
 
 // bypass_registration 与身份同步三开关仅在 internal_only 模式下生效。切换 policy 到其它值时，
 // 立即把相关字段重置为 false，避免保存请求里残留旧值。后端 admin handler 与
 // 配置加载层都有 coerce 兜底，这里是 UX 层的同步而非安全防线。
 watch(
-  () => form.dingtalk_connect_corp_restriction_policy,
-  (policy) => {
-    if (policy !== "internal_only") {
-      if (form.dingtalk_connect_bypass_registration) form.dingtalk_connect_bypass_registration = false;
-      if (form.dingtalk_connect_sync_corp_email) form.dingtalk_connect_sync_corp_email = false;
-      if (form.dingtalk_connect_sync_display_name) form.dingtalk_connect_sync_display_name = false;
-      if (form.dingtalk_connect_sync_dept) form.dingtalk_connect_sync_dept = false;
-    }
-  },
+    () => form.dingtalkConnectCorpRestrictionPolicy,
+    (policy) => {
+      if (policy !== "internal_only") {
+        if (form.dingtalkConnectBypassRegistration) form.dingtalkConnectBypassRegistration = false;
+        if (form.dingtalkConnectSyncCorpEmail) form.dingtalkConnectSyncCorpEmail = false;
+        if (form.dingtalkConnectSyncDisplayName) form.dingtalkConnectSyncDisplayName = false;
+        if (form.dingtalkConnectSyncDept) form.dingtalkConnectSyncDept = false;
+      }
+    },
 );
 </script>
 
@@ -12078,9 +12491,8 @@ watch(
 .settings-tabs-shell {
   @apply sticky z-20 -mx-1 rounded-2xl border border-white/80 bg-white/90 p-1.5 backdrop-blur-xl;
   top: 4.75rem;
-  box-shadow:
-    0 12px 28px rgb(15 23 42 / 0.07),
-    0 1px 0 rgb(255 255 255 / 0.9) inset;
+  box-shadow: 0 12px 28px rgb(15 23 42 / 0.07),
+  0 1px 0 rgb(255 255 255 / 0.9) inset;
 }
 
 .settings-tabs-scroll {
@@ -12130,9 +12542,8 @@ watch(
 
 .settings-tab-active {
   @apply border-primary-200/80 bg-white text-primary-700 shadow-sm dark:border-primary-400/30 dark:bg-dark-700/95 dark:text-primary-200;
-  box-shadow:
-    0 8px 18px rgb(15 23 42 / 0.08),
-    0 1px 0 rgb(255 255 255 / 0.92) inset;
+  box-shadow: 0 8px 18px rgb(15 23 42 / 0.08),
+  0 1px 0 rgb(255 255 255 / 0.92) inset;
 }
 
 .settings-tab-active::before {
@@ -12175,9 +12586,8 @@ watch(
 .dark .settings-tabs-shell {
   border-color: rgb(51 65 85 / 0.65);
   background: rgb(15 23 42 / 0.86);
-  box-shadow:
-    0 16px 36px rgb(0 0 0 / 0.28),
-    0 1px 0 rgb(255 255 255 / 0.06) inset;
+  box-shadow: 0 16px 36px rgb(0 0 0 / 0.28),
+  0 1px 0 rgb(255 255 255 / 0.06) inset;
 }
 
 .dark .settings-tab::before {
@@ -12185,8 +12595,7 @@ watch(
 }
 
 .dark .settings-tab-active {
-  box-shadow:
-    0 12px 26px rgb(0 0 0 / 0.22),
-    0 1px 0 rgb(255 255 255 / 0.08) inset;
+  box-shadow: 0 12px 26px rgb(0 0 0 / 0.22),
+  0 1px 0 rgb(255 255 255 / 0.08) inset;
 }
 </style>

@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { Expose, plainToInstance } from 'class-transformer'
-import { OpenAIMessagesDispatchModelConfig } from '@/features/admin-groups/domain/models/openAIMessagesDispatchModelConfig'
+import { OpenAIMessagesDispatchModelConfig } from '@/core/models/domain/openAIMessagesDispatchModelConfig'
 
 export class OpenAIMessagesDispatchModelConfigDto {
   @Expose({ name: 'opus_mapped_model' })

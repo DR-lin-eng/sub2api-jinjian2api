@@ -237,17 +237,18 @@ import { getLast24HourRange, parseRangeBoundary, toDateInputValue } from '@/core
 import { BILLING_MODE_IMAGE, getBillingModeLabel } from '@/core/utils/billingMode'
 import { calculateOutputTokensPerSecond } from '@/core/utils/usageMetrics'
 import { resolveUsageRequestType, requestTypeToLegacyStream } from '@/core/utils/usageRequestType'
-import type { UserErrorRequest } from '@/features/admin-ops/domain/models/userErrorTypes'
+import type { UserErrorRequest } from '@/features/admin-ops/domain/models/userErrorRequest'
 import type { Column } from '@/common/widgets/types'
 import { COMMON_ERROR_STATUS_CODES } from '@/core/utils/errorBadges'
-import type { ApiKey } from '@/features/keys/domain/models/apiKey'
-import type { EndpointStat } from '@/features/admin-dashboard/domain/models/endpointStat'
+import type { ApiKey } from '@/core/models/domain/apiKey'
+import type { EndpointStat } from '@/core/models/domain/endpointStat'
 import type { Group } from '@/features/admin-groups/domain/models/adminGroups'
 import type { GroupStat } from '@/features/admin-dashboard/domain/models/groupStat'
 import type { ModelStat } from '@/features/admin-dashboard/domain/models/modelStat'
 import type { TrendDataPoint } from '@/features/admin-dashboard/domain/models/trendDataPoint'
 import type { UsageLog } from '@/core/models/domain/usageLog'
-import type { UsageQueryParams } from '@/features/admin-usage/domain/models/adminUsageQueryParams'
+import type { AdminUsageLog } from '@/features/admin-usage/domain/models/adminUsageLog'
+import type { AdminUsageQueryParams as UsageQueryParams } from '@/features/admin-usage/domain/models/adminUsageQueryParams'
 import type { UsageStatsResponse } from '@/core/models/domain/usageStatsResponse'
 
 const { t } = useI18n()
@@ -258,7 +259,7 @@ type DistributionMetric = 'tokens' | 'actual_cost'
 type EndpointSource = 'inbound' | 'upstream' | 'path'
 
 const usageStats = ref<UsageStatsResponse | null>(null)
-const usageLogs = ref<UsageLog[]>([])
+const usageLogs = ref<AdminUsageLog[]>([])
 const trendData = ref<TrendDataPoint[]>([])
 const requestedModelStats = ref<ModelStat[]>([])
 const groupStats = ref<GroupStat[]>([])
@@ -351,7 +352,7 @@ const filters = ref<UsageQueryParams>({
   endDate: endDate.value,
   requestType: undefined,
   billingType: null,
-  billingMode: null,
+  billingMode: undefined,
 })
 
 const pagination = reactive({
@@ -433,7 +434,7 @@ const loadLogs = async () => {
       signal: controller.signal,
     })
     if (!controller.signal.aborted) {
-      usageLogs.value = res.items
+      usageLogs.value = res.items as AdminUsageLog[]
       pagination.total = res.total
     }
   } catch (error: any) {
@@ -546,7 +547,7 @@ const resetFilters = () => {
     endDate: range.end,
     requestType: undefined,
     billingType: null,
-    billingMode: null,
+    billingMode: undefined,
   }
   granularity.value = getGranularityForRange(range.start, range.end)
   applyFilters()

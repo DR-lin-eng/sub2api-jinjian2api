@@ -191,16 +191,16 @@
 import { computed, h, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAdminSettingsStore } from '@/core/stores/adminSettingsStore'
+import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/core/stores/authStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useOnboardingStore } from '@/core/stores/onboardingStore'
-import VersionBadge from '@/common/widgets/data/VersionBadge.vue'
+import VersionBadge from '@/features/admin-settings/presentation/widgets/VersionBadge.vue'
 import { sanitizeSvg } from '@/core/utils/sanitize'
 import { sanitizeUrl } from '@/core/utils/url'
 import { FeatureFlags, makeSidebarFlag } from '@/core/services/featureFlags'
 // TODO(spec-exception): useBatchImageAccess is a temporary cross-feature service; see .eslintrc.cjs override.
-import { useBatchImageAccess } from '@/core/services/useBatchImageAccess'
+import { useBatchImageAccess } from '@/features/batch-image/presentation/composables/useBatchImageAccess'
 
 interface NavItem {
   path: string
