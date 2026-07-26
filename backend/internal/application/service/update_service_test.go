@@ -4,7 +4,11 @@ package service
 
 import (
 	"context"
+	"crypto/ed25519"
+	"encoding/base64"
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -31,13 +35,17 @@ type updateServiceGitHubClientStub struct {
 	release        *GitHubRelease
 	recentReleases []*GitHubRelease
 	recentErr      error
+	latestRepo     string
+	recentRepo     string
 }
 
-func (s *updateServiceGitHubClientStub) FetchLatestRelease(context.Context, string) (*GitHubRelease, error) {
+func (s *updateServiceGitHubClientStub) FetchLatestRelease(_ context.Context, repo string) (*GitHubRelease, error) {
+	s.latestRepo = repo
 	return s.release, nil
 }
 
-func (s *updateServiceGitHubClientStub) FetchRecentReleases(context.Context, string, int) ([]*GitHubRelease, error) {
+func (s *updateServiceGitHubClientStub) FetchRecentReleases(_ context.Context, repo string, _ int) ([]*GitHubRelease, error) {
+	s.recentRepo = repo
 	return s.recentReleases, s.recentErr
 }
 
@@ -45,19 +53,20 @@ func (s *updateServiceGitHubClientStub) DownloadFile(context.Context, string, st
 	panic("DownloadFile should not be called when no update is available")
 }
 
-func (s *updateServiceGitHubClientStub) FetchChecksumFile(context.Context, string) ([]byte, error) {
-	panic("FetchChecksumFile should not be called when no update is available")
+func (s *updateServiceGitHubClientStub) FetchReleaseFile(context.Context, string, int64) ([]byte, error) {
+	panic("FetchReleaseFile should not be called when no update is available")
 }
 
 func TestUpdateServicePerformUpdateNoUpdateReturnsSentinel(t *testing.T) {
+	client := &updateServiceGitHubClientStub{
+		release: &GitHubRelease{
+			TagName: "v0.1.132",
+			Name:    "v0.1.132",
+		},
+	}
 	svc := NewUpdateService(
 		&updateServiceCacheStub{},
-		&updateServiceGitHubClientStub{
-			release: &GitHubRelease{
-				TagName: "v0.1.132",
-				Name:    "v0.1.132",
-			},
-		},
+		client,
 		"0.1.132",
 		"release",
 	)
@@ -67,6 +76,44 @@ func TestUpdateServicePerformUpdateNoUpdateReturnsSentinel(t *testing.T) {
 	require.Error(t, err)
 	require.True(t, errors.Is(err, ErrNoUpdateAvailable))
 	require.ErrorIs(t, err, ErrNoUpdateAvailable)
+	require.Equal(t, "DR-lin-eng/sub2api-no2api", client.latestRepo)
+}
+
+func TestApplyReleaseAssetsRequiresSignedChecksumManifest(t *testing.T) {
+	svc := NewUpdateService(&updateServiceCacheStub{}, &updateServiceGitHubClientStub{}, "0.1.132", "release")
+	archive := Asset{
+		Name:        "sub2api_0.1.133_" + svc.getArchiveName() + ".tar.gz",
+		DownloadURL: "https://github.com/DR-lin-eng/sub2api-no2api/releases/download/v0.1.133/sub2api.tar.gz",
+	}
+
+	err := svc.applyReleaseAssets(context.Background(), []Asset{archive})
+	require.ErrorContains(t, err, "missing checksums.txt")
+
+	err = svc.applyReleaseAssets(context.Background(), []Asset{
+		archive,
+		{Name: "checksums.txt", DownloadURL: "https://github.com/DR-lin-eng/sub2api-no2api/releases/download/v0.1.133/checksums.txt"},
+	})
+	require.ErrorContains(t, err, "missing checksums.txt.sig")
+}
+
+func TestVerifySignedChecksumManifest(t *testing.T) {
+	publicKey, privateKey, err := ed25519.GenerateKey(nil)
+	require.NoError(t, err)
+	publicKeyBase64 := base64.StdEncoding.EncodeToString(publicKey)
+	manifest := []byte("abc123  sub2api_linux_amd64.tar.gz\n")
+	signature := ed25519.Sign(privateKey, manifest)
+
+	require.NoError(t, verifySignedChecksumManifestWithPublicKey(manifest, signature, publicKeyBase64))
+	signature[0] ^= 0xff
+	require.Error(t, verifySignedChecksumManifestWithPublicKey(manifest, signature, publicKeyBase64))
+}
+
+func TestVerifyChecksumData(t *testing.T) {
+	filePath := filepath.Join(t.TempDir(), "sub2api_linux_amd64.tar.gz")
+	require.NoError(t, os.WriteFile(filePath, []byte("payload"), 0o600))
+
+	manifest := []byte("239f59ed55e737c77147cf55ad7c5f9b7f9e4f4f3db2a4d9bbd3a3a4adf3ad5d  sub2api_linux_amd64.tar.gz\n")
+	require.Error(t, verifyChecksumData(filePath, manifest))
 }
 
 func TestUpdateServiceCheckUpdateComparesReleaseCoreWhenCurrentVersionHasBuildSuffix(t *testing.T) {

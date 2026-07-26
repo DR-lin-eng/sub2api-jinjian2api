@@ -2,7 +2,7 @@
 #
 # Sub2API Installation Script
 # Sub2API 安装脚本
-# Usage: curl -sSL https://raw.githubusercontent.com/Wei-Shaw/sub2api/main/deploy/install.sh | bash
+# Download this file first, review it, then run: sudo bash ./install.sh
 #
 
 set -e
@@ -31,7 +31,7 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Configuration
-GITHUB_REPO="Wei-Shaw/sub2api"
+GITHUB_REPO="DR-lin-eng/sub2api-no2api"
 INSTALL_DIR="/opt/sub2api"
 SERVICE_NAME="sub2api"
 SERVICE_USER="sub2api"
@@ -79,6 +79,8 @@ declare -A MSG_ZH=(
     ["checksum_verified"]="校验通过"
     ["checksum_failed"]="校验失败"
     ["checksum_not_found"]="无法验证校验和（checksums.txt 未找到）"
+    ["signature_verified"]="发布签名验证通过"
+    ["signature_failed"]="发布签名验证失败"
     ["extracting"]="正在解压..."
     ["binary_installed"]="二进制文件已安装到"
     ["user_exists"]="用户已存在"
@@ -204,6 +206,8 @@ declare -A MSG_EN=(
     ["checksum_verified"]="Checksum verified"
     ["checksum_failed"]="Checksum verification failed"
     ["checksum_not_found"]="Could not verify checksum (checksums.txt not found)"
+    ["signature_verified"]="Release signature verified"
+    ["signature_failed"]="Release signature verification failed"
     ["extracting"]="Extracting..."
     ["binary_installed"]="Binary installed to"
     ["user_exists"]="User already exists"
@@ -326,7 +330,7 @@ print_error() {
 }
 
 # Check if running interactively (can access terminal)
-# When piped (curl | bash), stdin is not a terminal, but /dev/tty may still be available
+# When run non-interactively, stdin is not a terminal, but /dev/tty may still be available
 is_interactive() {
     # Check if /dev/tty is available (works even when piped)
     [ -e /dev/tty ] && [ -r /dev/tty ] && [ -w /dev/tty ]
@@ -473,6 +477,14 @@ check_dependencies() {
         missing+=("tar")
     fi
 
+    if ! command -v openssl &> /dev/null; then
+        missing+=("openssl")
+    fi
+
+    if ! command -v sha256sum &> /dev/null && ! command -v shasum &> /dev/null; then
+        missing+=("sha256sum or shasum")
+    fi
+
     if [ ${#missing[@]} -gt 0 ]; then
         print_error "$(msg 'missing_deps'): ${missing[*]}"
         print_info "$(msg 'install_deps_first')"
@@ -539,6 +551,11 @@ get_latest_version() {
         exit 1
     fi
 
+    if [[ ! "$LATEST_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+        print_error "$(msg 'failed_get_version')"
+        exit 1
+    fi
+
     print_info "$(msg 'latest_version'): $LATEST_VERSION"
 }
 
@@ -580,6 +597,11 @@ validate_version() {
         version="v$version"
     fi
 
+    if [[ ! "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+        print_error "$(msg 'version_not_found'): $version" >&2
+        exit 1
+    fi
+
     print_info "$(msg 'validating_version') $version" >&2
 
     # Check if the release exists
@@ -619,6 +641,8 @@ download_and_extract() {
     local archive_name="sub2api_${version_num}_${OS}_${ARCH}.tar.gz"
     local download_url="https://github.com/${GITHUB_REPO}/releases/download/${LATEST_VERSION}/${archive_name}"
     local checksum_url="https://github.com/${GITHUB_REPO}/releases/download/${LATEST_VERSION}/checksums.txt"
+    local signature_url="https://github.com/${GITHUB_REPO}/releases/download/${LATEST_VERSION}/checksums.txt.sig"
+    local public_key_url="https://raw.githubusercontent.com/${GITHUB_REPO}/${LATEST_VERSION}/deploy/update-signing-public-key.pem"
 
     print_info "$(msg 'downloading') ${archive_name}..."
 
@@ -626,28 +650,42 @@ download_and_extract() {
     TEMP_DIR=$(mktemp -d)
     trap "rm -rf $TEMP_DIR" EXIT
 
-    # Download archive
-    if ! curl -sL "$download_url" -o "$TEMP_DIR/$archive_name"; then
+    # The checksum manifest must be authenticated before any archive is installed.
+    if ! curl -fsSL --proto '=https' --tlsv1.2 "$checksum_url" -o "$TEMP_DIR/checksums.txt" ||
+       ! curl -fsSL --proto '=https' --tlsv1.2 "$signature_url" -o "$TEMP_DIR/checksums.txt.sig" ||
+       ! curl -fsSL --proto '=https' --tlsv1.2 "$public_key_url" -o "$TEMP_DIR/update-signing-public-key.pem"; then
+        print_error "$(msg 'checksum_not_found')"
+        exit 1
+    fi
+
+    if ! openssl pkeyutl -verify -pubin -inkey "$TEMP_DIR/update-signing-public-key.pem" -rawin -in "$TEMP_DIR/checksums.txt" -sigfile "$TEMP_DIR/checksums.txt.sig" >/dev/null 2>&1; then
+        print_error "$(msg 'signature_failed')"
+        exit 1
+    fi
+    print_success "$(msg 'signature_verified')"
+
+    if ! curl -fsSL --proto '=https' --tlsv1.2 "$download_url" -o "$TEMP_DIR/$archive_name"; then
         print_error "$(msg 'download_failed')"
         exit 1
     fi
 
-    # Download and verify checksum
     print_info "$(msg 'verifying_checksum')"
-    if curl -sL "$checksum_url" -o "$TEMP_DIR/checksums.txt" 2>/dev/null; then
-        local expected_checksum=$(grep "$archive_name" "$TEMP_DIR/checksums.txt" | awk '{print $1}')
-        local actual_checksum=$(sha256sum "$TEMP_DIR/$archive_name" | awk '{print $1}')
-
-        if [ "$expected_checksum" != "$actual_checksum" ]; then
-            print_error "$(msg 'checksum_failed')"
-            print_error "Expected: $expected_checksum"
-            print_error "Actual: $actual_checksum"
-            exit 1
-        fi
-        print_success "$(msg 'checksum_verified')"
+    local expected_checksum
+    local actual_checksum
+    expected_checksum=$(awk -v file="$archive_name" '$2 == file { print $1; exit }' "$TEMP_DIR/checksums.txt")
+    if command -v sha256sum &> /dev/null; then
+        actual_checksum=$(sha256sum "$TEMP_DIR/$archive_name" | awk '{print $1}')
     else
-        print_warning "$(msg 'checksum_not_found')"
+        actual_checksum=$(shasum -a 256 "$TEMP_DIR/$archive_name" | awk '{print $1}')
     fi
+
+    if [ -z "$expected_checksum" ] || [ "$expected_checksum" != "$actual_checksum" ]; then
+        print_error "$(msg 'checksum_failed')"
+        print_error "Expected: ${expected_checksum:-missing}"
+        print_error "Actual: $actual_checksum"
+        exit 1
+    fi
+    print_success "$(msg 'checksum_verified')"
 
     # Extract
     print_info "$(msg 'extracting')"
@@ -718,7 +756,7 @@ install_service() {
     cat > /etc/systemd/system/sub2api.service << EOF
 [Unit]
 Description=Sub2API - AI API Gateway Platform
-Documentation=https://github.com/Wei-Shaw/sub2api
+Documentation=https://github.com/DR-lin-eng/sub2api-no2api
 After=network.target postgresql.service redis.service
 Wants=postgresql.service redis.service
 
@@ -973,7 +1011,7 @@ uninstall() {
     # If not interactive (piped), require -y flag or skip confirmation
     if ! is_interactive; then
         if [ "${FORCE_YES:-}" != "true" ]; then
-            print_error "Non-interactive mode detected. Use 'curl ... | bash -s -- uninstall -y' to confirm."
+            print_error "Non-interactive mode detected. Download the installer first, then run './install.sh uninstall -y'."
             exit 1
         fi
     else

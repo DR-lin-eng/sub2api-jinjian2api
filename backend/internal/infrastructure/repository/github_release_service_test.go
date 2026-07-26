@@ -125,7 +125,7 @@ func TestGitHubReleaseClientDoesNotAuthorizeDownloads(t *testing.T) {
 
 	dest := filepath.Join(t.TempDir(), "asset")
 	require.NoError(t, client.DownloadFile(context.Background(), "https://objects.githubusercontent.com/asset", dest, 100))
-	_, err := client.FetchChecksumFile(context.Background(), "https://github.com/test/repo/releases/download/v1/checksums.txt")
+	_, err := client.FetchReleaseFile(context.Background(), "https://github.com/test/repo/releases/download/v1/checksums.txt", 1<<20)
 	require.NoError(t, err)
 	require.Len(t, headers, 2)
 	for _, header := range headers {
@@ -233,7 +233,7 @@ func (s *GitHubReleaseServiceSuite) TestDownloadFile_404() {
 	require.Error(s.T(), statErr, "expected file to not exist for 404")
 }
 
-func (s *GitHubReleaseServiceSuite) TestFetchChecksumFile_Success() {
+func (s *GitHubReleaseServiceSuite) TestFetchReleaseFile_Success() {
 	s.srv = newLocalTestServer(s.T(), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("sum"))
@@ -241,19 +241,19 @@ func (s *GitHubReleaseServiceSuite) TestFetchChecksumFile_Success() {
 
 	s.client = newTestGitHubReleaseClient()
 
-	body, err := s.client.FetchChecksumFile(context.Background(), s.srv.URL)
-	require.NoError(s.T(), err, "FetchChecksumFile")
+	body, err := s.client.FetchReleaseFile(context.Background(), s.srv.URL, 1<<20)
+	require.NoError(s.T(), err, "FetchReleaseFile")
 	require.Equal(s.T(), "sum", string(body), "checksum body mismatch")
 }
 
-func (s *GitHubReleaseServiceSuite) TestFetchChecksumFile_Non200() {
+func (s *GitHubReleaseServiceSuite) TestFetchReleaseFile_Non200() {
 	s.srv = newLocalTestServer(s.T(), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 
 	s.client = newTestGitHubReleaseClient()
 
-	_, err := s.client.FetchChecksumFile(context.Background(), s.srv.URL)
+	_, err := s.client.FetchReleaseFile(context.Background(), s.srv.URL, 1<<20)
 	require.Error(s.T(), err, "expected error for non-200")
 }
 
@@ -294,10 +294,10 @@ func (s *GitHubReleaseServiceSuite) TestDownloadFile_InvalidDestPath() {
 	require.Error(s.T(), err, "expected error for invalid destination path")
 }
 
-func (s *GitHubReleaseServiceSuite) TestFetchChecksumFile_InvalidURL() {
+func (s *GitHubReleaseServiceSuite) TestFetchReleaseFile_InvalidURL() {
 	s.client = newTestGitHubReleaseClient()
 
-	_, err := s.client.FetchChecksumFile(context.Background(), "://invalid-url")
+	_, err := s.client.FetchReleaseFile(context.Background(), "://invalid-url", 1<<20)
 	require.Error(s.T(), err, "expected error for invalid URL")
 }
 
@@ -463,7 +463,7 @@ func (s *GitHubReleaseServiceSuite) TestFetchLatestRelease_ContextCancel() {
 	require.Error(s.T(), err)
 }
 
-func (s *GitHubReleaseServiceSuite) TestFetchChecksumFile_ContextCancel() {
+func (s *GitHubReleaseServiceSuite) TestFetchReleaseFile_ContextCancel() {
 	s.srv = newLocalTestServer(s.T(), http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		<-r.Context().Done()
 	}))
@@ -473,7 +473,7 @@ func (s *GitHubReleaseServiceSuite) TestFetchChecksumFile_ContextCancel() {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, err := s.client.FetchChecksumFile(ctx, s.srv.URL)
+	_, err := s.client.FetchReleaseFile(ctx, s.srv.URL, 1<<20)
 	require.Error(s.T(), err)
 }
 

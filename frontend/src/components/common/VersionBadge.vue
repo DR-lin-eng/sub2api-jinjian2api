@@ -651,9 +651,9 @@ import {
 import { useClipboard } from '@/composables/useClipboard'
 import Icon from '@/components/icons/Icon.vue'
 
-const GITHUB_REPO = 'Wei-Shaw/sub2api'
-// Docker Hub image published by CI (tags carry no "v" prefix, e.g. weishaw/sub2api:0.1.146)
-const DOCKER_IMAGE = 'weishaw/sub2api'
+const GITHUB_REPO = 'DR-lin-eng/sub2api-no2api'
+// GHCR image published by this repository's release workflow.
+const DOCKER_IMAGE = 'ghcr.io/dr-lin-eng/sub2api-no2api'
 
 const { t } = useI18n()
 
@@ -710,7 +710,7 @@ const manualTabs = computed(() => [
 const scriptRollbackCommand = computed(() => {
   if (!selectedRollbackVersion.value) return ''
   const tag = `v${selectedRollbackVersion.value}`
-  return `curl -sSL https://raw.githubusercontent.com/${GITHUB_REPO}/${tag}/deploy/install.sh | sudo bash -s -- rollback ${tag}`
+  return `curl -fsSL https://raw.githubusercontent.com/${GITHUB_REPO}/${tag}/deploy/install.sh -o sub2api-install.sh && chmod 700 sub2api-install.sh && sudo bash ./sub2api-install.sh rollback ${tag}`
 })
 
 const dockerRollbackCommand = computed(() => {
@@ -753,6 +753,13 @@ async function refreshVersion(force = true) {
 
 async function handleUpdate() {
   if (updating.value) return
+  if (
+    !window.confirm(
+      t('version.confirmUpdateAction', { version: latestVersion.value || t('version.latestVersion') })
+    )
+  ) {
+    return
+  }
 
   updating.value = true
   updateError.value = ''
@@ -828,6 +835,13 @@ function formatPublishedAt(publishedAt: string): string {
 async function handleRollback() {
   if (!isAdmin.value) return
   if (rollingBack.value || !selectedRollbackVersion.value) return
+  if (
+    !window.confirm(
+      t('version.confirmRollbackAction', { version: `v${selectedRollbackVersion.value}` })
+    )
+  ) {
+    return
+  }
 
   rollingBack.value = true
   rollbackError.value = ''
@@ -850,6 +864,7 @@ async function handleRollback() {
 
 async function handleRestart() {
   if (restarting.value) return
+  if (!window.confirm(t('version.confirmRestartAction'))) return
 
   restarting.value = true
   restartCountdown.value = 8

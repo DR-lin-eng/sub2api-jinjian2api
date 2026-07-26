@@ -5,65 +5,126 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to release (e.g., v1.0.0)'
-        required: true
-        type: string
-      simple_release:
-        description: 'Simple release: only x86_64 GHCR image, skip other artifacts'
-        required: false
-        type: boolean
-        default: false
 
-# 环境变量：合并 workflow_dispatch 输入和 repository variable
-# tag push 触发时读取 vars.SIMPLE_RELEASE，workflow_dispatch 时使用输入参数
 env:
-  SIMPLE_RELEASE: ${{ github.event.inputs.simple_release == 'true' || vars.SIMPLE_RELEASE == 'true' }}
+  SIMPLE_RELEASE: ${{ vars.SIMPLE_RELEASE == 'true' }}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 permissions:
-  contents: write
-  packages: write
+  contents: read
 
 jobs:
-  # Update VERSION file with tag version
-  update-version:
+  prepare-release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.repository.default_branch || github.ref }}
+
+      - name: Resolve default version and tag
+        id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          if [ "$EVENT_NAME" = "push" ]; then
+            release_tag="$REF_NAME"
+          else
+            base_version=$(tr -d '\r\n' < backend/cmd/server/VERSION)
+            if [[ ! "$base_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Invalid default version: $base_version" >&2
+              exit 1
+            fi
+
+            IFS=. read -r major minor patch <<< "$base_version"
+            git fetch --tags --force origin
+            release_tag="v${major}.${minor}.${patch}"
+            while git rev-parse -q --verify "refs/tags/${release_tag}^{commit}" >/dev/null; do
+              patch=$((patch + 1))
+              release_tag="v${major}.${minor}.${patch}"
+            done
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag "$release_tag" "$(git rev-parse HEAD)"
+            git push origin "refs/tags/$release_tag"
+          fi
+
+          if [[ ! "$release_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid release tag: $release_tag" >&2
+            exit 1
+          fi
+
+          release_version=${release_tag#v}
+          echo "Using release tag: $release_tag"
+          {
+            echo "tag=$release_tag"
+            echo "version=$release_version"
+          } >> "$GITHUB_OUTPUT"
+
+  # Update VERSION file with tag version
+  update-version:
+    needs: [prepare-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      RELEASE_TAG: ${{ needs.prepare-release.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Update VERSION file
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION=${{ github.event.inputs.tag }}
-            VERSION=${VERSION#v}
-          else
-            VERSION=${GITHUB_REF#refs/tags/v}
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid release tag: $RELEASE_TAG" >&2
+            exit 1
           fi
+          VERSION=${RELEASE_TAG#v}
           echo "$VERSION" > backend/cmd/server/VERSION
           echo "Updated VERSION file to: $VERSION"
 
       - name: Upload VERSION artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: version-file
           path: backend/cmd/server/VERSION
           retention-days: 1
 
   build-frontend:
+    needs: [prepare-release]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      RELEASE_TAG: ${{ needs.prepare-release.outputs.tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271
         with:
           version: 9
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: '20'
           cache: 'pnpm'
@@ -78,36 +139,41 @@ jobs:
         working-directory: frontend
 
       - name: Upload frontend artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: frontend-dist
           path: backend/internal/transport/webassets/dist/
           retention-days: 1
 
   release:
-    needs: [update-version, build-frontend]
+    needs: [prepare-release, update-version, build-frontend]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    env:
+      RELEASE_TAG: ${{ needs.prepare-release.outputs.tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           fetch-depth: 0
-          ref: ${{ github.event.inputs.tag || github.ref }}
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Download VERSION artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: version-file
           path: backend/cmd/server/
 
       - name: Download frontend artifact
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: frontend-dist
           path: backend/internal/transport/webassets/dist/
 
       - name: Setup Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16
         with:
           go-version-file: backend/go.mod
           check-latest: false
@@ -119,14 +185,14 @@ jobs:
 
       # Docker setup for GoReleaser
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
 
       - name: Login to DockerHub
         if: ${{ env.DOCKERHUB_USERNAME != '' }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         with:
@@ -134,61 +200,56 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Fetch tags with annotations
-        run: |
-          # 确保获取完整的 annotated tag 信息
-          git fetch --tags --force
-
-      - name: Get tag message
-        id: tag_message
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG_NAME=${{ github.event.inputs.tag }}
-          else
-            TAG_NAME=${GITHUB_REF#refs/tags/}
-          fi
-          echo "Processing tag: $TAG_NAME"
-
-          # 获取完整的 tag message（跳过第一行标题）
-          TAG_MESSAGE=$(git tag -l --format='%(contents:body)' "$TAG_NAME")
-
-          # 调试输出
-          echo "Tag message length: ${#TAG_MESSAGE}"
-          echo "Tag message preview:"
-          echo "$TAG_MESSAGE" | head -10
-
-          # 使用 EOF 分隔符处理多行内容
-          echo "message<<EOF" >> $GITHUB_OUTPUT
-          echo "$TAG_MESSAGE" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
       - name: Set lowercase owner for GHCR
         id: lowercase
-        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+        env:
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+        run: echo "owner=${REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v7
+        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94
         with:
           version: '~> v2'
           args: release --clean --skip=validate ${{ env.SIMPLE_RELEASE == 'true' && '--config=.goreleaser.simple.yaml' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_MESSAGE: ${{ steps.tag_message.outputs.message }}
           GITHUB_REPO_OWNER: ${{ github.repository_owner }}
           GITHUB_REPO_OWNER_LOWER: ${{ steps.lowercase.outputs.owner }}
           GITHUB_REPO_NAME: ${{ github.event.repository.name }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || 'skip' }}
 
+      - name: Sign release checksum manifest
+        if: ${{ env.SIMPLE_RELEASE != 'true' }}
+        env:
+          UPDATE_SIGNING_PRIVATE_KEY: ${{ secrets.UPDATE_SIGNING_PRIVATE_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$UPDATE_SIGNING_PRIVATE_KEY" || { echo "UPDATE_SIGNING_PRIVATE_KEY is not configured" >&2; exit 1; }
+          expected_public_key=$(tr -d '\r\n' < deploy/update-signing-public-key.txt)
+          printf '%s\n' "$UPDATE_SIGNING_PRIVATE_KEY" > "$RUNNER_TEMP/sub2api-update-signing-key.pem"
+          chmod 600 "$RUNNER_TEMP/sub2api-update-signing-key.pem"
+          trap 'rm -f "$RUNNER_TEMP/sub2api-update-signing-key.pem"' EXIT
+          derived_public_key=$(openssl pkey -in "$RUNNER_TEMP/sub2api-update-signing-key.pem" -pubout -outform DER 2>/dev/null | tail -c 32 | base64 | tr -d '\n')
+          committed_pem_key=$(openssl pkey -pubin -in deploy/update-signing-public-key.pem -outform DER 2>/dev/null | tail -c 32 | base64 | tr -d '\n')
+          test "$derived_public_key" = "$expected_public_key" || { echo "Signing key does not match deploy/update-signing-public-key.txt" >&2; exit 1; }
+          test "$committed_pem_key" = "$expected_public_key" || { echo "Committed update signing public key files do not match" >&2; exit 1; }
+          test -s dist/checksums.txt
+          openssl pkeyutl -sign -rawin -inkey "$RUNNER_TEMP/sub2api-update-signing-key.pem" -in dist/checksums.txt -out dist/checksums.txt.sig
+          test "$(wc -c < dist/checksums.txt.sig)" -eq 64
+          gh release upload "$RELEASE_TAG" dist/checksums.txt.sig --repo "$GITHUB_REPOSITORY" --clobber
+          gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false
+
       # Update DockerHub description
       - name: Update DockerHub description
         if: ${{ env.SIMPLE_RELEASE != 'true' && env.DOCKERHUB_USERNAME != '' }}
-        uses: peter-evans/dockerhub-description@v5
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         with:
@@ -213,32 +274,15 @@ jobs:
             exit 0
           fi
 
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG_NAME=${{ github.event.inputs.tag }}
-          else
-            TAG_NAME=${GITHUB_REF#refs/tags/}
-          fi
+          TAG_NAME="$RELEASE_TAG"
           VERSION=${TAG_NAME#v}
           REPO="${{ github.repository }}"
+          REPO_NAME="${REPO#*/}"
           GHCR_IMAGE="ghcr.io/${REPO,,}"  # ${,,} converts to lowercase
-
-          # 获取 tag message 内容并转义 Markdown 特殊字符
-          TAG_MESSAGE='${{ steps.tag_message.outputs.message }}'
-          TAG_MESSAGE=$(echo "$TAG_MESSAGE" | sed 's/\([_*`\[]\)/\\\1/g')
-
-          # 限制消息长度（Telegram 消息限制 4096 字符，预留空间给头尾固定内容）
-          if [ ${#TAG_MESSAGE} -gt 3500 ]; then
-            TAG_MESSAGE="${TAG_MESSAGE:0:3500}..."
-          fi
 
           # 构建消息内容
           MESSAGE="🚀 *Sub2API 新版本发布！*"$'\n'$'\n'
           MESSAGE+="📦 版本号: \`${VERSION}\`"$'\n'$'\n'
-
-          # 添加更新内容
-          if [ -n "$TAG_MESSAGE" ]; then
-            MESSAGE+="${TAG_MESSAGE}"$'\n'$'\n'
-          fi
 
           MESSAGE+="🐳 *Docker 部署:*"$'\n'
           MESSAGE+="\`\`\`bash"$'\n'
@@ -256,7 +300,7 @@ jobs:
           if [ -n "$DOCKERHUB_USERNAME" ]; then
             MESSAGE+="• [Docker Hub](https://hub.docker.com/r/${DOCKER_IMAGE})"$'\n'
           fi
-          MESSAGE+="• [GitHub Packages](https://github.com/${REPO}/pkgs/container/sub2api)"$'\n'$'\n'
+          MESSAGE+="• [GitHub Packages](https://github.com/${REPO}/pkgs/container/${REPO_NAME})"$'\n'$'\n'
           MESSAGE+="#Sub2API #Release #${TAG_NAME//./_}"
 
           # 发送消息
@@ -273,23 +317,22 @@ jobs:
               }')"
 
   sync-version-file:
-    needs: [release]
+    needs: [prepare-release, release]
     if: ${{ needs.release.result == 'success' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      RELEASE_TAG: ${{ needs.prepare-release.outputs.tag }}
     steps:
       - name: Checkout default branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ github.event.repository.default_branch }}
 
       - name: Sync VERSION file to released tag
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION=${{ github.event.inputs.tag }}
-            VERSION=${VERSION#v}
-          else
-            VERSION=${GITHUB_REF#refs/tags/v}
-          fi
+          VERSION=${RELEASE_TAG#v}
 
           CURRENT_VERSION=$(tr -d '\r\n' < backend/cmd/server/VERSION || true)
           if [ "$CURRENT_VERSION" = "$VERSION" ]; then

@@ -116,7 +116,7 @@ func (c *githubReleaseClientError) DownloadFile(ctx context.Context, url, dest s
 	return c.err
 }
 
-func (c *githubReleaseClientError) FetchChecksumFile(ctx context.Context, url string) ([]byte, error) {
+func (c *githubReleaseClientError) FetchReleaseFile(ctx context.Context, url string, maxSize int64) ([]byte, error) {
 	return nil, c.err
 }
 
@@ -226,7 +226,7 @@ func (c *githubReleaseClient) DownloadFile(ctx context.Context, url, dest string
 	return nil
 }
 
-func (c *githubReleaseClient) FetchChecksumFile(ctx context.Context, url string) ([]byte, error) {
+func (c *githubReleaseClient) FetchReleaseFile(ctx context.Context, url string, maxSize int64) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -242,5 +242,15 @@ func (c *githubReleaseClient) FetchChecksumFile(ctx context.Context, url string)
 		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
 
-	return io.ReadAll(resp.Body)
+	if maxSize <= 0 {
+		maxSize = 1 << 20
+	}
+	data, err := io.ReadAll(io.LimitReader(resp.Body, maxSize+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > maxSize {
+		return nil, fmt.Errorf("release file exceeds maximum size of %d bytes", maxSize)
+	}
+	return data, nil
 }

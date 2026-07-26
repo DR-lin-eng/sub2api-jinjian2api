@@ -100,6 +100,7 @@ func newSystemHandlerTestRouter(t *testing.T, updateSvc *systemHandlerUpdateServ
 	router := gin.New()
 	router.POST("/api/v1/admin/system/update", handler.PerformUpdate)
 	router.POST("/api/v1/admin/system/rollback", handler.Rollback)
+	router.POST("/api/v1/admin/system/restart", handler.RestartService)
 	router.GET("/api/v1/admin/system/rollback-versions", handler.GetRollbackVersions)
 	return router
 }
@@ -130,7 +131,8 @@ func TestSystemHandlerPerformUpdateAlreadyUpToDateReturnsOK(t *testing.T) {
 	router := newSystemHandlerTestRouter(t, updateSvc, repo)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/system/update", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/system/update", strings.NewReader(`{"confirm":true}`))
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Idempotency-Key", "already-up-to-date")
 	router.ServeHTTP(rec, req)
 
@@ -158,7 +160,8 @@ func TestSystemHandlerPerformUpdateFailureStillReturnsInternalError(t *testing.T
 	router := newSystemHandlerTestRouter(t, updateSvc, repo)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/system/update", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/system/update", strings.NewReader(`{"confirm":true}`))
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Idempotency-Key", "real-failure")
 	router.ServeHTTP(rec, req)
 
@@ -173,6 +176,29 @@ func TestSystemHandlerPerformUpdateFailureStillReturnsInternalError(t *testing.T
 	require.Equal(t, "internal error", body.Message)
 }
 
+func TestSystemHandlerHighImpactActionsRequireConfirmation(t *testing.T) {
+	updateSvc := &systemHandlerUpdateServiceStub{}
+	repo := newMemoryIdempotencyRepoStub()
+	router := newSystemHandlerTestRouter(t, updateSvc, repo)
+
+	for _, path := range []string{
+		"/api/v1/admin/system/update",
+		"/api/v1/admin/system/rollback",
+		"/api/v1/admin/system/restart",
+	} {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPost, path, nil)
+		req.Header.Set("Idempotency-Key", "missing-confirmation-"+path)
+		router.ServeHTTP(rec, req)
+
+		require.Equal(t, http.StatusBadRequest, rec.Code, path)
+		require.Contains(t, rec.Body.String(), "confirmation required", path)
+	}
+	require.Zero(t, updateSvc.performCall)
+	require.Zero(t, updateSvc.rollbackCall)
+	require.Zero(t, updateSvc.rollbackToCall)
+}
+
 // TestSystemHandlerPerformUpdateSurvivesClientDisconnect reproduces #4504:
 // the browser or a reverse proxy (axios 30s default, nginx proxy_read_timeout
 // 60s) aborts the long-running update request and cancels the request
@@ -184,7 +210,8 @@ func TestSystemHandlerPerformUpdateSurvivesClientDisconnect(t *testing.T) {
 	router := newSystemHandlerTestRouter(t, updateSvc, repo)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/system/update", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/system/update", strings.NewReader(`{"confirm":true}`))
+	req.Header.Set("Content-Type", "application/json")
 	canceledCtx, cancel := context.WithCancel(context.Background())
 	cancel()
 	req = req.WithContext(canceledCtx)
@@ -206,7 +233,7 @@ func TestSystemHandlerRollbackToVersionSurvivesClientDisconnect(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/system/rollback",
-		strings.NewReader(`{"version":"0.1.146"}`))
+		strings.NewReader(`{"version":"0.1.146","confirm":true}`))
 	req.Header.Set("Content-Type", "application/json")
 	canceledCtx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -222,13 +249,14 @@ func TestSystemHandlerRollbackToVersionSurvivesClientDisconnect(t *testing.T) {
 	requireSystemLockStatus(t, repo, service.IdempotencyStatusSucceeded)
 }
 
-func TestSystemHandlerRollbackWithoutBodyUsesLegacyBackup(t *testing.T) {
+func TestSystemHandlerRollbackWithoutVersionUsesLegacyBackup(t *testing.T) {
 	updateSvc := &systemHandlerUpdateServiceStub{}
 	repo := newMemoryIdempotencyRepoStub()
 	router := newSystemHandlerTestRouter(t, updateSvc, repo)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/system/rollback", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/system/rollback", strings.NewReader(`{"confirm":true}`))
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Idempotency-Key", "legacy-rollback")
 	router.ServeHTTP(rec, req)
 
@@ -245,7 +273,7 @@ func TestSystemHandlerRollbackWithVersionCallsRollbackToVersion(t *testing.T) {
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/system/rollback",
-		strings.NewReader(`{"version":"0.1.146"}`))
+		strings.NewReader(`{"version":"0.1.146","confirm":true}`))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Idempotency-Key", "rollback-to-146")
 	router.ServeHTTP(rec, req)
@@ -271,7 +299,7 @@ func TestSystemHandlerRollbackWithDisallowedVersionReturnsBadRequest(t *testing.
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/admin/system/rollback",
-		strings.NewReader(`{"version":"9.9.9"}`))
+		strings.NewReader(`{"version":"9.9.9","confirm":true}`))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Idempotency-Key", "rollback-to-bad")
 	router.ServeHTTP(rec, req)

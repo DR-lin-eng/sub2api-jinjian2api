@@ -12,7 +12,13 @@ vi.mock('../client', () => ({
   },
 }))
 
-import { getRollbackVersions, rollback, type RollbackVersionInfo } from '@/api/admin/system'
+import {
+  getRollbackVersions,
+  performUpdate,
+  restartService,
+  rollback,
+  type RollbackVersionInfo
+} from '@/api/admin/system'
 
 describe('admin system rollback API', () => {
   beforeEach(() => {
@@ -25,7 +31,7 @@ describe('admin system rollback API', () => {
       {
         version: '0.1.146',
         published_at: '2026-07-07T00:00:00Z',
-        html_url: 'https://github.com/Wei-Shaw/sub2api/releases/tag/v0.1.146'
+        html_url: 'https://github.com/DR-lin-eng/sub2api-no2api/releases/tag/v0.1.146'
       }
     ]
     get.mockResolvedValue({ data: { versions } })
@@ -43,19 +49,34 @@ describe('admin system rollback API', () => {
 
     expect(post).toHaveBeenCalledWith(
       '/admin/system/rollback',
-      { version: '0.1.146' },
+      { version: '0.1.146', confirm: true },
       { timeout: 15 * 60 * 1000 }
     )
     expect(result.need_restart).toBe(true)
   })
 
-  it('rollback without a version posts no body (legacy backup rollback)', async () => {
+  it('rollback without a version posts only the confirmation', async () => {
     post.mockResolvedValue({ data: { message: 'ok', need_restart: true } })
 
     await rollback()
 
-    expect(post).toHaveBeenCalledWith('/admin/system/rollback', undefined, {
+    expect(post).toHaveBeenCalledWith('/admin/system/rollback', { confirm: true }, {
       timeout: 15 * 60 * 1000
     })
+  })
+
+  it('update and restart send the explicit backend confirmation', async () => {
+    post.mockResolvedValue({ data: { message: 'ok', need_restart: true } })
+
+    await performUpdate()
+    await restartService()
+
+    expect(post).toHaveBeenNthCalledWith(
+      1,
+      '/admin/system/update',
+      { confirm: true },
+      { timeout: 15 * 60 * 1000 }
+    )
+    expect(post).toHaveBeenNthCalledWith(2, '/admin/system/restart', { confirm: true })
   })
 })

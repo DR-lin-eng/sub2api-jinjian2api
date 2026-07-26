@@ -51,6 +51,18 @@ type systemUpdateService interface {
 	RollbackToVersion(ctx context.Context, version string) error
 }
 
+type systemActionConfirmation struct {
+	Confirm bool `json:"confirm"`
+}
+
+func requireSystemActionConfirmation(c *gin.Context, req *systemActionConfirmation) bool {
+	if err := c.ShouldBindJSON(req); err != nil || !req.Confirm {
+		response.Error(c, http.StatusBadRequest, "confirmation required")
+		return false
+	}
+	return true
+}
+
 // NewSystemHandler creates a new SystemHandler
 func NewSystemHandler(updateSvc systemUpdateService, lockSvc *service.SystemOperationLockService) *SystemHandler {
 	return &SystemHandler{
@@ -83,6 +95,9 @@ func (h *SystemHandler) CheckUpdates(c *gin.Context) {
 // PerformUpdate downloads and applies the update
 // POST /api/v1/admin/system/update
 func (h *SystemHandler) PerformUpdate(c *gin.Context) {
+	if !requireSystemActionConfirmation(c, &systemActionConfirmation{}) {
+		return
+	}
 	operationID := buildSystemOperationID(c, "update")
 	payload := gin.H{"operation_id": operationID}
 	executeAdminIdempotentJSON(c, "admin.system.update", payload, service.DefaultSystemOperationIdempotencyTTL(), func(ctx context.Context) (any, error) {
@@ -142,19 +157,19 @@ func (h *SystemHandler) GetRollbackVersions(c *gin.Context) {
 }
 
 // Rollback restores a previous version.
-// Without a body (or with an empty version) it restores the local .backup binary
-// left by the last in-place update. With {"version": "x.y.z"} it downloads and
-// installs that specific release (must be one of the recent rollback versions).
+// With an empty version it restores the local .backup binary left by the last
+// in-place update. With a version it downloads and installs that specific
+// release (must be one of the recent rollback versions). Both forms require
+// {"confirm": true}.
 // POST /api/v1/admin/system/rollback
 func (h *SystemHandler) Rollback(c *gin.Context) {
 	var req struct {
 		Version string `json:"version"`
+		Confirm bool   `json:"confirm"`
 	}
-	if c.Request.Body != nil && c.Request.ContentLength > 0 {
-		if err := c.ShouldBindJSON(&req); err != nil {
-			response.Error(c, http.StatusBadRequest, "invalid request body")
-			return
-		}
+	if err := c.ShouldBindJSON(&req); err != nil || !req.Confirm {
+		response.Error(c, http.StatusBadRequest, "confirmation required")
+		return
 	}
 	targetVersion := strings.TrimSpace(req.Version)
 
@@ -201,6 +216,9 @@ func (h *SystemHandler) Rollback(c *gin.Context) {
 // RestartService restarts the systemd service
 // POST /api/v1/admin/system/restart
 func (h *SystemHandler) RestartService(c *gin.Context) {
+	if !requireSystemActionConfirmation(c, &systemActionConfirmation{}) {
+		return
+	}
 	operationID := buildSystemOperationID(c, "restart")
 	payload := gin.H{"operation_id": operationID}
 	executeAdminIdempotentJSON(c, "admin.system.restart", payload, service.DefaultSystemOperationIdempotencyTTL(), func(ctx context.Context) (any, error) {

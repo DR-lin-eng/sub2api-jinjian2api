@@ -74,7 +74,7 @@ const UPDATE_REQUEST_TIMEOUT_MS = 15 * 60 * 1000
  * Downloads and applies the latest version
  */
 export async function performUpdate(): Promise<UpdateResult> {
-  const { data } = await apiClient.post<UpdateResult>('/admin/system/update', undefined, {
+  const { data } = await apiClient.post<UpdateResult>('/admin/system/update', { confirm: true }, {
     timeout: UPDATE_REQUEST_TIMEOUT_MS
   })
   return data
@@ -87,7 +87,7 @@ export async function performUpdate(): Promise<UpdateResult> {
 export async function rollback(version?: string): Promise<UpdateResult> {
   const { data } = await apiClient.post<UpdateResult>(
     '/admin/system/rollback',
-    version ? { version } : undefined,
+    version ? { version, confirm: true } : { confirm: true },
     { timeout: UPDATE_REQUEST_TIMEOUT_MS }
   )
   return data
@@ -97,7 +97,7 @@ export async function rollback(version?: string): Promise<UpdateResult> {
  * Restart the service
  */
 export async function restartService(): Promise<{ message: string }> {
-  const { data } = await apiClient.post<{ message: string }>('/admin/system/restart')
+  const { data } = await apiClient.post<{ message: string }>('/admin/system/restart', { confirm: true })
   return data
 }
 

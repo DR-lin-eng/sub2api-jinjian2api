@@ -5,7 +5,9 @@ import (
 	"bufio"
 	"compress/gzip"
 	"context"
+	"crypto/ed25519"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -30,7 +32,12 @@ var (
 const (
 	updateCacheKey = "update_check_cache"
 	updateCacheTTL = 1200 // 20 minutes
-	githubRepo     = "Wei-Shaw/sub2api"
+	githubRepo     = "DR-lin-eng/sub2api-no2api"
+
+	// UpdateSigningPublicKey is the repository release key committed in
+	// deploy/update-signing-public-key.txt. The private key only exists in the
+	// UPDATE_SIGNING_PRIVATE_KEY repository secret.
+	UpdateSigningPublicKey = "qIaPYg58Rs/41W/Vvpw7Kt49nMP0MxVjuSBDPsZNjgE="
 
 	// Security: allowed download domains for updates
 	allowedDownloadHost = "github.com"
@@ -56,7 +63,7 @@ type GitHubReleaseClient interface {
 	FetchLatestRelease(ctx context.Context, repo string) (*GitHubRelease, error)
 	FetchRecentReleases(ctx context.Context, repo string, perPage int) ([]*GitHubRelease, error)
 	DownloadFile(ctx context.Context, url, dest string, maxSize int64) error
-	FetchChecksumFile(ctx context.Context, url string) ([]byte, error)
+	FetchReleaseFile(ctx context.Context, url string, maxSize int64) ([]byte, error)
 }
 
 // UpdateService handles software updates
@@ -183,6 +190,7 @@ func (s *UpdateService) applyReleaseAssets(ctx context.Context, releaseAssets []
 	archiveName := s.getArchiveName()
 	var downloadURL string
 	var checksumURL string
+	var signatureURL string
 
 	for _, asset := range releaseAssets {
 		if strings.Contains(asset.Name, archiveName) && !strings.HasSuffix(asset.Name, ".txt") {
@@ -190,6 +198,9 @@ func (s *UpdateService) applyReleaseAssets(ctx context.Context, releaseAssets []
 		}
 		if asset.Name == "checksums.txt" {
 			checksumURL = asset.DownloadURL
+		}
+		if asset.Name == "checksums.txt.sig" {
+			signatureURL = asset.DownloadURL
 		}
 	}
 
@@ -201,10 +212,20 @@ func (s *UpdateService) applyReleaseAssets(ctx context.Context, releaseAssets []
 	if err := validateDownloadURL(downloadURL); err != nil {
 		return fmt.Errorf("invalid download URL: %w", err)
 	}
-	if checksumURL != "" {
-		if err := validateDownloadURL(checksumURL); err != nil {
-			return fmt.Errorf("invalid checksum URL: %w", err)
-		}
+	if checksumURL == "" {
+		return fmt.Errorf("release is missing checksums.txt")
+	}
+	if err := validateDownloadURL(checksumURL); err != nil {
+		return fmt.Errorf("invalid checksum URL: %w", err)
+	}
+	if signatureURL == "" {
+		return fmt.Errorf("release is missing checksums.txt.sig")
+	}
+	if err := validateDownloadURL(signatureURL); err != nil {
+		return fmt.Errorf("invalid checksum signature URL: %w", err)
+	}
+	if strings.TrimSpace(UpdateSigningPublicKey) == "" {
+		return fmt.Errorf("update signing public key is not configured")
 	}
 
 	// Get current executable path
@@ -233,11 +254,20 @@ func (s *UpdateService) applyReleaseAssets(ctx context.Context, releaseAssets []
 		return fmt.Errorf("download failed: %w", err)
 	}
 
-	// Verify checksum if available
-	if checksumURL != "" {
-		if err := s.verifyChecksum(ctx, archivePath, checksumURL); err != nil {
-			return fmt.Errorf("checksum verification failed: %w", err)
-		}
+	// Verify the signed checksum manifest before trusting the archive digest.
+	checksumData, err := s.githubClient.FetchReleaseFile(ctx, checksumURL, 1<<20)
+	if err != nil {
+		return fmt.Errorf("failed to download checksums: %w", err)
+	}
+	signatureData, err := s.githubClient.FetchReleaseFile(ctx, signatureURL, ed25519.SignatureSize)
+	if err != nil {
+		return fmt.Errorf("failed to download checksum signature: %w", err)
+	}
+	if err := verifySignedChecksumManifest(checksumData, signatureData); err != nil {
+		return fmt.Errorf("checksum signature verification failed: %w", err)
+	}
+	if err := verifyChecksumData(archivePath, checksumData); err != nil {
+		return fmt.Errorf("checksum verification failed: %w", err)
 	}
 
 	// Extract binary from archive
@@ -468,13 +498,7 @@ func validateDownloadURL(rawURL string) error {
 	return nil
 }
 
-func (s *UpdateService) verifyChecksum(ctx context.Context, filePath, checksumURL string) error {
-	// Download checksums file
-	checksumData, err := s.githubClient.FetchChecksumFile(ctx, checksumURL)
-	if err != nil {
-		return fmt.Errorf("failed to download checksums: %w", err)
-	}
-
+func verifyChecksumData(filePath string, checksumData []byte) error {
 	// Calculate file hash
 	f, err := os.Open(filePath)
 	if err != nil {
@@ -503,6 +527,27 @@ func (s *UpdateService) verifyChecksum(ctx context.Context, filePath, checksumUR
 	}
 
 	return fmt.Errorf("checksum not found for %s", fileName)
+}
+
+func verifySignedChecksumManifest(checksumData, signatureData []byte) error {
+	return verifySignedChecksumManifestWithPublicKey(checksumData, signatureData, UpdateSigningPublicKey)
+}
+
+func verifySignedChecksumManifestWithPublicKey(checksumData, signatureData []byte, publicKey string) error {
+	publicKeyData, err := base64.StdEncoding.DecodeString(strings.TrimSpace(publicKey))
+	if err != nil {
+		return fmt.Errorf("invalid base64 public key: %w", err)
+	}
+	if len(publicKeyData) != ed25519.PublicKeySize {
+		return fmt.Errorf("invalid public key length: %d", len(publicKeyData))
+	}
+	if len(signatureData) != ed25519.SignatureSize {
+		return fmt.Errorf("invalid signature length: %d", len(signatureData))
+	}
+	if !ed25519.Verify(ed25519.PublicKey(publicKeyData), checksumData, signatureData) {
+		return fmt.Errorf("signature does not match checksums.txt")
+	}
+	return nil
 }
 
 func (s *UpdateService) extractBinary(archivePath, destPath string) error {
