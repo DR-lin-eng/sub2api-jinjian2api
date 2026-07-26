@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -175,6 +176,42 @@ func TestGatewayNewSelectionResultRefreshesWaitPlanConcurrency(t *testing.T) {
 	require.Equal(t, 10, waitPlan.MaxConcurrency)
 }
 
+func TestApplyCPAPoolCapacityBatchReturnsOriginalSliceWhenUnchanged(t *testing.T) {
+	service := NewConcurrencyService(nil)
+	accounts := []Account{
+		{ID: 1, Type: AccountTypeAPIKey, Concurrency: 10},
+		{ID: 2, Type: AccountTypeOAuth, Concurrency: 20},
+	}
+
+	result := service.applyCPAPoolCapacityBatch(context.Background(), accounts)
+
+	require.Len(t, result, len(accounts))
+	require.True(t, &result[0] == &accounts[0], "unchanged batches must reuse the original backing array")
+}
+
+func TestApplyCPAPoolCapacityBatchCopiesOnlyWhenCapacityChanges(t *testing.T) {
+	service := NewConcurrencyService(nil)
+	cpaAccount := cpaTestAccount("https://cpa.example.com", 10, 1)
+	config, enabled := cpaPoolConfigFromAccount(cpaAccount)
+	require.True(t, enabled)
+	service.cpaPoolCapacity.cache.Store(service.cpaPoolCapacity.cacheKey(config), cpaCapacityCacheEntry{
+		snapshot: &cpaCapacitySnapshot{schedulableCredentials: 2, fetchedAt: time.Now()},
+	})
+	accounts := []Account{
+		{ID: 1, Type: AccountTypeAPIKey, Concurrency: 5},
+		*cpaAccount,
+		{ID: 3, Type: AccountTypeAPIKey, Concurrency: 8},
+	}
+
+	result := service.applyCPAPoolCapacityBatch(context.Background(), accounts)
+
+	require.Len(t, result, len(accounts))
+	require.False(t, &result[0] == &accounts[0], "changed batches must not mutate the source backing array")
+	require.Equal(t, 2, result[1].Concurrency)
+	require.Equal(t, int64(3), result[2].ID)
+	require.Equal(t, 10, accounts[1].Concurrency)
+}
+
 func TestNormalizeCPACredentials(t *testing.T) {
 	credentials := map[string]any{
 		CPAModeCredentialKey:                     true,
@@ -208,4 +245,51 @@ func TestNormalizeCPACredentialsRejectsIncompleteConfig(t *testing.T) {
 	require.Error(t, NormalizeCPACredentials(AccountTypeOAuth, map[string]any{
 		CPAModeCredentialKey: true, CPAManagementURLCredentialKey: "https://cpa.example.com", CPAManagementKeyCredentialKey: "secret",
 	}))
+}
+
+var cpaPoolCapacityBenchmarkAccountsSink []Account
+var cpaPoolCapacityBenchmarkAccountSink *Account
+
+func BenchmarkCPAPoolCapacityBatchNoCPA(b *testing.B) {
+	for _, count := range []int{1, 64, 1024, 3131} {
+		b.Run(fmt.Sprintf("accounts_%d", count), func(b *testing.B) {
+			service := NewConcurrencyService(nil)
+			accounts := make([]Account, count)
+			for index := range accounts {
+				accounts[index] = Account{
+					ID:          int64(index + 1),
+					Type:        AccountTypeAPIKey,
+					Concurrency: 20,
+				}
+			}
+			ctx := context.Background()
+			b.ReportAllocs()
+			b.ResetTimer()
+			for b.Loop() {
+				cpaPoolCapacityBenchmarkAccountsSink = service.applyCPAPoolCapacityBatch(ctx, accounts)
+			}
+		})
+	}
+}
+
+func BenchmarkCPAPoolCapacityCachedHit(b *testing.B) {
+	service := NewConcurrencyService(nil)
+	account := cpaTestAccount("https://cpa.example.com", 20, 1)
+	config, enabled := cpaPoolConfigFromAccount(account)
+	if !enabled {
+		b.Fatal("CPA configuration was not enabled")
+	}
+	service.cpaPoolCapacity.cache.Store(service.cpaPoolCapacity.cacheKey(config), cpaCapacityCacheEntry{
+		snapshot: &cpaCapacitySnapshot{schedulableCredentials: 20, fetchedAt: time.Now()},
+	})
+	ctx := context.Background()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for b.Loop() {
+		result, available := service.applyCPAPoolCapacity(ctx, account)
+		if !available || result == nil {
+			b.Fatal("cached CPA capacity was unavailable")
+		}
+		cpaPoolCapacityBenchmarkAccountSink = result
+	}
 }

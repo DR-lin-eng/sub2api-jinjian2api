@@ -33,11 +33,9 @@ func (s *GatewayService) SelectAccountForModel(ctx context.Context, groupID *int
 
 // SelectAccountForModelWithExclusions selects an account supporting the requested model while excluding specified accounts.
 func (s *GatewayService) SelectAccountForModelWithExclusions(ctx context.Context, groupID *int64, sessionHash string, requestedModel string, excludedIDs map[int64]struct{}) (*Account, error) {
-	localExcluded := make(map[int64]struct{}, len(excludedIDs)+1)
-	for accountID := range excludedIDs {
-		localExcluded[accountID] = struct{}{}
-	}
-	ctx = withSchedulerCandidateExclusions(ctx, localExcluded)
+	localExcluded := excludedIDs
+	localExcludedOwned := false
+	ctx = withSchedulerCandidateExclusions(ctx, excludedIDs)
 	// 优先检查 context 中的强制平台（/antigravity 路由）
 	var platform string
 	forcePlatform, hasForcePlatform := ctx.Value(ctxkey.ForcePlatform).(string)
@@ -83,7 +81,10 @@ func (s *GatewayService) SelectAccountForModelWithExclusions(ctx context.Context
 	// anthropic/gemini 分组支持混合调度（包含启用了 mixed_scheduling 的 antigravity 账户）
 	// 注意：强制平台模式不走混合调度
 	for {
-		requestCtx := withSchedulerCandidateExclusions(ctx, localExcluded)
+		requestCtx := ctx
+		if localExcludedOwned {
+			requestCtx = withSchedulerCandidateExclusions(ctx, localExcluded)
+		}
 		var account *Account
 		var selectErr error
 		if (platform == PlatformAnthropic || platform == PlatformGemini) && !hasForcePlatform {
@@ -101,6 +102,13 @@ func (s *GatewayService) SelectAccountForModelWithExclusions(ctx context.Context
 		}
 		if account == nil {
 			return nil, ErrNoAvailableAccounts
+		}
+		if !localExcludedOwned {
+			localExcluded = make(map[int64]struct{}, len(excludedIDs)+1)
+			for accountID := range excludedIDs {
+				localExcluded[accountID] = struct{}{}
+			}
+			localExcludedOwned = true
 		}
 		localExcluded[account.ID] = struct{}{}
 	}

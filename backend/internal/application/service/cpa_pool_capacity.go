@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -162,12 +161,16 @@ func NormalizeCPACredentials(accountType string, credentials map[string]any) err
 	return nil
 }
 
-func cpaPoolConfigFromAccount(account *Account) (cpaPoolConfig, bool) {
+func cpaModeEnabled(account *Account) bool {
 	if account == nil || account.Type != AccountTypeAPIKey || account.Credentials == nil {
-		return cpaPoolConfig{}, false
+		return false
 	}
 	enabled, ok := cpaBool(account.Credentials[CPAModeCredentialKey])
-	if !ok || !enabled {
+	return ok && enabled
+}
+
+func cpaPoolConfigFromAccount(account *Account) (cpaPoolConfig, bool) {
+	if !cpaModeEnabled(account) {
 		return cpaPoolConfig{}, false
 	}
 	managementURL, okURL := account.Credentials[CPAManagementURLCredentialKey].(string)
@@ -216,6 +219,15 @@ type cpaCapacitySnapshot struct {
 	fetchedAt              time.Time
 }
 
+type cpaCapacityCacheKey struct {
+	managementURL     string
+	managementKeyHash [sha256.Size]byte
+}
+
+func (k cpaCapacityCacheKey) singleflightKey() string {
+	return k.managementURL + "\x00" + string(k.managementKeyHash[:])
+}
+
 type cpaCapacityCacheEntry struct {
 	snapshot      *cpaCapacitySnapshot
 	lastAttemptAt time.Time
@@ -245,12 +257,14 @@ func newCPAPoolCapacityService() *cpaPoolCapacityService {
 	}
 }
 
-func (s *cpaPoolCapacityService) cacheKey(config cpaPoolConfig) string {
-	digest := sha256.Sum256([]byte(config.managementKey))
-	return config.managementURL + "\x00" + hex.EncodeToString(digest[:])
+func (s *cpaPoolCapacityService) cacheKey(config cpaPoolConfig) cpaCapacityCacheKey {
+	return cpaCapacityCacheKey{
+		managementURL:     config.managementURL,
+		managementKeyHash: sha256.Sum256([]byte(config.managementKey)),
+	}
 }
 
-func (s *cpaPoolCapacityService) cachedSnapshot(key string, now time.Time) (*cpaCapacitySnapshot, error, bool) {
+func (s *cpaPoolCapacityService) cachedSnapshot(key cpaCapacityCacheKey, now time.Time) (*cpaCapacitySnapshot, error, bool) {
 	raw, ok := s.cache.Load(key)
 	if !ok {
 		return nil, nil, false
@@ -281,7 +295,7 @@ func (s *cpaPoolCapacityService) snapshot(ctx context.Context, config cpaPoolCon
 		return snapshot, err
 	}
 
-	value, err, _ := s.group.Do(key, func() (any, error) {
+	value, err, _ := s.group.Do(key.singleflightKey(), func() (any, error) {
 		checkNow := s.now()
 		if snapshot, cachedErr, ok := s.cachedSnapshot(key, checkNow); ok {
 			return snapshot, cachedErr
@@ -406,13 +420,29 @@ func (s *ConcurrencyService) applyCPAPoolCapacityBatch(ctx context.Context, acco
 	if len(accounts) == 0 || s == nil || s.cpaPoolCapacity == nil {
 		return accounts
 	}
-	filtered := make([]Account, 0, len(accounts))
+	var filtered []Account
 	for index := range accounts {
-		account, available := s.applyCPAPoolCapacity(ctx, &accounts[index])
-		if !available || account == nil {
+		if !cpaModeEnabled(&accounts[index]) {
+			if filtered != nil {
+				filtered = append(filtered, accounts[index])
+			}
 			continue
 		}
-		filtered = append(filtered, *account)
+		account, available := s.applyCPAPoolCapacity(ctx, &accounts[index])
+		unchanged := available && account == &accounts[index]
+		if filtered == nil && unchanged {
+			continue
+		}
+		if filtered == nil {
+			filtered = make([]Account, 0, len(accounts))
+			filtered = append(filtered, accounts[:index]...)
+		}
+		if available && account != nil {
+			filtered = append(filtered, *account)
+		}
+	}
+	if filtered == nil {
+		return accounts
 	}
 	return filtered
 }
