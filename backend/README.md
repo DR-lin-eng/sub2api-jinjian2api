@@ -2,6 +2,8 @@
 
 本目录包含 Sub2API 的 Go 后端、数据库迁移、嵌入资源和维护脚本。后端采用模块化单体结构：业务调用仍在同一进程内完成，但目录按依赖方向和职责划分，便于独立修改、测试和审查。
 
+仓库级边界和调用链先读 `../docs/ARCHITECTURE.md`、`../docs/CODE_MAP.md` 和 `../docs/REQUEST_LIFECYCLES.md`。
+
 ## 目录索引
 
 | 目录 | 作用 |

@@ -4,7 +4,7 @@
 
 # Sub2API
 
-[![Go](https://img.shields.io/badge/Go-1.25.7-00ADD8.svg)](https://golang.org/)
+[![Go](https://img.shields.io/badge/Go-1.26.5-00ADD8.svg)](https://golang.org/)
 [![Vue](https://img.shields.io/badge/Vue-3.4+-4FC08D.svg)](https://vuejs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-7+-DC382D.svg)](https://redis.io/)
@@ -212,7 +212,7 @@ Sub2API を拡張・統合するコミュニティプロジェクト:
 
 | コンポーネント | 技術 |
 |-----------|------------|
-| バックエンド | Go 1.25.7, Gin, Ent |
+| バックエンド | Go 1.26.5, Gin, Ent |
 | フロントエンド | Vue 3.4+, Vite 5+, TailwindCSS |
 | データベース | PostgreSQL 15+ |
 | キャッシュ/キュー | Redis 7+ |
@@ -705,32 +705,37 @@ Antigravity アカウントはオプションの**ハイブリッドスケジュ
 
 ---
 
+## 開発ドキュメント
+
+- [ドキュメントハブ](docs/README.md)
+- [開発ガイド](DEV_GUIDE.md)
+- [アーキテクチャ概要](docs/ARCHITECTURE.md)
+- [コードマップ](docs/CODE_MAP.md)
+- [主要なリクエストフロー](docs/REQUEST_LIFECYCLES.md)
+
+コードエージェントと新しいコントリビューターは [AGENTS.md](AGENTS.md) から始めてください。
+
 ## プロジェクト構成
 
 ```
-sub2api/
-├── backend/                  # Go バックエンドサービス
-│   ├── cmd/server/           # アプリケーションエントリ
-│   ├── internal/             # 内部モジュール
-│   │   ├── config/           # 設定
-│   │   ├── model/            # データモデル
-│   │   ├── service/          # ビジネスロジック
-│   │   ├── handler/          # HTTP ハンドラー
-│   │   └── gateway/          # API ゲートウェイコア
-│   └── resources/            # 静的リソース
-│
-├── frontend/                 # Vue 3 フロントエンド
-│   └── src/
-│       ├── api/              # API 呼び出し
-│       ├── stores/           # 状態管理
-│       ├── views/            # ページコンポーネント
-│       └── components/       # 再利用可能なコンポーネント
-│
-└── deploy/                   # デプロイファイル
-    ├── docker-compose.yml    # Docker Compose 設定
-    ├── .env.example          # Docker Compose 用環境変数
-    ├── config.example.yaml   # バイナリデプロイ用フル設定ファイル
-    └── install.sh            # ワンクリックインストールスクリプト
+sub2api-no2api/
+├── backend/
+│   ├── cmd/server/                 # プロセスエントリと Wire 構成
+│   ├── ent/schema/                 # Ent モデル定義
+│   ├── internal/
+│   │   ├── application/            # ユースケース、ゲートウェイ、課金
+│   │   ├── domain/                 # 純粋なドメインルール
+│   │   ├── infrastructure/         # PostgreSQL、Redis、外部アダプター
+│   │   ├── transport/              # HTTP/SSE/WS と埋め込みフロントエンド
+│   │   ├── modules/                # 垂直ビジネスモジュール
+│   │   ├── platform/               # 設定、セキュリティ、実行基盤
+│   │   ├── shared/                 # 低レベルのプロトコルツール
+│   │   └── bootstrap/              # 初回セットアップとアップグレード
+│   └── migrations/                 # 前方データベースマイグレーション
+├── frontend/src/                   # Vue ビュー、コンポーネント、API、ストア
+├── docs/                           # 開発・機能ドキュメント
+├── deploy/                         # Compose、インストーラー、設定例
+└── openspec/                       # 進行中の仕様と検証資料
 ```
 
 ## スター履歴

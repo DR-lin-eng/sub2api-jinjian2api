@@ -4,7 +4,7 @@
 
 # Sub2API
 
-[![Go](https://img.shields.io/badge/Go-1.25.7-00ADD8.svg)](https://golang.org/)
+[![Go](https://img.shields.io/badge/Go-1.26.5-00ADD8.svg)](https://golang.org/)
 [![Vue](https://img.shields.io/badge/Vue-3.4+-4FC08D.svg)](https://vuejs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-7+-DC382D.svg)](https://redis.io/)
@@ -218,7 +218,7 @@ Sub2API 是一个 AI API 网关平台，用于分发和管理 AI 产品订阅的
 
 | 组件 | 技术 |
 |------|------|
-| 后端 | Go 1.25.7, Gin, Ent |
+| 后端 | Go 1.26.5, Gin, Ent |
 | 前端 | Vue 3.4+, Vite 5+, TailwindCSS |
 | 数据库 | PostgreSQL 15+ |
 | 缓存/队列 | Redis 7+ |
@@ -775,32 +775,37 @@ Antigravity 账户支持可选的**混合调度**功能。开启后，通用端�
 
 ---
 
+## 开发文档
+
+- [文档中心](docs/README.md)
+- [开发指南](DEV_GUIDE.md)
+- [架构总览](docs/ARCHITECTURE.md)
+- [代码地图](docs/CODE_MAP.md)
+- [关键请求链路](docs/REQUEST_LIFECYCLES.md)
+
+代码代理和新贡献者请先阅读 [AGENTS.md](AGENTS.md)。
+
 ## 项目结构
 
 ```
-sub2api/
-├── backend/                  # Go 后端服务
-│   ├── cmd/server/           # 应用入口
-│   ├── internal/             # 内部模块
-│   │   ├── config/           # 配置管理
-│   │   ├── model/            # 数据模型
-│   │   ├── service/          # 业务逻辑
-│   │   ├── handler/          # HTTP 处理器
-│   │   └── gateway/          # API 网关核心
-│   └── resources/            # 静态资源
-│
-├── frontend/                 # Vue 3 前端
-│   └── src/
-│       ├── api/              # API 调用
-│       ├── stores/           # 状态管理
-│       ├── views/            # 页面组件
-│       └── components/       # 通用组件
-│
-└── deploy/                   # 部署文件
-    ├── docker-compose.yml    # Docker Compose 配置
-    ├── .env.example          # Docker Compose 环境变量
-    ├── config.example.yaml   # 二进制部署完整配置文件
-    └── install.sh            # 一键安装脚本
+sub2api-no2api/
+├── backend/
+│   ├── cmd/server/                 # 进程入口与 Wire 装配
+│   ├── ent/schema/                 # Ent 模型定义
+│   ├── internal/
+│   │   ├── application/            # 用例、网关、调度和计费
+│   │   ├── domain/                 # 纯领域值与规则
+│   │   ├── infrastructure/         # PostgreSQL、Redis 和上游适配
+│   │   ├── transport/              # HTTP/SSE/WS 与嵌入式前端
+│   │   ├── modules/                # 垂直业务模块
+│   │   ├── platform/               # 配置、安全和运行平台能力
+│   │   ├── shared/                 # 低层协议与复用工具
+│   │   └── bootstrap/              # 首次设置和升级引导
+│   └── migrations/                 # 向前数据库迁移
+├── frontend/src/                   # Vue 页面、组件、API 和状态
+├── docs/                           # 开发与功能文档
+├── deploy/                         # Compose、安装脚本和配置示例
+└── openspec/                       # 进行中的规格与交付证据
 ```
 
 ## Star History

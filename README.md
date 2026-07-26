@@ -4,7 +4,7 @@
 
 # Sub2API
 
-[![Go](https://img.shields.io/badge/Go-1.25.7-00ADD8.svg)](https://golang.org/)
+[![Go](https://img.shields.io/badge/Go-1.26.5-00ADD8.svg)](https://golang.org/)
 [![Vue](https://img.shields.io/badge/Vue-3.4+-4FC08D.svg)](https://vuejs.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-336791.svg)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-7+-DC382D.svg)](https://redis.io/)
@@ -215,7 +215,7 @@ Community projects that extend or integrate with Sub2API:
 
 | Component | Technology |
 |-----------|------------|
-| Backend | Go 1.25.7, Gin, Ent |
+| Backend | Go 1.26.5, Gin, Ent |
 | Frontend | Vue 3.4+, Vite 5+, TailwindCSS |
 | Database | PostgreSQL 15+ |
 | Cache/Queue | Redis 7+ |
@@ -843,32 +843,37 @@ Antigravity accounts support optional **hybrid scheduling**. When enabled, the g
 
 ---
 
+## Development Documentation
+
+- [Documentation hub](docs/README.md)
+- [Development guide](DEV_GUIDE.md)
+- [Architecture overview](docs/ARCHITECTURE.md)
+- [Code map](docs/CODE_MAP.md)
+- [Key request lifecycles](docs/REQUEST_LIFECYCLES.md)
+
+Code assistants and new contributors should start with [AGENTS.md](AGENTS.md).
+
 ## Project Structure
 
 ```
-sub2api/
-├── backend/                  # Go backend service
-│   ├── cmd/server/           # Application entry
-│   ├── internal/             # Internal modules
-│   │   ├── config/           # Configuration
-│   │   ├── model/            # Data models
-│   │   ├── service/          # Business logic
-│   │   ├── handler/          # HTTP handlers
-│   │   └── gateway/          # API gateway core
-│   └── resources/            # Static resources
-│
-├── frontend/                 # Vue 3 frontend
-│   └── src/
-│       ├── api/              # API calls
-│       ├── stores/           # State management
-│       ├── views/            # Page components
-│       └── components/       # Reusable components
-│
-└── deploy/                   # Deployment files
-    ├── docker-compose.yml    # Docker Compose configuration
-    ├── .env.example          # Environment variables for Docker Compose
-    ├── config.example.yaml   # Full config file for binary deployment
-    └── install.sh            # One-click installation script
+sub2api-no2api/
+├── backend/
+│   ├── cmd/server/                 # Process entry and Wire graph
+│   ├── ent/schema/                 # Ent model definitions
+│   ├── internal/
+│   │   ├── application/            # Use cases, gateway, scheduling, billing
+│   │   ├── domain/                 # Pure domain values and rules
+│   │   ├── infrastructure/         # PostgreSQL, Redis and upstream adapters
+│   │   ├── transport/              # HTTP/SSE/WS and embedded frontend
+│   │   ├── modules/                # Vertical business modules
+│   │   ├── platform/               # Config, security and runtime facilities
+│   │   ├── shared/                 # Low-level protocol utilities
+│   │   └── bootstrap/              # First-run setup and upgrades
+│   └── migrations/                 # Forward database migrations
+├── frontend/src/                   # Vue views, components, API and stores
+├── docs/                           # Development and feature documentation
+├── deploy/                         # Compose, installers and config examples
+└── openspec/                       # Active specifications and evidence
 ```
 
 ## Star History

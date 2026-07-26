@@ -1,4 +1,4 @@
-.PHONY: build build-backend build-frontend test test-backend test-frontend test-frontend-critical
+.PHONY: build build-backend build-frontend test test-backend test-frontend test-frontend-critical check-docs
 
 FRONTEND_CRITICAL_VITEST := \
 	src/views/auth/__tests__/LinuxDoCallbackView.spec.ts \
@@ -20,7 +20,10 @@ build-frontend:
 	@pnpm --dir frontend run build
 
 # 运行测试（后端 + 前端）
-test: test-backend test-frontend
+test: check-docs test-backend test-frontend
+
+check-docs:
+	@./tools/check-docs.sh
 
 test-backend:
 	@$(MAKE) -C backend test

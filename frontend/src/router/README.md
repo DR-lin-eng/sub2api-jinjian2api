@@ -1,276 +1,68 @@
-# Vue Router Configuration
+# Vue Router
 
-## Overview
+本目录定义前端路由、访问元数据、导航守卫、页面标题和首次设置重定向。完整路由列表以 `index.ts` 为唯一事实源，不在 README 复制一份容易过期的清单。
 
-This directory contains the Vue Router configuration for the Sub2API frontend application. The router implements a comprehensive navigation system with authentication guards, role-based access control, and lazy loading.
+## 文件索引
 
-## Files
+| 文件 | 作用 |
+| --- | --- |
+| `index.ts` | 路由记录、全局 guard、滚动恢复、预加载和 chunk 错误恢复 |
+| `meta.d.ts` | `RouteMeta` 类型扩展 |
+| `setupRedirect.ts` | setup 已完成时的目标路径选择 |
+| `title.ts` | 站点名、i18n 和自定义菜单标题解析 |
+| `__tests__/` | guard 辅助、标题和 setup 重定向测试 |
 
-- **index.ts**: Main router configuration with route definitions and navigation guards
-- **meta.d.ts**: TypeScript type definitions for route meta fields
+## 路由域
 
-## Route Structure
+- `/setup`: 首次安装。
+- 公共/认证：`/home`, `/login`, `/register`, OAuth 回调、密码重置、法律文档等。
+- 用户：dashboard、API Key、用量、订阅、支付、渠道、个人设置等。
+- 管理：dashboard、Ops、账号/分组/渠道、用户、支付、设置、审计和风控等。
+- `/:pathMatch(.*)*`: 404。
 
-### Public Routes (No Authentication Required)
+查精确路径或组件时：
 
-| Path        | Component    | Description            |
-| ----------- | ------------ | ---------------------- |
-| `/login`    | LoginView    | User login page        |
-| `/register` | RegisterView | User registration page |
-
-### User Routes (Authentication Required)
-
-| Path         | Component     | Description                  |
-| ------------ | ------------- | ---------------------------- |
-| `/`          | -             | Redirects to `/dashboard`    |
-| `/dashboard` | DashboardView | User dashboard with stats    |
-| `/keys`      | KeysView      | API key management           |
-| `/usage`     | UsageView     | Usage records and statistics |
-| `/redeem`    | RedeemView    | Redeem code interface        |
-| `/profile`   | ProfileView   | User profile settings        |
-
-### Admin Routes (Admin Role Required)
-
-| Path               | Component          | Description                     |
-| ------------------ | ------------------ | ------------------------------- |
-| `/admin`           | -                  | Redirects to `/admin/dashboard` |
-| `/admin/dashboard` | AdminDashboardView | Admin dashboard                 |
-| `/admin/users`     | AdminUsersView     | User management                 |
-| `/admin/groups`    | AdminGroupsView    | Group management                |
-| `/admin/accounts`  | AdminAccountsView  | Account management              |
-| `/admin/proxies`   | AdminProxiesView   | Proxy management                |
-| `/admin/redeem`    | AdminRedeemView    | Redeem code management          |
-
-### Special Routes
-
-| Path              | Component    | Description    |
-| ----------------- | ------------ | -------------- |
-| `/:pathMatch(.*)` | NotFoundView | 404 error page |
-
-## Navigation Guards
-
-### Authentication Guard (beforeEach)
-
-The router implements a comprehensive navigation guard that:
-
-1. **Sets Page Title**: Updates document title based on route meta
-2. **Checks Authentication**:
-   - Public routes (`requiresAuth: false`) are accessible without login
-   - Protected routes require authentication
-   - Redirects to `/login` if not authenticated
-3. **Prevents Double Login**:
-   - Redirects authenticated users away from login/register pages
-4. **Role-Based Access Control**:
-   - Admin routes (`requiresAdmin: true`) require admin role
-   - Non-admin users are redirected to `/dashboard`
-5. **Preserves Intended Destination**:
-   - Saves original URL in query parameter for post-login redirect
-
-### Flow Diagram
-
-```
-User navigates to route
-        ↓
-Set page title from meta
-        ↓
-Is route public? ──Yes──→ Already authenticated? ──Yes──→ Redirect to /dashboard
-        ↓ No                                        ↓ No
-        ↓                                      Allow access
-        ↓
-Is user authenticated? ──No──→ Redirect to /login with redirect query
-        ↓ Yes
-        ↓
-Requires admin role? ──Yes──→ Is user admin? ──No──→ Redirect to /dashboard
-        ↓ No                                  ↓ Yes
-        ↓                                     ↓
-Allow access ←────────────────────────────────┘
+```sh
+rg -n 'path:|name:|component:' frontend/src/router/index.ts
 ```
 
-## Route Meta Fields
+## Route Meta
 
-Each route can define the following meta fields:
+`meta.d.ts` 当前定义：
 
-```typescript
-interface RouteMeta {
-  requiresAuth?: boolean // Default: true (requires authentication)
-  requiresAdmin?: boolean // Default: false (admin access only)
-  title?: string // Page title
-  breadcrumbs?: Array<{
-    // Breadcrumb navigation
-    label: string
-    to?: string
-  }>
-  icon?: string // Icon for navigation menu
-  hideInMenu?: boolean // Hide from navigation menu
-}
-```
+| 字段 | 含义 |
+| --- | --- |
+| `requiresAuth` | 是否登录；未设置时默认为 `true` |
+| `requiresAdmin` | 是否要求管理员 |
+| `requiresPayment` | 是否要求内部支付功能启用 |
+| `requiresRiskControl` | 是否要求风控功能启用 |
+| `title`, `titleKey`, `descriptionKey` | 页面标题和 i18n 元数据 |
+| `breadcrumbs`, `icon`, `hideInMenu` | 导航展示元数据 |
 
-## Lazy Loading
+新增字段时同时修改 `meta.d.ts`、guard/标题消费者和测试。
 
-All route components use dynamic imports for code splitting:
+## Guard 顺序
 
-```typescript
-component: () => import('@/views/user/DashboardView.vue')
-```
+`beforeEach` 的主要顺序是：
 
-Benefits:
+1. 启动导航 loading，并首次恢复内存 access token。
+2. 根据站点设置和路由元数据生成标题。
+3. 处理 `/setup` 已完成重定向。
+4. 处理公共路由、登录态和 backend mode 公共白名单。
+5. 验证登录和管理员角色。
+6. 确保支付/风控所需的公开设置已加载，再应用功能开关。
+7. 应用 simple mode 和 backend mode 的访问限制。
+8. 导航完成后停止 loading 并触发空闲预加载。
 
-- Reduced initial bundle size
-- Faster initial page load
-- Components loaded on-demand
-- Automatic code splitting by Vite
+动态 import 在部署更新后可能失效。`router.onError` 对 chunk load error 做一次受控刷新；修改时必须保留防循环机制。
 
-## Authentication Store Integration
+## 添加路由
 
-The router integrates with the Pinia auth store (`@/stores/auth`):
+1. 页面放入 `views/<domain>/` 或已有 `features/<domain>/`。
+2. 使用 `() => import(...)` 懒加载。
+3. 显式填写 `requiresAuth`、`requiresAdmin` 和功能开关 meta。
+4. 添加 `titleKey`，并同步 locale。
+5. 更新菜单可见性，但不要把菜单隐藏当作权限校验。
+6. 为 guard 分支、setup/功能开关或复杂重定向添加测试。
 
-```typescript
-const authStore = useAuthStore()
-
-// Check authentication status
-authStore.isAuthenticated
-
-// Check admin role
-authStore.isAdmin
-```
-
-## Usage Examples
-
-### Programmatic Navigation
-
-```typescript
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-
-// Navigate to a route
-router.push('/dashboard')
-
-// Navigate with query parameters
-router.push({
-  path: '/usage',
-  query: { filter: 'today' }
-})
-
-// Navigate to admin route (will be blocked if not admin)
-router.push('/admin/users')
-```
-
-### Route Links
-
-```vue
-<template>
-  <!-- Simple link -->
-  <router-link to="/dashboard">Dashboard</router-link>
-
-  <!-- Named route -->
-  <router-link :to="{ name: 'Keys' }">API Keys</router-link>
-
-  <!-- With query parameters -->
-  <router-link :to="{ path: '/usage', query: { page: 1 } }"> Usage </router-link>
-</template>
-```
-
-### Checking Current Route
-
-```typescript
-import { useRoute } from 'vue-router'
-
-const route = useRoute()
-
-// Check if on admin page
-const isAdminPage = route.path.startsWith('/admin')
-
-// Get route meta
-const requiresAdmin = route.meta.requiresAdmin
-```
-
-## Scroll Behavior
-
-The router implements automatic scroll management:
-
-- **Browser Navigation**: Restores saved scroll position
-- **New Routes**: Scrolls to top of page
-- **Hash Links**: Scrolls to anchor (when implemented)
-
-## Error Handling
-
-The router includes error handling for navigation failures:
-
-```typescript
-router.onError((error) => {
-  console.error('Router error:', error)
-})
-```
-
-## Testing Routes
-
-To test navigation guards and route access:
-
-1. **Public Route Access**: Visit `/login` without authentication
-2. **Protected Route**: Try accessing `/dashboard` without login (should redirect)
-3. **Admin Access**: Login as regular user, try `/admin/users` (should redirect to dashboard)
-4. **Admin Success**: Login as admin, access `/admin/users` (should succeed)
-5. **404 Handling**: Visit non-existent route (should show 404 page)
-
-## Development Tips
-
-### Adding New Routes
-
-1. Add route definition in `routes` array
-2. Create corresponding view component
-3. Set appropriate meta fields (`requiresAuth`, `requiresAdmin`)
-4. Use lazy loading with `() => import()`
-5. Update this README with route documentation
-
-### Debugging Navigation
-
-Enable Vue Router debug mode:
-
-```typescript
-// In browser console
-window.__VUE_ROUTER__ = router
-
-// Check current route
-router.currentRoute.value
-```
-
-### Common Issues
-
-**Issue**: 404 on page refresh
-
-- **Cause**: Server not configured for SPA
-- **Solution**: Configure server to serve `index.html` for all routes
-
-**Issue**: Navigation guard runs twice
-
-- **Cause**: Multiple `next()` calls
-- **Solution**: Ensure only one `next()` call per code path
-
-**Issue**: User data not loaded
-
-- **Cause**: Auth store not initialized
-- **Solution**: Call `authStore.checkAuth()` in App.vue or main.ts
-
-## Security Considerations
-
-1. **Client-Side Only**: Navigation guards are client-side; server must also validate
-2. **Token Validation**: API should verify JWT token on every request
-3. **Role Checking**: Backend must verify admin role, not just frontend
-4. **XSS Protection**: Vue automatically escapes template content
-5. **CSRF Protection**: Use CSRF tokens for state-changing operations
-
-## Performance Optimization
-
-1. **Lazy Loading**: All routes use dynamic imports
-2. **Code Splitting**: Vite automatically splits route chunks
-3. **Prefetching**: Consider adding route prefetch for common paths
-4. **Route Caching**: Vue Router caches component instances
-
-## Future Enhancements
-
-- [ ] Add breadcrumb navigation system
-- [ ] Implement route-based permissions beyond admin/user
-- [ ] Add route transition animations
-- [ ] Implement route prefetching for anticipated navigation
-- [ ] Add navigation analytics tracking
+后端仍必须执行对应 JWT、Admin 或 step-up 校验。前端 Router 只负责导航体验。
