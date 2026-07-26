@@ -1160,11 +1160,7 @@
                     <!-- Add pattern button -->
                     <button
                         type="button"
-                        @click="
-                        if (!rule.modelWhitelist)
-                          rule.modelWhitelist = [];
-                        rule.modelWhitelist.push('');
-                      "
+                        @click="addModelWhitelistEntry(rule)"
                         class="mb-2 inline-flex items-center gap-1 text-xs text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                     >
                       <svg
@@ -12424,6 +12420,11 @@ function openAffiliateBatchModal() {
   if (affiliateState.selected.length === 0) return;
   affiliateBatchModal.open = true;
   affiliateBatchModal.rate = "";
+}
+
+function addModelWhitelistEntry(rule: { modelWhitelist?: string[] }): void {
+  if (!rule.modelWhitelist) rule.modelWhitelist = [];
+  rule.modelWhitelist.push("");
 }
 
 async function submitAffiliateBatchModal() {
