@@ -33,7 +33,11 @@ func (s *GatewayService) SelectAccountForModel(ctx context.Context, groupID *int
 
 // SelectAccountForModelWithExclusions selects an account supporting the requested model while excluding specified accounts.
 func (s *GatewayService) SelectAccountForModelWithExclusions(ctx context.Context, groupID *int64, sessionHash string, requestedModel string, excludedIDs map[int64]struct{}) (*Account, error) {
-	ctx = withSchedulerCandidateExclusions(ctx, excludedIDs)
+	localExcluded := make(map[int64]struct{}, len(excludedIDs)+1)
+	for accountID := range excludedIDs {
+		localExcluded[accountID] = struct{}{}
+	}
+	ctx = withSchedulerCandidateExclusions(ctx, localExcluded)
 	// 优先检查 context 中的强制平台（/antigravity 路由）
 	var platform string
 	forcePlatform, hasForcePlatform := ctx.Value(ctxkey.ForcePlatform).(string)
@@ -78,21 +82,28 @@ func (s *GatewayService) SelectAccountForModelWithExclusions(ctx context.Context
 
 	// anthropic/gemini 分组支持混合调度（包含启用了 mixed_scheduling 的 antigravity 账户）
 	// 注意：强制平台模式不走混合调度
-	if (platform == PlatformAnthropic || platform == PlatformGemini) && !hasForcePlatform {
-		account, err := s.selectAccountWithMixedScheduling(ctx, groupID, sessionHash, requestedModel, excludedIDs, platform)
-		if err != nil {
-			return nil, err
+	for {
+		requestCtx := withSchedulerCandidateExclusions(ctx, localExcluded)
+		var account *Account
+		var selectErr error
+		if (platform == PlatformAnthropic || platform == PlatformGemini) && !hasForcePlatform {
+			account, selectErr = s.selectAccountWithMixedScheduling(requestCtx, groupID, sessionHash, requestedModel, localExcluded, platform)
+		} else {
+			// antigravity 分组、强制平台模式或无分组使用单平台选择。
+			account, selectErr = s.selectAccountForModelWithPlatform(requestCtx, groupID, sessionHash, requestedModel, localExcluded, platform)
 		}
-		return s.hydrateSelectedAccount(ctx, account)
+		if selectErr != nil {
+			return nil, selectErr
+		}
+		hydrated, hydrateErr := s.hydrateSelectedAccount(requestCtx, account)
+		if !errors.Is(hydrateErr, errCPAPoolCapacityUnavailable) {
+			return hydrated, hydrateErr
+		}
+		if account == nil {
+			return nil, ErrNoAvailableAccounts
+		}
+		localExcluded[account.ID] = struct{}{}
 	}
-
-	// antigravity 分组、强制平台模式或无分组使用单平台选择
-	// 注意：强制平台模式也必须遵守分组限制，不再回退到全平台查询
-	account, err := s.selectAccountForModelWithPlatform(ctx, groupID, sessionHash, requestedModel, excludedIDs, platform)
-	if err != nil {
-		return nil, err
-	}
-	return s.hydrateSelectedAccount(ctx, account)
 }
 
 // SelectAccountWithLoadAwareness selects account with load-awareness and wait plan.
@@ -992,6 +1003,7 @@ func (s *GatewayService) listSchedulableAccounts(ctx context.Context, groupID *i
 	if s.schedulerSnapshot != nil {
 		accounts, useMixed, err := s.schedulerSnapshot.ListSchedulableAccounts(ctx, groupID, platform, hasForcePlatform)
 		if err == nil {
+			accounts = s.concurrencyService.applyCPAPoolCapacityBatch(ctx, accounts)
 			slog.Debug("account_scheduling_list_snapshot",
 				"group_id", derefGroupID(groupID),
 				"platform", platform,
@@ -1053,7 +1065,7 @@ func (s *GatewayService) listSchedulableAccounts(ctx context.Context, groupID *i
 					"tls_fingerprint", acc.IsTLSFingerprintEnabled())
 			}
 		}
-		return filtered, useMixed, nil
+		return s.concurrencyService.applyCPAPoolCapacityBatch(ctx, filtered), useMixed, nil
 	}
 
 	var accounts []Account
@@ -1088,7 +1100,7 @@ func (s *GatewayService) listSchedulableAccounts(ctx context.Context, groupID *i
 				"tls_fingerprint", acc.IsTLSFingerprintEnabled())
 		}
 	}
-	return accounts, useMixed, nil
+	return s.concurrencyService.applyCPAPoolCapacityBatch(ctx, accounts), useMixed, nil
 }
 
 func (s *GatewayService) withGatewaySchedulerCandidateFilter(ctx context.Context, platform string, useMixed bool, requestedModel string) context.Context {
@@ -1500,23 +1512,38 @@ func (s *GatewayService) getSchedulableAccount(ctx context.Context, accountID in
 }
 
 func (s *GatewayService) hydrateSelectedAccount(ctx context.Context, account *Account) (*Account, error) {
-	if account == nil || s.schedulerSnapshot == nil {
-		return account, nil
+	if account == nil {
+		return nil, nil
 	}
-	hydrated, err := s.schedulerSnapshot.GetAccount(ctx, account.ID)
-	if err != nil {
-		return nil, err
+	hydrated := account
+	if s.schedulerSnapshot != nil {
+		var err error
+		hydrated, err = s.schedulerSnapshot.GetAccount(ctx, account.ID)
+		if err != nil {
+			return nil, err
+		}
+		if hydrated == nil {
+			return nil, fmt.Errorf("selected gateway account %d not found during hydration", account.ID)
+		}
 	}
-	if hydrated == nil {
-		return nil, fmt.Errorf("selected gateway account %d not found during hydration", account.ID)
+	if capped, available := s.concurrencyService.applyCPAPoolCapacity(ctx, hydrated); available {
+		return capped, nil
 	}
-	return hydrated, nil
+	return nil, fmt.Errorf("%w: account %d", errCPAPoolCapacityUnavailable, account.ID)
 }
 
 func (s *GatewayService) newSelectionResult(ctx context.Context, account *Account, acquired bool, release func(), waitPlan *AccountWaitPlan) (*AccountSelectionResult, error) {
 	hydrated, err := s.hydrateSelectedAccount(ctx, account)
 	if err != nil {
+		if acquired && release != nil {
+			release()
+		}
 		return nil, err
+	}
+	if waitPlan != nil && hydrated != nil && waitPlan.MaxConcurrency != hydrated.Concurrency {
+		updatedWaitPlan := *waitPlan
+		updatedWaitPlan.MaxConcurrency = hydrated.Concurrency
+		waitPlan = &updatedWaitPlan
 	}
 	return &AccountSelectionResult{
 		Account:     hydrated,

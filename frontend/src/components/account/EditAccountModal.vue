@@ -328,6 +328,77 @@
           </div>
         </div>
 
+        <div class="border-t border-gray-200 pt-4 dark:border-dark-600">
+          <div class="mb-3 flex items-center justify-between gap-4">
+            <div>
+              <label class="input-label mb-0">{{ t('admin.accounts.cpaMode') }}</label>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('admin.accounts.cpaModeHint') }}
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              data-testid="cpa-mode-toggle"
+              :aria-checked="cpaModeEnabled"
+              @click="cpaModeEnabled = !cpaModeEnabled"
+              :class="[
+                'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+                cpaModeEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+              ]"
+            >
+              <span
+                :class="[
+                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                  cpaModeEnabled ? 'translate-x-5' : 'translate-x-0'
+                ]"
+              />
+            </button>
+          </div>
+
+          <div v-if="cpaModeEnabled" class="space-y-3" data-testid="cpa-mode-settings">
+            <div>
+              <label class="input-label">{{ t('admin.accounts.cpaManagementUrl') }}</label>
+              <input
+                v-model="cpaManagementUrl"
+                type="url"
+                class="input font-mono"
+                data-testid="cpa-management-url"
+                placeholder="http://cpa:8317"
+              />
+            </div>
+            <div>
+              <label class="input-label">{{ t('admin.accounts.cpaManagementKey') }}</label>
+              <input
+                v-model="cpaManagementKey"
+                type="password"
+                class="input font-mono"
+                autocomplete="new-password"
+                data-testid="cpa-management-key"
+                data-1p-ignore
+                data-lpignore="true"
+                data-bwignore="true"
+                :placeholder="t('admin.accounts.leaveEmptyToKeep')"
+              />
+            </div>
+            <div>
+              <label class="input-label">{{ t('admin.accounts.cpaConcurrencyPerCredential') }}</label>
+              <input
+                v-model.number="cpaConcurrencyPerCredential"
+                type="number"
+                min="1"
+                :max="MAX_CPA_CONCURRENCY_PER_CREDENTIAL"
+                step="1"
+                class="input"
+                data-testid="cpa-concurrency-per-credential"
+              />
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('admin.accounts.cpaConcurrencyHint', { seconds: CPA_SNAPSHOT_INTERVAL_SECONDS }) }}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <!-- Custom Error Codes Section -->
         <div class="border-t border-gray-200 pt-4 dark:border-dark-600">
           <div class="mb-3 flex items-center justify-between">
@@ -2786,10 +2857,16 @@ const allowedModels = ref<string[]>([])
 const DEFAULT_POOL_MODE_RETRY_COUNT = 3
 const MAX_POOL_MODE_RETRY_COUNT = 10
 const DEFAULT_POOL_MODE_RETRY_STATUS_CODES = [401, 403, 429]
+const CPA_SNAPSHOT_INTERVAL_SECONDS = 90
+const MAX_CPA_CONCURRENCY_PER_CREDENTIAL = 10000
 const GROK_CLIENT_TOOL_CACHE_EXTRA_KEY = 'grok_client_tool_cache_enabled'
 const poolModeEnabled = ref(false)
 const poolModeRetryCount = ref(DEFAULT_POOL_MODE_RETRY_COUNT)
 const poolModeRetryStatusCodesInput = ref('')
+const cpaModeEnabled = ref(false)
+const cpaManagementUrl = ref('')
+const cpaManagementKey = ref('')
+const cpaConcurrencyPerCredential = ref(1)
 
 function parsePoolModeRetryStatusCodes(input: string): number[] {
   if (!input || !input.trim()) return []
@@ -3574,6 +3651,16 @@ const syncFormFromAccount = (newAccount: Account | null) => {
     )
     poolModeRetryStatusCodesInput.value = formatPoolModeRetryStatusCodes(credentials.pool_mode_retry_status_codes)
 
+    cpaModeEnabled.value = credentials.cpa_mode === true
+    cpaManagementUrl.value = typeof credentials.cpa_management_url === 'string'
+      ? credentials.cpa_management_url
+      : ''
+    const storedCPAConcurrency = Number(credentials.cpa_concurrency_per_credential ?? 1)
+    cpaConcurrencyPerCredential.value = Number.isInteger(storedCPAConcurrency) && storedCPAConcurrency > 0
+      ? Math.min(storedCPAConcurrency, MAX_CPA_CONCURRENCY_PER_CREDENTIAL)
+      : 1
+    cpaManagementKey.value = ''
+
     // Load custom error codes
     customErrorCodesEnabled.value = credentials.custom_error_codes_enabled === true
     const existingErrorCodes = credentials.custom_error_codes as number[] | undefined
@@ -3647,6 +3734,10 @@ const syncFormFromAccount = (newAccount: Account | null) => {
     poolModeEnabled.value = false
     poolModeRetryCount.value = DEFAULT_POOL_MODE_RETRY_COUNT
     poolModeRetryStatusCodesInput.value = ''
+    cpaModeEnabled.value = false
+    cpaManagementUrl.value = ''
+    cpaManagementKey.value = ''
+    cpaConcurrencyPerCredential.value = 1
     customErrorCodesEnabled.value = false
     selectedErrorCodes.value = []
   }
@@ -4193,6 +4284,35 @@ const handleSubmit = async () => {
         } else {
           delete newCredentials.compact_model_mapping
         }
+      }
+
+      if (cpaModeEnabled.value) {
+        const managementUrl = cpaManagementUrl.value.trim().replace(/\/+$/, '')
+        if (!managementUrl) {
+          appStore.showError(t('admin.accounts.cpaManagementUrlRequired'))
+          return
+        }
+        const hasExistingManagementKey =
+          props.account.credentials_status?.has_cpa_management_key ?? false
+        const managementKey = cpaManagementKey.value.trim()
+        if (!managementKey && !hasExistingManagementKey) {
+          appStore.showError(t('admin.accounts.cpaManagementKeyRequired'))
+          return
+        }
+        const perCredential = Math.trunc(Number(cpaConcurrencyPerCredential.value))
+        if (!Number.isFinite(perCredential) || perCredential < 1 || perCredential > MAX_CPA_CONCURRENCY_PER_CREDENTIAL) {
+          appStore.showError(t('admin.accounts.cpaConcurrencyInvalid', { max: MAX_CPA_CONCURRENCY_PER_CREDENTIAL }))
+          return
+        }
+        newCredentials.cpa_mode = true
+        newCredentials.cpa_management_url = managementUrl
+        newCredentials.cpa_concurrency_per_credential = perCredential
+        if (managementKey) newCredentials.cpa_management_key = managementKey
+      } else {
+        newCredentials.cpa_mode = false
+        newCredentials.cpa_management_key = ''
+        delete newCredentials.cpa_management_url
+        delete newCredentials.cpa_concurrency_per_credential
       }
 
       // Add pool mode if enabled

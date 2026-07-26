@@ -231,7 +231,8 @@ const (
 
 // ConcurrencyService 管理账号和用户的并发限制。
 type ConcurrencyService struct {
-	cache ConcurrencyCache
+	cache           ConcurrencyCache
+	cpaPoolCapacity *cpaPoolCapacityService
 
 	standaloneRequestSlots atomic.Bool
 	localAPIKeySlots       localSlotRegistry
@@ -313,7 +314,7 @@ func (k accountLoadBatchKey) singleflightKey() string {
 
 // NewConcurrencyService 创建并发控制服务。
 func NewConcurrencyService(cache ConcurrencyCache) *ConcurrencyService {
-	svc := &ConcurrencyService{cache: cache}
+	svc := &ConcurrencyService{cache: cache, cpaPoolCapacity: newCPAPoolCapacityService()}
 	svc.SetAccountLoadBatchCacheTTL(defaultAccountLoadBatchCacheTTL)
 	svc.SetPriorityAdmissionRuntimeConfig(DefaultPriorityAdmissionRuntimeConfig())
 	return svc

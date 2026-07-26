@@ -728,6 +728,15 @@ export default {
       poolModeRetryStatusCodes: 'Retry Status Codes',
       poolModeRetryStatusCodesHint:
         'Comma-separated HTTP status codes (100-599) that trigger same-account retry in pool mode. Leave blank to use defaults ({default}).',
+      cpaMode: 'CPA concurrency sync',
+      cpaModeHint: 'Read CPA schedulable credential count and use it to reduce this account concurrency limit',
+      cpaManagementUrl: 'CPA management URL',
+      cpaManagementKey: 'CPA management key',
+      cpaConcurrencyPerCredential: 'Concurrency per credential',
+      cpaConcurrencyHint: 'Effective limit = min(local limit, schedulable credentials x per-credential concurrency). Read at most once every {seconds} seconds.',
+      cpaManagementUrlRequired: 'CPA management URL is required when CPA concurrency sync is enabled',
+      cpaManagementKeyRequired: 'CPA management key is required when CPA concurrency sync is enabled',
+      cpaConcurrencyInvalid: 'Concurrency per credential must be an integer between 1 and {max}',
       customErrorCodes: 'Custom Error Codes',
       customErrorCodesHint: 'Only stop scheduling for selected error codes',
       customErrorCodesWarning:

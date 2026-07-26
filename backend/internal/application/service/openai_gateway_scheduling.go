@@ -1502,7 +1502,10 @@ func (s *OpenAIGatewayService) listSchedulableAccounts(ctx context.Context, grou
 	platform = normalizeOpenAICompatiblePlatform(platform)
 	if s.schedulerSnapshot != nil {
 		accounts, _, err := s.schedulerSnapshot.ListSchedulableAccounts(ctx, groupID, platform, false)
-		return accounts, err
+		if err != nil {
+			return nil, err
+		}
+		return s.concurrencyService.applyCPAPoolCapacityBatch(ctx, accounts), nil
 	}
 	var accounts []Account
 	var err error
@@ -1516,7 +1519,7 @@ func (s *OpenAIGatewayService) listSchedulableAccounts(ctx context.Context, grou
 	if err != nil {
 		return nil, fmt.Errorf("query accounts failed: %w", err)
 	}
-	return accounts, nil
+	return s.concurrencyService.applyCPAPoolCapacityBatch(ctx, accounts), nil
 }
 
 func (s *OpenAIGatewayService) withOpenAISchedulerCandidateFilter(ctx context.Context, groupID *int64, platform, requestedModel string, requireCompact bool, requiredCapability OpenAIEndpointCapability) context.Context {
@@ -1577,7 +1580,11 @@ func (s *OpenAIGatewayService) resolveFreshSchedulableOpenAIAccount(ctx context.
 	if s.isOpenAIProxyStreamQuarantined(fresh) {
 		return nil
 	}
-	return fresh
+	capped, available := s.concurrencyService.applyCPAPoolCapacity(ctx, fresh)
+	if !available {
+		return nil
+	}
+	return capped
 }
 
 // parentAccountLookup 返回供 parentHealthyForShadow 使用的母账号解析闭包:经 accountRepo
@@ -1609,7 +1616,11 @@ func (s *OpenAIGatewayService) recheckSelectedOpenAIAccountFromDB(ctx context.Co
 		if s.isOpenAIProxyStreamQuarantined(account) {
 			return nil
 		}
-		return account
+		capped, available := s.concurrencyService.applyCPAPoolCapacity(ctx, account)
+		if !available {
+			return nil
+		}
+		return capped
 	}
 
 	latest, err := s.accountRepo.GetByID(ctx, account.ID)
@@ -1631,7 +1642,11 @@ func (s *OpenAIGatewayService) recheckSelectedOpenAIAccountFromDB(ctx context.Co
 	if s.isOpenAIProxyStreamQuarantined(latest) {
 		return nil
 	}
-	return latest
+	capped, available := s.concurrencyService.applyCPAPoolCapacity(ctx, latest)
+	if !available {
+		return nil
+	}
+	return capped
 }
 
 func (s *OpenAIGatewayService) openAIAccountMatchesSchedulingGroup(account *Account, groupID *int64) bool {
