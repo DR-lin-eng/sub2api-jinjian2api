@@ -1199,7 +1199,7 @@ import type {WebSearchProviderConfig} from '@/features/admin-settings/domain/mod
 import type {WebSearchTestResult} from '@/features/admin-settings/domain/models/webSearchTestResult'
 import type {Proxy} from '@/features/admin-proxies/domain/models/proxy'
 
-defineProps<{ form: Record<string, any>; saving: boolean; loadFailed: boolean }>()
+const props = defineProps<{ form: Record<string, any>; saving: boolean; loadFailed: boolean }>()
 
 const {t} = useI18n()
 const $settings = useAdminSettings()
@@ -1845,8 +1845,6 @@ async function saveRectifierSettings() {
     rectifierSaving.value = false
   }
 }
-
-const props = defineProps<{ form: Record<string, any>; saving: boolean; loadFailed: boolean }>()
 
 onMounted(() => {
   loadUpstreamBillingProbeSettings()
