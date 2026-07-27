@@ -124,7 +124,7 @@ onMounted(async () => {
   try {
     const status = await setupQueryDatasource.getSetupStatus()
     if (status.needsSetup && route.path !== '/setup') {
-      router.replace('/setup')
+      await router.replace('/setup')
       return
     }
   } catch {
