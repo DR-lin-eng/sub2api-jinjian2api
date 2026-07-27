@@ -554,6 +554,11 @@ export default {
     }
   },
 
+  modelSquare: {
+    title: 'Model Square',
+    description: 'Browse available models, capabilities, and pricing'
+  },
+
   // Available Channels (user-facing)
   availableChannels: {
     title: 'Available Channels',

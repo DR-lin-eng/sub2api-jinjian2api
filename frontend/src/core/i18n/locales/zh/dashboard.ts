@@ -559,6 +559,11 @@ export default {
     }
   },
 
+  modelSquare: {
+    title: '模型广场',
+    description: '浏览可用模型及其能力和定价'
+  },
+
   // Available Channels (user-facing)
   availableChannels: {
     title: '可用渠道',

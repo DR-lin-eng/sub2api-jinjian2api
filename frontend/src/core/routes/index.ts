@@ -14,6 +14,7 @@ import { batchImageRoutes } from '@/features/batch-image'
 import { usageRoutes } from '@/features/usage'
 import { billingRoutes } from '@/features/billing'
 import { affiliateRoutes } from '@/features/affiliate'
+import { modelSquareRoutes } from '@/features/model-square'
 import { channelsUserRoutes } from '@/features/channels-user'
 import { profileRoutes } from '@/features/profile'
 import { subscriptionsRoutes } from '@/features/subscriptions'
@@ -51,6 +52,7 @@ const routes: RouteRecordRaw[] = [
   ...usageRoutes,
   ...billingRoutes,
   ...affiliateRoutes,
+  ...modelSquareRoutes,
   ...channelsUserRoutes,
   ...profileRoutes,
   ...subscriptionsRoutes,

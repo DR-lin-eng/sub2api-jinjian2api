@@ -404,6 +404,19 @@ const ChannelIcon = {
     )
 }
 
+const ModelSquareIcon = {
+  render: () =>
+    h(
+      'svg',
+      { fill: 'currentColor', viewBox: '0 0 1024 1024' },
+      [
+        h('path', {
+          d: 'M571.050667 75.264a118.215111 118.215111 0 0 0-118.101334 0L163.214222 242.460444A118.215111 118.215111 0 0 0 104.163556 344.746667v334.449777c0 42.211556 22.528 81.237333 59.164444 102.343112l289.564444 167.196444c36.579556 21.048889 81.635556 21.048889 118.158223 0l289.678222-167.253333a118.215111 118.215111 0 0 0 59.050667-102.343111V344.803556c0-42.211556-22.528-81.237333-59.107556-102.4l-289.621333-167.139556zM210.318222 296.96L488.277333 136.533333a47.445333 47.445333 0 0 1 47.388445 0l277.959111 160.426667L512 471.153778 210.318222 297.016889z m-35.328 61.326222v320.853334c0 17.009778 8.988444 32.597333 23.665778 41.073777l277.959111 160.426667V532.48L174.990222 358.4z m372.394667 174.08l301.624889-174.08v320.853334a47.445333 47.445333 0 0 1-23.722667 41.073777l-277.902222 160.426667V532.48z'
+        })
+      ]
+    )
+}
+
 const CreditCardIcon = {
   render: () =>
     h(
@@ -705,6 +718,7 @@ function buildSelfNavItems(withDashboard: boolean): NavItem[] {
     { path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon },
     { path: '/batch-image', label: t('nav.batchImage'), icon: BatchImageIcon, hideInSimpleMode: true, featureFlag: flagBatchImageAccess },
     { path: '/usage', label: t('nav.usage'), icon: ChartIcon, hideInSimpleMode: true },
+    { path: '/models', label: t('nav.modelSquare'), icon: ModelSquareIcon },
     { path: '/available-channels', label: t('nav.availableChannels'), icon: ChannelIcon, hideInSimpleMode: true, featureFlag: flagAvailableChannels },
     { path: '/monitor', label: t('nav.channelStatus'), icon: SignalIcon, featureFlag: flagChannelMonitor },
     { path: '/subscriptions', label: t('nav.mySubscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
