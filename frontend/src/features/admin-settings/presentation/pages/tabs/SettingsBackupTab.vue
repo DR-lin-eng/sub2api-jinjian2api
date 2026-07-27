@@ -1,5 +1,7 @@
 <template>
-  <BackupSettings />
+  <div>
+    <BackupSettings />
+  </div>
 </template>
 
 <script setup lang="ts">
