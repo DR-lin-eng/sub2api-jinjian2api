@@ -345,7 +345,7 @@ func (s *cpaPoolCapacityService) fetch(ctx context.Context, config cpaPoolConfig
 	if err != nil {
 		return nil, fmt.Errorf("query CPA auth-files: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 4096))
 		return nil, fmt.Errorf("query CPA auth-files: unexpected HTTP status %d", resp.StatusCode)
