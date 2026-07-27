@@ -206,7 +206,12 @@ func TestUpdateSettingsRejectsMultipleHumanVerificationProviders(t *testing.T) {
 }
 
 func TestUpdateSettingsPersistsSingleHumanVerificationProvider(t *testing.T) {
-	h, repo := newStepUpSwitchTestHandler(t, map[string]string{})
+	h, repo := newStepUpSwitchTestHandler(t, map[string]string{
+		service.SettingKeyTurnstileEnabled:    "false",
+		service.SettingKeyRecaptchaEnabled:    "false",
+		service.SettingKeyCapEnabled:          "false",
+		service.SettingKeyLocalCaptchaEnabled: "false",
+	})
 
 	rec := doUpdateSettings(t, h, map[string]any{
 		"recaptcha_enabled":    true,

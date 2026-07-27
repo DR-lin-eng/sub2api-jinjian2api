@@ -140,6 +140,89 @@ func TestSettingServiceSchedulerV2_OverlayAndSwitchOnlyOnChange(t *testing.T) {
 	require.Equal(t, []bool{true}, switcher.calls, "saving unrelated settings must not rebuild the scheduler")
 }
 
+func TestSettingServiceSchedulerV2_PartialUpdateUsesStoredSchedulerSettings(t *testing.T) {
+	repo := &schedulerV2SettingRepo{values: map[string]string{
+		SettingKeySchedulerV2Enabled:        "true",
+		SettingKeySchedulerV2CandidateLimit: "32",
+		SettingKeySchedulerV2ScanLimit:      "128",
+	}}
+	switcher := &schedulerV2SwitcherStub{
+		state:          SchedulerEngineState{Engine: SchedulerEngineV2, Status: SchedulerEngineStatusActive},
+		candidateLimit: 32,
+		scanLimit:      128,
+	}
+	svc := NewSettingService(repo, &config.Config{})
+	svc.SetSchedulerEngineSwitcher(switcher)
+
+	err := svc.UpdateSettingsOmitting(context.Background(), &SystemSettings{SiteName: "updated"}, OmittedSettingKeys{
+		SettingKeySchedulerV2Enabled:        {},
+		SettingKeySchedulerV2CandidateLimit: {},
+		SettingKeySchedulerV2ScanLimit:      {},
+	})
+	require.NoError(t, err)
+	require.Empty(t, switcher.calls)
+	require.Equal(t, 32, switcher.candidateLimit)
+	require.Equal(t, 128, switcher.scanLimit)
+	require.Equal(t, "true", repo.values[SettingKeySchedulerV2Enabled])
+	require.Equal(t, "32", repo.values[SettingKeySchedulerV2CandidateLimit])
+	require.Equal(t, "128", repo.values[SettingKeySchedulerV2ScanLimit])
+}
+
+func TestSettingServiceSchedulerV2_PartialUpdateAppliesPersistedSchedulerTarget(t *testing.T) {
+	repo := &schedulerV2SettingRepo{values: map[string]string{
+		SettingKeySchedulerV2Enabled:        "false",
+		SettingKeySchedulerV2CandidateLimit: "24",
+		SettingKeySchedulerV2ScanLimit:      "96",
+	}}
+	switcher := &schedulerV2SwitcherStub{
+		state:          SchedulerEngineState{Engine: SchedulerEngineLegacy, Status: SchedulerEngineStatusDisabled},
+		candidateLimit: 24,
+		scanLimit:      96,
+	}
+	svc := NewSettingService(repo, &config.Config{})
+	svc.SetSchedulerEngineSwitcher(switcher)
+
+	err := svc.UpdateSettingsOmitting(context.Background(), &SystemSettings{
+		SchedulerV2Enabled:        true,
+		SchedulerV2CandidateLimit: 32,
+		SchedulerV2ScanLimit:      128,
+	}, OmittedSettingKeys{SettingKeySiteName: {}})
+	require.NoError(t, err)
+	require.Equal(t, []bool{true}, switcher.calls)
+	require.Equal(t, 32, switcher.candidateLimit)
+	require.Equal(t, 128, switcher.scanLimit)
+	require.Equal(t, "true", repo.values[SettingKeySchedulerV2Enabled])
+	require.Equal(t, "32", repo.values[SettingKeySchedulerV2CandidateLimit])
+	require.Equal(t, "128", repo.values[SettingKeySchedulerV2ScanLimit])
+}
+
+func TestSettingServiceSchedulerV2_PartialUpdateAppliesPersistedLimits(t *testing.T) {
+	repo := &schedulerV2SettingRepo{values: map[string]string{
+		SettingKeySchedulerV2Enabled:        "true",
+		SettingKeySchedulerV2CandidateLimit: "32",
+		SettingKeySchedulerV2ScanLimit:      "128",
+	}}
+	switcher := &schedulerV2SwitcherStub{
+		state:          SchedulerEngineState{Engine: SchedulerEngineV2, Status: SchedulerEngineStatusActive},
+		candidateLimit: 32,
+		scanLimit:      128,
+	}
+	svc := NewSettingService(repo, &config.Config{})
+	svc.SetSchedulerEngineSwitcher(switcher)
+
+	err := svc.UpdateSettingsOmitting(context.Background(), &SystemSettings{
+		SchedulerV2Enabled:        true,
+		SchedulerV2CandidateLimit: 40,
+		SchedulerV2ScanLimit:      160,
+	}, OmittedSettingKeys{SettingKeySiteName: {}})
+	require.NoError(t, err)
+	require.Empty(t, switcher.calls)
+	require.Equal(t, 40, switcher.candidateLimit)
+	require.Equal(t, 160, switcher.scanLimit)
+	require.Equal(t, "40", repo.values[SettingKeySchedulerV2CandidateLimit])
+	require.Equal(t, "160", repo.values[SettingKeySchedulerV2ScanLimit])
+}
+
 func TestSettingServiceSchedulerV2_FailedStateCanBeRetried(t *testing.T) {
 	repo := &schedulerV2SettingRepo{values: map[string]string{SettingKeySchedulerV2Enabled: "true"}}
 	switcher := &schedulerV2SwitcherStub{state: SchedulerEngineState{

@@ -180,6 +180,17 @@ func (s *GatewayService) Forward(ctx context.Context, c *gin.Context, account *A
 		clientUserAgent = c.GetHeader("User-Agent")
 	}
 	isClaudeCode := IsClaudeCodeClient(ctx) || isClaudeCodeClient(clientUserAgent, parsed.MetadataUserID)
+
+	// 补充判定：上游 API 网关（如 new-api）转发真实 Claude Code 流量时，
+	// UA 会变成 Go-http-client 但 body 保留了完整的 Claude Code 特征
+	// （billing attribution block + 可解析的 metadata.user_id）。此时如果仍走 mimicry
+	// 重写 system prompt，会破坏 Anthropic prompt cache 的前缀匹配——
+	// 导致 messages 级缓存永远 miss、cache_creation 每轮全量重写。
+	// 两个特征必须同时有效；该识别仅影响请求重写，不参与身份认证。
+	if !isClaudeCode {
+		isClaudeCode = isProxiedClaudeCodeRequest(body, parsed.MetadataUserID)
+	}
+
 	shouldMimicClaudeCode := account.IsOAuth() && !isClaudeCode
 
 	if shouldMimicClaudeCode {

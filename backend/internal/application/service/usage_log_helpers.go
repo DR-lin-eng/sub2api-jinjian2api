@@ -10,14 +10,22 @@ func optionalTrimmedStringPtr(raw string) *string {
 	return &trimmed
 }
 
-// optionalNonEqualStringPtr returns a pointer to value if it is non-empty and
-// differs from compare; otherwise nil. Used to store upstream_model only when
-// it differs from the requested model.
-func optionalNonEqualStringPtr(value, compare string) *string {
-	if value == "" || value == compare {
+// optionalUsageUpstreamModel keeps the column sparse for ordinary requests
+// while preserving every mapping shape that cannot be reconstructed from model
+// alone. In particular, channel mappings can leave upstreamModel == model while
+// requestedModel differs, and looped channel/account mappings can make the final
+// upstream equal the original request.
+func optionalUsageUpstreamModel(upstreamModel, model, requestedModel string) *string {
+	upstreamModel = strings.TrimSpace(upstreamModel)
+	if upstreamModel == "" {
 		return nil
 	}
-	return &value
+	model = strings.TrimSpace(model)
+	requestedModel = strings.TrimSpace(requestedModel)
+	if upstreamModel == model && requestedModel == model {
+		return nil
+	}
+	return optionalTrimmedStringPtr(upstreamModel)
 }
 
 func forwardResultBillingModel(requestedModel, upstreamModel string) string {

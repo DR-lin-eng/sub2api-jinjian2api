@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 
@@ -123,5 +124,24 @@ func BenchmarkReplaceOpenAIWSMessageModel_DualReplace(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		benchmarkOpenAIWSBytesSink = replaceOpenAIWSMessageModel(event, "gpt-5.1", "custom-model")
+	}
+}
+
+func BenchmarkOpenAIWSEventModelRestoreGate(b *testing.B) {
+	for _, size := range []int{2 * 1024, 256 * 1024} {
+		b.Run(fmt.Sprintf("delta_%dKiB", size/1024), func(b *testing.B) {
+			prefix := []byte(`{"type":"response.output_text.delta","delta":"`)
+			suffix := []byte(`"}`)
+			event := make([]byte, 0, size)
+			event = append(event, prefix...)
+			event = append(event, bytes.Repeat([]byte("x"), size-len(prefix)-len(suffix))...)
+			event = append(event, suffix...)
+			b.SetBytes(int64(len(event)))
+			b.ReportAllocs()
+			b.ResetTimer()
+			for range b.N {
+				benchmarkOpenAIWSBoolSink = openAIWSEventMayNeedModelRestore(event)
+			}
+		})
 	}
 }

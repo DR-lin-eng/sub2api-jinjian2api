@@ -44,6 +44,7 @@ func newAuthRoutesTestRouterWithSettings(redisClient *redis.Client, settingServi
 		redisClient,
 		nil,
 		settingService,
+		nil,
 	)
 
 	return router

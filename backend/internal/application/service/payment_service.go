@@ -144,6 +144,9 @@ type RefundResult struct {
 }
 
 type DashboardStats struct {
+	// Legacy scalar totals are retained for rolling upgrades. They preserve the
+	// historical cross-currency aggregation until all clients consume the
+	// currency-aware fields below.
 	TodayAmount   float64 `json:"today_amount"`
 	TotalAmount   float64 `json:"total_amount"`
 	TodayCount    int     `json:"today_count"`
@@ -151,21 +154,32 @@ type DashboardStats struct {
 	AvgAmount     float64 `json:"avg_amount"`
 	PendingOrders int     `json:"pending_orders"`
 
-	DailySeries    []DailyStats        `json:"daily_series"`
-	PaymentMethods []PaymentMethodStat `json:"payment_methods"`
-	TopUsers       []TopUserStat       `json:"top_users"`
+	TodayAmountByCurrency CurrencyAmounts `json:"today_amount_by_currency"`
+	TotalAmountByCurrency CurrencyAmounts `json:"total_amount_by_currency"`
+	AvgAmountByCurrency   CurrencyAmounts `json:"avg_amount_by_currency"`
+
+	DailySeries        []DailyStats        `json:"daily_series"`
+	PaymentMethods     []PaymentMethodStat `json:"payment_methods"`
+	TopUsers           []TopUserStat       `json:"top_users"`
+	TopUsersByCurrency TopUsersByCurrency  `json:"top_users_by_currency"`
 }
 
+// CurrencyAmounts holds payment amounts keyed by their ISO 4217 currency.
+// Amounts in different currencies must never be added together.
+type CurrencyAmounts map[string]float64
+
 type DailyStats struct {
-	Date   string  `json:"date"`
-	Amount float64 `json:"amount"`
-	Count  int     `json:"count"`
+	Date             string          `json:"date"`
+	Amount           float64         `json:"amount"`
+	AmountByCurrency CurrencyAmounts `json:"amount_by_currency"`
+	Count            int             `json:"count"`
 }
 
 type PaymentMethodStat struct {
-	Type   string  `json:"type"`
-	Amount float64 `json:"amount"`
-	Count  int     `json:"count"`
+	Type             string          `json:"type"`
+	Amount           float64         `json:"amount"`
+	AmountByCurrency CurrencyAmounts `json:"amount_by_currency"`
+	Count            int             `json:"count"`
 }
 
 type TopUserStat struct {
@@ -173,6 +187,10 @@ type TopUserStat struct {
 	Email  string  `json:"email"`
 	Amount float64 `json:"amount"`
 }
+
+// TopUsersByCurrency contains an independent ranked user list for each
+// currency. A single cross-currency leaderboard would be misleading.
+type TopUsersByCurrency map[string][]TopUserStat
 
 // --- Service ---
 

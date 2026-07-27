@@ -1883,6 +1883,8 @@
             </div>
           </div>
 
+          <PanelRateLimitSettingsCard v-if="panelRateLimitSettingsMounted" />
+
           <!-- Authentication bot protection settings -->
           <div class="card">
             <div
@@ -8246,6 +8248,7 @@ import ImageUpload from "@/components/common/ImageUpload.vue";
 import BackupSettings from "@/views/admin/BackupView.vue";
 import EmailTemplateEditor from "@/views/admin/settings/EmailTemplateEditor.vue";
 import OpenAIFastPolicyUserSelector from "@/views/admin/settings/OpenAIFastPolicyUserSelector.vue";
+import PanelRateLimitSettingsCard from "@/views/admin/settings/PanelRateLimitSettingsCard.vue";
 import { useClipboard } from "@/composables/useClipboard";
 import {
   useStepUp,
@@ -8307,6 +8310,7 @@ type SettingsTab =
   | "email"
   | "backup";
 const activeTab = ref<SettingsTab>("general");
+const panelRateLimitSettingsMounted = ref(false);
 const settingsTabs = [
   { key: "general" as SettingsTab, icon: "home" as const },
   { key: "agreement" as SettingsTab, icon: "document" as const },
@@ -8330,6 +8334,9 @@ const settingsTabKeyboardActions = {
 } as const;
 
 function selectSettingsTab(tab: SettingsTab): void {
+  if (tab === "security") {
+    panelRateLimitSettingsMounted.value = true;
+  }
   activeTab.value = tab;
 }
 

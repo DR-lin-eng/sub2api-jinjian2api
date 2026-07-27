@@ -330,3 +330,62 @@ func TestTrimOpenAIEncryptedReasoningItems_ContentNullDropsBareSkeleton(t *testi
 	_, hasInput := reqBody["input"]
 	assert.False(t, hasInput, "bare reasoning skeleton should be dropped, emptying input")
 }
+
+func TestSanitizeOpenAICrossModeFailoverReasoning_DropsWholeEncryptedItem(t *testing.T) {
+	body := []byte(`{"model":"gpt-5.1","input":[` +
+		`{"type":"message","role":"user","content":"hi"},` +
+		`{"type":"reasoning","id":"rs_kiro_1","encrypted_content":"ENC","summary":[{"type":"summary_text","text":"t"}]},` +
+		`{"type":"message","role":"assistant","content":"yo"}` +
+		`]}`)
+
+	sanitized, changed, err := SanitizeOpenAICrossModeFailoverReasoning(body)
+	require.NoError(t, err)
+	require.True(t, changed)
+	require.NotContains(t, string(sanitized), "rs_kiro_1")
+	require.NotContains(t, string(sanitized), "summary_text")
+	require.Equal(t, int64(2), gjson.GetBytes(sanitized, "input.#").Int())
+}
+
+func TestSanitizeOpenAICrossModeFailoverReasoning_NoEncryptedIsNoop(t *testing.T) {
+	body := []byte(`{"model":"gpt-5.1","input":[{"type":"reasoning","summary":[{"type":"summary_text","text":"t"}]}]}`)
+	sanitized, changed, err := SanitizeOpenAICrossModeFailoverReasoning(body)
+	require.NoError(t, err)
+	require.False(t, changed)
+	require.Same(t, &body[0], &sanitized[0])
+}
+
+func TestSanitizeOpenAICrossModeFailoverReasoning_PreservesLargeIntegers(t *testing.T) {
+	body := []byte(`{"model":"gpt-5.1","input":[` +
+		`{"type":"reasoning","id":"rs_kiro_1","encrypted_content":"ENC"},` +
+		`{"type":"message","role":"user","content":"hi"}` +
+		`],"tools":[{"type":"function","function":{"name":"lookup","parameters":{"type":"object","properties":{"id":{"const":9007199254740993}}}}}]}`)
+
+	sanitized, changed, err := SanitizeOpenAICrossModeFailoverReasoning(body)
+	require.NoError(t, err)
+	require.True(t, changed)
+	require.Contains(t, string(sanitized), `"const":9007199254740993`)
+}
+
+func BenchmarkSanitizeOpenAICrossModeFailoverReasoning_Ordinary2KiB(b *testing.B) {
+	benchmarkSanitizeOpenAICrossModeFailoverReasoningOrdinary(b, 2*1024)
+}
+
+func BenchmarkSanitizeOpenAICrossModeFailoverReasoning_Ordinary256KiB(b *testing.B) {
+	benchmarkSanitizeOpenAICrossModeFailoverReasoningOrdinary(b, 256*1024)
+}
+
+func benchmarkSanitizeOpenAICrossModeFailoverReasoningOrdinary(b *testing.B, size int) {
+	b.Helper()
+	prefix := `{"model":"gpt-5.1","input":[{"type":"message","role":"user","content":"`
+	suffix := `"}]}`
+	body := []byte(prefix + strings.Repeat("x", size-len(prefix)-len(suffix)) + suffix)
+	b.SetBytes(int64(len(body)))
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		sanitized, changed, err := SanitizeOpenAICrossModeFailoverReasoning(body)
+		if err != nil || changed || len(sanitized) != len(body) {
+			b.Fatalf("unexpected sanitize result: len=%d changed=%v err=%v", len(sanitized), changed, err)
+		}
+	}
+}

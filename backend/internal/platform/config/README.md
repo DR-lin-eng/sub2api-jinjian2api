@@ -7,6 +7,7 @@
 | `config_gateway_types.go` | 网关、OpenAI WebSocket、调度和用量队列配置 |
 | `config_storage_ops_types.go` | 数据库、Redis、运维、缓存和清理配置 |
 | `load.go` | Viper 加载、环境绑定和运行模式归一化 |
+| `source.go` | 显式配置文件与默认搜索路径的统一优先级 |
 | `defaults.go` | 全部配置默认值 |
 | `validate.go` | 主配置校验 |
 | `helpers.go` | URL、JWT 和通用归一化辅助函数 |

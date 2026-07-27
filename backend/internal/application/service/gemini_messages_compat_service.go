@@ -952,6 +952,9 @@ func (s *GeminiMessagesCompatService) Forward(ctx context.Context, c *gin.Contex
 				if upstreamReqID == "" {
 					upstreamReqID = resp.Header.Get("x-goog-request-id")
 				}
+				if failoverErr := s.poolModeSkippedFailoverError(c, account, resp.StatusCode, respBody, upstreamReqID); failoverErr != nil {
+					return nil, failoverErr
+				}
 				return nil, s.writeGeminiMappedError(c, account, http.StatusInternalServerError, upstreamReqID, respBody)
 			case ErrorPolicyMatched, ErrorPolicyTempUnscheduled:
 				if policy == ErrorPolicyMatched {
@@ -1459,6 +1462,9 @@ func (s *GeminiMessagesCompatService) ForwardNative(ctx context.Context, c *gin.
 			policy := s.rateLimitService.CheckErrorPolicy(ctx, account, resp.StatusCode, respBody, mappedModel)
 			switch policy {
 			case ErrorPolicySkipped:
+				if failoverErr := s.poolModeSkippedFailoverError(c, account, resp.StatusCode, respBody, requestID); failoverErr != nil {
+					return nil, failoverErr
+				}
 				respBody = unwrapIfNeeded(isOAuth, respBody)
 				contentType := resp.Header.Get("Content-Type")
 				if contentType == "" {
@@ -3462,17 +3468,12 @@ func normalizeGeminiRequestForAIStudio(body []byte) []byte {
 
 func isClaudeWebSearchToolMap(tool map[string]any) bool {
 	toolType, _ := tool["type"].(string)
-	if strings.HasPrefix(toolType, "web_search") || toolType == "google_search" {
-		return true
-	}
-
-	name, _ := tool["name"].(string)
-	switch strings.TrimSpace(name) {
-	case "web_search", "google_search", "web_search_20250305":
-		return true
-	default:
-		return false
-	}
+	// A function named web_search is still a client-side function. This is
+	// especially important for Chat Completions clients such as Hermes, whose
+	// built-in runtime tools are represented as ordinary function tools.
+	// Promote only explicitly typed server-side search tools to Gemini's
+	// built-in googleSearch tool.
+	return strings.HasPrefix(toolType, "web_search") || toolType == "google_search"
 }
 
 // cleanToolSchema 清理工具的 JSON Schema，移除 Gemini 不支持的字段

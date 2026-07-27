@@ -81,6 +81,31 @@ func TestRateLimiterFixesMissingTTL(t *testing.T) {
 	require.Greater(t, ttlAfter, time.Duration(0))
 }
 
+func TestRateLimiterAllowManyChecksBucketsAndReturnsRetryAfter(t *testing.T) {
+	ctx := context.Background()
+	limiter := NewRateLimiter(startRedis(t, ctx))
+	rules := []RateLimitRule{
+		{Key: "panel:global:user:42", Limit: 1},
+		{Key: "panel:heavy:user:42", Limit: 2},
+	}
+
+	first, err := limiter.AllowMany(ctx, rules, 2*time.Second)
+	require.NoError(t, err)
+	require.True(t, first.Allowed)
+	require.Equal(t, []int64{1, 1}, first.Counts)
+	require.Zero(t, first.RetryAfter)
+
+	second, err := limiter.AllowMany(ctx, rules, 2*time.Second)
+	require.NoError(t, err)
+	require.False(t, second.Allowed)
+	require.Equal(t, []int64{2, 0}, second.Counts)
+	require.Greater(t, second.RetryAfter, time.Duration(0))
+	require.LessOrEqual(t, second.RetryAfter, 2*time.Second)
+	heavyCount, err := limiter.redis.Get(ctx, limiter.prefix+rules[1].Key).Int64()
+	require.NoError(t, err)
+	require.Equal(t, int64(1), heavyCount, "global rejection must not consume the downstream heavy bucket")
+}
+
 func performRequest(router *gin.Engine) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	req.RemoteAddr = "127.0.0.1:1234"

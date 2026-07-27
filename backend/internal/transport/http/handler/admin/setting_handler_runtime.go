@@ -174,10 +174,9 @@ type UpdateGlobalTempUnschedulableSettingsRequest struct {
 func (h *SettingHandler) UpdateGlobalTempUnschedulableSettings(c *gin.Context) {
 	var req UpdateGlobalTempUnschedulableSettingsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, err.Error())
+		response.BadRequest(c, "Invalid request: "+err.Error())
 		return
 	}
-
 	settings := &service.GlobalTempUnschedulableSettings{Enabled: req.Enabled}
 	if err := h.settingService.SetGlobalTempUnschedulableSettings(c.Request.Context(), settings); err != nil {
 		response.ErrorFrom(c, err)

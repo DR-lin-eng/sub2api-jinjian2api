@@ -134,6 +134,12 @@
           </transition>
         </div>
 
+        <AffiliateInvitationCodeField
+          v-else-if="affiliateEnabled"
+          v-model="formData.aff_code"
+          :disabled="registrationActionDisabled"
+        />
+
         <!-- Promo Code Input (Optional) -->
         <div v-if="promoCodeEnabled">
           <label for="promo_code" class="input-label">
@@ -182,7 +188,10 @@
           </transition>
         </div>
 
-        <div v-if="turnstileEnabled && (turnstileSiteKey || humanVerificationAPIEndpoint)">
+        <div
+          v-if="turnstileEnabled && (turnstileSiteKey || humanVerificationAPIEndpoint)"
+          data-testid="registration-human-verification"
+        >
           <HumanVerificationWidget
             ref="turnstileRef"
             :provider="humanVerificationProvider"
@@ -322,6 +331,7 @@ import WechatOAuthSection from '@/components/auth/WechatOAuthSection.vue'
 import EmailOAuthButtons from '@/components/auth/EmailOAuthButtons.vue'
 import LoginAgreementPrompt from '@/components/auth/LoginAgreementPrompt.vue'
 import LocalCaptchaWidget from '@/components/auth/LocalCaptchaWidget.vue'
+import AffiliateInvitationCodeField from '@/components/auth/AffiliateInvitationCodeField.vue'
 import Icon from '@/components/icons/Icon.vue'
 import HumanVerificationWidget from '@/components/auth/HumanVerificationWidget.vue'
 import { useAuthStore, useAppStore } from '@/stores'
@@ -377,6 +387,7 @@ const registrationEnabled = ref<boolean>(true)
 const emailVerifyEnabled = ref<boolean>(false)
 const promoCodeEnabled = ref<boolean>(true)
 const invitationCodeEnabled = ref<boolean>(false)
+const affiliateEnabled = ref<boolean>(false)
 const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
 const humanVerificationProvider = ref<ExternalHumanVerificationProvider>('turnstile')
@@ -500,6 +511,7 @@ onMounted(async () => {
     emailVerifyEnabled.value = settings.email_verify_enabled
     promoCodeEnabled.value = settings.promo_code_enabled
     invitationCodeEnabled.value = settings.invitation_code_enabled
+    affiliateEnabled.value = settings.affiliate_enabled
     const verification = resolveHumanVerification(settings)
     turnstileEnabled.value = verification.external
     turnstileSiteKey.value = verification.siteKey

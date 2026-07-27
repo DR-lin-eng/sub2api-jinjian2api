@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { defineComponent, h } from "vue";
+import { defineComponent, h, type Component } from "vue";
 import { flushPromises, mount } from "@vue/test-utils";
 
 import SettingsView from "../SettingsView.vue";
+import PanelRateLimitSettingsCard from "../settings/PanelRateLimitSettingsCard.vue";
 
 const {
   getSettings,
@@ -15,6 +16,8 @@ const {
   updateRateLimit429CooldownSettings,
   getGlobalTempUnschedulableSettings,
   updateGlobalTempUnschedulableSettings,
+  getPanelRateLimitSettings,
+  updatePanelRateLimitSettings,
   getStreamTimeoutSettings,
   updateStreamTimeoutSettings,
   getRectifierSettings,
@@ -44,6 +47,8 @@ const {
   updateRateLimit429CooldownSettings: vi.fn(),
   getGlobalTempUnschedulableSettings: vi.fn(),
   updateGlobalTempUnschedulableSettings: vi.fn(),
+  getPanelRateLimitSettings: vi.fn(),
+  updatePanelRateLimitSettings: vi.fn(),
   getStreamTimeoutSettings: vi.fn(),
   updateStreamTimeoutSettings: vi.fn(),
   getRectifierSettings: vi.fn(),
@@ -86,6 +91,8 @@ vi.mock("@/api", () => ({
       updateRateLimit429CooldownSettings,
       getGlobalTempUnschedulableSettings,
       updateGlobalTempUnschedulableSettings,
+      getPanelRateLimitSettings,
+      updatePanelRateLimitSettings,
       getStreamTimeoutSettings,
       updateStreamTimeoutSettings,
       getRectifierSettings,
@@ -550,7 +557,7 @@ const baseSettingsResponse = {
   },
 };
 
-function mountView() {
+function mountView(extraStubs: Record<string, Component | boolean> = {}) {
   return mount(SettingsView, {
     global: {
       stubs: {
@@ -566,6 +573,8 @@ function mountView() {
         ProxySelector: true,
         ImageUpload: ImageUploadStub,
         BackupSettings: true,
+        PanelRateLimitSettingsCard: true,
+        ...extraStubs,
       },
     },
   });
@@ -588,6 +597,16 @@ async function openSecurityTab(wrapper: ReturnType<typeof mountView>) {
 
   expect(securityTabButton).toBeDefined();
   await securityTabButton?.trigger("click");
+  await flushPromises();
+}
+
+async function openGeneralTab(wrapper: ReturnType<typeof mountView>) {
+  const generalTabButton = wrapper
+    .findAll("button")
+    .find((node) => node.text().includes("admin.settings.tabs.general"));
+
+  expect(generalTabButton).toBeDefined();
+  await generalTabButton?.trigger("click");
   await flushPromises();
 }
 
@@ -633,6 +652,8 @@ describe("admin SettingsView payment visible method controls", () => {
     updateRateLimit429CooldownSettings.mockReset();
     getGlobalTempUnschedulableSettings.mockReset();
     updateGlobalTempUnschedulableSettings.mockReset();
+    getPanelRateLimitSettings.mockReset();
+    updatePanelRateLimitSettings.mockReset();
     getStreamTimeoutSettings.mockReset();
     updateStreamTimeoutSettings.mockReset();
     getRectifierSettings.mockReset();
@@ -683,6 +704,14 @@ describe("admin SettingsView payment visible method controls", () => {
     updateGlobalTempUnschedulableSettings.mockImplementation(
       async (payload) => payload,
     );
+    getPanelRateLimitSettings.mockResolvedValue({
+      enabled: true,
+      user_rpm: 240,
+      heavy_rpm: 60,
+      exempt_admin: true,
+      public_ip_rpm: 300,
+    });
+    updatePanelRateLimitSettings.mockImplementation(async (payload) => payload);
     getStreamTimeoutSettings.mockResolvedValue({
       response_header_timeout_degradation_enabled: true,
       response_header_timeout_seconds: 20,
@@ -773,6 +802,39 @@ describe("admin SettingsView payment visible method controls", () => {
       cap_enabled: true,
       local_captcha_enabled: false,
     });
+  });
+
+  it("mounts panel rate limit settings only after opening the security tab", async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    expect(wrapper.find("panel-rate-limit-settings-card-stub").exists()).toBe(false);
+
+    await openSecurityTab(wrapper);
+
+    expect(wrapper.find("panel-rate-limit-settings-card-stub").exists()).toBe(true);
+  });
+
+  it("keeps panel rate limit settings mounted across tab switches", async () => {
+    const wrapper = mountView({ PanelRateLimitSettingsCard });
+    await flushPromises();
+
+    expect(getPanelRateLimitSettings).not.toHaveBeenCalled();
+
+    await openSecurityTab(wrapper);
+    const rateInput = wrapper.get('[data-testid="panel-rate-limit-user-rpm"]');
+    await rateInput.setValue("120");
+    expect(getPanelRateLimitSettings).toHaveBeenCalledTimes(1);
+
+    await openGeneralTab(wrapper);
+    expect(wrapper.find('[data-testid="panel-rate-limit-user-rpm"]').exists()).toBe(true);
+
+    await openSecurityTab(wrapper);
+    expect(getPanelRateLimitSettings).toHaveBeenCalledTimes(1);
+    expect(
+      (wrapper.get('[data-testid="panel-rate-limit-user-rpm"]').element as HTMLInputElement)
+        .value,
+    ).toBe("120");
   });
 
   it("submits unified client IP mode without the deprecated boolean", async () => {

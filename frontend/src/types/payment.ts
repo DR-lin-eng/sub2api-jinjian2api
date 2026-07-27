@@ -222,13 +222,64 @@ export interface CreateOrderResult {
   jsapi_payload?: WechatJSAPIPayload
 }
 
+export type CurrencyAmounts = Record<string, number>
+
+export interface DailyPaymentStats {
+  date: string
+  amount: number
+  amount_by_currency?: CurrencyAmounts | null
+  count: number
+}
+
+export interface PaymentMethodStats {
+  type: string
+  amount: number
+  amount_by_currency?: CurrencyAmounts | null
+  count: number
+}
+
+export interface TopUserPaymentStats {
+  user_id: number
+  email: string
+  amount: number
+}
+
 export interface DashboardStats {
   today_amount: number
+  today_amount_by_currency?: CurrencyAmounts | null
   total_amount: number
+  total_amount_by_currency?: CurrencyAmounts | null
   today_count: number
   total_count: number
   avg_amount: number
-  daily_series: { date: string; amount: number; count: number }[]
-  payment_methods: { type: string; amount: number; count: number }[]
-  top_users: { user_id: number; email: string; amount: number }[]
+  avg_amount_by_currency?: CurrencyAmounts | null
+  pending_orders?: number
+  daily_series: DailyPaymentStats[]
+  payment_methods: PaymentMethodStats[]
+  top_users: TopUserPaymentStats[]
+  top_users_by_currency?: Record<string, TopUserPaymentStats[]> | null
+}
+
+export interface CurrencyAwareDailyPaymentStats {
+  date: string
+  amount: CurrencyAmounts
+  count: number
+}
+
+export interface CurrencyAwarePaymentMethodStats {
+  type: string
+  amount: CurrencyAmounts
+  count: number
+}
+
+export interface CurrencyAwareDashboardStats {
+  today_amount: CurrencyAmounts
+  total_amount: CurrencyAmounts
+  today_count: number
+  total_count: number
+  avg_amount: CurrencyAmounts
+  pending_orders: number
+  daily_series: CurrencyAwareDailyPaymentStats[]
+  payment_methods: CurrencyAwarePaymentMethodStats[]
+  top_users: Record<string, TopUserPaymentStats[]>
 }

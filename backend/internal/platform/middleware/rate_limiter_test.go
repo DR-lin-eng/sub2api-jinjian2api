@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	ippkg "github.com/Wei-Shaw/sub2api/internal/shared/ip"
+
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/require"
@@ -65,9 +67,9 @@ func TestRateLimiterDifferentIPsIndependent(t *testing.T) {
 
 	callCounts := make(map[string]int64)
 	originalRun := rateLimitRun
-	rateLimitRun = func(ctx context.Context, client *redis.Client, key string, windowMillis int64) (int64, bool, error) {
+	rateLimitRun = func(ctx context.Context, client *redis.Client, key string, windowMillis int64) (int64, bool, int64, error) {
 		callCounts[key]++
-		return callCounts[key], false, nil
+		return callCounts[key], false, 0, nil
 	}
 	t.Cleanup(func() {
 		rateLimitRun = originalRun
@@ -103,19 +105,134 @@ func TestRateLimiterDifferentIPsIndependent(t *testing.T) {
 	require.Equal(t, http.StatusTooManyRequests, rec3.Code, "第一个 IP 的第二次请求应被限流")
 }
 
+func TestRateLimiterAllow(t *testing.T) {
+	originalRun := rateLimitRun
+	var gotKey string
+	count := int64(0)
+	rateLimitRun = func(ctx context.Context, client *redis.Client, key string, windowMillis int64) (int64, bool, int64, error) {
+		gotKey = key
+		count++
+		return count, false, 42_000, nil
+	}
+	t.Cleanup(func() {
+		rateLimitRun = originalRun
+	})
+
+	// The script hook returns TTL with the count, so Allow must not need a
+	// separate Redis PTTL command to populate RetryAfter.
+	limiter := NewRateLimiter(redis.NewClient(&redis.Options{
+		Addr:         "127.0.0.1:1",
+		DialTimeout:  50 * time.Millisecond,
+		ReadTimeout:  50 * time.Millisecond,
+		WriteTimeout: 50 * time.Millisecond,
+	}))
+
+	res, err := limiter.Allow(context.Background(), "panel:global:user:42", 1, time.Minute)
+	require.NoError(t, err)
+	require.True(t, res.Allowed)
+	require.Equal(t, int64(1), res.Count)
+	require.Zero(t, res.RetryAfter)
+	require.Equal(t, "rate_limit:panel:global:user:42", gotKey)
+
+	res, err = limiter.Allow(context.Background(), "panel:global:user:42", 1, time.Minute)
+	require.NoError(t, err)
+	require.False(t, res.Allowed)
+	require.Equal(t, int64(2), res.Count)
+	require.Equal(t, 42*time.Second, res.RetryAfter)
+}
+
+func TestRateLimiterHonorsForwardedIPSnapshot(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	callCounts := make(map[string]int64)
+	originalRun := rateLimitRun
+	rateLimitRun = func(ctx context.Context, client *redis.Client, key string, windowMillis int64) (int64, bool, int64, error) {
+		callCounts[key]++
+		return callCounts[key], false, 0, nil
+	}
+	t.Cleanup(func() {
+		rateLimitRun = originalRun
+	})
+
+	limiter := NewRateLimiter(redis.NewClient(&redis.Options{Addr: "127.0.0.1:1"}))
+
+	resolver, err := ippkg.NewResolver(nil)
+	require.NoError(t, err)
+	router := gin.New()
+	router.Use(resolver.Middleware())
+	router.Use(limiter.Limit("fwd", 1, time.Second))
+	router.GET("/test", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"ok": true})
+	})
+
+	send := func(xff string) int {
+		req := httptest.NewRequest(http.MethodGet, "/test", nil)
+		// 所有请求都来自同一个反代地址
+		req.RemoteAddr = "127.0.0.1:5678"
+		req.Header.Set("X-Forwarded-For", xff)
+		rec := httptest.NewRecorder()
+		router.ServeHTTP(rec, req)
+		return rec.Code
+	}
+
+	// 反代后两个不同的真实客户端应各自独立计数，不因共享代理地址被合并限流
+	require.Equal(t, http.StatusOK, send("198.51.100.1"))
+	require.Equal(t, http.StatusOK, send("198.51.100.2"))
+	// 同一真实客户端第二次请求应被限流
+	require.Equal(t, http.StatusTooManyRequests, send("198.51.100.1"))
+
+	require.Contains(t, callCounts, "rate_limit:fwd:198.51.100.1")
+	require.Contains(t, callCounts, "rate_limit:fwd:198.51.100.2")
+}
+
+func TestRateLimiterAllowManyUsesOneScriptAndReturnsRetryAfter(t *testing.T) {
+	originalRun := rateLimitManyRun
+	t.Cleanup(func() { rateLimitManyRun = originalRun })
+
+	var gotKeys []string
+	var gotLimits []int
+	var gotWindow int64
+	rateLimitManyRun = func(_ context.Context, _ *redis.Client, keys []string, limits []int, windowMillis int64) (rateLimitManyScriptResult, error) {
+		gotKeys = append([]string(nil), keys...)
+		gotLimits = append([]int(nil), limits...)
+		gotWindow = windowMillis
+		return rateLimitManyScriptResult{
+			allowed:         false,
+			retryAfterMilli: 3456,
+			counts:          []int64{11, 4},
+		}, nil
+	}
+
+	limiter := NewRateLimiter(redis.NewClient(&redis.Options{Addr: "127.0.0.1:1"}))
+	result, err := limiter.AllowMany(context.Background(), []RateLimitRule{
+		{Key: "panel:global:user:42", Limit: 10},
+		{Key: "panel:heavy:user:42", Limit: 3},
+	}, time.Minute)
+	require.NoError(t, err)
+	require.False(t, result.Allowed)
+	require.Equal(t, []int64{11, 4}, result.Counts)
+	require.Equal(t, 3456*time.Millisecond, result.RetryAfter)
+	require.Equal(t, []string{
+		"rate_limit:panel:global:user:42",
+		"rate_limit:panel:heavy:user:42",
+	}, gotKeys)
+	require.Equal(t, []int{10, 3}, gotLimits)
+	require.Equal(t, time.Minute.Milliseconds(), gotWindow)
+}
+
 func TestRateLimiterSuccessAndLimit(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	originalRun := rateLimitRun
 	counts := []int64{1, 2}
 	callIndex := 0
-	rateLimitRun = func(ctx context.Context, client *redis.Client, key string, windowMillis int64) (int64, bool, error) {
+	rateLimitRun = func(ctx context.Context, client *redis.Client, key string, windowMillis int64) (int64, bool, int64, error) {
 		if callIndex >= len(counts) {
-			return counts[len(counts)-1], false, nil
+			return counts[len(counts)-1], false, 0, nil
 		}
 		value := counts[callIndex]
 		callIndex++
-		return value, false, nil
+		return value, false, 0, nil
 	}
 	t.Cleanup(func() {
 		rateLimitRun = originalRun

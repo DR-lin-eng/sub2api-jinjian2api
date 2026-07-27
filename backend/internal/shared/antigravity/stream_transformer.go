@@ -34,6 +34,8 @@ type StreamingProcessor struct {
 	webSearchQueries  []string
 	groundingChunks   []GeminiGroundingChunk
 	usageMapHook      UsageMapHook
+	eventSink         ClaudeStreamEventSink
+	eventSinkErr      error
 
 	// 累计 usage
 	inputTokens       int
@@ -53,6 +55,35 @@ func NewStreamingProcessor(originalModel string) *StreamingProcessor {
 // SetUsageMapHook sets an optional hook that modifies usage maps before they are emitted.
 func (p *StreamingProcessor) SetUsageMapHook(fn UsageMapHook) {
 	p.usageMapHook = fn
+}
+
+// ProcessLineEvents processes one Gemini SSE line and delivers typed Claude
+// events to sink without serializing them to SSE JSON first.
+func (p *StreamingProcessor) ProcessLineEvents(line string, sink ClaudeStreamEventSink) error {
+	if sink == nil {
+		return fmt.Errorf("claude stream event sink is nil")
+	}
+	p.eventSink = sink
+	p.eventSinkErr = nil
+	_ = p.ProcessLine(line)
+	err := p.eventSinkErr
+	p.eventSink = nil
+	p.eventSinkErr = nil
+	return err
+}
+
+// FinishEvents finalizes the processor through the typed event sink.
+func (p *StreamingProcessor) FinishEvents(sink ClaudeStreamEventSink) (*ClaudeUsage, error) {
+	if sink == nil {
+		return nil, fmt.Errorf("claude stream event sink is nil")
+	}
+	p.eventSink = sink
+	p.eventSinkErr = nil
+	_, usage := p.Finish()
+	err := p.eventSinkErr
+	p.eventSink = nil
+	p.eventSinkErr = nil
+	return usage, err
 }
 
 func usageToMap(u ClaudeUsage) map[string]any {
@@ -556,6 +587,17 @@ func (p *StreamingProcessor) emitFinish(finishReason string) []byte {
 
 // formatSSE 格式化 SSE 事件
 func (p *StreamingProcessor) formatSSE(eventType string, data any) []byte {
+	if p.eventSink != nil {
+		if p.eventSinkErr != nil {
+			return nil
+		}
+		event, err := claudeStreamEventFromWire(eventType, data)
+		if err == nil {
+			err = p.eventSink.ConsumeClaudeStreamEvent(event)
+		}
+		p.eventSinkErr = err
+		return nil
+	}
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return nil

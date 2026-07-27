@@ -37,6 +37,8 @@ func TestAccountRepositoryListDueUpstreamBillingProbeAccountsBoundsQuery(t *test
 	require.Contains(t, normalized, "IS NOT TRUE")
 	require.Contains(t, normalized, "::numeric <= $1")
 	require.Contains(t, normalized, "jsonb_path_query_first_tz")
+	require.Contains(t, normalized, "regexp_replace(next_probe_at")
+	require.Contains(t, normalized, "legacy_parsed AS MATERIALIZED")
 	require.Contains(t, normalized, "parsed_next_probe_at::timestamptz <= to_timestamp($1)")
 	require.Contains(t, normalized, "LIMIT $2")
 	require.NoError(t, mock.ExpectationsWereMet())

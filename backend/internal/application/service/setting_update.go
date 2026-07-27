@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math"
 	"strconv"
 	"strings"
@@ -15,29 +16,49 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/shared/ip"
 )
 
+// OmittedSettingKeys marks setting keys the caller's payload never carried.
+// SystemSettings is a plain struct, so a field the caller omitted arrives as a
+// zero value and is indistinguishable from a deliberate clear. Listing the key
+// here drops it from the write, leaving the stored value in place.
+//
+// A nil or empty set keeps whole-document semantics: every key is written.
+type OmittedSettingKeys map[string]struct{}
+
+func (o OmittedSettingKeys) dropFrom(updates map[string]string) {
+	for key := range o {
+		delete(updates, key)
+	}
+}
+
 // UpdateSettings 更新系统设置
 func (s *SettingService) UpdateSettings(ctx context.Context, settings *SystemSettings) error {
+	return s.UpdateSettingsOmitting(ctx, settings, nil)
+}
+
+// UpdateSettingsOmitting persists system settings, leaving the keys in omitted
+// at their stored value.
+func (s *SettingService) UpdateSettingsOmitting(ctx context.Context, settings *SystemSettings, omitted OmittedSettingKeys) error {
 	updates, err := s.buildSystemSettingsUpdates(ctx, settings)
 	if err != nil {
 		return err
 	}
+	omitted.dropFrom(updates)
 
-	err = s.settingRepo.SetMultiple(ctx, updates)
-	if err == nil {
-		if switchErr := s.applySchedulerEngineSettings(ctx, settings); switchErr != nil {
-			return switchErr
-		}
-		previousRequestPriority := s.RequestPriorityAdmissionSettingsSnapshot()
-		s.refreshCachedSettings(settings)
-		if previousRequestPriority != s.RequestPriorityAdmissionSettingsSnapshot() {
-			s.publishRequestPriorityAdmissionSettingsUpdate(ctx)
-		}
+	if err := s.settingRepo.SetMultiple(ctx, updates); err != nil {
+		return err
 	}
-	return err
+	return s.applySettingsRuntimeAfterWrite(ctx, settings, omitted)
 }
 
 // UpdateSettingsWithAuthSourceDefaults persists system settings and auth-source defaults in a single write.
 func (s *SettingService) UpdateSettingsWithAuthSourceDefaults(ctx context.Context, settings *SystemSettings, authDefaults *AuthSourceDefaultSettings) error {
+	return s.UpdateSettingsWithAuthSourceDefaultsOmitting(ctx, settings, authDefaults, nil)
+}
+
+// UpdateSettingsWithAuthSourceDefaultsOmitting persists system settings and
+// auth-source defaults in a single write, leaving the keys in omitted at their
+// stored value.
+func (s *SettingService) UpdateSettingsWithAuthSourceDefaultsOmitting(ctx context.Context, settings *SystemSettings, authDefaults *AuthSourceDefaultSettings, omitted OmittedSettingKeys) error {
 	updates, err := s.buildSystemSettingsUpdates(ctx, settings)
 	if err != nil {
 		return err
@@ -50,19 +71,41 @@ func (s *SettingService) UpdateSettingsWithAuthSourceDefaults(ctx context.Contex
 	for key, value := range authSourceUpdates {
 		updates[key] = value
 	}
+	omitted.dropFrom(updates)
 
-	err = s.settingRepo.SetMultiple(ctx, updates)
-	if err == nil {
-		if switchErr := s.applySchedulerEngineSettings(ctx, settings); switchErr != nil {
-			return switchErr
-		}
-		previousRequestPriority := s.RequestPriorityAdmissionSettingsSnapshot()
-		s.refreshCachedSettings(settings)
-		if previousRequestPriority != s.RequestPriorityAdmissionSettingsSnapshot() {
-			s.publishRequestPriorityAdmissionSettingsUpdate(ctx)
-		}
+	if err := s.settingRepo.SetMultiple(ctx, updates); err != nil {
+		return err
 	}
-	return err
+	return s.applySettingsRuntimeAfterWrite(ctx, settings, omitted)
+}
+
+// applySettingsRuntimeAfterWrite preserves the runtime side effects of the
+// existing whole-document update path. Partial requests refresh caches from the
+// stored document because omitted value fields are zero in the request struct.
+func (s *SettingService) applySettingsRuntimeAfterWrite(ctx context.Context, settings *SystemSettings, omitted OmittedSettingKeys) error {
+	previousRequestPriority := s.RequestPriorityAdmissionSettingsSnapshot()
+	settingsForRuntime := settings
+	if len(omitted) > 0 {
+		stored, err := s.getPersistedSystemSettings(ctx)
+		if err != nil {
+			slog.Warn("load merged settings after partial update failed", "error", err)
+			if s.onUpdate != nil {
+				s.onUpdate()
+			}
+			return nil
+		}
+		settingsForRuntime = stored
+	}
+
+	if err := s.applySchedulerEngineSettings(ctx, settingsForRuntime); err != nil {
+		return err
+	}
+
+	s.refreshCachedSettings(settingsForRuntime)
+	if previousRequestPriority != s.RequestPriorityAdmissionSettingsSnapshot() {
+		s.publishRequestPriorityAdmissionSettingsUpdate(ctx)
+	}
+	return nil
 }
 
 func (s *SettingService) applySchedulerEngineSettings(ctx context.Context, settings *SystemSettings) error {

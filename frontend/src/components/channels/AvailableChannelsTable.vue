@@ -2,7 +2,11 @@
   <!-- .table-wrapper 是 TablePageLayout 滚动链的挂载点：外层 .table-scroll-container
        负责卡片外观并 overflow-hidden，本层接收 overflow-y-auto 才能在内容超高时滚动。 -->
   <div class="table-wrapper">
-    <table class="w-full table-fixed border-collapse text-sm">
+    <table
+      v-if="isDesktopViewport"
+      data-testid="desktop-channels"
+      class="w-full table-fixed border-collapse text-sm"
+    >
       <thead>
         <tr class="border-b border-gray-100 bg-gray-50/50 text-xs font-medium uppercase tracking-wide text-gray-500 dark:border-dark-700 dark:bg-dark-800/50 dark:text-gray-400">
           <th class="w-[180px] px-4 py-3 text-center">{{ columns.name }}</th>
@@ -168,15 +172,29 @@
         </tr>
       </tbody>
     </table>
+
+    <AvailableChannelsMobileList
+      v-else
+      :columns="columns"
+      :rows="rows"
+      :loading="loading"
+      :pricing-key-prefix="pricingKeyPrefix"
+      :no-pricing-label="noPricingLabel"
+      :no-models-label="noModelsLabel"
+      :empty-label="emptyLabel"
+      :user-group-rates="userGroupRates"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { useMediaQuery } from '@vueuse/core'
 import Icon from '@/components/icons/Icon.vue'
 import PlatformIcon from '@/components/common/PlatformIcon.vue'
 import GroupBadge from '@/components/common/GroupBadge.vue'
 import SupportedModelChip from './SupportedModelChip.vue'
+import AvailableChannelsMobileList from './AvailableChannelsMobileList.vue'
 import type { UserAvailableChannel, UserAvailableGroup, UserChannelPlatformSection } from '@/api/channels'
 import type { GroupPlatform, SubscriptionType } from '@/types'
 import { platformBadgeClass } from '@/utils/platformColors'
@@ -206,6 +224,7 @@ const props = defineProps<{
 void props.userGroupRates
 
 const { t } = useI18n()
+const isDesktopViewport = useMediaQuery('(min-width: 1024px)')
 
 function exclusiveGroups(section: UserChannelPlatformSection): UserAvailableGroup[] {
   return section.groups.filter((g) => g.is_exclusive)
