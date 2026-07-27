@@ -5,12 +5,12 @@ import Select from '@/common/widgets/forms/Select.vue'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
+import { useAppStore } from '@/core/stores/appStore'
 import { useAdminGroupsQueryStore } from '@/features/admin-groups/presentation/stores/adminGroupsQueryStore'
 import type { OpsDashboardOverview } from '@/features/admin-ops/domain/models/opsDashboardOverview'
 import type { OpsMetricThresholds } from '@/features/admin-ops/domain/models/opsMetricThresholds'
 import type { OpsRealtimeTrafficSummary } from '@/features/admin-ops/domain/models/opsRealtimeTrafficSummary'
 import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
-const queryStore = useAdminOpsQueryStore()
 import type { OpsRequestDetailsPreset } from '@/features/admin-ops/presentation/widgets/OpsRequestDetailsDialog.vue'
 import { formatBytes } from '@/core/utils/format'
 import {
@@ -19,6 +19,9 @@ import {
   formatExactDurationMs,
   formatExactNumber
 } from '@/features/admin-ops/presentation/utils/opsFormatter'
+
+const appStore = useAppStore()
+const queryStore = useAdminOpsQueryStore()
 
 type RealtimeWindow = '1min' | '5min' | '30min' | '1h'
 
