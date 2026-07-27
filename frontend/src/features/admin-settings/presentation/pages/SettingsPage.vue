@@ -145,7 +145,6 @@ import {
 import TotpStepUpDialog from "@/features/auth/presentation/widgets/TotpStepUpDialog.vue";
 import {extractApiErrorMessage} from "@/core/utils/apiError";
 import {useAppStore} from "@/core/stores/appStore";
-import {useAdminSettingsStore} from "@/features/admin-settings/presentation/stores/adminSettingsStore";
 import {
   normalizeRegistrationEmailSuffixDomains,
 } from "@/core/utils/registrationEmailPolicy";
@@ -185,7 +184,6 @@ const {t, locale} = useI18n();
 const appStore = useAppStore();
 // 关闭 step-up 开关是敏感操作：后端返回 STEP_UP_REQUIRED 时弹 TOTP 码重试
 const settingsStepUp = useStepUp();
-const adminSettingsStore = useAdminSettingsStore();
 const isZhLocale = computed(() => locale.value.startsWith("zh"));
 
 function localText(zh: string, en: string): string {
@@ -1429,7 +1427,7 @@ async function saveSettings() {
     const wsOk = gatewayTabRef.value ? await gatewayTabRef.value.saveWebSearchConfig() : true;
     // Refresh cached settings so sidebar/header update immediately
     await appStore.fetchPublicSettings(true);
-    await adminSettingsStore.fetch(true);
+    await appStore.fetchAdminConfig(true);
     if (wsOk) {
       appStore.showSuccess(t("admin.settings.settingsSaved"));
     }

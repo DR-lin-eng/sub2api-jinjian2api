@@ -1,8 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
-import { useAdminComplianceStore } from '@/features/admin-settings/presentation/stores/adminComplianceStore'
+import { useAdminCompliance } from '@/features/admin-settings/presentation/composables/useAdminCompliance'
 import { useNavigationLoadingState } from '@/core/routes/composables/useNavigationLoading'
 import { useRoutePrefetch } from '@/core/routes/composables/useRoutePrefetch'
 import { resolveRouteDocumentTitle } from './title'
@@ -113,10 +112,9 @@ router.beforeEach(async (to, _from, next) => {
   }
 
   const appStore = useAppStore()
-  const adminSettingsStore = useAdminSettingsStore()
   const customMenuItems = [
     ...(appStore.cachedPublicSettings?.customMenuItems ?? []),
-    ...(authStore.isAdmin ? adminSettingsStore.customMenuItems : []),
+    ...(authStore.isAdmin ? appStore.customMenuItems : []),
   ]
   document.title = resolveRouteDocumentTitle(to, appStore.siteName, customMenuItems)
 
@@ -157,14 +155,14 @@ router.beforeEach(async (to, _from, next) => {
   }
 
   if (requiresAdmin && authStore.isAdmin) {
-    const adminComplianceStore = useAdminComplianceStore()
-    if (!adminComplianceStore.initialized) {
+    const adminCompliance = useAdminCompliance()
+    if (!adminCompliance.initialized.value) {
       try {
-        await adminComplianceStore.fetchStatus()
+        await adminCompliance.fetchStatus()
       } catch (error) {
         const err = error as { status?: number; code?: string; metadata?: Record<string, string> }
         if (err.status === 423 && err.code === 'ADMIN_COMPLIANCE_ACK_REQUIRED') {
-          adminComplianceStore.requireAcknowledgement(err.metadata)
+          adminCompliance.requireAcknowledgement(err.metadata)
         }
       }
     }

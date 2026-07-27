@@ -246,7 +246,6 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useOnboardingStore } from '@/core/stores/onboardingStore'
-import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
 import LocaleSwitcher from '@/common/widgets/data/LocaleSwitcher.vue'
 import SubscriptionProgressMini from '@/features/subscriptions/presentation/widgets/SubscriptionProgressMini.vue'
 import AnnouncementBell from '@/features/announcements/presentation/widgets/AnnouncementBell.vue'
@@ -258,7 +257,6 @@ const route = useRoute()
 const { t } = useI18n()
 const appStore = useAppStore()
 const authStore = useAuthStore()
-const adminSettingsStore = useAdminSettingsStore()
 const onboardingStore = useOnboardingStore()
 
 const user = computed(() => authStore.user)
@@ -305,7 +303,7 @@ const pageTitle = computed(() => {
     const id = route.params.id as string
     const publicItems = appStore.cachedPublicSettings?.customMenuItems ?? []
     const menuItem = publicItems.find((item: any) => item.id === id)
-      ?? (authStore.isAdmin ? adminSettingsStore.customMenuItems.find((item: any) => item.id === id) : undefined)
+      ?? (authStore.isAdmin ? appStore.customMenuItems.find((item: any) => item.id === id) : undefined)
     if (menuItem?.label) return menuItem.label
   }
   const titleKey = route.meta.titleKey as string

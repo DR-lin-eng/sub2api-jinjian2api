@@ -178,7 +178,6 @@ import type { OpsThroughputTrendResponse } from '@/features/admin-ops/domain/mod
 import type { OpsMetricThresholds } from '@/features/admin-ops/domain/models/opsMetricThresholds'
 import type { OpsAdvancedSettings } from '@/features/admin-ops/domain/models/opsAdvancedSettings'
 import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
-import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
 import { useAppStore } from '@/core/stores/appStore'
 import OpsDashboardHeader from '@/features/admin-ops/presentation/widgets/OpsDashboardHeader.vue'
 import OpsDashboardSkeleton from '@/features/admin-ops/presentation/widgets/OpsDashboardSkeleton.vue'
@@ -202,11 +201,10 @@ import OpsAlertRulesCard from '@/features/admin-ops/presentation/widgets/OpsAler
 const route = useRoute()
 const router = useRouter()
 const appStore = useAppStore()
-const adminSettingsStore = useAdminSettingsStore()
 const queryStore = useAdminOpsQueryStore()
 const { t } = useI18n()
 
-const opsEnabled = computed(() => adminSettingsStore.opsMonitoringEnabled)
+const opsEnabled = computed(() => appStore.opsMonitoringEnabled)
 
 type TimeRange = '5m' | '30m' | '1h' | '6h' | '24h' | 'custom'
 const allowedTimeRanges = new Set<TimeRange>(['5m', '30m', '1h', '6h', '24h', 'custom'])
@@ -317,7 +315,7 @@ const applyRouteQueryToState = () => {
   if (nextMode && allowedQueryModes.has(nextMode as QueryMode)) {
     queryMode.value = nextMode as QueryMode
   } else {
-    const fallback = adminSettingsStore.opsQueryModeDefault || 'auto'
+    const fallback = appStore.opsQueryModeDefault || 'auto'
     queryMode.value = allowedQueryModes.has(fallback as QueryMode) ? (fallback as QueryMode) : 'auto'
   }
 
@@ -886,8 +884,8 @@ onMounted(async () => {
   // Fullscreen mode: listen for ESC key
   window.addEventListener('keydown', handleKeydown)
 
-  await adminSettingsStore.fetch()
-  if (!adminSettingsStore.opsMonitoringEnabled) {
+  await appStore.fetchAdminConfig()
+  if (!appStore.opsMonitoringEnabled) {
     await router.replace('/admin/settings')
     return
   }

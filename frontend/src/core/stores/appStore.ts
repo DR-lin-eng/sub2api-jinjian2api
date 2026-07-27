@@ -14,9 +14,37 @@ import { i18n } from '@/core/i18n'
 // Deferred for a dedicated repository-layer refactor pass.
 import { systemQueryRepository } from '@/features/admin-settings/data/repositories/systemQueryRepositoryImpl'
 import { authQueryRepository } from '@/features/auth/data/repositories/authQueryRepositoryImpl'
+import { adminSettingsQueryRepository } from '@/features/admin-settings/data/repositories/adminSettingsQueryRepositoryImpl'
+import { adminOrdersQueryRepository } from '@/features/admin-orders/data/repositories/adminOrdersQueryRepositoryImpl'
 import type { VersionInfo } from '@/core/models/domain/versionInfo'
 import type { ReleaseInfo } from '@/core/models/domain/releaseInfo'
 import type { PublicSettings } from '@/core/models/domain/publicSettings'
+import type { CustomMenuItem } from '@/core/models/domain/customMenuItem'
+
+function _readCachedBool(key: string, defaultValue: boolean): boolean {
+  try {
+    const raw = localStorage.getItem(key)
+    if (raw === 'true') return true
+    if (raw === 'false') return false
+  } catch { /* ignore */ }
+  return defaultValue
+}
+
+function _writeCachedBool(key: string, value: boolean) {
+  try { localStorage.setItem(key, value ? 'true' : 'false') } catch { /* ignore */ }
+}
+
+function _readCachedString(key: string, defaultValue: string): string {
+  try {
+    const raw = localStorage.getItem(key)
+    if (typeof raw === 'string' && raw.length > 0) return raw
+  } catch { /* ignore */ }
+  return defaultValue
+}
+
+function _writeCachedString(key: string, value: string) {
+  try { localStorage.setItem(key, value) } catch { /* ignore */ }
+}
 
 type ToastType = 'success' | 'error' | 'info' | 'warning'
 
@@ -58,6 +86,15 @@ export const useAppStore = defineStore('app', () => {
   const hasUpdate = ref<boolean>(false)
   const buildType = ref<string>('source')
   const releaseInfo = ref<ReleaseInfo | null>(null)
+
+  // Admin UI config cache state
+  const adminConfigLoaded = ref(false)
+  const adminConfigLoading = ref(false)
+  const opsMonitoringEnabled = ref(_readCachedBool('ops_monitoring_enabled_cached', true))
+  const opsRealtimeMonitoringEnabled = ref(_readCachedBool('ops_realtime_monitoring_enabled_cached', true))
+  const opsQueryModeDefault = ref(_readCachedString('ops_query_mode_default_cached', 'auto'))
+  const paymentEnabled = ref(_readCachedBool('payment_enabled_cached', false))
+  const customMenuItems = ref<CustomMenuItem[]>([])
 
   // Auto-incrementing ID for toasts
   let toastIdCounter = 0
@@ -236,6 +273,64 @@ export const useAppStore = defineStore('app', () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function fetchAdminConfig(force = false): Promise<void> {
+    if (adminConfigLoaded.value && !force) return
+    if (adminConfigLoading.value) return
+    adminConfigLoading.value = true
+    try {
+      const [settings, paymentConfig] = await Promise.all([
+        adminSettingsQueryRepository.getSettings(),
+        adminOrdersQueryRepository.getConfig(),
+      ])
+      opsMonitoringEnabled.value = settings.opsMonitoringEnabled ?? true
+      _writeCachedBool('ops_monitoring_enabled_cached', opsMonitoringEnabled.value)
+      opsRealtimeMonitoringEnabled.value = settings.opsRealtimeMonitoringEnabled ?? true
+      _writeCachedBool('ops_realtime_monitoring_enabled_cached', opsRealtimeMonitoringEnabled.value)
+      opsQueryModeDefault.value = settings.opsQueryModeDefault || 'auto'
+      _writeCachedString('ops_query_mode_default_cached', opsQueryModeDefault.value)
+      customMenuItems.value = Array.isArray(settings.customMenuItems) ? settings.customMenuItems : []
+      paymentEnabled.value = paymentConfig.enabled ?? false
+      _writeCachedBool('payment_enabled_cached', paymentEnabled.value)
+      adminConfigLoaded.value = true
+    } catch (err) {
+      adminConfigLoaded.value = true
+      console.error('[appStore] Failed to fetch admin config:', err)
+    } finally {
+      adminConfigLoading.value = false
+    }
+  }
+
+  function setOpsMonitoringEnabledLocal(value: boolean) {
+    opsMonitoringEnabled.value = value
+    _writeCachedBool('ops_monitoring_enabled_cached', value)
+    adminConfigLoaded.value = true
+  }
+
+  function setOpsRealtimeMonitoringEnabledLocal(value: boolean) {
+    opsRealtimeMonitoringEnabled.value = value
+    _writeCachedBool('ops_realtime_monitoring_enabled_cached', value)
+    adminConfigLoaded.value = true
+  }
+
+  function setPaymentEnabledLocal(value: boolean) {
+    paymentEnabled.value = value
+    _writeCachedBool('payment_enabled_cached', value)
+    adminConfigLoaded.value = true
+  }
+
+  function setOpsQueryModeDefaultLocal(value: string) {
+    opsQueryModeDefault.value = value || 'auto'
+    _writeCachedString('ops_query_mode_default_cached', opsQueryModeDefault.value)
+    adminConfigLoaded.value = true
+  }
+
+  // Keep UI consistent if ops is disabled via feature-gated 404s.
+  if (typeof window !== 'undefined') {
+    window.addEventListener('ops-monitoring-disabled', () => {
+      setOpsMonitoringEnabledLocal(false)
+    })
   }
 
   /**
@@ -496,6 +591,20 @@ export const useAppStore = defineStore('app', () => {
     // Version actions
     fetchVersion,
     clearVersionCache,
+
+    // Admin UI config
+    adminConfigLoaded,
+    adminConfigLoading,
+    opsMonitoringEnabled,
+    opsRealtimeMonitoringEnabled,
+    opsQueryModeDefault,
+    paymentEnabled,
+    customMenuItems,
+    fetchAdminConfig,
+    setOpsMonitoringEnabledLocal,
+    setOpsRealtimeMonitoringEnabledLocal,
+    setPaymentEnabledLocal,
+    setOpsQueryModeDefaultLocal,
 
     // Public settings actions
     fetchPublicSettings,

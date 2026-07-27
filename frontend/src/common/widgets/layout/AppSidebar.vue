@@ -191,7 +191,6 @@
 import { computed, h, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useOnboardingStore } from '@/core/stores/onboardingStore'
@@ -245,7 +244,6 @@ const router = useRouter()
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const onboardingStore = useOnboardingStore()
-const adminSettingsStore = useAdminSettingsStore()
 const { canUseBatchImage, refreshBatchImageAccess } = useBatchImageAccess()
 
 const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
@@ -689,8 +687,8 @@ const flagPayment = makeSidebarFlag(FeatureFlags.payment)
 const flagAvailableChannels = makeSidebarFlag(FeatureFlags.availableChannels)
 const flagAffiliate = makeSidebarFlag(FeatureFlags.affiliate)
 const flagRiskControl = makeSidebarFlag(FeatureFlags.riskControl)
-const flagOpsMonitoring = () => adminSettingsStore.opsMonitoringEnabled
-const flagAdminPayment = () => adminSettingsStore.paymentEnabled
+const flagOpsMonitoring = () => appStore.opsMonitoringEnabled
+const flagAdminPayment = () => appStore.paymentEnabled
 const flagBatchImageAccess = () => canUseBatchImage.value
 
 // buildSelfNavItems 构造用户自己的导航项（用户端主菜单和管理员的"我的账户"子菜单共享这组声明）。
@@ -748,7 +746,7 @@ const customMenuItemsForUser = computed(() => {
 })
 
 const customMenuItemsForAdmin = computed(() => {
-  return adminSettingsStore.customMenuItems
+  return appStore.customMenuItems
     .filter((item: any) => item.visibility === 'admin')
     .sort((a: any, b: any) => a.sortOrder - b.sortOrder)
 })
@@ -932,7 +930,7 @@ watch(
   isAdmin,
   (v) => {
     if (v) {
-      adminSettingsStore.fetch()
+      appStore.fetchAdminConfig()
     }
   },
   { immediate: true }
@@ -941,7 +939,7 @@ watch(
 onMounted(() => {
   void refreshBatchImageAccess()
   if (isAdmin.value) {
-    adminSettingsStore.fetch()
+    appStore.fetchAdminConfig()
   }
   // Restore sidebar scroll position after route change re-mounts the component
   if (appStore.sidebarScrollTop > 0 && sidebarNavRef.value) {

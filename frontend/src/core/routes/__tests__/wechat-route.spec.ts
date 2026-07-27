@@ -21,11 +21,6 @@ vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => appStore,
 }))
 
-vi.mock('@/features/admin-settings/presentation/stores/adminSettingsStore', () => ({
-  useAdminSettingsStore: () => ({
-    customMenuItems: [],
-  }),
-}))
 
 vi.mock('@/core/routes/composables/useNavigationLoading', () => ({
   useNavigationLoadingState: () => ({

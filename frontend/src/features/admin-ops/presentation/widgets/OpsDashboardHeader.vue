@@ -12,7 +12,6 @@ import type { OpsRealtimeTrafficSummary } from '@/features/admin-ops/domain/mode
 import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
 const queryStore = useAdminOpsQueryStore()
 import type { OpsRequestDetailsPreset } from '@/features/admin-ops/presentation/widgets/OpsRequestDetailsDialog.vue'
-import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
 import { formatBytes } from '@/core/utils/format'
 import {
   formatCompactNumber,
@@ -58,7 +57,6 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const { t } = useI18n()
-const adminSettingsStore = useAdminSettingsStore()
 
 const realtimeWindow = ref<RealtimeWindow>('1min')
 
@@ -306,7 +304,7 @@ function makeZeroRealtimeTrafficSummary(): OpsRealtimeTrafficSummary {
 
 async function loadRealtimeTrafficSummary() {
   if (realtimeTrafficLoading.value) return
-  if (!adminSettingsStore.opsRealtimeMonitoringEnabled) {
+  if (!appStore.opsRealtimeMonitoringEnabled) {
     realtimeTrafficSummary.value = makeZeroRealtimeTrafficSummary()
     return
   }
@@ -314,7 +312,7 @@ async function loadRealtimeTrafficSummary() {
   try {
     const res = await queryStore.getRealtimeTrafficSummary(realtimeWindow.value, props.platform, props.groupId)
     if (res && res.enabled === false) {
-      adminSettingsStore.setOpsRealtimeMonitoringEnabledLocal(false)
+      appStore.setOpsRealtimeMonitoringEnabledLocal(false)
     }
     realtimeTrafficSummary.value = res?.summary ?? null
   } catch (err) {
@@ -334,7 +332,7 @@ watch(
 )
 
 watch(
-  () => adminSettingsStore.opsRealtimeMonitoringEnabled,
+  () => appStore.opsRealtimeMonitoringEnabled,
   (enabled) => {
     if (!enabled) {
       // Keep UI stable when realtime monitoring is turned off.
