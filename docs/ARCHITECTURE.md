@@ -88,16 +88,32 @@ infrastructure implements application ports
 
 | 路径 | 职责 |
 | --- | --- |
-| `frontend/src/views/` | 路由级页面；按 `admin/`, `user/`, `auth/`, `public/`, `setup/` 分域 |
-| `frontend/src/components/` | 可复用或领域组件 |
-| `frontend/src/features/` | 自包含、可独立演进的前端功能 |
-| `frontend/src/api/` | API 封装；共享 Axios 行为集中在 `client.ts` |
-| `frontend/src/stores/` | 跨页面 Pinia 状态和生命周期 |
-| `frontend/src/composables/` | 可组合交互逻辑 |
-| `frontend/src/router/` | 路由定义、守卫、标题和 setup 重定向 |
-| `frontend/src/i18n/locales/` | 用户可见文案 |
+| `frontend/src/core/routes/` | 路由定义、守卫、标题和 setup 重定向；`index.ts` 是路由事实源 |
+| `frontend/src/core/networks/` | Axios client、内存 token、session 刷新、URL 和凭据传输能力 |
+| `frontend/src/core/stores/` | 全应用共享的运行状态；当前包括 app 与 onboarding owner |
+| `frontend/src/core/i18n/` | i18n 初始化、locale 懒加载和全部用户可见文案 |
+| `frontend/src/core/themes/` | 全局样式入口和公告、引导等专题样式 |
+| `frontend/src/core/services/`, `constants/`, `utils/` | 应用级服务、常量和无页面归属的基础工具 |
+| `frontend/src/common/` | 跨功能复用的页面、widget、composable 和 UI 类型 |
+| `frontend/src/features/<domain>/data/datasources/` | 领域请求协议、响应类型和 API 调用 |
+| `frontend/src/features/<domain>/presentation/` | 领域 page、widget、composable 和 Pinia store |
+| `frontend/src/types/` | 多个 feature 仍共享的协议类型与全局类型声明 |
 
-页面只保留展示和页面级编排。可复用交互下沉到 component/composable；跨页面状态才进入 store；HTTP 细节进入 api 模块。
+前端的主调用方向是：
+
+```text
+main / core routes
+  -> feature presentation
+  -> feature data datasource
+  -> core networks
+  -> backend
+
+feature presentation -> common + core services/stores/utils
+```
+
+页面、领域组件、交互、Store 和 API 默认跟随 `features/<domain>` 的 owner。跨业务的展示与交互能力进入 `common`；应用级组合与运行能力进入 `core`。Router 作为组合入口可以懒加载 feature page，`main.ts` 只连接 Pinia、公开设置、i18n、Router 和主题。
+
+`frontend/src/api/index.ts`、`frontend/src/api/admin/index.ts` 和 `frontend/src/stores/index.ts` 仅保留旧导入的过渡兼容导出。它们不拥有业务实现；新代码应直接导入所属 feature datasource/store 或 core 模块，避免迁移期 barrel 重新变成长期公共层。为保证滚动升级和平滑迁移，在旧导入全部替换且回归验证通过前保留这些导出。
 
 ## 关键不变量
 

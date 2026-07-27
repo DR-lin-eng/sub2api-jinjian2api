@@ -1,12 +1,12 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
-import router from './router'
-import i18n, { initI18n } from './i18n'
-import { useAppStore } from '@/stores/app'
-import { updateFavicon } from '@/utils/branding'
-import { isIOSDevice } from '@/utils/device'
-import './style.css'
+import router from '@/core/routes'
+import i18n, { initI18n } from '@/core/i18n'
+import { useAppStore } from '@/core/stores/appStore'
+import { updateFavicon } from '@/core/services/branding'
+import { isIOSDevice } from '@/core/utils/device'
+import '@/core/themes/style.css'
 
 function initIOSViewportZoomFix() {
   // iOS Safari 在输入框字号小于 16px 时聚焦会自动放大页面，且失焦后不会恢复。

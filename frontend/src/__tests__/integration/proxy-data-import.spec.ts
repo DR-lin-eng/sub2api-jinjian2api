@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import ImportDataModal from '@/components/admin/proxy/ImportDataModal.vue'
+import ImportDataModal from '@/features/admin-proxies/presentation/widgets/ImportDataDialog.vue'
 
 const showError = vi.fn()
 const showSuccess = vi.fn()
 
-vi.mock('@/stores/app', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError,
     showSuccess

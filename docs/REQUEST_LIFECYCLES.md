@@ -57,15 +57,15 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant View as Vue View/Component
-    participant API as frontend/src/api
-    participant Client as Shared Axios Client
+    participant Page as Feature Page/Widget/Store
+    participant Data as Feature Datasource
+    participant Client as core/networks Client
     participant Route as /api/v1 Route + Auth
     participant Service as Application Service
     participant Repo as Repository
 
-    View->>API: typed operation
-    API->>Client: request config
+    Page->>Data: typed operation
+    Data->>Client: request config
     Client->>Client: access token, locale, timezone, UI marker
     Client->>Route: HTTP request
     Route->>Route: JWT/Admin/step-up middleware
@@ -74,20 +74,24 @@ sequenceDiagram
     Repo-->>Service: entity/projection
     Service-->>Route: application result
     Route-->>Client: standard API envelope
-    Client-->>View: unwrapped data or normalized error
+    Client-->>Page: unwrapped data or normalized error
 ```
 
 ### 阅读顺序
 
-1. `frontend/src/router/index.ts` 找页面和权限元数据。
-2. `frontend/src/views/<domain>/` 找页面编排，再跟 import 到 component/composable/store。
-3. `frontend/src/api/` 找请求封装；统一拦截行为在 `api/client.ts`。
+1. `frontend/src/core/routes/index.ts` 找 feature page 和权限元数据。
+2. `frontend/src/features/<domain>/presentation/` 找页面编排，再跟 import 到 widget/composable/store。
+3. 在同一 feature 的 `data/datasources/` 找请求封装；统一拦截行为在 `frontend/src/core/networks/client.ts`。
 4. 后端 `routes/auth.go`, `user.go`, `admin.go` 或 `payment.go` 找精确路由。
 5. 跟到 handler、application service 接口和 infrastructure repository。
 
+跨功能复用 UI/交互位于 `frontend/src/common/`；应用级 Router、网络、i18n、主题和全局 Store 位于 `frontend/src/core/`。`frontend/src/api/` 与 `frontend/src/stores/` 只保留旧导入的过渡兼容 barrel，排障时必须继续追到实际 feature/core owner。
+
 ### 认证刷新
 
-短期 access token 保存在前端内存中，请求由 `api/client.ts` 添加 `Authorization`。刷新凭据留在 HttpOnly cookie；401 时通过 `api/sessionRefresh.ts` 合并并发刷新，再重试原请求。页面不得直接读取刷新 cookie 或各自实现刷新队列。
+短期 access token 保存在前端内存中，请求由 `core/networks/client.ts` 添加 `Authorization`。刷新凭据留在 HttpOnly cookie；401 时通过 `core/networks/sessionRefresh.ts` 合并并发刷新，token 内存状态由 `core/networks/tokenStore.ts` 管理，再重试原请求。页面不得直接读取刷新 cookie 或各自实现刷新队列。
+
+登录和会话业务由 `features/auth/data/datasources/authDatasource.ts` 与 `features/auth/presentation/stores/authStore.ts` 拥有；网络级刷新和请求重试仍由 `core/networks/` 统一负责。
 
 管理员路由的前端 guard 只改善体验。真正的管理员权限、step-up 和 scoped Admin API Key 校验在后端 middleware。
 
@@ -155,13 +159,14 @@ go run ./cmd/server (Go backend)
 
 ```text
 frontend/src
+  -> main.ts + core/routes + feature presentation/data
   -> pnpm run build
   -> backend/internal/transport/webassets/dist
   -> go build ./cmd/server
   -> embedded frontend served by transport/webassets
 ```
 
-后端可在 HTML 中注入公开运行设置，前端 `main.ts` 在挂载前读取这些设置，随后初始化 i18n 和 Router。修改品牌、登录方式或前台能力开关时，要同时检查注入 DTO、setting service、前端 app store 和首屏行为。
+后端可在 HTML 中注入公开运行设置，前端 `main.ts` 在挂载前读取这些设置，加载 `core/themes/style.css`，随后初始化 `core/i18n` 和 `core/routes`。修改品牌、登录方式或前台能力开关时，要同时检查注入 DTO、setting service、`core/stores/appStore.ts` 和首屏行为。
 
 ## 故障定位起点
 
@@ -173,7 +178,7 @@ frontend/src
 | 503/429 后反复调度坏账号 | 错误分类、临时不可调度状态、scheduler exclusion |
 | 流式响应头或错误格式异常 | handler 写出时机、SSE headers、stream-started 分支 |
 | 前端有余额但网关拒绝 | 展示余额、pending/frozen 状态、billing cache 与准入一起检查 |
-| 前端登录循环 | `api/client.ts` 刷新合并、session refresh API、路由 guard |
+| 前端登录循环 | `core/networks/client.ts` 刷新合并、session refresh API、`features/auth` store、`core/routes` guard |
 | 用量存在但余额未扣/重复扣 | RecordUsage、queue、幂等 key、DB transaction、cache refresh |
 
 功能到文件的更完整映射见 [代码地图](CODE_MAP.md)。

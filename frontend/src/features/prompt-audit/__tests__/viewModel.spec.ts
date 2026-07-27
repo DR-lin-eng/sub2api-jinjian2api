@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { PromptAuditConfig } from '../types'
+import type { PromptAuditConfig } from '../domain/models/promptAuditTypes'
 import {
   buildUpdateRequest,
   configToDraft,
@@ -8,7 +8,7 @@ import {
   eventFilterPayload,
   hasExplicitDeleteRange,
   SCANNER_CATALOG,
-} from '../viewModel'
+} from '../domain/promptAuditViewModel'
 
 const config = (): PromptAuditConfig => ({
   enabled: true,

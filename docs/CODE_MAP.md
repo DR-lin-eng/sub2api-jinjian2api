@@ -19,8 +19,8 @@
 | 修改支付 | `internal/modules/payment/` | `routes/payment.go`, payment handlers/repositories | provider、webhook、订单状态测试 |
 | 修改数据库表 | `backend/ent/schema/` | `backend/migrations/`, repository, DTO | generate + migration/integration tests |
 | 修改运行配置 | `platform/config/` | `deploy/config.example.yaml`, setting service/admin UI | config tests + 相关 service/前端测试 |
-| 修改 Ops/审计 | `handler/admin/ops*`, `application/service/ops*` | `repository/ops*`, 前端 `views/admin/ops/` | query/service + 前端视图测试 |
-| 修改前端页面 | `frontend/src/router/index.ts`, `views/<domain>/` | `components/`, `api/`, `stores/`, i18n | 相邻 spec + typecheck |
+| 修改 Ops/审计 | `handler/admin/ops*`, `application/service/ops*` | `repository/ops*`, 前端 `features/admin-ops/`, `features/admin-audit/` | query/service + 前端 feature 测试 |
+| 修改前端页面 | `frontend/src/core/routes/index.ts`, `features/<domain>/presentation/pages/` | 同 feature 的 `widgets/`, `composables/`, `stores/`, `data/datasources/` 与 `core/i18n/` | 相邻 spec + typecheck |
 
 ## 后端功能前缀
 
@@ -83,20 +83,23 @@ rg -n '"/api/v1|"/v1|"/responses' backend/internal/transport/http/server/routes
 | 任务 | 路径 |
 | --- | --- |
 | 应用启动 | `frontend/src/main.ts`, `App.vue` |
-| 路由与访问元数据 | `frontend/src/router/index.ts`, `meta.d.ts` |
-| 管理页面 | `frontend/src/views/admin/` |
-| 用户页面 | `frontend/src/views/user/` |
-| 登录和回调 | `frontend/src/views/auth/` |
-| 公共页与首次设置 | `frontend/src/views/public/`, `views/setup/` |
-| 领域组件 | `frontend/src/components/admin/`, `user/`, `account/`, `payment/` 等 |
-| HTTP 客户端 | `frontend/src/api/client.ts` |
-| 具体 API | `frontend/src/api/*.ts`, `api/admin/` |
-| 跨页状态 | `frontend/src/stores/` |
-| 可复用交互逻辑 | `frontend/src/composables/` |
+| 路由与访问元数据 | `frontend/src/core/routes/index.ts`, `meta.d.ts` |
+| 管理功能 | `frontend/src/features/admin-*/`，各 feature 下分 `data/` 与 `presentation/` |
+| 用户功能 | `frontend/src/features/keys/`, `usage/`, `profile/`, `subscriptions/`, `billing/` 等 |
+| 登录和回调 | `frontend/src/features/auth/presentation/` 与 `data/datasources/authDatasource.ts` |
+| 公共页与首次设置 | `frontend/src/common/pages/`, `features/setup/`, `features/channels-user/` |
+| 领域组件与交互 | `frontend/src/features/<domain>/presentation/widgets/`, `composables/` |
+| 跨功能 UI 与交互 | `frontend/src/common/widgets/`, `common/composables/` |
+| HTTP/session 客户端 | `frontend/src/core/networks/client.ts`, `tokenStore.ts`, `sessionRefresh.ts` |
+| 具体 API | `frontend/src/features/<domain>/data/datasources/` |
+| 全局与领域状态 | `frontend/src/core/stores/`, `features/<domain>/presentation/stores/` |
 | 类型与协议 | `frontend/src/types/` |
-| 文案 | `frontend/src/i18n/locales/` |
+| 文案 | `frontend/src/core/i18n/locales/` |
+| 全局与专题样式 | `frontend/src/core/themes/` |
 
-常规追踪顺序是 `route -> view -> component/composable -> api -> backend route`。遇到登录失效或统一错误处理，先读 `api/client.ts` 和 `api/sessionRefresh.ts`，不要在单页重复实现拦截逻辑。
+常规追踪顺序是 `core route -> feature page/widget/composable/store -> feature datasource -> core network client -> backend route`。遇到登录失效或统一错误处理，先读 `core/networks/client.ts`、`sessionRefresh.ts` 和 `tokenStore.ts`，不要在单页重复实现拦截逻辑。
+
+`frontend/src/api/index.ts`、`frontend/src/api/admin/index.ts` 和 `frontend/src/stores/index.ts` 是旧导入的过渡兼容 barrel，不是实现事实源。查调用时可以将它们作为迁移线索；新增或修改业务时应继续追到明确的 feature/core owner。
 
 ## 数据库与生成代码
 
@@ -133,19 +136,22 @@ rg --files backend/internal/infrastructure/repository | rg '/usage_billing.*\.go
 前端按页面反查 API：
 
 ```sh
-rg -n "from '@/api|from '@/stores|from '@/composables" frontend/src/views/admin/AccountsView.vue
-rg -n 'accountsAPI|/accounts' frontend/src/api frontend/src/views frontend/src/components
+rg -n "from '@/features|from '@/common|from '@/core" frontend/src/features/admin-accounts/presentation/pages/AccountsPage.vue
+rg -n "adminAccountsDatasource|/admin/accounts" frontend/src/features/admin-accounts frontend/src/core/routes
+rg -n "from '@/api|from '@/api/admin|from '@/stores" frontend/src -g '*.{ts,vue}'
 ```
+
+最后一条用于定位尚未迁离兼容 barrel 的调用，不应作为新增导入的示例。
 
 ## 常见完整改动集合
 
 | 改动 | 通常需要同步 |
 | --- | --- |
-| 新 API 字段 | DTO/mapper、service、repository、前端 type/api/view、兼容测试 |
-| 新管理设置 | 持久设置、运行缓存/订阅、admin handler、前端 store/view、配置说明 |
+| 新 API 字段 | DTO/mapper、service、repository、前端 datasource/type/page、兼容测试 |
+| 新管理设置 | 持久设置、运行缓存/订阅、admin handler、所属 feature 的 store/page、配置说明 |
 | 新数据库字段 | Ent schema、迁移、repository、备份/恢复、DTO、测试 fixture |
 | 新网关协议行为 | route/handler、service 转换与上游、流式/非流式错误、计费、审计/日志测试 |
 | 新平台/账号类型 | 常量、账号模型、调度过滤、凭据、探测、管理 UI、导入导出 |
-| 新前端页面 | route、view、导航可见性、API、i18n、权限和视图测试 |
+| 新前端页面 | core route、feature page/widget、导航可见性、datasource、core i18n、权限和相邻测试 |
 
 需要理解调用时序时，继续阅读 [关键请求链路](REQUEST_LIFECYCLES.md)。

@@ -1,13 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 import { mount } from '@vue/test-utils'
-import EndpointPool from '../components/EndpointPool.vue'
-import PolicyPanel from '../components/PolicyPanel.vue'
-import EventWorkspace from '../components/EventWorkspace.vue'
-import EventDetailDialog from '../components/EventDetailDialog.vue'
-import FilterDeleteDialog from '../components/FilterDeleteDialog.vue'
-import type { PromptAuditDraft, PromptAuditEndpointDraft, PromptAuditEvent, PromptEventFilters } from '../types'
-import { emptyEventFilters, resolveDeleteRangeFilters, SCANNER_CATALOG } from '../viewModel'
+import EndpointPool from '../presentation/widgets/EndpointPool.vue'
+import PolicyPanel from '../presentation/widgets/PolicyPanel.vue'
+import EventWorkspace from '../presentation/widgets/EventWorkspace.vue'
+import EventDetailDialog from '../presentation/widgets/EventDetailDialog.vue'
+import FilterDeleteDialog from '../presentation/widgets/FilterDeleteDialog.vue'
+import type {
+  PromptAuditDraft,
+  PromptAuditEndpointDraft,
+  PromptAuditEvent,
+  PromptEventFilters,
+} from '../domain/models/promptAuditTypes'
+import {
+  emptyEventFilters,
+  resolveDeleteRangeFilters,
+  SCANNER_CATALOG,
+} from '../domain/promptAuditViewModel'
 
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')

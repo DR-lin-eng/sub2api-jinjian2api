@@ -27,56 +27,68 @@ pnpm run build
 | --- | --- |
 | `src/main.ts` | 应用启动、Pinia、公开设置、i18n 和 Router 初始化 |
 | `src/App.vue` | 全局壳层和应用生命周期 |
-| `src/router/` | 路由定义、守卫、标题和 setup 重定向 |
-| `src/views/` | 路由级页面，按 `admin`, `user`, `auth`, `public`, `setup` 分域 |
-| `src/components/` | 复用 UI 和领域组件 |
-| `src/features/` | 自包含、可独立演进的前端功能 |
-| `src/api/` | 共享 HTTP 客户端和领域 API |
-| `src/stores/` | 跨页面 Pinia 状态 |
-| `src/composables/` | 可复用交互与生命周期逻辑 |
-| `src/types/` | API 与 UI TypeScript 类型 |
-| `src/utils/` | 无 UI 状态的纯工具或格式化逻辑 |
-| `src/i18n/locales/` | 多语言文案 |
-| `src/styles/`, `src/style.css` | 全局样式和专题样式 |
+| `src/core/` | 应用级基础能力：Router、HTTP/session、i18n、全局 Store、主题、服务、常量和工具 |
+| `src/common/` | 跨功能复用的页面、组件、composable 和 UI 类型 |
+| `src/features/<domain>/` | 业务垂直切片；包含 datasource、页面、组件、composable、领域 Store 和相邻测试 |
+| `src/features/<domain>/data/datasources/` | 对应功能的请求协议、响应类型和 API 调用 |
+| `src/features/<domain>/presentation/` | 对应功能的页面、组件、交互逻辑和 Store |
+| `src/types/` | 仍被多个功能共享的协议类型和全局类型声明 |
+| `src/api/`, `src/stores/` | 迁移期兼容 barrel；只转发旧导入，不是新代码的归属位置 |
+| `src/assets/`, `src/core/themes/` | 静态资源、全局样式和专题样式 |
 
-## 页面分层
+真实的应用级入口如下：
+
+- Router：`src/core/routes/index.ts`
+- HTTP client 与 session：`src/core/networks/client.ts`, `tokenStore.ts`, `sessionRefresh.ts`
+- 全局 Store：`src/core/stores/`；领域 Store：对应 `src/features/<domain>/presentation/stores/`
+- i18n：`src/core/i18n/index.ts` 与 `src/core/i18n/locales/`
+- 主题：`src/core/themes/style.css` 及同目录专题样式
+
+## 模块分层
 
 推荐依赖方向：
 
 ```text
-router -> view -> component/composable/store -> api -> backend
+main / core routes
+  -> feature presentation (page / widget / composable / store)
+  -> feature data datasource
+  -> core networks
+  -> backend
+
+feature presentation -> common widgets/composables + core services/stores/utils
 ```
 
-- View 负责页面数据编排和页面级状态，不沉积大型可复用组件。
-- Component 通过 props/events 暴露清晰边界；领域组件放入对应子目录。
-- Composable 管理可复用交互、订阅和清理逻辑。
-- Store 只保存跨页面共享、需要缓存或具备明确启动/停止生命周期的状态。
-- API 模块负责请求与响应类型；token、刷新和统一错误处理集中在 `src/api/client.ts`。
-- Utils 应尽量是纯函数，不读取 Pinia 或操作路由。
+- `features/<domain>` 是业务代码的默认 owner。页面放 `presentation/pages/`，领域组件放 `presentation/widgets/`，领域交互放 `presentation/composables/`，API 放 `data/datasources/`。
+- `common` 只保存不属于单一业务的复用能力。业务协议、管理端 API 和领域 Store 不应下沉到 `common`。
+- `core` 保存应用级运行能力和组合入口。统一认证头、401 刷新、URL 处理和错误拦截集中在 `core/networks`。
+- Store 只保存跨页面共享、需要缓存或具备明确启动/停止生命周期的状态；领域 Store 跟随所属 feature。
+- 跨 feature 协作应导入明确的 owner 文件，避免新增无归属的顶层聚合模块。
+- `src/api/index.ts`、`src/api/admin/index.ts` 和 `src/stores/index.ts` 仅用于平滑迁移旧调用。新代码直接导入 `@/features/...` 或 `@/core/...`，不向兼容 barrel 添加新的业务边界；在旧导入全部迁移并通过回归验证前不要移除这些 barrel。
 
 ## 认证和权限
 
-短期 access token 保存在内存中，刷新凭据由后端 HttpOnly cookie 管理。`src/api/client.ts` 会合并并发 401 刷新并重试请求。
+短期 access token 保存在内存中，刷新凭据由后端 HttpOnly cookie 管理。`src/core/networks/client.ts` 会合并并发 401 刷新并重试请求。
 
 Router guard 提供页面跳转和功能开关体验，但不是安全边界。管理员、step-up、用户身份和功能权限必须由后端再次验证。
 
 修改登录/刷新流程时同时检查：
 
-- `src/stores/auth.ts`
-- `src/api/auth.ts`, `tokenStore.ts`, `sessionRefresh.ts`, `client.ts`
-- `src/router/index.ts`
-- `src/views/auth/`
+- `src/features/auth/presentation/stores/authStore.ts`
+- `src/features/auth/data/datasources/authDatasource.ts`
+- `src/core/networks/tokenStore.ts`, `sessionRefresh.ts`, `client.ts`
+- `src/core/routes/index.ts`
+- `src/features/auth/presentation/pages/`
 
 ## 添加页面
 
-1. 在 `src/views/<domain>/` 创建页面，复杂 UI 拆入 `components/<domain>/`。
-2. 在 `src/router/index.ts` 添加懒加载路由和准确 meta。
-3. 在 `src/api/` 增加领域 API，必要时补充 `src/types/`。
-4. 新增用户可见文案到所有受支持 locale。
+1. 选择或创建 `src/features/<domain>/`，页面放入 `presentation/pages/`，复杂 UI 拆入 `presentation/widgets/`。
+2. 在 `src/core/routes/index.ts` 添加懒加载路由和准确 meta。
+3. 在该 feature 的 `data/datasources/` 增加请求；只有真正跨 feature 的协议类型才放 `src/types/`。
+4. 新增用户可见文案到 `src/core/i18n/locales/` 的所有受支持语言。
 5. 更新导航可见性和后端权限。
 6. 添加相邻 Vitest，并运行 lint/typecheck。
 
-路由约定见 [src/router/README.md](src/router/README.md)。
+路由约定见 [src/core/routes/README.md](src/core/routes/README.md)。
 
 ## 状态选择
 
@@ -85,12 +97,13 @@ Router guard 提供页面跳转和功能开关体验，但不是安全边界。�
 | 状态范围 | 放置位置 |
 | --- | --- |
 | 单个组件内部 | 组件 `ref` / `computed` |
-| 同一页面多个组件 | 页面或页面 composable |
-| 多页面共享、需要缓存 | Pinia store |
+| 同一 feature 内多个组件 | `presentation/composables/` 或页面级状态 |
+| 同一 feature 多页面共享、需要缓存 | `features/<domain>/presentation/stores/` |
+| 全应用共享的运行状态 | `core/stores/` |
 | URL 可表达的筛选/分页 | route query |
 | 后端持久事实 | API + 后端数据库，不以 localStorage 作为事实源 |
 
-Store 索引见 [src/stores/README.md](src/stores/README.md)。
+Store 索引见 [src/core/stores/README.md](src/core/stores/README.md)。
 
 ## 测试
 
@@ -98,7 +111,7 @@ Store 索引见 [src/stores/README.md](src/stores/README.md)。
 
 ```sh
 # 单文件
-pnpm exec vitest run src/views/admin/__tests__/SettingsView.spec.ts
+pnpm exec vitest run src/features/admin-settings/__tests__/SettingsPage.spec.ts
 
 # 全部前端测试
 pnpm run test:run
@@ -115,6 +128,7 @@ pnpm run typecheck
 - 使用 `@/` 别名导入 `src/` 内容。
 - 不混用 npm/yarn，不提交 `node_modules/` 和构建缓存。
 - 不在页面中创建第二套 Axios client 或 token 刷新逻辑。
+- 不在新代码中继续依赖或扩充 `@/api`、`@/api/admin`、`@/stores` 兼容 barrel。
 - 不把后端实体直接当作 UI 状态；通过类型和映射隔离可选字段与兼容字段。
-- 大页面按展示区、表单、数据加载和交互行为拆分，避免继续扩大单文件。
+- 大页面在所属 feature 内按页面、widget、composable 和 datasource 拆分，避免继续扩大单文件。
 - 目录或公共约定变化时更新本 README 和最近的子目录 README。

@@ -577,7 +577,7 @@ go test ./internal/infrastructure/repository -run '^$' \
 
 ```bash
 cd /home/ubuntu-24/sub2api-codex/frontend
-pnpm --ignore-workspace exec vitest run src/views/admin/__tests__/SettingsView.spec.ts
+pnpm --ignore-workspace exec vitest run src/features/admin-settings/__tests__/SettingsPage.spec.ts
 pnpm --ignore-workspace run typecheck
 pnpm --ignore-workspace run lint:check
 pnpm --ignore-workspace run build

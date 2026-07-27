@@ -2385,4 +2385,4 @@ export type {
   PlatformQuotaPlatform,
   PlatformQuotaWindow,
   PlatformQuotasResponse,
-} from '@/api/admin/users'
+} from '@/features/admin-users/data/datasources/adminUsersDatasource'

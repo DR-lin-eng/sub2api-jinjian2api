@@ -2,15 +2,15 @@ import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import en from '@/i18n/locales/en'
-import zh from '@/i18n/locales/zh'
+import en from '@/core/i18n/locales/en'
+import zh from '@/core/i18n/locales/zh'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const read = (path: string) => readFileSync(resolve(here, path), 'utf8')
 
 describe('Prompt Audit integration surface', () => {
   it('registers an admin and risk-control guarded route', () => {
-    const router = read('../../../router/index.ts')
+    const router = read('../../../core/routes/index.ts')
     expect(router).toContain("path: '/admin/prompt-audit'")
     const route = router.slice(router.indexOf("path: '/admin/prompt-audit'"), router.indexOf("path: '/admin/usage'"))
     expect(route).toContain('requiresAuth: true')
@@ -19,7 +19,7 @@ describe('Prompt Audit integration surface', () => {
   })
 
   it('keeps security audit available while guarding only feature-specific children', () => {
-    const sidebar = read('../../../components/layout/AppSidebar.vue')
+    const sidebar = read('../../../common/widgets/layout/AppSidebar.vue')
     const group = sidebar.slice(sidebar.indexOf("path: '/admin/security-audit'"), sidebar.indexOf("path: '/admin/redeem'"))
     const groupHeader = group.slice(0, group.indexOf('children:'))
     expect(group).toContain('expandOnly: true')
@@ -38,8 +38,8 @@ describe('Prompt Audit integration surface', () => {
     expect(en.nav.securityAudit).toBeTruthy()
     expect(zh.nav.ingressRisk).toBeTruthy()
     expect(en.nav.ingressRisk).toBeTruthy()
-    const endpoint = read('../components/EndpointPool.vue')
-    const events = read('../components/EventWorkspace.vue')
+    const endpoint = read('../presentation/widgets/EndpointPool.vue')
+    const events = read('../presentation/widgets/EventWorkspace.vue')
     expect(endpoint).toContain('aria-label')
     expect(events).toContain('aria-label')
     expect(events).toContain('overflow-x-auto')

@@ -1,16 +1,16 @@
 /**
- * Pinia Stores Export
- * Central export point for all application stores
+ * Transitional store compatibility barrel.
+ * New code should import from the owning core or feature module directly.
  */
 
-export { useAuthStore } from './auth'
-export { useAppStore } from './app'
-export { useAdminSettingsStore } from './adminSettings'
-export { useSubscriptionStore } from './subscriptions'
-export { useOnboardingStore } from './onboarding'
-export { useAnnouncementStore } from './announcements'
-export { usePaymentStore } from './payment'
-export { useAdminComplianceStore } from './adminCompliance'
+export { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+export { useAppStore } from '@/core/stores/appStore'
+export { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
+export { useSubscriptionStore } from '@/features/subscriptions/presentation/stores/subscriptionsStore'
+export { useOnboardingStore } from '@/core/stores/onboardingStore'
+export { useAnnouncementStore } from '@/features/announcements/presentation/stores/announcementsStore'
+export { usePaymentStore } from '@/features/billing/presentation/stores/paymentStore'
+export { useAdminComplianceStore } from '@/features/admin-settings/presentation/stores/adminComplianceStore'
 
 // Re-export types for convenience
 export type { User, LoginRequest, RegisterRequest, AuthResponse } from '@/types'

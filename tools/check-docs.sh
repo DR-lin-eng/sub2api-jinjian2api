@@ -30,8 +30,8 @@ docs/CODE_MAP.md
 docs/REQUEST_LIFECYCLES.md
 backend/README.md
 frontend/README.md
-frontend/src/router/README.md
-frontend/src/stores/README.md'
+frontend/src/core/routes/README.md
+frontend/src/core/stores/README.md'
 
 required_paths='backend/cmd/server/main.go
 backend/cmd/server/wire.go
@@ -44,12 +44,14 @@ backend/internal/transport/http/server/routes/gateway.go
 backend/internal/transport/http/server/middleware/api_key_auth.go
 backend/migrations
 deploy/config.example.yaml
-frontend/src/api/client.ts
-frontend/src/i18n/locales
+frontend/src/common
+frontend/src/core/i18n/locales
+frontend/src/core/networks/client.ts
+frontend/src/core/routes/index.ts
+frontend/src/core/stores
+frontend/src/features
 frontend/src/main.ts
-frontend/src/router/index.ts
-frontend/src/stores
-frontend/src/views'
+'
 
 status=0
 

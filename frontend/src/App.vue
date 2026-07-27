@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { RouterView, useRouter, useRoute } from 'vue-router'
 import { onMounted, onBeforeUnmount, watch } from 'vue'
-import Toast from '@/components/common/Toast.vue'
-import NavigationProgress from '@/components/common/NavigationProgress.vue'
-import AdminComplianceDialog from '@/components/admin/AdminComplianceDialog.vue'
-import { resolveRouteDocumentTitle } from '@/router/title'
-import AnnouncementPopup from '@/components/common/AnnouncementPopup.vue'
+import Toast from '@/common/widgets/feedback/Toast.vue'
+import NavigationProgress from '@/common/widgets/feedback/NavigationProgress.vue'
+import AdminComplianceDialog from '@/features/admin-settings/presentation/widgets/AdminComplianceDialog.vue'
+import { resolveRouteDocumentTitle } from '@/core/routes/title'
+import AnnouncementPopup from '@/common/widgets/data/AnnouncementPopup.vue'
 import { useAppStore, useAuthStore, useSubscriptionStore, useAnnouncementStore, useAdminComplianceStore, useAdminSettingsStore } from '@/stores'
-import { getSetupStatus } from '@/api/setup'
-import { updateFavicon } from '@/utils/branding'
+import { getSetupStatus } from '@/features/setup/data/datasources/setupDatasource'
+import { updateFavicon } from '@/core/services/branding'
 
 const router = useRouter()
 const route = useRoute()
@@ -121,7 +121,7 @@ onMounted(async () => {
   try {
     const status = await getSetupStatus()
     if (status.needs_setup && route.path !== '/setup') {
-      router.replace('/setup')
+      await router.replace('/setup')
       return
     }
   } catch {

@@ -29,7 +29,7 @@
 | 修改网关编排、调度、计费 | `backend/internal/application/service/` |
 | 修改 PostgreSQL、Redis 或上游访问 | `backend/internal/infrastructure/repository/` |
 | 修改表结构 | `backend/ent/schema/` 与 `backend/migrations/` |
-| 修改管理端或用户端页面 | `frontend/src/views/`，再追到 `components/`、`api/`、`stores/` |
+| 修改管理端或用户端页面 | `frontend/src/features/<domain>/presentation/pages/`，再追到同域 `widgets/`、`data/`、`stores/` |
 | 修改部署参数 | `deploy/config.example.yaml`、`deploy/.env.example` 和 `deploy/README.md` |
 
 更细的功能到文件映射见 `docs/CODE_MAP.md`。
@@ -41,8 +41,8 @@
 - 保持 API JSON、SSE、WebSocket 和错误格式的兼容性。流式与非流式路径必须分别验证。
 - 计费是正确性关键路径。不得以丢弃、采样或无界内存排队代替可靠结算。
 - 调度变更必须同时检查账号筛选、并发槽位、失败排除、粘性会话和释放路径。
-- 前端 HTTP 调用统一通过 `frontend/src/api/client.ts`；浏览器权限控制不能替代后端鉴权。
-- 新增用户可见文本时同步 `frontend/src/i18n/locales/`。
+- 前端 HTTP 调用统一通过 `frontend/src/core/networks/client.ts`；浏览器权限控制不能替代后端鉴权。
+- 新增用户可见文本时同步 `frontend/src/core/i18n/locales/`。
 - 只改与当前任务相关的文件；保留工作区中已有的用户改动。
 
 ## 验证命令
