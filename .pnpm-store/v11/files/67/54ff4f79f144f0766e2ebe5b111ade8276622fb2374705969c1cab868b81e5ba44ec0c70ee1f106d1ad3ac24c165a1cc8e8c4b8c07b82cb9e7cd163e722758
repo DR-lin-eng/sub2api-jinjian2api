@@ -1,3 +1,0 @@
-import DropdownMenu_default from "./DropdownMenu.mjs";
-
-export { DropdownMenu_default as default };
