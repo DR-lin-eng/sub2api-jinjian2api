@@ -11,6 +11,9 @@ const runtimeSources = {
   page: readFeatureSource('../presentation/pages/KeysPage.vue'),
   table: readFeatureSource('../presentation/widgets/KeysTable.vue'),
   editor: readFeatureSource('../presentation/widgets/KeyEditorDialog.vue'),
+  useKeyDialog: readFeatureSource('../presentation/widgets/UseKeyDialog.vue'),
+  openCodeResolver: readFeatureSource('../presentation/resolvers/openCodeConfigResolver.ts'),
+  openCodeCatalogs: readFeatureSource('../presentation/resolvers/openCodeModelCatalogs.ts'),
   context: readFeatureSource('../presentation/keysPageContext.ts')
 }
 
@@ -28,6 +31,13 @@ describe('keys page modularization', () => {
     expect(runtimeSources.page).toContain('<KeyEditorDialog :context="keyEditorDialogContext" />')
     expect(runtimeSources.table).toContain('context: KeysTableContext')
     expect(runtimeSources.editor).toContain('context: KeyEditorDialogContext')
+    expect(runtimeSources.useKeyDialog).toContain(
+      "from '@/features/keys/presentation/resolvers/openCodeConfigResolver'"
+    )
+    expect(runtimeSources.openCodeResolver).toContain(
+      "from '@/features/keys/presentation/resolvers/openCodeModelCatalogs'"
+    )
+    expect(runtimeSources.useKeyDialog).not.toContain('function generateOpenCodeConfig')
 
     for (const source of Object.values(runtimeSources)) {
       expect(source).not.toContain('import(')

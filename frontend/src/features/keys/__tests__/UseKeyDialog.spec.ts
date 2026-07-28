@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
+import type { GroupPlatform } from '@/types'
 
 const { copyToClipboardMock } = vi.hoisted(() => ({
   copyToClipboardMock: vi.fn().mockResolvedValue(true)
@@ -21,6 +22,90 @@ vi.mock('@/common/composables/useClipboard', () => ({
 import UseKeyModal from '../presentation/widgets/UseKeyDialog.vue'
 
 describe('UseKeyModal', () => {
+  it('maps every group platform to the existing OpenCode provider, path, and base URL', async () => {
+    const cases: Array<{
+      platform: GroupPlatform
+      files: Array<{ provider: string; path: string; baseURL: string }>
+    }> = [
+      {
+        platform: 'anthropic',
+        files: [{ provider: 'anthropic', path: 'opencode.json', baseURL: 'https://example.com/root/v1' }]
+      },
+      {
+        platform: 'openai',
+        files: [{ provider: 'openai', path: 'opencode.json', baseURL: 'https://example.com/root/v1' }]
+      },
+      {
+        platform: 'gemini',
+        files: [{ provider: 'gemini', path: 'opencode.json', baseURL: 'https://example.com/root/v1beta' }]
+      },
+      {
+        platform: 'antigravity',
+        files: [
+          {
+            provider: 'antigravity-claude',
+            path: 'opencode.json (Claude)',
+            baseURL: 'https://example.com/root/antigravity/v1'
+          },
+          {
+            provider: 'antigravity-gemini',
+            path: 'opencode.json (Gemini)',
+            baseURL: 'https://example.com/root/antigravity/v1beta'
+          }
+        ]
+      },
+      {
+        platform: 'grok',
+        files: [{ provider: 'grok', path: 'opencode.json', baseURL: 'https://example.com/root/v1' }]
+      },
+      {
+        platform: 'composite',
+        files: [{ provider: 'openai', path: 'opencode.json', baseURL: 'https://example.com/root/v1' }]
+      }
+    ]
+
+    for (const testCase of cases) {
+      const wrapper = mount(UseKeyModal, {
+        props: {
+          show: true,
+          apiKey: 'sk-platform-map',
+          baseUrl: 'https://example.com/root/',
+          platform: testCase.platform
+        },
+        global: {
+          stubs: {
+            BaseDialog: {
+              template: '<div><slot /><slot name="footer" /></div>'
+            },
+            Icon: {
+              template: '<span />'
+            }
+          }
+        }
+      })
+      const opencodeTab = wrapper.findAll('button').find((button) =>
+        button.text().includes('keys.useKeyModal.cliTabs.opencode')
+      )
+
+      expect(opencodeTab, testCase.platform).toBeDefined()
+      await opencodeTab!.trigger('click')
+      await nextTick()
+
+      const configs = wrapper.findAll('pre code').map((code) => JSON.parse(code.text()))
+      expect(configs).toHaveLength(testCase.files.length)
+      testCase.files.forEach((expected, index) => {
+        expect(Object.keys(configs[index].provider)).toEqual([expected.provider])
+        expect(configs[index].provider[expected.provider].options).toEqual({
+          baseURL: expected.baseURL,
+          apiKey: 'sk-platform-map'
+        })
+        expect(wrapper.text()).toContain(expected.path)
+      })
+      expect(wrapper.text()).toContain('keys.useKeyModal.opencode.hint')
+      wrapper.unmount()
+    }
+  })
+
   it('renders Grok Build and OpenCode setup for Grok groups', async () => {
     const wrapper = mount(UseKeyModal, {
       props: {
