@@ -119,7 +119,102 @@ vi.mock("@/api", () => ({
   },
 }));
 
+vi.mock(
+  "@/features/admin-settings/data/datasources/adminSettingsDatasource",
+  async (importOriginal) => {
+    const actual = await importOriginal<
+      typeof import("@/features/admin-settings/data/datasources/adminSettingsDatasource")
+    >();
+    return {
+      ...actual,
+      settingsAPI: {
+        getSettings,
+        updateSettings,
+        getWebSearchEmulationConfig,
+        updateWebSearchEmulationConfig,
+        getAdminApiKey,
+        getOverloadCooldownSettings,
+        getRateLimit429CooldownSettings,
+        updateRateLimit429CooldownSettings,
+        getGlobalTempUnschedulableSettings,
+        updateGlobalTempUnschedulableSettings,
+        getPanelRateLimitSettings,
+        updatePanelRateLimitSettings,
+        getStreamTimeoutSettings,
+        updateStreamTimeoutSettings,
+        getRectifierSettings,
+        getBetaPolicySettings,
+      },
+    };
+  },
+);
+
+vi.mock(
+  "@/features/admin-accounts/data/datasources/adminAccountsDatasource",
+  () => {
+    const accountsAPI = {
+      getUpstreamBillingProbeSettings,
+      updateUpstreamBillingProbeSettings,
+      getOllamaCloudUsageSettings,
+      updateOllamaCloudUsageSettings,
+    };
+    return { accountsAPI, default: accountsAPI };
+  },
+);
+
+vi.mock(
+  "@/features/admin-groups/data/datasources/adminGroupsDatasource",
+  () => {
+    const groupsAPI = { getAll: getGroups };
+    return { getAll: getGroups, groupsAPI, default: groupsAPI };
+  },
+);
+
+vi.mock(
+  "@/features/admin-proxies/data/datasources/adminProxiesDatasource",
+  () => {
+    const proxiesAPI = { list: listProxies };
+    return { proxiesAPI, default: proxiesAPI };
+  },
+);
+
+vi.mock(
+  "@/features/admin-orders/data/datasources/adminPaymentDatasource",
+  () => ({
+    default: {
+      getProviders,
+      updateProvider,
+      createProvider,
+      deleteProvider,
+    },
+  }),
+);
+
+vi.mock(
+  "@/features/affiliate/data/datasources/adminAffiliatesDatasource",
+  () => {
+    const affiliatesAPI = {
+      listUsers: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+      lookupUsers: vi.fn().mockResolvedValue([]),
+      updateUserSettings: vi.fn().mockResolvedValue(undefined),
+      clearUserSettings: vi.fn().mockResolvedValue(undefined),
+      batchSetRate: vi.fn().mockResolvedValue(undefined),
+    };
+    return { affiliatesAPI, default: affiliatesAPI };
+  },
+);
+
 vi.mock("@/stores", () => ({
+  useAppStore: () => ({
+    showError,
+    showSuccess,
+    showWarning: vi.fn(),
+    showInfo: vi.fn(),
+    fetchPublicSettings,
+  }),
+}));
+
+vi.mock("@/core/stores/appStore", () => ({
   useAppStore: () => ({
     showError,
     showSuccess,
@@ -562,6 +657,7 @@ function mountView(extraStubs: Record<string, Component | boolean> = {}) {
     global: {
       stubs: {
         AppLayout: AppLayoutStub,
+        RouterLink: true,
         Select: SelectStub,
         Toggle: ToggleStub,
         Icon: true,
@@ -1144,6 +1240,7 @@ describe("admin SettingsView payment visible method controls", () => {
       global: {
         stubs: {
           AppLayout: AppLayoutStub,
+          RouterLink: true,
           Select: SelectStub,
           Toggle: ToggleStub,
           Icon: true,
@@ -1392,6 +1489,7 @@ describe("admin SettingsView payment visible method controls", () => {
       global: {
         stubs: {
           AppLayout: AppLayoutStub,
+          RouterLink: true,
           Select: SelectStub,
           Toggle: ToggleStub,
           Icon: true,
