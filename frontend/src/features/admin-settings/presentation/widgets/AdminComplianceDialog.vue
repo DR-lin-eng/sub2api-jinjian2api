@@ -7,6 +7,7 @@
     :close-on-click-outside="false"
     :show-close-button="false"
     :z-index="80"
+    initial-focus="dialog"
     @close="noop"
   >
     <div class="space-y-5">

@@ -1,4 +1,11 @@
-import { onMounted, onUnmounted, nextTick } from 'vue'
+import {
+  onMounted,
+  onUnmounted,
+  nextTick,
+  toValue,
+  watch,
+  type MaybeRefOrGetter
+} from 'vue'
 import { driver, type Driver, type DriveStep } from 'driver.js'
 import 'driver.js/dist/driver.css'
 import { useAuthStore as useUserStore } from '@/features/auth/presentation/stores/authStore'
@@ -9,6 +16,7 @@ import { getAdminSteps, getUserSteps } from '@/core/services/guide/steps'
 export interface OnboardingOptions {
   storageKey?: string
   autoStart?: boolean
+  autoStartReady?: MaybeRefOrGetter<boolean>
 }
 
 export function useOnboardingTour(options: OnboardingOptions) {
@@ -55,6 +63,7 @@ export function useOnboardingTour(options: OnboardingOptions) {
     eventTypes?: string[] // Track which event types were added
   } | null = null
   let autoStartTimer: ReturnType<typeof setTimeout> | null = null
+  let stopAutoStartReadyWatch: (() => void) | null = null
   let globalKeyboardHandler: ((e: KeyboardEvent) => void) | null = null
 
   const getStorageKey = () => {
@@ -542,10 +551,28 @@ export function useOnboardingTour(options: OnboardingOptions) {
       return
     }
 
-    if (!options.autoStart || hasSeen()) return
-    autoStartTimer = setTimeout(() => {
-      void startTour()
-    }, TIMING.AUTO_START_DELAY_MS)
+    stopAutoStartReadyWatch = watch(
+      () => toValue(options.autoStartReady ?? true),
+      (ready) => {
+        if (autoStartTimer) {
+          clearTimeout(autoStartTimer)
+          autoStartTimer = null
+        }
+
+        if (!ready || !options.autoStart || hasSeen()) {
+          return
+        }
+
+        autoStartTimer = setTimeout(() => {
+          autoStartTimer = null
+          if (!toValue(options.autoStartReady ?? true) || hasSeen()) {
+            return
+          }
+          void startTour()
+        }, TIMING.AUTO_START_DELAY_MS)
+      },
+      { immediate: true }
+    )
   })
 
   onUnmounted(() => {
@@ -553,6 +580,8 @@ export function useOnboardingTour(options: OnboardingOptions) {
       clearTimeout(autoStartTimer)
       autoStartTimer = null
     }
+    stopAutoStartReadyWatch?.()
+    stopAutoStartReadyWatch = null
     // 关键修复：不再此处清理 globalKeyboardHandler，交由 driver.onDestroyed 管理
     onboardingStore.clearControlMethods()
   })

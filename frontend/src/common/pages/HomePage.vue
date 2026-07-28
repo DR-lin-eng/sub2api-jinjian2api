@@ -139,7 +139,7 @@
           </div>
 
           <!-- Right: Terminal Animation -->
-          <div class="flex flex-1 justify-center lg:justify-end">
+          <div class="flex w-full min-w-0 flex-1 justify-center lg:justify-end">
             <div class="terminal-container">
               <div class="terminal-window">
                 <!-- Window header -->
@@ -483,11 +483,13 @@ onMounted(() => {
 .terminal-container {
   position: relative;
   display: inline-block;
+  width: 100%;
+  max-width: 420px;
 }
 
 /* Terminal Window */
 .terminal-window {
-  width: 420px;
+  width: 100%;
   background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
   border-radius: 14px;
   box-shadow:
@@ -618,6 +620,18 @@ onMounted(() => {
   height: 16px;
   background: #22c55e;
   animation: blink 1s step-end infinite;
+}
+
+@media (max-width: 639px) {
+  .terminal-window,
+  .terminal-window:hover {
+    transform: none;
+  }
+
+  .terminal-body {
+    padding: 16px;
+    font-size: 12px;
+  }
 }
 
 @keyframes blink {

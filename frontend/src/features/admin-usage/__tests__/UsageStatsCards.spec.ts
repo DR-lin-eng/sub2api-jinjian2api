@@ -64,4 +64,22 @@ describe('UsageStatsCards', () => {
     expect(text).toContain('Cache Read')
     expect(text).toContain('22')
   })
+
+  it('keeps the cache breakdown tooltip inside narrow viewports', () => {
+    const wrapper = mount(UsageStatsCards, {
+      props: {
+        stats,
+      },
+      global: {
+        stubs: {
+          Icon: true,
+        },
+      },
+    })
+
+    const tooltip = wrapper.get('[data-testid="cache-breakdown-tooltip"]')
+    expect(tooltip.classes()).toContain('right-0')
+    expect(tooltip.classes()).toContain('sm:left-1/2')
+    expect(tooltip.classes()).toContain('sm:-translate-x-1/2')
+  })
 })
