@@ -9,7 +9,12 @@
 | `load.go` | Viper 加载、环境绑定和运行模式归一化 |
 | `source.go` | 显式配置文件与默认搜索路径的统一优先级 |
 | `defaults.go` | 全部配置默认值 |
-| `validate.go` | 主配置校验 |
+| `validate.go` | 主配置校验顺序编排 |
+| `validate_runtime.go` | 部署、服务端、鉴权、日志和运行时校验 |
+| `validate_identity.go` | LinuxDo、微信和 OIDC 身份接入校验 |
+| `validate_storage.go` | 计费、存储、批处理、聚合和幂等校验 |
+| `validate_gateway.go` | 网关传输、WebSocket、调度和用量队列校验 |
+| `validate_ops.go` | 运维、并发和钉钉接入编排校验 |
 | `helpers.go` | URL、JWT 和通用归一化辅助函数 |
 | `validate_dingtalk.go` | 钉钉配置专项校验 |
 | `wire.go` | 配置 provider |
