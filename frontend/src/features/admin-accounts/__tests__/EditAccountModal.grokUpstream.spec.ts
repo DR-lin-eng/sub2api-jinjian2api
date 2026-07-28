@@ -41,7 +41,11 @@ vi.mock('@/api/admin', () => ({
 }))
 
 vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', () => ({
-  getAntigravityDefaultModelMapping: vi.fn()
+  getAntigravityDefaultModelMapping: vi.fn(),
+  accountsAPI: {
+    update: updateAccountMock,
+    checkMixedChannelRisk: checkMixedChannelRiskMock
+  }
 }))
 
 vi.mock('vue-i18n', async () => {

@@ -47,6 +47,12 @@ vi.mock('@/api/admin', () => ({
 
 vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', () => ({
   getAntigravityDefaultModelMapping: vi.fn().mockResolvedValue([]),
+  accountsAPI: {
+    create: createAccountMock,
+    importCodexSession: importCodexSessionMock,
+    createOpenAICodexPAT: createOpenAICodexPATMock,
+    exchangeCode: vi.fn(),
+  },
 }))
 
 vi.mock('vue-i18n', async () => {

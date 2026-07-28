@@ -2,10 +2,13 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const source = readFileSync(
-  resolve(process.cwd(), 'src/features/admin-accounts/presentation/widgets/CreateAccountDialog.vue'),
-  'utf8'
-)
+const source = [
+  'src/features/admin-accounts/presentation/widgets/CreateAccountDialog.vue',
+  'src/features/admin-accounts/presentation/widgets/create/CreateAccountPlatformFields.vue',
+  'src/features/admin-accounts/presentation/widgets/create/CreateAccountCredentialFields.vue',
+  'src/features/admin-accounts/presentation/composables/useCreateAccountEditorPolicy.ts',
+  'src/features/admin-accounts/presentation/composables/useCreateAccountOAuthActions.ts'
+].map((path) => readFileSync(resolve(process.cwd(), path), 'utf8')).join('\n')
 
 describe('CreateAccountModal Grok account types', () => {
   it('offers API-key setup alongside OAuth with the official xAI default', () => {
