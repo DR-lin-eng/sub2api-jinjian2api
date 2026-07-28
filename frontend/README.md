@@ -19,7 +19,7 @@ pnpm run test:run
 pnpm run build
 ```
 
-生产构建输出到 `../backend/internal/transport/webassets/dist/`，由后端嵌入。不要直接编辑该生成目录。
+生产构建输出到 `../backend/internal/transport/webassets/dist/`，由后端嵌入。不要直接编辑该生成目录。`vite.config.ts` 是唯一的 Vite 配置事实源；package scripts 会显式选择它，忽略 TypeScript 增量编译可能留下的 `vite.config.js`。
 
 ## 源码索引
 
@@ -64,6 +64,10 @@ feature presentation -> common widgets/composables + core services/stores/utils
 - Store 只保存跨页面共享、需要缓存或具备明确启动/停止生命周期的状态；领域 Store 跟随所属 feature。
 - 跨 feature 协作应导入明确的 owner 文件，避免新增无归属的顶层聚合模块。
 - `src/api/index.ts`、`src/api/admin/index.ts` 和 `src/stores/index.ts` 仅用于平滑迁移旧调用。新代码直接导入 `@/features/...` 或 `@/core/...`，不向兼容 barrel 添加新的业务边界；在旧导入全部迁移并通过回归验证前不要移除这些 barrel。
+
+复杂页面采用稳定的三段式边界：page 负责路由级加载、保存和对话框编排；feature-private widget 负责表单、表格和 tab/panel；composable/resolver 负责可测试的交互状态与纯转换。源码组织拆分使用静态 import，使子模块继续归入原路由 chunk；只有现有路由懒加载和明确的按需重依赖可以使用动态 import。
+
+所有运行时 TypeScript/Vue 模块受 ESLint 的 1500 有效行硬门禁约束，空行和注释不计入。接近上限时按领域职责拆分，不以新增全局 Store、无归属 barrel、一对一 DTO/反射层或把代码搬进 composable/datasource 来转移复杂度。
 
 ## 认证和权限
 
@@ -130,5 +134,5 @@ pnpm run typecheck
 - 不在页面中创建第二套 Axios client 或 token 刷新逻辑。
 - 不在新代码中继续依赖或扩充 `@/api`、`@/api/admin`、`@/stores` 兼容 barrel。
 - 不把后端实体直接当作 UI 状态；通过类型和映射隔离可选字段与兼容字段。
-- 大页面在所属 feature 内按页面、widget、composable 和 datasource 拆分，避免继续扩大单文件。
+- 大页面在所属 feature 内按 page 编排、widget 展示、composable 交互和 datasource 协议拆分；保持原路由 chunk、请求时序与局部状态 owner。
 - 目录或公共约定变化时更新本 README 和最近的子目录 README。

@@ -124,9 +124,14 @@ export default defineConfig(({ mode }) => {
               return 'vendor-vue'
             }
 
-            // UI 工具库（较大，单独分离）
-            if (id.includes('/@vueuse/') || id.includes('/xlsx/')) {
-              return 'vendor-ui'
+            // VueUse 被多个页面静态引用；保持为独立公共 chunk。
+            if (id.includes('/@vueuse/')) {
+              return 'vendor-vueuse'
+            }
+
+            // XLSX 仅在导出流程中动态加载，不能与 VueUse 合并后进入页面 preload。
+            if (id.includes('/xlsx/')) {
+              return 'vendor-xlsx'
             }
 
             // 图表库

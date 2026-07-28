@@ -113,6 +113,10 @@ feature presentation -> common + core services/stores/utils
 
 页面、领域组件、交互、Store 和 API 默认跟随 `features/<domain>` 的 owner。跨业务的展示与交互能力进入 `common`；应用级组合与运行能力进入 `core`。Router 作为组合入口可以懒加载 feature page，`main.ts` 只连接 Pinia、公开设置、i18n、Router 和主题。
 
+复杂 feature 页面继续按 `page -> widget -> composable/resolver` 收敛：page 保留路由级加载、保存和生命周期，widget 承担领域表单、表格与 tab/panel，composable/resolver 承担可复用状态和纯转换。feature 内的源码拆分使用静态 import，确保仍归入原路由 chunk；不得用动态组件或全局 Store 仅为缩短文件而改变挂载、请求或分包语义。
+
+前端非测试运行时 TypeScript/Vue 模块执行 1500 有效行硬门禁。超限代码必须在所属 feature 内按职责拆分，不能通过格式压缩、跨层搬运或扩大兼容 barrel 绕过。
+
 `frontend/src/api/index.ts`、`frontend/src/api/admin/index.ts` 和 `frontend/src/stores/index.ts` 仅保留旧导入的过渡兼容导出。它们不拥有业务实现；新代码应直接导入所属 feature datasource/store 或 core 模块，避免迁移期 barrel 重新变成长期公共层。为保证滚动升级和平滑迁移，在旧导入全部替换且回归验证通过前保留这些导出。
 
 ## 关键不变量

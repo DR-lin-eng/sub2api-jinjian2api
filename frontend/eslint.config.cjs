@@ -202,4 +202,16 @@ module.exports = [
       ]),
     },
   },
+  {
+    files: ['src/**/*.{ts,vue}'],
+    ignores: ['**/__tests__/**'],
+    rules: {
+      // A repository-wide ceiling prevents a large module from being moved to
+      // another layer just to bypass the page/widget rule.
+      'max-lines': [
+        'error',
+        { max: 1500, skipBlankLines: true, skipComments: true },
+      ],
+    },
+  },
 ]

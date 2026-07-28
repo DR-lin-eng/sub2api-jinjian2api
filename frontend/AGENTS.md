@@ -39,7 +39,8 @@ main / core routes
 - Store：并发加载去重、失败恢复、invalidate、logout/user switch 清理。
 - 表格/筛选：loading、empty、error、分页、查询取消和 URL/偏好持久化。
 - 支付/认证：不要提前加载第三方 SDK；验证回调、刷新竞争和失败跳转。
-- 大页面：在所属 feature 内按 datasource、page、widget 和 composable 拆分，避免继续扩大单文件。
+- 大页面：page 只负责路由级编排和请求生命周期；领域表单、表格、tab/panel 放入同 feature 的 widget，复用交互和纯转换放入 composable/resolver。源码拆分默认使用静态 import，不能为了缩短文件擅自改变路由 chunk 或请求时序。
+- 所有运行时 TypeScript/Vue 模块必须保持在 1500 有效行以内，ESLint 会忽略空行和注释后执行硬门禁。接近上限时按业务职责继续拆分，不能通过关闭规则、压缩排版、搬到 composable/datasource 或把整页状态塞进无边界 Store 绕过。
 
 ## 验证
 
