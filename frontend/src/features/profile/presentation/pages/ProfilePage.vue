@@ -44,6 +44,7 @@
       />
 
       <ProfileTotpCard />
+      <ProfilePasskeyCard :enabled="passkeyEnabled" />
     </div>
   </AppLayout>
 </template>
@@ -57,6 +58,7 @@ import ProfileBalanceNotifyCard from '@/features/profile/presentation/widgets/Pr
 import ProfileInfoCard from '@/features/profile/presentation/widgets/ProfileInfoCard.vue'
 import ProfilePasswordForm from '@/features/profile/presentation/widgets/ProfilePasswordForm.vue'
 import ProfileTotpCard from '@/features/profile/presentation/widgets/ProfileTotpCard.vue'
+import ProfilePasskeyCard from '@/features/passkeys/presentation/widgets/ProfilePasskeyCard.vue'
 import { isWeChatWebOAuthEnabled } from '@/features/auth/data/datasources/authDatasource'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
@@ -76,6 +78,7 @@ const wechatOAuthOpenEnabled = ref<boolean | undefined>(undefined)
 const wechatOAuthMPEnabled = ref<boolean | undefined>(undefined)
 const oidcOAuthEnabled = ref(false)
 const oidcOAuthProviderName = ref('OIDC')
+const passkeyEnabled = ref(false)
 
 onMounted(async () => {
   const profileRefresh = authStore.refreshUser().catch((error) => {
@@ -101,6 +104,7 @@ onMounted(async () => {
         : undefined
       oidcOAuthEnabled.value = settings.oidc_oauth_enabled ?? false
       oidcOAuthProviderName.value = settings.oidc_oauth_provider_name || 'OIDC'
+      passkeyEnabled.value = settings.passkey_enabled === true
     })
     .catch((error) => {
       console.error('Failed to load settings:', error)

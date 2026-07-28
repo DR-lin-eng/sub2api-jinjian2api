@@ -42,6 +42,7 @@ function buildGeneralSettingsPayload({
     invitation_code_enabled: form.invitation_code_enabled,
     password_reset_enabled: form.password_reset_enabled,
     totp_enabled: form.totp_enabled,
+    passkey_enabled: form.passkey_enabled,
     session_binding_enabled: form.session_binding_enabled,
     step_up_enabled: form.step_up_enabled,
     // Empty/invalid numeric input follows the backend's empty-value default.

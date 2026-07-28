@@ -16,6 +16,7 @@ type UpdateSettingsRequest struct {
 	FrontendURL                      string                       `json:"frontend_url"`
 	InvitationCodeEnabled            bool                         `json:"invitation_code_enabled"`
 	TotpEnabled                      bool                         `json:"totp_enabled"`             // TOTP 双因素认证
+	PasskeyEnabled                   *bool                        `json:"passkey_enabled"`          // Passkey 登录（省略=保持现值）
 	SessionBindingEnabled            *bool                        `json:"session_binding_enabled"`  // 会话 IP/UA 绑定（省略=保持现值）
 	StepUpEnabled                    *bool                        `json:"step_up_enabled"`          // 敏感操作 step-up 2FA（省略=保持现值）
 	AuditLogRetentionDays            int                          `json:"audit_log_retention_days"` // 审计日志保留天数

@@ -9,6 +9,9 @@ func buildSettingsUpdateResponsePayload(
 	updatedSettings *service.SystemSettings,
 	updatedPaymentCfg *service.PaymentConfig,
 	totpEncryptionKeyConfigured bool,
+	passkeyConfigured bool,
+	passkeyRPID string,
+	passkeyRPOrigins []string,
 ) dto.SystemSettings {
 	updatedDefaultSubscriptions := make([]dto.DefaultSubscriptionSetting, 0, len(updatedSettings.DefaultSubscriptions))
 	for _, sub := range updatedSettings.DefaultSubscriptions {
@@ -28,6 +31,10 @@ func buildSettingsUpdateResponsePayload(
 		InvitationCodeEnabled:                                  updatedSettings.InvitationCodeEnabled,
 		TotpEnabled:                                            updatedSettings.TotpEnabled,
 		TotpEncryptionKeyConfigured:                            totpEncryptionKeyConfigured,
+		PasskeyEnabled:                                         updatedSettings.PasskeyEnabled,
+		PasskeyConfigured:                                      passkeyConfigured,
+		PasskeyRPID:                                            passkeyRPID,
+		PasskeyRPOrigins:                                       passkeyRPOrigins,
 		SessionBindingEnabled:                                  updatedSettings.SessionBindingEnabled,
 		StepUpEnabled:                                          updatedSettings.StepUpEnabled,
 		AuditLogRetentionDays:                                  updatedSettings.AuditLogRetentionDays,

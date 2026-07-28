@@ -31,6 +31,9 @@ func (c *Config) Validate() error {
 	if err := validateSecurity(c); err != nil {
 		return err
 	}
+	if err := validateWebAuthn(c); err != nil {
+		return err
+	}
 	if err := validateLinuxDoConnect(c); err != nil {
 		return err
 	}

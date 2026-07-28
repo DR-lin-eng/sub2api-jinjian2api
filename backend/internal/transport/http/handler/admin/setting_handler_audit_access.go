@@ -31,6 +31,9 @@ func appendAccessSettingChanges(changed []string, before, after *service.SystemS
 	if before.TotpEnabled != after.TotpEnabled {
 		changed = append(changed, "totp_enabled")
 	}
+	if before.PasskeyEnabled != after.PasskeyEnabled {
+		changed = append(changed, "passkey_enabled")
+	}
 	if before.SessionBindingEnabled != after.SessionBindingEnabled {
 		changed = append(changed, "session_binding_enabled")
 	}

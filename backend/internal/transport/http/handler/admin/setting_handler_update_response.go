@@ -40,10 +40,14 @@ func (h *SettingHandler) writeSettingsUpdateResponse(
 	if updatedPaymentCfg == nil {
 		updatedPaymentCfg = &service.PaymentConfig{}
 	}
+	passkeyConfigured, passkeyRPID, passkeyRPOrigins := h.settingService.PasskeyConfiguration()
 	payload := buildSettingsUpdateResponsePayload(
 		updatedSettings,
 		updatedPaymentCfg,
 		h.settingService.IsTotpEncryptionKeyConfigured(),
+		passkeyConfigured,
+		passkeyRPID,
+		passkeyRPOrigins,
 	)
 	if fastPolicy, err := h.settingService.GetOpenAIFastPolicySettings(c.Request.Context()); err != nil {
 		slog.Error("openai_fast_policy_settings_get_failed", "error", err)

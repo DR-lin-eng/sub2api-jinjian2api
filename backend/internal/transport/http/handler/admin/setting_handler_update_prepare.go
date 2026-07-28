@@ -15,6 +15,7 @@ type preparedSettingsUpdate struct {
 	previousSettings           *service.SystemSettings
 	previousAuthSourceDefaults *service.AuthSourceDefaultSettings
 
+	passkeyEnabled          bool
 	sessionBindingEnabled   bool
 	stepUpEnabled           bool
 	localCaptchaEnabled     bool
@@ -116,6 +117,17 @@ func (h *SettingHandler) resolveSettingsUpdateSecurity(c *gin.Context, prepared 
 	if req.StepUpEnabled != nil {
 		stepUpEnabled = *req.StepUpEnabled
 	}
+	passkeyEnabled := previousSettings.PasskeyEnabled
+	if req.PasskeyEnabled != nil {
+		passkeyEnabled = *req.PasskeyEnabled
+	}
+	if passkeyEnabled {
+		configured, _, _ := h.settingService.PasskeyConfiguration()
+		if !configured {
+			response.BadRequest(c, "Passkey sign-in requires a valid WebAuthn RP ID and allowed HTTPS origins in the deployment configuration")
+			return false
+		}
+	}
 	localCaptchaEnabled := previousSettings.LocalCaptchaEnabled
 	if req.LocalCaptchaEnabled != nil {
 		localCaptchaEnabled = *req.LocalCaptchaEnabled
@@ -164,6 +176,7 @@ func (h *SettingHandler) resolveSettingsUpdateSecurity(c *gin.Context, prepared 
 		}
 	}
 
+	prepared.passkeyEnabled = passkeyEnabled
 	prepared.sessionBindingEnabled = sessionBindingEnabled
 	prepared.stepUpEnabled = stepUpEnabled
 	prepared.localCaptchaEnabled = localCaptchaEnabled

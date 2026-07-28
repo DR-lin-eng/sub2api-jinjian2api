@@ -25,6 +25,7 @@ import type {
   AuthResponse
 } from '@/types'
 import type { RefreshTokenResponse } from '@/features/auth/data/datasources/authDatasource'
+import { passkeyAPI } from '@/features/passkeys/data/datasources/passkeyDatasource'
 
 const clearAuthToken = clearTokenMemory
 const getTokenExpiresAt = getTokenExpiresAtMemory
@@ -303,6 +304,17 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function loginWithPasskey(): Promise<User> {
+    try {
+      const response = await passkeyAPI.login()
+      setAuthFromResponse(response)
+      return user.value!
+    } catch (error) {
+      clearAuth({ preservePendingAuthSession: pendingAuthSession.value !== null })
+      throw error
+    }
+  }
+
   /**
    * Set auth state from an AuthResponse
    * Internal helper function
@@ -503,6 +515,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Actions
     login,
+    loginWithPasskey,
     login2FA,
     register,
     setToken,

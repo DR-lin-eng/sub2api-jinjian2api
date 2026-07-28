@@ -6,6 +6,13 @@ func setIdentityDefaults() {
 	// Turnstile
 	viper.SetDefault("turnstile.required", false)
 
+	// WebAuthn / Passkeys are opt-in because the relying-party boundary must
+	// be configured explicitly for each deployment.
+	viper.SetDefault("webauthn.enabled", false)
+	viper.SetDefault("webauthn.rp_display_name", "Sub2API")
+	viper.SetDefault("webauthn.rp_id", "")
+	viper.SetDefault("webauthn.rp_origins", []string{})
+
 	// LinuxDo Connect OAuth 登录
 	viper.SetDefault("linuxdo_connect.enabled", false)
 	viper.SetDefault("linuxdo_connect.client_id", "")

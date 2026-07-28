@@ -10,6 +10,7 @@ import (
 func buildSystemSettingsUpdate(prepared *preparedSettingsUpdate) *service.SystemSettings {
 	req := prepared.request
 	previousSettings := prepared.previousSettings
+	passkeyEnabled := prepared.passkeyEnabled
 	sessionBindingEnabled := prepared.sessionBindingEnabled
 	stepUpEnabled := prepared.stepUpEnabled
 	localCaptchaEnabled := prepared.localCaptchaEnabled
@@ -45,6 +46,7 @@ func buildSystemSettingsUpdate(prepared *preparedSettingsUpdate) *service.System
 		FrontendURL:                      req.FrontendURL,
 		InvitationCodeEnabled:            req.InvitationCodeEnabled,
 		TotpEnabled:                      req.TotpEnabled,
+		PasskeyEnabled:                   passkeyEnabled,
 		SessionBindingEnabled:            sessionBindingEnabled,
 		StepUpEnabled:                    stepUpEnabled,
 		AuditLogRetentionDays:            req.AuditLogRetentionDays,
