@@ -5,6 +5,8 @@ import PaymentProviderDialog from '@/features/billing/presentation/widgets/Payme
 import { STRIPE_SDK_API_VERSION } from '@/features/billing/presentation/providerConfigSignals'
 import type { ProviderInstance } from '@/types/payment'
 
+const showError = vi.hoisted(() => vi.fn())
+
 const messages: Record<string, string> = {
   'admin.settings.payment.providerConfig': 'Credentials',
   'admin.settings.payment.easypayCustomMethods': 'Custom EasyPay methods',
@@ -34,6 +36,10 @@ vi.mock('vue-i18n', () => ({
       )
     },
   }),
+}))
+
+vi.mock('@/stores', () => ({
+  useAppStore: () => ({ showError }),
 }))
 
 function providerFactory(overrides: Partial<ProviderInstance> = {}): ProviderInstance {
@@ -245,5 +251,10 @@ describe('PaymentProviderDialog payment guide', () => {
     await wrapper.find('form').trigger('submit.prevent')
 
     expect(wrapper.emitted('save')).toBeUndefined()
+    await vi.waitFor(() =>
+      expect(showError).toHaveBeenCalledWith(
+        'admin.settings.payment.validationEasyPayCustomMethodPrefixReserved',
+      ),
+    )
   })
 })
