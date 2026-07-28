@@ -279,7 +279,7 @@ async function resolveOrderFromResumeToken(resumeToken: string): Promise<Resolve
   try {
     const result = await paymentAPI.resolveOrderPublicByResumeToken(resumeToken)
     return result.data
-  } catch (_err: unknown) {
+  } catch {
     return null
   }
 }
@@ -288,11 +288,11 @@ async function resolveOrderFromOutTradeNo(outTradeNo: string): Promise<ResolvedO
   try {
     const result = await paymentAPI.verifyOrder(outTradeNo)
     return result.data
-  } catch (_err: unknown) {
+  } catch {
     try {
       const result = await paymentAPI.verifyOrderPublic(outTradeNo)
       return result.data
-    } catch (_innerErr: unknown) {
+    } catch {
       return null
     }
   }
@@ -382,7 +382,7 @@ onMounted(async () => {
   if (!order.value && orderId && (!resumeToken || routeOrderId > 0)) {
     try {
       setResolvedOrder(await paymentStore.pollOrderStatus(orderId))
-    } catch (_err: unknown) {
+    } catch {
       // Order lookup failed, will try legacy fallback below when possible.
     }
   }
@@ -417,7 +417,7 @@ onMounted(async () => {
     if (orderId) {
       try {
         return await paymentStore.pollOrderStatus(orderId)
-      } catch (_err: unknown) {
+      } catch {
         // Fall through to legacy public verification when order polling is unavailable.
       }
     }

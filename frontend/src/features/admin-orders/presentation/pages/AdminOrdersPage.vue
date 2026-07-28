@@ -222,7 +222,7 @@ async function showOrderDetail(order: PaymentOrder) {
     const data = res.data as unknown as Record<string, unknown>
     if (data.order) selectedOrder.value = data.order as PaymentOrder
     orderAuditLogs.value = ((data.auditLogs || data.audit_logs || []) as unknown) as AuditLog[]
-  } catch (_err: unknown) { /* keep cached order data */ }
+  } catch { /* keep cached order data */ }
 }
 
 async function handleCancelOrder(order: PaymentOrder) {

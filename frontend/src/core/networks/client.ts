@@ -241,7 +241,7 @@ apiClient.interceptors.response.use(
 
             // Refresh response was not successful, fall through to clear auth
             throw new Error('Token refresh failed')
-          } catch (refreshError) {
+          } catch {
             // Refresh failed - notify subscribers with empty token
             onTokenRefreshed('')
             isRefreshing = false
