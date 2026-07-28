@@ -17,5 +17,6 @@
 | `setting_handler_update_mapping.go` | 将已校验请求映射为 application service 输入 |
 | `setting_handler_update_persistence.go` | 持久化系统设置、独立策略和支付配置，并刷新支付 provider |
 | `setting_handler_update_response*.go` | 回读最新设置、同步运行时副作用、审计并映射响应 DTO |
+| `setting_handler_audit*.go` | 按设置域比较更新前后值，并按兼容顺序生成审计字段列表 |
 
 设置更新的校验顺序、字段省略语义和持久化后副作用属于兼容性边界；扩展字段时应在对应阶段补齐映射与回归测试，不应重新堆回入口 handler。
