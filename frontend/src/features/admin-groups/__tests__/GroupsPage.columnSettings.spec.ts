@@ -65,6 +65,25 @@ vi.mock('@/api/admin', () => ({
   },
 }))
 
+vi.mock('@/features/admin-groups/data/datasources/adminGroupsDatasource', () => ({
+  list: listGroups,
+  getAll: getAllGroups,
+  getModelsListCandidates,
+  getUsageSummary,
+  getCapacitySummary,
+  getLiveCapability,
+  create: vi.fn(),
+  update: vi.fn(),
+  deleteGroup: vi.fn(),
+  duplicate: vi.fn(),
+  updateSortOrder: vi.fn(),
+}))
+
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', () => ({
+  list: listAccounts,
+  getById: vi.fn(),
+}))
+
 vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError,
