@@ -5,11 +5,9 @@ import OpsDashboardHeader from '../presentation/widgets/OpsDashboardHeader.vue'
 
 const mockGetGroups = vi.fn()
 
-vi.mock('@/api', () => ({
-  adminAPI: {
-    groups: {
-      getAll: (...args: any[]) => mockGetGroups(...args)
-    }
+vi.mock('@/features/admin-groups/data/datasources/adminGroupsDatasource', () => ({
+  groupsAPI: {
+    getAll: (...args: any[]) => mockGetGroups(...args)
   }
 }))
 
@@ -19,7 +17,7 @@ vi.mock('@/features/admin-ops/data/datasources/adminOpsDatasource', () => ({
   }
 }))
 
-vi.mock('@/stores', () => ({
+vi.mock('@/features/admin-settings/presentation/stores/adminSettingsStore', () => ({
   useAdminSettingsStore: () => ({
     opsRealtimeMonitoringEnabled: false,
     setOpsRealtimeMonitoringEnabledLocal: vi.fn()

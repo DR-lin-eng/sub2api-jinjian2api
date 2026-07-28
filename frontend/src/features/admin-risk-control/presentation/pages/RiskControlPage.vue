@@ -23,353 +23,33 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <div
-            v-for="item in overviewItems"
-            :key="item.key"
-            class="rounded-lg border border-gray-100 bg-white px-4 py-3 shadow-sm dark:border-dark-700 dark:bg-dark-800"
-          >
-            <div class="flex min-w-0 items-center gap-3">
-              <div class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg" :class="item.iconClass">
-                <Icon :name="item.icon" size="sm" />
-              </div>
-              <div class="min-w-0 flex-1">
-                <div class="flex min-w-0 items-center justify-between gap-2">
-                  <p class="truncate text-xs font-medium text-gray-500 dark:text-gray-400">{{ item.label }}</p>
-                  <span
-                    v-if="item.badge"
-                    class="inline-flex flex-shrink-0 items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                    :class="item.badgeClass"
-                  >
-                    {{ item.badge }}
-                  </span>
-                </div>
-                <div class="mt-1 flex min-w-0 items-baseline gap-2">
-                  <p class="truncate text-xl font-semibold leading-7 text-gray-900 dark:text-white">{{ item.value }}</p>
-                  <p v-if="item.meta" class="truncate text-xs text-gray-500 dark:text-gray-400">{{ item.meta }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <RiskControlOverviewCards :items="overviewItems" />
+        <RiskControlRuntimeCards
+          :status="status"
+          :mode="configForm.mode"
+          :worker-count="configForm.worker_count"
+          :queue-size="configForm.queue_size"
+        />
 
-        <div
-          v-if="showPreBlockRuntimeCard"
-          data-test="pre-block-runtime-cards"
-          class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,520px)_minmax(0,1fr)]"
-        >
-          <div data-test="pre-block-sync-card" class="card">
-            <div class="flex flex-col gap-4 border-b border-gray-100 px-6 py-4 dark:border-dark-700 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.preBlockSyncStatus') }}</h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.preBlockSyncHint') }}</p>
-              </div>
-              <span class="inline-flex w-fit items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-dark-700 dark:text-gray-300">
-                {{ modeLabel(status?.mode ?? configForm.mode) }}
-              </span>
-            </div>
-
-            <div class="p-6">
-              <div data-test="pre-block-metric-grid" class="grid grid-cols-2 gap-3 md:grid-cols-3">
-                <div
-                  v-for="item in preBlockMetricItems"
-                  :key="item.key"
-                  class="rounded-lg p-4"
-                  :class="item.class"
-                >
-                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ item.label }}</p>
-                  <p class="mt-2 truncate text-2xl font-semibold leading-8" :class="item.valueClass">{{ item.value }}</p>
-                  <p v-if="item.meta" class="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">{{ item.meta }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div data-test="pre-block-api-key-load-card" class="card">
-            <div class="flex flex-col gap-4 border-b border-gray-100 px-6 py-4 dark:border-dark-700 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.preBlockAPIKeyLoad') }}</h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  {{ t('admin.riskControl.preBlockAPIKeyLoadHint') }}
-                </p>
-              </div>
-              <span class="inline-flex w-fit items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-dark-700 dark:text-gray-300">
-                {{ preBlockAPIKeyLoadSummaryText }}
-              </span>
-            </div>
-
-            <div class="p-6">
-              <div
-                v-if="preBlockAPIKeyLoads.length > 0"
-                data-test="pre-block-api-key-load-list"
-                class="max-h-[280px] space-y-3 overflow-y-auto pr-1"
-              >
-                <div
-                  v-for="item in preBlockAPIKeyLoads"
-                  :key="item.key_hash || item.index"
-                  class="rounded-lg bg-gray-50 p-3 dark:bg-dark-700/50"
-                >
-                  <div class="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div class="min-w-0">
-                      <div class="flex min-w-0 items-center gap-2">
-                        <span class="font-mono text-sm font-semibold text-gray-900 dark:text-white">#{{ item.index + 1 }}</span>
-                        <span class="truncate font-mono text-sm text-gray-700 dark:text-gray-200">{{ item.masked || '-' }}</span>
-                        <span class="h-2 w-2 flex-shrink-0 rounded-full" :class="apiKeyStatusDotClass(item.status)"></span>
-                      </div>
-                      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                        {{ t('admin.riskControl.preBlockAPIKeyTotals', { total: formatNumber(item.total), success: formatNumber(item.success), errors: formatNumber(item.errors) }) }}
-                      </p>
-                    </div>
-                    <div class="grid grid-cols-4 gap-2 text-right text-xs text-gray-500 dark:text-gray-400 sm:min-w-[280px]">
-                      <div>
-                        <p>{{ t('admin.riskControl.preBlockKeyActiveShort') }}</p>
-                        <p class="mt-1 text-sm font-semibold text-sky-700 dark:text-sky-300">{{ formatNumber(item.active) }}</p>
-                      </div>
-                      <div>
-                        <p>{{ t('admin.riskControl.preBlockKeyTotalShort') }}</p>
-                        <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{{ formatNumber(item.total) }}</p>
-                      </div>
-                      <div>
-                        <p>{{ t('admin.riskControl.preBlockKeyAvgShort') }}</p>
-                        <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{{ formatNumber(item.avg_latency_ms) }} ms</p>
-                      </div>
-                      <div>
-                        <p>{{ t('admin.riskControl.preBlockKeyLastShort') }}</p>
-                        <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{{ formatNumber(item.last_latency_ms) }} ms</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-white dark:bg-dark-900">
-                    <div class="h-full rounded-full bg-sky-500" :style="{ width: preBlockAPIKeyLoadWidth(item.total) }"></div>
-                  </div>
-                </div>
-              </div>
-              <p v-else class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500 dark:bg-dark-700/50 dark:text-gray-400">
-                {{ t('admin.riskControl.preBlockAPIKeyLoadEmpty') }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div v-if="showWorkerRuntimeCard" class="card">
-          <div class="flex flex-col gap-4 border-b border-gray-100 px-6 py-4 dark:border-dark-700 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.workerStatus') }}</h2>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.workerStatusHint') }}</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-              <span>{{ t('admin.riskControl.autoRefresh') }}</span>
-              <span v-if="status?.last_cleanup_at">
-                {{ t('admin.riskControl.lastCleanup', { time: formatDateTime(status.last_cleanup_at) }) }}
-              </span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 gap-6 p-6 xl:grid-cols-[minmax(0,360px)_1fr]">
-            <div class="space-y-4">
-              <div class="rounded-lg border border-gray-100 p-4 dark:border-dark-700">
-                <div class="flex items-center justify-between gap-3">
-                  <div>
-                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ t('admin.riskControl.queueUsage') }}</p>
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {{ formatNumber(status?.queue_length ?? 0) }} / {{ formatNumber(status?.queue_size ?? configForm.queue_size) }}
-                    </p>
-                  </div>
-                  <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ queueUsagePercent }}</span>
-                </div>
-                <div class="mt-4 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-dark-700">
-                  <div class="h-full rounded-full bg-primary-500 transition-all duration-300" :style="queueUsageStyle"></div>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3">
-                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-700/50">
-                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.activeWorkers') }}</p>
-                  <p class="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{{ status?.active_workers ?? 0 }}</p>
-                </div>
-                <div class="rounded-lg bg-emerald-50 p-4 dark:bg-emerald-900/10">
-                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.idleWorkers') }}</p>
-                  <p class="mt-2 text-2xl font-semibold text-emerald-700 dark:text-emerald-300">{{ status?.idle_workers ?? configForm.worker_count }}</p>
-                </div>
-                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-700/50">
-                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.processed') }}</p>
-                  <p class="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{{ formatNumber(status?.processed ?? 0) }}</p>
-                </div>
-                <div class="rounded-lg bg-gray-50 p-4 dark:bg-dark-700/50">
-                  <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.droppedErrors') }}</p>
-                  <p class="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">{{ formatNumber((status?.dropped ?? 0) + (status?.errors ?? 0)) }}</p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <div class="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ t('admin.riskControl.workerPool') }}</p>
-                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {{ t('admin.riskControl.workerPoolMeta', { active: status?.active_workers ?? 0, idle: status?.idle_workers ?? configForm.worker_count, total: status?.worker_count ?? configForm.worker_count }) }}
-                  </p>
-                </div>
-                <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 dark:bg-dark-700 dark:text-gray-300">
-                  {{ modeLabel(status?.mode ?? configForm.mode) }}
-                </span>
-              </div>
-              <div class="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-6 xl:grid-cols-8 2xl:grid-cols-10">
-                <div
-                  v-for="worker in workerSlots"
-                  :key="worker.id"
-                  class="flex h-12 items-center justify-between rounded-lg border px-3 transition-colors"
-                  :class="workerSlotClass(worker.state)"
-                  :title="worker.label"
-                >
-                  <span class="text-sm font-semibold">#{{ worker.id }}</span>
-                  <span class="h-2.5 w-2.5 rounded-full" :class="workerDotClass(worker.state)"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="flex flex-col gap-4 border-b border-gray-100 px-6 py-4 dark:border-dark-700">
-            <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.records') }}</h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.recordsHint') }}</p>
-              </div>
-              <button type="button" class="btn btn-secondary inline-flex items-center gap-2" :disabled="logsLoading" @click="loadLogs">
-                <Icon name="refresh" size="sm" :class="logsLoading ? 'animate-spin' : ''" />
-                {{ t('admin.riskControl.refresh') }}
-              </button>
-            </div>
-
-            <div class="flex flex-col gap-2 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 dark:border-dark-700 dark:bg-dark-900/30 sm:flex-row sm:items-center sm:justify-between">
-              <div class="flex min-w-0 items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
-                <Icon name="filter" size="sm" class="flex-shrink-0 text-gray-400" />
-                <span class="font-medium">{{ t('admin.riskControl.modelFilter') }}</span>
-                <span class="truncate text-gray-500 dark:text-gray-400">{{ modelFilterSummary }}</span>
-              </div>
-              <div v-if="modelFilterPreviewModels.length > 0" class="flex flex-wrap gap-1.5">
-                <span
-                  v-for="model in modelFilterPreviewModels"
-                  :key="model"
-                  class="inline-flex max-w-[180px] items-center truncate rounded-md bg-white px-2 py-1 font-mono text-xs text-gray-600 shadow-sm dark:bg-dark-800 dark:text-gray-300"
-                >
-                  {{ model }}
-                </span>
-                <span v-if="hiddenModelFilterModelCount > 0" class="inline-flex rounded-md bg-white px-2 py-1 text-xs text-gray-500 shadow-sm dark:bg-dark-800 dark:text-gray-400">
-                  +{{ hiddenModelFilterModelCount }}
-                </span>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-6">
-              <Select v-model="filters.result" :options="resultOptions" @change="reloadLogsFromFirstPage" />
-              <Select v-model="filters.group_id" :options="groupFilterOptions" @change="reloadLogsFromFirstPage" />
-              <Select v-model="filters.endpoint" :options="endpointOptions" @change="reloadLogsFromFirstPage" />
-              <input v-model.trim="filters.search" type="search" class="input" :placeholder="t('admin.riskControl.filters.search')" @keyup.enter="reloadLogsFromFirstPage" />
-              <input v-model="filters.from" type="datetime-local" class="input" :title="t('admin.riskControl.filters.from')" @change="reloadLogsFromFirstPage" />
-              <input v-model="filters.to" type="datetime-local" class="input" :title="t('admin.riskControl.filters.to')" @change="reloadLogsFromFirstPage" />
-            </div>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
-              <thead class="bg-gray-50 dark:bg-dark-800">
-                <tr>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.time') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.group') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.user') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.apiKey') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.endpoint') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.result') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.highest') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.actionMeta') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.latency') }}</th>
-                  <th class="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.input') }}</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100 bg-white dark:divide-dark-800 dark:bg-dark-800">
-                <tr v-if="logsLoading">
-                  <td colspan="10" class="px-5 py-12 text-center text-sm text-gray-500 dark:text-gray-400">{{ t('common.loading') }}</td>
-                </tr>
-                <tr v-else-if="logs.length === 0">
-                  <td colspan="10" class="px-5 py-12 text-center text-sm text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.emptyLogs') }}</td>
-                </tr>
-                <template v-else>
-                  <tr v-for="row in logs" :key="row.id" class="hover:bg-gray-50 dark:hover:bg-dark-700/60">
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(row.created_at) }}</td>
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{{ row.group_name || '-' }}</td>
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      <div>{{ row.user_email || '-' }}</div>
-                      <div v-if="row.user_id" class="text-xs text-gray-400">UID {{ row.user_id }}</div>
-                    </td>
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">{{ row.api_key_name || '-' }}</td>
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      <div>{{ row.endpoint || '-' }}</div>
-                      <div class="text-xs text-gray-400">{{ row.provider || '-' }} / {{ row.model || '-' }}</div>
-                    </td>
-                    <td class="whitespace-nowrap px-5 py-4">
-                      <span class="inline-flex rounded-md px-2 py-1 text-xs font-medium" :class="resultBadgeClass(row)">
-                        {{ resultLabel(row) }}
-                      </span>
-                    </td>
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      <div>{{ row.highest_category || '-' }}</div>
-                      <div class="text-xs text-gray-400">{{ percent(row.highest_score) }}</div>
-                      <div v-if="row.matched_keyword" class="mt-0.5 text-xs font-medium text-red-600 dark:text-red-300" :title="t('admin.riskControl.matchedKeyword') + ': ' + row.matched_keyword">
-                        {{ t('admin.riskControl.matchedKeyword') }}: {{ row.matched_keyword }}
-                      </div>
-                    </td>
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      <div>{{ violationCountText(row) }}</div>
-                      <div class="text-xs text-gray-400">
-                        {{ row.email_sent ? t('admin.riskControl.emailSent') : t('admin.riskControl.emailNotSent') }}
-                        <span v-if="row.auto_banned"> / {{ t('admin.riskControl.autoBanned') }}</span>
-                      </div>
-                      <button
-                        v-if="canUnbanRow(row)"
-                        type="button"
-                        class="mt-2 inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
-                        :disabled="unbanningUserID === row.user_id"
-                        @click="unbanUser(row)"
-                      >
-                        <Icon name="checkCircle" size="xs" :class="unbanningUserID === row.user_id ? 'animate-spin' : ''" />
-                        {{ unbanningUserID === row.user_id ? t('common.processing') : t('admin.riskControl.unbanUser') }}
-                      </button>
-                    </td>
-                    <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      <div>{{ latencyText(row.upstream_latency_ms) }}</div>
-                      <div v-if="row.queue_delay_ms !== null && row.queue_delay_ms !== undefined" class="text-xs text-gray-400">
-                        {{ t('admin.riskControl.queueDelay', { ms: row.queue_delay_ms }) }}
-                      </div>
-                    </td>
-                    <td class="w-[320px] max-w-sm px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      <button
-                        type="button"
-                        class="group flex w-full min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-dark-700"
-                        :title="inputSummaryText(row)"
-                        @click="openInputDetail(row)"
-                      >
-                        <span class="min-w-0 flex-1 truncate">{{ inputSummaryText(row) }}</span>
-                        <Icon name="eye" size="xs" class="flex-shrink-0 text-gray-300 transition-colors group-hover:text-primary-500 dark:text-gray-500" />
-                      </button>
-                    </td>
-                  </tr>
-                </template>
-              </tbody>
-            </table>
-          </div>
-
-          <Pagination
-            v-if="pagination.total > 0"
-            :page="pagination.page"
-            :total="pagination.total"
-            :page-size="pagination.page_size"
-            @update:page="onPageChange"
-            @update:pageSize="onPageSizeChange"
-          />
-        </div>
+        <RiskControlRecordsPanel
+          :logs="logs"
+          :loading="logsLoading"
+          :filters="filters"
+          :result-options="resultOptions"
+          :group-filter-options="groupFilterOptions"
+          :endpoint-options="endpointOptions"
+          :model-filter-summary="modelFilterSummary"
+          :model-filter-preview-models="modelFilterPreviewModels"
+          :hidden-model-filter-model-count="hiddenModelFilterModelCount"
+          :pagination="pagination"
+          :unbanning-user-id="unbanningUserID"
+          @refresh="loadLogs"
+          @reload="reloadLogsFromFirstPage"
+          @page-change="onPageChange"
+          @page-size-change="onPageSizeChange"
+          @unban="unbanUser"
+          @update-filter="updateLogFilter"
+        />
       </template>
 
       <BaseDialog :show="settingsOpen" :title="t('admin.riskControl.settingsTitle')" width="extra-wide" @close="settingsOpen = false">
@@ -1053,83 +733,46 @@
         </template>
       </BaseDialog>
 
-      <BaseDialog
-        :show="inputDetailRow !== null"
-        :title="t('admin.riskControl.inputDetailTitle')"
-        width="wide"
-        @close="closeInputDetail"
-      >
-        <div v-if="inputDetailRow" class="space-y-5">
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <div class="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-dark-700 dark:bg-dark-800/70">
-              <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.time') }}</p>
-              <p class="mt-1 truncate text-sm font-semibold text-gray-900 dark:text-white">{{ formatDateTime(inputDetailRow.created_at) }}</p>
-            </div>
-            <div class="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-dark-700 dark:bg-dark-800/70">
-              <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.user') }}</p>
-              <p class="mt-1 truncate text-sm font-semibold text-gray-900 dark:text-white">{{ inputDetailRow.user_email || '-' }}</p>
-            </div>
-            <div class="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-dark-700 dark:bg-dark-800/70">
-              <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.result') }}</p>
-              <span class="mt-1 inline-flex rounded-md px-2 py-1 text-xs font-medium" :class="resultBadgeClass(inputDetailRow)">
-                {{ resultLabel(inputDetailRow) }}
-              </span>
-            </div>
-            <div class="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-dark-700 dark:bg-dark-800/70">
-              <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.table.highest') }}</p>
-              <p class="mt-1 truncate text-sm font-semibold text-gray-900 dark:text-white">
-                {{ inputDetailRow.highest_category || '-' }} / {{ percent(inputDetailRow.highest_score) }}
-              </p>
-            </div>
-            <div v-if="inputDetailRow.matched_keyword" class="rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-900/60 dark:bg-red-900/20">
-              <p class="text-xs font-medium text-red-500 dark:text-red-300">{{ t('admin.riskControl.matchedKeyword') }}</p>
-              <p class="mt-1 truncate text-sm font-semibold text-red-700 dark:text-red-200" :title="inputDetailRow.matched_keyword">{{ inputDetailRow.matched_keyword }}</p>
-            </div>
-          </div>
 
-          <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-dark-700 dark:bg-dark-800">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('admin.riskControl.inputDetailContent') }}</p>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  {{ inputDetailRow.endpoint || '-' }} · {{ inputDetailRow.provider || '-' }} / {{ inputDetailRow.model || '-' }}
-                </p>
-              </div>
-              <span v-if="inputDetailRow.group_name" class="inline-flex rounded-md bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700 dark:bg-sky-900/20 dark:text-sky-300">
-                {{ inputDetailRow.group_name }}
-              </span>
-            </div>
-            <pre class="mt-4 max-h-[420px] overflow-auto whitespace-pre-wrap break-words rounded-lg bg-gray-950 p-4 text-sm leading-6 text-gray-100 shadow-inner dark:bg-black/50">{{ inputDetailText }}</pre>
-          </div>
-        </div>
-
-        <template #footer>
-          <div class="flex justify-end">
-            <button type="button" class="btn btn-secondary" @click="closeInputDetail">{{ t('common.close') }}</button>
-          </div>
-        </template>
-      </BaseDialog>
     </div>
   </AppLayout>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
-import Pagination from '@/common/widgets/data/Pagination.vue'
 import ModelWhitelistSelector from '@/features/admin-accounts/presentation/widgets/ModelWhitelistSelector.vue'
+import RiskControlOverviewCards from '@/features/admin-risk-control/presentation/widgets/RiskControlOverviewCards.vue'
+import RiskControlRuntimeCards from '@/features/admin-risk-control/presentation/widgets/RiskControlRuntimeCards.vue'
+import RiskControlRecordsPanel from '@/features/admin-risk-control/presentation/widgets/RiskControlRecordsPanel.vue'
+import { useRiskControlPolling } from '@/features/admin-risk-control/presentation/composables/useRiskControlPolling'
+import {
+  useRiskControlOptions,
+  type RiskControlSettingsTab,
+} from '@/features/admin-risk-control/presentation/composables/useRiskControlOptions'
+import {
+  buildModelFilterPayload,
+  buildRiskThresholdPayload,
+  formatThresholdPercent,
+  normalizeDateTimeLocal,
+  normalizeKeywordBlockingMode,
+  normalizeModelFilter,
+  parseApiKeys,
+  parseBlockedKeywords,
+  riskThresholdCategories,
+  riskThresholdDefaults,
+  riskThresholdsFromConfig,
+} from '@/features/admin-risk-control/presentation/composables/riskControlFormResolvers'
 import { adminAPI } from '@/api/admin'
 import type {
-  ContentModerationAPIKeyLoad,
   ContentModerationAPIKeyStatus,
   ContentModerationConfig,
   ContentModerationLog,
-  ContentModerationModelFilter,
   ContentModerationModelFilterType,
   ContentModerationRuntimeStatus,
   ContentModerationTestAuditResult,
@@ -1137,13 +780,11 @@ import type {
   ModerationMode,
   UpdateContentModerationConfig,
 } from '@/features/admin-risk-control/data/datasources/adminRiskControlDatasource'
-import type { AdminGroup, SelectOption } from '@/types'
+import type { AdminGroup } from '@/types'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { formatDateTime as formatDateTimeValue } from '@/core/utils/format'
 
-type SettingsTab = 'basic' | 'scope' | 'runtime' | 'response' | 'riskThresholds' | 'retention' | 'keywords'
-type WorkerSlotState = 'active' | 'idle' | 'disabled'
 type APIKeysWriteMode = 'append' | 'replace'
 type OverviewIcon = 'shield' | 'key' | 'users' | 'document'
 type OverviewItem = {
@@ -1172,22 +813,6 @@ const maxModerationTestImages = 1
 const maxModerationTestImageSize = 8 * 1024 * 1024
 const maxVisibleApiKeyRows: number = 3
 const blockedKeywordMax = 10000
-const riskThresholdDefaults: Record<string, number> = {
-  harassment: 98,
-  'harassment/threatening': 90,
-  hate: 65,
-  'hate/threatening': 65,
-  illicit: 95,
-  'illicit/violent': 95,
-  'self-harm': 65,
-  'self-harm/intent': 85,
-  'self-harm/instructions': 65,
-  sexual: 65,
-  'sexual/minors': 65,
-  violence: 95,
-  'violence/graphic': 95,
-}
-const riskThresholdCategories = Object.keys(riskThresholdDefaults)
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -1201,7 +826,7 @@ const apiKeyTesting = ref(false)
 const hashActionLoading = ref(false)
 const unbanningUserID = ref<number | null>(null)
 const settingsOpen = ref(false)
-const activeSettingsTab = ref<SettingsTab>('basic')
+const activeSettingsTab = ref<RiskControlSettingsTab>('basic')
 const groupSearch = ref('')
 const flaggedHashInput = ref('')
 const groups = ref<AdminGroup[]>([])
@@ -1213,8 +838,6 @@ const apiKeyRowsExpanded = ref<boolean>(false)
 const moderationTestPrompt = ref('')
 const moderationTestImages = ref<string[]>([])
 const moderationTestResult = ref<ContentModerationTestAuditResult | null>(null)
-const inputDetailRow = ref<ContentModerationLog | null>(null)
-let statusTimer: number | null = null
 
 const configForm = reactive({
   enabled: false,
@@ -1270,137 +893,16 @@ const filters = reactive({
   to: '',
 })
 
-const settingsTabs = computed<Array<{ id: SettingsTab; label: string }>>(() => [
-  { id: 'basic', label: t('admin.riskControl.tabs.basic') },
-  { id: 'scope', label: t('admin.riskControl.tabs.scope') },
-  { id: 'runtime', label: t('admin.riskControl.tabs.runtime') },
-  { id: 'response', label: t('admin.riskControl.tabs.response') },
-  { id: 'riskThresholds', label: t('admin.riskControl.tabs.riskThresholds') },
-  { id: 'keywords', label: t('admin.riskControl.tabs.keywords') },
-  { id: 'retention', label: t('admin.riskControl.tabs.retention') },
-])
-
-const modeOptions = computed<SelectOption[]>(() => [
-  { value: 'pre_block', label: t('admin.riskControl.modePreBlock') },
-  { value: 'observe', label: t('admin.riskControl.modeObserve') },
-  { value: 'off', label: t('admin.riskControl.modeOff') },
-])
-
-const keywordBlockingModeOptions = computed<Array<{ value: KeywordBlockingMode; label: string; description: string }>>(() => [
-  {
-    value: 'keyword_and_api',
-    label: t('admin.riskControl.keywordModeKeywordAndApi'),
-    description: t('admin.riskControl.keywordModeKeywordAndApiDesc'),
-  },
-  {
-    value: 'keyword_only',
-    label: t('admin.riskControl.keywordModeKeywordOnly'),
-    description: t('admin.riskControl.keywordModeKeywordOnlyDesc'),
-  },
-  {
-    value: 'api_only',
-    label: t('admin.riskControl.keywordModeApiOnly'),
-    description: t('admin.riskControl.keywordModeApiOnlyDesc'),
-  },
-])
-
-const modelFilterOptions = computed<Array<{ value: ContentModerationModelFilterType; label: string; description: string }>>(() => [
-  {
-    value: 'all',
-    label: t('admin.riskControl.modelFilterAll'),
-    description: t('admin.riskControl.modelFilterAllDesc'),
-  },
-  {
-    value: 'include',
-    label: t('admin.riskControl.modelFilterInclude'),
-    description: t('admin.riskControl.modelFilterIncludeDesc'),
-  },
-  {
-    value: 'exclude',
-    label: t('admin.riskControl.modelFilterExclude'),
-    description: t('admin.riskControl.modelFilterExcludeDesc'),
-  },
-])
-
-type KeywordNoticeView = {
-  title: string
-  description: string
-  icon: 'infoCircle' | 'exclamationTriangle'
-  toneClass: string
-  iconClass: string
-  titleClass: string
-}
-
-const keywordNoticeTones = {
-  info: {
-    icon: 'infoCircle' as const,
-    toneClass: 'border-primary-100 bg-primary-50/60 dark:border-primary-900/40 dark:bg-primary-900/10',
-    iconClass: 'mt-0.5 flex-shrink-0 text-primary-500 dark:text-primary-300',
-    titleClass: 'text-primary-700 dark:text-primary-200',
-  },
-  warning: {
-    icon: 'exclamationTriangle' as const,
-    toneClass: 'border-amber-200 bg-amber-50 dark:border-amber-900/40 dark:bg-amber-900/20',
-    iconClass: 'mt-0.5 flex-shrink-0 text-amber-500 dark:text-amber-300',
-    titleClass: 'text-amber-700 dark:text-amber-200',
-  },
-}
-
-const keywordNotice = computed<KeywordNoticeView>(() => {
-  const strategy = configForm.keyword_blocking_mode
-  if (strategy === 'api_only') {
-    return {
-      ...keywordNoticeTones.info,
-      title: t('admin.riskControl.keywordModeApiOnlyNotice'),
-      description: t('admin.riskControl.keywordModeApiOnlyDesc'),
-    }
-  }
-  if (configForm.mode !== 'pre_block') {
-    return {
-      ...keywordNoticeTones.warning,
-      title: t('admin.riskControl.blockedKeywordsModeWarning', { mode: modeLabel(configForm.mode) }),
-      description: t('admin.riskControl.blockedKeywordsDescription'),
-    }
-  }
-  if (strategy === 'keyword_only') {
-    return {
-      ...keywordNoticeTones.info,
-      title: t('admin.riskControl.keywordModeKeywordOnlyNotice'),
-      description: t('admin.riskControl.keywordModeKeywordOnlyDesc'),
-    }
-  }
-  return {
-    ...keywordNoticeTones.info,
-    title: t('admin.riskControl.blockedKeywordsPreBlockHint'),
-    description: t('admin.riskControl.blockedKeywordsDescription'),
-  }
-})
-
-const resultOptions = computed<SelectOption[]>(() => [
-  { value: '', label: t('admin.riskControl.result.all') },
-  { value: 'hit', label: t('admin.riskControl.result.hit') },
-  { value: 'blocked', label: t('admin.riskControl.result.blocked') },
-  { value: 'pass', label: t('admin.riskControl.result.pass') },
-  { value: 'error', label: t('admin.riskControl.result.error') },
-])
-
-const endpointOptions = computed<SelectOption[]>(() => [
-  { value: '', label: t('admin.riskControl.filters.allEndpoints') },
-  { value: '/v1/messages', label: '/v1/messages' },
-  { value: '/v1/responses', label: '/v1/responses' },
-  { value: '/v1/chat/completions', label: '/v1/chat/completions' },
-  { value: '/v1beta/models', label: '/v1beta/models' },
-  { value: '/v1/images/generations', label: '/v1/images/generations' },
-  { value: '/v1/images/edits', label: '/v1/images/edits' },
-])
-
-const groupFilterOptions = computed<SelectOption[]>(() => [
-  { value: 0, label: t('admin.riskControl.filters.allGroups') },
-  ...groups.value.map((group) => ({
-    value: group.id,
-    label: `${group.name} (${group.platform})`,
-  })),
-])
+const {
+  endpointOptions,
+  groupFilterOptions,
+  keywordBlockingModeOptions,
+  keywordNotice,
+  modeOptions,
+  modelFilterOptions,
+  resultOptions,
+  settingsTabs,
+} = useRiskControlOptions(t, groups, configForm)
 
 const selectedGroupCount = computed(() => String(configForm.group_ids.length))
 
@@ -1576,107 +1078,6 @@ const riskThresholdRows = computed<RiskThresholdRow[]>(() => (
   }))
 ))
 
-const inputDetailText = computed(() => {
-  if (!inputDetailRow.value) return '-'
-  return inputDetailRow.value.input_excerpt || inputDetailRow.value.error || '-'
-})
-
-const queueUsagePercent = computed(() => `${Math.min(100, Math.max(0, status.value?.queue_usage_percent ?? 0)).toFixed(1)}%`)
-
-const queueUsageStyle = computed(() => ({
-  width: queueUsagePercent.value,
-}))
-
-const runtimeMode = computed<ModerationMode>(() => status.value?.mode ?? configForm.mode)
-
-const showPreBlockRuntimeCard = computed(() => runtimeMode.value === 'pre_block')
-
-const showWorkerRuntimeCard = computed(() => runtimeMode.value === 'observe')
-
-const preBlockMetricItems = computed(() => [
-  {
-    key: 'active',
-    label: t('admin.riskControl.preBlockActive'),
-    value: formatNumber(status.value?.pre_block_active ?? 0),
-    meta: t('admin.riskControl.preBlockActiveHint'),
-    class: 'bg-sky-50 dark:bg-sky-900/10',
-    valueClass: 'text-sky-700 dark:text-sky-300',
-  },
-  {
-    key: 'checked',
-    label: t('admin.riskControl.preBlockChecked'),
-    value: formatNumber(status.value?.pre_block_checked ?? 0),
-    meta: t('admin.riskControl.preBlockCheckedHint'),
-    class: 'bg-gray-50 dark:bg-dark-700/50',
-    valueClass: 'text-gray-900 dark:text-white',
-  },
-  {
-    key: 'allowed',
-    label: t('admin.riskControl.preBlockAllowed'),
-    value: formatNumber(status.value?.pre_block_allowed ?? 0),
-    meta: t('admin.riskControl.preBlockAllowedHint'),
-    class: 'bg-emerald-50 dark:bg-emerald-900/10',
-    valueClass: 'text-emerald-700 dark:text-emerald-300',
-  },
-  {
-    key: 'blocked',
-    label: t('admin.riskControl.preBlockBlocked'),
-    value: formatNumber(status.value?.pre_block_blocked ?? 0),
-    meta: t('admin.riskControl.preBlockBlockedHint'),
-    class: 'bg-rose-50 dark:bg-rose-900/10',
-    valueClass: 'text-rose-700 dark:text-rose-300',
-  },
-  {
-    key: 'errors',
-    label: t('admin.riskControl.preBlockErrors'),
-    value: formatNumber(status.value?.pre_block_errors ?? 0),
-    meta: t('admin.riskControl.preBlockErrorsHint'),
-    class: 'bg-amber-50 dark:bg-amber-900/10',
-    valueClass: 'text-amber-700 dark:text-amber-300',
-  },
-  {
-    key: 'latency',
-    label: t('admin.riskControl.preBlockAvgLatency'),
-    value: `${formatNumber(status.value?.pre_block_avg_latency_ms ?? 0)} ms`,
-    meta: t('admin.riskControl.preBlockAvgLatencyHint'),
-    class: 'bg-violet-50 dark:bg-violet-900/10',
-    valueClass: 'text-violet-700 dark:text-violet-300',
-  },
-])
-
-const preBlockAPIKeyLoads = computed<ContentModerationAPIKeyLoad[]>(() => (
-  [...(status.value?.pre_block_api_key_loads ?? [])].sort((a, b) => a.index - b.index)
-))
-
-const preBlockAPIKeyMaxTotal = computed(() => Math.max(1, ...preBlockAPIKeyLoads.value.map((item) => item.total || 0)))
-
-const preBlockAPIKeyLoadSummaryText = computed(() => t('admin.riskControl.preBlockAPIKeyLoadSummary', {
-  active: formatNumber(status.value?.pre_block_api_key_active ?? 0),
-  available: formatNumber(status.value?.pre_block_api_key_available_count ?? 0),
-  total: formatNumber(status.value?.pre_block_api_key_total_calls ?? 0),
-  workerActive: formatNumber(status.value?.active_workers ?? 0),
-  workerTotal: formatNumber(status.value?.worker_count ?? configForm.worker_count),
-}))
-
-function preBlockAPIKeyLoadWidth(total: number): string {
-  return `${Math.min(100, Math.max(0, (total / preBlockAPIKeyMaxTotal.value) * 100)).toFixed(1)}%`
-}
-
-const workerSlots = computed(() => {
-  const total = Math.max(0, status.value?.worker_count ?? configForm.worker_count)
-  const active = Math.max(0, status.value?.active_workers ?? 0)
-  const enabled = Boolean(status.value?.risk_control_enabled && status.value?.enabled && status.value?.mode !== 'off')
-  return Array.from({ length: total }, (_, index) => ({
-    id: index + 1,
-    state: (!enabled ? 'disabled' : index < active ? 'active' : 'idle') as WorkerSlotState,
-    label: !enabled
-      ? t('admin.riskControl.workerDisabled')
-      : index < active
-        ? t('admin.riskControl.workerActive')
-        : t('admin.riskControl.workerIdle'),
-  }))
-})
-
 const runtimeBadgeText = computed(() => {
   if (!status.value?.risk_control_enabled) return t('admin.riskControl.riskSwitchOff')
   if (!configForm.enabled || configForm.mode === 'off') return t('admin.riskControl.overview.disabled')
@@ -1776,7 +1177,10 @@ async function loadStatus(silent = true) {
 async function saveConfig() {
   saving.value = true
   try {
-    const modelFilterPayload = buildModelFilterPayload()
+    const modelFilterPayload = buildModelFilterPayload(
+      configForm.model_filter_type,
+      configForm.model_filter_models,
+    )
     if (modelFilterPayload.type !== 'all' && modelFilterPayload.models.length === 0) {
       appStore.showError(t('admin.riskControl.modelFilterModelsRequired'))
       return
@@ -1805,7 +1209,7 @@ async function saveConfig() {
       hit_retention_days: Number(configForm.hit_retention_days) || 180,
       non_hit_retention_days: Math.min(Math.max(Number(configForm.non_hit_retention_days) || 3, 1), 3),
       pre_hash_check_enabled: configForm.pre_hash_check_enabled,
-      thresholds: buildRiskThresholdPayload(),
+      thresholds: buildRiskThresholdPayload(configForm.thresholds),
       blocked_keywords: blockedKeywordList.value,
       keyword_blocking_mode: configForm.keyword_blocking_mode,
       model_filter: modelFilterPayload,
@@ -1860,22 +1264,6 @@ async function loadLogs() {
   } finally {
     logsLoading.value = false
   }
-}
-
-function canUnbanRow(row: ContentModerationLog): boolean {
-  return Boolean(row.auto_banned && row.user_id && row.user_status === 'disabled')
-}
-
-function inputSummaryText(row: ContentModerationLog): string {
-  return row.input_excerpt || row.error || '-'
-}
-
-function openInputDetail(row: ContentModerationLog) {
-  inputDetailRow.value = row
-}
-
-function closeInputDetail() {
-  inputDetailRow.value = null
 }
 
 async function unbanUser(row: ContentModerationLog) {
@@ -1934,6 +1322,14 @@ function openSettings() {
 function reloadLogsFromFirstPage() {
   pagination.page = 1
   void loadLogs()
+}
+
+function updateLogFilter(key: keyof typeof filters, value: string | number) {
+  if (key === 'group_id') {
+    filters.group_id = Number(value)
+    return
+  }
+  filters[key] = String(value)
 }
 
 function onPageChange(page: number) {
@@ -2114,38 +1510,6 @@ function modeDescription(mode: ModerationMode): string {
   return descriptions[mode] ?? ''
 }
 
-function resultLabel(row: ContentModerationLog): string {
-  if (row.action === 'cyber_policy') return t('admin.riskControl.action.cyberPolicy')
-  if (row.action === 'keyword_block') return t('admin.riskControl.action.keywordBlock')
-  if (row.action === 'block') return t('admin.riskControl.action.block')
-  if (row.action === 'error' || row.error) return t('admin.riskControl.action.error')
-  if (row.flagged) return t('admin.riskControl.result.hit')
-  return t('admin.riskControl.result.pass')
-}
-
-function resultBadgeClass(row: ContentModerationLog): string {
-  if (row.action === 'block' || row.action === 'keyword_block' || row.action === 'cyber_policy') return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-  if (row.action === 'error' || row.error) return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-  if (row.flagged) return 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300'
-  return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-}
-
-function workerSlotClass(state: WorkerSlotState): string {
-  if (state === 'active') {
-    return 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-900/20 dark:text-sky-300'
-  }
-  if (state === 'idle') {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-300'
-  }
-  return 'border-gray-100 bg-white text-gray-400 dark:border-dark-700 dark:bg-dark-800 dark:text-gray-500'
-}
-
-function workerDotClass(state: WorkerSlotState): string {
-  if (state === 'active') return 'bg-sky-500'
-  if (state === 'idle') return 'bg-emerald-500'
-  return 'bg-gray-300 dark:bg-dark-500'
-}
-
 function percent(value: number): string {
   if (!Number.isFinite(value)) return '-'
   return `${(value * 100).toFixed(1)}%`
@@ -2154,11 +1518,6 @@ function percent(value: number): string {
 function percentWidth(value: number): string {
   if (!Number.isFinite(value)) return '0%'
   return `${Math.min(100, Math.max(0, value * 100)).toFixed(1)}%`
-}
-
-function latencyText(value: number | null): string {
-  if (value === null || value === undefined) return '-'
-  return `${value} ms`
 }
 
 function apiKeyRowKey(row: ContentModerationAPIKeyStatus, index: number): string {
@@ -2214,123 +1573,8 @@ function apiKeyStatusMeta(row: ContentModerationAPIKeyStatus): string {
   return parts.join(' / ')
 }
 
-function parseApiKeys(value: string): string[] {
-  return value
-    .split(/\r?\n/)
-    .map((item) => item.trim())
-    .filter((item, index, arr) => item && arr.indexOf(item) === index)
-}
-
-function normalizeKeywordBlockingMode(value: unknown): KeywordBlockingMode {
-  if (value === 'keyword_only' || value === 'api_only' || value === 'keyword_and_api') {
-    return value
-  }
-  return 'keyword_and_api'
-}
-
-function normalizeModelFilter(value: unknown): ContentModerationModelFilter {
-  if (!value || typeof value !== 'object') {
-    return { type: 'all', models: [] }
-  }
-  const raw = value as Partial<ContentModerationModelFilter>
-  const type = normalizeModelFilterType(raw.type)
-  const models = type === 'all' ? [] : normalizeModelNames(raw.models)
-  return { type, models }
-}
-
-function normalizeModelFilterType(value: unknown): ContentModerationModelFilterType {
-  if (value === 'include' || value === 'exclude' || value === 'all') {
-    return value
-  }
-  return 'all'
-}
-
-function normalizeModelNames(models: unknown): string[] {
-  if (!Array.isArray(models)) return []
-  const seen = new Set<string>()
-  const out: string[] = []
-  for (const item of models) {
-    const model = String(item ?? '').trim()
-    if (!model) continue
-    const key = model.toLowerCase()
-    if (seen.has(key)) continue
-    seen.add(key)
-    out.push(model)
-  }
-  return out
-}
-
-function buildModelFilterPayload(): ContentModerationModelFilter {
-  const type = normalizeModelFilterType(configForm.model_filter_type)
-  if (type === 'all') {
-    return { type: 'all', models: [] }
-  }
-  return {
-    type,
-    models: normalizeModelNames(configForm.model_filter_models),
-  }
-}
-
-function riskThresholdsFromConfig(thresholds: Record<string, number> | null | undefined): Record<string, number> {
-  const out: Record<string, number> = { ...riskThresholdDefaults }
-  for (const category of riskThresholdCategories) {
-    const value = thresholds?.[category]
-    if (Number.isFinite(value)) {
-      out[category] = clampPercent(Number(value) * 100)
-    }
-  }
-  return out
-}
-
-function buildRiskThresholdPayload(): Record<string, number> {
-  const payload: Record<string, number> = {}
-  for (const category of riskThresholdCategories) {
-    payload[category] = Number((clampPercent(configForm.thresholds[category]) / 100).toFixed(4))
-  }
-  return payload
-}
-
 function resetRiskThresholds() {
   configForm.thresholds = { ...riskThresholdDefaults }
-}
-
-function clampPercent(value: unknown): number {
-  const numeric = Number(value)
-  if (!Number.isFinite(numeric)) {
-    return 0
-  }
-  return Math.min(100, Math.max(0, numeric))
-}
-
-function formatThresholdPercent(value: number): string {
-  return `${clampPercent(value).toFixed(1)}%`
-}
-
-function parseBlockedKeywords(value: string): string[] {
-  const seen = new Set<string>()
-  const out: string[] = []
-  for (const line of value.split(/\r?\n/)) {
-    const kw = line.trim()
-    if (!kw) continue
-    const key = kw.toLowerCase()
-    if (seen.has(key)) continue
-    seen.add(key)
-    out.push(kw)
-  }
-  return out
-}
-
-function violationCountText(row: ContentModerationLog): string {
-  if (!row.flagged) return '-'
-  if (row.violation_count === 0) return t('admin.riskControl.violationNotCounted')
-  return t('admin.riskControl.violationCount', { count: row.violation_count || 1 })
-}
-
-function normalizeDateTimeLocal(value: string): string | undefined {
-  if (!value) return undefined
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return undefined
-  return date.toISOString()
 }
 
 function formatDateTime(value: string): string {
@@ -2341,17 +1585,8 @@ function formatNumber(value: number): string {
   return new Intl.NumberFormat().format(value)
 }
 
-onMounted(() => {
-  void loadAll()
-  statusTimer = window.setInterval(() => {
-    void loadStatus(true)
-  }, 15000)
-})
-
-onUnmounted(() => {
-  if (statusTimer !== null) {
-    window.clearInterval(statusTimer)
-    statusTimer = null
-  }
+useRiskControlPolling({
+  loadInitial: loadAll,
+  refreshStatus: loadStatus,
 })
 </script>
