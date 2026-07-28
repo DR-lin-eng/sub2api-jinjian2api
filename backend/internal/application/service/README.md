@@ -32,6 +32,9 @@
 | `setting_parse.go`, `setting_parse_core.go` | 持久设置默认值、解析编排与基础站点设置 |
 | `setting_parse_identity.go`, `setting_parse_oidc.go` | LinuxDo、DingTalk、OIDC、OAuth 与微信身份源设置 |
 | `setting_parse_features.go`, `setting_parse_gateway.go`, `setting_parse_notifications.go` | 功能开关、网关调度与通知展示设置 |
+| `setting_update.go`, `setting_update_prepare.go` | 持久设置更新编排、首错顺序与跨域预处理 |
+| `setting_update_core.go`, `setting_update_identity.go`, `setting_update_product.go` | 注册访问、身份源与产品默认设置写入 |
+| `setting_update_gateway.go`, `setting_update_notifications.go` | 网关调度、通知与平台额度设置写入 |
 
 ## 拆分约定
 
