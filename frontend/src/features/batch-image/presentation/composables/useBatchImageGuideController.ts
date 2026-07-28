@@ -24,7 +24,15 @@ import {
   type BatchImageSubmitItem,
 } from '@/features/batch-image/data/datasources/batchImageDatasource'
 import { createBatchImagePreviewCache } from '@/features/batch-image/presentation/preview/batchImagePreviewCache'
+import { buildBatchImageAgentInstruction } from '@/features/batch-image/presentation/resolvers/batchImageAgentInstruction'
 import { createBatchImageMessages } from '@/features/batch-image/presentation/resolvers/batchImageMessages'
+import {
+  createBatchImageGenerationScope,
+  createBatchImageLatestSingleFlight,
+  replaceBatchImageObjectURL,
+  revokeBatchImageObjectURLs,
+  type BatchImageGenerationSnapshot,
+} from '@/features/batch-image/presentation/composables/batchImageAsyncLifecycle'
 import { useBatchImagePromptPopover } from '@/features/batch-image/presentation/composables/useBatchImagePromptPopover'
 import type { ApiKey } from '@/types'
 import type { Column } from '@/common/types/uiTypes'
@@ -53,6 +61,18 @@ export function useBatchImageGuideController() {
   type ReferenceImageDraft = BatchImageReferenceImage & {
     name: string
     size: number
+  }
+
+  type DetailRefreshRequest = {
+    snapshot: BatchImageGenerationSnapshot
+    batchId: string
+    apiKey: string
+  }
+
+  type PreviewRequest = {
+    detailSnapshot: BatchImageGenerationSnapshot
+    previewSnapshot: BatchImageGenerationSnapshot
+    ownerBatchId: string
   }
 
   const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled', 'output_deleted'])
@@ -173,6 +193,7 @@ export function useBatchImageGuideController() {
   const previewLoadingIds = ref(new Set<string>())
   const previewErrorIds = ref(new Set<string>())
   const previewImageItem = ref<BatchImageItem | null>(null)
+  const previewLoadingGenerations = new Map<string, number>()
   const availableBatchImageModels = ref<Array<{ value: string; label: string }>>([])
   const modelLoadError = ref('')
   const openMoreJobId = ref('')
@@ -180,6 +201,16 @@ export function useBatchImageGuideController() {
   let modelRequestSeq = 0
   let pollTimer: ReturnType<typeof setInterval> | null = null
   let previewCacheCleanupTimer: ReturnType<typeof setInterval> | null = null
+  const detailGeneration = createBatchImageGenerationScope()
+  const previewGeneration = createBatchImageGenerationScope()
+  const refreshSingleFlight = createBatchImageLatestSingleFlight<DetailRefreshRequest>({
+    key: request => `${request.snapshot.generation}:${request.batchId}`,
+    isCurrent: isDetailRefreshCurrent,
+    run: performDetailRefresh,
+    onBusyChange: (busy) => {
+      refreshing.value = busy
+    },
+  })
 
   const geminiApiKeys = computed(() =>
     apiKeys.value.filter((key) =>
@@ -309,76 +340,7 @@ export function useBatchImageGuideController() {
     return 0
   }
 
-  const agentInstruction = computed(() => `---
-  name: sub2api-batch-image
-  description: 当用户希望用 Gemini/Vertex 批量生成图片、批量跑提示词、下载批量生图结果、重试失败图片时使用。
-  ---
-
-  你是 Codex 中的批量生图执行 Agent。用户不需要手动填写页面表单；你应从当前聊天、用户给的文件、目录或上下文中整理任务名称、prompt 列表和输出目录，只有缺少关键决策时才向用户提问。
-
-  默认端点：
-  ${endpointBase.value}
-
-  你需要自己完成：
-  1. 从用户聊天或附件中提取 prompt。每条 prompt 保留完整文本，按顺序生成稳定 custom_id，例如 img_001、img_002。
-  2. 从用户要求或上下文推断任务名称；没有明确名称时用当前时间生成任务名。
-  3. 从用户要求或上下文推断输出目录；如果用户没有说保存到哪里，才询问用户。
-  4. 提交前必须先计算 expected_output_count = 所有 item 的 output_count 之和。单个批量任务硬性最多 200 张输出图；超过 200 张必须拆成多组任务，不能提交一个超大任务，也不能把参考图附件上限当成生成张数上限。
-  5. 如果用户提供参考图，把参考图按用途绑定到具体 item。参考图只是输入附件，不是输出图数量。模型单条限制必须按模型执行：Gemini 2.5 Flash Image 每条最多 3 张参考图；Gemini 3 Pro Image 每条最多 14 张参考图。不要把后端附件风控理解成 Pro 单条能力：按 output_count 展开后，所有 item 的参考图附件总数还有内部保护阈值 1000 个，inline base64 参考图解码后总量最多 128MB。这个 1000 只是服务器拒绝异常请求的保护阈值，不是推荐规模；参考图很多或总请求体较大时应主动拆分任务。
-  6. 参考图会按 output_count 重复消耗输入 token；大量任务、重复复用同一张参考图或参考图总体积较大时，优先使用 gs:// file_uri 或拆分成多组任务。
-  7. 选择 API Key 和模型：先获取当前可用的批量生图 Key/模型；如果用户指定模型且该 Key 支持，则使用用户指定模型；否则使用该 Key 可用模型中的默认/第一个。不要展示或询问内部 provider 名称。
-  8. 调用批量生图 API 提交、轮询、下载，不要求用户去页面里手填。
-
-  API 调用规范：
-  - 模型：GET ${joinEndpointPath(endpointBase.value, '/v1/images/batches/models')}
-  - 提交：POST ${joinEndpointPath(endpointBase.value, '/v1/images/batches')}
-  - 查询：GET ${joinEndpointPath(endpointBase.value, '/v1/images/batches/{id}')}
-  - 明细：GET ${joinEndpointPath(endpointBase.value, '/v1/images/batches/{id}/items')}
-  - 下载：GET ${joinEndpointPath(endpointBase.value, '/v1/images/batches/{id}/download')}
-  - 取消：POST ${joinEndpointPath(endpointBase.value, '/v1/images/batches/{id}/cancel')}
-
-  提交请求体：
-  {
-    "model": "<按所选 Key 可用模型填写>",
-    "task_name": "<从聊天推断；为空则用当前时间>",
-    "image_size": "1K",
-    "response_mime_type": "image/png",
-    "items": [
-      {
-        "custom_id": "img_001",
-        "prompt": "<第一条完整 prompt>",
-        "output_count": 1,
-        "reference_images": [
-          {
-            "id": "face",
-            "type": "subject",
-            "mime_type": "image/png",
-            "data": "<base64，不含 data:image/png;base64, 前缀>"
-          }
-        ]
-      }
-    ]
-  }
-
-  必须遵守：
-  - 不要把 API Key 写入仓库、日志、提交记录或最终回复。
-  - 不要把参考图 base64 写入最终回复、日志或公开文件。恢复记录中只保存参考图文件名、用途、数量和请求 JSON 文件路径；若请求 JSON 文件包含 base64，应保存在用户指定输出目录且不要提交到仓库。
-  - output_count 表示同一 prompt 和参考图重复生成几张，默认 1，每条最多 4；这不是依赖 Gemini 单次请求返回多图，而是系统展开成多个真实任务项。提交前必须确认预计输出图总数不超过 200，超过就拆分成多组任务。绝不能因为参考图附件有更高的内部保护阈值，就提交会生成超过 200 张图的任务。
-  - 当前对用户的批量生图计费仍按成功输出图片数量结算，不单独对参考图加价。可以向用户说明：参考图会产生少量上游输入 token 和临时存储成本，且会随 output_count 重复计算；页面显示的冻结/结算金额按输出图片数量计算。
-  - 提交成功后，必须立刻在输出目录写入本地恢复记录，例如 batch-image-resume.json。不要在恢复记录里保存 API Key。
-  - 恢复记录至少包含：endpoint、task_name、batch_id、model、output_dir、request_file、submitted_at、last_status、status_url、items_url、download_url、prompt_count、expected_output_count，以及可用于失败重试的 custom_id 到 prompt 映射或请求 JSON 文件路径。
-  - 每次查询状态后更新恢复记录，写入 last_checked_at、last_status、成功数、失败数、实际扣费和失败摘要。会话中断或暂停后，下次必须能凭该文件继续查询、下载或重试。
-  - 不要高频轮询。首次查询等待约 20 到 30 秒；queued 状态每 60 到 120 秒查询一次；如果连续 3 次仍是 queued，就先停止主动查询，告诉用户任务仍在排队，并保留恢复记录，之后可继续其他任务或等待用户稍后让你恢复。
-  - running 状态每约 60 秒查询一次，服务器压力大或大批量任务时可以更久；processing_results 等接近完成的状态可每 20 到 45 秒查询一次。
-  - 任务完成后报告任务名、任务 id、成功数、失败数、实际扣费和保存路径。
-  - 只下载成功图片。部分失败时，先展示失败 custom_id、错误码、错误来源和简要原因。
-  - 重试只能重试失败项，不能重复提交已成功项。若历史任务没有保存失败项 prompt，必须告诉用户无法自动重试，并询问用户是否提供原 prompt。
-  - 取消任务前必须提醒：已被系统索引为成功的图片仍会按成功项结算扣费，其余冻结金额会释放。
-  - 图片预览按需加载；不要为了查看列表自动批量加载图片内容。`)
-
-  function joinEndpointPath(base: string, path: string): string {
-    return `${base.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`
-  }
+  const agentInstruction = computed(() => buildBatchImageAgentInstruction(endpointBase.value))
 
   function uniqueCustomID(raw: string, used: Set<string>, index: number): string {
     const base = raw.replace(/[^\w.-]+/g, '_').replace(/^_+|_+$/g, '') || `img_${String(index + 1).padStart(3, '0')}`
@@ -742,11 +704,13 @@ export function useBatchImageGuideController() {
   }
 
   function closeDetail() {
+    invalidateDetailGeneration()
     closePromptPopover()
     currentJob.value = null
     selectedBatchId.value = ''
     selectedBatchApiKeyId.value = 0
     items.value = []
+    loadingItems.value = false
     clearItemPreviews()
   }
 
@@ -807,6 +771,7 @@ export function useBatchImageGuideController() {
         },
         `sub2api-ui-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
       )
+      invalidateDetailGeneration()
       currentJob.value = job
       selectedBatchId.value = job.id
       selectedBatchApiKeyId.value = key.id
@@ -824,21 +789,54 @@ export function useBatchImageGuideController() {
     }
   }
 
-  async function refreshSelected() {
-    if (!selectedBatchId.value) return
+  function invalidateDetailGeneration() {
+    detailGeneration.invalidate()
+    refreshSingleFlight.clearPending()
+    loadingItems.value = false
+  }
+
+  function isDetailSnapshotCurrent(
+    snapshot: BatchImageGenerationSnapshot,
+    batchId: string,
+  ) {
+    return detailGeneration.isCurrent(snapshot, selectedBatchId.value)
+      && selectedBatchId.value === batchId
+  }
+
+  function isDetailRefreshCurrent(request: DetailRefreshRequest) {
+    return isDetailSnapshotCurrent(request.snapshot, request.batchId)
+  }
+
+  function captureDetailRefreshRequest(): DetailRefreshRequest | null {
+    const batchId = selectedBatchId.value
+    if (!batchId) return null
     const key = keyForSelectedBatch() || requireApiKey()
-    if (!key) return
-    refreshing.value = true
+    if (!key) return null
+    return {
+      snapshot: detailGeneration.capture(batchId),
+      batchId,
+      apiKey: key.key,
+    }
+  }
+
+  async function performDetailRefresh(request: DetailRefreshRequest) {
     try {
-      const job = await getBatchImageJob(key.key, selectedBatchId.value)
+      const job = await getBatchImageJob(request.apiKey, request.batchId)
+      if (!isDetailRefreshCurrent(request)) return
       currentJob.value = job
       upsertJob(job)
       if (TERMINAL_STATUSES.has(job.status)) stopPolling()
     } catch (error: any) {
-      appStore.showError(batchImageErrorMessage(error, batchImageText('refreshFailed')))
-    } finally {
-      refreshing.value = false
+      if (isDetailRefreshCurrent(request)) {
+        appStore.showError(batchImageErrorMessage(error, batchImageText('refreshFailed')))
+      }
     }
+  }
+
+  function refreshSelected() {
+    const request = captureDetailRefreshRequest()
+    if (!request) return Promise.resolve()
+    return refreshSingleFlight.request(request)
   }
 
   async function refreshDetail() {
@@ -849,6 +847,7 @@ export function useBatchImageGuideController() {
   }
 
   function selectJob(batchId: string) {
+    invalidateDetailGeneration()
     const row = batchJobs.value.find(job => job.id === batchId)
     if (row?.api_key_id && geminiApiKeys.value.some(key => key.id === row.api_key_id)) {
       form.apiKeyId = row.api_key_id
@@ -988,6 +987,7 @@ export function useBatchImageGuideController() {
         },
         `sub2api-ui-retry-${job.id}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
       )
+      invalidateDetailGeneration()
       currentJob.value = retryJob
       selectedBatchId.value = retryJob.id
       selectedBatchApiKeyId.value = key.id
@@ -1166,19 +1166,49 @@ export function useBatchImageGuideController() {
     )
   }
 
-  async function hydrateCachedItemPreviews(detailItems: BatchImageDetailItem[]) {
+  function capturePreviewRequest(ownerBatchId: string): PreviewRequest {
+    return {
+      detailSnapshot: detailGeneration.capture(ownerBatchId),
+      previewSnapshot: previewGeneration.capture(ownerBatchId),
+      ownerBatchId,
+    }
+  }
+
+  function isPreviewRequestCurrent(request: PreviewRequest) {
+    return isDetailSnapshotCurrent(request.detailSnapshot, request.ownerBatchId)
+      && previewGeneration.isCurrent(request.previewSnapshot, selectedBatchId.value)
+  }
+
+  function commitPreviewBlob(
+    request: PreviewRequest,
+    previewKey: string,
+    blob: Blob,
+  ) {
+    return replaceBatchImageObjectURL(
+      itemPreviewUrls,
+      previewKey,
+      blob,
+      () => isPreviewRequestCurrent(request),
+    )
+  }
+
+  async function hydrateCachedItemPreviews(
+    detailItems: BatchImageDetailItem[],
+    request: PreviewRequest,
+  ) {
     const previewableItems = detailItems.filter(item => canLoadItemPreview(item))
-    if (!previewableItems.length || !previewCacheSupported()) return
+    if (!previewableItems.length || !previewCacheSupported() || !isPreviewRequestCurrent(request)) return
 
     await Promise.all(previewableItems.map(async (item) => {
-      const batchId = item.batch_id || selectedBatchId.value || currentJob.value?.id || ''
-      const previewKey = itemPreviewKey(item)
+      if (!isPreviewRequestCurrent(request)) return
+      const batchId = item.batch_id || request.ownerBatchId
+      const previewKey = previewCacheKey(batchId, item.custom_id, 0)
       if (!batchId || itemPreviewUrls[previewKey] || previewErrorIds.value.has(previewKey)) return
       const cached = await getCachedPreviewBlob(
         previewCacheKey(batchId, item.custom_id, 0),
       ).catch(() => null)
       if (!cached || itemPreviewUrls[previewKey]) return
-      itemPreviewUrls[previewKey] = URL.createObjectURL(cached)
+      commitPreviewBlob(request, previewKey, cached)
     }))
   }
 
@@ -1187,9 +1217,11 @@ export function useBatchImageGuideController() {
     if (!batchId) return
     const key = keyForSelectedBatch() || requireApiKey()
     if (!key) return
+    const detailSnapshot = detailGeneration.capture(batchId)
     loadingItems.value = true
+    clearItemPreviews()
+    const previewRequest = capturePreviewRequest(batchId)
     try {
-      clearItemPreviews()
       const jobs = detailJobsForBatch(batchId)
       const results = await Promise.all(jobs.map(async (job) => {
         const result = await listBatchImageItems(key.key, job.id)
@@ -1199,13 +1231,18 @@ export function useBatchImageGuideController() {
           source_task_name: detailSourceName(job, batchId),
         }))
       }))
+      if (!isDetailSnapshotCurrent(detailSnapshot, batchId)) return
       const detailItems = results.flat()
       items.value = detailItems
-      void hydrateCachedItemPreviews(detailItems)
+      void hydrateCachedItemPreviews(detailItems, previewRequest)
     } catch (error: any) {
-      appStore.showError(batchImageErrorMessage(error, batchImageText('loadItemsFailed')))
+      if (isDetailSnapshotCurrent(detailSnapshot, batchId)) {
+        appStore.showError(batchImageErrorMessage(error, batchImageText('loadItemsFailed')))
+      }
     } finally {
-      loadingItems.value = false
+      if (isDetailSnapshotCurrent(detailSnapshot, batchId)) {
+        loadingItems.value = false
+      }
     }
   }
 
@@ -1224,12 +1261,22 @@ export function useBatchImageGuideController() {
   }
 
   async function loadItemPreview(item: BatchImageItem) {
+    const ownerBatchId = selectedBatchId.value || currentJob.value?.id || ''
     const batchId = item.batch_id || selectedBatchId.value || currentJob.value?.id || ''
     const previewKey = itemPreviewKey(item)
-    if (!batchId || !canLoadItemPreview(item) || (itemPreviewUrls[previewKey] && !previewErrorIds.value.has(previewKey))) return
+    const request = capturePreviewRequest(ownerBatchId)
+    if (
+      !batchId
+      || !ownerBatchId
+      || !isPreviewRequestCurrent(request)
+      || previewLoadingGenerations.has(previewKey)
+      || !canLoadItemPreview(item)
+      || (itemPreviewUrls[previewKey] && !previewErrorIds.value.has(previewKey))
+    ) return
     const key = keyForSelectedBatch() || requireApiKey()
     if (!key) return
     const cacheKey = previewCacheKey(batchId, item.custom_id, 0)
+    previewLoadingGenerations.set(previewKey, request.previewSnapshot.generation)
     previewLoadingIds.value = new Set([...previewLoadingIds.value, previewKey])
     try {
       previewErrorIds.value = new Set([...previewErrorIds.value].filter(id => id !== previewKey))
@@ -1239,22 +1286,27 @@ export function useBatchImageGuideController() {
       }
       const cached = await getCachedPreviewBlob(cacheKey)
       if (cached) {
-        itemPreviewUrls[previewKey] = URL.createObjectURL(cached)
+        commitPreviewBlob(request, previewKey, cached)
         return
       }
       const blob = await getBatchImageItemContent(key.key, batchId, item.custom_id, 0)
       const thumbnail = await createThumbnailBlob(blob).catch(() => blob)
-      itemPreviewUrls[previewKey] = URL.createObjectURL(thumbnail)
+      commitPreviewBlob(request, previewKey, thumbnail)
       if (thumbnail !== blob || thumbnail.size <= 1024 * 1024) {
         void putCachedPreviewBlob(cacheKey, thumbnail)
       }
     } catch (error: any) {
-      previewErrorIds.value = new Set([...previewErrorIds.value, previewKey])
-      appStore.showError(batchImageErrorMessage(error, batchImageText('loadPreviewFailed')))
+      if (isPreviewRequestCurrent(request)) {
+        previewErrorIds.value = new Set([...previewErrorIds.value, previewKey])
+        appStore.showError(batchImageErrorMessage(error, batchImageText('loadPreviewFailed')))
+      }
     } finally {
-      const next = new Set(previewLoadingIds.value)
-      next.delete(previewKey)
-      previewLoadingIds.value = next
+      if (previewLoadingGenerations.get(previewKey) === request.previewSnapshot.generation) {
+        previewLoadingGenerations.delete(previewKey)
+        const next = new Set(previewLoadingIds.value)
+        next.delete(previewKey)
+        previewLoadingIds.value = next
+      }
     }
   }
 
@@ -1277,13 +1329,10 @@ export function useBatchImageGuideController() {
   }
 
   function clearItemPreviews() {
+    previewGeneration.invalidate()
     closePromptPopover()
-    for (const url of Object.values(itemPreviewUrls)) {
-      if (url) URL.revokeObjectURL(url)
-    }
-    for (const key of Object.keys(itemPreviewUrls)) {
-      delete itemPreviewUrls[key]
-    }
+    revokeBatchImageObjectURLs(itemPreviewUrls)
+    previewLoadingGenerations.clear()
     previewLoadingIds.value = new Set()
     previewErrorIds.value = new Set()
     previewImageItem.value = null
@@ -1440,12 +1489,15 @@ export function useBatchImageGuideController() {
   )
 
   onBeforeUnmount(() => {
+    detailGeneration.dispose()
+    refreshSingleFlight.clearPending()
     stopPolling()
     if (previewCacheCleanupTimer) {
       clearInterval(previewCacheCleanupTimer)
       previewCacheCleanupTimer = null
     }
     clearItemPreviews()
+    previewGeneration.dispose()
     document.removeEventListener('click', closeMoreMenu)
     window.removeEventListener('resize', closeMoreMenu)
     window.removeEventListener('scroll', closeMoreMenu, true)

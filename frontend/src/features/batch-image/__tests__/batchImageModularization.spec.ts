@@ -14,6 +14,7 @@ const pageSource = readFeatureSource('../presentation/pages/BatchImageGuidePage.
 const workspaceSource = readFeatureSource('../presentation/widgets/BatchImageGuideWorkspace.vue')
 const controllerSource = readFeatureSource('../presentation/composables/useBatchImageGuideController.ts')
 const previewCacheSource = readFeatureSource('../presentation/preview/batchImagePreviewCache.ts')
+const asyncLifecycleSource = readFeatureSource('../presentation/composables/batchImageAsyncLifecycle.ts')
 
 afterEach(() => {
   vi.useRealTimers()
@@ -29,14 +30,20 @@ describe('batch image modularization', () => {
     expect(workspaceSource).not.toContain('listBatchImageJobs')
     expect(workspaceSource).not.toContain('getBatchImageJob')
     expect(controllerSource).toContain('listBatchImageJobs(key.key, options)')
-    expect(controllerSource).toContain('getBatchImageJob(key.key, selectedBatchId.value)')
+    expect(controllerSource).toContain('getBatchImageJob(request.apiKey, request.batchId)')
     expect(`${pageSource}\n${workspaceSource}\n${controllerSource}`).not.toContain('import(')
   })
 
   it('preserves polling, cache cleanup, and object URL cleanup contracts', () => {
     expect(controllerSource).toContain('}, 8000)')
     expect(controllerSource).toContain('}, 60 * 60 * 1000)')
-    expect(controllerSource).toContain('URL.revokeObjectURL(url)')
+    expect(controllerSource).toContain('createBatchImageLatestSingleFlight<DetailRefreshRequest>')
+    expect(controllerSource).toContain('if (!isDetailRefreshCurrent(request)) return')
+    expect(controllerSource).toContain('replaceBatchImageObjectURL(')
+    expect(controllerSource).toContain('previewGeneration.invalidate()')
+    expect(controllerSource).toContain('detailGeneration.dispose()')
+    expect(controllerSource).toContain('previewGeneration.dispose()')
+    expect(asyncLifecycleSource).toContain('urlAPI.revokeObjectURL(url)')
     expect(previewCacheSource).toContain("const PREVIEW_CACHE_DB_NAME = 'sub2api-batch-image-preview-cache'")
     expect(previewCacheSource).toContain('const PREVIEW_CACHE_MAX_ENTRIES = 120')
     expect(previewCacheSource).toContain('const PREVIEW_CACHE_MAX_BYTES = 48 * 1024 * 1024')

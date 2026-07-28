@@ -199,25 +199,35 @@ export function createBatchImagePreviewCache() {
 
   const createThumbnail = async (blob: Blob): Promise<Blob> => {
     const source = await loadImageSource(blob)
-    const scale = Math.min(
-      1,
-      PREVIEW_THUMBNAIL_MAX_EDGE / Math.max(source.width, source.height),
-    )
-    const targetWidth = Math.max(1, Math.round(source.width * scale))
-    const targetHeight = Math.max(1, Math.round(source.height * scale))
-    const canvas = document.createElement('canvas')
-    canvas.width = targetWidth
-    canvas.height = targetHeight
-    const ctx = canvas.getContext('2d')
-    if (!ctx) throw new Error('canvas unavailable')
-    ctx.drawImage(source.image, 0, 0, targetWidth, targetHeight)
-    source.close()
-    return await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob((thumbnail) => {
-        if (thumbnail) resolve(thumbnail)
-        else reject(new Error('thumbnail unavailable'))
-      }, 'image/webp', PREVIEW_THUMBNAIL_QUALITY)
-    })
+    let sourceClosed = false
+    const closeSource = () => {
+      if (sourceClosed) return
+      sourceClosed = true
+      source.close()
+    }
+    try {
+      const scale = Math.min(
+        1,
+        PREVIEW_THUMBNAIL_MAX_EDGE / Math.max(source.width, source.height),
+      )
+      const targetWidth = Math.max(1, Math.round(source.width * scale))
+      const targetHeight = Math.max(1, Math.round(source.height * scale))
+      const canvas = document.createElement('canvas')
+      canvas.width = targetWidth
+      canvas.height = targetHeight
+      const ctx = canvas.getContext('2d')
+      if (!ctx) throw new Error('canvas unavailable')
+      ctx.drawImage(source.image, 0, 0, targetWidth, targetHeight)
+      closeSource()
+      return await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((thumbnail) => {
+          if (thumbnail) resolve(thumbnail)
+          else reject(new Error('thumbnail unavailable'))
+        }, 'image/webp', PREVIEW_THUMBNAIL_QUALITY)
+      })
+    } finally {
+      closeSource()
+    }
   }
 
   return {
