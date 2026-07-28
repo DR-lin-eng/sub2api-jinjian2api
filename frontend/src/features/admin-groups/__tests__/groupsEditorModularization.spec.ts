@@ -13,6 +13,18 @@ const pageSource = readFeatureSource(
 const editorSource = readFeatureSource(
   "../presentation/widgets/GroupEditorDialog.vue",
 );
+const coreFieldsSource = readFeatureSource(
+  "../presentation/widgets/GroupEditorCoreFields.vue",
+);
+const antigravityFieldsSource = readFeatureSource(
+  "../presentation/widgets/GroupEditorAntigravityFields.vue",
+);
+const providerFieldsSource = readFeatureSource(
+  "../presentation/widgets/GroupEditorProviderFields.vue",
+);
+const accountRoutingFieldsSource = readFeatureSource(
+  "../presentation/widgets/GroupEditorAccountRoutingFields.vue",
+);
 const createWrapperSource = readFeatureSource(
   "../presentation/widgets/CreateGroupDialog.vue",
 );
@@ -43,7 +55,9 @@ describe("groups editor modularization", () => {
 
   it("preserves form ids, selectors, and controller-owned submit payloads", () => {
     expect(editorSource).toContain("'edit-group-form' : 'create-group-form'");
-    expect(editorSource).toContain("'edit-group-form-name' : 'group-form-name'");
+    expect(coreFieldsSource).toContain(
+      "'edit-group-form-name' : 'group-form-name'",
+    );
     expect(editorSource).toContain('data-tour="group-form-submit"');
     expect(editorSource).toContain('@submit.prevent="submit"');
 
@@ -57,6 +71,50 @@ describe("groups editor modularization", () => {
     );
     expect(pageSource).toContain("useCreateGroupController");
     expect(pageSource).toContain("useEditGroupController");
+  });
+
+  it("keeps field widgets static, ordered, and bound to the existing context", () => {
+    const widgetNames = [
+      "GroupEditorCoreFields",
+      "GroupEditorAntigravityFields",
+      "GroupEditorProviderFields",
+      "GroupEditorAccountRoutingFields",
+    ];
+    let previousIndex = -1;
+    for (const widgetName of widgetNames) {
+      expect(editorSource).toContain(`import ${widgetName} from "./${widgetName}.vue"`);
+      const currentIndex = editorSource.indexOf(`<${widgetName}`);
+      expect(currentIndex).toBeGreaterThan(previousIndex);
+      previousIndex = currentIndex;
+    }
+
+    const fieldSources = [
+      coreFieldsSource,
+      antigravityFieldsSource,
+      providerFieldsSource,
+      accountRoutingFieldsSource,
+    ];
+    for (const source of fieldSources) {
+      expect(source).not.toContain("import(");
+      expect(source).not.toContain("adminAPI");
+      expect(source).toContain("GroupEditorDialogContext");
+    }
+
+    expect(coreFieldsSource).toContain('data-tour="group-form-platform"');
+    expect(coreFieldsSource).toContain('data-tour="group-form-multiplier"');
+    expect(coreFieldsSource).toContain('v-model="form.subscription_type"');
+    expect(coreFieldsSource).toContain(':context="editorContext"');
+    expect(antigravityFieldsSource).toContain("form.platform === 'antigravity'");
+    expect(antigravityFieldsSource).toContain("@change=\"toggleScope('gemini_image')\"");
+    expect(providerFieldsSource).toContain("form.platform === 'anthropic'");
+    expect(providerFieldsSource).toContain("form.platform === 'openai'");
+    expect(providerFieldsSource).toContain('@click="toggleLive()"');
+    expect(accountRoutingFieldsSource).toContain(
+      "form.require_oauth_only = !form.require_oauth_only",
+    );
+    expect(accountRoutingFieldsSource).toContain('v-model="form.fallback_group_id_on_invalid_request"');
+    expect(accountRoutingFieldsSource).toContain('v-model="rule.pattern"');
+    expect(accountRoutingFieldsSource).toContain('@input="searchAccountsByRule(rule)"');
   });
 
   it("uses one edit-platform watcher with the complete non-OpenAI reset", () => {
