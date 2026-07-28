@@ -262,6 +262,10 @@ func buildSettingsUpdateResponsePayload(
 
 		AvailableChannelsEnabled: updatedSettings.AvailableChannelsEnabled,
 
+		ModelPlazaEnabled:     updatedSettings.ModelPlazaEnabled,
+		ModelPlazaRequireAuth: updatedSettings.ModelPlazaRequireAuth,
+		ModelPlazaDescription: updatedSettings.ModelPlazaDescription,
+
 		AffiliateEnabled: updatedSettings.AffiliateEnabled,
 
 		RiskControlEnabled:          updatedSettings.RiskControlEnabled,

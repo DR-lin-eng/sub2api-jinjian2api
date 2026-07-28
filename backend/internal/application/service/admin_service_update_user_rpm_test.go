@@ -14,9 +14,11 @@ import (
 type rpmUserRepoStub struct {
 	*userRepoStub
 	lastUpdated *User
+	lastFields  UserUpdateFields
 }
 
-func (s *rpmUserRepoStub) Update(_ context.Context, user *User) error {
+func (s *rpmUserRepoStub) Update(_ context.Context, user *User, fields UserUpdateFields) error {
+	s.lastFields = fields
 	if user == nil {
 		return nil
 	}
@@ -45,6 +47,7 @@ func TestAdminService_UpdateUser_InvalidatesAuthCacheOnRPMLimitChange(t *testing
 	require.NoError(t, err)
 	require.NotNil(t, updated)
 	require.Equal(t, 60, updated.RPMLimit)
+	require.Equal(t, UserUpdateFields{RPMLimit: true}, repo.lastFields)
 	require.Equal(t, []int64{42}, invalidator.userIDs, "仅修改 RPMLimit 也应失效 API Key 认证缓存")
 }
 
@@ -83,5 +86,6 @@ func TestAdminService_UpdateUser_InvalidatesAuthCacheOnSchedulingTierChange(t *t
 
 	require.NoError(t, err)
 	require.Equal(t, RequestSchedulingTierLow, updated.SchedulingTier)
+	require.Equal(t, UserUpdateFields{SchedulingTier: true}, repo.lastFields)
 	require.Equal(t, []int64{42}, invalidator.userIDs)
 }
