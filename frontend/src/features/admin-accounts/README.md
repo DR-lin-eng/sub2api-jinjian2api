@@ -16,7 +16,8 @@
 - `accountFormPolicy.ts`: 创建和编辑共用的纯表单转换。
 - `useCreateAccountEditorPolicy.ts`: 创建表单 watcher 与字段动作。
 - `useCreateAccountOAuthActions.ts`: 创建账号的 OAuth exchange/import/batch 流程。
-- `useEditAccountSubmission.ts`: 编辑 payload、风险确认与更新请求。
+- `accountEditUpdatePayload.ts`: 按账号类型和平台构造编辑 payload。
+- `useEditAccountSubmission.ts`: 编辑校验、风险确认与更新请求编排。
 - `useAccountsUpstreamBilling.ts`: 上游计费探测、额度缓存、批量查询和定时刷新。
 - `useAccountColumnPreferences.ts`: 列可见性迁移与服务端派生查询参数。
 - `useAccountTodayStats.ts`: 当前页今日统计的请求并发保护。
