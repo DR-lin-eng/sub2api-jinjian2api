@@ -5,6 +5,8 @@
 - `data/datasources/`: 设置协议、归一化规则和管理端 API。
 - `presentation/pages/`: 路由级加载、保存、step-up 与对话框编排。
 - `presentation/widgets/settings-tabs/`: 按设置领域拆分的 tab 和 panel。
+- `presentation/widgets/settings-tabs/gateway-resilience/`: 临时不可调度、冷却、流超时、请求修正与策略设置卡片；直接复用页面 context，由网关韧性 panel 按原顺序装配。
+- `presentation/widgets/settings-tabs/identity-providers/`: LinuxDo、邮箱 OAuth、微信、钉钉与 OIDC 静态设置卡片；直接复用页面 context，由身份源 panel 按原顺序装配。
 - `presentation/composables/`: 页面局部控制器、表单初始化和纯转换。
 - `presentation/composables/settingsSavePreparation.ts`: 按页面既有顺序完成统一保存前的归一化与校验。
 - `presentation/composables/settingsSavePayload.ts`: 按设置领域组装兼容 payload；新增字段放入所属 builder，不改变统一保存请求。
