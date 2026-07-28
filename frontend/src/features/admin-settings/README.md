@@ -6,6 +6,9 @@
 - `presentation/pages/`: 路由级加载、保存、step-up 与对话框编排。
 - `presentation/widgets/settings-tabs/`: 按设置领域拆分的 tab 和 panel。
 - `presentation/composables/`: 页面局部控制器、表单初始化和纯转换。
+- `presentation/composables/settingsSavePreparation.ts`: 按页面既有顺序完成统一保存前的归一化与校验。
+- `presentation/composables/settingsSavePayload.ts`: 按设置领域组装兼容 payload；新增字段放入所属 builder，不改变统一保存请求。
+- `presentation/composables/settingsSaveResponse.ts`: 回填保存响应并清理敏感输入，保持后续缓存刷新与通知顺序。
 
 新增设置项时，先确定所属 tab 和 datasource 字段，再把交互放入对应 controller。feature 内组件使用静态 import；不要把页面 context 提升为全局 Store，也不要通过 `@/api` 或 `@/stores` 兼容 barrel 新增依赖。保留单次设置加载、统一保存、敏感操作 step-up 和按需挂载语义。
 

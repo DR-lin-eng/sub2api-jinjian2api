@@ -864,6 +864,32 @@ describe("admin SettingsView payment visible method controls", () => {
     expect(payload.stream_mode_performance_enabled).toBe(true);
   });
 
+  it("keeps the main save, web search, refresh, and notification order", async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(updateSettings).toHaveBeenCalledTimes(1);
+    expect(updateWebSearchEmulationConfig).toHaveBeenCalledTimes(1);
+    expect(fetchPublicSettings).toHaveBeenCalledTimes(1);
+    expect(adminSettingsFetch).toHaveBeenCalledTimes(1);
+    expect(showSuccess).toHaveBeenCalledWith("admin.settings.settingsSaved");
+    expect(updateSettings.mock.invocationCallOrder[0]).toBeLessThan(
+      updateWebSearchEmulationConfig.mock.invocationCallOrder[0]!,
+    );
+    expect(
+      updateWebSearchEmulationConfig.mock.invocationCallOrder[0],
+    ).toBeLessThan(fetchPublicSettings.mock.invocationCallOrder[0]!);
+    expect(fetchPublicSettings.mock.invocationCallOrder[0]).toBeLessThan(
+      adminSettingsFetch.mock.invocationCallOrder[0]!,
+    );
+    expect(adminSettingsFetch.mock.invocationCallOrder[0]).toBeLessThan(
+      showSuccess.mock.invocationCallOrder.at(-1)!,
+    );
+  });
+
   it("keeps human verification provider switches mutually exclusive", async () => {
     const wrapper = mountView();
     await flushPromises();
