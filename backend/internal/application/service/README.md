@@ -29,6 +29,9 @@
 | `content_moderation_client.go`, `content_moderation_key_health.go` | 上游审核 API 和密钥健康状态 |
 | `content_moderation_side_effects.go`, `content_moderation_cyber_policy.go` | 命中后的账户、通知和网络安全事件处理 |
 | `content_moderation_test_input.go` | 管理端测试输入和确定性评分辅助 |
+| `setting_parse.go`, `setting_parse_core.go` | 持久设置默认值、解析编排与基础站点设置 |
+| `setting_parse_identity.go`, `setting_parse_oidc.go` | LinuxDo、DingTalk、OIDC、OAuth 与微信身份源设置 |
+| `setting_parse_features.go`, `setting_parse_gateway.go`, `setting_parse_notifications.go` | 功能开关、网关调度与通知展示设置 |
 
 ## 拆分约定
 

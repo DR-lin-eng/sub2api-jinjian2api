@@ -62,7 +62,6 @@ internal/application/service/openai_ws_v2_passthrough_adapter.go
 internal/application/service/ratelimit_service.go
 internal/application/service/scheduler_snapshot_service.go
 internal/application/service/setting_features.go
-internal/application/service/setting_parse.go
 internal/application/service/subscription_service.go
 internal/application/service/token_refresh_service.go
 internal/application/service/token_refresh_service_test.go
