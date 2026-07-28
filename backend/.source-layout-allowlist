@@ -83,7 +83,6 @@ internal/shared/apicompat/chatcompletions_responses_bridge.go
 internal/shared/apicompat/chatcompletions_responses_test.go
 internal/transport/http/handler/admin/account_codex_import.go
 internal/transport/http/handler/admin/account_handler.go
-internal/transport/http/handler/admin/setting_handler_update.go
 internal/transport/http/handler/auth_linuxdo_oauth.go
 internal/transport/http/handler/auth_linuxdo_oauth_test.go
 internal/transport/http/handler/auth_oauth_pending_flow.go
