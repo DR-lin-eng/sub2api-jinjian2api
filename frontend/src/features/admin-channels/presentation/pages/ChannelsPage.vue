@@ -630,9 +630,17 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { adminAPI } from '@/api/admin'
-import type { Channel, ChannelModelPricing, CreateChannelRequest, UpdateChannelRequest, AccountStatsPricingRule } from '@/features/admin-channels/data/datasources/adminChannelsDatasource'
+import type { Channel, CreateChannelRequest, UpdateChannelRequest, AccountStatsPricingRule } from '@/features/admin-channels/data/datasources/adminChannelsDatasource'
 import type { PricingFormEntry } from '@/features/admin-channels/presentation/adminChannelSignals'
-import { mTokToPerToken, perTokenToMTok, apiIntervalsToForm, formIntervalsToAPI, findModelConflict, validateIntervals } from '@/features/admin-channels/presentation/adminChannelSignals'
+import { findModelConflict, validateIntervals } from '@/features/admin-channels/presentation/adminChannelSignals'
+import type { PlatformSection } from '@/features/admin-channels/presentation/channelFormCodec'
+import {
+  buildAccountStatsPricingRules,
+  buildChannelAPIFields,
+  channelPlatformOrder,
+  channelToPlatformSections,
+  distributeAccountStatsPricingRules,
+} from '@/features/admin-channels/presentation/channelFormCodec'
 import type { AdminGroup, GroupPlatform } from '@/types'
 import type { Column } from '@/common/types/uiTypes'
 import { platformTextClass, platformBadgeLightClass } from '@/core/utils/platformColors'
@@ -664,28 +672,6 @@ async function loadWebSearchGlobalState() {
     console.warn('Failed to load web search global state:', err)
     webSearchGlobalEnabled.value = false
   }
-}
-
-// ── Form-level pricing rule type (per-platform) ──
-interface FormPricingRule {
-  name: string
-  group_ids: number[]
-  account_ids: number[]
-  pricing: PricingFormEntry[]
-}
-
-// ── Platform Section type ──
-interface PlatformSection {
-  platform: GroupPlatform
-  enabled: boolean
-  collapsed: boolean
-  group_ids: number[]
-  model_mapping: Record<string, string>
-  model_pricing: PricingFormEntry[]
-  web_search_emulation: boolean
-  codex_image_generation_bridge: boolean
-  bedrock_cc_compat: boolean
-  account_stats_pricing_rules: FormPricingRule[]
 }
 
 // ── Table columns ──
@@ -760,7 +746,7 @@ const form = reactive({
 let abortController: AbortController | null = null
 
 // ── Platform config ──
-const platformOrder: GroupPlatform[] = ['anthropic', 'openai', 'gemini', 'antigravity', 'grok']
+const platformOrder = channelPlatformOrder
 
 // ── Helpers ──
 function formatDate(value: string): string {
@@ -1051,191 +1037,16 @@ function clearAllRuleAccountSearchState() {
 }
 
 function accountStatsRulesToAPI(): AccountStatsPricingRule[] {
-  const rules: AccountStatsPricingRule[] = []
-  for (const section of form.platforms) {
-    if (!section.enabled) continue
-    for (const rule of section.account_stats_pricing_rules) {
-      rules.push({
-        name: rule.name,
-        group_ids: rule.group_ids,
-        account_ids: rule.account_ids,
-        pricing: rule.pricing
-          .filter(p => p.models.length > 0)
-          .map(p => ({
-            platform: section.platform,
-            models: p.models,
-            billing_mode: p.billing_mode,
-            input_price: mTokToPerToken(p.input_price),
-            output_price: mTokToPerToken(p.output_price),
-            cache_write_price: mTokToPerToken(p.cache_write_price),
-            cache_read_price: mTokToPerToken(p.cache_read_price),
-            image_input_price: mTokToPerToken(p.image_input_price),
-            image_output_price: mTokToPerToken(p.image_output_price),
-            per_request_price: p.per_request_price != null && p.per_request_price !== '' ? Number(p.per_request_price) : null,
-            intervals: formIntervalsToAPI(p.intervals || [])
-          }))
-      })
-    }
-  }
-  return rules
+  return buildAccountStatsPricingRules(form.platforms)
 }
 
 // ── Form ↔ API conversion ──
-function formToAPI(): { group_ids: number[], model_pricing: ChannelModelPricing[], model_mapping: Record<string, Record<string, string>>, features_config: Record<string, unknown> } {
-  const group_ids: number[] = []
-  const model_pricing: ChannelModelPricing[] = []
-  const model_mapping: Record<string, Record<string, string>> = {}
-  // Preserve existing features_config fields not managed by the form
-  const featuresConfig: Record<string, unknown> = editingChannel.value?.features_config
-    ? { ...editingChannel.value.features_config }
-    : {}
-
-  for (const section of form.platforms) {
-    if (!section.enabled) continue
-    group_ids.push(...section.group_ids)
-
-    // Model mapping per platform
-    if (Object.keys(section.model_mapping).length > 0) {
-      model_mapping[section.platform] = { ...section.model_mapping }
-    }
-
-    // Model pricing with platform tag
-    for (const entry of section.model_pricing) {
-      if (entry.models.length === 0) continue
-      model_pricing.push({
-        platform: section.platform,
-        models: entry.models,
-        billing_mode: entry.billing_mode,
-        input_price: mTokToPerToken(entry.input_price),
-        output_price: mTokToPerToken(entry.output_price),
-        cache_write_price: mTokToPerToken(entry.cache_write_price),
-        cache_read_price: mTokToPerToken(entry.cache_read_price),
-        image_input_price: mTokToPerToken(entry.image_input_price),
-        image_output_price: mTokToPerToken(entry.image_output_price),
-        per_request_price: entry.per_request_price != null && entry.per_request_price !== '' ? Number(entry.per_request_price) : null,
-        intervals: formIntervalsToAPI(entry.intervals || [])
-      })
-    }
-  }
-  const uniqueGroupIds = Array.from(new Set(group_ids))
-
-  // Collect web_search_emulation (only anthropic platform supports it)
-  // Always write the key so that disabling in the UI correctly sets platform to false,
-  // rather than leaving a stale true value from the cloned features_config.
-  const wsEmulation: Record<string, boolean> = {}
-  for (const section of form.platforms) {
-    if (!section.enabled) continue
-    if (section.platform === 'anthropic') {
-      wsEmulation[section.platform] = !!section.web_search_emulation
-    }
-  }
-  if (Object.keys(wsEmulation).length > 0) {
-    featuresConfig.web_search_emulation = wsEmulation
-  } else {
-    delete featuresConfig.web_search_emulation
-  }
-
-  const codexImageGenerationBridge: Record<string, boolean> = {}
-  for (const section of form.platforms) {
-    if (!section.enabled) continue
-    if (section.platform === 'openai') {
-      codexImageGenerationBridge[section.platform] = !!section.codex_image_generation_bridge
-    }
-  }
-  if (Object.keys(codexImageGenerationBridge).length > 0) {
-    featuresConfig.codex_image_generation_bridge = codexImageGenerationBridge
-  } else {
-    delete featuresConfig.codex_image_generation_bridge
-  }
-
-  const bedrockCCCompat: Record<string, boolean> = {}
-  for (const section of form.platforms) {
-    if (!section.enabled) continue
-    if (section.platform === 'anthropic') {
-      bedrockCCCompat[section.platform] = !!section.bedrock_cc_compat
-    }
-  }
-  if (Object.keys(bedrockCCCompat).length > 0) {
-    featuresConfig.bedrock_cc_compat = bedrockCCCompat
-  } else {
-    delete featuresConfig.bedrock_cc_compat
-  }
-
-  return { group_ids: uniqueGroupIds, model_pricing, model_mapping, features_config: featuresConfig }
+function formToAPI() {
+  return buildChannelAPIFields(form.platforms, editingChannel.value?.features_config)
 }
 
 function apiToForm(channel: Channel): PlatformSection[] {
-  // Build a map: groupID → platform
-  const groupPlatformMap = new Map<number, GroupPlatform>()
-  for (const g of allGroups.value) {
-    groupPlatformMap.set(g.id, g.platform)
-  }
-
-  // Determine which platforms are active (from groups + pricing + mapping)
-  const activePlatforms = new Set<GroupPlatform>()
-  for (const gid of channel.group_ids || []) {
-    const p = groupPlatformMap.get(gid)
-    if (p === 'composite') {
-      platformOrder.forEach(platform => activePlatforms.add(platform))
-    } else if (p) {
-      activePlatforms.add(p)
-    }
-  }
-  for (const p of channel.model_pricing || []) {
-    if (p.platform) activePlatforms.add(p.platform as GroupPlatform)
-  }
-  for (const p of Object.keys(channel.model_mapping || {})) {
-    if (platformOrder.includes(p as GroupPlatform)) activePlatforms.add(p as GroupPlatform)
-  }
-
-  // Build sections in platform order
-  const sections: PlatformSection[] = []
-  for (const platform of platformOrder) {
-    if (!activePlatforms.has(platform)) continue
-
-    const groupIds = (channel.group_ids || []).filter(gid => {
-      const groupPlatform = groupPlatformMap.get(gid)
-      return groupPlatform === platform || groupPlatform === 'composite'
-    })
-    const mapping = (channel.model_mapping || {})[platform] || {}
-    const pricing = (channel.model_pricing || [])
-      .filter(p => (p.platform || 'anthropic') === platform)
-      .map(p => ({
-        models: p.models || [],
-        billing_mode: p.billing_mode,
-        input_price: perTokenToMTok(p.input_price),
-        output_price: perTokenToMTok(p.output_price),
-        cache_write_price: perTokenToMTok(p.cache_write_price),
-        cache_read_price: perTokenToMTok(p.cache_read_price),
-        image_input_price: perTokenToMTok(p.image_input_price),
-        image_output_price: perTokenToMTok(p.image_output_price),
-        per_request_price: p.per_request_price,
-        intervals: apiIntervalsToForm(p.intervals || [])
-      } as PricingFormEntry))
-
-    // Read web_search_emulation from features_config
-    const fc = channel.features_config
-    const wsEmulation = fc?.web_search_emulation as Record<string, boolean> | undefined
-    const webSearchEnabled = wsEmulation?.[platform] === true
-    const codexImageGenerationBridge = fc?.codex_image_generation_bridge as Record<string, boolean> | undefined
-    const codexImageGenerationBridgeEnabled = codexImageGenerationBridge?.[platform] === true
-    const bedrockCCCompatEnabled = fc?.bedrock_cc_compat === true
-
-    sections.push({
-      platform,
-      enabled: true,
-      collapsed: false,
-      group_ids: groupIds,
-      model_mapping: { ...mapping },
-      model_pricing: pricing,
-      web_search_emulation: webSearchEnabled,
-      codex_image_generation_bridge: codexImageGenerationBridgeEnabled,
-      bedrock_cc_compat: bedrockCCCompatEnabled,
-      account_stats_pricing_rules: [],
-    })
-  }
-
-  return sections
+  return channelToPlatformSections(channel, allGroups.value, platformOrder)
 }
 
 // ── Load data ──
@@ -1283,7 +1094,7 @@ async function loadAllChannelsForConflict() {
   try {
     const response = await adminAPI.channels.list(1, 1000)
     allChannelsForConflict.value = response.items || []
-  } catch (error) {
+  } catch {
     // Fallback to current page data
     allChannelsForConflict.value = channels.value
   }
@@ -1361,49 +1172,7 @@ async function openEditDialog(channel: Channel) {
 
 /** Distribute flat channel-level rules into the matching platform section based on group_ids */
 function distributeRulesToPlatforms(apiRules: AccountStatsPricingRule[]) {
-  // Build groupID → platform lookup
-  const groupPlatformMap = new Map<number, GroupPlatform>()
-  for (const g of allGroups.value) {
-    groupPlatformMap.set(g.id, g.platform)
-  }
-
-  for (const apiRule of apiRules) {
-    // Infer platform from group_ids
-    const platforms = new Set<GroupPlatform>()
-    for (const gid of apiRule.group_ids || []) {
-      const p = groupPlatformMap.get(gid)
-      if (p && p !== 'composite') platforms.add(p)
-    }
-    // If pricing has a platform field, use that as fallback
-    if (platforms.size === 0 && apiRule.pricing?.length > 0) {
-      const p = apiRule.pricing[0].platform as GroupPlatform | undefined
-      if (p) platforms.add(p)
-    }
-    const targetPlatform = platforms.size >= 1 ? [...platforms][0] : null
-    if (!targetPlatform) continue
-
-    const section = form.platforms.find(s => s.platform === targetPlatform)
-    if (!section) continue
-
-    const formRule: FormPricingRule = {
-      name: apiRule.name || '',
-      group_ids: [...(apiRule.group_ids || [])],
-      account_ids: [...(apiRule.account_ids || [])],
-      pricing: (apiRule.pricing || []).map(p => ({
-        models: [...(p.models || [])],
-        billing_mode: p.billing_mode,
-        input_price: perTokenToMTok(p.input_price),
-        output_price: perTokenToMTok(p.output_price),
-        cache_write_price: perTokenToMTok(p.cache_write_price),
-        cache_read_price: perTokenToMTok(p.cache_read_price),
-        image_input_price: perTokenToMTok(p.image_input_price),
-        image_output_price: perTokenToMTok(p.image_output_price),
-        per_request_price: p.per_request_price,
-        intervals: apiIntervalsToForm(p.intervals || [])
-      } as PricingFormEntry))
-    }
-    section.account_stats_pricing_rules.push(formRule)
-  }
+  distributeAccountStatsPricingRules(form.platforms, apiRules, allGroups.value)
 }
 
 /** Populate ruleAccountNameCache by fetching account details for all account_ids in rules */
