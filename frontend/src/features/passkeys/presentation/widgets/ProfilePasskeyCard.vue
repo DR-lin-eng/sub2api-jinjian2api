@@ -208,12 +208,16 @@ function extractErrorMessage(error: unknown, fallback: string): string {
 }
 
 async function loadCredentials(): Promise<void> {
+  if (!props.enabled) {
+    credentials.value = []
+    return
+  }
   loading.value = true
   try {
     credentials.value = await passkeyAPI.list()
   } catch (error) {
-    const code = (error as { code?: string }).code
-    if (code !== 'PASSKEY_DISABLED') {
+    const reason = (error as { reason?: string }).reason
+    if (reason !== 'PASSKEY_DISABLED') {
       appStore.showError(t('profile.passkey.loadFailed'))
     }
   } finally {

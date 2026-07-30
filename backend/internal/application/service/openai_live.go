@@ -28,8 +28,12 @@ const (
 	liveRedisOperationTimeout     = 3 * time.Second
 	liveClosedRecordTTL           = 24 * time.Hour
 	liveObserverPollInterval      = 250 * time.Millisecond
+	liveObserverStoreRetryLimit   = 5
 	liveUpstreamBodyLimit         = 2 << 20
 )
+
+// liveObserverStoreRetryInterval 是 var 以便测试缩短 store 报错的重试等待。
+var liveObserverStoreRetryInterval = time.Second
 
 var (
 	chatGPTLiveCallsURL        = "https://chatgpt.com/backend-api/codex/realtime/calls?intent=quicksilver&architecture=avas"
@@ -369,7 +373,7 @@ func (s *OpenAIGatewayService) CreateLiveCall(
 			return nil, fmt.Errorf("save live call mapping: %w", saveErr)
 		}
 		created.Account = account
-		go s.observeLiveCall(record.CallHash)
+		go s.observeLiveCall(record)
 		return created, nil
 	}
 	if lastErr != nil {
@@ -648,7 +652,7 @@ func (s *OpenAIGatewayService) ProxyLiveSideband(
 	upstream, err := s.dialLiveSideband(ctx, record)
 	if err != nil {
 		_, _ = store.ReleaseLiveController(context.Background(), record.CallHash, owner)
-		go s.observeLiveCall(record.CallHash)
+		go s.observeLiveCall(record)
 		return err
 	}
 	defer func() { _ = upstream.Close() }()
@@ -698,7 +702,7 @@ func (s *OpenAIGatewayService) ProxyLiveSideband(
 		s.finalizeLiveCall(record)
 		return runErr
 	}
-	go s.observeLiveCall(record.CallHash)
+	go s.observeLiveCall(record)
 	return runErr
 }
 
@@ -743,19 +747,42 @@ func (s *OpenAIGatewayService) runLiveController(
 	}
 }
 
-func (s *OpenAIGatewayService) observeLiveCall(callHash string) {
+func (s *OpenAIGatewayService) observeLiveCall(record *LiveCallRecord) {
+	if record == nil {
+		return
+	}
 	store, err := s.liveStore()
 	if err != nil {
 		return
 	}
 	owner := uuid.NewString()
-	claimed, err := store.ClaimLiveController(context.Background(), callHash, LiveControllerObserver, owner)
-	if err != nil || !claimed {
+	claimed, claimErr := store.ClaimLiveController(context.Background(), record.CallHash, LiveControllerObserver, owner)
+	if claimErr != nil {
+		// store 报错时无法确认控制权归属；按 ExpiresAt 兜底 finalize，避免 usage log 与租约释放丢失。
+		s.finalizeLiveCallAfterExpiry(record)
 		return
 	}
+	if !claimed {
+		return
+	}
+	storeErrStreak := 0
 	for {
-		record, getErr := store.GetLiveCall(context.Background(), callHash)
-		if getErr != nil || record.Controller != LiveControllerObserver {
+		latest, getErr := store.GetLiveCall(context.Background(), record.CallHash)
+		if getErr != nil {
+			if errors.Is(getErr, ErrLiveCallNotFound) {
+				return
+			}
+			storeErrStreak++
+			if storeErrStreak >= liveObserverStoreRetryLimit {
+				s.finalizeLiveCallAfterExpiry(record)
+				return
+			}
+			time.Sleep(liveObserverStoreRetryInterval)
+			continue
+		}
+		storeErrStreak = 0
+		record = latest
+		if record.Controller != LiveControllerObserver {
 			return
 		}
 		if !time.Now().Before(record.ExpiresAt) {
@@ -853,10 +880,24 @@ func (s *OpenAIGatewayService) waitForLiveObserverRetry(record *LiveCallRecord) 
 	if err != nil {
 		return false
 	}
-	controller, err := store.GetLiveController(context.Background(), record.CallHash)
+	controller, getErr := store.GetLiveController(context.Background(), record.CallHash)
+	if getErr != nil && !errors.Is(getErr, ErrLiveCallNotFound) {
+		// store 报错不等于控制权被接管，交回 observeLiveCall 做有限重试与到期兜底。
+		return true
+	}
 	// 过期不在此处判定：返回 true 让调用方回到循环顶部的过期分支，由它 finalize
 	// （写 usage log + 释放租约）。在这里直接返回 false 会让会话静默结束、不留记录。
-	return err == nil && controller == LiveControllerObserver
+	return getErr == nil && controller == LiveControllerObserver
+}
+
+func (s *OpenAIGatewayService) finalizeLiveCallAfterExpiry(record *LiveCallRecord) {
+	if record == nil {
+		return
+	}
+	if wait := time.Until(record.ExpiresAt); wait > 0 {
+		time.Sleep(wait)
+	}
+	s.finalizeLiveCall(record)
 }
 
 func (s *OpenAIGatewayService) refreshLiveLease(record *LiveCallRecord) bool {
@@ -910,7 +951,7 @@ func (s *OpenAIGatewayService) finalizeLiveCall(record *LiveCallRecord) {
 	if record.SubscriptionID > 0 {
 		billingType = BillingTypeSubscription
 	}
-	_, _ = s.usageLogRepo.Create(context.Background(), &UsageLog{
+	writeUsageLogBestEffort(context.Background(), s.usageLogRepo, &UsageLog{
 		UserID:           record.UserID,
 		APIKeyID:         record.APIKeyID,
 		AccountID:        record.AccountID,
@@ -928,5 +969,5 @@ func (s *OpenAIGatewayService) finalizeLiveCall(record *LiveCallRecord) {
 		InboundEndpoint:  &inboundEndpoint,
 		UpstreamEndpoint: &upstreamEndpoint,
 		CreatedAt:        record.CreatedAt,
-	})
+	}, "service.openai_live")
 }
