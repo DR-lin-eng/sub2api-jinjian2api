@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
@@ -41,6 +42,8 @@ func acquireMetadataAccountSlot(
 	helper *ConcurrencyHelper,
 	cfg *config.Config,
 	account *service.Account,
+	revalidator accountWaitRevalidator,
+	groupID *int64,
 ) (func(), error) {
 	timeout := metadataFallbackWaitTimeout
 	maxWaiting := metadataFallbackMaxWaiting
@@ -63,5 +66,34 @@ func acquireMetadataAccountSlot(
 		},
 	}
 	streamStarted := false
-	return acquireAccountSelectionSlot(c, helper, selection, false, &streamStarted, nil)
+	return acquireAccountSelectionSlot(c, helper, selection, false, &streamStarted, nil, revalidator, groupID, "")
+}
+
+func (h *GatewayHandler) selectGeminiMetadataAccount(
+	c *gin.Context,
+	groupID *int64,
+	priorityAdmissionEnabled bool,
+) (*service.Account, func(), error) {
+	var excludedAccountIDs map[int64]struct{}
+	for {
+		account, err := h.geminiCompatService.SelectAccountForAIStudioEndpointsWithExclusions(
+			c.Request.Context(),
+			groupID,
+			excludedAccountIDs,
+		)
+		if err != nil || !priorityAdmissionEnabled {
+			return account, nil, err
+		}
+
+		var revalidator accountWaitRevalidator
+		if h.gatewayService != nil {
+			revalidator = h.gatewayService
+		}
+		release, err := acquireMetadataAccountSlot(c, h.concurrencyHelper, h.cfg, account, revalidator, groupID)
+		if errors.Is(err, service.ErrAccountSchedulingChanged) {
+			addFailedAccountID(&excludedAccountIDs, account.ID)
+			continue
+		}
+		return account, release, err
+	}
 }

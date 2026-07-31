@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -75,8 +76,12 @@ func (h *OpenAIGatewayHandler) CodexModels(c *gin.Context) {
 
 		var accountRelease func()
 		if priorityAdmissionEnabled {
-			accountRelease, err = acquireMetadataAccountSlot(c, h.concurrencyHelper, h.cfg, account)
+			accountRelease, err = acquireMetadataAccountSlot(c, h.concurrencyHelper, h.cfg, account, h.gatewayService, apiKey.GroupID)
 			if err != nil {
+				if errors.Is(err, service.ErrAccountSchedulingChanged) {
+					addFailedAccountID(&failedAccountIDs, account.ID)
+					continue
+				}
 				h.handleConcurrencyError(c, err, "account", false)
 				return
 			}

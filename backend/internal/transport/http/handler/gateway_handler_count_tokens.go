@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/json"
 	"errors"
@@ -129,61 +130,73 @@ func (h *GatewayHandler) CountTokens(c *gin.Context) {
 
 	var account *service.Account
 	var selection *service.AccountSelectionResult
-	if priorityAdmissionEnabled {
-		// 开启时保留调度器返回的已获取槽位或等待计划。
-		selection, err = h.gatewayService.SelectAccountWithLoadAwareness(
-			c.Request.Context(),
-			apiKey.GroupID,
-			sessionHash,
-			parsedReq.Model,
-			nil,
-			parsedReq.MetadataUserID,
-			subject.UserID,
-		)
-		if selection != nil {
-			account = selection.Account
+	var accountReleaseFunc func()
+	var failedAccountIDs map[int64]struct{}
+	for {
+		account = nil
+		selection = nil
+		if priorityAdmissionEnabled {
+			// 开启时保留调度器返回的已获取槽位或等待计划。
+			selection, err = h.gatewayService.SelectAccountWithLoadAwareness(
+				c.Request.Context(),
+				apiKey.GroupID,
+				sessionHash,
+				parsedReq.Model,
+				failedAccountIDs,
+				parsedReq.MetadataUserID,
+				subject.UserID,
+			)
+			if selection != nil {
+				account = selection.Account
+			}
+		} else {
+			// 开关关闭时保持原有路径，不增加账号并发 Redis 请求。
+			account, err = h.gatewayService.SelectAccountForModel(c.Request.Context(), apiKey.GroupID, sessionHash, parsedReq.Model)
 		}
-	} else {
-		// 开关关闭时保持原有路径，不增加账号并发 Redis 请求。
-		account, err = h.gatewayService.SelectAccountForModel(c.Request.Context(), apiKey.GroupID, sessionHash, parsedReq.Model)
-	}
-	if err != nil {
-		reqLog.Warn("gateway.count_tokens_select_account_failed", zap.Error(err))
-		if priorityAdmissionEnabled && errors.Is(err, service.ErrPriorityAdmissionUnavailable) {
-			h.handleConcurrencyError(c, err, "account", false)
+		if err != nil {
+			reqLog.Warn("gateway.count_tokens_select_account_failed", zap.Error(err))
+			if priorityAdmissionEnabled && errors.Is(err, service.ErrPriorityAdmissionUnavailable) {
+				h.handleConcurrencyError(c, err, "account", false)
+				return
+			}
+			cls := classifyNoAccountErrorFromGin(c, h.gatewayService, apiKey, parsedReq.Model, parsedReq.Model, service.PlatformAnthropic)
+			if !cls.ModelNotFound {
+				markOpsRoutingCapacityLimitedIfNoAvailable(c, err)
+			}
+			h.errorResponse(c, cls.Status, cls.ErrType, cls.Message)
 			return
 		}
-		cls := classifyNoAccountErrorFromGin(c, h.gatewayService, apiKey, parsedReq.Model, parsedReq.Model, service.PlatformAnthropic)
-		if !cls.ModelNotFound {
-			markOpsRoutingCapacityLimitedIfNoAvailable(c, err)
-		}
-		h.errorResponse(c, cls.Status, cls.ErrType, cls.Message)
-		return
-	}
-	if account == nil {
-		markOpsRoutingCapacityLimited(c)
-		h.errorResponse(c, http.StatusServiceUnavailable, "api_error", "No available accounts")
-		return
-	}
-	setOpsSelectedAccount(c, account.ID, account.Platform)
-	if priorityAdmissionEnabled {
-		waitedForAccount := !selection.Acquired
-		accountReleaseFunc, acquireErr := acquireAccountSelectionSlot(c, h.concurrencyHelper, selection, false, &streamStarted, reqLog)
-		if acquireErr != nil {
-			if shouldLogConcurrencyAcquireError(acquireErr) {
-				reqLog.Warn("gateway.count_tokens_account_slot_acquire_failed", zap.Int64("account_id", account.ID), zap.Error(acquireErr))
-			}
-			h.handleConcurrencyError(c, acquireErr, "account", false)
+		if account == nil {
+			markOpsRoutingCapacityLimited(c)
+			h.errorResponse(c, http.StatusServiceUnavailable, "api_error", "No available accounts")
 			return
 		}
-		if accountReleaseFunc != nil {
-			defer accountReleaseFunc()
-		}
-		if waitedForAccount {
-			if bindErr := h.gatewayService.BindStickySession(c.Request.Context(), apiKey.GroupID, sessionHash, account.ID); bindErr != nil {
-				reqLog.Warn("gateway.count_tokens_bind_sticky_session_failed", zap.Int64("account_id", account.ID), zap.Error(bindErr))
+		setOpsSelectedAccount(c, account.ID, account.Platform)
+		if priorityAdmissionEnabled {
+			waitedForAccount := !selection.Acquired
+			var acquireErr error
+			accountReleaseFunc, acquireErr = acquireAccountSelectionSlot(c, h.concurrencyHelper, selection, false, &streamStarted, reqLog, h.gatewayService, apiKey.GroupID, sessionHash)
+			if acquireErr != nil {
+				if errors.Is(acquireErr, service.ErrAccountSchedulingChanged) {
+					addFailedAccountID(&failedAccountIDs, account.ID)
+					continue
+				}
+				if shouldLogConcurrencyAcquireError(acquireErr) {
+					reqLog.Warn("gateway.count_tokens_account_slot_acquire_failed", zap.Int64("account_id", account.ID), zap.Error(acquireErr))
+				}
+				h.handleConcurrencyError(c, acquireErr, "account", false)
+				return
+			}
+			if waitedForAccount {
+				if bindErr := h.gatewayService.BindStickySession(c.Request.Context(), apiKey.GroupID, sessionHash, account.ID); bindErr != nil {
+					reqLog.Warn("gateway.count_tokens_bind_sticky_session_failed", zap.Int64("account_id", account.ID), zap.Error(bindErr))
+				}
 			}
 		}
+		break
+	}
+	if accountReleaseFunc != nil {
+		defer accountReleaseFunc()
 	}
 
 	// 转发请求（不记录使用量）
@@ -207,6 +220,10 @@ func priorityAdmissionActiveForRequest(c *gin.Context, helper *ConcurrencyHelper
 // acquireAccountSelectionSlot applies the scheduler wait plan without writing
 // a response. Callers retain the typed admission error so the outer protocol
 // boundary can produce the correct JSON, SSE, or WebSocket error envelope.
+type accountWaitRevalidator interface {
+	EnsureAccountSchedulableAfterWait(context.Context, *int64, string, int64) error
+}
+
 func acquireAccountSelectionSlot(
 	c *gin.Context,
 	helper *ConcurrencyHelper,
@@ -214,6 +231,9 @@ func acquireAccountSelectionSlot(
 	reqStream bool,
 	streamStarted *bool,
 	reqLog *zap.Logger,
+	revalidator accountWaitRevalidator,
+	groupID *int64,
+	sessionHash string,
 ) (func(), error) {
 	if c == nil || c.Request == nil || helper == nil || helper.concurrencyService == nil {
 		return nil, fmt.Errorf("concurrency service is unavailable")
@@ -226,6 +246,17 @@ func acquireAccountSelectionSlot(
 	}
 	if selection.WaitPlan == nil {
 		return nil, fmt.Errorf("account wait plan is unavailable")
+	}
+	finishWait := func(release func()) (func(), error) {
+		if revalidator != nil {
+			if err := revalidator.EnsureAccountSchedulableAfterWait(c.Request.Context(), groupID, sessionHash, selection.Account.ID); err != nil {
+				if release != nil {
+					release()
+				}
+				return nil, err
+			}
+		}
+		return wrapReleaseOnDone(c.Request.Context(), release), nil
 	}
 
 	plan := selection.WaitPlan
@@ -243,7 +274,7 @@ func acquireAccountSelectionSlot(
 		if err != nil {
 			return nil, err
 		}
-		return wrapReleaseOnDone(c.Request.Context(), release), nil
+		return finishWait(release)
 	}
 
 	fastRelease, fastAcquired, err := helper.TryAcquireAccountSlot(
@@ -255,7 +286,7 @@ func acquireAccountSelectionSlot(
 		return nil, err
 	}
 	if fastAcquired {
-		return wrapReleaseOnDone(c.Request.Context(), fastRelease), nil
+		return finishWait(fastRelease)
 	}
 
 	canWait, waitErr := helper.IncrementAccountWaitCount(c.Request.Context(), selection.Account.ID, plan.MaxWaiting)
@@ -284,7 +315,7 @@ func acquireAccountSelectionSlot(
 	if err != nil {
 		return nil, err
 	}
-	return wrapReleaseOnDone(c.Request.Context(), release), nil
+	return finishWait(release)
 }
 
 // InterceptType 表示请求拦截类型

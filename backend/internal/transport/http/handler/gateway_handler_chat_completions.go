@@ -244,6 +244,19 @@ func (h *GatewayHandler) ChatCompletions(c *gin.Context) {
 				h.handleConcurrencyError(c, err, "account", streamStarted)
 				return
 			}
+			if err := h.gatewayService.EnsureAccountSchedulableAfterWait(c.Request.Context(), apiKey.GroupID, selectionSessionHash, account.ID); err != nil {
+				if accountReleaseFunc != nil {
+					accountReleaseFunc()
+				}
+				if errors.Is(err, service.ErrAccountSchedulingChanged) {
+					reqLog.Info("gateway.cc.account_reschedule_after_wait", zap.Int64("account_id", account.ID))
+					fs.ExcludeAccount(account.ID)
+					continue
+				}
+				reqLog.Warn("gateway.cc.account_recheck_after_wait_failed", zap.Int64("account_id", account.ID), zap.Error(err))
+				h.chatCompletionsErrorResponse(c, http.StatusServiceUnavailable, "api_error", "Account scheduling state is unavailable")
+				return
+			}
 		}
 		accountReleaseFunc = wrapReleaseOnDone(c.Request.Context(), accountReleaseFunc)
 

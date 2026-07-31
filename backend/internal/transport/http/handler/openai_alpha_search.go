@@ -156,8 +156,12 @@ func (h *OpenAIGatewayHandler) AlphaSearch(c *gin.Context) {
 
 		account := selection.Account
 		setOpsSelectedAccount(c, account.ID, account.Platform)
-		accountRelease, acquired := h.acquireResponsesAccountSlot(c, apiKey.GroupID, sessionHash, selection, false, &streamStarted, reqLog)
-		if !acquired {
+		accountRelease, acquireOutcome := h.acquireResponsesAccountSlot(c, apiKey.GroupID, sessionHash, selection, false, &streamStarted, reqLog)
+		if acquireOutcome == accountSlotAcquireReschedule {
+			addFailedAccountID(&failedAccountIDs, account.ID)
+			continue
+		}
+		if acquireOutcome != accountSlotAcquireReady {
 			return
 		}
 		service.SetOpsLatencyMs(c, service.OpsRoutingLatencyMsKey, time.Since(routingStart).Milliseconds())

@@ -444,6 +444,19 @@ func (h *OpenAIGatewayHandler) ResponsesWebSocket(c *gin.Context) {
 				return
 			}
 			accountReleaseFunc = fastReleaseFunc
+			if err := h.gatewayService.EnsureAccountSchedulableAfterWait(ctx, apiKey.GroupID, sessionHash, account.ID); err != nil {
+				if accountReleaseFunc != nil {
+					accountReleaseFunc()
+				}
+				if errors.Is(err, service.ErrAccountSchedulingChanged) {
+					reqLog.Info("openai.websocket_account_reschedule_after_wait", zap.Int64("account_id", account.ID))
+					addFailedAccountID(&failedAccountIDs, account.ID)
+					continue
+				}
+				reqLog.Warn("openai.websocket_account_recheck_after_wait_failed", zap.Int64("account_id", account.ID), zap.Error(err))
+				closeOpenAIClientWS(wsConn, coderws.StatusTryAgainLater, "account scheduling state is unavailable")
+				return
+			}
 		}
 		currentAccountRelease = wrapReleaseOnDone(ctx, accountReleaseFunc)
 		if err := h.gatewayService.BindStickySession(ctx, apiKey.GroupID, sessionHash, account.ID); err != nil {
@@ -574,6 +587,15 @@ func (h *OpenAIGatewayHandler) ResponsesWebSocket(c *gin.Context) {
 						userReleaseFunc()
 					}
 					return service.NewOpenAIWSClientCloseError(coderws.StatusTryAgainLater, "account is busy, please retry later", nil)
+				}
+				if err := h.gatewayService.EnsureAccountSchedulableAfterWait(c.Request.Context(), apiKey.GroupID, sessionHash, account.ID); err != nil {
+					if accountReleaseFunc != nil {
+						accountReleaseFunc()
+					}
+					if userReleaseFunc != nil {
+						userReleaseFunc()
+					}
+					return service.NewOpenAIWSClientCloseError(coderws.StatusTryAgainLater, "account scheduling changed; reconnect to reschedule", err)
 				}
 				turnCtx := c.Request.Context()
 				currentUserRelease = wrapReleaseOnDone(turnCtx, userReleaseFunc)

@@ -70,7 +70,12 @@ func (h *GatewayHandler) GeminiV1BetaListModels(c *gin.Context) {
 		}
 	}
 
-	account, err := h.geminiCompatService.SelectAccountForAIStudioEndpoints(c.Request.Context(), apiKey.GroupID)
+	account, accountRelease, err := h.selectGeminiMetadataAccount(c, apiKey.GroupID, priorityAdmissionEnabled)
+	if err != nil && account != nil {
+		status, _, message := concurrencyErrorResponse(err, "account")
+		googleError(c, status, message)
+		return
+	}
 	if err != nil {
 		if errors.Is(err, service.ErrPriorityAdmissionUnavailable) {
 			googleError(c, http.StatusServiceUnavailable, "Service temporarily unavailable, please retry later")
@@ -87,16 +92,8 @@ func (h *GatewayHandler) GeminiV1BetaListModels(c *gin.Context) {
 		googleError(c, http.StatusServiceUnavailable, "No available Gemini accounts: "+err.Error())
 		return
 	}
-	if priorityAdmissionEnabled {
-		accountRelease, acquireErr := acquireMetadataAccountSlot(c, h.concurrencyHelper, h.cfg, account)
-		if acquireErr != nil {
-			status, _, message := concurrencyErrorResponse(acquireErr, "account")
-			googleError(c, status, message)
-			return
-		}
-		if accountRelease != nil {
-			defer accountRelease()
-		}
+	if accountRelease != nil {
+		defer accountRelease()
 	}
 
 	res, err := h.geminiCompatService.ForwardAIStudioGET(c.Request.Context(), account, "/v1beta/models")
@@ -159,7 +156,12 @@ func (h *GatewayHandler) GeminiV1BetaGetModel(c *gin.Context) {
 		}
 	}
 
-	account, err := h.geminiCompatService.SelectAccountForAIStudioEndpoints(c.Request.Context(), apiKey.GroupID)
+	account, accountRelease, err := h.selectGeminiMetadataAccount(c, apiKey.GroupID, priorityAdmissionEnabled)
+	if err != nil && account != nil {
+		status, _, message := concurrencyErrorResponse(err, "account")
+		googleError(c, status, message)
+		return
+	}
 	if err != nil {
 		if errors.Is(err, service.ErrPriorityAdmissionUnavailable) {
 			googleError(c, http.StatusServiceUnavailable, "Service temporarily unavailable, please retry later")
@@ -176,16 +178,8 @@ func (h *GatewayHandler) GeminiV1BetaGetModel(c *gin.Context) {
 		googleError(c, http.StatusServiceUnavailable, "No available Gemini accounts: "+err.Error())
 		return
 	}
-	if priorityAdmissionEnabled {
-		accountRelease, acquireErr := acquireMetadataAccountSlot(c, h.concurrencyHelper, h.cfg, account)
-		if acquireErr != nil {
-			status, _, message := concurrencyErrorResponse(acquireErr, "account")
-			googleError(c, status, message)
-			return
-		}
-		if accountRelease != nil {
-			defer accountRelease()
-		}
+	if accountRelease != nil {
+		defer accountRelease()
 	}
 
 	res, err := h.geminiCompatService.ForwardAIStudioGET(c.Request.Context(), account, "/v1beta/models/"+modelName)
@@ -548,6 +542,19 @@ func (h *GatewayHandler) GeminiV1BetaModels(c *gin.Context) {
 					geminiConcurrency.DecrementAccountWaitCount(c.Request.Context(), account.ID)
 					accountWaitCounted = false
 				}
+			}
+			if err := h.gatewayService.EnsureAccountSchedulableAfterWait(c.Request.Context(), apiKey.GroupID, sessionKey, account.ID); err != nil {
+				if accountReleaseFunc != nil {
+					accountReleaseFunc()
+				}
+				if errors.Is(err, service.ErrAccountSchedulingChanged) {
+					reqLog.Info("gemini.account_reschedule_after_wait", zap.Int64("account_id", account.ID))
+					fs.ExcludeAccount(account.ID)
+					continue
+				}
+				reqLog.Warn("gemini.account_recheck_after_wait_failed", zap.Int64("account_id", account.ID), zap.Error(err))
+				googleError(c, http.StatusServiceUnavailable, "Account scheduling state is unavailable")
+				return
 			}
 			if err := h.gatewayService.BindStickySession(c.Request.Context(), apiKey.GroupID, sessionKey, account.ID); err != nil {
 				reqLog.Warn("gemini.bind_sticky_session_failed", zap.Int64("account_id", account.ID), zap.Error(err))

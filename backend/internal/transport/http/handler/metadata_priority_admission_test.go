@@ -154,6 +154,25 @@ func TestMetadataPriorityAdmissionCapturesEnabledRequestSnapshot(t *testing.T) {
 	require.True(t, helper.concurrencyService.PriorityAdmissionEnabledForRequest(c.Request.Context()))
 }
 
+func TestMetadataAccountSlotReleasesDisabledAccountForReschedule(t *testing.T) {
+	cache := &metadataPriorityCache{
+		accountStatuses: []service.PriorityAccountAdmissionStatus{service.PriorityAccountAdmissionAcquired},
+	}
+	helper := newMetadataConcurrency(cache, true)
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodGet, "/v1/models", nil)
+	require.True(t, metadataPriorityAdmissionEnabled(c, helper))
+	revalidator := &countTokensWaitRevalidator{err: service.ErrAccountSchedulingChanged}
+	account := &service.Account{ID: 73, Concurrency: 1}
+
+	release, err := acquireMetadataAccountSlot(c, helper, nil, account, revalidator, nil)
+	require.Nil(t, release)
+	require.ErrorIs(t, err, service.ErrAccountSchedulingChanged)
+	require.Equal(t, 1, revalidator.calls)
+	require.Equal(t, []string{"account:73:acquire", "account:73:release"}, cache.eventSnapshot())
+}
+
 func TestCodexModelsPriorityAdmissionReleasesAccountBeforeFailover(t *testing.T) {
 	handler, upstream, groupID := newCodexModelsFailoverTestHandler(http.StatusServiceUnavailable)
 	cache := &metadataPriorityCache{

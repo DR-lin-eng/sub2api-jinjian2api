@@ -345,8 +345,12 @@ func (h *OpenAIGatewayHandler) Responses(c *gin.Context) {
 		reqLog.Debug("openai.account_selected", zap.Int64("account_id", account.ID), zap.String("account_name", account.Name))
 		setOpsSelectedAccount(c, account.ID, account.Platform)
 
-		accountReleaseFunc, acquired := h.acquireResponsesAccountSlot(c, apiKey.GroupID, sessionHash, selection, reqStream, &streamStarted, reqLog)
-		if !acquired {
+		accountReleaseFunc, acquireOutcome := h.acquireResponsesAccountSlot(c, apiKey.GroupID, sessionHash, selection, reqStream, &streamStarted, reqLog)
+		if acquireOutcome == accountSlotAcquireReschedule {
+			addFailedAccountID(&failedAccountIDs, account.ID)
+			continue
+		}
+		if acquireOutcome != accountSlotAcquireReady {
 			return
 		}
 

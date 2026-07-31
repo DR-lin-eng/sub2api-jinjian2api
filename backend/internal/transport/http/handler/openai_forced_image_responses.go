@@ -270,8 +270,15 @@ func (h *OpenAIGatewayHandler) runForcedOpenAIImageChild(
 			input.stream,
 			&childStreamStarted,
 			input.reqLog,
+			h.gatewayService,
+			input.apiKey.GroupID,
+			fmt.Sprintf("%s:image:%d", input.sessionHash, index),
 		)
 		if acquireErr != nil {
+			if errors.Is(acquireErr, service.ErrAccountSchedulingChanged) {
+				addFailedAccountID(&failedAccountIDs, account.ID)
+				continue
+			}
 			return openAIForcedImageChildResult{index: index, err: newOpenAIForcedImageAdmissionError(acquireErr)}
 		}
 		if waitedForAccount {

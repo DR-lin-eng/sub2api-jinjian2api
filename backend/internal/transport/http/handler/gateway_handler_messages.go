@@ -349,6 +349,19 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 					// Slot acquired: no longer waiting in queue.
 					releaseWait()
 				}
+				if err := h.gatewayService.EnsureAccountSchedulableAfterWait(c.Request.Context(), apiKey.GroupID, sessionKey, account.ID); err != nil {
+					if accountReleaseFunc != nil {
+						accountReleaseFunc()
+					}
+					if errors.Is(err, service.ErrAccountSchedulingChanged) {
+						reqLog.Info("gateway.account_reschedule_after_wait", zap.Int64("account_id", account.ID))
+						fs.ExcludeAccount(account.ID)
+						continue
+					}
+					reqLog.Warn("gateway.account_recheck_after_wait_failed", zap.Int64("account_id", account.ID), zap.Error(err))
+					h.handleStreamingAwareError(c, http.StatusServiceUnavailable, "api_error", "Account scheduling state is unavailable", streamStarted)
+					return
+				}
 				if err := h.gatewayService.BindStickySession(c.Request.Context(), apiKey.GroupID, sessionKey, account.ID); err != nil {
 					reqLog.Warn("gateway.bind_sticky_session_failed", zap.Int64("account_id", account.ID), zap.Error(err))
 				}
@@ -672,6 +685,19 @@ func (h *GatewayHandler) Messages(c *gin.Context) {
 					}
 					// Slot acquired: no longer waiting in queue.
 					releaseWait()
+				}
+				if err := h.gatewayService.EnsureAccountSchedulableAfterWait(c.Request.Context(), currentAPIKey.GroupID, sessionKey, account.ID); err != nil {
+					if accountReleaseFunc != nil {
+						accountReleaseFunc()
+					}
+					if errors.Is(err, service.ErrAccountSchedulingChanged) {
+						reqLog.Info("gateway.account_reschedule_after_wait", zap.Int64("account_id", account.ID))
+						fs.ExcludeAccount(account.ID)
+						continue
+					}
+					reqLog.Warn("gateway.account_recheck_after_wait_failed", zap.Int64("account_id", account.ID), zap.Error(err))
+					h.handleStreamingAwareError(c, http.StatusServiceUnavailable, "api_error", "Account scheduling state is unavailable", streamStarted)
+					return
 				}
 				reqLog.Info("sticky.bind_after_wait",
 					zap.String("session_key", sessionKey),

@@ -221,8 +221,12 @@ func (h *OpenAIGatewayHandler) Messages(c *gin.Context) {
 		_ = scheduleDecision
 		setOpsSelectedAccount(c, account.ID, account.Platform)
 
-		accountReleaseFunc, acquired := h.acquireResponsesAccountSlot(c, apiKey.GroupID, sessionHash, selection, reqStream, &streamStarted, reqLog)
-		if !acquired {
+		accountReleaseFunc, acquireOutcome := h.acquireResponsesAccountSlot(c, apiKey.GroupID, sessionHash, selection, reqStream, &streamStarted, reqLog)
+		if acquireOutcome == accountSlotAcquireReschedule {
+			addFailedAccountID(&failedAccountIDs, account.ID)
+			continue
+		}
+		if acquireOutcome != accountSlotAcquireReady {
 			return
 		}
 

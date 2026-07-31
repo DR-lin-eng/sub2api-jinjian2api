@@ -246,8 +246,12 @@ func (h *OpenAIGatewayHandler) CountTokens(c *gin.Context) {
 		var accountRelease func()
 		if priorityAdmissionEnabled {
 			waitedForAccount := !selection.Acquired
-			accountRelease, err = acquireAccountSelectionSlot(c, h.concurrencyHelper, selection, false, &streamStarted, reqLog)
+			accountRelease, err = acquireAccountSelectionSlot(c, h.concurrencyHelper, selection, false, &streamStarted, reqLog, h.gatewayService, apiKey.GroupID, sessionHash)
 			if err != nil {
+				if errors.Is(err, service.ErrAccountSchedulingChanged) {
+					addFailedAccountID(&failedAccountIDs, account.ID)
+					continue
+				}
 				if shouldLogConcurrencyAcquireError(err) {
 					reqLog.Warn("openai_count_tokens.account_slot_acquire_failed", zap.Int64("account_id", account.ID), zap.Error(err))
 				}

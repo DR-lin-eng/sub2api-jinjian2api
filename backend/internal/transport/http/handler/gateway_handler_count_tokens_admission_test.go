@@ -23,6 +23,16 @@ type countTokensAdmissionCache struct {
 	priorityRequests   []service.PriorityAccountAdmissionRequest
 }
 
+type countTokensWaitRevalidator struct {
+	err   error
+	calls int
+}
+
+func (r *countTokensWaitRevalidator) EnsureAccountSchedulableAfterWait(context.Context, *int64, string, int64) error {
+	r.calls++
+	return r.err
+}
+
 func (c *countTokensAdmissionCache) IncrementAccountWaitCount(context.Context, int64, int) (bool, error) {
 	c.accountWaitCalls++
 	return c.accountWaitAllowed, nil
@@ -76,14 +86,16 @@ func TestAcquireAccountSelectionSlotUsesAcquiredSelection(t *testing.T) {
 		ReleaseFunc: func() { releaseCalls++ },
 	}
 	streamStarted := false
+	revalidator := &countTokensWaitRevalidator{err: service.ErrAccountSchedulingChanged}
 
-	release, err := acquireAccountSelectionSlot(c, helper, selection, false, &streamStarted, nil)
+	release, err := acquireAccountSelectionSlot(c, helper, selection, false, &streamStarted, nil, revalidator, nil, "session")
 	require.NoError(t, err)
 	require.NotNil(t, release)
 	release()
 	release()
 	require.Equal(t, 1, releaseCalls)
 	require.Zero(t, cache.accountWaitCalls)
+	require.Zero(t, revalidator.calls)
 }
 
 func TestAcquireAccountSelectionSlotFeatureOffRetriesBeforeQueue(t *testing.T) {
@@ -99,11 +111,32 @@ func TestAcquireAccountSelectionSlotFeatureOffRetriesBeforeQueue(t *testing.T) {
 	c := newCountTokensAdmissionContext(t)
 	streamStarted := false
 
-	release, err := acquireAccountSelectionSlot(c, helper, countTokensWaitSelection(), false, &streamStarted, nil)
+	release, err := acquireAccountSelectionSlot(c, helper, countTokensWaitSelection(), false, &streamStarted, nil, nil, nil, "")
 	require.NoError(t, err)
 	require.NotNil(t, release)
 	require.Zero(t, cache.accountWaitCalls)
 	release()
+}
+
+func TestAcquireAccountSelectionSlotReleasesDisabledAccountForReschedule(t *testing.T) {
+	cache := &countTokensAdmissionCache{
+		concurrencyCacheMock: &concurrencyCacheMock{
+			acquireAccountSlotFn: func(context.Context, int64, int, string) (bool, error) {
+				return true, nil
+			},
+		},
+		accountWaitAllowed: true,
+	}
+	helper := NewConcurrencyHelper(service.NewConcurrencyService(cache), SSEPingFormatNone, time.Second)
+	c := newCountTokensAdmissionContext(t)
+	streamStarted := false
+	revalidator := &countTokensWaitRevalidator{err: service.ErrAccountSchedulingChanged}
+
+	release, err := acquireAccountSelectionSlot(c, helper, countTokensWaitSelection(), false, &streamStarted, nil, revalidator, nil, "session")
+	require.Nil(t, release)
+	require.ErrorIs(t, err, service.ErrAccountSchedulingChanged)
+	require.Equal(t, 1, revalidator.calls)
+	require.Equal(t, int32(1), cache.releaseAccountCalled)
 }
 
 func TestAcquireAccountSelectionSlotFeatureOffHonorsWaitLimit(t *testing.T) {
@@ -119,7 +152,7 @@ func TestAcquireAccountSelectionSlotFeatureOffHonorsWaitLimit(t *testing.T) {
 	c := newCountTokensAdmissionContext(t)
 	streamStarted := false
 
-	release, err := acquireAccountSelectionSlot(c, helper, countTokensWaitSelection(), false, &streamStarted, nil)
+	release, err := acquireAccountSelectionSlot(c, helper, countTokensWaitSelection(), false, &streamStarted, nil, nil, nil, "")
 	require.Nil(t, release)
 	var queueFullErr *WaitQueueFullError
 	require.ErrorAs(t, err, &queueFullErr)
@@ -138,7 +171,7 @@ func TestAcquireAccountSelectionSlotLowTierNeverRegistersWaiter(t *testing.T) {
 	c.Request = c.Request.WithContext(service.WithRequestSchedulingTier(c.Request.Context(), service.RequestSchedulingTierLow))
 	streamStarted := false
 
-	release, err := acquireAccountSelectionSlot(c, helper, countTokensWaitSelection(), false, &streamStarted, nil)
+	release, err := acquireAccountSelectionSlot(c, helper, countTokensWaitSelection(), false, &streamStarted, nil, nil, nil, "")
 	require.Nil(t, release)
 	var queueFullErr *WaitQueueFullError
 	require.ErrorAs(t, err, &queueFullErr)
@@ -159,7 +192,7 @@ func TestAcquireAccountSelectionSlotPriorityRedisFailureFailsClosed(t *testing.T
 	c.Request = c.Request.WithContext(service.WithRequestSchedulingTier(c.Request.Context(), service.RequestSchedulingTierNormal))
 	streamStarted := false
 
-	release, err := acquireAccountSelectionSlot(c, helper, countTokensWaitSelection(), false, &streamStarted, nil)
+	release, err := acquireAccountSelectionSlot(c, helper, countTokensWaitSelection(), false, &streamStarted, nil, nil, nil, "")
 	require.Nil(t, release)
 	require.ErrorIs(t, err, service.ErrPriorityAdmissionUnavailable)
 	require.Len(t, cache.priorityRequests, 1)

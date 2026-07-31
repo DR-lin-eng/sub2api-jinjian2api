@@ -170,8 +170,12 @@ func (h *OpenAIGatewayHandler) Embeddings(c *gin.Context) {
 		account := selection.Account
 		setOpsSelectedAccount(c, account.ID, account.Platform)
 
-		accountReleaseFunc, accountAcquired := h.acquireResponsesAccountSlot(c, apiKey.GroupID, "", selection, false, &streamStarted, reqLog)
-		if !accountAcquired {
+		accountReleaseFunc, acquireOutcome := h.acquireResponsesAccountSlot(c, apiKey.GroupID, "", selection, false, &streamStarted, reqLog)
+		if acquireOutcome == accountSlotAcquireReschedule {
+			addFailedAccountID(&failedAccountIDs, account.ID)
+			continue
+		}
+		if acquireOutcome != accountSlotAcquireReady {
 			return
 		}
 

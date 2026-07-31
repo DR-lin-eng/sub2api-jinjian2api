@@ -599,6 +599,87 @@ func (c *stubGatewayCache) DeleteSessionAccountID(ctx context.Context, groupID i
 	return nil
 }
 
+func TestEnsureAccountSchedulableAfterWait_DisabledAccountClearsStickyBinding(t *testing.T) {
+	groupID := int64(7)
+	disabled := Account{
+		ID:          41,
+		Platform:    PlatformOpenAI,
+		Status:      StatusActive,
+		Schedulable: false,
+	}
+
+	t.Run("gateway", func(t *testing.T) {
+		cache := &stubGatewayCache{sessionBindings: map[string]int64{"session": disabled.ID}}
+		svc := &GatewayService{
+			accountRepo: stubOpenAIAccountRepo{accounts: []Account{disabled}},
+			cache:       cache,
+		}
+
+		err := svc.EnsureAccountSchedulableAfterWait(context.Background(), &groupID, "session", disabled.ID)
+		require.ErrorIs(t, err, ErrAccountSchedulingChanged)
+		require.NotContains(t, cache.sessionBindings, "session")
+		require.Equal(t, 1, cache.deletedSessions["session"])
+	})
+
+	t.Run("openai", func(t *testing.T) {
+		cache := &stubGatewayCache{sessionBindings: map[string]int64{"openai:session": disabled.ID}}
+		svc := &OpenAIGatewayService{
+			accountRepo: stubOpenAIAccountRepo{accounts: []Account{disabled}},
+			cache:       cache,
+		}
+
+		err := svc.EnsureAccountSchedulableAfterWait(context.Background(), &groupID, "session", disabled.ID)
+		require.ErrorIs(t, err, ErrAccountSchedulingChanged)
+		require.NotContains(t, cache.sessionBindings, "openai:session")
+		require.Equal(t, 1, cache.deletedSessions["openai:session"])
+	})
+}
+
+func TestEnsureAccountSchedulableAfterWait_ActiveAccountKeepsStickyBinding(t *testing.T) {
+	active := Account{
+		ID:          42,
+		Platform:    PlatformOpenAI,
+		Status:      StatusActive,
+		Schedulable: true,
+	}
+	cache := &stubGatewayCache{sessionBindings: map[string]int64{"openai:session": active.ID}}
+	svc := &OpenAIGatewayService{
+		accountRepo: stubOpenAIAccountRepo{accounts: []Account{active}},
+		cache:       cache,
+	}
+
+	require.NoError(t, svc.EnsureAccountSchedulableAfterWait(context.Background(), nil, "session", active.ID))
+	require.Equal(t, active.ID, cache.sessionBindings["openai:session"])
+	require.Empty(t, cache.deletedSessions)
+}
+
+func TestEnsureAccountSchedulableAfterWait_MissingAccountClearsStickyBinding(t *testing.T) {
+	cache := &stubGatewayCache{sessionBindings: map[string]int64{"openai:session": 43}}
+	svc := &OpenAIGatewayService{
+		accountRepo: stubOpenAIAccountRepo{getErr: ErrAccountNotFound},
+		cache:       cache,
+	}
+
+	err := svc.EnsureAccountSchedulableAfterWait(context.Background(), nil, "session", 43)
+	require.ErrorIs(t, err, ErrAccountSchedulingChanged)
+	require.NotContains(t, cache.sessionBindings, "openai:session")
+}
+
+func TestEnsureAccountSchedulableAfterWait_RepositoryFailureKeepsStickyBinding(t *testing.T) {
+	repoErr := errors.New("database unavailable")
+	cache := &stubGatewayCache{sessionBindings: map[string]int64{"openai:session": 44}}
+	svc := &OpenAIGatewayService{
+		accountRepo: stubOpenAIAccountRepo{getErr: repoErr},
+		cache:       cache,
+	}
+
+	err := svc.EnsureAccountSchedulableAfterWait(context.Background(), nil, "session", 44)
+	require.ErrorIs(t, err, repoErr)
+	require.NotErrorIs(t, err, ErrAccountSchedulingChanged)
+	require.Equal(t, int64(44), cache.sessionBindings["openai:session"])
+	require.Empty(t, cache.deletedSessions)
+}
+
 func TestOpenAISelectAccountWithLoadAwareness_FiltersUnschedulable(t *testing.T) {
 	now := time.Now()
 	resetAt := now.Add(10 * time.Minute)
