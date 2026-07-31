@@ -633,6 +633,38 @@
         </div>
       </div>
 
+      <!-- OpenAI Codex namespace flattening compatibility (OAuth only) -->
+      <div
+        v-if="form.platform === 'openai' && form.type === 'oauth'"
+        class="border-t border-gray-200 pt-4 dark:border-dark-600"
+      >
+        <div class="flex items-center justify-between">
+          <div>
+            <label class="input-label mb-0">{{ t('admin.accounts.openai.flattenNamespaces') }}</label>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {{ t('admin.accounts.openai.flattenNamespacesDesc') }}
+            </p>
+          </div>
+          <button
+            type="button"
+            data-testid="create-openai-flatten-namespaces-toggle"
+            :aria-pressed="openaiFlattenNamespacesEnabled"
+            @click="openaiFlattenNamespacesEnabled = !openaiFlattenNamespacesEnabled"
+            :class="[
+              'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+              openaiFlattenNamespacesEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+            ]"
+          >
+            <span
+              :class="[
+                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                openaiFlattenNamespacesEnabled ? 'translate-x-5' : 'translate-x-0'
+              ]"
+            />
+          </button>
+        </div>
+      </div>
+
       <!-- OpenAI WS Mode 三态（off/ctx_pool/passthrough） -->
       <div
         v-if="form.platform === 'openai' && (accountCategory === 'oauth-based' || accountCategory === 'apikey')"
@@ -1024,5 +1056,5 @@ import Toggle from '@/common/widgets/forms/Toggle.vue'
 import type { CreateAccountAdvancedContext } from '../../accountEditorContext'
 
 const props = defineProps<{ context: CreateAccountAdvancedContext }>()
-const { accountCategory, addOpenAICompactModelMapping, addTempUnschedRule, allowOverages, anthropicAPIKeyAuthScheme, anthropicPassthroughEnabled, isSimpleMode, autoPauseOnExpired, baseRpm, cacheTTLOverrideEnabled, cacheTTLOverrideTarget, codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled, customBaseUrl, customBaseUrlEnabled, expiresAtInput, form, getOpenAICompactModelMappingKey, getTempUnschedRuleKey, groups, interceptWarmupRequests, maxSessions, mixedScheduling, moveTempUnschedRule, openAICompactMode, openAICompactModeOptions, openAICompactModelMappings, openAIEndpointCapabilities, openAIEndpointCapabilityOptions, openAIForceImageAPIEnabled, openAILongContextBillingEnabled, openAIResponsesMode, openAIResponsesModeOptions, openAITextGenerationCapabilityEnabled, openAIWSModeConcurrencyHintKey, openAIWSModeOptions, openaiPassthroughEnabled, openaiResponsesWebSocketV2Mode, proxies, removeOpenAICompactModelMapping, removeTempUnschedRule, rpmLimitEnabled, rpmStickyBuffer, rpmStrategy, sessionIdMaskingEnabled, sessionIdleTimeout, sessionLimitEnabled, t, tempUnschedEnabled, tempUnschedPresets, tempUnschedRules, tlsFingerprintEnabled, tlsFingerprintProfileId, tlsFingerprintProfiles, toggleOpenAIEndpointCapability, toggleOpenAILongContextBilling, umqModeOptions, userMsgQueueMode, webSearchEmulationMode, webSearchGlobalEnabled, windowCostEnabled, windowCostLimit, windowCostStickyReserve } = props.context
+const { accountCategory, addOpenAICompactModelMapping, addTempUnschedRule, allowOverages, anthropicAPIKeyAuthScheme, anthropicPassthroughEnabled, isSimpleMode, autoPauseOnExpired, baseRpm, cacheTTLOverrideEnabled, cacheTTLOverrideTarget, codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled, customBaseUrl, customBaseUrlEnabled, expiresAtInput, form, getOpenAICompactModelMappingKey, getTempUnschedRuleKey, groups, interceptWarmupRequests, maxSessions, mixedScheduling, moveTempUnschedRule, openAICompactMode, openAICompactModeOptions, openAICompactModelMappings, openAIEndpointCapabilities, openAIEndpointCapabilityOptions, openAIForceImageAPIEnabled, openAILongContextBillingEnabled, openAIResponsesMode, openAIResponsesModeOptions, openAITextGenerationCapabilityEnabled, openAIWSModeConcurrencyHintKey, openAIWSModeOptions, openaiPassthroughEnabled, openaiFlattenNamespacesEnabled, openaiResponsesWebSocketV2Mode, proxies, removeOpenAICompactModelMapping, removeTempUnschedRule, rpmLimitEnabled, rpmStickyBuffer, rpmStrategy, sessionIdMaskingEnabled, sessionIdleTimeout, sessionLimitEnabled, t, tempUnschedEnabled, tempUnschedPresets, tempUnschedRules, tlsFingerprintEnabled, tlsFingerprintProfileId, tlsFingerprintProfiles, toggleOpenAIEndpointCapability, toggleOpenAILongContextBilling, umqModeOptions, userMsgQueueMode, webSearchEmulationMode, webSearchGlobalEnabled, windowCostEnabled, windowCostLimit, windowCostStickyReserve } = props.context
 </script>

@@ -50,6 +50,58 @@
         </div>
       </div>
 
+      <!-- OpenAI Codex namespace flattening compatibility (OAuth only) -->
+      <div
+        v-if="allOpenAIOAuthOnly"
+        class="border-t border-gray-200 pt-4 dark:border-dark-600"
+      >
+        <div class="mb-3 flex items-center justify-between">
+          <div class="flex-1 pr-4">
+            <label
+              id="bulk-edit-openai-flatten-namespaces-label"
+              class="input-label mb-0"
+              for="bulk-edit-openai-flatten-namespaces-enabled"
+            >
+              {{ t('admin.accounts.openai.flattenNamespaces') }}
+            </label>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {{ t('admin.accounts.openai.flattenNamespacesDesc') }}
+            </p>
+          </div>
+          <input
+            id="bulk-edit-openai-flatten-namespaces-enabled"
+            v-model="enableOpenAIFlattenNamespaces"
+            type="checkbox"
+            aria-controls="bulk-edit-openai-flatten-namespaces-body"
+            class="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+          />
+        </div>
+        <div
+          id="bulk-edit-openai-flatten-namespaces-body"
+          :class="!enableOpenAIFlattenNamespaces && 'pointer-events-none opacity-50'"
+          role="group"
+          aria-labelledby="bulk-edit-openai-flatten-namespaces-label"
+        >
+          <button
+            id="bulk-edit-openai-flatten-namespaces-toggle"
+            type="button"
+            :aria-pressed="openaiFlattenNamespacesEnabled"
+            :class="[
+              'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
+              openaiFlattenNamespacesEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
+            ]"
+            @click="openaiFlattenNamespacesEnabled = !openaiFlattenNamespacesEnabled"
+          >
+            <span
+              :class="[
+                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                openaiFlattenNamespacesEnabled ? 'translate-x-5' : 'translate-x-0'
+              ]"
+            />
+          </button>
+        </div>
+      </div>
+
       <!-- Base URL (API Key only) -->
       <div class="border-t border-gray-200 pt-4 dark:border-dark-600">
         <div class="mb-3 flex items-center justify-between">
@@ -536,6 +588,7 @@ const {
   addModelMapping,
   addPresetMapping,
   allHeaderOverrideCapable,
+  allOpenAIOAuthOnly,
   allowedModels,
   allOpenAIPassthroughCapable,
   allTargetsGrok,
@@ -547,6 +600,7 @@ const {
   enableHeaderOverride,
   enableInterceptWarmup,
   enableModelRestriction,
+  enableOpenAIFlattenNamespaces,
   enableOpenAIPassthrough,
   filteredPresets,
   headerOverrideEnabled,
@@ -555,6 +609,7 @@ const {
   isOpenAIModelRestrictionDisabled,
   modelMappings,
   modelRestrictionMode,
+  openaiFlattenNamespacesEnabled,
   openaiPassthroughEnabled,
   removeErrorCode,
   removeModelMapping,

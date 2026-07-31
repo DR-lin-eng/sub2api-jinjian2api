@@ -151,6 +151,7 @@ func buildSystemSettingsUpdate(prepared *preparedSettingsUpdate) *service.System
 		ContactInfo:                                        req.ContactInfo,
 		DocURL:                                             req.DocURL,
 		HomeContent:                                        req.HomeContent,
+		CompactHomeEnabled:                                 req.CompactHomeEnabled,
 		HideCcsImportButton:                                req.HideCcsImportButton,
 		PurchaseSubscriptionEnabled:                        purchaseEnabled,
 		PurchaseSubscriptionURL:                            purchaseURL,

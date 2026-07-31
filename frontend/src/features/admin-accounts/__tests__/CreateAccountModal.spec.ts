@@ -177,6 +177,15 @@ describe('CreateAccountModal OpenAI long-context billing', () => {
     expect(createAccountMock.mock.calls[0]?.[0]?.extra?.openai_long_context_billing_enabled).toBe(false)
   })
 
+  it('shows namespace flattening only for OpenAI OAuth accounts', async () => {
+    const wrapper = mountModal()
+    await selectButtonByText(wrapper, 'OpenAI')
+    expect(wrapper.find('[data-testid="create-openai-flatten-namespaces-toggle"]').exists()).toBe(true)
+
+    await selectButtonByText(wrapper, 'API Key')
+    expect(wrapper.find('[data-testid="create-openai-flatten-namespaces-toggle"]').exists()).toBe(false)
+  })
+
   it('enables upstream billing probes by default for new OpenAI API key accounts', async () => {
     await submitApiKeyAccount('openai')
 

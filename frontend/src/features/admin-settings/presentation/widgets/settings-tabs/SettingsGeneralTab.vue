@@ -335,9 +335,23 @@
                 <p class="mt-2 text-xs text-amber-600 dark:text-amber-400">
                   {{ t("admin.settings.site.homeContentIframeWarning") }}
                 </p>
-              </div>
+			  </div>
 
-              <!-- Hide CCS Import Button -->
+			  <div
+				class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
+			  >
+				<div>
+				  <label class="font-medium text-gray-900 dark:text-white">
+					{{ t("admin.settings.site.compactHome") }}
+				  </label>
+				  <p class="text-sm text-gray-500 dark:text-gray-400">
+					{{ t("admin.settings.site.compactHomeHint") }}
+				  </p>
+				</div>
+				<Toggle v-model="form.compact_home_enabled" data-testid="compact-home-toggle" />
+			  </div>
+
+			  <!-- Hide CCS Import Button -->
               <div
                 class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
               >

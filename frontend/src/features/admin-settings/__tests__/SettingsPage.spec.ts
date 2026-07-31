@@ -485,6 +485,7 @@ const baseSettingsResponse = {
   contact_info: "",
   doc_url: "",
   home_content: "",
+  compact_home_enabled: false,
   hide_ccs_import_button: false,
   table_default_page_size: 20,
   table_page_size_options: [10, 20, 50, 100],
@@ -866,6 +867,21 @@ describe("admin SettingsView payment visible method controls", () => {
 
     const payload = updateSettings.mock.calls.at(-1)?.[0] as Record<string, unknown>;
     expect(payload.stream_mode_performance_enabled).toBe(true);
+  });
+
+  it("loads and saves the compact home setting from the general tab", async () => {
+    const wrapper = mountView();
+    await flushPromises();
+    await openGeneralTab(wrapper);
+
+    const toggle = wrapper.get('[data-testid="compact-home-toggle"]');
+    expect((toggle.element as HTMLInputElement).checked).toBe(false);
+    await toggle.setValue(true);
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    const payload = updateSettings.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+    expect(payload.compact_home_enabled).toBe(true);
   });
 
   it("keeps the main save, web search, refresh, and notification order", async () => {

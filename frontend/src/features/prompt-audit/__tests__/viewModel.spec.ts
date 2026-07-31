@@ -12,7 +12,8 @@ import {
 
 const config = (): PromptAuditConfig => ({
   enabled: true,
-  blocking_enabled: false,
+	blocking_enabled: false,
+	blocking_latest_turn_only: false,
   store_pass_events: false,
   effective_mode: 'async_audit',
   strategy: 'priority',
@@ -43,7 +44,7 @@ describe('Prompt Audit view model', () => {
     expect(SCANNER_CATALOG.map((item) => item.id)).toContain('suicide_and_self_harm')
   })
 
-  it('keeps, replaces, or explicitly clears a saved token without copying plaintext from the server', () => {
+	it('keeps, replaces, or explicitly clears a saved token without copying plaintext from the server', () => {
     const draft = configToDraft(config())
     expect(draft.endpoints[0].token).toBe('')
     expect(buildUpdateRequest(draft).endpoints[0]).toMatchObject({ token: undefined, clear_token: false })
@@ -54,7 +55,13 @@ describe('Prompt Audit view model', () => {
     draft.endpoints[0].token = ''
     draft.endpoints[0].clear_token = true
     expect(buildUpdateRequest(draft).endpoints[0]).toMatchObject({ token: undefined, clear_token: true })
-  })
+	})
+
+	it('includes the optional narrow blocking scope in the update payload', () => {
+		const draft = configToDraft(config())
+		draft.blocking_latest_turn_only = true
+		expect(buildUpdateRequest(draft)).toMatchObject({ blocking_latest_turn_only: true })
+	})
 
   it('tracks dirty state from the full normalized save payload', () => {
     const original = configToDraft(config())

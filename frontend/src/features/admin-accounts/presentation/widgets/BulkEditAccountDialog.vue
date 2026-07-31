@@ -807,6 +807,15 @@ const allOpenAIOAuth = computed(() => {
   )
 })
 
+const allOpenAIOAuthOnly = computed(() => {
+  return (
+    targetSelectedPlatforms.value.length === 1 &&
+    targetSelectedPlatforms.value[0] === 'openai' &&
+    targetSelectedTypes.value.length > 0 &&
+    targetSelectedTypes.value.every(t => t === 'oauth')
+  )
+})
+
 const allOpenAIAPIKey = computed(() => {
   return (
     targetSelectedPlatforms.value.length === 1 &&
@@ -868,6 +877,7 @@ const enableRateMultiplier = ref(false)
 const enableStatus = ref(false)
 const enableGroups = ref(false)
 const enableOpenAIPassthrough = ref(false)
+const enableOpenAIFlattenNamespaces = ref(false)
 const enableOpenAIWSMode = ref(false)
 const enableOpenAIAPIKeyWSMode = ref(false)
 const enableUpstreamBillingAutoProbe = ref(false)
@@ -899,6 +909,7 @@ const rateMultiplier = ref(1)
 const status = ref<'active' | 'inactive'>('active')
 const groupIds = ref<number[]>([])
 const openaiPassthroughEnabled = ref(false)
+const openaiFlattenNamespacesEnabled = ref(false)
 const openaiOAuthResponsesWebSocketV2Mode = ref<OpenAIWSMode>(OPENAI_WS_MODE_OFF)
 const openaiAPIKeyResponsesWebSocketV2Mode = ref<OpenAIWSMode>(OPENAI_WS_MODE_OFF)
 const upstreamBillingAutoProbeMode = ref<'enabled' | 'disabled'>('enabled')
@@ -1043,6 +1054,7 @@ const bulkEditRoutingPolicyContext = {
   addModelMapping,
   addPresetMapping,
   allHeaderOverrideCapable,
+  allOpenAIOAuthOnly,
   allowedModels,
   allOpenAIPassthroughCapable,
   allTargetsGrok,
@@ -1054,6 +1066,7 @@ const bulkEditRoutingPolicyContext = {
   enableHeaderOverride,
   enableInterceptWarmup,
   enableModelRestriction,
+  enableOpenAIFlattenNamespaces,
   enableOpenAIPassthrough,
   filteredPresets,
   headerOverrideEnabled,
@@ -1062,6 +1075,7 @@ const bulkEditRoutingPolicyContext = {
   isOpenAIModelRestrictionDisabled,
   modelMappings,
   modelRestrictionMode,
+  openaiFlattenNamespacesEnabled,
   openaiPassthroughEnabled,
   removeErrorCode,
   removeModelMapping,
@@ -1091,6 +1105,9 @@ const buildUpdatePayload = (): Record<string, unknown> | null => {
     baseUrl: baseUrl.value,
     enableOpenAIPassthrough: enableOpenAIPassthrough.value,
     openaiPassthroughEnabled: openaiPassthroughEnabled.value,
+    enableOpenAIFlattenNamespaces: enableOpenAIFlattenNamespaces.value,
+    openaiFlattenNamespacesEligible: allOpenAIOAuthOnly.value,
+    openaiFlattenNamespacesEnabled: openaiFlattenNamespacesEnabled.value,
     enableModelRestriction: enableModelRestriction.value,
     isOpenAIModelRestrictionDisabled: isOpenAIModelRestrictionDisabled.value,
     modelRestrictionMode: modelRestrictionMode.value,
@@ -1175,6 +1192,7 @@ const handleSubmit = async () => {
   const hasAnyFieldEnabled =
     enableBaseUrl.value ||
     enableOpenAIPassthrough.value ||
+    enableOpenAIFlattenNamespaces.value ||
     enableModelRestriction.value ||
     enableCustomErrorCodes.value ||
     enableInterceptWarmup.value ||
@@ -1315,6 +1333,7 @@ watch(
       enableStatus.value = false
       enableGroups.value = false
       enableOpenAIPassthrough.value = false
+      enableOpenAIFlattenNamespaces.value = false
       enableOpenAIWSMode.value = false
       enableOpenAIAPIKeyWSMode.value = false
       enableUpstreamBillingAutoProbe.value = false
@@ -1327,6 +1346,7 @@ watch(
       // Reset all values
       baseUrl.value = ''
       openaiPassthroughEnabled.value = false
+      openaiFlattenNamespacesEnabled.value = false
       modelRestrictionMode.value = 'whitelist'
       allowedModels.value = []
       modelMappings.value = []

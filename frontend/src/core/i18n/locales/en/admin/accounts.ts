@@ -569,6 +569,9 @@ export default {
         oauthPassthrough: 'Auto passthrough (auth only)',
         oauthPassthroughDesc:
           'When enabled, this OpenAI account uses automatic passthrough: the gateway forwards request/response as-is and only swaps auth, while keeping billing/concurrency/audit and necessary safety filtering.',
+        flattenNamespaces: 'Flatten Codex namespace tools',
+        flattenNamespacesDesc:
+          'OAuth compatibility switch for relays that reject namespace tools. Disabled by default so native Codex requests preserve namespace declarations; compact requests always use flattened tools.',
         longContextBilling: 'API long-context pricing',
         longContextBillingDesc:
           'Disabled by default. Enable only when this account\'s upstream charges OpenAI API long-context rates above the model threshold.',

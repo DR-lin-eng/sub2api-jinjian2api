@@ -20,6 +20,7 @@ export interface BulkEditRoutingPolicyContext {
   allHeaderOverrideCapable: ComputedRef<boolean>
   allowedModels: Ref<string[]>
   allOpenAIPassthroughCapable: ComputedRef<boolean>
+  allOpenAIOAuthOnly: ComputedRef<boolean>
   allTargetsGrok: ComputedRef<boolean>
   baseUrl: Ref<string>
   commonErrorCodes: Array<{ value: number; label: string }>
@@ -30,6 +31,7 @@ export interface BulkEditRoutingPolicyContext {
   enableInterceptWarmup: Ref<boolean>
   enableModelRestriction: Ref<boolean>
   enableOpenAIPassthrough: Ref<boolean>
+  enableOpenAIFlattenNamespaces: Ref<boolean>
   filteredPresets: ComputedRef<ModelPreset[]>
   headerOverrideEnabled: Ref<boolean>
   headerOverrideRows: Ref<HeaderOverrideRow[]>
@@ -38,6 +40,7 @@ export interface BulkEditRoutingPolicyContext {
   modelMappings: Ref<ModelMapping[]>
   modelRestrictionMode: Ref<ModelRestrictionMode>
   openaiPassthroughEnabled: Ref<boolean>
+  openaiFlattenNamespacesEnabled: Ref<boolean>
   removeErrorCode: (code: number) => void
   removeModelMapping: (index: number) => void
   selectedErrorCodes: Ref<number[]>

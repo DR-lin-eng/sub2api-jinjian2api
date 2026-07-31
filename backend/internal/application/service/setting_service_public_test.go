@@ -105,6 +105,22 @@ func TestSettingService_GetPublicSettings_ExposesTablePreferences(t *testing.T) 
 	require.Equal(t, []int{20, 50, 100}, settings.TablePageSizeOptions)
 }
 
+func TestSettingService_GetPublicSettings_ExposesCompactHomeEnabled(t *testing.T) {
+	repo := &settingPublicRepoStub{values: map[string]string{
+		SettingKeyCompactHomeEnabled: "true",
+	}}
+	settings, err := NewSettingService(repo, &config.Config{}).GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.True(t, settings.CompactHomeEnabled)
+
+	missing, err := NewSettingService(
+		&settingPublicRepoStub{values: map[string]string{}},
+		&config.Config{},
+	).GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.False(t, missing.CompactHomeEnabled)
+}
+
 func TestSettingService_GetPublicSettings_ExposesForceEmailOnThirdPartySignup(t *testing.T) {
 	repo := &settingPublicRepoStub{
 		values: map[string]string{

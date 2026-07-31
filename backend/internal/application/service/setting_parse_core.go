@@ -72,6 +72,7 @@ func (s *SettingService) parseCoreSystemSettings(settings map[string]string) *Sy
 		ContactInfo:                  settings[SettingKeyContactInfo],
 		DocURL:                       settings[SettingKeyDocURL],
 		HomeContent:                  settings[SettingKeyHomeContent],
+		CompactHomeEnabled:           settings[SettingKeyCompactHomeEnabled] == "true",
 		HideCcsImportButton:          settings[SettingKeyHideCcsImportButton] == "true",
 		PurchaseSubscriptionEnabled:  settings[SettingKeyPurchaseSubscriptionEnabled] == "true",
 		PurchaseSubscriptionURL:      strings.TrimSpace(settings[SettingKeyPurchaseSubscriptionURL]),

@@ -441,7 +441,12 @@ func (s *paymentConfigSettingRepoStub) GetAll(context.Context) (map[string]strin
 func (s *paymentConfigSettingRepoStub) Delete(context.Context, string) error { return nil }
 
 func TestUpdatePaymentConfig_PersistsVisibleMethodRouting(t *testing.T) {
-	repo := &paymentConfigSettingRepoStub{values: map[string]string{}}
+	repo := &paymentConfigSettingRepoStub{values: map[string]string{
+		SettingPaymentVisibleMethodAlipayEnabled: "false",
+		SettingPaymentVisibleMethodAlipaySource:  VisibleMethodSourceOfficialAlipay,
+		SettingPaymentVisibleMethodWxpayEnabled:  "true",
+		SettingPaymentVisibleMethodWxpaySource:   VisibleMethodSourceEasyPayWechat,
+	}}
 	svc := &PaymentConfigService{settingRepo: repo}
 
 	alipayEnabled := true
@@ -467,6 +472,73 @@ func TestUpdatePaymentConfig_PersistsVisibleMethodRouting(t *testing.T) {
 	}
 	if repo.values[SettingPaymentVisibleMethodWxpaySource] != VisibleMethodSourceOfficialWechat {
 		t.Fatalf("wxpay source = %q, want %q", repo.values[SettingPaymentVisibleMethodWxpaySource], VisibleMethodSourceOfficialWechat)
+	}
+}
+
+func TestUpdatePaymentConfig_OmittedVisibleMethodRoutingIsPreserved(t *testing.T) {
+	wantVisibleMethods := map[string]string{
+		SettingPaymentVisibleMethodAlipayEnabled: "true",
+		SettingPaymentVisibleMethodAlipaySource:  VisibleMethodSourceEasyPayAlipay,
+		SettingPaymentVisibleMethodWxpayEnabled:  "false",
+		SettingPaymentVisibleMethodWxpaySource:   VisibleMethodSourceOfficialWechat,
+	}
+	initial := make(map[string]string, len(wantVisibleMethods))
+	for key, value := range wantVisibleMethods {
+		initial[key] = value
+	}
+	repo := &paymentConfigSettingRepoStub{values: initial}
+	svc := &PaymentConfigService{settingRepo: repo}
+
+	enabled := true
+	err := svc.UpdatePaymentConfig(context.Background(), UpdatePaymentConfigRequest{Enabled: &enabled})
+	if err != nil {
+		t.Fatalf("UpdatePaymentConfig returned error: %v", err)
+	}
+
+	for key, want := range wantVisibleMethods {
+		if _, updated := repo.updates[key]; updated {
+			t.Fatalf("omitted visible method setting %q was unexpectedly updated", key)
+		}
+		if got := repo.values[key]; got != want {
+			t.Fatalf("visible method setting %q = %q, want preserved value %q", key, got, want)
+		}
+	}
+	if repo.updates[SettingPaymentEnabled] != "true" {
+		t.Fatalf("payment enabled update = %q, want true", repo.updates[SettingPaymentEnabled])
+	}
+}
+
+func TestUpdatePaymentConfig_PersistsExplicitEmptyAndFalseValues(t *testing.T) {
+	repo := &paymentConfigSettingRepoStub{values: map[string]string{
+		SettingEnabledPaymentTypes: "alipay,wxpay",
+		SettingBalancePayDisabled:  "true",
+		SettingProductNamePrefix:   "existing",
+	}}
+	svc := &PaymentConfigService{settingRepo: repo}
+
+	falseValue := false
+	emptyString := ""
+	err := svc.UpdatePaymentConfig(context.Background(), UpdatePaymentConfigRequest{
+		EnabledTypes:      []string{},
+		BalanceDisabled:   &falseValue,
+		ProductNamePrefix: &emptyString,
+	})
+	if err != nil {
+		t.Fatalf("UpdatePaymentConfig returned error: %v", err)
+	}
+
+	want := map[string]string{
+		SettingEnabledPaymentTypes: "",
+		SettingBalancePayDisabled:  "false",
+		SettingProductNamePrefix:   "",
+	}
+	if len(repo.updates) != len(want) {
+		t.Fatalf("updated %d settings, want %d: %v", len(repo.updates), len(want), repo.updates)
+	}
+	for key, wantValue := range want {
+		if got := repo.updates[key]; got != wantValue {
+			t.Fatalf("setting %q = %q, want %q", key, got, wantValue)
+		}
 	}
 }
 

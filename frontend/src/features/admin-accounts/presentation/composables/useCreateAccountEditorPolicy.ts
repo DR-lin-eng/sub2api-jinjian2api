@@ -62,6 +62,7 @@ type EditorFields =
     | 'openAICompactModelMappings'
     | 'openAIEndpointCapabilities'
     | 'openAIForceImageAPIEnabled'
+    | 'openaiFlattenNamespacesEnabled'
     | 'openaiPassthroughEnabled'
     | 'tempUnschedEnabled'
     | 'tempUnschedRules'
@@ -115,7 +116,8 @@ export function useCreateAccountEditorPolicy(context: CreateAccountEditorPolicyC
     modelRestrictionMode, notifications, oauth, openAICompactModelMappings,
     openAIEndpointCapabilities, openAIForceImageAPIEnabled,
     openaiAPIKeyResponsesWebSocketV2Mode, openaiOAuth,
-    openaiOAuthResponsesWebSocketV2Mode, openaiPassthroughEnabled, resetForm,
+    openaiOAuthResponsesWebSocketV2Mode, openaiFlattenNamespacesEnabled,
+    openaiPassthroughEnabled, resetForm,
     selectedErrorCodes, show, t, tempUnschedEnabled, tempUnschedRules,
     tlsFingerprintProfiles, vertexClientEmail, vertexLocation, vertexProjectId,
     vertexServiceAccountJson, webSearchEmulationMode,
@@ -237,6 +239,7 @@ export function useCreateAccountEditorPolicy(context: CreateAccountEditorPolicyC
         interceptWarmupRequests.value = false
       }
       if (newPlatform !== 'openai') {
+        openaiFlattenNamespacesEnabled.value = false
         openaiPassthroughEnabled.value = false
         openAIEndpointCapabilities.value = ['chat_completions', 'embeddings']
         openAIForceImageAPIEnabled.value = false

@@ -34,4 +34,27 @@ describe('PaymentMethodSelector', () => {
     expect(button.classes()).toContain('border-primary-500')
     expect(button.classes()).not.toContain('border-[#02A9F1]')
   })
+
+  it('keeps long custom names inside a bounded responsive grid', () => {
+    const name = 'A very long custom payment method name that must not resize the selector'
+    const wrapper = mount(PaymentMethodSelector, {
+      props: {
+        selected: 'long_custom_method',
+        methods: [{ type: 'long_custom_method', display_name: name, fee_rate: 0, available: true }],
+      },
+    })
+
+    expect(wrapper.get('[data-testid="payment-method-grid"]').classes()).toEqual(expect.arrayContaining([
+      'grid-cols-2',
+      'sm:grid-cols-3',
+      'lg:grid-cols-4',
+    ]))
+    const button = wrapper.get('button')
+    expect(button.attributes('title')).toBe(name)
+    expect(button.classes()).toContain('min-w-0')
+    expect(wrapper.get('[data-testid="payment-method-label"]').classes()).toEqual(expect.arrayContaining([
+      'w-full',
+      'truncate',
+    ]))
+  })
 })

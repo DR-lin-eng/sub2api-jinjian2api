@@ -318,6 +318,43 @@ func TestTrimOpenAIEncryptedReasoningItems_NoReasoningItems(t *testing.T) {
 	assert.False(t, changed)
 }
 
+func TestTrimOpenAIEncryptedReasoningItems_Compaction(t *testing.T) {
+	tests := []struct {
+		name      string
+		itemType  string
+		encrypted bool
+		changed   bool
+	}{
+		{name: "compaction", itemType: "compaction", encrypted: true, changed: true},
+		{name: "compaction summary", itemType: "compaction_summary", encrypted: true, changed: true},
+		{name: "unencrypted compaction", itemType: "compaction", encrypted: false, changed: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			item := map[string]any{"type": tt.itemType, "id": "cmp_stale"}
+			if tt.encrypted {
+				item["encrypted_content"] = "gAAA"
+			}
+			reqBody := map[string]any{"input": []any{
+				item,
+				map[string]any{"type": "message", "content": "hi"},
+			}}
+
+			changed := trimOpenAIEncryptedReasoningItems(reqBody)
+			require.Equal(t, tt.changed, changed)
+			input := reqBody["input"].([]any)
+			if tt.changed {
+				require.Len(t, input, 1)
+				require.Equal(t, "message", input[0].(map[string]any)["type"])
+				return
+			}
+			require.Len(t, input, 2)
+			require.Equal(t, tt.itemType, input[0].(map[string]any)["type"])
+		})
+	}
+}
+
 func TestTrimOpenAIEncryptedReasoningItems_ContentNullDropsBareSkeleton(t *testing.T) {
 	reqBody := map[string]any{
 		"input": []any{

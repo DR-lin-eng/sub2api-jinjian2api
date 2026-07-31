@@ -57,6 +57,16 @@ type settingGetAllRepoStub struct {
 	values map[string]string
 }
 
+func TestSettingService_UpdateSettings_PersistsCompactHomeEnabled(t *testing.T) {
+	repo := &settingUpdateRepoStub{}
+	err := NewSettingService(repo, &config.Config{}).UpdateSettings(
+		context.Background(),
+		&SystemSettings{CompactHomeEnabled: true},
+	)
+	require.NoError(t, err)
+	require.Equal(t, "true", repo.updates[SettingKeyCompactHomeEnabled])
+}
+
 func (s *settingGetAllRepoStub) Get(ctx context.Context, key string) (*Setting, error) {
 	panic("unexpected Get call")
 }

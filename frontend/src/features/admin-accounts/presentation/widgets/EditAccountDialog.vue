@@ -296,6 +296,8 @@ const customBaseUrl = ref('')
 
 // OpenAI 自动透传开关（OAuth/API Key）
 const openaiPassthroughEnabled = ref(false)
+// OAuth-only compatibility switch; default preserves namespace declarations.
+const openaiFlattenNamespacesEnabled = ref(false)
 const openAILongContextBillingEnabled = ref(false)
 // OpenAI 订阅档位（Plus/Pro/Free）手动覆盖值,存于 credentials.plan_type;'' 表示清空/自动识别
 const editPlanType = ref<string>('')
@@ -752,6 +754,7 @@ const syncFormFromAccount = (newAccount: Account | null) => {
 
   // Load OpenAI passthrough toggle (OpenAI OAuth/SetupToken/API Key)
   openaiPassthroughEnabled.value = false
+  openaiFlattenNamespacesEnabled.value = false
   openAILongContextBillingEnabled.value = false
   editPlanType.value = ''
   openAICompactMode.value = 'auto'
@@ -770,6 +773,8 @@ const syncFormFromAccount = (newAccount: Account | null) => {
   webSearchEmulationMode.value = 'default'
   if (newAccount.platform === 'openai' && (newAccount.type === 'oauth' || newAccount.type === 'setup-token' || newAccount.type === 'apikey')) {
     openaiPassthroughEnabled.value = extra?.openai_passthrough === true || extra?.openai_oauth_passthrough === true
+    openaiFlattenNamespacesEnabled.value =
+      newAccount.type === 'oauth' && extra?.openai_responses_flatten_namespaces === true
     const longContextBillingValue = extra?.openai_long_context_billing_enabled
     openAILongContextBillingEnabled.value = longContextBillingValue === true
     // plan_type 手动覆盖仅 OAuth 有实际调度语义(IsOpenAIChatGPTSubscription 要求 oauth),故只对 oauth 回填
@@ -1382,7 +1387,8 @@ const {
   openAICompactMode, openAICompactModelMappings, openAIForceImageAPIEnabled,
   openAILongContextBillingEnabled, openAIResponsesMode,
   openAITextGenerationCapabilityEnabled, openaiAPIKeyResponsesWebSocketV2Mode,
-  openaiOAuthResponsesWebSocketV2Mode, openaiPassthroughEnabled, poolModeEnabled,
+  openaiOAuthResponsesWebSocketV2Mode, openaiFlattenNamespacesEnabled,
+  openaiPassthroughEnabled, poolModeEnabled,
   poolModeRetryCount, poolModeRetryStatusCodesInput, rpmLimitEnabled, rpmStickyBuffer,
   rpmStrategy, selectedErrorCodes, sessionIdMaskingEnabled, sessionIdleTimeout,
   sessionLimitEnabled, showMixedChannelWarning, submitting, t, tlsFingerprintEnabled,
@@ -1421,6 +1427,7 @@ const editAccountAdvancedContext = {
   openAIForceImageAPIEnabled, openAILongContextBillingEnabled, openAIResponsesMode,
   openAIResponsesModeOptions, openAIResponsesStatusKey, openAITextGenerationCapabilityEnabled,
   openAIWSModeConcurrencyHintKey, openAIWSModeOptions, openaiPassthroughEnabled,
+  openaiFlattenNamespacesEnabled,
   openaiResponsesWebSocketV2Mode, proxies: availableProxies, quotaNotifyGlobalEnabled,
   quotaNotifyState, removeTempUnschedRule, t, tempUnschedEnabled, tempUnschedPresets,
   tempUnschedRules, toggleOpenAIEndpointCapability, upstreamBillingAutoProbeEnabled,

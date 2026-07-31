@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/Wei-Shaw/sub2api/internal/shared/apicompat"
 	"github.com/gin-gonic/gin"
@@ -13,19 +14,49 @@ import (
 
 const openAIResponsesNamespaceNamesContextKey = "openai_responses_namespace_names"
 
-// shouldFlattenOpenAIResponsesNamespaces 判定原生 Responses 转发前是否摊平
-// Codex namespace 工具。WSv2 上游原生支持 namespace，且 WS 出口
-// （openai_ws_forwarder_v2）原样转发上游事件、不经 HTTP 回程还原，摊平后的
-// 平名无法还原会破坏客户端工具匹配，因此实际走 WSv2 分支的请求保持 namespace
-// 原样。透传账号先于 WSv2 分支经 HTTP 转发返回，仍需摊平。
-func shouldFlattenOpenAIResponsesNamespaces(account *Account, transport OpenAIUpstreamTransport, passthroughEnabled bool) bool {
+// shouldFlattenOpenAIResponsesNamespaces determines whether Codex namespace
+// tools need the legacy flattened representation. Native OpenAI OAuth
+// Responses preserves namespaces by default; compact requests and explicitly
+// configured compatibility upstreams retain the established flattening path.
+func shouldFlattenOpenAIResponsesNamespaces(
+	account *Account,
+	transport OpenAIUpstreamTransport,
+	passthroughEnabled bool,
+	compactPath bool,
+) bool {
 	if account == nil || !account.IsOpenAIOAuth() {
+		return false
+	}
+	if !compactPath && !account.IsOpenAIResponsesFlattenNamespacesEnabled() {
 		return false
 	}
 	if transport == OpenAIUpstreamTransportResponsesWebsocketV2 && !passthroughEnabled {
 		return false
 	}
 	return true
+}
+
+func shouldKeepOpenAIResponsesToolCallNamespaces(
+	account *Account,
+	transport OpenAIUpstreamTransport,
+	passthroughEnabled bool,
+	compactPath bool,
+) bool {
+	if account == nil || !account.IsOpenAIOAuth() || compactPath {
+		return false
+	}
+	return !shouldFlattenOpenAIResponsesNamespaces(account, transport, passthroughEnabled, compactPath)
+}
+
+var openAIResponsesToolCallItemTypes = map[string]bool{
+	"function_call":    true,
+	"tool_call":        true,
+	"custom_tool_call": true,
+	"mcp_tool_call":    true,
+}
+
+func isOpenAIResponsesToolCallItemType(itemType string) bool {
+	return openAIResponsesToolCallItemTypes[strings.ToLower(strings.TrimSpace(itemType))]
 }
 
 // shouldStripOpenAIResponsesInputNamespaces removes residual input item
@@ -68,7 +99,7 @@ func flattenOpenAIResponsesNamespaces(c *gin.Context, body []byte) ([]byte, erro
 // array items. Namespace declarations and nested namespace fields are left
 // untouched. Rebuilding the input array once keeps this linear for long
 // histories and avoids decoding JSON numbers through float64.
-func stripOpenAIResponsesInputNamespaces(body []byte) ([]byte, error) {
+func stripOpenAIResponsesInputNamespaces(body []byte, keepToolCallNamespaces bool) ([]byte, error) {
 	if !bytes.Contains(body, []byte(`"namespace"`)) {
 		return body, nil
 	}
@@ -89,7 +120,8 @@ func stripOpenAIResponsesInputNamespaces(body []byte) ([]byte, error) {
 		}
 		first = false
 		itemBody := []byte(item.Raw)
-		if item.IsObject() && item.Get("namespace").Exists() {
+		if item.IsObject() && item.Get("namespace").Exists() &&
+			(!keepToolCallNamespaces || !isOpenAIResponsesToolCallItemType(item.Get("type").String())) {
 			itemBody, stripErr = sjson.DeleteBytes(itemBody, "namespace")
 			if stripErr != nil {
 				return false
@@ -99,18 +131,27 @@ func stripOpenAIResponsesInputNamespaces(body []byte) ([]byte, error) {
 		_, _ = rebuilt.Write(itemBody)
 		return true
 	})
+	_ = rebuilt.WriteByte(']')
 	if stripErr != nil {
 		return body, fmt.Errorf("delete OpenAI input namespace: %w", stripErr)
 	}
 	if !changed {
 		return body, nil
 	}
-	_ = rebuilt.WriteByte(']')
 	stripped, err := sjson.SetRawBytes(body, "input", rebuilt.Bytes())
 	if err != nil {
 		return body, fmt.Errorf("replace OpenAI input after namespace deletion: %w", err)
 	}
 	return stripped, nil
+}
+
+func clearOpenAIResponsesNamespaceNames(c *gin.Context) {
+	if c == nil {
+		return
+	}
+	if _, exists := c.Get(openAIResponsesNamespaceNamesContextKey); exists {
+		c.Set(openAIResponsesNamespaceNamesContextKey, map[string]apicompat.ResponsesNamespaceName(nil))
+	}
 }
 
 func setOpenAIResponsesNamespaceNames(c *gin.Context, names map[string]apicompat.ResponsesNamespaceName) {

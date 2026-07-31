@@ -24,6 +24,9 @@ func appendProductSettingChanges(changed []string, before, after *service.System
 	if before.HomeContent != after.HomeContent {
 		changed = append(changed, "home_content")
 	}
+	if before.CompactHomeEnabled != after.CompactHomeEnabled {
+		changed = append(changed, "compact_home_enabled")
+	}
 	if before.HideCcsImportButton != after.HideCcsImportButton {
 		changed = append(changed, "hide_ccs_import_button")
 	}

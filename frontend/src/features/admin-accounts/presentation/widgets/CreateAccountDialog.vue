@@ -336,6 +336,8 @@ const applyGrokOAuthUpstreamConfig = (credentials: Record<string, unknown>) => {
 const interceptWarmupRequests = ref(false)
 const autoPauseOnExpired = ref(true)
 const openaiPassthroughEnabled = ref(false)
+// OAuth-only compatibility switch; default preserves namespace declarations.
+const openaiFlattenNamespacesEnabled = ref(false)
 const openAILongContextBillingEnabled = ref(false)
 const openAILongContextBillingTouched = ref(false)
 const openAICompactMode = ref<OpenAICompactMode>('auto')
@@ -704,7 +706,8 @@ const {
   modelMappings, modelRestrictionMode, notifications, oauth,
   openAICompactModelMappings, openAIEndpointCapabilities, openAIForceImageAPIEnabled,
   openaiAPIKeyResponsesWebSocketV2Mode, openaiOAuth, openaiOAuthResponsesWebSocketV2Mode,
-  openaiPassthroughEnabled, resetForm: () => resetForm(), selectedErrorCodes,
+  openaiFlattenNamespacesEnabled, openaiPassthroughEnabled, resetForm: () => resetForm(),
+  selectedErrorCodes,
   show: () => props.show, t, tempUnschedEnabled, tempUnschedRules, tlsFingerprintProfiles,
   vertexClientEmail, vertexLocation, vertexProjectId, vertexServiceAccountJson,
   webSearchEmulationMode,
@@ -872,6 +875,7 @@ const resetForm = () => {
   interceptWarmupRequests.value = false
   autoPauseOnExpired.value = true
   openaiPassthroughEnabled.value = false
+  openaiFlattenNamespacesEnabled.value = false
   openAILongContextBillingEnabled.value = false
   openAILongContextBillingTouched.value = false
   openAICompactMode.value = 'auto'
@@ -956,6 +960,11 @@ const buildOpenAIExtra = (base?: Record<string, unknown>): Record<string, unknow
   } else {
     delete extra.openai_passthrough
     delete extra.openai_oauth_passthrough
+  }
+  if (form.type === 'oauth' && openaiFlattenNamespacesEnabled.value) {
+    extra.openai_responses_flatten_namespaces = true
+  } else {
+    delete extra.openai_responses_flatten_namespaces
   }
   extra.openai_long_context_billing_enabled = openAILongContextBillingEnabled.value
 
@@ -1419,7 +1428,8 @@ const createAccountAdvancedContext = {
   openAICompactModelMappings, openAIEndpointCapabilities, openAIEndpointCapabilityOptions,
   openAIForceImageAPIEnabled, openAILongContextBillingEnabled, openAIResponsesMode,
   openAIResponsesModeOptions, openAITextGenerationCapabilityEnabled, openAIWSModeConcurrencyHintKey,
-  openAIWSModeOptions, openaiPassthroughEnabled, openaiResponsesWebSocketV2Mode,
+  openAIWSModeOptions, openaiPassthroughEnabled, openaiFlattenNamespacesEnabled,
+  openaiResponsesWebSocketV2Mode,
   proxies: availableProxies, removeOpenAICompactModelMapping, removeTempUnschedRule,
   rpmLimitEnabled, rpmStickyBuffer, rpmStrategy, sessionIdMaskingEnabled, sessionIdleTimeout,
   sessionLimitEnabled, t, tempUnschedEnabled, tempUnschedPresets, tempUnschedRules,

@@ -81,6 +81,7 @@ type EditorFields =
     | 'openAILongContextBillingEnabled'
     | 'openAIResponsesMode'
     | 'openAITextGenerationCapabilityEnabled'
+    | 'openaiFlattenNamespacesEnabled'
     | 'openaiPassthroughEnabled'
     | 'upstreamBillingAutoProbeEnabled'
     | 'webSearchEmulationMode'
@@ -825,6 +826,11 @@ function applyOpenAIExtra(
   } else {
     delete extra.openai_passthrough
     delete extra.openai_oauth_passthrough
+  }
+  if (account.type === 'oauth' && context.openaiFlattenNamespacesEnabled.value) {
+    extra.openai_responses_flatten_namespaces = true
+  } else {
+    delete extra.openai_responses_flatten_namespaces
   }
   if (context.isSparkShadow.value) {
     delete extra.openai_long_context_billing_enabled
