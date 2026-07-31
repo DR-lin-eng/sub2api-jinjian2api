@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -128,7 +129,7 @@ func BenchmarkOpenAIProxyStreamCircuitSchedulerLookup(b *testing.B) {
 		svc := &OpenAIGatewayService{cfg: &config.Config{}}
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
-			_ = svc.isOpenAIProxyStreamQuarantined(account)
+			_ = svc.isOpenAIProxyStreamQuarantined(context.Background(), account)
 		}
 	})
 
@@ -144,11 +145,43 @@ func BenchmarkOpenAIProxyStreamCircuitSchedulerLookup(b *testing.B) {
 		now := time.Now()
 		circuit.recordFailure(proxyID, now, now)
 		svc := &OpenAIGatewayService{cfg: cfg, openaiProxyStreamCircuit: circuit}
-		require.True(b, svc.isOpenAIProxyStreamQuarantined(account))
+		require.True(b, svc.isOpenAIProxyStreamQuarantined(context.Background(), account))
 		b.ReportAllocs()
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_ = svc.isOpenAIProxyStreamQuarantined(account)
+			_ = svc.isOpenAIProxyStreamQuarantined(context.Background(), account)
 		}
 	})
+}
+
+func TestOpenAIProxyStreamCircuitCollapsesBurstFailures(t *testing.T) {
+	base := time.Unix(1_800_000_000, 0)
+	circuit := newOpenAIProxyStreamCircuit(openAIProxyStreamCircuitSettings{
+		failureThreshold: 2,
+		failureWindow:    time.Minute,
+		quarantineTTL:    10 * time.Minute,
+		collapseInterval: 3 * time.Second,
+		maxEntries:       16,
+	})
+	tripped, _ := circuit.recordFailure(1, base, base)
+	require.False(t, tripped)
+	tripped, _ = circuit.recordFailure(1, base.Add(time.Second), base.Add(time.Second))
+	require.False(t, tripped)
+	tripped, _ = circuit.recordFailure(1, base.Add(5*time.Second), base.Add(5*time.Second))
+	require.True(t, tripped)
+}
+
+func TestOpenAIProxyStreamCircuitDisabledAndBypass(t *testing.T) {
+	base := time.Unix(1_800_000_000, 0)
+	proxyID := int64(7)
+	account := &Account{ID: 1, Platform: PlatformOpenAI, ProxyID: &proxyID}
+	svc := &OpenAIGatewayService{cfg: &config.Config{Gateway: config.GatewayConfig{OpenAIProxyStreamCircuit: config.GatewayOpenAIProxyStreamCircuitConfig{Enabled: true}}}}
+	svc.openaiProxyStreamCircuit = newOpenAIProxyStreamCircuit(openAIProxyStreamCircuitSettings{failureThreshold: 1, failureWindow: time.Minute, quarantineTTL: time.Minute, maxEntries: 16})
+	svc.openaiProxyStreamCircuit.recordFailure(proxyID, base, base)
+	require.True(t, svc.isOpenAIProxyStreamQuarantined(context.Background(), account))
+	require.False(t, svc.isOpenAIProxyStreamQuarantined(withOpenAIProxyStreamQuarantineBypass(context.Background()), account))
+	disabled := newOpenAIProxyStreamCircuit(openAIProxyStreamCircuitSettings{disabled: true, failureThreshold: 1, failureWindow: time.Minute, quarantineTTL: time.Minute, maxEntries: 16})
+	tripped, _ := disabled.recordFailure(proxyID, base, base)
+	require.False(t, tripped)
+	require.Equal(t, 0, disabled.activeBlockCount(base))
 }

@@ -421,6 +421,8 @@ gateway:
   # OpenAI Responses SSE 代理断流熔断；按 proxy_id 跨账号隔离，仅影响下一次调度。
   openai_proxy_stream_circuit:
     enabled: false
+    # Upstream-compatible emergency switch. Enabled remains opt-in in this fork.
+    disabled: false
     failure_threshold: 2
     window_seconds: 60
     ttl_seconds: 600

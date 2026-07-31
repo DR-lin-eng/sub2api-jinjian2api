@@ -584,6 +584,9 @@ func sanitizeCountTokensRequestBody(body []byte) []byte {
 		"stream",
 		"stop_sequences",
 		"stop",
+		// OAuth mimicry may inject max_tokens for normal messages requests, but
+		// Anthropic's count_tokens endpoint accepts request-input fields only.
+		"max_tokens",
 	} {
 		if gjson.GetBytes(out, path).Exists() {
 			if next, ok := deleteJSONPathBytes(out, path); ok {

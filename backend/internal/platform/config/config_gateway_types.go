@@ -157,7 +157,10 @@ type GatewayOpenAIHTTP2Config struct {
 // GatewayOpenAIProxyStreamCircuitConfig controls the bounded, in-process
 // proxy-ID circuit used for incomplete OpenAI Responses SSE streams.
 type GatewayOpenAIProxyStreamCircuitConfig struct {
-	Enabled          bool `mapstructure:"enabled"`
+	Enabled bool `mapstructure:"enabled"`
+	// Disabled is an emergency kill switch accepted for upstream compatibility.
+	// The fork keeps Enabled opt-in by default so upgrades do not change routing.
+	Disabled         bool `mapstructure:"disabled"`
 	FailureThreshold int  `mapstructure:"failure_threshold"`
 	WindowSeconds    int  `mapstructure:"window_seconds"`
 	TTLSeconds       int  `mapstructure:"ttl_seconds"`

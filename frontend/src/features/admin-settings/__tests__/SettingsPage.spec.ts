@@ -1085,6 +1085,7 @@ describe("admin SettingsView payment visible method controls", () => {
     expect(toggle.attributes("disabled")).toBeUndefined();
     expect(settings.text()).toContain("sub3.nebula-spaces.com");
     expect(settings.text()).toContain("https://sub3.nebula-spaces.com");
+    expect(settings.text()).not.toContain("passkeyDeploymentHint");
 
     await toggle.setValue(false);
     await wrapper.find("form").trigger("submit.prevent");
@@ -1110,9 +1111,11 @@ describe("admin SettingsView payment visible method controls", () => {
 
     const settings = wrapper.get('[data-testid="passkey-settings"]');
     expect(settings.get('[data-testid="passkey-toggle"]').attributes("disabled")).toBeDefined();
-    expect(settings.get('[data-testid="passkey-config-status"]').text()).toContain(
+    const status = settings.get('[data-testid="passkey-config-status"]');
+    expect(status.text()).toContain(
       "admin.settings.security.passkeyNotConfigured",
     );
+    expect(status.text()).toContain("admin.settings.security.passkeyDeploymentHint");
   });
 
   it("links payment guidance to README sections instead of removed payment docs", async () => {

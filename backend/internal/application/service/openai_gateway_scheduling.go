@@ -1577,7 +1577,7 @@ func (s *OpenAIGatewayService) resolveFreshSchedulableOpenAIAccount(ctx context.
 	if s.isOpenAIAccountRequestRuntimeBlocked(fresh, requestedModel) {
 		return nil
 	}
-	if s.isOpenAIProxyStreamQuarantined(fresh) {
+	if s.isOpenAIProxyStreamQuarantined(ctx, fresh) {
 		return nil
 	}
 	capped, available := s.concurrencyService.applyCPAPoolCapacity(ctx, fresh)
@@ -1613,7 +1613,7 @@ func (s *OpenAIGatewayService) recheckSelectedOpenAIAccountFromDB(ctx context.Co
 		if !parentHealthyForShadow(account, s.parentAccountLookup(ctx)) {
 			return nil
 		}
-		if s.isOpenAIProxyStreamQuarantined(account) {
+		if s.isOpenAIProxyStreamQuarantined(ctx, account) {
 			return nil
 		}
 		capped, available := s.concurrencyService.applyCPAPoolCapacity(ctx, account)
@@ -1639,7 +1639,7 @@ func (s *OpenAIGatewayService) recheckSelectedOpenAIAccountFromDB(ctx context.Co
 	if s.isOpenAIAccountRequestRuntimeBlocked(latest, requestedModel) {
 		return nil
 	}
-	if s.isOpenAIProxyStreamQuarantined(latest) {
+	if s.isOpenAIProxyStreamQuarantined(ctx, latest) {
 		return nil
 	}
 	capped, available := s.concurrencyService.applyCPAPoolCapacity(ctx, latest)

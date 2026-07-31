@@ -16,12 +16,16 @@ const (
 	defaultOpenAIProxyStreamFailureWindow     = time.Minute
 	defaultOpenAIProxyStreamQuarantineTTL     = 10 * time.Minute
 	defaultOpenAIProxyStreamCircuitMaxEntries = 4096
+	defaultOpenAIProxyStreamFailureCollapse   = 3 * time.Second
+	openAIProxyStreamFailOpenLogInterval      = 5 * time.Second
 )
 
 type openAIProxyStreamCircuitSettings struct {
+	disabled         bool
 	failureThreshold int
 	failureWindow    time.Duration
 	quarantineTTL    time.Duration
+	collapseInterval time.Duration
 	maxEntries       int
 }
 
@@ -32,6 +36,7 @@ type openAIProxyStreamCircuitEntry struct {
 	lastTouched          time.Time
 	lastFailureStartedAt time.Time
 	lastSuccessStartedAt time.Time
+	lastFailureAt        time.Time
 }
 
 type openAIProxyStreamBlockedSnapshot struct {
@@ -53,12 +58,14 @@ func resolveOpenAIProxyStreamCircuitSettings(s *OpenAIGatewayService) openAIProx
 		failureThreshold: defaultOpenAIProxyStreamFailureThreshold,
 		failureWindow:    defaultOpenAIProxyStreamFailureWindow,
 		quarantineTTL:    defaultOpenAIProxyStreamQuarantineTTL,
+		collapseInterval: defaultOpenAIProxyStreamFailureCollapse,
 		maxEntries:       defaultOpenAIProxyStreamCircuitMaxEntries,
 	}
 	if s == nil || s.cfg == nil {
 		return settings
 	}
 	cfg := s.cfg.Gateway.OpenAIProxyStreamCircuit
+	settings.disabled = cfg.Disabled
 	if cfg.FailureThreshold > 0 {
 		settings.failureThreshold = cfg.FailureThreshold
 	}
@@ -72,7 +79,7 @@ func resolveOpenAIProxyStreamCircuitSettings(s *OpenAIGatewayService) openAIProx
 }
 
 func (s *OpenAIGatewayService) openAIProxyStreamCircuitEnabled() bool {
-	return s != nil && s.cfg != nil && s.cfg.Gateway.OpenAIProxyStreamCircuit.Enabled
+	return s != nil && s.cfg != nil && s.cfg.Gateway.OpenAIProxyStreamCircuit.Enabled && !s.cfg.Gateway.OpenAIProxyStreamCircuit.Disabled
 }
 
 func newOpenAIProxyStreamCircuit(settings openAIProxyStreamCircuitSettings) *openAIProxyStreamCircuit {
@@ -87,6 +94,9 @@ func newOpenAIProxyStreamCircuit(settings openAIProxyStreamCircuitSettings) *ope
 	}
 	if settings.maxEntries <= 0 {
 		settings.maxEntries = defaultOpenAIProxyStreamCircuitMaxEntries
+	}
+	if settings.collapseInterval < 0 {
+		settings.collapseInterval = 0
 	}
 	return &openAIProxyStreamCircuit{
 		settings: settings,
@@ -107,7 +117,7 @@ func (s *OpenAIGatewayService) getOpenAIProxyStreamCircuit() *openAIProxyStreamC
 }
 
 func (c *openAIProxyStreamCircuit) recordFailure(proxyID int64, requestStartedAt, observedAt time.Time) (bool, time.Time) {
-	if c == nil || proxyID <= 0 {
+	if c == nil || c.settings.disabled || proxyID <= 0 {
 		return false, time.Time{}
 	}
 	if observedAt.IsZero() {
@@ -142,8 +152,15 @@ func (c *openAIProxyStreamCircuit) recordFailure(proxyID int64, requestStartedAt
 		entry.windowStart = observedAt
 		entry.blockedUntil = time.Time{}
 	}
+	if c.settings.collapseInterval > 0 && !entry.lastFailureAt.IsZero() &&
+		!observedAt.Before(entry.lastFailureAt) && observedAt.Sub(entry.lastFailureAt) < c.settings.collapseInterval {
+		entry.lastTouched = observedAt
+		c.entries[proxyID] = entry
+		return false, entry.blockedUntil
+	}
 	entry.failureCount++
 	entry.lastFailureStartedAt = requestStartedAt
+	entry.lastFailureAt = observedAt
 	entry.lastTouched = observedAt
 	tripped := entry.failureCount >= c.settings.failureThreshold
 	if tripped {
@@ -194,7 +211,7 @@ func (c *openAIProxyStreamCircuit) recordSuccess(proxyID int64, requestStartedAt
 }
 
 func (c *openAIProxyStreamCircuit) isBlocked(proxyID int64, now time.Time) bool {
-	if c == nil || proxyID <= 0 {
+	if c == nil || c.settings.disabled || proxyID <= 0 {
 		return false
 	}
 	snapshot := c.blockedSnapshot.Load()
@@ -203,6 +220,21 @@ func (c *openAIProxyStreamCircuit) isBlocked(proxyID int64, now time.Time) bool 
 	}
 	blockedUntil, ok := snapshot.blockedUntilByProxy[proxyID]
 	return ok && now.Before(blockedUntil)
+}
+
+func (c *openAIProxyStreamCircuit) activeBlockCount(now time.Time) int {
+	if c == nil || c.settings.disabled {
+		return 0
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	count := 0
+	for _, entry := range c.entries {
+		if !entry.blockedUntil.IsZero() && now.Before(entry.blockedUntil) {
+			count++
+		}
+	}
+	return count
 }
 
 func (c *openAIProxyStreamCircuit) publishBlockedSnapshotLocked(now time.Time) {
@@ -287,7 +319,21 @@ func (s *OpenAIGatewayService) clearOpenAIProxyStreamDisconnect(account *Account
 	}
 }
 
-func (s *OpenAIGatewayService) isOpenAIProxyStreamQuarantined(account *Account) bool {
+type openAIProxyStreamQuarantineBypassKey struct{}
+
+func withOpenAIProxyStreamQuarantineBypass(ctx context.Context) context.Context {
+	return context.WithValue(ctx, openAIProxyStreamQuarantineBypassKey{}, true)
+}
+
+func openAIProxyStreamQuarantineBypassed(ctx context.Context) bool {
+	if ctx == nil {
+		return false
+	}
+	bypassed, _ := ctx.Value(openAIProxyStreamQuarantineBypassKey{}).(bool)
+	return bypassed
+}
+
+func (s *OpenAIGatewayService) isOpenAIProxyStreamQuarantined(ctx context.Context, account *Account) bool {
 	proxyID, ok := openAIProxyStreamCircuitProxyID(account)
 	if !ok {
 		return false
@@ -295,6 +341,23 @@ func (s *OpenAIGatewayService) isOpenAIProxyStreamQuarantined(account *Account) 
 	if !s.openAIProxyStreamCircuitEnabled() {
 		return false
 	}
+	if openAIProxyStreamQuarantineBypassed(ctx) {
+		return false
+	}
 	circuit := s.getOpenAIProxyStreamCircuit()
 	return circuit != nil && circuit.isBlocked(proxyID, time.Now())
+}
+
+func (s *OpenAIGatewayService) logOpenAIProxyStreamQuarantineFailOpen(requestedModel string, blockedProxies int) {
+	now := time.Now().UnixNano()
+	last := s.openaiProxyStreamFailOpenLogAt.Load()
+	if now-last < int64(openAIProxyStreamFailOpenLogInterval) ||
+		!s.openaiProxyStreamFailOpenLogAt.CompareAndSwap(last, now) {
+		return
+	}
+	logger.L().With(zap.String("component", "service.openai_gateway")).Warn(
+		"openai.proxy_stream_quarantine_fail_open",
+		zap.Int("blocked_proxies", blockedProxies),
+		zap.String("model", requestedModel),
+	)
 }
