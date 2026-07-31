@@ -343,14 +343,19 @@ func TestTrimOpenAIEncryptedReasoningItems_Compaction(t *testing.T) {
 
 			changed := trimOpenAIEncryptedReasoningItems(reqBody)
 			require.Equal(t, tt.changed, changed)
-			input := reqBody["input"].([]any)
+			input, ok := reqBody["input"].([]any)
+			require.True(t, ok)
 			if tt.changed {
 				require.Len(t, input, 1)
-				require.Equal(t, "message", input[0].(map[string]any)["type"])
+				firstItem, itemOK := input[0].(map[string]any)
+				require.True(t, itemOK)
+				require.Equal(t, "message", firstItem["type"])
 				return
 			}
 			require.Len(t, input, 2)
-			require.Equal(t, tt.itemType, input[0].(map[string]any)["type"])
+			firstItem, itemOK := input[0].(map[string]any)
+			require.True(t, itemOK)
+			require.Equal(t, tt.itemType, firstItem["type"])
 		})
 	}
 }
