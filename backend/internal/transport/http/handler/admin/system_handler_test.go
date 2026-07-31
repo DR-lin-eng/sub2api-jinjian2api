@@ -80,6 +80,7 @@ type systemUpdateResponseEnvelope struct {
 
 type systemUpdateErrorEnvelope struct {
 	Code    int    `json:"code"`
+	Reason  string `json:"reason"`
 	Message string `json:"message"`
 }
 
@@ -152,7 +153,7 @@ func TestSystemHandlerPerformUpdateAlreadyUpToDateReturnsOK(t *testing.T) {
 	require.NotEmpty(t, body.Data.OperationID)
 }
 
-func TestSystemHandlerPerformUpdateFailureStillReturnsInternalError(t *testing.T) {
+func TestSystemHandlerPerformUpdateFailureReturnsSafeActionableError(t *testing.T) {
 	updateSvc := &systemHandlerUpdateServiceStub{
 		performErr: errors.New("download failed"),
 	}
@@ -173,7 +174,8 @@ func TestSystemHandlerPerformUpdateFailureStillReturnsInternalError(t *testing.T
 	var body systemUpdateErrorEnvelope
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
 	require.Equal(t, http.StatusInternalServerError, body.Code)
-	require.Equal(t, "internal error", body.Message)
+	require.Equal(t, "SYSTEM_UPDATE_FAILED", body.Reason)
+	require.Equal(t, "update failed; check server logs for details", body.Message)
 }
 
 func TestSystemHandlerHighImpactActionsRequireConfirmation(t *testing.T) {

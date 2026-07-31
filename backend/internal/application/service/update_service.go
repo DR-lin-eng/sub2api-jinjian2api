@@ -170,9 +170,12 @@ func (s *UpdateService) CheckUpdate(ctx context.Context, force bool) (*UpdateInf
 // PerformUpdate downloads and applies the update
 // Uses atomic file replacement pattern for safe in-place updates
 func (s *UpdateService) PerformUpdate(ctx context.Context) error {
-	info, err := s.CheckUpdate(ctx, true)
+	// Applying an update must not use CheckUpdate's availability fallback. A
+	// stale cache is useful for the version badge, but treating a failed live
+	// release lookup as "already up to date" hides a real update failure.
+	info, err := s.fetchLatestRelease(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("fetch latest release: %w", err)
 	}
 
 	if !info.HasUpdate {

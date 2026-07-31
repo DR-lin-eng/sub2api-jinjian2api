@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
+	infraerrors "github.com/Wei-Shaw/sub2api/internal/shared/errors"
 	"github.com/Wei-Shaw/sub2api/internal/shared/response"
 	"github.com/Wei-Shaw/sub2api/internal/shared/sysutil"
 	middleware2 "github.com/Wei-Shaw/sub2api/internal/transport/http/server/middleware"
@@ -131,7 +132,13 @@ func (h *SystemHandler) PerformUpdate(c *gin.Context) {
 				}, nil
 			}
 			releaseReason = "SYSTEM_UPDATE_FAILED"
-			return nil, err
+			// Keep implementation details (download URLs, filesystem paths, and
+			// proxy errors) in the server log while returning an actionable,
+			// stable response to the administrator.
+			return nil, infraerrors.InternalServer(
+				"SYSTEM_UPDATE_FAILED",
+				"update failed; check server logs for details",
+			).WithCause(err)
 		}
 		succeeded = true
 

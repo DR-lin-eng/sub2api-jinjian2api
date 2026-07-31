@@ -33,6 +33,7 @@ func (s *updateServiceCacheStub) SetUpdateInfo(_ context.Context, data string, _
 
 type updateServiceGitHubClientStub struct {
 	release        *GitHubRelease
+	latestErr      error
 	recentReleases []*GitHubRelease
 	recentErr      error
 	latestRepo     string
@@ -41,7 +42,7 @@ type updateServiceGitHubClientStub struct {
 
 func (s *updateServiceGitHubClientStub) FetchLatestRelease(_ context.Context, repo string) (*GitHubRelease, error) {
 	s.latestRepo = repo
-	return s.release, nil
+	return s.release, s.latestErr
 }
 
 func (s *updateServiceGitHubClientStub) FetchRecentReleases(_ context.Context, repo string, _ int) ([]*GitHubRelease, error) {
@@ -76,6 +77,23 @@ func TestUpdateServicePerformUpdateNoUpdateReturnsSentinel(t *testing.T) {
 	require.Error(t, err)
 	require.True(t, errors.Is(err, ErrNoUpdateAvailable))
 	require.ErrorIs(t, err, ErrNoUpdateAvailable)
+	require.Equal(t, "DR-lin-eng/sub2api-no2api", client.latestRepo)
+}
+
+func TestUpdateServicePerformUpdateFailsWhenLiveReleaseLookupFails(t *testing.T) {
+	latestErr := errors.New("github unavailable")
+	client := &updateServiceGitHubClientStub{latestErr: latestErr}
+	svc := NewUpdateService(
+		&updateServiceCacheStub{},
+		client,
+		"0.1.132",
+		"release",
+	)
+
+	err := svc.PerformUpdate(context.Background())
+
+	require.ErrorIs(t, err, latestErr)
+	require.NotErrorIs(t, err, ErrNoUpdateAvailable)
 	require.Equal(t, "DR-lin-eng/sub2api-no2api", client.latestRepo)
 }
 
