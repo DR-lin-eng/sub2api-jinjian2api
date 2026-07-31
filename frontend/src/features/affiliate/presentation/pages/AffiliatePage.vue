@@ -24,22 +24,22 @@
           <div class="card p-5">
             <p class="text-sm text-gray-500 dark:text-dark-400">{{ t('affiliate.stats.invitedUsers') }}</p>
             <p class="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
-              {{ formatCount(detail.aff_count) }}
+              {{ formatCount(detail.affCount) }}
             </p>
           </div>
           <div class="card p-5">
             <p class="text-sm text-gray-500 dark:text-dark-400">{{ t('affiliate.stats.availableQuota') }}</p>
             <p class="mt-2 text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
-              {{ formatCurrency(detail.aff_quota) }}
+              {{ formatCurrency(detail.affQuota) }}
             </p>
           </div>
           <div class="card p-5">
             <p class="text-sm text-gray-500 dark:text-dark-400">{{ t('affiliate.stats.totalQuota') }}</p>
             <p class="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
-              {{ formatCurrency(detail.aff_history_quota) }}
+              {{ formatCurrency(detail.affHistoryQuota) }}
             </p>
-            <p v-if="detail.aff_frozen_quota > 0" class="mt-1 text-xs text-amber-600 dark:text-amber-400">
-              {{ t('affiliate.stats.frozenQuota') }}: {{ formatCurrency(detail.aff_frozen_quota) }}
+            <p v-if="detail.affFrozenQuota > 0" class="mt-1 text-xs text-amber-600 dark:text-amber-400">
+              {{ t('affiliate.stats.frozenQuota') }}: {{ formatCurrency(detail.affFrozenQuota) }}
             </p>
           </div>
         </div>
@@ -51,9 +51,9 @@
           <div class="mt-5 grid gap-4 md:grid-cols-2">
             <div class="space-y-2">
               <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('affiliate.yourCode') }}</p>
-              <div class="flex flex-col items-stretch gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-dark-700 dark:bg-dark-900 sm:flex-row sm:items-center">
-                <code class="min-w-0 break-all text-sm font-semibold text-gray-900 dark:text-white sm:flex-1 sm:truncate">{{ detail.aff_code }}</code>
-                <button class="btn btn-secondary btn-sm w-full sm:w-auto sm:shrink-0" @click="copyCode">
+              <div class="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-dark-700 dark:bg-dark-900">
+                <code class="flex-1 truncate text-sm font-semibold text-gray-900 dark:text-white">{{ detail.affCode }}</code>
+                <button class="btn btn-secondary btn-sm" @click="copyCode">
                   <Icon name="copy" size="sm" />
                   <span>{{ t('affiliate.copyCode') }}</span>
                 </button>
@@ -62,9 +62,9 @@
 
             <div class="space-y-2">
               <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ t('affiliate.inviteLink') }}</p>
-              <div class="flex flex-col items-stretch gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-dark-700 dark:bg-dark-900 sm:flex-row sm:items-center">
-                <code class="min-w-0 break-all text-sm text-gray-700 dark:text-gray-300 sm:flex-1 sm:truncate">{{ inviteLink }}</code>
-                <button class="btn btn-secondary btn-sm w-full sm:w-auto sm:shrink-0" @click="copyInviteLink">
+              <div class="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 dark:border-dark-700 dark:bg-dark-900">
+                <code class="flex-1 truncate text-sm text-gray-700 dark:text-gray-300">{{ inviteLink }}</code>
+                <button class="btn btn-secondary btn-sm" @click="copyInviteLink">
                   <Icon name="copy" size="sm" />
                   <span>{{ t('affiliate.copyLink') }}</span>
                 </button>
@@ -78,7 +78,7 @@
               <li>1. {{ t('affiliate.tips.line1') }}</li>
               <li>2. {{ t('affiliate.tips.line2', { rate: `${formattedRebateRate}%` }) }}</li>
               <li>3. {{ t('affiliate.tips.line3') }}</li>
-              <li v-if="detail.aff_frozen_quota > 0">4. {{ t('affiliate.tips.line4') }}</li>
+              <li v-if="detail.affFrozenQuota > 0">4. {{ t('affiliate.tips.line4') }}</li>
             </ul>
           </div>
         </div>
@@ -91,7 +91,7 @@
             </div>
             <button
               class="btn btn-primary"
-              :disabled="transferring || detail.aff_quota <= 0"
+              :disabled="transferring || detail.affQuota <= 0"
               @click="transferQuota"
             >
               <Icon v-if="transferring" name="refresh" size="sm" class="animate-spin" />
@@ -99,7 +99,7 @@
               <span>{{ transferring ? t('affiliate.transfer.transferring') : t('affiliate.transfer.button') }}</span>
             </button>
           </div>
-          <p v-if="detail.aff_quota <= 0" class="mt-3 text-sm text-amber-600 dark:text-amber-400">
+          <p v-if="detail.affQuota <= 0" class="mt-3 text-sm text-amber-600 dark:text-amber-400">
             {{ t('affiliate.transfer.empty') }}
           </p>
         </div>
@@ -122,13 +122,13 @@
               <tbody>
                 <tr
                   v-for="item in detail.invitees"
-                  :key="item.user_id"
+                  :key="item.userId"
                   class="border-b border-gray-100 last:border-b-0 dark:border-dark-800"
                 >
                   <td class="px-3 py-3 text-gray-900 dark:text-white">{{ item.email || '-' }}</td>
                   <td class="px-3 py-3 text-gray-700 dark:text-gray-300">{{ item.username || '-' }}</td>
-                  <td class="px-3 py-3 text-right font-medium text-emerald-600 dark:text-emerald-400">{{ formatCurrency(item.total_rebate) }}</td>
-                  <td class="px-3 py-3 text-gray-700 dark:text-gray-300">{{ formatDateTime(item.created_at) || '-' }}</td>
+                  <td class="px-3 py-3 text-right font-medium text-emerald-600 dark:text-emerald-400">{{ formatCurrency(item.totalRebate) }}</td>
+                  <td class="px-3 py-3 text-gray-700 dark:text-gray-300">{{ formatDateTime(item.createdAt) || '-' }}</td>
                 </tr>
               </tbody>
             </table>
@@ -144,8 +144,12 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import userAPI from '@/features/profile/data/datasources/profileDatasource'
-import type { UserAffiliateDetail } from '@/types'
+import { useProfileQueryStore } from '@/features/profile/presentation/stores/profileQueryStore'
+import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
+
+const profileQueryStore = useProfileQueryStore()
+const profileActionStore = useProfileActionStore()
+import type { UserAffiliateDetail } from '@/features/affiliate/domain/models/userAffiliateDetail'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useClipboard } from '@/common/composables/useClipboard'
@@ -163,14 +167,14 @@ const detail = ref<UserAffiliateDetail | null>(null)
 
 const inviteLink = computed(() => {
   if (!detail.value) return ''
-  if (typeof window === 'undefined') return `/register?aff=${encodeURIComponent(detail.value.aff_code)}`
-  return `${window.location.origin}/register?aff=${encodeURIComponent(detail.value.aff_code)}`
+  if (typeof window === 'undefined') return `/register?aff=${encodeURIComponent(detail.value.affCode)}`
+  return `${window.location.origin}/register?aff=${encodeURIComponent(detail.value.affCode)}`
 })
 
 // Rebate rate is a percentage in the range [0, 100]; backend already clamps it.
 // We trim trailing zeros (e.g. 20.00 → "20", 12.50 → "12.5") for a cleaner UI.
 const formattedRebateRate = computed(() => {
-  const v = detail.value?.effective_rebate_rate_percent ?? 0
+  const v = detail.value?.effectiveRebateRatePercent ?? 0
   const rounded = Math.round(v * 100) / 100
   return Number.isInteger(rounded) ? String(rounded) : rounded.toString()
 })
@@ -184,7 +188,7 @@ async function loadAffiliateDetail(silent = false): Promise<void> {
     loading.value = true
   }
   try {
-    detail.value = await userAPI.getAffiliateDetail()
+    detail.value = await profileQueryStore.getAffiliateDetail()
   } catch (error) {
     appStore.showError(extractApiErrorMessage(error, t('affiliate.loadFailed')))
   } finally {
@@ -195,8 +199,8 @@ async function loadAffiliateDetail(silent = false): Promise<void> {
 }
 
 async function copyCode(): Promise<void> {
-  if (!detail.value?.aff_code) return
-  await copyToClipboard(detail.value.aff_code, t('affiliate.codeCopied'))
+  if (!detail.value?.affCode) return
+  await copyToClipboard(detail.value.affCode, t('affiliate.codeCopied'))
 }
 
 async function copyInviteLink(): Promise<void> {
@@ -205,11 +209,11 @@ async function copyInviteLink(): Promise<void> {
 }
 
 async function transferQuota(): Promise<void> {
-  if (!detail.value || detail.value.aff_quota <= 0 || transferring.value) return
+  if (!detail.value || detail.value.affQuota <= 0 || transferring.value) return
   transferring.value = true
   try {
-    const resp = await userAPI.transferAffiliateQuota()
-    appStore.showSuccess(t('affiliate.transfer.success', { amount: formatCurrency(resp.transferred_quota) }))
+    const resp = await profileActionStore.transferAffiliateQuota()
+    appStore.showSuccess(t('affiliate.transfer.success', { amount: formatCurrency(resp.transferredQuota) }))
     await Promise.all([
       loadAffiliateDetail(true),
       authStore.refreshUser().catch(() => undefined),

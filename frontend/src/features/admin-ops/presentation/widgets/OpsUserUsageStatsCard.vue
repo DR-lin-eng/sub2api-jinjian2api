@@ -4,14 +4,12 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import Select from '@/common/widgets/forms/Select.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
-import {
-  opsAPI,
-  type OpsUserUsageStatsParams,
-  type OpsUserUsageStatsResponse,
-  type OpsUserUsageStatsTimeRange
-} from '@/features/admin-ops/data/datasources/adminOpsDatasource'
+import type { OpsUserUsageStats } from '@/features/admin-ops/domain/models/opsUserUsageStats'
+import type { OpsUserUsageStatsParams, OpsUserUsageStatsTimeRange } from '@/features/admin-ops/data/requests_models/opsUserUsageStatsParams'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
 import { formatCurrency, formatDateTime } from '@/core/utils/format'
-import { formatCompactNumber, formatExactNumber } from '../opsFormatter'
+import { formatCompactNumber, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 interface Props {
   platformFilter?: string
@@ -30,7 +28,7 @@ const { t } = useI18n()
 const router = useRouter()
 const loading = ref(false)
 const errorMessage = ref('')
-const response = ref<OpsUserUsageStatsResponse | null>(null)
+const response = ref<OpsUserUsageStats | null>(null)
 
 const timeRange = ref<OpsUserUsageStatsTimeRange>('24h')
 const viewMode = ref<ViewMode>('topn')
@@ -80,10 +78,10 @@ async function loadData() {
   loading.value = true
   errorMessage.value = ''
   try {
-    response.value = await opsAPI.getUserUsageStats(buildParams())
+    response.value = await queryStore.getUserUsageStats(buildParams())
     if (viewMode.value === 'pagination' && page.value > totalPages.value) {
       page.value = totalPages.value
-      response.value = await opsAPI.getUserUsageStats(buildParams())
+      response.value = await queryStore.getUserUsageStats(buildParams())
     }
   } catch (err: any) {
     console.error('[OpsUserUsageStatsCard] Failed to load data', err)
@@ -206,24 +204,24 @@ function onNextPage() {
             <tbody>
               <tr
                 v-for="row in items"
-                :key="row.user_id"
+                :key="row.userId"
                 class="border-b border-gray-100 text-gray-700 last:border-b-0 dark:border-dark-800 dark:text-gray-200"
               >
                 <td class="px-3 py-2">
-                  <button class="text-left font-medium text-primary-600 hover:underline dark:text-primary-400" @click="openUserUsage(row.user_id)">
-                    {{ row.username || row.email || `#${row.user_id}` }}
+                  <button class="text-left font-medium text-primary-600 hover:underline dark:text-primary-400" @click="openUserUsage(row.userId)">
+                    {{ row.username || row.email || `#${row.userId}` }}
                   </button>
                   <div v-if="row.email && row.email !== row.username" class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    {{ row.email }} · #{{ row.user_id }}
+                    {{ row.email }} · #{{ row.userId }}
                   </div>
                 </td>
-                <td class="px-3 py-2 tabular-nums" :title="formatExactNumber(row.request_count)">{{ formatCompactNumber(row.request_count) }}</td>
-                <td class="px-3 py-2 tabular-nums" :title="formatExactNumber(row.input_tokens)">{{ formatCompactNumber(row.input_tokens) }}</td>
-                <td class="px-3 py-2 tabular-nums" :title="formatExactNumber(row.output_tokens)">{{ formatCompactNumber(row.output_tokens) }}</td>
-                <td class="px-3 py-2 tabular-nums" :title="formatExactNumber(row.cache_tokens)">{{ formatCompactNumber(row.cache_tokens) }}</td>
-                <td class="px-3 py-2 tabular-nums font-medium" :title="formatExactNumber(row.total_tokens)">{{ formatCompactNumber(row.total_tokens) }}</td>
-                <td class="px-3 py-2 tabular-nums">{{ formatCurrency(row.actual_cost) }}</td>
-                <td class="px-3 py-2 whitespace-nowrap">{{ formatDateTime(row.last_request_at) || '-' }}</td>
+                <td class="px-3 py-2 tabular-nums" :title="formatExactNumber(row.requestCount)">{{ formatCompactNumber(row.requestCount) }}</td>
+                <td class="px-3 py-2 tabular-nums" :title="formatExactNumber(row.inputTokens)">{{ formatCompactNumber(row.inputTokens) }}</td>
+                <td class="px-3 py-2 tabular-nums" :title="formatExactNumber(row.outputTokens)">{{ formatCompactNumber(row.outputTokens) }}</td>
+                <td class="px-3 py-2 tabular-nums" :title="formatExactNumber(row.cacheTokens)">{{ formatCompactNumber(row.cacheTokens) }}</td>
+                <td class="px-3 py-2 tabular-nums font-medium" :title="formatExactNumber(row.totalTokens)">{{ formatCompactNumber(row.totalTokens) }}</td>
+                <td class="px-3 py-2 tabular-nums">{{ formatCurrency(row.actualCost) }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">{{ formatDateTime(row.lastRequestAt) || '-' }}</td>
               </tr>
             </tbody>
           </table>

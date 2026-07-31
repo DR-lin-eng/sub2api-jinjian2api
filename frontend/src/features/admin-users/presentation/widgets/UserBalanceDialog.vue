@@ -28,9 +28,11 @@
 import { reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { AdminUser } from '@/types'
+import { useAdminUsers } from '@/features/admin-users/presentation/composables/useAdminUsers'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
+
+const $adminUsers = useAdminUsers()
 
 const props = defineProps<{ show: boolean, user: AdminUser | null, operation: 'add' | 'subtract' }>()
 const emit = defineEmits(['close', 'success']); const { t } = useI18n(); const appStore = useAppStore()
@@ -76,7 +78,7 @@ const handleBalanceSubmit = async () => {
   }
   submitting.value = true
   try {
-    await adminAPI.users.updateBalance(props.user.id, form.amount, props.operation, form.notes)
+    await $adminUsers.updateBalance(props.user.id, { balance: form.amount, operation: props.operation, notes: form.notes })
     appStore.showSuccess(t('common.success')); emit('success'); emit('close')
   } catch (e: any) {
     console.error('Failed to update balance:', e)

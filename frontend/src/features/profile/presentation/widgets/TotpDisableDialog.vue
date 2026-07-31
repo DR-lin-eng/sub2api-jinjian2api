@@ -86,7 +86,8 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { totpAPI } from '@/api'
+import { useProfileQueryStore } from '@/features/profile/presentation/stores/profileQueryStore'
+import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
 
 const emit = defineEmits<{
   close: []
@@ -95,6 +96,8 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const profileQuery = useProfileQueryStore()
+const profileAction = useProfileActionStore()
 
 const methodLoading = ref(true)
 const verificationMethod = ref<'email' | 'password'>('password')
@@ -117,7 +120,7 @@ const canSubmit = computed(() => {
 const loadVerificationMethod = async () => {
   methodLoading.value = true
   try {
-    const method = await totpAPI.getVerificationMethod()
+    const method = await profileQuery.getVerificationMethod()
     verificationMethod.value = method.method
   } catch (err: any) {
     appStore.showError(err.response?.data?.message || t('common.error'))
@@ -130,9 +133,8 @@ const loadVerificationMethod = async () => {
 const handleSendCode = async () => {
   sendingCode.value = true
   try {
-    await totpAPI.sendVerifyCode()
+    await profileAction.sendVerifyCode()
     appStore.showSuccess(t('profile.totp.codeSent'))
-    // Start cooldown
     codeCooldown.value = 60
     if (cooldownTimer.value) {
       clearInterval(cooldownTimer.value)
@@ -156,15 +158,12 @@ const handleSendCode = async () => {
 
 const handleDisable = async () => {
   if (!canSubmit.value) return
-
   loading.value = true
-
   try {
     const request = verificationMethod.value === 'email'
       ? { email_code: form.value.emailCode }
       : { password: form.value.password }
-
-    await totpAPI.disable(request)
+    await profileAction.disable(request)
     appStore.showSuccess(t('profile.totp.disableSuccess'))
     emit('success')
   } catch (err: any) {

@@ -32,7 +32,7 @@
       <!-- Toggles + Payment mode + Supported types (single row) -->
       <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
         <ToggleSwitch :label="t('common.enabled')" :checked="form.enabled" @toggle="form.enabled = !form.enabled" />
-        <ToggleSwitch :label="t('admin.settings.payment.refundEnabled')" :checked="form.refund_enabled" @toggle="form.refund_enabled = !form.refund_enabled; if (!form.refund_enabled) form.allow_user_refund = false" />
+        <ToggleSwitch :label="t('admin.settings.payment.refundEnabled')" :checked="form.refund_enabled" @toggle="toggleRefundEnabled" />
         <ToggleSwitch v-if="form.refund_enabled" :label="t('admin.settings.payment.allowUserRefund')" :checked="form.allow_user_refund" @toggle="form.allow_user_refund = !form.allow_user_refund" />
         <div v-if="supportsPaymentMode" class="flex items-center gap-2">
           <span class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('admin.settings.payment.paymentMode') }}</span>
@@ -312,8 +312,8 @@ import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import type { SelectOption } from '@/common/widgets/forms/Select.vue'
 import ToggleSwitch from './ToggleSwitch.vue'
-import type { ProviderInstance } from '@/types/payment'
-import type { EasyPayCustomMethod, TypeOption } from '../providerConfigSignals'
+import type { ProviderInstance } from '@/features/admin-orders/domain/models/providerInstance'
+import type { EasyPayCustomMethod, TypeOption } from '@/features/billing/presentation/utils/providerConfigSignals'
 import {
   PROVIDER_CONFIG_FIELDS,
   PROVIDER_SUPPORTED_TYPES,
@@ -327,7 +327,7 @@ import {
   extractBaseUrl,
   parseEasyPayCustomMethods,
   serializeEasyPayCustomMethods,
-} from '../providerConfigSignals'
+} from '@/features/billing/presentation/utils/providerConfigSignals'
 
 /** Default payment_mode per provider key — "" means "no preference, use
  * provider's built-in default behavior". */
@@ -404,6 +404,11 @@ const form = reactive({
   refund_enabled: false,
   allow_user_refund: false,
 })
+
+function toggleRefundEnabled(): void {
+  form.refund_enabled = !form.refund_enabled
+  if (!form.refund_enabled) form.allow_user_refund = false
+}
 const config = reactive<Record<string, string>>({})
 const limits = reactive<Record<string, Record<string, number>>>({})
 const notifyBaseUrl = ref('')
@@ -779,7 +784,7 @@ function validateEasyPayCustomMethods(): string | null {
 function emitValidationError(msg: string) {
   // Use a custom event or inject appStore — for now use window alert fallback
   // The parent handles this via the save event validation
-  import('@/stores').then(m => m.useAppStore().showError(msg))
+  import('@/core/stores/appStore').then(m => m.useAppStore().showError(msg))
 }
 
 // --- Public API for parent to call ---
@@ -797,19 +802,19 @@ function reset(defaultKey: string) {
 
 function loadProvider(provider: ProviderInstance) {
   form.name = provider.name
-  form.provider_key = provider.provider_key
-  form.supported_types = Array.isArray(provider.supported_types)
-    ? [...provider.supported_types]
+  form.provider_key = provider.providerKey
+  form.supported_types = Array.isArray(provider.supportedTypes)
+    ? [...provider.supportedTypes]
     : []
   form.enabled = provider.enabled
   // Coerce to a valid value for this provider. Guards against stale data
   // (e.g. "popup" written by an older client) showing up as an unselected
   // button in the dialog.
-  form.payment_mode = isValidPaymentMode(provider.provider_key, provider.payment_mode || '')
-    ? (provider.payment_mode || '')
-    : defaultPaymentMode(provider.provider_key)
-  form.refund_enabled = provider.refund_enabled
-  form.allow_user_refund = provider.allow_user_refund
+  form.payment_mode = isValidPaymentMode(provider.providerKey, provider.paymentMode || '')
+    ? (provider.paymentMode || '')
+    : defaultPaymentMode(provider.providerKey)
+  form.refund_enabled = provider.refundEnabled
+  form.allow_user_refund = provider.allowUserRefund
   clearConfig()
   // Pre-fill config from API response. Backend omits sensitive fields entirely,
   // so those inputs stay blank — submitting blank preserves the stored secret.
@@ -817,14 +822,14 @@ function loadProvider(provider: ProviderInstance) {
     for (const [k, v] of Object.entries(provider.config)) {
       // Skip notifyUrl/returnUrl — they are derived from callbackBaseUrl
       if (k === 'notifyUrl' || k === 'returnUrl') continue
-      if (k === 'customMethods' && provider.provider_key === 'easypay') {
+      if (k === 'customMethods' && provider.providerKey === 'easypay') {
         easyPayCustomMethods.push(...parseEasyPayCustomMethods(v))
         continue
       }
       config[k] = v
     }
     // Extract base URLs from existing callback URLs
-    const paths = PROVIDER_CALLBACK_PATHS[provider.provider_key]
+    const paths = PROVIDER_CALLBACK_PATHS[provider.providerKey]
     if (paths?.notifyUrl && provider.config['notifyUrl']) {
       notifyBaseUrl.value = extractBaseUrl(provider.config['notifyUrl'], paths.notifyUrl)
     }

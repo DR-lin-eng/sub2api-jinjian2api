@@ -12,15 +12,15 @@
       <span class="w-20 shrink-0 font-mono text-gray-700 dark:text-gray-300">{{ row.platform }}</span>
       <span class="text-gray-500 dark:text-gray-400">
         {{ t('admin.users.platformQuota.windowDaily') }}
-        <span class="text-gray-900 dark:text-white">{{ fmtUsd(row.daily_usage_usd) }}/{{ fmtLimit(row.daily_limit_usd) }}</span>
+        <span class="text-gray-900 dark:text-white">{{ fmtUsd(row.dailyUsageUsd) }}/{{ fmtLimit(row.dailyLimitUsd) }}</span>
       </span>
       <span class="text-gray-500 dark:text-gray-400">
         {{ t('admin.users.platformQuota.windowWeekly') }}
-        <span class="text-gray-900 dark:text-white">{{ fmtUsd(row.weekly_usage_usd) }}/{{ fmtLimit(row.weekly_limit_usd) }}</span>
+        <span class="text-gray-900 dark:text-white">{{ fmtUsd(row.weeklyUsageUsd) }}/{{ fmtLimit(row.weeklyLimitUsd) }}</span>
       </span>
       <span class="text-gray-500 dark:text-gray-400">
         {{ t('admin.users.platformQuota.windowMonthly') }}
-        <span class="text-gray-900 dark:text-white">{{ fmtUsd(row.monthly_usage_usd) }}/{{ fmtLimit(row.monthly_limit_usd) }}</span>
+        <span class="text-gray-900 dark:text-white">{{ fmtUsd(row.monthlyUsageUsd) }}/{{ fmtLimit(row.monthlyLimitUsd) }}</span>
       </span>
     </div>
   </div>
@@ -29,7 +29,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { PlatformQuotaItem, PlatformQuotaPlatform } from '@/features/admin-users/data/datasources/adminUsersDatasource'
+import type { PlatformQuotaItem } from '@/features/admin-users/domain/models/platformQuotaItem'
+import type { PlatformQuotaPlatform } from '@/features/admin-users/enums/platformQuotaEnums'
 
 const props = defineProps<{ quotas?: PlatformQuotaItem[] }>()
 const { t } = useI18n()
@@ -42,9 +43,9 @@ const configured = computed(() => {
   return props.quotas
     .filter(
       (q) =>
-        q.daily_limit_usd != null ||
-        q.weekly_limit_usd != null ||
-        q.monthly_limit_usd != null
+        q.dailyLimitUsd != null ||
+        q.weeklyLimitUsd != null ||
+        q.monthlyLimitUsd != null
     )
     .slice()
     .sort((a, b) => PLATFORM_ORDER.indexOf(a.platform) - PLATFORM_ORDER.indexOf(b.platform))

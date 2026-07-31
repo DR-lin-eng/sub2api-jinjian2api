@@ -1,6 +1,5 @@
 import { apiClient } from './client'
-import type { CredentialEnvelope } from '@/types'
-
+import type { CredentialEnvelope } from '@/features/auth/data/requests_models/credentialEnvelope'
 const CREDENTIAL_ALGORITHM = 'RSA-OAEP-256+A256GCM' as const
 const PUBLIC_KEY_EXPIRY_SKEW_SECONDS = 5
 

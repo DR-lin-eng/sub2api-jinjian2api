@@ -1,8 +1,8 @@
 <template>
   <header class="glass sticky top-0 z-30 border-b border-gray-200/50 dark:border-dark-700/50">
-    <div class="flex h-16 items-center justify-between gap-2 px-2 sm:px-4 md:px-6">
+    <div class="flex h-16 items-center justify-between px-4 md:px-6">
       <!-- Left: Mobile Menu Toggle + Page Title -->
-      <div class="flex shrink-0 items-center gap-2 sm:gap-4">
+      <div class="flex items-center gap-4">
         <button
           @click="toggleMobileSidebar"
           class="btn-ghost btn-icon lg:hidden"
@@ -22,7 +22,7 @@
       </div>
 
       <!-- Right: Announcements + Docs + Language + Subscriptions + Balance + User Dropdown -->
-      <div class="flex min-w-0 items-center gap-1 sm:gap-3">
+      <div class="flex items-center gap-3">
         <!-- Announcement Bell -->
         <AnnouncementBell v-if="user" />
 
@@ -32,21 +32,11 @@
           :href="docUrl"
           target="_blank"
           rel="noopener noreferrer"
-          class="hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white sm:flex"
+          class="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white"
         >
           <Icon name="book" size="sm" />
           <span class="hidden sm:inline">{{ t('nav.docs') }}</span>
         </a>
-
-        <!-- Model Plaza Entry -->
-        <router-link
-          v-if="user && modelPlazaEnabled"
-          :to="{ path: '/model-plaza', query: { embedded: '1' } }"
-          class="hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white sm:flex"
-        >
-          <Icon name="grid" size="sm" />
-          <span class="hidden sm:inline">{{ t('nav.modelPlaza') }}</span>
-        </router-link>
 
         <!-- Language Switcher -->
         <LocaleSwitcher />
@@ -72,21 +62,12 @@
               d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"
             />
           </svg>
-          <span v-if="!walletSyncUnavailable" class="text-sm font-semibold text-primary-700 dark:text-primary-300">
+          <span class="text-sm font-semibold text-primary-700 dark:text-primary-300">
             {{ formatHeaderMoney(availableBalance) }}
-          </span>
-          <span v-else class="text-xs font-medium text-amber-700 dark:text-amber-300">
-            {{ balanceSyncingText }}
-          </span>
-          <span
-            v-if="pendingSettlement > 0"
-            class="hidden rounded-full bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700 dark:bg-orange-900/40 dark:text-orange-200 xl:inline-flex"
-          >
-            {{ balancePendingLabel }}
           </span>
           <span
             v-if="frozenBalance > 0"
-            class="hidden rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-200 xl:inline-flex"
+            class="rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-200"
           >
             {{ balanceFrozenLabel }}
           </span>
@@ -95,21 +76,11 @@
           >
             <div class="flex items-center justify-between">
               <span class="text-gray-500 dark:text-dark-400">{{ balanceAvailableText }}</span>
-              <span v-if="!walletSyncUnavailable" class="font-medium text-gray-900 dark:text-white">{{ formatHeaderMoney(availableBalance) }}</span>
-              <span v-else class="font-medium text-amber-700 dark:text-amber-300">{{ balanceSyncingText }}</span>
-            </div>
-            <div class="mt-2 flex items-center justify-between">
-              <span class="text-gray-500 dark:text-dark-400">{{ balancePendingText }}</span>
-              <span v-if="!walletSyncUnavailable" class="font-medium text-orange-700 dark:text-orange-200">{{ formatHeaderMoney(pendingSettlement) }}</span>
-              <span v-else class="font-medium text-amber-700 dark:text-amber-300">{{ balanceSyncingText }}</span>
+              <span class="font-medium text-gray-900 dark:text-white">{{ formatHeaderMoney(availableBalance) }}</span>
             </div>
             <div class="mt-2 flex items-center justify-between">
               <span class="text-gray-500 dark:text-dark-400">{{ balanceFrozenText }}</span>
               <span class="font-medium text-amber-700 dark:text-amber-200">{{ formatHeaderMoney(frozenBalance) }}</span>
-            </div>
-            <div class="mt-2 flex items-center justify-between">
-              <span class="text-gray-500 dark:text-dark-400">{{ balanceLedgerText }}</span>
-              <span class="font-medium text-gray-900 dark:text-white">{{ formatHeaderMoney(ledgerBalance) }}</span>
             </div>
             <div class="mt-2 border-t border-gray-100 pt-2 dark:border-dark-700">
               <div class="flex items-center justify-between">
@@ -163,12 +134,8 @@
                 <div class="text-xs text-gray-500 dark:text-dark-400">
                   {{ t('common.balance') }}
                 </div>
-                <div v-if="!walletSyncUnavailable" class="text-sm font-semibold text-primary-600 dark:text-primary-400">
+                <div class="text-sm font-semibold text-primary-600 dark:text-primary-400">
                   {{ formatHeaderMoney(availableBalance) }}
-                </div>
-                <div v-else class="text-sm font-medium text-amber-600 dark:text-amber-300">{{ balanceSyncingText }}</div>
-                <div v-if="pendingSettlement > 0" class="mt-1 text-xs text-orange-600 dark:text-orange-300">
-                  {{ balancePendingText }} {{ formatHeaderMoney(pendingSettlement) }}
                 </div>
                 <div v-if="frozenBalance > 0" class="mt-1 text-xs text-amber-600 dark:text-amber-300">
                   {{ balanceFrozenText }} {{ formatHeaderMoney(frozenBalance) }}
@@ -188,7 +155,7 @@
 
                 <a
                   v-if="authStore.isAdmin"
-                  href="https://github.com/DR-lin-eng/sub2api-no2api"
+                  href="https://github.com/Wei-Shaw/sub2api"
                   target="_blank"
                   rel="noopener noreferrer"
                   @click="closeDropdown"
@@ -276,21 +243,20 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAppStore, useAuthStore, useOnboardingStore } from '@/stores'
-import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { useOnboardingStore } from '@/core/stores/onboardingStore'
 import LocaleSwitcher from '@/common/widgets/data/LocaleSwitcher.vue'
-import SubscriptionProgressMini from '@/common/widgets/data/SubscriptionProgressMini.vue'
-import AnnouncementBell from '@/common/widgets/data/AnnouncementBell.vue'
+import SubscriptionProgressMini from '@/features/subscriptions/presentation/widgets/SubscriptionProgressMini.vue'
+import AnnouncementBell from '@/features/announcements/presentation/widgets/AnnouncementBell.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { sanitizeUrl } from '@/core/utils/url'
-import { FeatureFlags, isFeatureFlagEnabled } from '@/core/services/featureFlags'
 
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
 const appStore = useAppStore()
 const authStore = useAuthStore()
-const adminSettingsStore = useAdminSettingsStore()
 const onboardingStore = useOnboardingStore()
 
 const user = computed(() => authStore.user)
@@ -298,24 +264,13 @@ const dropdownOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
 const contactInfo = computed(() => appStore.contactInfo)
 const docUrl = computed(() => sanitizeUrl(appStore.docUrl))
-const modelPlazaEnabled = computed(() => isFeatureFlagEnabled(FeatureFlags.modelPlaza))
-const avatarUrl = computed(() => user.value?.avatar_url?.trim() || '')
-const walletSyncUnavailable = computed(() => user.value?.balance_sync_status === 'unavailable')
-const availableBalance = computed(() => {
-  const snapshot = user.value?.available_balance
-  return typeof snapshot === 'number' ? snapshot : Number(user.value?.balance || 0)
-})
-const pendingSettlement = computed(() => Number(user.value?.pending_settlement || 0))
-const frozenBalance = computed(() => Number(user.value?.frozen_balance || 0))
-const ledgerBalance = computed(() => Number(user.value?.balance || 0))
-const totalBalance = computed(() => ledgerBalance.value + frozenBalance.value)
+const avatarUrl = computed(() => user.value?.avatarUrl?.trim() || '')
+const availableBalance = computed(() => Number(user.value?.balance || 0))
+const frozenBalance = computed(() => Number(user.value?.frozenBalance || 0))
+const totalBalance = computed(() => availableBalance.value + frozenBalance.value)
 const balanceAvailableText = computed(() => t('common.availableBalance') === 'common.availableBalance' ? '可用余额' : t('common.availableBalance'))
-const balancePendingText = computed(() => t('common.pendingSettlement') === 'common.pendingSettlement' ? '待结算' : t('common.pendingSettlement'))
 const balanceFrozenText = computed(() => t('common.frozenBalance') === 'common.frozenBalance' ? '冻结金额' : t('common.frozenBalance'))
-const balanceLedgerText = computed(() => t('common.ledgerBalance') === 'common.ledgerBalance' ? '账面余额' : t('common.ledgerBalance'))
 const balanceTotalText = computed(() => t('common.totalBalance') === 'common.totalBalance' ? '总余额' : t('common.totalBalance'))
-const balanceSyncingText = computed(() => t('common.balanceSyncing') === 'common.balanceSyncing' ? '余额同步中' : t('common.balanceSyncing'))
-const balancePendingLabel = computed(() => `${balancePendingText.value} ${formatHeaderMoney(pendingSettlement.value)}`)
 const balanceFrozenLabel = computed(() => `${balanceFrozenText.value} ${formatHeaderMoney(frozenBalance.value)}`)
 
 // 只在标准模式的管理员下显示新手引导按钮
@@ -346,9 +301,9 @@ const pageTitle = computed(() => {
   // For custom pages, use the menu item's label instead of generic "自定义页面"
   if (route.name === 'CustomPage') {
     const id = route.params.id as string
-    const publicItems = appStore.cachedPublicSettings?.custom_menu_items ?? []
-    const menuItem = publicItems.find((item) => item.id === id)
-      ?? (authStore.isAdmin ? adminSettingsStore.customMenuItems.find((item) => item.id === id) : undefined)
+    const publicItems = appStore.cachedPublicSettings?.customMenuItems ?? []
+    const menuItem = publicItems.find((item: any) => item.id === id)
+      ?? (authStore.isAdmin ? appStore.customMenuItems.find((item: any) => item.id === id) : undefined)
     if (menuItem?.label) return menuItem.label
   }
   const titleKey = route.meta.titleKey as string

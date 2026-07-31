@@ -3,5 +3,5 @@
 </template>
 
 <script setup lang="ts">
-import AdminAffiliateRecordsTable from '../widgets/AdminAffiliateRecordsTable.vue'
+import AdminAffiliateRecordsTable from '@/features/affiliate/presentation/widgets/AdminAffiliateRecordsTable.vue'
 </script>

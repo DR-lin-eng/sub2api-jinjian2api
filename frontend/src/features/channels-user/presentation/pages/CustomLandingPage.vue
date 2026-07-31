@@ -119,9 +119,8 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
-import { useAdminSettingsStore } from '@/features/admin-settings/presentation/stores/adminSettingsStore'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { buildApiUrl } from '@/core/networks/client'
@@ -139,7 +138,6 @@ const { t, locale } = useI18n()
 const route = useRoute()
 const appStore = useAppStore()
 const authStore = useAuthStore()
-const adminSettingsStore = useAdminSettingsStore()
 
 const loading = ref(false)
 const pageTheme = ref<'light' | 'dark'>('light')
@@ -154,11 +152,11 @@ const menuItemId = computed(() => route.params.id as string)
 
 const menuItem = computed(() => {
   const id = menuItemId.value
-  const publicItems = appStore.cachedPublicSettings?.custom_menu_items ?? []
-  const found = publicItems.find((item) => item.id === id) ?? null
+  const publicItems = appStore.cachedPublicSettings?.customMenuItems ?? []
+  const found = publicItems.find((item: any) => item.id === id) ?? null
   if (found) return found
   if (authStore.isAdmin) {
-    return adminSettingsStore.customMenuItems.find((item) => item.id === id) ?? null
+    return appStore.customMenuItems.find((item: any) => item.id === id) ?? null
   }
   return null
 })
@@ -166,7 +164,7 @@ const menuItem = computed(() => {
 const markdownSlug = computed(() => {
   const item = menuItem.value
   if (!item) return ''
-  if (item.page_slug) return item.page_slug
+  if (item.pageSlug) return item.pageSlug
   if (item.url?.startsWith('md:')) return item.url.slice(3)
   return ''
 })

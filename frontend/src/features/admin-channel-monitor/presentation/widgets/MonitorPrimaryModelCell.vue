@@ -1,26 +1,26 @@
 <template>
   <div class="flex items-center gap-2">
-    <span class="text-sm text-gray-900 dark:text-gray-100">{{ row.primary_model }}</span>
+    <span class="text-sm text-gray-900 dark:text-gray-100">{{ row.primaryModel }}</span>
     <HelpTooltip>
       <template #trigger>
         <span
           class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
-          :class="statusBadgeClass(row.primary_status)"
+          :class="statusBadgeClass(row.primaryStatus)"
         >
-          {{ statusLabel(row.primary_status) }}
+          {{ statusLabel(row.primaryStatus) }}
         </span>
       </template>
       <div class="space-y-2">
         <div class="text-xs font-semibold text-gray-100">
-          {{ row.primary_model }}
+          {{ row.primaryModel }}
           <span
             class="ml-1 inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium"
-            :class="statusBadgeClass(row.primary_status)"
+            :class="statusBadgeClass(row.primaryStatus)"
           >
-            {{ statusLabel(row.primary_status) }}
+            {{ statusLabel(row.primaryStatus) }}
           </span>
         </div>
-        <div v-if="(row.extra_models?.length ?? 0) === 0" class="text-[11px] text-gray-300">
+        <div v-if="(row.extraModels?.length ?? 0) === 0" class="text-[11px] text-gray-300">
           {{ t('monitorCommon.extraModelsEmpty') }}
         </div>
         <div v-else class="space-y-1">
@@ -36,7 +36,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="m in (row.extra_models_status || [])" :key="m.model">
+              <tr v-for="m in (row.extraModelsStatus || [])" :key="m.model">
                 <td class="py-0.5 pr-2 text-gray-100">{{ m.model }}</td>
                 <td class="py-0.5 pr-2">
                   <span
@@ -46,7 +46,7 @@
                     {{ statusLabel(m.status) }}
                   </span>
                 </td>
-                <td class="py-0.5 text-gray-100">{{ formatLatency(m.latency_ms) }}</td>
+                <td class="py-0.5 text-gray-100">{{ formatLatency(m.latencyMs) }}</td>
               </tr>
             </tbody>
           </table>
@@ -58,7 +58,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import type { ChannelMonitor } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
+import type { ChannelMonitor } from '@/features/admin-channel-monitor/domain/models/channelMonitor'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import { useChannelMonitorFormat } from '@/features/channel-monitor-user/presentation/composables/useChannelMonitorFormat'
 

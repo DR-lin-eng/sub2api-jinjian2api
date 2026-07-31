@@ -5,9 +5,8 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import subscriptionsAPI from '@/features/subscriptions/data/datasources/subscriptionsDatasource'
-import type { UserSubscription } from '@/types'
-
+import { subscriptionsQueryRepository } from '@/features/subscriptions/data/repositories/subscriptionsQueryRepositoryImpl'
+import type { UserSubscription } from '@/core/models/domain/userSubscription'
 // Cache TTL: 60 seconds
 const CACHE_TTL_MS = 60_000
 
@@ -56,8 +55,8 @@ export const useSubscriptionStore = defineStore('subscriptions', () => {
 
     // Start new request
     loading.value = true
-    const requestPromise = subscriptionsAPI
-      .getActiveSubscriptions()
+    const requestPromise = subscriptionsQueryRepository
+      .listActive()
       .then((data) => {
         if (currentGeneration === requestGeneration) {
           activeSubscriptions.value = data

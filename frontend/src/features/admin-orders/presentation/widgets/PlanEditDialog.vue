@@ -24,12 +24,12 @@
       <!-- Group Info Preview -->
       <div v-if="selectedGroupInfo" class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-dark-600 dark:bg-dark-800">
         <div class="mb-2 flex items-center gap-2">
-          <GroupBadge :name="selectedGroupInfo.name" :platform="selectedGroupInfo.platform" :rate-multiplier="selectedGroupInfo.rate_multiplier" />
+          <GroupBadge :name="selectedGroupInfo.name" :platform="selectedGroupInfo.platform" :rate-multiplier="selectedGroupInfo.rateMultiplier" />
         </div>
         <div class="grid grid-cols-2 gap-2 text-xs">
-          <div><span class="text-gray-500">{{ t('payment.admin.dailyLimit') }}:</span> <span class="ml-1 font-medium text-gray-700 dark:text-gray-300">{{ selectedGroupInfo.daily_limit_usd != null ? '$' + selectedGroupInfo.daily_limit_usd : t('payment.admin.unlimited') }}</span></div>
-          <div><span class="text-gray-500">{{ t('payment.admin.weeklyLimit') }}:</span> <span class="ml-1 font-medium text-gray-700 dark:text-gray-300">{{ selectedGroupInfo.weekly_limit_usd != null ? '$' + selectedGroupInfo.weekly_limit_usd : t('payment.admin.unlimited') }}</span></div>
-          <div><span class="text-gray-500">{{ t('payment.admin.monthlyLimit') }}:</span> <span class="ml-1 font-medium text-gray-700 dark:text-gray-300">{{ selectedGroupInfo.monthly_limit_usd != null ? '$' + selectedGroupInfo.monthly_limit_usd : t('payment.admin.unlimited') }}</span></div>
+          <div><span class="text-gray-500">{{ t('payment.admin.dailyLimit') }}:</span> <span class="ml-1 font-medium text-gray-700 dark:text-gray-300">{{ selectedGroupInfo.dailyLimitUsd != null ? '$' + selectedGroupInfo.dailyLimitUsd : t('payment.admin.unlimited') }}</span></div>
+          <div><span class="text-gray-500">{{ t('payment.admin.weeklyLimit') }}:</span> <span class="ml-1 font-medium text-gray-700 dark:text-gray-300">{{ selectedGroupInfo.weeklyLimitUsd != null ? '$' + selectedGroupInfo.weeklyLimitUsd : t('payment.admin.unlimited') }}</span></div>
+          <div><span class="text-gray-500">{{ t('payment.admin.monthlyLimit') }}:</span> <span class="ml-1 font-medium text-gray-700 dark:text-gray-300">{{ selectedGroupInfo.monthlyLimitUsd != null ? '$' + selectedGroupInfo.monthlyLimitUsd : t('payment.admin.unlimited') }}</span></div>
         </div>
       </div>
 
@@ -52,7 +52,7 @@
         <div><label class="input-label">{{ t('payment.admin.validityUnit') }} <span class="text-red-500">*</span></label><Select v-model="planForm.validity_unit" :options="validityUnitOptions" /></div>
       </div>
       <div class="grid grid-cols-2 gap-4">
-        <div><label class="input-label">{{ t('payment.admin.sortOrder') }}</label><input v-model.number="planForm.sort_order" type="number" min="0" class="input" /></div>
+        <div><label class="input-label">{{ t('payment.admin.sort_order') }}</label><input v-model.number="planForm.sort_order" type="number" min="0" class="input" /></div>
         <div>
           <label class="input-label">{{ t('payment.admin.currency') }}</label>
           <input v-model="planForm.currency" type="text" maxlength="3" class="input uppercase" :placeholder="t('payment.admin.currencyPlaceholder')" />
@@ -94,17 +94,19 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminPaymentAPI } from '@/features/admin-orders/data/datasources/adminPaymentDatasource'
-import type { AdminPaymentConfig } from '@/features/admin-orders/data/datasources/adminPaymentDatasource'
+import { useAdminOrdersActionStore } from '@/features/admin-orders/presentation/stores/adminOrdersActionStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
-import { formatPaymentAmount } from '@/features/billing/presentation/currencyFormatter'
-import type { SubscriptionPlan } from '@/types/payment'
-import type { AdminGroup } from '@/types'
+import { formatPaymentAmount } from '@/features/billing/presentation/utils/currencyFormatter'
+import type { SubscriptionPlan } from '@/features/admin-orders/domain/models/subscriptionPlan'
+import type { AdminPaymentConfig } from '@/features/admin-orders/domain/models/adminPaymentConfig'
+import type { CreateSubscriptionPlanRequest } from '@/features/admin-orders/data/requests_models/createSubscriptionPlanRequest'
+import type { UpdateSubscriptionPlanRequest } from '@/features/admin-orders/data/requests_models/updateSubscriptionPlanRequest'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import { platformTextClass } from '@/core/utils/platformColors'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
 
 const props = defineProps<{
   show: boolean
@@ -120,6 +122,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const actionStore = useAdminOrdersActionStore()
 
 const saving = ref(false)
 const planForm = reactive({ name: '', group_id: null as number | null, description: '', price: 0, original_price: 0, currency: '', validity_days: 30, validity_unit: 'days', sort_order: 0, for_sale: true })
@@ -133,10 +136,10 @@ const validityUnitOptions = computed(() => [
 
 const groupOptions = computed(() =>
   props.groups
-    .filter(g => g.subscription_type === 'subscription')
+    .filter(g => g.subscriptionType === 'subscription')
     .map(g => ({
       value: g.id,
-      label: `${g.name} — ${g.platform} (${g.rate_multiplier}x)`,
+      label: `${g.name} — ${g.platform} (${g.rateMultiplier}x)`,
       platform: g.platform,
     })),
 )
@@ -156,11 +159,11 @@ function ceilCnyAmount(value: number): number {
 
 const subscriptionCnyPreview = computed(() => {
   const price = Number(planForm.price) || 0
-  const rate = Number(props.paymentConfig?.subscription_usd_to_cny_rate) || 0
+  const rate = Number(props.paymentConfig?.subscriptionUsdToCnyRate) || 0
   if (price <= 0 || rate <= 0) return null
 
   const amount = roundCnyAmount(price * rate)
-  const feeRate = Number(props.paymentConfig?.recharge_fee_rate) || 0
+  const feeRate = Number(props.paymentConfig?.rechargeFeeRate) || 0
   const fee = feeRate > 0 ? ceilCnyAmount((amount * feeRate) / 100) : 0
   const total = feeRate > 0 ? roundCnyAmount(amount + fee) : amount
 
@@ -171,11 +174,21 @@ const subscriptionCnyPreview = computed(() => {
   }
 })
 
-// Reset form when dialog opens
 watch(() => props.show, (visible) => {
   if (!visible) return
   if (props.plan) {
-    Object.assign(planForm, { name: props.plan.name, group_id: props.plan.group_id, description: props.plan.description, price: props.plan.price, original_price: props.plan.original_price || 0, currency: props.plan.currency || '', validity_days: props.plan.validity_days, validity_unit: props.plan.validity_unit || 'days', sort_order: props.plan.sort_order || 0, for_sale: props.plan.for_sale })
+    Object.assign(planForm, {
+      name: props.plan.name,
+      group_id: props.plan.groupId,
+      description: props.plan.description,
+      price: props.plan.price,
+      original_price: props.plan.originalPrice || 0,
+      currency: props.plan.currency || '',
+      validity_days: props.plan.validityDays,
+      validity_unit: props.plan.validityUnit || 'days',
+      sort_order: props.plan.sortOrder || 0,
+      for_sale: props.plan.forSale,
+    })
     planFeaturesText.value = (props.plan.features || []).join('\n')
   } else {
     Object.assign(planForm, { name: '', group_id: null, description: '', price: 0, original_price: 0, currency: '', validity_days: 30, validity_unit: 'days', sort_order: 0, for_sale: true })
@@ -183,12 +196,11 @@ watch(() => props.show, (visible) => {
   }
 })
 
-/** Build request payload with snake_case keys matching backend JSON tags */
-function buildPlanPayload() {
+function buildPlanPayload(): CreateSubscriptionPlanRequest | UpdateSubscriptionPlanRequest {
   const features = planFeaturesText.value.split('\n').map(f => f.trim()).filter(Boolean).join('\n')
   return {
     name: planForm.name,
-    group_id: planForm.group_id,
+    group_id: planForm.group_id!,
     description: planForm.description,
     price: planForm.price,
     original_price: planForm.original_price || 0,
@@ -217,8 +229,11 @@ async function handleSavePlan() {
   saving.value = true
   try {
     const data = buildPlanPayload()
-    if (props.plan) { await adminPaymentAPI.updatePlan(props.plan.id, data) }
-    else { await adminPaymentAPI.createPlan(data) }
+    if (props.plan) {
+      await actionStore.updatePlan(props.plan.id, data as UpdateSubscriptionPlanRequest)
+    } else {
+      await actionStore.createPlan(data as CreateSubscriptionPlanRequest)
+    }
     appStore.showSuccess(t('common.saved'))
     emit('close')
     emit('saved')

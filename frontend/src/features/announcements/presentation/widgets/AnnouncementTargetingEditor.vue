@@ -68,7 +68,7 @@
           <div class="min-w-0">
             <div class="text-sm font-medium text-gray-900 dark:text-white">
               {{ t('admin.announcements.form.targetingCustom') }} #{{ groupIndex + 1 }}
-              <span class="ml-2 text-xs font-normal text-gray-500 dark:text-dark-400">AND ({{ (group.all_of?.length || 0) }}/50)</span>
+              <span class="ml-2 text-xs font-normal text-gray-500 dark:text-dark-400">AND ({{ (group.allOf?.length || 0) }}/50)</span>
             </div>
             <div class="mt-1 text-xs text-gray-500 dark:text-dark-400">
               {{ t('admin.announcements.form.addAndCondition') }}
@@ -87,7 +87,7 @@
 
         <div class="mt-4 space-y-3">
           <div
-            v-for="(cond, condIndex) in (group.all_of || [])"
+            v-for="(cond, condIndex) in (group.allOf || [])"
             :key="condIndex"
             class="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-dark-700 dark:bg-dark-900/30"
           >
@@ -97,7 +97,7 @@
                 <Select
                   :model-value="cond.type"
                   :options="conditionTypeOptions"
-                  @update:model-value="(v) => setConditionType(groupIndex, condIndex, v as any)"
+                  @update:model-value="(v) => handleConditionTypeChange(groupIndex, condIndex, v)"
                 />
               </div>
 
@@ -115,7 +115,7 @@
                   <Select
                     :model-value="cond.operator"
                     :options="balanceOperatorOptions"
-                    @update:model-value="(v) => setOperator(groupIndex, condIndex, v as any)"
+                    @update:model-value="(v) => handleOperatorChange(groupIndex, condIndex, v)"
                   />
                 </div>
                 <div class="w-full sm:flex-1">
@@ -147,7 +147,7 @@
             <button
               type="button"
               class="btn btn-secondary"
-              :disabled="(group.all_of?.length || 0) >= 50"
+              :disabled="(group.allOf?.length || 0) >= 50"
               @click="addAndCondition(groupIndex)"
             >
               <Icon name="plus" size="sm" class="mr-1" />
@@ -167,18 +167,15 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type {
-  AdminGroup,
-  AnnouncementTargeting,
-  AnnouncementCondition,
-  AnnouncementConditionGroup,
-  AnnouncementConditionType,
-  AnnouncementOperator
-} from '@/types'
-
 import Select from '@/common/widgets/forms/Select.vue'
 import GroupSelector from '@/common/widgets/data/GroupSelector.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
+import type { AnnouncementTargeting } from '@/features/announcements/domain/models/announcementTargeting'
+import type { AnnouncementCondition } from '@/features/announcements/domain/models/announcementCondition'
+import type { AnnouncementConditionGroup } from '@/features/announcements/domain/models/announcementConditionGroup'
+import type { AnnouncementConditionType } from '@/features/announcements/enums/announcementConditionType'
+import type { AnnouncementOperator } from '@/features/announcements/enums/announcementOperator'
 
 const { t } = useI18n()
 
@@ -191,7 +188,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: AnnouncementTargeting): void
 }>()
 
-const anyOf = computed(() => props.modelValue?.any_of ?? [])
+const anyOf = computed(() => props.modelValue?.anyOf ?? [])
 
 type Mode = 'all' | 'custom'
 const mode = computed<Mode>(() => (anyOf.value.length === 0 ? 'all' : 'custom'))
@@ -211,11 +208,11 @@ const balanceOperatorOptions = computed(() => [
 
 function setMode(next: Mode) {
   if (next === 'all') {
-    emit('update:modelValue', { any_of: [] })
+    emit('update:modelValue', { anyOf: [] })
     return
   }
   if (anyOf.value.length === 0) {
-    emit('update:modelValue', { any_of: [{ all_of: [defaultSubscriptionCondition()] }] })
+    emit('update:modelValue', { anyOf: [{ allOf: [defaultSubscriptionCondition()] }] })
   }
 }
 
@@ -223,7 +220,7 @@ function defaultSubscriptionCondition(): AnnouncementCondition {
   return {
     type: 'subscription' as AnnouncementConditionType,
     operator: 'in' as AnnouncementOperator,
-    group_ids: []
+    groupIds: []
   }
 }
 
@@ -236,65 +233,83 @@ function defaultBalanceCondition(): AnnouncementCondition {
 }
 
 type TargetingDraft = {
-  any_of: AnnouncementConditionGroup[]
+  anyOf: AnnouncementConditionGroup[]
 }
 
 function updateTargeting(mutator: (draft: TargetingDraft) => void) {
-  const draft: TargetingDraft = JSON.parse(JSON.stringify(props.modelValue ?? { any_of: [] }))
-  if (!draft.any_of) draft.any_of = []
+  const draft: TargetingDraft = JSON.parse(JSON.stringify(props.modelValue ?? { anyOf: [] }))
+  if (!draft.anyOf) draft.anyOf = []
   mutator(draft)
   emit('update:modelValue', draft)
 }
 
 function addOrGroup() {
   updateTargeting((draft) => {
-    if (draft.any_of.length >= 50) return
-    draft.any_of.push({ all_of: [defaultSubscriptionCondition()] })
+    if (draft.anyOf.length >= 50) return
+    draft.anyOf.push({ allOf: [defaultSubscriptionCondition()] })
   })
 }
 
 function removeOrGroup(groupIndex: number) {
   updateTargeting((draft) => {
-    draft.any_of.splice(groupIndex, 1)
+    draft.anyOf.splice(groupIndex, 1)
   })
 }
 
 function addAndCondition(groupIndex: number) {
   updateTargeting((draft) => {
-    const group = draft.any_of[groupIndex]
-    if (!group.all_of) group.all_of = []
-    if (group.all_of.length >= 50) return
-    group.all_of.push(defaultSubscriptionCondition())
+    const group = draft.anyOf[groupIndex]
+    if (!group.allOf) group.allOf = []
+    if (group.allOf.length >= 50) return
+    group.allOf.push(defaultSubscriptionCondition())
   })
 }
 
 function removeAndCondition(groupIndex: number, condIndex: number) {
   updateTargeting((draft) => {
-    const group = draft.any_of[groupIndex]
-    if (!group?.all_of) return
-    group.all_of.splice(condIndex, 1)
+    const group = draft.anyOf[groupIndex]
+    if (!group?.allOf) return
+    group.allOf.splice(condIndex, 1)
   })
+}
+
+function isAnnouncementConditionType(v: unknown): v is AnnouncementConditionType {
+  return v === 'subscription' || v === 'balance'
+}
+
+function isAnnouncementOperator(v: unknown): v is AnnouncementOperator {
+  return v === 'in' || v === 'gt' || v === 'gte' || v === 'lt' || v === 'lte' || v === 'eq'
+}
+
+function handleConditionTypeChange(groupIndex: number, condIndex: number, v: string | number | boolean | null) {
+  if (!isAnnouncementConditionType(v)) return
+  setConditionType(groupIndex, condIndex, v)
+}
+
+function handleOperatorChange(groupIndex: number, condIndex: number, v: string | number | boolean | null) {
+  if (!isAnnouncementOperator(v)) return
+  setOperator(groupIndex, condIndex, v)
 }
 
 function setConditionType(groupIndex: number, condIndex: number, nextType: AnnouncementConditionType) {
   updateTargeting((draft) => {
-    const group = draft.any_of[groupIndex]
-    if (!group?.all_of) return
+    const group = draft.anyOf[groupIndex]
+    if (!group?.allOf) return
 
     if (nextType === 'subscription') {
-      group.all_of[condIndex] = defaultSubscriptionCondition()
+      group.allOf[condIndex] = defaultSubscriptionCondition()
     } else {
-      group.all_of[condIndex] = defaultBalanceCondition()
+      group.allOf[condIndex] = defaultBalanceCondition()
     }
   })
 }
 
 function setOperator(groupIndex: number, condIndex: number, op: AnnouncementOperator) {
   updateTargeting((draft) => {
-    const group = draft.any_of[groupIndex]
-    if (!group?.all_of) return
+    const group = draft.anyOf[groupIndex]
+    if (!group?.allOf) return
 
-    const cond = group.all_of[condIndex]
+    const cond = group.allOf[condIndex]
     if (!cond) return
 
     cond.operator = op
@@ -304,10 +319,10 @@ function setOperator(groupIndex: number, condIndex: number, op: AnnouncementOper
 function setBalanceValue(groupIndex: number, condIndex: number, raw: string) {
   const n = raw === '' ? 0 : Number(raw)
   updateTargeting((draft) => {
-    const group = draft.any_of[groupIndex]
-    if (!group?.all_of) return
+    const group = draft.anyOf[groupIndex]
+    if (!group?.allOf) return
 
-    const cond = group.all_of[condIndex]
+    const cond = group.allOf[condIndex]
     if (!cond) return
 
     cond.value = Number.isFinite(n) ? n : 0
@@ -315,7 +330,7 @@ function setBalanceValue(groupIndex: number, condIndex: number, raw: string) {
 }
 
 // We keep group_ids selection in a parallel reactive map because GroupSelector is numeric list.
-// Then we mirror it back to targeting.group_ids via a watcher.
+// Then we mirror it back to targeting.groupIds via a watcher.
 const subscriptionSelections = reactive<Record<number, Record<number, number[]>>>({})
 
 function ensureSelectionPath(groupIndex: number, condIndex: number) {
@@ -327,15 +342,15 @@ function ensureSelectionPath(groupIndex: number, condIndex: number) {
 watch(
   () => props.modelValue,
   (v) => {
-    const groups = v?.any_of ?? []
+    const groups = v?.anyOf ?? []
     for (let gi = 0; gi < groups.length; gi++) {
-      const allOf = groups[gi]?.all_of ?? []
+      const allOf = groups[gi]?.allOf ?? []
       for (let ci = 0; ci < allOf.length; ci++) {
         const c = allOf[ci]
         if (c?.type === 'subscription') {
           ensureSelectionPath(gi, ci)
           // Only update if different to avoid triggering unnecessary updates
-          const newIds = (c.group_ids ?? []).slice()
+          const newIds = (c.groupIds ?? []).slice()
           const currentIds = subscriptionSelections[gi]?.[ci] ?? []
           if (JSON.stringify(newIds.sort()) !== JSON.stringify(currentIds.sort())) {
             subscriptionSelections[gi][ci] = newIds
@@ -358,18 +373,18 @@ watch(
 
     syncTimeout = setTimeout(() => {
       // Build the new targeting state
-      const newTargeting: TargetingDraft = JSON.parse(JSON.stringify(props.modelValue ?? { any_of: [] }))
-      if (!newTargeting.any_of) newTargeting.any_of = []
+      const newTargeting: TargetingDraft = JSON.parse(JSON.stringify(props.modelValue ?? { anyOf: [] }))
+      if (!newTargeting.anyOf) newTargeting.anyOf = []
 
-      const groups = newTargeting.any_of ?? []
+      const groups = newTargeting.anyOf ?? []
       for (let gi = 0; gi < groups.length; gi++) {
-        const allOf = groups[gi]?.all_of ?? []
+        const allOf = groups[gi]?.allOf ?? []
         for (let ci = 0; ci < allOf.length; ci++) {
           const c = allOf[ci]
           if (c?.type === 'subscription') {
             ensureSelectionPath(gi, ci)
             c.operator = 'in' as AnnouncementOperator
-            c.group_ids = (subscriptionSelections[gi]?.[ci] ?? []).slice()
+            c.groupIds = (subscriptionSelections[gi]?.[ci] ?? []).slice()
           }
         }
       }
@@ -392,13 +407,13 @@ const validationError = computed(() => {
   if (groups.length > 50) return 'any_of > 50'
 
   for (const g of groups) {
-    const allOf = g?.all_of ?? []
+    const allOf = g?.allOf ?? []
     if (allOf.length === 0) return t('admin.announcements.form.addAndCondition')
     if (allOf.length > 50) return 'all_of > 50'
 
     for (const c of allOf) {
       if (c.type === 'subscription') {
-        if (!c.group_ids || c.group_ids.length === 0) return t('admin.announcements.form.selectPackages')
+        if (!c.groupIds || c.groupIds.length === 0) return t('admin.announcements.form.selectPackages')
       }
     }
   }

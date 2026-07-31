@@ -84,10 +84,11 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import { useAppStore } from '@/stores'
-import { paymentAPI } from '@/features/billing/data/datasources/paymentDatasource'
+import { useAppStore } from '@/core/stores/appStore'
+import { useBillingQueryStore } from '@/features/billing/presentation/stores/billingQueryStore'
+import { useBillingActionStore } from '@/features/billing/presentation/stores/billingActionStore'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
-import type { PaymentOrder } from '@/types/payment'
+import type { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
@@ -98,6 +99,8 @@ import OrderTable from '@/features/billing/presentation/widgets/OrderTable.vue'
 const { t } = useI18n()
 const router = useRouter()
 const appStore = useAppStore()
+const billingQuery = useBillingQueryStore()
+const billingAction = useBillingActionStore()
 
 const loading = ref(false)
 const actionLoading = ref(false)
@@ -120,7 +123,7 @@ const statusFilters = computed(() => [
 async function fetchOrders() {
   loading.value = true
   try {
-    const res = await paymentAPI.getMyOrders({
+    const res = await billingQuery.getMyOrders({
       page: pagination.page,
       page_size: pagination.page_size,
       status: currentFilter.value || undefined,
@@ -143,7 +146,7 @@ async function confirmCancel() {
   if (!cancelTargetId.value) return
   actionLoading.value = true
   try {
-    await paymentAPI.cancelOrder(cancelTargetId.value)
+    await billingAction.cancelOrder(cancelTargetId.value)
     appStore.showSuccess(t('common.success'))
     cancelTargetId.value = null
     await fetchOrders()
@@ -160,7 +163,7 @@ async function confirmRefund() {
   if (!refundTarget.value || !refundReason.value.trim()) return
   actionLoading.value = true
   try {
-    await paymentAPI.requestRefund(refundTarget.value.id, { reason: refundReason.value.trim() })
+    await billingAction.requestRefund(refundTarget.value.id, { reason: refundReason.value.trim() })
     appStore.showSuccess(t('common.success'))
     refundTarget.value = null
     refundReason.value = ''
@@ -174,13 +177,13 @@ async function confirmRefund() {
 
 function canRequestRefund(order: PaymentOrder): boolean {
   if (order.status !== 'COMPLETED') return false
-  if (!order.provider_instance_id) return false
-  return refundEligibleProviders.value.has(order.provider_instance_id)
+  if (!order.providerInstanceId) return false
+  return refundEligibleProviders.value.has(order.providerInstanceId)
 }
 
 async function loadRefundEligibility() {
   try {
-    const res = await paymentAPI.getRefundEligibleProviders()
+    const res = await billingQuery.getRefundEligibleProviders()
     refundEligibleProviders.value = new Set(res.data.provider_instance_ids || [])
   } catch { /* ignore — default to hiding refund button */ }
 }

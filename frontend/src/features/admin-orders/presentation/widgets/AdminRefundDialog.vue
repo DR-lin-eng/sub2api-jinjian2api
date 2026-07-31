@@ -8,7 +8,7 @@
     <form id="refund-form" @submit.prevent="handleSubmit" class="space-y-4">
       <!-- Refund Request Info -->
       <div
-        v-if="order?.refund_requested_at || order?.refund_request_reason"
+        v-if="order?.refundRequestedAt || order?.refundRequestReason"
         class="rounded-lg border border-violet-200 bg-violet-50 p-3 dark:border-violet-800 dark:bg-violet-900/20"
       >
         <div class="flex items-center gap-2 text-sm font-medium text-violet-700 dark:text-violet-300">
@@ -17,13 +17,13 @@
           </svg>
           {{ t('payment.admin.refundRequestInfo') }}
         </div>
-        <div v-if="order?.refund_requested_at" class="mt-2 flex justify-between text-sm">
+        <div v-if="order?.refundRequestedAt" class="mt-2 flex justify-between text-sm">
           <span class="text-violet-600 dark:text-violet-400">{{ t('payment.admin.refundRequestedAt') }}</span>
-          <span class="text-violet-800 dark:text-violet-200">{{ formatDateTime(order.refund_requested_at) }}</span>
+          <span class="text-violet-800 dark:text-violet-200">{{ formatDateTime(order.refundRequestedAt) }}</span>
         </div>
-        <div v-if="order?.refund_request_reason" class="mt-1 text-sm">
+        <div v-if="order?.refundRequestReason" class="mt-1 text-sm">
           <span class="text-violet-600 dark:text-violet-400">{{ t('payment.admin.refundRequestReason') }}:</span>
-          <span class="ml-1 text-violet-800 dark:text-violet-200">{{ order.refund_request_reason }}</span>
+          <span class="ml-1 text-violet-800 dark:text-violet-200">{{ order.refundRequestReason }}</span>
         </div>
       </div>
 
@@ -39,7 +39,7 @@
         </div>
         <div class="mt-1 flex justify-between text-sm">
           <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.payAmount') }}</span>
-          <span class="font-medium text-gray-900 dark:text-white">{{ paymentAmountSymbol }}{{ order?.pay_amount?.toFixed(2) }}</span>
+          <span class="font-medium text-gray-900 dark:text-white">{{ paymentAmountSymbol }}{{ order?.payAmount?.toFixed(2) }}</span>
         </div>
         <div v-if="actuallyRefunded > 0" class="mt-1 flex justify-between text-sm">
           <span class="text-gray-500 dark:text-gray-400">{{ t('payment.admin.alreadyRefunded') }}</span>
@@ -167,9 +167,9 @@
 import { reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import type { PaymentOrder } from '@/types/payment'
-import { formatOrderDateTime } from '@/features/billing/presentation/orderUtilsFormatter'
-import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
+import type { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
+import { formatOrderDateTime } from '@/features/billing/presentation/utils/orderUtilsFormatter'
+import { currencySymbol } from '@/features/billing/presentation/utils/currencyFormatter'
 
 const { t } = useI18n()
 
@@ -203,7 +203,7 @@ const form = reactive({
 const actuallyRefunded = computed(() => {
   if (!props.order) return 0
   const s = props.order.status
-  if (s === 'PARTIALLY_REFUNDED' || s === 'REFUNDED') return props.order.refund_amount || 0
+  if (s === 'PARTIALLY_REFUNDED' || s === 'REFUNDED') return props.order.refundAmount || 0
   return 0
 })
 
@@ -220,12 +220,12 @@ const balanceInsufficient = computed(() => {
 watch(() => props.show, (val) => {
   if (val && props.order) {
     // For REFUND_REQUESTED, pre-fill with the requested amount
-    if (props.order.status === 'REFUND_REQUESTED' && props.order.refund_amount) {
-      form.amount = props.order.refund_amount
+    if (props.order.status === 'REFUND_REQUESTED' && props.order.refundAmount) {
+      form.amount = props.order.refundAmount
     } else {
       form.amount = maxRefundable.value
     }
-    form.reason = props.order.refund_request_reason || ''
+    form.reason = props.order.refundRequestReason || ''
     form.deduct_balance = true
     form.force = false
   }

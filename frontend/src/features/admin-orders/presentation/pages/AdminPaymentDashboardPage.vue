@@ -30,19 +30,19 @@
       </div>
       <template v-else-if="stats">
         <OrderStatsCards :stats="stats" />
-        <DailyRevenueChart :data="stats.daily_series || []" :loading="loading" />
+        <DailyRevenueChart :data="stats.dailySeries || []" :loading="loading" />
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div class="card p-4">
             <h3 class="mb-4 text-sm font-semibold text-gray-900 dark:text-white">{{ t('payment.admin.paymentDistribution') }}</h3>
-            <div v-if="!stats.payment_methods?.length" class="flex h-32 items-center justify-center text-sm text-gray-500 dark:text-gray-400">{{ t('payment.admin.noData') }}</div>
+            <div v-if="!stats.paymentMethods?.length" class="flex h-32 items-center justify-center text-sm text-gray-500 dark:text-gray-400">{{ t('payment.admin.noData') }}</div>
             <div v-else class="space-y-3">
-              <div v-for="method in stats.payment_methods" :key="method.type" class="flex items-center justify-between">
+              <div v-for="method in stats.paymentMethods" :key="method.type" class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
                   <span :class="['inline-block h-3 w-3 rounded-full', methodColor(method.type)]"></span>
                   <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('payment.methods.' + method.type, method.type) }}</span>
                 </div>
-                <div class="space-y-1 text-right">
-                  <span v-for="[currency, amount] in sortedAmounts(method.amount)" :key="currency" class="block text-sm font-medium text-gray-900 dark:text-white">{{ formatMoney(currency, amount) }}</span>
+                <div class="text-right">
+                  <span class="text-sm font-medium text-gray-900 dark:text-white">&yen;{{ method.amount.toFixed(2) }}</span>
                   <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">({{ method.count }})</span>
                 </div>
               </div>
@@ -50,17 +50,14 @@
           </div>
           <div class="card p-4">
             <h3 class="mb-4 text-sm font-semibold text-gray-900 dark:text-white">{{ t('payment.admin.topUsers') }}</h3>
-            <div v-if="!hasTopUsers(stats.top_users)" class="flex h-32 items-center justify-center text-sm text-gray-500 dark:text-gray-400">{{ t('payment.admin.noData') }}</div>
+            <div v-if="!stats.topUsers?.length" class="flex h-32 items-center justify-center text-sm text-gray-500 dark:text-gray-400">{{ t('payment.admin.noData') }}</div>
             <div v-else class="space-y-2">
-              <div v-for="[currency, users] in sortedTopUsers(stats.top_users)" :key="currency" class="space-y-2">
-                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400">{{ currency }}</p>
-                <div v-for="(user, idx) in users" :key="user.user_id" class="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-dark-700">
-                  <div class="flex items-center gap-3">
-                    <span :class="['flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold', rankClass(idx)]">{{ idx + 1 }}</span>
-                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ user.email }}</span>
-                  </div>
-                  <span class="text-sm font-medium text-gray-900 dark:text-white">{{ formatMoney(currency, user.amount) }}</span>
+              <div v-for="(user, idx) in stats.topUsers" :key="user.userId" class="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-50 dark:hover:bg-dark-700">
+                <div class="flex items-center gap-3">
+                  <span :class="['flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold', rankClass(idx)]">{{ idx + 1 }}</span>
+                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ user.email }}</span>
                 </div>
+                <span class="text-sm font-medium text-gray-900 dark:text-white">&yen;{{ user.amount.toFixed(2) }}</span>
               </div>
             </div>
           </div>
@@ -71,27 +68,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminPaymentAPI } from '@/features/admin-orders/data/datasources/adminPaymentDatasource'
+import { useAdminOrdersQueryStore } from '@/features/admin-orders/presentation/stores/adminOrdersQueryStore'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
-import type { CurrencyAmounts, CurrencyAwareDashboardStats, TopUserPaymentStats } from '@/types/payment'
+import type { DashboardStats } from '@/features/admin-orders/domain/models/dashboardStats'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import OrderStatsCards from '@/features/admin-orders/presentation/widgets/OrderStatsCards.vue'
 import DailyRevenueChart from '@/features/admin-orders/presentation/widgets/DailyRevenueChart.vue'
-import { normalizePaymentDashboardStats } from '@/features/admin-orders/presentation/widgets/dashboardStats'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const queryStore = useAdminOrdersQueryStore()
 
 const DAYS_OPTIONS = [7, 30, 90] as const
 const days = ref<number>(30)
 const loading = ref(false)
-const stats = ref<CurrencyAwareDashboardStats | null>(null)
-let dashboardRequestSequence = 0
+const stats = ref<DashboardStats | null>(null)
 
 function methodColor(type: string): string {
   const c: Record<string, string> = {
@@ -109,41 +105,17 @@ function rankClass(idx: number): string {
   return 'bg-gray-100 text-gray-500 dark:bg-dark-700 dark:text-gray-400'
 }
 
-function sortedAmounts(amounts: CurrencyAmounts): [string, number][] {
-  return Object.entries(amounts).sort(([left], [right]) => left.localeCompare(right))
-}
-
-function sortedTopUsers(usersByCurrency: Record<string, TopUserPaymentStats[]>): [string, TopUserPaymentStats[]][] {
-  return Object.entries(usersByCurrency).sort(([left], [right]) => left.localeCompare(right))
-}
-
-function hasTopUsers(usersByCurrency: Record<string, TopUserPaymentStats[]>): boolean {
-  return Object.values(usersByCurrency).some(users => users.length > 0)
-}
-
-function formatMoney(currency: string, amount: number): string {
-  return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(amount)
-}
-
 async function loadDashboard() {
-  const sequence = ++dashboardRequestSequence
-  const requestedDays = days.value
   loading.value = true
   try {
-    const res = await adminPaymentAPI.getDashboard(requestedDays)
-    if (sequence !== dashboardRequestSequence) return
-    stats.value = normalizePaymentDashboardStats(res.data)
+    stats.value = await queryStore.fetchDashboard(days.value)
   } catch (err: unknown) {
-    if (sequence !== dashboardRequestSequence) return
     appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error')))
   } finally {
-    if (sequence === dashboardRequestSequence) loading.value = false
+    loading.value = false
   }
 }
 
 watch(days, () => loadDashboard())
 onMounted(() => loadDashboard())
-onUnmounted(() => {
-  dashboardRequestSequence += 1
-})
 </script>

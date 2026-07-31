@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, shallowMount } from '@vue/test-utils'
-import AirwallexPaymentView from '../presentation/pages/AirwallexPaymentPage.vue'
+import AirwallexPaymentView from '@/features/billing/presentation/pages/AirwallexPaymentPage.vue'
 import {
   PAYMENT_RECOVERY_STORAGE_KEY,
   type PaymentRecoverySnapshot,
-} from '@/features/billing/presentation/paymentFlowResolver'
+} from '@/features/billing/presentation/utils/paymentFlowResolver'
 
 const routeState = vi.hoisted(() => ({
   query: {} as Record<string, unknown>,

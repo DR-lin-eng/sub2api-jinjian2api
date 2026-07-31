@@ -107,21 +107,21 @@
                     </p>
                     <p v-else-if="redeemResult.type === 'subscription'" class="font-medium">
                       {{ t('redeem.subscriptionAssigned') }}
-                      <span v-if="redeemResult.group_name"> - {{ redeemResult.group_name }}</span>
-                      <span v-if="redeemResult.validity_days">
+                      <span v-if="redeemResult.groupName"> - {{ redeemResult.groupName }}</span>
+                      <span v-if="redeemResult.validityDays">
                         ({{
-                          t('redeem.subscriptionDays', { days: redeemResult.validity_days })
+                          t('redeem.subscriptionDays', { days: redeemResult.validityDays })
                         }})</span
                       >
                     </p>
-                    <p v-if="redeemResult.new_balance !== undefined">
+                    <p v-if="redeemResult.newBalance !== undefined">
                       {{ t('redeem.newBalance') }}:
-                      <span class="font-semibold">${{ redeemResult.new_balance.toFixed(2) }}</span>
+                      <span class="font-semibold">${{ redeemResult.newBalance.toFixed(2) }}</span>
                     </p>
-                    <p v-if="redeemResult.new_concurrency !== undefined">
+                    <p v-if="redeemResult.newConcurrency !== undefined">
                       {{ t('redeem.newConcurrency') }}:
                       <span class="font-semibold"
-                        >{{ redeemResult.new_concurrency }} {{ t('redeem.requests') }}</span
+                        >{{ redeemResult.newConcurrency }} {{ t('redeem.requests') }}</span
                       >
                     </p>
                   </div>
@@ -282,7 +282,7 @@
                     {{ getHistoryItemTitle(item) }}
                   </p>
                   <p class="text-xs text-gray-500 dark:text-dark-400">
-                    {{ formatDateTime(item.used_at) }}
+                    {{ formatDateTime(item.usedAt) }}
                   </p>
                 </div>
               </div>
@@ -347,7 +347,10 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { useAppStore } from '@/core/stores/appStore'
 import { useSubscriptionStore } from '@/features/subscriptions/presentation/stores/subscriptionsStore'
-import { redeemAPI, authAPI, type RedeemHistoryItem } from '@/api'
+import { useBillingQueryStore } from '@/features/billing/presentation/stores/billingQueryStore'
+import { useBillingActionStore } from '@/features/billing/presentation/stores/billingActionStore'
+import type { RedeemHistoryItem } from '@/features/billing/domain/models/redeemHistoryItem'
+import type { RedeemCodeResult } from '@/features/billing/domain/models/redeemCodeResult'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { formatDateTime } from '@/core/utils/format'
@@ -356,20 +359,14 @@ const { t } = useI18n()
 const authStore = useAuthStore()
 const appStore = useAppStore()
 const subscriptionStore = useSubscriptionStore()
+const billingQuery = useBillingQueryStore()
+const billingAction = useBillingActionStore()
 
 const user = computed(() => authStore.user)
 
 const redeemCode = ref('')
 const submitting = ref(false)
-const redeemResult = ref<{
-  message: string
-  type: string
-  value: number
-  new_balance?: number
-  new_concurrency?: number
-  group_name?: string
-  validity_days?: number
-} | null>(null)
+const redeemResult = ref<RedeemCodeResult | null>(null)
 const errorMessage = ref('')
 
 // History data
@@ -411,8 +408,8 @@ const formatHistoryValue = (item: RedeemHistoryItem) => {
     return `${sign}$${item.value.toFixed(2)}`
   } else if (isSubscriptionType(item.type)) {
     // 订阅类型显示有效天数和分组名称
-    const days = item.validity_days || Math.round(item.value)
-    const groupName = item.group?.name || ''
+    const days = item.validityDays || Math.round(item.value)
+    const groupName = item.groupName || ''
     return groupName ? `${days}${t('redeem.days')} - ${groupName}` : `${days}${t('redeem.days')}`
   } else {
     const sign = item.value >= 0 ? '+' : ''
@@ -423,7 +420,7 @@ const formatHistoryValue = (item: RedeemHistoryItem) => {
 const fetchHistory = async () => {
   loadingHistory.value = true
   try {
-    history.value = await redeemAPI.getHistory()
+    history.value = await billingQuery.getHistory()
   } catch (error) {
     console.error('Failed to fetch history:', error)
   } finally {
@@ -442,7 +439,7 @@ const handleRedeem = async () => {
   redeemResult.value = null
 
   try {
-    const result = await redeemAPI.redeem(redeemCode.value.trim())
+    const result = await billingAction.redeem({ code: redeemCode.value.trim() })
 
     redeemResult.value = result
 
@@ -479,8 +476,8 @@ const handleRedeem = async () => {
 onMounted(async () => {
   fetchHistory()
   try {
-    const settings = await authAPI.getPublicSettings()
-    contactInfo.value = settings.contact_info || ''
+    const settings = await useAppStore().fetchPublicSettings()
+    contactInfo.value = settings?.contactInfo || ''
   } catch (error) {
     console.error('Failed to load contact info:', error)
   }

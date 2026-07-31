@@ -10,15 +10,26 @@ vi.mock('vue-i18n', async () => {
   }
 })
 
-import UserPlatformQuotaCell from '../presentation/widgets/UserPlatformQuotaCell.vue'
-import type { PlatformQuotaItem } from '@/features/admin-users/data/datasources/adminUsersDatasource'
+import UserPlatformQuotaCell from '@/features/subscriptions/presentation/widgets/UserPlatformQuotaCell.vue'
+import type { PlatformQuotaItem, PlatformQuotaPlatform } from '@/features/admin-users/domain/models/platformQuotaItem'
+import { PlatformQuotaItem as PlatformQuotaItemClass } from '@/features/admin-users/domain/models/platformQuotaItem'
 
-function item(over: Partial<PlatformQuotaItem> & { platform: PlatformQuotaItem['platform'] }): PlatformQuotaItem {
-  return {
-    daily_limit_usd: null, weekly_limit_usd: null, monthly_limit_usd: null,
-    daily_usage_usd: 0, weekly_usage_usd: 0, monthly_usage_usd: 0,
-    ...over,
-  } as PlatformQuotaItem
+function item(over: Partial<PlatformQuotaItem> & { platform: PlatformQuotaPlatform }): PlatformQuotaItem {
+  const entity = new PlatformQuotaItemClass()
+  entity.platform = over.platform
+  entity.dailyLimitUsd = over.dailyLimitUsd ?? null
+  entity.weeklyLimitUsd = over.weeklyLimitUsd ?? null
+  entity.monthlyLimitUsd = over.monthlyLimitUsd ?? null
+  entity.dailyUsageUsd = over.dailyUsageUsd ?? 0
+  entity.weeklyUsageUsd = over.weeklyUsageUsd ?? 0
+  entity.monthlyUsageUsd = over.monthlyUsageUsd ?? 0
+  entity.dailyWindowStart = over.dailyWindowStart ?? ''
+  entity.weeklyWindowStart = over.weeklyWindowStart ?? ''
+  entity.monthlyWindowStart = over.monthlyWindowStart ?? ''
+  entity.dailyWindowResetsAt = over.dailyWindowResetsAt ?? ''
+  entity.weeklyWindowResetsAt = over.weeklyWindowResetsAt ?? ''
+  entity.monthlyWindowResetsAt = over.monthlyWindowResetsAt ?? ''
+  return entity
 }
 
 describe('UserPlatformQuotaCell', () => {
@@ -35,7 +46,7 @@ describe('UserPlatformQuotaCell', () => {
 
   it('平台有记录但全部 limit 为 null 时视为未配置', () => {
     const w = mount(UserPlatformQuotaCell, {
-      props: { quotas: [item({ platform: 'openai', daily_usage_usd: 5 })] },
+      props: { quotas: [item({ platform: 'openai', dailyUsageUsd: 5 })] },
     })
     expect(w.html()).toContain('admin.users.platformQuota.cellNotConfigured')
   })
@@ -44,9 +55,9 @@ describe('UserPlatformQuotaCell', () => {
     const w = mount(UserPlatformQuotaCell, {
       props: {
         quotas: [
-          item({ platform: 'anthropic', daily_limit_usd: 100, daily_usage_usd: 30,
-                 weekly_limit_usd: null, weekly_usage_usd: 0,
-                 monthly_limit_usd: 2000, monthly_usage_usd: 90.5 }),
+          item({ platform: 'anthropic', dailyLimitUsd: 100, dailyUsageUsd: 30,
+                 weeklyLimitUsd: null, weeklyUsageUsd: 0,
+                 monthlyLimitUsd: 2000, monthlyUsageUsd: 90.5 }),
         ],
       },
     })
@@ -61,9 +72,9 @@ describe('UserPlatformQuotaCell', () => {
     const w = mount(UserPlatformQuotaCell, {
       props: {
         quotas: [
-          item({ platform: 'gemini', monthly_limit_usd: 50 }),
-          item({ platform: 'anthropic', daily_limit_usd: 10 }),
-          item({ platform: 'openai', daily_usage_usd: 9 }),
+          item({ platform: 'gemini', monthlyLimitUsd: 50 }),
+          item({ platform: 'anthropic', dailyLimitUsd: 10 }),
+          item({ platform: 'openai', dailyUsageUsd: 9 }),
         ],
       },
     })

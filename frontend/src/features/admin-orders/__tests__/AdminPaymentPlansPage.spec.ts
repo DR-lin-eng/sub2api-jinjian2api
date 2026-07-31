@@ -2,27 +2,53 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import AdminPaymentPlansView from '../presentation/pages/AdminPaymentPlansPage.vue'
+import AdminPaymentPlansView from '@/features/admin-orders/presentation/pages/AdminPaymentPlansPage.vue'
 
-const { getPlans, getConfig, getGroups } = vi.hoisted(() => ({
-  getPlans: vi.fn(),
-  getConfig: vi.fn(),
-  getGroups: vi.fn(),
+const { fetchPlans, fetchConfig } = vi.hoisted(() => ({
+  fetchPlans: vi.fn(),
+  fetchConfig: vi.fn(),
 }))
 
-vi.mock('@/features/admin-orders/data/datasources/adminPaymentDatasource', () => ({
-  adminPaymentAPI: {
-    getPlans,
-    getConfig,
-  },
+vi.mock('@/features/admin-orders/presentation/stores/adminOrdersQueryStore', () => ({
+  createAdminOrdersQueryStore: () => () => ({
+    fetchPlans,
+    fetchConfig,
+    fetchDashboard: vi.fn(),
+    fetchOrders: vi.fn(),
+    fetchOrder: vi.fn(),
+    fetchProviders: vi.fn(),
+    loading: {},
+    errors: {},
+    config: null,
+    dashboard: null,
+    orders: null,
+    plans: [],
+    providers: [],
+  }),
+  useAdminOrdersQueryStore: () => ({
+    fetchPlans,
+    fetchConfig,
+    fetchDashboard: vi.fn(),
+    fetchOrders: vi.fn(),
+    fetchOrder: vi.fn(),
+    fetchProviders: vi.fn(),
+    loading: {},
+    errors: {},
+    config: null,
+    dashboard: null,
+    orders: null,
+    plans: [],
+    providers: [],
+  }),
 }))
 
-vi.mock('@/api/admin', () => ({
-  default: {
-    groups: {
-      getAll: getGroups,
-    },
-  },
+vi.mock('@/features/admin-orders/presentation/stores/adminOrdersActionStore', () => ({
+  createAdminOrdersActionStore: () => () => ({ loading: {}, errors: {}, updatePlan: vi.fn(), deletePlan: vi.fn() }),
+  useAdminOrdersActionStore: () => ({ loading: {}, errors: {}, updatePlan: vi.fn(), deletePlan: vi.fn() }),
+}))
+
+vi.mock('@/features/admin-groups/presentation/composables/useAdminGroups', () => ({
+  useAdminGroups: () => ({ getAll: vi.fn().mockResolvedValue([]) }),
 }))
 
 vi.mock('vue-i18n', async (importOriginal) => {
@@ -48,38 +74,27 @@ const DataTableStub = {
 
 describe('AdminPaymentPlansView', () => {
   beforeEach(() => {
-    getGroups.mockResolvedValue([])
-    getConfig.mockResolvedValue({ data: {} })
-    getPlans.mockResolvedValue({
-      data: [
-        {
-          id: 1,
-          name: 'CNY plan',
-          group_id: 1,
-          price: 499,
-          original_price: 599,
-          currency: 'CNY',
-          validity_days: 30,
-          validity_unit: 'day',
-          sort_order: 0,
-          for_sale: true,
-          features: [],
-        },
-        {
-          id: 2,
-          name: 'Legacy plan',
-          group_id: 1,
-          price: 10,
-          original_price: 0,
-          currency: '',
-          validity_days: 30,
-          validity_unit: 'day',
-          sort_order: 0,
-          for_sale: true,
-          features: [],
-        },
-      ],
-    })
+    fetchConfig.mockResolvedValue(null)
+    fetchPlans.mockResolvedValue([
+      {
+        id: 1, name: 'CNY plan', groupId: 1,
+        price: 499, originalPrice: 599, currency: 'CNY',
+        validityDays: 30, validityUnit: 'day', sortOrder: 0, forSale: true, features: [],
+        groupPlatform: '', groupName: '', rateMultiplier: 1, peakRateEnabled: false,
+        peakStart: '', peakEnd: '', peakRateMultiplier: 1,
+        dailyLimitUsd: null, weeklyLimitUsd: null, monthlyLimitUsd: null, supportedModelScopes: [],
+        description: '',
+      },
+      {
+        id: 2, name: 'Legacy plan', groupId: 1,
+        price: 10, originalPrice: 0, currency: '',
+        validityDays: 30, validityUnit: 'day', sortOrder: 0, forSale: true, features: [],
+        groupPlatform: '', groupName: '', rateMultiplier: 1, peakRateEnabled: false,
+        peakStart: '', peakEnd: '', peakRateMultiplier: 1,
+        dailyLimitUsd: null, weeklyLimitUsd: null, monthlyLimitUsd: null, supportedModelScopes: [],
+        description: '',
+      },
+    ])
   })
 
   it('uses the configured currency symbol and keeps legacy prices in USD', async () => {

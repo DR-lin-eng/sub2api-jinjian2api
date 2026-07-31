@@ -20,10 +20,10 @@
                   {{ t('admin.dashboard.apiKeys') }}
                 </p>
                 <p class="text-xl font-bold text-gray-900 dark:text-white">
-                  {{ stats.total_api_keys }}
+                  {{ stats.totalApiKeys }}
                 </p>
                 <p class="text-xs text-green-600 dark:text-green-400">
-                  {{ stats.active_api_keys }} {{ t('common.active') }}
+                  {{ stats.activeApiKeys }} {{ t('common.active') }}
                 </p>
               </div>
             </div>
@@ -40,14 +40,14 @@
                   {{ t('admin.dashboard.accounts') }}
                 </p>
                 <p class="text-xl font-bold text-gray-900 dark:text-white">
-                  {{ stats.total_accounts }}
+                  {{ stats.totalAccounts }}
                 </p>
                 <p class="text-xs">
                   <span class="text-green-600 dark:text-green-400"
-                    >{{ stats.normal_accounts }} {{ t('common.active') }}</span
+                    >{{ stats.normalAccounts }} {{ t('common.active') }}</span
                   >
-                  <span v-if="stats.error_accounts > 0" class="ml-1 text-red-500"
-                    >{{ stats.error_accounts }} {{ t('common.error') }}</span
+                  <span v-if="stats.errorAccounts > 0" class="ml-1 text-red-500"
+                    >{{ stats.errorAccounts }} {{ t('common.error') }}</span
                   >
                 </p>
               </div>
@@ -65,10 +65,10 @@
                   {{ t('admin.dashboard.todayRequests') }}
                 </p>
                 <p class="text-xl font-bold text-gray-900 dark:text-white">
-                  {{ stats.today_requests }}
+                  {{ stats.todayRequests }}
                 </p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ t('common.total') }}: {{ formatNumber(stats.total_requests) }}
+                  {{ t('common.total') }}: {{ formatNumber(stats.totalRequests) }}
                 </p>
               </div>
             </div>
@@ -85,10 +85,10 @@
                   {{ t('admin.dashboard.users') }}
                 </p>
                 <p class="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                  +{{ stats.today_new_users }}
+                  +{{ stats.todayNewUsers }}
                 </p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ t('common.total') }}: {{ formatNumber(stats.total_users) }}
+                  {{ t('common.total') }}: {{ formatNumber(stats.totalUsers) }}
                 </p>
               </div>
             </div>
@@ -108,25 +108,25 @@
                   {{ t('admin.dashboard.todayTokens') }}
                 </p>
                 <p class="text-xl font-bold text-gray-900 dark:text-white">
-                  {{ formatTokens(stats.today_tokens) }}
+                  {{ formatTokens(stats.todayTokens) }}
                 </p>
                 <p class="text-xs">
                   <span
                     class="text-green-600 dark:text-green-400"
                     :title="t('admin.dashboard.actual')"
-                    >${{ formatCost(stats.today_actual_cost) }}</span
+                    >${{ formatCost(stats.todayActualCost) }}</span
                   >
                   <span class="text-gray-400 dark:text-gray-500"> / </span>
                   <span
                     class="text-orange-500 dark:text-orange-400"
                     :title="t('admin.dashboard.accountCost')"
-                    >${{ formatCost(stats.today_account_cost) }}</span
+                    >${{ formatCost(stats.todayAccountCost) }}</span
                   >
                   <span class="text-gray-400 dark:text-gray-500"> / </span>
                   <span
                     class="text-gray-400 dark:text-gray-500"
                     :title="t('admin.dashboard.standard')"
-                    >${{ formatCost(stats.today_cost) }}</span
+                    >${{ formatCost(stats.todayCost) }}</span
                   >
                 </p>
               </div>
@@ -144,25 +144,25 @@
                   {{ t('admin.dashboard.totalTokens') }}
                 </p>
                 <p class="text-xl font-bold text-gray-900 dark:text-white">
-                  {{ formatTokens(stats.total_tokens) }}
+                  {{ formatTokens(stats.totalTokens) }}
                 </p>
                 <p class="text-xs">
                   <span
                     class="text-green-600 dark:text-green-400"
                     :title="t('admin.dashboard.actual')"
-                    >${{ formatCost(stats.total_actual_cost) }}</span
+                    >${{ formatCost(stats.totalActualCost) }}</span
                   >
                   <span class="text-gray-400 dark:text-gray-500"> / </span>
                   <span
                     class="text-orange-500 dark:text-orange-400"
                     :title="t('admin.dashboard.accountCost')"
-                    >${{ formatCost(stats.total_account_cost) }}</span
+                    >${{ formatCost(stats.totalAccountCost) }}</span
                   >
                   <span class="text-gray-400 dark:text-gray-500"> / </span>
                   <span
                     class="text-gray-400 dark:text-gray-500"
                     :title="t('admin.dashboard.standard')"
-                    >${{ formatCost(stats.total_cost) }}</span
+                    >${{ formatCost(stats.totalCost) }}</span
                   >
                 </p>
               </div>
@@ -206,10 +206,10 @@
                   {{ t('admin.dashboard.avgResponse') }}
                 </p>
                 <p class="text-xl font-bold text-gray-900 dark:text-white">
-                  {{ formatDuration(stats.average_duration_ms) }}
+                  {{ formatDuration(stats.averageDurationMs) }}
                 </p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ stats.active_users }} {{ t('admin.dashboard.activeUsers') }}
+                  {{ stats.activeUsers }} {{ t('admin.dashboard.activeUsers') }}
                 </p>
               </div>
             </div>
@@ -353,21 +353,15 @@ import { useRouter } from 'vue-router'
 import { useAppStore } from '@/core/stores/appStore'
 
 const { t } = useI18n()
-import { adminAPI } from '@/api/admin'
-import type {
-  DashboardStats,
-  TrendDataPoint,
-  ModelStat,
-  UserUsageTrendPoint,
-  UserSpendingRankingItem
-} from '@/types'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import DateRangePicker from '@/common/widgets/forms/DateRangePicker.vue'
 import Select from '@/common/widgets/forms/Select.vue'
-import ModelDistributionChart from '@/common/widgets/charts/ModelDistributionChart.vue'
-import TokenUsageTrend from '@/common/widgets/charts/TokenUsageTrend.vue'
+import ModelDistributionChart from '@/features/admin-dashboard/presentation/widgets/ModelDistributionChart.vue'
+import TokenUsageTrend from '@/features/admin-dashboard/presentation/widgets/TokenUsageTrend.vue'
+import { useAdminDashboardQueryStore } from '@/features/admin-dashboard/presentation/stores/adminDashboardQueryStore'
+// TODO(spec-exception): useBatchImageAccess is a temporary cross-feature service; see .eslintrc.cjs override.
 import { useBatchImageAccess } from '@/features/batch-image/presentation/composables/useBatchImageAccess'
 import { getLast24HourRange } from '@/core/utils/dateRange'
 
@@ -382,6 +376,11 @@ import {
   Filler
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
+import type { DashboardStats } from '@/features/admin-dashboard/domain/models/dashboardStats'
+import type { TrendDataPoint } from '@/features/admin-dashboard/domain/models/trendDataPoint'
+import type { ModelStat } from '@/features/admin-dashboard/domain/models/modelStat'
+import type { UserUsageTrendPoint } from '@/features/admin-dashboard/domain/models/userUsageTrendPoint'
+import type { UserSpendingRankingItem } from '@/features/admin-dashboard/domain/models/userSpendingRankingItem'
 
 // Register Chart.js components
 ChartJS.register(
@@ -396,6 +395,7 @@ ChartJS.register(
 
 const appStore = useAppStore()
 const router = useRouter()
+const dashboardStore = useAdminDashboardQueryStore()
 const { canUseBatchImage, refreshBatchImageAccess } = useBatchImageAccess()
 const stats = ref<DashboardStats | null>(null)
 const loading = ref(false)
@@ -515,7 +515,7 @@ const userTrendChartData = computed(() => {
       return email
     }
 
-    return t('admin.redeem.userPrefix', { id: point.user_id })
+    return t('admin.redeem.userPrefix', { id: point.userId })
   }
 
   // Group by user_id to avoid merging different users with the same display name
@@ -524,7 +524,7 @@ const userTrendChartData = computed(() => {
 
   userTrend.value.forEach((point) => {
     allDates.add(point.date)
-    const key = point.user_id
+    const key = point.userId
     if (!userGroups.has(key)) {
       userGroups.set(key, { name: getDisplayName(point), data: new Map() })
     }
@@ -607,7 +607,7 @@ const goToUserUsage = (item: UserSpendingRankingItem) => {
   void router.push({
     path: '/admin/usage',
     query: {
-      user_id: String(item.user_id),
+      user_id: String(item.userId),
       start_date: startDate.value,
       end_date: endDate.value
     }
@@ -642,7 +642,7 @@ const loadStatsSnapshot = async (currentSeq: number) => {
     loading.value = true
   }
   try {
-    const response = await adminAPI.dashboard.getSnapshotV2({
+    const response = await dashboardStore.getSnapshotV2({
       start_date: startDate.value,
       end_date: endDate.value,
       granularity: granularity.value,
@@ -671,7 +671,7 @@ const loadStatsSnapshot = async (currentSeq: number) => {
 const loadChartSnapshot = async (currentSeq: number) => {
   chartsLoading.value = true
   try {
-    const response = await adminAPI.dashboard.getSnapshotV2({
+    const response = await dashboardStore.getSnapshotV2({
       start_date: startDate.value,
       end_date: endDate.value,
       granularity: granularity.value,
@@ -704,7 +704,7 @@ const loadUserInsightsSnapshot = async (currentSeq: number) => {
   rankingLoading.value = true
   rankingError.value = false
   try {
-    const response = await adminAPI.dashboard.getSnapshotV2({
+    const response = await dashboardStore.getSnapshotV2({
       start_date: startDate.value,
       end_date: endDate.value,
       granularity: granularity.value,
@@ -718,11 +718,11 @@ const loadUserInsightsSnapshot = async (currentSeq: number) => {
       user_ranking_limit: rankingLimit
     })
     if (currentSeq !== dashboardLoadSeq) return
-    userTrend.value = response.users_trend || []
+    userTrend.value = response.usersTrend || []
     rankingItems.value = response.ranking || []
-    rankingTotalActualCost.value = response.ranking_total_actual_cost || 0
-    rankingTotalRequests.value = response.ranking_total_requests || 0
-    rankingTotalTokens.value = response.ranking_total_tokens || 0
+    rankingTotalActualCost.value = response.rankingTotalActualCost || 0
+    rankingTotalRequests.value = response.rankingTotalRequests || 0
+    rankingTotalTokens.value = response.rankingTotalTokens || 0
   } catch (error) {
     if (currentSeq !== dashboardLoadSeq) return
     console.error('Error loading dashboard user insights:', error)

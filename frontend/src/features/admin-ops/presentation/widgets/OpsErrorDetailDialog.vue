@@ -24,7 +24,7 @@
         <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-900">
           <div class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ t('admin.ops.errorDetail.time') }}</div>
           <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">
-            {{ formatDateTime(detail.created_at) }}
+            {{ formatDateTime(detail.createdAt) }}
           </div>
         </div>
 
@@ -34,10 +34,10 @@
           </div>
           <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">
             <template v-if="isUpstreamError(detail)">
-              {{ detail.account_name || (detail.account_id != null ? String(detail.account_id) : '—') }}
+              {{ detail.accountName || (detail.accountId != null ? String(detail.accountId) : '—') }}
             </template>
             <template v-else>
-              {{ detail.user_email || (detail.user_id != null ? String(detail.user_id) : '—') }}
+              {{ detail.userEmail || (detail.userId != null ? String(detail.userId) : '—') }}
             </template>
           </div>
         </div>
@@ -52,7 +52,7 @@
         <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-900">
           <div class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ t('admin.ops.errorDetail.group') }}</div>
           <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">
-            {{ detail.group_name || (detail.group_id != null ? String(detail.group_id) : '—') }}
+            {{ detail.groupName || (detail.groupId != null ? String(detail.groupId) : '—') }}
           </div>
         </div>
 
@@ -60,9 +60,9 @@
           <div class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ t('admin.ops.errorDetail.model') }}</div>
           <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">
             <template v-if="hasModelMapping(detail)">
-              <span class="font-mono">{{ detail.requested_model }}</span>
+              <span class="font-mono">{{ detail.requestedModel }}</span>
               <span class="mx-1 text-gray-400">→</span>
-              <span class="font-mono text-primary-600 dark:text-primary-400">{{ detail.upstream_model }}</span>
+              <span class="font-mono text-primary-600 dark:text-primary-400">{{ detail.upstreamModel }}</span>
             </template>
             <template v-else>
               {{ displayModel(detail) || '—' }}
@@ -73,14 +73,14 @@
         <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-900">
           <div class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ t('admin.ops.errorDetail.inboundEndpoint') }}</div>
           <div class="mt-1 break-all font-mono text-sm font-medium text-gray-900 dark:text-white">
-            {{ detail.inbound_endpoint || '—' }}
+            {{ detail.inboundEndpoint || '—' }}
           </div>
         </div>
 
         <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-900">
           <div class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ t('admin.ops.errorDetail.upstreamEndpoint') }}</div>
           <div class="mt-1 break-all font-mono text-sm font-medium text-gray-900 dark:text-white">
-            {{ detail.upstream_endpoint || '—' }}
+            {{ detail.upstreamEndpoint || '—' }}
           </div>
         </div>
 
@@ -88,7 +88,7 @@
           <div class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ t('admin.ops.errorDetail.status') }}</div>
           <div class="mt-1">
             <span :class="['inline-flex items-center rounded-lg px-2 py-1 text-xs font-black ring-1 ring-inset shadow-sm', statusClass]">
-              {{ detail.status_code }}
+              {{ detail.statusCode }}
             </span>
           </div>
         </div>
@@ -96,7 +96,7 @@
         <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-900">
           <div class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ t('admin.ops.errorDetail.requestType') }}</div>
           <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">
-            {{ formatRequestTypeLabel(detail.request_type) }}
+            {{ formatRequestTypeLabel(detail.requestType) }}
           </div>
         </div>
 
@@ -107,10 +107,10 @@
           </div>
         </div>
 
-        <div v-if="detail.api_key_prefix" class="rounded-xl bg-gray-50 p-4 dark:bg-dark-900">
+        <div v-if="detail.apiKeyPrefix" class="rounded-xl bg-gray-50 p-4 dark:bg-dark-900">
           <div class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ t('admin.ops.errorDetail.apiKeyPrefix') }}</div>
           <div class="mt-1 font-mono text-sm font-medium text-gray-900 dark:text-white">
-            {{ detail.api_key_prefix }}
+            {{ detail.apiKeyPrefix }}
           </div>
         </div>
 
@@ -146,7 +146,7 @@
               </div>
               <div class="flex items-center gap-2">
                 <div class="font-mono text-xs text-gray-500 dark:text-gray-400">
-                  {{ ev.status_code ?? '—' }}
+                  {{ ev.statusCode ?? '—' }}
                 </div>
                 <button
                   type="button"
@@ -174,11 +174,11 @@
             <div class="mt-3 grid grid-cols-1 gap-2 text-xs text-gray-600 dark:text-gray-300 sm:grid-cols-2">
               <div>
                 <span class="text-gray-400">{{ t('admin.ops.errorDetail.upstreamEvent.status') }}:</span>
-                <span class="ml-1 font-mono">{{ ev.status_code ?? '—' }}</span>
+                <span class="ml-1 font-mono">{{ ev.statusCode ?? '—' }}</span>
               </div>
               <div>
                 <span class="text-gray-400">{{ t('admin.ops.errorDetail.upstreamEvent.requestId') }}:</span>
-                <span class="ml-1 font-mono">{{ ev.request_id || ev.client_request_id || '—' }}</span>
+                <span class="ml-1 font-mono">{{ ev.requestId || ev.clientRequestId || '—' }}</span>
               </div>
             </div>
 
@@ -200,10 +200,12 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import { useAppStore } from '@/stores'
-import { opsAPI, type OpsErrorDetail } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
+import { useAppStore } from '@/core/stores/appStore'
+import type { OpsErrorDetail } from '@/features/admin-ops/domain/models/opsErrorDetail'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
 import { formatDateTime } from '@/core/utils/format'
-import { resolvePrimaryResponseBody, resolveUpstreamPayload } from '../errorDetailResponseResolver'
+import { resolvePrimaryResponseBody, resolveUpstreamPayload } from '@/features/admin-ops/presentation/utils/errorDetailResponseResolver'
 
 interface Props {
   show: boolean
@@ -226,7 +228,7 @@ const detail = ref<OpsErrorDetail | null>(null)
 
 const showUpstreamList = computed(() => props.errorType === 'request')
 
-const requestId = computed(() => detail.value?.request_id || detail.value?.client_request_id || '')
+const requestId = computed(() => detail.value?.requestId || detail.value?.clientRequestId || '')
 
 const primaryResponseBody = computed(() => {
   return resolvePrimaryResponseBody(detail.value, props.errorType)
@@ -245,7 +247,7 @@ const emptyText = computed(() => t('admin.ops.errorDetail.noErrorSelected'))
 function isUpstreamError(d: OpsErrorDetail | null): boolean {
   if (!d) return false
   const phase = String(d.phase || '').toLowerCase()
-  const owner = String(d.error_owner || '').toLowerCase()
+  const owner = String(d.errorOwner || '').toLowerCase()
   return phase === 'upstream' && owner === 'provider'
 }
 
@@ -260,16 +262,16 @@ function formatRequestTypeLabel(type: number | null | undefined): string {
 
 function hasModelMapping(d: OpsErrorDetail | null): boolean {
   if (!d) return false
-  const requested = String(d.requested_model || '').trim()
-  const upstream = String(d.upstream_model || '').trim()
+  const requested = String(d.requestedModel || '').trim()
+  const upstream = String(d.upstreamModel || '').trim()
   return !!requested && !!upstream && requested !== upstream
 }
 
 function displayModel(d: OpsErrorDetail | null): string {
   if (!d) return ''
-  const upstream = String(d.upstream_model || '').trim()
+  const upstream = String(d.upstreamModel || '').trim()
   if (upstream) return upstream
-  const requested = String(d.requested_model || '').trim()
+  const requested = String(d.requestedModel || '').trim()
   if (requested) return requested
   return String(d.model || '').trim()
 }
@@ -284,7 +286,7 @@ const expandedUpstreamDetailIds = ref(new Set<number>())
 function getUpstreamResponsePreview(ev: OpsErrorDetail): string {
   const upstreamPayload = resolveUpstreamPayload(ev)
   if (upstreamPayload) return upstreamPayload
-  return String(ev.error_body || '').trim()
+  return String(ev.errorBody || '').trim()
 }
 
 function toggleUpstreamDetail(id: number) {
@@ -297,7 +299,7 @@ function toggleUpstreamDetail(id: number) {
 async function fetchCorrelatedUpstreamErrors(requestErrorId: number) {
   correlatedUpstreamLoading.value = true
   try {
-    const res = await opsAPI.listRequestErrorUpstreamErrors(
+    const res = await queryStore.listRequestErrorUpstreamErrors(
       requestErrorId,
       { page: 1, page_size: 100, view: 'all' },
       { include_detail: true }
@@ -328,7 +330,7 @@ async function fetchDetail(id: number) {
   loading.value = true
   try {
     const kind = props.errorType || (detail.value?.phase === 'upstream' ? 'upstream' : 'request')
-    const d = kind === 'upstream' ? await opsAPI.getUpstreamErrorDetail(id) : await opsAPI.getRequestErrorDetail(id)
+    const d = kind === 'upstream' ? await queryStore.getUpstreamErrorDetail(id) : await queryStore.getRequestErrorDetail(id)
     detail.value = d
   } catch (err: any) {
     detail.value = null
@@ -359,7 +361,7 @@ watch(
 )
 
 const statusClass = computed(() => {
-  const code = detail.value?.status_code ?? 0
+  const code = detail.value?.statusCode ?? 0
   if (code >= 500) return 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/30 dark:text-red-400 dark:ring-red-500/30'
   if (code === 429) return 'bg-purple-50 text-purple-700 ring-purple-600/20 dark:bg-purple-900/30 dark:text-purple-400 dark:ring-purple-500/30'
   if (code >= 400) return 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-900/30 dark:text-amber-400 dark:ring-amber-500/30'

@@ -215,41 +215,6 @@
   color: #9ca3af !important; 
 }
 
-@media (max-width: 639px) {
-  .theme-tour-popover .driver-popover-title {
-    padding: 18px 20px 10px !important;
-  }
-
-  .driver-popover-title-text {
-    padding-right: 32px !important;
-  }
-
-  .theme-tour-popover .driver-popover-description {
-    padding: 0 20px 20px !important;
-  }
-
-  .theme-tour-popover .driver-popover-footer {
-    padding: 12px 16px !important;
-  }
-
-  .footer-left {
-    min-width: 0 !important;
-    flex-shrink: 1 !important;
-  }
-
-  .footer-shortcuts {
-    display: none !important;
-  }
-
-  .footer-right {
-    flex-shrink: 0 !important;
-  }
-
-  .theme-tour-popover button {
-    padding: 8px 12px !important;
-  }
-}
-
 /* Arrows */
 .driver-popover-arrow { z-index: 100000001 !important; }
 .driver-popover-arrow-side-left.driver-popover-arrow { border-left-color: #ffffff !important; }

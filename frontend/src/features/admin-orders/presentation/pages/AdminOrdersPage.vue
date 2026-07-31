@@ -35,7 +35,7 @@
               {{ t('payment.admin.retry') }}
             </button>
             <template v-if="row.status === 'REFUND_REQUESTED'">
-              <span v-if="row.refund_amount" class="rounded-full bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">{{ creditedAmountSymbol }}{{ row.refund_amount.toFixed(2) }}</span>
+              <span v-if="row.refundAmount" class="rounded-full bg-purple-100 px-1.5 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">{{ creditedAmountSymbol }}{{ row.refundAmount.toFixed(2) }}</span>
               <button @click="openRefundDialog(row)" class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/20">
                 <Icon name="check" size="sm" />
                 {{ t('payment.admin.approveRefund') }}
@@ -64,32 +64,31 @@
       <div v-if="selectedOrder" class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
           <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.orderId') }}</p><p class="font-mono text-sm font-medium text-gray-900 dark:text-white">#{{ selectedOrder.id }}</p></div>
-          <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.orderNo') }}</p><p class="text-sm font-medium text-gray-900 dark:text-white">{{ selectedOrder.out_trade_no }}</p></div>
+          <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.orderNo') }}</p><p class="text-sm font-medium text-gray-900 dark:text-white">{{ selectedOrder.outTradeNo }}</p></div>
           <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.status') }}</p><OrderStatusBadge :status="selectedOrder.status" /></div>
           <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.amount') }}</p><p class="text-sm font-medium text-gray-900 dark:text-white">{{ creditedAmountSymbol }}{{ selectedOrder.amount.toFixed(2) }}</p></div>
-          <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.payAmount') }}</p><p class="text-sm font-medium text-gray-900 dark:text-white">{{ paymentAmountSymbol(selectedOrder) }}{{ selectedOrder.pay_amount.toFixed(2) }}</p></div>
-          <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.paymentMethod') }}</p><p class="text-sm text-gray-700 dark:text-gray-300">{{ t('payment.methods.' + selectedOrder.payment_type, selectedOrder.payment_type) }}</p></div>
-          <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.feeRate') }}</p><p class="text-sm text-gray-700 dark:text-gray-300">{{ selectedOrder.fee_rate }}%</p></div>
-          <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.createdAt') }}</p><p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(selectedOrder.created_at) }}</p></div>
-          <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.expiresAt') }}</p><p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(selectedOrder.expires_at) }}</p></div>
-          <div v-if="selectedOrder.paid_at"><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.paidAt') }}</p><p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(selectedOrder.paid_at) }}</p></div>
-          <div v-if="selectedOrder.refund_amount"><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.refundAmount') }}</p><p class="text-sm font-medium text-red-600 dark:text-red-400">{{ creditedAmountSymbol }}{{ selectedOrder.refund_amount.toFixed(2) }}</p></div>
-          <div v-if="selectedOrder.refund_reason" class="col-span-2"><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.refundReason') }}</p><p class="text-sm text-gray-700 dark:text-gray-300">{{ selectedOrder.refund_reason }}</p></div>
-          <!-- Refund request info -->
-          <div v-if="selectedOrder.refund_requested_at" class="col-span-2 border-t border-gray-200 pt-3 dark:border-dark-600">
+          <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.payAmount') }}</p><p class="text-sm font-medium text-gray-900 dark:text-white">{{ paymentAmountSymbol(selectedOrder) }}{{ selectedOrder.payAmount.toFixed(2) }}</p></div>
+          <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.paymentMethod') }}</p><p class="text-sm text-gray-700 dark:text-gray-300">{{ t('payment.methods.' + selectedOrder.paymentType, selectedOrder.paymentType) }}</p></div>
+          <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.feeRate') }}</p><p class="text-sm text-gray-700 dark:text-gray-300">{{ selectedOrder.feeRate }}%</p></div>
+          <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.orders.createdAt') }}</p><p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(selectedOrder.createdAt) }}</p></div>
+          <div><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.expiresAt') }}</p><p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(selectedOrder.expiresAt) }}</p></div>
+          <div v-if="selectedOrder.paidAt"><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.paidAt') }}</p><p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(selectedOrder.paidAt) }}</p></div>
+          <div v-if="selectedOrder.refundAmount"><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.refundAmount') }}</p><p class="text-sm font-medium text-red-600 dark:text-red-400">{{ creditedAmountSymbol }}{{ selectedOrder.refundAmount.toFixed(2) }}</p></div>
+          <div v-if="selectedOrder.refundReason" class="col-span-2"><p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.refundReason') }}</p><p class="text-sm text-gray-700 dark:text-gray-300">{{ selectedOrder.refundReason }}</p></div>
+          <div v-if="selectedOrder.refundRequestedAt" class="col-span-2 border-t border-gray-200 pt-3 dark:border-dark-600">
             <p class="mb-2 text-xs font-medium text-purple-600 dark:text-purple-400">{{ t('payment.admin.refundRequestInfo') }}</p>
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.refundRequestedAt') }}</p>
-                <p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(selectedOrder.refund_requested_at) }}</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(selectedOrder.refundRequestedAt) }}</p>
               </div>
               <div>
                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.refundRequestedBy') }}</p>
-                <p class="text-sm text-gray-700 dark:text-gray-300">#{{ selectedOrder.refund_requested_by }}</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300">#{{ selectedOrder.refundRequestedBy }}</p>
               </div>
               <div class="col-span-2">
                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ t('payment.admin.refundRequestReason') }}</p>
-                <p class="text-sm text-gray-700 dark:text-gray-300">{{ selectedOrder.refund_request_reason }}</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300">{{ selectedOrder.refundRequestReason }}</p>
               </div>
             </div>
           </div>
@@ -119,10 +118,12 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminPaymentAPI } from '@/features/admin-orders/data/datasources/adminPaymentDatasource'
+import { useAdminOrdersQueryStore } from '@/features/admin-orders/presentation/stores/adminOrdersQueryStore'
+import { useAdminOrdersActionStore } from '@/features/admin-orders/presentation/stores/adminOrdersActionStore'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
-import { formatOrderDateTime } from '@/features/billing/presentation/orderUtilsFormatter'
-import type { PaymentOrder } from '@/types/payment'
+import { formatOrderDateTime } from '@/features/billing/presentation/utils/orderUtilsFormatter'
+import type { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
+import type { RefundOrderRequest } from '@/features/admin-orders/data/requests_models/refundOrderRequest'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
@@ -131,7 +132,7 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 import AdminRefundDialog from '@/features/admin-orders/presentation/widgets/AdminRefundDialog.vue'
 import OrderStatusBadge from '@/features/billing/presentation/widgets/OrderStatusBadge.vue'
 import OrderTable from '@/features/billing/presentation/widgets/OrderTable.vue'
-import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
+import { currencySymbol } from '@/features/billing/presentation/utils/currencyFormatter'
 
 interface AuditLog {
   id: number
@@ -143,6 +144,8 @@ interface AuditLog {
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const queryStore = useAdminOrdersQueryStore()
+const actionStore = useAdminOrdersActionStore()
 
 const ordersLoading = ref(false)
 const orders = ref<PaymentOrder[]>([])
@@ -170,13 +173,16 @@ function debounceLoadOrders() {
 async function loadOrders() {
   ordersLoading.value = true
   try {
-    const res = await adminPaymentAPI.getOrders({
-      page: orderPagination.page, page_size: orderPagination.page_size,
-      keyword: orderSearch.value || undefined, status: orderFilters.status || undefined,
-      payment_type: orderFilters.payment_type || undefined, order_type: orderFilters.order_type || undefined,
+    const result = await queryStore.fetchOrders({
+      page: orderPagination.page,
+      page_size: orderPagination.page_size,
+      keyword: orderSearch.value || undefined,
+      status: orderFilters.status || undefined,
+      payment_type: orderFilters.payment_type || undefined,
+      order_type: orderFilters.order_type || undefined,
     })
-    orders.value = res.data.items || []
-    orderPagination.total = res.data.total || 0
+    orders.value = result?.items || []
+    orderPagination.total = result?.total || 0
   } catch (err: unknown) {
     appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error')))
   } finally { ordersLoading.value = false }
@@ -218,26 +224,25 @@ async function showOrderDetail(order: PaymentOrder) {
   orderAuditLogs.value = []
   showDetailDialog.value = true
   try {
-    const res = await adminPaymentAPI.getOrder(order.id)
-    const data = res.data as unknown as Record<string, unknown>
-    if (data.order) selectedOrder.value = data.order as PaymentOrder
-    orderAuditLogs.value = ((data.auditLogs || data.audit_logs || []) as unknown) as AuditLog[]
+    const data = await queryStore.fetchOrder(order.id) as Record<string, unknown>
+    if (data?.order) selectedOrder.value = data.order as PaymentOrder
+    orderAuditLogs.value = ((data?.auditLogs || data?.audit_logs || []) as unknown) as AuditLog[]
   } catch { /* keep cached order data */ }
 }
 
 async function handleCancelOrder(order: PaymentOrder) {
-  try { await adminPaymentAPI.cancelOrder(order.id); appStore.showSuccess(t('payment.admin.orderCancelled')); loadOrders() }
+  try { await actionStore.cancelOrder(order.id); appStore.showSuccess(t('payment.admin.orderCancelled')); loadOrders() }
   catch (err: unknown) { appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error'))) }
 }
 
 async function handleRetryOrder(order: PaymentOrder) {
-  try { await adminPaymentAPI.retryRecharge(order.id); appStore.showSuccess(t('payment.admin.retrySuccess')); loadOrders() }
+  try { await actionStore.retryRecharge(order.id); appStore.showSuccess(t('payment.admin.retrySuccess')); loadOrders() }
   catch (err: unknown) { appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error'))) }
 }
 
 function openRefundDialog(order: PaymentOrder) { selectedOrder.value = order; showRefundDialog.value = true }
 
-function isRefundPendingWarning(warning: string | undefined): boolean {
+function isRefundPendingWarning(warning: string): boolean {
   return /pending|处理中|待/.test(String(warning || '').toLowerCase())
 }
 
@@ -245,20 +250,21 @@ async function handleRefund(data: { amount: number; reason: string; deduct_balan
   if (!selectedOrder.value) return
   refundSubmitting.value = true
   try {
-    const res = await adminPaymentAPI.refundOrder(selectedOrder.value.id, { amount: data.amount, reason: data.reason, deduct_balance: data.deduct_balance, force: data.force })
-    if (res.data.success) {
+    const req: RefundOrderRequest = { amount: data.amount, reason: data.reason, deduct_balance: data.deduct_balance, force: data.force }
+    const result = await actionStore.refundOrder(selectedOrder.value.id, req)
+    if (result.success) {
       appStore.showSuccess(t('payment.admin.refundSuccess'))
       showRefundDialog.value = false
       loadOrders()
       return
     }
-    if (isRefundPendingWarning(res.data.warning)) {
+    if (isRefundPendingWarning(result.warning)) {
       appStore.showSuccess(t('payment.admin.refundPending'))
       showRefundDialog.value = false
       loadOrders()
       return
     }
-    appStore.showError(res.data.warning || t('common.error'))
+    appStore.showError(result.warning || t('common.error'))
   } catch (err: unknown) { appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error'))) }
   finally { refundSubmitting.value = false }
 }
@@ -266,13 +272,13 @@ async function handleRefund(data: { amount: number; reason: string; deduct_balan
 async function handleQueryRefund(order: PaymentOrder) {
   refundQueryingIds.value = new Set(refundQueryingIds.value).add(order.id)
   try {
-    const res = await adminPaymentAPI.queryRefund(order.id)
-    if (res.data.success) {
+    const result = await actionStore.queryRefund(order.id)
+    if (result.success) {
       appStore.showSuccess(t('payment.admin.refundSuccess'))
-    } else if (isRefundPendingWarning(res.data.warning)) {
+    } else if (isRefundPendingWarning(result.warning)) {
       appStore.showSuccess(t('payment.admin.refundPending'))
     } else {
-      appStore.showError(res.data.warning || t('common.error'))
+      appStore.showError(result.warning || t('common.error'))
     }
     loadOrders()
   } catch (err: unknown) {

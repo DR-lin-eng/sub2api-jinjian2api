@@ -34,16 +34,16 @@
             <td class="py-2 pr-3">
               <span
                 class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px]"
-                :class="statusBadgeClass(m.latest_status)"
+                :class="statusBadgeClass(m.latestStatus)"
               >
-                {{ statusLabel(m.latest_status) }}
+                {{ statusLabel(m.latestStatus) }}
               </span>
             </td>
-            <td class="py-2 pr-3 text-gray-700 dark:text-gray-300">{{ formatLatency(m.latest_latency_ms) }}</td>
-            <td class="py-2 pr-3 text-gray-700 dark:text-gray-300">{{ formatPercent(m.availability_7d) }}</td>
-            <td class="py-2 pr-3 text-gray-700 dark:text-gray-300">{{ formatPercent(m.availability_15d) }}</td>
-            <td class="py-2 pr-3 text-gray-700 dark:text-gray-300">{{ formatPercent(m.availability_30d) }}</td>
-            <td class="py-2 pr-3 text-gray-700 dark:text-gray-300">{{ formatLatency(m.avg_latency_7d_ms) }}</td>
+            <td class="py-2 pr-3 text-gray-700 dark:text-gray-300">{{ formatLatency(m.latestLatencyMs) }}</td>
+            <td class="py-2 pr-3 text-gray-700 dark:text-gray-300">{{ formatPercent(m.availability7d) }}</td>
+            <td class="py-2 pr-3 text-gray-700 dark:text-gray-300">{{ formatPercent(m.availability15d) }}</td>
+            <td class="py-2 pr-3 text-gray-700 dark:text-gray-300">{{ formatPercent(m.availability30d) }}</td>
+            <td class="py-2 pr-3 text-gray-700 dark:text-gray-300">{{ formatLatency(m.avgLatency7dMs) }}</td>
           </tr>
         </tbody>
       </table>
@@ -64,10 +64,8 @@ import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
-import {
-  status as fetchChannelMonitorDetail,
-  type UserMonitorDetail,
-} from '@/features/channel-monitor-user/data/datasources/channelMonitorUserDatasource'
+import { useChannelMonitorUserActionStore } from '@/features/channel-monitor-user/presentation/stores/channelMonitorUserActionStore'
+import type { UserMonitorDetail } from '@/features/channel-monitor-user/domain/models/userMonitorDetail'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import { useChannelMonitorFormat } from '@/features/channel-monitor-user/presentation/composables/useChannelMonitorFormat'
 
@@ -84,6 +82,7 @@ defineEmits<{
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const actionStore = useChannelMonitorUserActionStore()
 const { statusLabel, statusBadgeClass, formatLatency, formatPercent } = useChannelMonitorFormat()
 
 const detail = ref<UserMonitorDetail | null>(null)
@@ -93,7 +92,7 @@ async function load(id: number) {
   detail.value = null
   loading.value = true
   try {
-    detail.value = await fetchChannelMonitorDetail(id)
+    detail.value = await actionStore.status(id)
   } catch (err: unknown) {
     appStore.showError(extractApiErrorMessage(err, t('channelStatus.detailLoadError')))
   } finally {

@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useClipboard } from '@/common/composables/useClipboard'
-import type { CustomEndpoint } from '@/types'
+import type { CustomEndpoint } from '@/core/models/domain/customEndpoint'
 
 const props = defineProps<{
   apiBaseUrl: string

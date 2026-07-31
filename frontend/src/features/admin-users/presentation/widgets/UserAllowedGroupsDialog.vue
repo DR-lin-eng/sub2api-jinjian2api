@@ -182,10 +182,13 @@
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { AdminUser, Group, GroupPlatform } from '@/types'
+import { useAdminGroupsQueryStore } from '@/features/admin-groups/presentation/stores/adminGroupsQueryStore'
+import { useAdminUsersActionStore } from '@/features/admin-users/presentation/stores/adminUsersActionStore'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
+import type { Group } from '@/core/models/domain/group'
+import type { GroupPlatform } from '@/core/enums/groupPlatform'
 
 interface GroupRateConfig {
   groupId: number
@@ -201,6 +204,8 @@ const props = defineProps<{ show: boolean; user: AdminUser | null }>()
 const emit = defineEmits(['close', 'success'])
 const { t } = useI18n()
 const appStore = useAppStore()
+const adminGroupsQueryStore = useAdminGroupsQueryStore()
+const adminUsersActionStore = useAdminUsersActionStore()
 
 const groups = ref<Group[]>([])
 const groupConfigs = ref<GroupRateConfig[]>([])
@@ -209,8 +214,8 @@ const loading = ref(false)
 const submitting = ref(false)
 
 // 分离专属分组和公开分组
-const exclusiveGroups = computed(() => groups.value.filter((g) => g.is_exclusive))
-const publicGroups = computed(() => groups.value.filter((g) => !g.is_exclusive))
+const exclusiveGroups = computed(() => groups.value.filter((g: any) => g.isExclusive))
+const publicGroups = computed(() => groups.value.filter((g) => !g.isExclusive))
 
 const exclusiveGroupConfigs = computed(() => groupConfigs.value.filter((c) => c.isExclusive))
 const publicGroupConfigs = computed(() => groupConfigs.value.filter((c) => !c.isExclusive))
@@ -227,13 +232,13 @@ watch(
 const load = async () => {
   loading.value = true
   try {
-    const res = await adminAPI.groups.list(1, 1000)
+    const res = await adminGroupsQueryStore.list(1, 1000)
     // 只显示标准类型且活跃的分组
-    groups.value = res.items.filter((g) => g.subscription_type === 'standard' && g.status === 'active')
+    groups.value = res.items.filter((g: any) => g.subscriptionType === 'standard' && g.status === 'active')
 
     // 初始化配置
-    const userAllowedGroups = props.user?.allowed_groups || []
-    const userGroupRates = props.user?.group_rates || {}
+    const userAllowedGroups = props.user?.allowedGroups || []
+    const userGroupRates = props.user?.groupRates || {}
 
     // 保存原始专属倍率，用于检测删除操作
     originalGroupRates.value = { ...userGroupRates }
@@ -242,12 +247,12 @@ const load = async () => {
       groupId: g.id,
       groupName: g.name,
       platform: g.platform,
-      isExclusive: g.is_exclusive,
-      defaultRate: g.rate_multiplier,
+      isExclusive: g.isExclusive,
+      defaultRate: g.rateMultiplier,
       customRate: userGroupRates[g.id] ?? null,
       // 专属分组：检查是否在 allowed_groups 中
       // 公开分组：始终选中
-      isSelected: g.is_exclusive ? userAllowedGroups.includes(g.id) : true,
+      isSelected: g.isExclusive ? userAllowedGroups.includes(g.id) : true,
     }))
   } catch (error) {
     console.error('Failed to load groups:', error)
@@ -299,7 +304,7 @@ const handleSave = async () => {
       }
     }
 
-    await adminAPI.users.update(props.user.id, {
+    await adminUsersActionStore.update(props.user.id, {
       allowed_groups: allowedGroups,
       group_rates: Object.keys(groupRates).length > 0 ? groupRates : undefined,
     })

@@ -24,7 +24,7 @@ const getInjectedAppConfig = () => {
 }
 
 const getSanitizedConfiguredOptions = (): number[] => {
-  const configured = getInjectedAppConfig()?.table_page_size_options
+  const configured = getInjectedAppConfig()?.tablePageSizeOptions
   if (!Array.isArray(configured)) return []
 
   return Array.from(
@@ -46,7 +46,7 @@ const normalizePageSizeToOptions = (value: number, options: number[]): number =>
 }
 
 export const getConfiguredTableDefaultPageSize = (): number => {
-  const configured = sanitizePageSize(getInjectedAppConfig()?.table_default_page_size)
+  const configured = sanitizePageSize(getInjectedAppConfig()?.tableDefaultPageSize)
   if (configured === null) {
     return DEFAULT_TABLE_PAGE_SIZE
   }

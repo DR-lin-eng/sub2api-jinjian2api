@@ -48,7 +48,7 @@
               <Icon name="edit" size="md" class="mr-2" />
               {{ t('admin.redeem.batchUpdate') }}
             </button>
-            <button data-test="generate-open" @click="showGenerateDialog = true" class="btn btn-primary">
+            <button @click="showGenerateDialog = true" class="btn btn-primary">
               {{ t('admin.redeem.generateCodes') }}
             </button>
           </div>
@@ -132,7 +132,7 @@
             <span class="text-sm font-medium text-gray-900 dark:text-white">
               <template v-if="row.type === 'balance'">${{ value.toFixed(2) }}</template>
               <template v-else-if="row.type === 'subscription'">
-                {{ row.validity_days || 30 }} {{ t('admin.redeem.days') }}
+                {{ row.validityDays || 30 }} {{ t('admin.redeem.days') }}
                 <span v-if="row.group" class="ml-1 text-xs text-gray-500 dark:text-gray-400"
                   >({{ row.group.name }})</span
                 >
@@ -158,10 +158,10 @@
 
           <template #cell-usage="{ row }">
             <div class="text-sm text-gray-600 dark:text-gray-300">
-              {{ row.used_count }} /
-              {{ row.max_uses === 0 ? t('admin.redeem.unlimited') : row.max_uses }}
+              {{ row.usedCount }} /
+              {{ row.maxUses === 0 ? t('admin.redeem.unlimited') : row.maxUses }}
               <span class="block text-xs text-gray-400 dark:text-gray-500">
-                {{ row.max_uses_per_user === 0 ? t('admin.redeem.unlimitedPerUser') : t('admin.redeem.perUserLimit', { count: row.max_uses_per_user }) }}
+                {{ row.maxUsesPerUser === 0 ? t('admin.redeem.unlimitedPerUser') : t('admin.redeem.perUserLimit', { count: row.maxUsesPerUser }) }}
               </span>
             </div>
           </template>
@@ -292,7 +292,7 @@
           <h2 class="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
             {{ t('admin.redeem.generateCodesTitle') }}
           </h2>
-          <form data-test="generate-form" @submit.prevent="handleGenerateCodes" class="space-y-4">
+          <form @submit.prevent="handleGenerateCodes" class="space-y-4">
             <div>
               <label class="input-label">{{ t('admin.redeem.codeType') }}</label>
               <Select v-model="generateForm.type" :options="typeOptions" />
@@ -422,10 +422,10 @@
             <div>
               <label class="input-label">{{ t('admin.redeem.count') }}</label>
               <input
-                data-test="generate-count"
                 v-model.number="generateForm.count"
                 type="number"
                 min="1"
+                max="100"
                 required
                 class="input"
               />
@@ -607,9 +607,6 @@
                 class="w-full resize-none rounded-lg border border-gray-200 bg-gray-50 p-3 font-mono text-sm text-gray-800 focus:outline-none dark:border-dark-600 dark:bg-dark-700 dark:text-gray-200"
               ></textarea>
             </div>
-            <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">
-              {{ t('admin.redeem.downloadPrompt') }}
-            </p>
           </div>
           <!-- Footer -->
           <div
@@ -633,31 +630,9 @@
               </svg>
               {{ copiedAll ? t('admin.redeem.copied') : t('admin.redeem.copyAll') }}
             </button>
-            <button
-              data-test="download-generated-csv"
-              @click="downloadGeneratedCodes('csv')"
-              :disabled="downloadingFormat !== null"
-              class="btn btn-primary flex items-center gap-2"
-            >
+            <button @click="downloadGeneratedCodes" class="btn btn-primary flex items-center gap-2">
               <Icon name="download" size="sm" :stroke-width="2" />
-              {{
-                downloadingFormat === 'csv'
-                  ? t('admin.redeem.downloading')
-                  : t('admin.redeem.downloadCsv')
-              }}
-            </button>
-            <button
-              data-test="download-generated-txt"
-              @click="downloadGeneratedCodes('txt')"
-              :disabled="downloadingFormat !== null"
-              class="btn btn-primary flex items-center gap-2"
-            >
-              <Icon name="download" size="sm" :stroke-width="2" />
-              {{
-                downloadingFormat === 'txt'
-                  ? t('admin.redeem.downloading')
-                  : t('admin.redeem.downloadTxt')
-              }}
+              {{ t('admin.redeem.download') }}
             </button>
           </div>
         </div>
@@ -673,17 +648,8 @@ import { useAppStore } from '@/core/stores/appStore'
 import { useClipboard } from '@/common/composables/useClipboard'
 import { useTableSelection } from '@/common/composables/useTableSelection'
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
-import { adminAPI } from '@/api/admin'
 import { formatDateTime } from '@/core/utils/format'
-import type {
-  RedeemCode,
-  RedeemCodeType,
-  Group,
-  GroupPlatform,
-  SubscriptionType,
-  BatchUpdateRedeemCodeFields
-} from '@/types'
-import type { Column } from '@/common/types/uiTypes'
+import type { Column } from '@/common/widgets/types'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
 import DataTable from '@/common/widgets/data/DataTable.vue'
@@ -693,6 +659,15 @@ import Select from '@/common/widgets/forms/Select.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import GroupOptionItem from '@/common/widgets/data/GroupOptionItem.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
+import { useAdminRedeem } from '@/features/admin-redeem/presentation/composables/useAdminRedeem'
+import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
+import type { RedeemCode } from '@/features/admin-redeem/domain/models/redeemCode'
+import type { RedeemCodeType } from '@/features/admin-redeem/enums/redeemCodeType'
+import type { GenerateRedeemCodesRequest } from '@/features/admin-redeem/data/requests_models/generateRedeemCodesRequest'
+import type { BatchUpdateRedeemCodesRequest } from '@/features/admin-redeem/data/requests_models/batchUpdateRedeemCodesRequest'
+import type { Group, GroupPlatform, SubscriptionType } from '@/features/admin-groups/domain/models/adminGroups'
+const $redeem = useAdminRedeem()
+const $groups = useAdminGroups()
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -715,14 +690,14 @@ const subscriptionGroups = ref<Group[]>([])
 // 订阅类型分组选项
 const subscriptionGroupOptions = computed(() => {
   return subscriptionGroups.value
-    .filter((g) => g.subscription_type === 'subscription')
+    .filter((g) => g.subscriptionType === 'subscription')
     .map((g) => ({
       value: g.id,
       label: g.name,
       description: g.description,
       platform: g.platform,
-      subscriptionType: g.subscription_type,
-      rate: g.rate_multiplier
+      subscriptionType: g.subscriptionType,
+      rate: g.rateMultiplier
     }))
 })
 
@@ -749,7 +724,6 @@ const textareaHeight = computed(() => {
 })
 
 const copiedAll = ref(false)
-const downloadingFormat = ref<'csv' | 'txt' | null>(null)
 
 const closeResultDialog = () => {
   showResultDialog.value = false
@@ -767,27 +741,16 @@ const copyGeneratedCodes = async () => {
   }
 }
 
-const downloadGeneratedCodes = async (format: 'csv' | 'txt') => {
-  downloadingFormat.value = format
-  try {
-    const blob = await adminAPI.redeem.exportGenerated(
-      generatedCodes.value.map((code) => code.id),
-      format
-    )
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `redeem-codes-new-${new Date().toISOString().split('T')[0]}.${format}`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-  } catch (error: any) {
-    appStore.showError(error.response?.data?.detail || t('admin.redeem.failedToExportGenerated'))
-    console.error('Error exporting generated codes:', error)
-  } finally {
-    downloadingFormat.value = null
-  }
+const downloadGeneratedCodes = () => {
+  const blob = new Blob([generatedCodesText.value], { type: 'text/plain' })
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `redeem-codes-${new Date().toISOString().split('T')[0]}.txt`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(url)
 }
 
 const columns = computed<Column[]>(() => [
@@ -939,7 +902,7 @@ const loadCodes = async () => {
   abortController = currentController
   loading.value = true
   try {
-    const response = await adminAPI.redeem.list(
+    const response = await $redeem.list(
       pagination.page,
       pagination.page_size,
       buildRedeemQueryFilters(),
@@ -1062,8 +1025,8 @@ const closeBatchUpdateDialog = () => {
   showBatchUpdateDialog.value = false
 }
 
-const buildBatchUpdateFields = (): BatchUpdateRedeemCodeFields | null => {
-  const fields: BatchUpdateRedeemCodeFields = {}
+const buildBatchUpdateFields = (): BatchUpdateRedeemCodesRequest['fields'] | null => {
+  const fields: BatchUpdateRedeemCodesRequest['fields'] = {}
 
   if (batchUpdateForm.update_status) {
     fields.status = batchUpdateForm.status
@@ -1084,8 +1047,7 @@ const buildBatchUpdateFields = (): BatchUpdateRedeemCodeFields | null => {
     fields.notes = batchUpdateForm.notes
   }
   if (batchUpdateForm.update_group_id) {
-    fields.group_id =
-      batchUpdateForm.group_id == null ? null : Number(batchUpdateForm.group_id)
+    fields.group_id = batchUpdateForm.group_id == null ? null : Number(batchUpdateForm.group_id)
   }
 
   return Object.keys(fields).length > 0 ? fields : null
@@ -1106,16 +1068,22 @@ const handleGenerateCodes = async () => {
 
   generating.value = true
   try {
-    const result = await adminAPI.redeem.generate(
-      generateForm.count,
-      generateForm.type,
-      generateForm.value,
-      generateForm.type === 'subscription' ? generateForm.group_id : undefined,
-      generateForm.type === 'subscription' ? generateForm.validity_days : undefined,
-      expiresInDays,
-      generateForm.max_uses,
-      generateForm.max_uses_per_user
-    )
+    const req: GenerateRedeemCodesRequest = {
+      count: generateForm.count,
+      type: generateForm.type,
+      value: generateForm.value,
+      max_uses: generateForm.max_uses,
+      max_uses_per_user: generateForm.max_uses_per_user,
+    }
+    if (generateForm.type === 'subscription') {
+      req.group_id = generateForm.group_id
+      req.validity_days = generateForm.validity_days
+    }
+    if (expiresInDays !== undefined) {
+      req.expires_in_days = expiresInDays
+    }
+
+    const result = await $redeem.generate(req)
     showGenerateDialog.value = false
     generatedCodes.value = result
     showResultDialog.value = true
@@ -1147,7 +1115,7 @@ const copyToClipboard = async (text: string) => {
 
 const handleExportCodes = async () => {
   try {
-    const blob = await adminAPI.redeem.exportCodes(buildRedeemQueryFilters())
+    const blob = await $redeem.exportCodes(buildRedeemQueryFilters())
 
     // Create download link
     const url = window.URL.createObjectURL(blob)
@@ -1175,7 +1143,7 @@ const confirmDelete = async () => {
   if (!deletingCode.value) return
 
   try {
-    await adminAPI.redeem.delete(deletingCode.value.id)
+    await $redeem.deleteCode(deletingCode.value.id)
     appStore.showSuccess(t('admin.redeem.codeDeleted'))
     showDeleteDialog.value = false
     deletingCode.value = null
@@ -1188,8 +1156,7 @@ const confirmDelete = async () => {
 
 const confirmDeleteUnused = async () => {
   try {
-    // Get all unused codes and delete them
-    const unusedCodesResponse = await adminAPI.redeem.list(1, 1000, { status: 'unused' })
+    const unusedCodesResponse = await $redeem.list(1, 1000, { status: 'unused' })
     const unusedCodeIds = unusedCodesResponse.items.map((code) => code.id)
 
     if (unusedCodeIds.length === 0) {
@@ -1198,7 +1165,7 @@ const confirmDeleteUnused = async () => {
       return
     }
 
-    const result = await adminAPI.redeem.batchDelete(unusedCodeIds)
+    const result = await $redeem.batchDelete({ ids: unusedCodeIds })
     appStore.showSuccess(t('admin.redeem.codesDeleted', { count: result.deleted }))
     showDeleteUnusedDialog.value = false
     loadCodes()
@@ -1232,7 +1199,8 @@ const handleBatchUpdate = async () => {
 
   batchUpdating.value = true
   try {
-    const result = await adminAPI.redeem.batchUpdate(ids, fields)
+    const req: BatchUpdateRedeemCodesRequest = { ids, fields }
+    const result = await $redeem.batchUpdate(req)
     appStore.showSuccess(t('admin.redeem.batchUpdateSuccess', { count: result.updated }))
     showBatchUpdateDialog.value = false
     clearSelectedCodes()
@@ -1248,7 +1216,7 @@ const handleBatchUpdate = async () => {
 // 加载订阅类型分组
 const loadSubscriptionGroups = async () => {
   try {
-    const groups = await adminAPI.groups.getAll()
+    const groups = await $groups.getAll()
     subscriptionGroups.value = groups
   } catch (error) {
     console.error('Error loading subscription groups:', error)

@@ -82,9 +82,13 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { adminAPI } from "@/api/admin";
-import type { SimpleUser } from "@/features/admin-usage/data/datasources/adminUsageDatasource";
+import { useAdminUsageQueryStore } from "@/features/admin-usage/presentation/stores/adminUsageQueryStore";
+import { useAdminUsersQueryStore } from "@/features/admin-users/presentation/stores/adminUsersQueryStore";
+import type { SimpleUser } from "@/features/admin-usage/domain/models/simpleUser";
 import Icon from "@/common/widgets/icons/Icon.vue";
+
+const adminUsageQueryStore = useAdminUsageQueryStore();
+const adminUsersQueryStore = useAdminUsersQueryStore();
 
 const props = defineProps<{
   modelValue: number[];
@@ -142,7 +146,7 @@ function debounceSearch(): void {
   searchTimer = setTimeout(async () => {
     searchLoading.value = true;
     try {
-      const results = await adminAPI.usage.searchUsers(query);
+      const results = await adminUsageQueryStore.searchUsers(query);
       if (sequence === searchSequence) {
         searchResults.value = results;
       }
@@ -182,11 +186,11 @@ async function hydrateSelectedUsers(userIds: number[]): Promise<void> {
   const users = await Promise.all(
     missing.map(async (id) => {
       try {
-        const user = await adminAPI.users.getById(id, true);
+        const user = await adminUsersQueryStore.getById(id, true);
         return {
           id: user.id,
           email: user.email,
-          deleted: Boolean(user.deleted_at),
+          deleted: Boolean(user.deletedAt),
         } satisfies SimpleUser;
       } catch {
         return null;

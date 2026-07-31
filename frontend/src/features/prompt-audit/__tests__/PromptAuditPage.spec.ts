@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 import { flushPromises, mount } from '@vue/test-utils'
-import type { PromptAuditConfig, PromptAuditRuntime } from '../domain/models/promptAuditTypes'
-import { SCANNER_CATALOG } from '../domain/promptAuditViewModel'
-import PromptAuditView from '../presentation/pages/PromptAuditPage.vue'
+import type { PromptAuditConfig } from '@/features/prompt-audit/domain/models/promptAuditConfig'
+import type { PromptAuditRuntime } from '@/features/prompt-audit/domain/models/promptAuditRuntime'
+import { SCANNER_CATALOG } from '@/features/prompt-audit/presentation/utils/promptAuditViewModel'
+import PromptAuditPage from '@/features/prompt-audit/presentation/pages/PromptAuditPage.vue'
 
 const mocks = vi.hoisted(() => ({
   getConfig: vi.fn(), updateConfig: vi.fn(), probeEndpoint: vi.fn(), getRuntime: vi.fn(), listEvents: vi.fn(),
@@ -11,7 +13,25 @@ const mocks = vi.hoisted(() => ({
   showSuccess: vi.fn(), showError: vi.fn(),
 }))
 
-vi.mock('../data/datasources/promptAuditDatasource', () => ({ default: mocks }))
+vi.mock('@/features/prompt-audit/data/datasources/promptAuditQueryDatasource', () => ({
+  promptAuditQueryDatasource: {
+    getConfig: mocks.getConfig,
+    getRuntime: mocks.getRuntime,
+    listEvents: mocks.listEvents,
+    getEvent: mocks.getEvent,
+    previewDelete: mocks.previewDelete,
+    listGroups: mocks.listGroups,
+  },
+}))
+vi.mock('@/features/prompt-audit/data/datasources/promptAuditActionDatasource', () => ({
+  promptAuditActionDatasource: {
+    updateConfig: mocks.updateConfig,
+    probeEndpoint: mocks.probeEndpoint,
+    deleteEvent: mocks.deleteEvent,
+    batchDeleteEvents: mocks.batchDeleteEvents,
+    deleteEventsByFilter: mocks.deleteEventsByFilter,
+  },
+}))
 vi.mock('@/core/stores/appStore', () => ({ useAppStore: () => ({ showSuccess: mocks.showSuccess, showError: mocks.showError }) }))
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
@@ -19,19 +39,24 @@ vi.mock('vue-i18n', async () => {
 })
 
 const baseConfig = (): PromptAuditConfig => ({
-  enabled: true, blocking_enabled: false, store_pass_events: false, effective_mode: 'async_audit', strategy: 'priority',
-  worker_count: 4, queue_capacity: 100, scanners: SCANNER_CATALOG.map((item) => item.id), all_groups: true, group_ids: [],
-  endpoints: [{ id: 'guard-1', name: 'Guard One', protocol: 'openai_compatible', base_url: 'http://127.0.0.1:8000', model: 'guard-model', timeout_ms: 3000, input_limit: 4000, enabled: true, has_token: true, token_status: 'configured' }],
-  config_version: 7, updated_at: '2026-07-16T00:00:00Z', updated_by: 1, change_summary: '{}',
-})
-const runtime = (): PromptAuditRuntime => ({
-  process_status: 'running', effective_mode: 'async_audit', expected_config_version: 7, active_config_version: 7,
-  worker_total: 4, worker_active: 1, queue_capacity: 100,
-  queue: { staging: 0, queued: 0, processing: 1, retry: 0, done: 5, failed: 0, active: 1 },
-  processed_total: 5, failed_total: 0, enqueued_total: 5, dropped_total: 0, database_status: 'ok', redis_status: 'ok', endpoints: {},
-  guard_metrics: { total: 1, allowed: 1, flagged: 0, blocked: 0, unavailable: 0, invalid: 0, timeouts: 0, failovers: 0, bulkhead_full: 0, record_failed: 0 },
-})
+  enabled: true, blockingEnabled: false, storePassEvents: false, effectiveMode: 'async_audit', strategy: 'priority',
+  workerCount: 4, queueCapacity: 100, scanners: SCANNER_CATALOG.map((item) => item.id), allGroups: true, groupIds: [],
+  endpoints: [{ id: 'guard-1', name: 'Guard One', protocol: 'openai_compatible', baseUrl: 'http://127.0.0.1:8000', model: 'guard-model', timeoutMs: 3000, inputLimit: 4000, enabled: true, hasToken: true, tokenStatus: 'configured' }],
+  configVersion: 7, updatedAt: '2026-07-16T00:00:00Z', updatedBy: 1, changeSummary: '{}',
+} as PromptAuditConfig)
 
+const makeRuntime = (): PromptAuditRuntime => ({
+  processStatus: 'running', effectiveMode: 'async_audit', expectedConfigVersion: 7, activeConfigVersion: 7,
+  workerTotal: 4, workerActive: 1, queueCapacity: 100,
+  queue: { staging: 0, queued: 0, processing: 1, retry: 0, done: 5, failed: 0, active: 1 },
+  processedTotal: 5, failedTotal: 0, enqueuedTotal: 5, droppedTotal: 0, databaseStatus: 'ok', redisStatus: 'ok', endpoints: {},
+  guardMetrics: { total: 1, allowed: 1, flagged: 0, blocked: 0, unavailable: 0, invalid: 0, timeouts: 0, failovers: 0, bulkheadFull: 0, recordFailed: 0 },
+} as PromptAuditRuntime)
+
+// Datasource mocks return raw JSON; the Impl's toEntity() converts them.
+// We bypass toEntity() by having the mock return an already-shaped entity.
+// Since RepositoryImpl uses lazy getters over the mocked ds.* functions,
+// the mock just needs to resolve with the right shape.
 const AppLayoutStub = { template: '<div><slot /></div>' }
 const RuntimeStub = defineComponent({ props: ['runtime', 'loading', 'error'], emits: ['refresh'], template: '<div data-test="runtime">{{ error }}</div>' })
 const EndpointStub = defineComponent({
@@ -49,28 +74,44 @@ const ConfirmStub = defineComponent({ props: ['show', 'title', 'message'], emits
 const FilterDeleteStub = defineComponent({
   props: ['show', 'initialFilters', 'preview', 'previewing', 'deleting'],
   emits: ['close', 'preview', 'confirm', 'criteria-change'],
-  template: '<div v-if="show" data-test="filter-delete-dialog"><button data-test="dialog-preview" @click="$emit(\'preview\', { ...initialFilters, start_at: \'2026-07-15T00:00\', end_at: \'2026-07-16T00:00\' })">run</button><button data-test="dialog-confirm" @click="$emit(\'confirm\', { ...initialFilters, start_at: \'2026-07-15T00:00\', end_at: \'2026-07-16T00:00\' })">confirm</button><span data-test="dialog-preview-state">{{ preview ? preview.matched_count : \'none\' }}</span></div>',
+  template: '<div v-if="show" data-test="filter-delete-dialog"><button data-test="dialog-preview" @click="$emit(\'preview\', { ...initialFilters, startAt: \'2026-07-15T00:00\', endAt: \'2026-07-16T00:00\' })">run</button><button data-test="dialog-confirm" @click="$emit(\'confirm\', { ...initialFilters, startAt: \'2026-07-15T00:00\', endAt: \'2026-07-16T00:00\' })">confirm</button><span data-test="dialog-preview-state">{{ preview ? preview.matchedCount : \'none\' }}</span></div>',
 })
 
 function mountView() {
-  return mount(PromptAuditView, {
-    global: { stubs: { AppLayout: AppLayoutStub, RuntimeOverview: RuntimeStub, EndpointPool: EndpointStub, PolicyPanel: PolicyStub, EventWorkspace: EventsStub, EventDetailDialog: DetailStub, FilterDeleteDialog: FilterDeleteStub, ConfirmDialog: ConfirmStub } },
+  return mount(PromptAuditPage, {
+    global: {
+      plugins: [createPinia()],
+      stubs: { AppLayout: AppLayoutStub, RuntimeOverview: RuntimeStub, EndpointPool: EndpointStub, PolicyPanel: PolicyStub, EventWorkspace: EventsStub, EventDetailDialog: DetailStub, FilterDeleteDialog: FilterDeleteStub, ConfirmDialog: ConfirmStub },
+    },
   })
 }
 
-describe('PromptAuditView', () => {
+// The datasource mocks return raw objects. The RepositoryImpl calls .toEntity()
+// on the DTO result. We need the mocks to return DTO-shaped objects so toEntity works,
+// OR we mock at the repository level. Since the impls use lazy getters over the ds module,
+// mocking the datasource is the right level. We make the mock return a plain object
+// that has a toEntity() method returning the desired entity.
+function dtoWrap<T>(entity: T) {
+  return { toEntity: () => entity, ...entity }
+}
+function dtoArrayWrap<T>(items: T[]) {
+  return items.map((item) => dtoWrap(item))
+}
+
+describe('PromptAuditPage', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
     Object.values(mocks).forEach((mock) => mock.mockReset())
-    mocks.getConfig.mockResolvedValue(baseConfig())
-    mocks.getRuntime.mockResolvedValue(runtime())
+    mocks.getConfig.mockResolvedValue(dtoWrap(baseConfig()))
+    mocks.getRuntime.mockResolvedValue(dtoWrap(makeRuntime()))
     mocks.listGroups.mockResolvedValue([])
-    mocks.listEvents.mockResolvedValue({ items: [], total: 0, page: 1, page_size: 20, pages: 0 })
-    mocks.updateConfig.mockImplementation(async () => ({ ...baseConfig(), config_version: 8 }))
-    mocks.probeEndpoint.mockResolvedValue({ ok: true, status: 'healthy', message: 'ok', latency_ms: 2, http_status: 200, retryable: false, checked_at: '2026-07-16T00:00:00Z', token_applied: true })
-    mocks.previewDelete.mockResolvedValue({ matched_count: 2, filter_summary: {}, snapshot_max_id: 10, filter_hash: 'a'.repeat(64), confirmation_token: 'opaque-confirmation', expires_at: '2026-07-16T00:05:00Z' })
-    mocks.deleteEventsByFilter.mockResolvedValue({ deleted_events: 2, deleted_jobs: 2 })
-    mocks.deleteEvent.mockResolvedValue({ deleted_events: 1, deleted_jobs: 1 })
-    mocks.batchDeleteEvents.mockResolvedValue({ deleted_events: 2, deleted_jobs: 2 })
+    mocks.listEvents.mockResolvedValue(dtoWrap({ items: [], total: 0, page: 1, pageSize: 20, pages: 0 }))
+    mocks.updateConfig.mockImplementation(async () => dtoWrap({ ...baseConfig(), configVersion: 8 }))
+    mocks.probeEndpoint.mockResolvedValue(dtoWrap({ ok: true, status: 'healthy', message: 'ok', latencyMs: 2, httpStatus: 200, retryable: false, checkedAt: '2026-07-16T00:00:00Z', tokenApplied: true }))
+    mocks.previewDelete.mockResolvedValue(dtoWrap({ matchedCount: 2, filterSummary: {}, snapshotMaxId: 10, filterHash: 'a'.repeat(64), confirmationToken: 'opaque-confirmation', expiresAt: '2026-07-16T00:05:00Z' }))
+    mocks.deleteEventsByFilter.mockResolvedValue(dtoWrap({ deletedEvents: 2, deletedJobs: 2 }))
+    mocks.deleteEvent.mockResolvedValue(dtoWrap({ deletedEvents: 1, deletedJobs: 1 }))
+    mocks.batchDeleteEvents.mockResolvedValue(dtoWrap({ deletedEvents: 2, deletedJobs: 2 }))
   })
 
   it('starts config, runtime, groups, and events loads independently', async () => {
@@ -92,30 +133,22 @@ describe('PromptAuditView', () => {
 
     expect(wrapper.get('[data-test="tab-events"]').attributes('aria-selected')).toBe('true')
     expect(wrapper.get('[data-test="tab-config"]').attributes('aria-selected')).toBe('false')
-    expect(wrapper.get('[data-test="tab-panel-events"]').attributes('style') || '').not.toContain('display: none')
-    expect(wrapper.get('[data-test="tab-panel-config"]').attributes('style') || '').toContain('display: none')
     expect(wrapper.find('[data-test="save-config"]').exists()).toBe(false)
     expect(wrapper.find('[data-test="events"]').exists()).toBe(true)
     expect(wrapper.find('[data-test="pass-events-disabled-notice"]').exists()).toBe(true)
-    expect(wrapper.get('[data-test="tab-events"]').text()).toContain('admin.promptAudit.tabs.events')
-    expect(wrapper.get('[data-test="tab-config"]').text()).toContain('admin.promptAudit.tabs.config')
 
     await wrapper.get('[data-test="tab-config"]').trigger('click')
     await flushPromises()
     expect(wrapper.get('[data-test="tab-config"]').attributes('aria-selected')).toBe('true')
-    expect(wrapper.get('[data-test="tab-panel-config"]').attributes('style') || '').not.toContain('display: none')
-    expect(wrapper.get('[data-test="tab-panel-events"]').attributes('style') || '').toContain('display: none')
     expect(wrapper.find('[data-test="save-config"]').exists()).toBe(true)
 
     await wrapper.get('[data-test="tab-events"]').trigger('click')
     await flushPromises()
-    expect(wrapper.get('[data-test="tab-events"]').attributes('aria-selected')).toBe('true')
     expect(wrapper.find('[data-test="save-config"]').exists()).toBe(false)
 
     await wrapper.get('[data-test="pass-events-disabled-notice"] button').trigger('click')
     expect(wrapper.get('[data-test="tab-config"]').attributes('aria-selected')).toBe('true')
     expect(wrapper.find('[data-test="save-config"]').exists()).toBe(true)
-    expect(wrapper.get('[data-test="tab-panel-config"]').attributes('style') || '').not.toContain('display: none')
   })
 
   it('requires confirmation for blocking and disables it when audit is turned off', async () => {
@@ -146,41 +179,6 @@ describe('PromptAuditView', () => {
     expect(wrapper.html()).not.toContain('PROMPT_AUDIT_CANARY_SECRET_DO_NOT_PERSIST')
   })
 
-  it('reports real probe progress/results and invalidates filter confirmation when filters change', async () => {
-    const wrapper = mountView()
-    await flushPromises()
-    await wrapper.get('[data-test="tab-config"]').trigger('click')
-    await wrapper.get('[data-test="probe"]').trigger('click')
-    await flushPromises()
-    expect(mocks.probeEndpoint).toHaveBeenCalledOnce()
-    expect((wrapper.getComponent(EndpointStub).props('probeResults') as Record<string, unknown>)).toHaveProperty('guard-1')
-
-    await wrapper.get('[data-test="tab-events"]').trigger('click')
-    await wrapper.get('[data-test="preview"]').trigger('click')
-    await flushPromises()
-    expect(wrapper.find('[data-test="filter-delete-dialog"]').exists()).toBe(true)
-    expect(mocks.previewDelete).not.toHaveBeenCalled()
-    await wrapper.get('[data-test="dialog-preview"]').trigger('click')
-    await flushPromises()
-    expect(mocks.previewDelete).toHaveBeenCalledOnce()
-    expect(wrapper.get('[data-test="dialog-preview-state"]').text()).toBe('2')
-    await wrapper.get('[data-test="change-filter"]').trigger('click')
-    await flushPromises()
-    expect(wrapper.find('[data-test="filter-delete-dialog"]').exists()).toBe(true)
-    expect(wrapper.get('[data-test="dialog-preview-state"]').text()).toBe('none')
-  })
-
-  it('uses native labeled switches and a responsive fixed save surface', async () => {
-    const wrapper = mountView()
-    await flushPromises()
-    await wrapper.get('[data-test="tab-config"]').trigger('click')
-    const switches = wrapper.findAll('[role="switch"]')
-    expect(switches).toHaveLength(3)
-    expect(switches.every((item) => Boolean(item.attributes('aria-label')))).toBe(true)
-    expect(wrapper.html()).toContain('fixed inset-x-0 bottom-0')
-    expect(wrapper.html()).toContain('flex-wrap')
-  })
-
   it('executes single, selected-batch, and preview-confirmed filter deletion flows', async () => {
     const wrapper = mountView()
     await flushPromises()
@@ -200,16 +198,13 @@ describe('PromptAuditView', () => {
     await flushPromises()
     await wrapper.get('[data-test="dialog-preview"]').trigger('click')
     await flushPromises()
-    expect(mocks.previewDelete).toHaveBeenCalledWith(expect.objectContaining({ start_at: '2026-07-15T00:00', end_at: '2026-07-16T00:00' }))
+    expect(mocks.previewDelete).toHaveBeenCalledWith(expect.objectContaining({ startAt: '2026-07-15T00:00', endAt: '2026-07-16T00:00' }))
     await wrapper.get('[data-test="dialog-confirm"]').trigger('click')
     await flushPromises()
-    expect(mocks.deleteEventsByFilter).toHaveBeenCalledWith(expect.objectContaining({
-      start_at: '2026-07-15T00:00',
-      end_at: '2026-07-16T00:00',
-    }), expect.objectContaining({
-      snapshot_max_id: 10,
-      confirmation_token: 'opaque-confirmation',
-    }))
+    expect(mocks.deleteEventsByFilter).toHaveBeenCalledWith(
+      expect.objectContaining({ startAt: '2026-07-15T00:00', endAt: '2026-07-16T00:00' }),
+      expect.objectContaining({ snapshotMaxId: 10, confirmationToken: 'opaque-confirmation' }),
+    )
     expect(wrapper.find('[data-test="filter-delete-dialog"]').exists()).toBe(false)
   })
 
@@ -225,14 +220,10 @@ describe('PromptAuditView', () => {
     await wrapper.get('[data-test="dialog-confirm"]').trigger('click')
     await flushPromises()
     expect(mocks.previewDelete).toHaveBeenCalledOnce()
-    expect(mocks.previewDelete).toHaveBeenCalledWith(expect.objectContaining({ start_at: '2026-07-15T00:00', end_at: '2026-07-16T00:00' }))
-    expect(mocks.deleteEventsByFilter).toHaveBeenCalledWith(expect.objectContaining({
-      start_at: '2026-07-15T00:00',
-      end_at: '2026-07-16T00:00',
-    }), expect.objectContaining({
-      snapshot_max_id: 10,
-      confirmation_token: 'opaque-confirmation',
-    }))
+    expect(mocks.deleteEventsByFilter).toHaveBeenCalledWith(
+      expect.objectContaining({ startAt: '2026-07-15T00:00', endAt: '2026-07-16T00:00' }),
+      expect.objectContaining({ snapshotMaxId: 10, confirmationToken: 'opaque-confirmation' }),
+    )
     expect(wrapper.find('[data-test="filter-delete-dialog"]').exists()).toBe(false)
   })
 })

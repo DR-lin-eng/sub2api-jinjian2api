@@ -3,12 +3,12 @@ import { setActivePinia, createPinia } from 'pinia'
 import { useForm } from '@/common/composables/useForm'
 import { useAppStore } from '@/core/stores/appStore'
 
-// Mock API 依赖（app store 内部引用了这些）
-vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
-  checkUpdates: vi.fn(),
+// Mock repository 层（appStore 内部引用）
+vi.mock('@/features/admin-settings/data/repositories/systemQueryRepositoryImpl', () => ({
+  systemQueryRepository: { checkUpdates: vi.fn(), getVersion: vi.fn(), getRollbackVersions: vi.fn() },
 }))
-vi.mock('@/features/auth/data/datasources/authDatasource', () => ({
-  getPublicSettings: vi.fn(),
+vi.mock('@/features/auth/data/repositories/authQueryRepositoryImpl', () => ({
+  authQueryRepository: { getPublicSettings: vi.fn(), getCurrentUser: vi.fn(), getLocalCaptcha: vi.fn() },
 }))
 
 describe('useForm', () => {

@@ -22,25 +22,25 @@ export function getBillingModeBadgeClass(mode: string | null | undefined): strin
 }
 
 interface ImageBillingRow {
-  image_count: number
-  billing_mode?: string | null
-  total_cost: number
+  imageCount: number
+  billingMode?: string | null
+  totalCost: number
 }
 
-export function isImageUsage(row: Pick<ImageBillingRow, 'image_count' | 'billing_mode'> | null | undefined): boolean {
-  return (row?.image_count ?? 0) > 0 && row?.billing_mode !== BILLING_MODE_TOKEN && row?.billing_mode !== BILLING_MODE_VIDEO
+export function isImageUsage(row: Pick<ImageBillingRow, 'imageCount' | 'billingMode'> | null | undefined): boolean {
+  return (row?.imageCount ?? 0) > 0 && row?.billingMode !== BILLING_MODE_TOKEN && row?.billingMode !== BILLING_MODE_VIDEO
 }
 
-export function getDisplayBillingMode(row: Pick<ImageBillingRow, 'billing_mode' | 'image_count'> | null | undefined): string | null | undefined {
-  if ((row?.image_count ?? 0) > 0 && !row?.billing_mode) {
+export function getDisplayBillingMode(row: Pick<ImageBillingRow, 'billingMode' | 'imageCount'> | null | undefined): string | null | undefined {
+  if ((row?.imageCount ?? 0) > 0 && !row?.billingMode) {
     return BILLING_MODE_IMAGE
   }
-  return row?.billing_mode
+  return row?.billingMode
 }
 
-export function imageUnitPrice(row: Pick<ImageBillingRow, 'image_count' | 'total_cost'> | null): number {
-  if (!row || row.image_count <= 0) return 0
-  const total = row.total_cost ?? 0
-  const price = total / row.image_count
+export function imageUnitPrice(row: Pick<ImageBillingRow, 'imageCount' | 'totalCost'> | null): number {
+  if (!row || row.imageCount <= 0) return 0
+  const total = row.totalCost ?? 0
+  const price = total / row.imageCount
   return Number.isFinite(price) ? price : 0
 }

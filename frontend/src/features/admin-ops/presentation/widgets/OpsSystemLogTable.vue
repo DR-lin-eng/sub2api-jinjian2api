@@ -1,26 +1,23 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
-import {
-  opsAPI,
-  type OpsRuntimeLogConfig,
-  type OpsSystemLog,
-  type OpsSystemLogCleanupRequest,
-  type OpsSystemLogSinkHealth
-} from '@/features/admin-ops/data/datasources/adminOpsDatasource'
+import { OpsSystemLog } from '@/features/admin-ops/domain/models/opsSystemLog'
+import { OpsRuntimeLogConfig } from '@/features/admin-ops/domain/models/opsRuntimeLogConfig'
+import { OpsSystemLogSinkHealth } from '@/features/admin-ops/domain/models/opsSystemLogSinkHealth'
+import { useAdminOpsActionStore } from '@/features/admin-ops/presentation/stores/adminOpsActionStore'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+import type { UpdateRuntimeLogConfigRequest } from '@/features/admin-ops/data/requests_models/updateRuntimeLogConfigRequest'
+import type { CleanupSystemLogsRequest } from '@/features/admin-ops/data/requests_models/cleanupSystemLogsRequest'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
-import { useAppStore } from '@/stores'
-import { extractApiErrorMessage } from '@/core/utils/apiError'
-import { formatCompactNumber, formatExactNumber } from '../opsFormatter'
+import { useAppStore } from '@/core/stores/appStore'
+import { formatCompactNumber, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 const appStore = useAppStore()
 const { t } = useI18n()
-
-// 与 DataTable 一致：< 768px 切换为卡片视图，避免宽表在移动端被截断。
-const isDesktopViewport = useMediaQuery('(min-width: 768px)')
+const actionStore = useAdminOpsActionStore()
+const queryStore = useAdminOpsQueryStore()
 
 const props = withDefaults(defineProps<{
   platformFilter?: string
@@ -37,25 +34,29 @@ const page = ref(1)
 const pageSize = ref(20)
 
 const health = ref<OpsSystemLogSinkHealth>({
-  queue_depth: 0,
-  queue_capacity: 0,
-  dropped_count: 0,
-  write_failed_count: 0,
-  written_count: 0,
-  avg_write_delay_ms: 0
+  queueDepth: 0,
+  queueCapacity: 0,
+  droppedCount: 0,
+  writeFailedCount: 0,
+  writtenCount: 0,
+  avgWriteDelayMs: 0,
+  lastError: ''
 })
 
 const runtimeLoading = ref(false)
 const runtimeSaving = ref(false)
 const runtimeConfig = reactive<OpsRuntimeLogConfig>({
   level: 'info',
-  enable_sampling: false,
-  sampling_initial: 100,
-  sampling_thereafter: 100,
+  enableSampling: false,
+  samplingInitial: 100,
+  samplingThereafter: 100,
   caller: true,
-  stacktrace_level: 'error',
-  retention_days: 30,
-  redis_only: false
+  stacktraceLevel: 'error',
+  retentionDays: 30,
+  redisOnly: false,
+  source: '',
+  updatedAt: '',
+  updatedByUserId: 0
 })
 
 const filters = reactive({
@@ -153,11 +154,11 @@ const formatSystemLogDetail = (row: OpsSystemLog) => {
   if (accessParts.length > 0) parts.push(accessParts.join(' '))
 
   const corrParts: string[] = []
-  if (row.request_id) corrParts.push(`req=${row.request_id}`)
-  if (row.client_request_id) corrParts.push(`client_req=${row.client_request_id}`)
-  if (row.user_id != null) corrParts.push(`user=${row.user_id}`)
-  if (row.api_key_id != null) corrParts.push(`key=${row.api_key_id}`)
-  if (row.account_id != null) corrParts.push(`acc=${row.account_id}`)
+  if (row.requestId) corrParts.push(`req=${row.requestId}`)
+  if (row.clientRequestId) corrParts.push(`client_req=${row.clientRequestId}`)
+  if (row.userId != null) corrParts.push(`user=${row.userId}`)
+  if (row.apiKeyId != null) corrParts.push(`key=${row.apiKeyId}`)
+  if (row.accountId != null) corrParts.push(`acc=${row.accountId}`)
   if (row.platform) corrParts.push(`platform=${row.platform}`)
   if (row.model) corrParts.push(`model=${row.model}`)
   if (corrParts.length > 0) parts.push(corrParts.join(' '))
@@ -193,19 +194,19 @@ const buildQuery = () => {
   if (filters.host.trim()) query.host = filters.host.trim()
   if (filters.level.trim()) query.level = filters.level.trim()
   if (filters.component.trim()) query.component = filters.component.trim()
-  if (filters.request_id.trim()) query.request_id = filters.request_id.trim()
-  if (filters.client_request_id.trim()) query.client_request_id = filters.client_request_id.trim()
+  if (filters.request_id.trim()) query.requestId = filters.request_id.trim()
+  if (filters.client_request_id.trim()) query.clientRequestId = filters.client_request_id.trim()
   if (filters.user_id.trim()) {
     const v = Number.parseInt(filters.user_id.trim(), 10)
-    if (Number.isFinite(v) && v > 0) query.user_id = v
+    if (Number.isFinite(v) && v > 0) query.userId = v
   }
   if (filters.api_key_id.trim()) {
     const v = Number.parseInt(filters.api_key_id.trim(), 10)
-    if (Number.isFinite(v) && v > 0) query.api_key_id = v
+    if (Number.isFinite(v) && v > 0) query.apiKeyId = v
   }
   if (filters.account_id.trim()) {
     const v = Number.parseInt(filters.account_id.trim(), 10)
-    if (Number.isFinite(v) && v > 0) query.account_id = v
+    if (Number.isFinite(v) && v > 0) query.accountId = v
   }
   if (filters.platform.trim()) query.platform = filters.platform.trim()
   if (filters.model.trim()) query.model = filters.model.trim()
@@ -216,7 +217,7 @@ const buildQuery = () => {
 const fetchLogs = async () => {
   loading.value = true
   try {
-    const res = await opsAPI.listSystemLogs(buildQuery())
+    const res = await queryStore.listSystemLogs(buildQuery())
     logs.value = res.items || []
     total.value = res.total || 0
   } catch (err: any) {
@@ -229,7 +230,7 @@ const fetchLogs = async () => {
 
 const fetchHealth = async () => {
   try {
-    health.value = await opsAPI.getSystemLogSinkHealth()
+    health.value = await queryStore.getSystemLogSinkHealth()
   } catch {
     // 忽略健康数据读取失败，不影响主流程。
   }
@@ -238,15 +239,15 @@ const fetchHealth = async () => {
 const loadRuntimeConfig = async () => {
   runtimeLoading.value = true
   try {
-    const cfg = await opsAPI.getRuntimeLogConfig()
+    const cfg = await queryStore.getRuntimeLogConfig()
     runtimeConfig.level = cfg.level
-    runtimeConfig.enable_sampling = cfg.enable_sampling
-    runtimeConfig.sampling_initial = cfg.sampling_initial
-    runtimeConfig.sampling_thereafter = cfg.sampling_thereafter
+    runtimeConfig.enableSampling = cfg.enableSampling
+    runtimeConfig.samplingInitial = cfg.samplingInitial
+    runtimeConfig.samplingThereafter = cfg.samplingThereafter
     runtimeConfig.caller = cfg.caller
-    runtimeConfig.stacktrace_level = cfg.stacktrace_level
-    runtimeConfig.retention_days = cfg.retention_days
-    runtimeConfig.redis_only = cfg.redis_only ?? false
+    runtimeConfig.stacktraceLevel = cfg.stacktraceLevel
+    runtimeConfig.retentionDays = cfg.retentionDays
+    runtimeConfig.redisOnly = cfg.redisOnly ?? false
   } catch (err: any) {
     console.error('[OpsSystemLogTable] Failed to load runtime log config', err)
   } finally {
@@ -257,15 +258,25 @@ const loadRuntimeConfig = async () => {
 const saveRuntimeConfig = async () => {
   runtimeSaving.value = true
   try {
-    const saved = await opsAPI.updateRuntimeLogConfig({ ...runtimeConfig })
+    const req: UpdateRuntimeLogConfigRequest = {
+      level: runtimeConfig.level,
+      enable_sampling: runtimeConfig.enableSampling,
+      sampling_initial: runtimeConfig.samplingInitial,
+      sampling_thereafter: runtimeConfig.samplingThereafter,
+      caller: runtimeConfig.caller,
+      stacktrace_level: runtimeConfig.stacktraceLevel,
+      retention_days: runtimeConfig.retentionDays,
+      redis_only: runtimeConfig.redisOnly ?? false,
+    }
+    const saved = await actionStore.updateRuntimeLogConfig(req)
     runtimeConfig.level = saved.level
-    runtimeConfig.enable_sampling = saved.enable_sampling
-    runtimeConfig.sampling_initial = saved.sampling_initial
-    runtimeConfig.sampling_thereafter = saved.sampling_thereafter
+    runtimeConfig.enableSampling = saved.enableSampling
+    runtimeConfig.samplingInitial = saved.samplingInitial
+    runtimeConfig.samplingThereafter = saved.samplingThereafter
     runtimeConfig.caller = saved.caller
-    runtimeConfig.stacktrace_level = saved.stacktrace_level
-    runtimeConfig.retention_days = saved.retention_days
-    runtimeConfig.redis_only = saved.redis_only ?? false
+    runtimeConfig.stacktraceLevel = saved.stacktraceLevel
+    runtimeConfig.retentionDays = saved.retentionDays
+    runtimeConfig.redisOnly = saved.redisOnly ?? false
     appStore.showSuccess(t('admin.ops.systemLogs.runtimeConfigActive'))
   } catch (err: any) {
     console.error('[OpsSystemLogTable] Failed to save runtime log config', err)
@@ -281,15 +292,15 @@ const resetRuntimeConfig = async () => {
 
   runtimeSaving.value = true
   try {
-    const saved = await opsAPI.resetRuntimeLogConfig()
+    const saved = await actionStore.resetRuntimeLogConfig()
     runtimeConfig.level = saved.level
-    runtimeConfig.enable_sampling = saved.enable_sampling
-    runtimeConfig.sampling_initial = saved.sampling_initial
-    runtimeConfig.sampling_thereafter = saved.sampling_thereafter
+    runtimeConfig.enableSampling = saved.enableSampling
+    runtimeConfig.samplingInitial = saved.samplingInitial
+    runtimeConfig.samplingThereafter = saved.samplingThereafter
     runtimeConfig.caller = saved.caller
-    runtimeConfig.stacktrace_level = saved.stacktrace_level
-    runtimeConfig.retention_days = saved.retention_days
-    runtimeConfig.redis_only = saved.redis_only ?? false
+    runtimeConfig.stacktraceLevel = saved.stacktraceLevel
+    runtimeConfig.retentionDays = saved.retentionDays
+    runtimeConfig.redisOnly = saved.redisOnly ?? false
     appStore.showSuccess(t('admin.ops.systemLogs.runtimeConfigReset'))
     await fetchHealth()
   } catch (err: any) {
@@ -326,7 +337,7 @@ const cleanupCurrentFilter = async () => {
   const ok = window.confirm(t(confirmKey))
   if (!ok) return
   try {
-    const payload: OpsSystemLogCleanupRequest = {
+    const req: CleanupSystemLogsRequest = {
       clear_all: clearAll,
       start_time: toRFC3339(filters.start_time),
       end_time: toRFC3339(filters.end_time),
@@ -342,17 +353,13 @@ const cleanupCurrentFilter = async () => {
       model: filters.model.trim() || undefined,
       q: filters.q.trim() || undefined
     }
-    const res = await opsAPI.cleanupSystemLogs(payload)
+    const res = await actionStore.cleanupSystemLogs(req)
     appStore.showSuccess(t('admin.ops.systemLogs.cleanupSuccess', { count: res.deleted || 0 }))
     page.value = 1
     await Promise.all([fetchLogs(), fetchHealth()])
   } catch (err: any) {
     console.error('[OpsSystemLogTable] Failed to cleanup logs', err)
-    appStore.showError(
-      extractApiErrorMessage(err, t('admin.ops.systemLogs.cleanupFailed'), {
-        OPS_SYSTEM_LOG_CLEANUP_FILTER_REQUIRED: t('admin.ops.systemLogs.cleanupFilterRequired')
-      })
-    )
+    appStore.showError(err?.response?.data?.detail || t('admin.ops.systemLogs.cleanupFailed'))
   }
 }
 
@@ -422,10 +429,10 @@ onMounted(async () => {
         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('admin.ops.systemLogs.description') }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-2 text-xs">
-        <span class="rounded-md bg-gray-100 px-2 py-1 tabular-nums text-gray-700 dark:bg-dark-700 dark:text-gray-200" :title="`${formatExactNumber(health.queue_depth)} / ${formatExactNumber(health.queue_capacity)}`">{{ t('admin.ops.systemLogs.queue') }} {{ formatCompactNumber(health.queue_depth) }}/{{ formatCompactNumber(health.queue_capacity) }}</span>
-        <span class="rounded-md bg-gray-100 px-2 py-1 tabular-nums text-gray-700 dark:bg-dark-700 dark:text-gray-200" :title="formatExactNumber(health.written_count)">{{ t('admin.ops.systemLogs.written') }} {{ formatCompactNumber(health.written_count) }}</span>
-        <span class="rounded-md bg-amber-100 px-2 py-1 tabular-nums text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" :title="formatExactNumber(health.dropped_count)">{{ t('admin.ops.systemLogs.dropped') }} {{ formatCompactNumber(health.dropped_count) }}</span>
-        <span class="rounded-md bg-red-100 px-2 py-1 tabular-nums text-red-700 dark:bg-red-900/30 dark:text-red-300" :title="formatExactNumber(health.write_failed_count)">{{ t('admin.ops.systemLogs.failed') }} {{ formatCompactNumber(health.write_failed_count) }}</span>
+        <span class="rounded-md bg-gray-100 px-2 py-1 tabular-nums text-gray-700 dark:bg-dark-700 dark:text-gray-200" :title="`${formatExactNumber(health.queueDepth)} / ${formatExactNumber(health.queueCapacity)}`">{{ t('admin.ops.systemLogs.queue') }} {{ formatCompactNumber(health.queueDepth) }}/{{ formatCompactNumber(health.queueCapacity) }}</span>
+        <span class="rounded-md bg-gray-100 px-2 py-1 tabular-nums text-gray-700 dark:bg-dark-700 dark:text-gray-200" :title="formatExactNumber(health.writtenCount)">{{ t('admin.ops.systemLogs.written') }} {{ formatCompactNumber(health.writtenCount) }}</span>
+        <span class="rounded-md bg-amber-100 px-2 py-1 tabular-nums text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" :title="formatExactNumber(health.droppedCount)">{{ t('admin.ops.systemLogs.dropped') }} {{ formatCompactNumber(health.droppedCount) }}</span>
+        <span class="rounded-md bg-red-100 px-2 py-1 tabular-nums text-red-700 dark:bg-red-900/30 dark:text-red-300" :title="formatExactNumber(health.writeFailedCount)">{{ t('admin.ops.systemLogs.failed') }} {{ formatCompactNumber(health.writeFailedCount) }}</span>
       </div>
     </div>
 
@@ -441,19 +448,19 @@ onMounted(async () => {
         </label>
         <label class="text-xs text-gray-600 dark:text-gray-300">
           {{ t('admin.ops.systemLogs.stacktraceThreshold') }}
-          <Select v-model="runtimeConfig.stacktrace_level" class="mt-1" :options="stacktraceLevelOptions" />
+          <Select v-model="runtimeConfig.stacktraceLevel" class="mt-1" :options="stacktraceLevelOptions" />
         </label>
         <label class="text-xs text-gray-600 dark:text-gray-300">
           {{ t('admin.ops.systemLogs.samplingInitial') }}
-          <input v-model.number="runtimeConfig.sampling_initial" type="number" min="1" class="input mt-1" />
+          <input v-model.number="runtimeConfig.samplingInitial" type="number" min="1" class="input mt-1" />
         </label>
         <label class="text-xs text-gray-600 dark:text-gray-300">
           {{ t('admin.ops.systemLogs.samplingThereafter') }}
-          <input v-model.number="runtimeConfig.sampling_thereafter" type="number" min="1" class="input mt-1" />
+          <input v-model.number="runtimeConfig.samplingThereafter" type="number" min="1" class="input mt-1" />
         </label>
         <label class="text-xs text-gray-600 dark:text-gray-300">
           {{ t('admin.ops.systemLogs.retentionDays') }}
-          <input v-model.number="runtimeConfig.retention_days" type="number" min="1" max="3650" class="input mt-1" :disabled="runtimeConfig.redis_only" />
+          <input v-model.number="runtimeConfig.retentionDays" type="number" min="1" max="3650" class="input mt-1" :disabled="runtimeConfig.redisOnly" />
         </label>
         <div class="md:col-span-2 xl:col-span-6">
           <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
@@ -463,11 +470,11 @@ onMounted(async () => {
                 {{ t('admin.ops.systemLogs.caller') }}
               </label>
               <label class="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                <input v-model="runtimeConfig.enable_sampling" type="checkbox" />
+                <input v-model="runtimeConfig.enableSampling" type="checkbox" />
                 {{ t('admin.ops.systemLogs.sampling') }}
               </label>
               <div class="flex items-center gap-3">
-                <Toggle v-model="runtimeConfig.redis_only" />
+                <Toggle v-model="runtimeConfig.redisOnly" />
                 <div>
                   <div class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ t('admin.ops.systemLogs.redisOnly') }}</div>
                   <div class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{{ t('admin.ops.systemLogs.redisOnlyHint') }}</div>
@@ -485,7 +492,7 @@ onMounted(async () => {
           </div>
         </div>
       </div>
-      <p v-if="health.last_error" class="mt-2 text-xs text-red-600 dark:text-red-400">{{ t('admin.ops.systemLogs.latestWriteError') }} {{ health.last_error }}</p>
+      <p v-if="health.lastError" class="mt-2 text-xs text-red-600 dark:text-red-400">{{ t('admin.ops.systemLogs.latestWriteError') }} {{ health.lastError }}</p>
     </div>
 
     <div class="mb-4 grid grid-cols-1 gap-3 md:grid-cols-5">
@@ -557,22 +564,6 @@ onMounted(async () => {
     <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-dark-700">
       <div v-if="loading" class="px-4 py-8 text-center text-sm text-gray-500">{{ t('common.loading') }}</div>
       <div v-else-if="!hasData" class="px-4 py-8 text-center text-sm text-gray-500">{{ t('admin.ops.systemLogs.empty') }}</div>
-      <div v-else-if="!isDesktopViewport" class="divide-y divide-gray-100 dark:divide-dark-800">
-        <div v-for="row in logs" :key="row.id" class="space-y-1.5 p-3">
-          <div class="flex items-center justify-between gap-2">
-            <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold" :class="levelBadgeClass(row.level)">
-              {{ row.level }}
-            </span>
-            <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatTime(row.created_at) }}</span>
-          </div>
-          <div v-if="row.host" class="truncate text-xs text-gray-500 dark:text-gray-400" :title="row.host">
-            {{ row.host }}
-          </div>
-          <div class="whitespace-normal break-all text-xs text-gray-700 dark:text-gray-300">
-            {{ formatSystemLogDetail(row) }}
-          </div>
-        </div>
-      </div>
       <div v-else class="overflow-auto">
         <table class="min-w-full table-fixed divide-y divide-gray-200 dark:divide-dark-700">
           <thead class="bg-gray-50 dark:bg-dark-900">
@@ -585,7 +576,7 @@ onMounted(async () => {
           </thead>
           <tbody class="divide-y divide-gray-100 dark:divide-dark-800">
             <tr v-for="row in logs" :key="row.id" class="align-top">
-              <td class="px-3 py-2 text-xs text-gray-700 dark:text-gray-300">{{ formatTime(row.created_at) }}</td>
+              <td class="px-3 py-2 text-xs text-gray-700 dark:text-gray-300">{{ formatTime(row.createdAt) }}</td>
               <td class="px-3 py-2 text-xs text-gray-700 dark:text-gray-300">
                 <span class="block truncate" :title="row.host || '-'">{{ row.host || '-' }}</span>
               </td>

@@ -71,7 +71,7 @@
           <div v-if="activeTab === 'errors'" class="flex flex-1 flex-wrap items-end gap-4">
             <div class="w-full sm:w-auto sm:min-w-[220px]">
               <label class="input-label">{{ t('usage.errors.keyName') }}</label>
-              <Select v-model="errorFilter.api_key_id" :options="errorKeyOptions" @change="applyErrorFilters" />
+              <Select v-model="errorFilter.apiKeyId" :options="errorKeyOptions" @change="applyErrorFilters" />
             </div>
             <div class="w-full sm:w-auto sm:min-w-[220px]">
               <label class="input-label">{{ t('usage.errors.model') }}</label>
@@ -91,13 +91,13 @@
             </div>
             <div class="w-full sm:w-auto sm:min-w-[180px]">
               <label class="input-label">{{ t('usage.errors.status') }}</label>
-              <Select v-model="errorFilter.status_code" :options="errorStatusOptions" @change="applyErrorFilters" />
+              <Select v-model="errorFilter.statusCode" :options="errorStatusOptions" @change="applyErrorFilters" />
             </div>
           </div>
           <div v-else class="flex flex-1 flex-wrap items-end gap-4">
             <div class="w-full sm:w-auto sm:min-w-[220px]">
               <label class="input-label">{{ t('usage.apiKeyFilter') }}</label>
-              <Select v-model="filters.api_key_id" :options="apiKeyOptions" @change="applyFilters" />
+              <Select v-model="filters.apiKeyId" :options="apiKeyOptions" @change="applyFilters" />
             </div>
             <div class="w-full sm:w-auto sm:min-w-[220px]">
               <label class="input-label">{{ t('usage.model') }}</label>
@@ -105,19 +105,19 @@
             </div>
             <div class="w-full sm:w-auto sm:min-w-[200px]">
               <label class="input-label">{{ t('admin.usage.group') }}</label>
-              <Select v-model="filters.group_id" :options="groupOptions" searchable @change="applyFilters" />
+              <Select v-model="filters.groupId" :options="groupOptions" searchable @change="applyFilters" />
             </div>
             <div class="w-full sm:w-auto sm:min-w-[180px]">
               <label class="input-label">{{ t('usage.type') }}</label>
-              <Select v-model="filters.request_type" :options="requestTypeOptions" @change="applyFilters" />
+              <Select v-model="filters.requestType" :options="requestTypeOptions" @change="applyFilters" />
             </div>
             <div class="w-full sm:w-auto sm:min-w-[200px]">
               <label class="input-label">{{ t('admin.usage.billingType') }}</label>
-              <Select v-model="filters.billing_type" :options="billingTypeOptions" @change="applyFilters" />
+              <Select v-model="filters.billingType" :options="billingTypeOptions" @change="applyFilters" />
             </div>
             <div class="w-full sm:w-auto sm:min-w-[200px]">
               <label class="input-label">{{ t('admin.usage.billingMode') }}</label>
-              <Select v-model="filters.billing_mode" :options="billingModeOptions" @change="applyFilters" />
+              <Select v-model="filters.billingMode" :options="billingModeOptions" @change="applyFilters" />
             </div>
           </div>
 
@@ -216,17 +216,19 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { keysAPI, usageAPI, userGroupsAPI } from '@/api'
+import { useUsageQueryStore } from '@/features/usage/presentation/stores/usageQueryStore'
+import { useGroupsUserQueryStore } from '@/features/groups-user/presentation/stores/groupsUserQueryStore'
+import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import Select, { type SelectOption } from '@/common/widgets/forms/Select.vue'
 import DateRangePicker from '@/common/widgets/forms/DateRangePicker.vue'
 import UsageStatsCards from '@/features/admin-usage/presentation/widgets/UsageStatsCards.vue'
 import UsageTable from '@/features/admin-usage/presentation/widgets/UsageTable.vue'
-import ModelDistributionChart from '@/common/widgets/charts/ModelDistributionChart.vue'
-import GroupDistributionChart from '@/common/widgets/charts/GroupDistributionChart.vue'
-import EndpointDistributionChart from '@/common/widgets/charts/EndpointDistributionChart.vue'
-import TokenUsageTrend from '@/common/widgets/charts/TokenUsageTrend.vue'
+import ModelDistributionChart from '@/features/admin-dashboard/presentation/widgets/ModelDistributionChart.vue'
+import GroupDistributionChart from '@/features/admin-dashboard/presentation/widgets/GroupDistributionChart.vue'
+import EndpointDistributionChart from '@/features/admin-dashboard/presentation/widgets/EndpointDistributionChart.vue'
+import TokenUsageTrend from '@/features/admin-dashboard/presentation/widgets/TokenUsageTrend.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import UserErrorRequestsTable from '@/features/usage/presentation/widgets/UserErrorRequestsTable.vue'
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
@@ -235,29 +237,29 @@ import { getLast24HourRange, parseRangeBoundary, toDateInputValue } from '@/core
 import { BILLING_MODE_IMAGE, getBillingModeLabel } from '@/core/utils/billingMode'
 import { calculateOutputTokensPerSecond } from '@/core/utils/usageMetrics'
 import { resolveUsageRequestType, requestTypeToLegacyStream } from '@/core/utils/usageRequestType'
-import type {
-  ApiKey,
-  EndpointStat,
-  Group,
-  GroupStat,
-  ModelStat,
-  TrendDataPoint,
-  UsageLog,
-  UsageQueryParams,
-  UsageStatsResponse,
-  UserErrorRequest,
-} from '@/types'
-import type { Column } from '@/common/types/uiTypes'
+import type { UserErrorRequest } from '@/features/admin-ops/domain/models/userErrorRequest'
+import type { Column } from '@/common/widgets/types'
 import { COMMON_ERROR_STATUS_CODES } from '@/core/utils/errorBadges'
+import type { ApiKey } from '@/core/models/domain/apiKey'
+import type { EndpointStat } from '@/core/models/domain/endpointStat'
+import type { Group } from '@/features/admin-groups/domain/models/adminGroups'
+import type { GroupStat } from '@/features/admin-dashboard/domain/models/groupStat'
+import type { ModelStat } from '@/features/admin-dashboard/domain/models/modelStat'
+import type { TrendDataPoint } from '@/features/admin-dashboard/domain/models/trendDataPoint'
+import type { UsageLog } from '@/core/models/domain/usageLog'
+import type { AdminUsageLog } from '@/features/admin-usage/domain/models/adminUsageLog'
+import type { AdminUsageQueryParams as UsageQueryParams } from '@/features/admin-usage/domain/models/adminUsageQueryParams'
+import type { UsageStatsResponse } from '@/core/models/domain/usageStatsResponse'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const usageStore = useUsageQueryStore()
 
 type DistributionMetric = 'tokens' | 'actual_cost'
 type EndpointSource = 'inbound' | 'upstream' | 'path'
 
 const usageStats = ref<UsageStatsResponse | null>(null)
-const usageLogs = ref<UsageLog[]>([])
+const usageLogs = ref<AdminUsageLog[]>([])
 const trendData = ref<TrendDataPoint[]>([])
 const requestedModelStats = ref<ModelStat[]>([])
 const groupStats = ref<GroupStat[]>([])
@@ -277,11 +279,11 @@ const errorPageSize = ref(20)
 const errorSortBy = ref('created_at')
 const errorSortOrder = ref<'asc' | 'desc'>('desc')
 const errorTotal = ref(0)
-const errorFilter = ref<{ model: string | null; category: string; api_key_id: number | null; status_code: number | null }>({
+const errorFilter = ref<{ model: string | null; category: string; apiKeyId: number | null; statusCode: number | null }>({
   model: '',
   category: '',
-  api_key_id: null,
-  status_code: null,
+  apiKeyId: null,
+  statusCode: null,
 })
 
 const errorKeyOptions = computed<SelectOption[]>(() => [
@@ -342,15 +344,15 @@ const groupDistributionMetric = ref<DistributionMetric>('tokens')
 const endpointDistributionMetric = ref<DistributionMetric>('tokens')
 const endpointDistributionSource = ref<EndpointSource>('inbound')
 const activeTab = ref<'usage' | 'errors'>('usage')
-const errorViewEnabled = computed(() => appStore.cachedPublicSettings?.allow_user_view_error_requests ?? false)
-const usageDetailEnabled = computed(() => appStore.cachedPublicSettings?.allow_user_view_usage_details ?? false)
+const errorViewEnabled = computed(() => appStore.cachedPublicSettings?.allowUserViewErrorRequests ?? false)
+const usageDetailEnabled = computed(() => appStore.cachedPublicSettings?.allowUserViewUsageDetails ?? false)
 
 const filters = ref<UsageQueryParams>({
-  start_date: startDate.value,
-  end_date: endDate.value,
-  request_type: undefined,
-  billing_type: null,
-  billing_mode: null,
+  startDate: startDate.value,
+  endDate: endDate.value,
+  requestType: undefined,
+  billingType: null,
+  billingMode: undefined,
 })
 
 const pagination = reactive({
@@ -370,7 +372,6 @@ const granularityOptions = computed<SelectOption[]>(() => [
 const requestTypeOptions = computed<SelectOption[]>(() => [
   { value: null, label: t('admin.usage.allTypes') },
   { value: 'ws_v2', label: t('usage.ws') },
-  { value: 'live', label: t('usage.live') },
   { value: 'stream', label: t('usage.stream') },
   { value: 'sync', label: t('usage.sync') },
 ])
@@ -405,22 +406,22 @@ const modelOptions = computed<SelectOption[]>(() => [
 ])
 
 const normalizedFilters = computed<UsageQueryParams>(() => {
-  const requestType = filters.value.request_type
+  const requestType = filters.value.requestType
   const legacyStream = requestType ? requestTypeToLegacyStream(requestType) : filters.value.stream
   return {
     ...filters.value,
-    start_date: startDate.value,
-    end_date: endDate.value,
+    startDate: startDate.value,
+    endDate: endDate.value,
     stream: legacyStream === null ? undefined : legacyStream,
   }
 })
 
 const buildUsageListParams = (page: number, pageSize: number): UsageQueryParams => ({
   page,
-  page_size: pageSize,
+  pageSize,
   ...normalizedFilters.value,
-  sort_by: sortState.sort_by,
-  sort_order: sortState.sort_order,
+  sortBy: sortState.sort_by,
+  sortOrder: sortState.sort_order,
 })
 
 const loadLogs = async () => {
@@ -429,11 +430,11 @@ const loadLogs = async () => {
   abortController = controller
   loading.value = true
   try {
-    const res = await usageAPI.query(buildUsageListParams(pagination.page, pagination.page_size), {
+    const res = await usageStore.query(buildUsageListParams(pagination.page, pagination.page_size), {
       signal: controller.signal,
     })
     if (!controller.signal.aborted) {
-      usageLogs.value = res.items
+      usageLogs.value = res.items as AdminUsageLog[]
       pagination.total = res.total
     }
   } catch (error: any) {
@@ -449,7 +450,7 @@ const loadStats = async () => {
   const seq = ++statsReqSeq
   endpointStatsLoading.value = true
   try {
-    const stats = await usageAPI.getStats(normalizedFilters.value)
+    const stats = await usageStore.getStats(normalizedFilters.value)
     if (seq !== statsReqSeq) return
     usageStats.value = stats
     inboundEndpointStats.value = stats.endpoints || []
@@ -470,7 +471,7 @@ const loadModelStats = async () => {
   const seq = ++modelStatsReqSeq
   modelStatsLoading.value = true
   try {
-    const response = await usageAPI.getDashboardModels({
+    const response = await usageStore.getDashboardModels({
       ...normalizedFilters.value,
       model_source: 'requested',
     })
@@ -490,7 +491,7 @@ const loadChartData = async () => {
   const seq = ++chartReqSeq
   chartsLoading.value = true
   try {
-    const snapshot = await usageAPI.getDashboardSnapshotV2({
+    const snapshot = await usageStore.getDashboardSnapshotV2({
       ...normalizedFilters.value,
       granularity: granularity.value,
       include_trend: true,
@@ -542,16 +543,16 @@ const resetFilters = () => {
   startDate.value = range.start
   endDate.value = range.end
   filters.value = {
-    start_date: range.start,
-    end_date: range.end,
-    request_type: undefined,
-    billing_type: null,
-    billing_mode: null,
+    startDate: range.start,
+    endDate: range.end,
+    requestType: undefined,
+    billingType: null,
+    billingMode: undefined,
   }
   granularity.value = getGranularityForRange(range.start, range.end)
   applyFilters()
   if (activeTab.value === 'errors') {
-    errorFilter.value = { model: '', category: '', api_key_id: null, status_code: null }
+    errorFilter.value = { model: '', category: '', apiKeyId: null, statusCode: null }
     applyErrorFilters()
   }
 }
@@ -559,8 +560,8 @@ const resetFilters = () => {
 const onDateRangeChange = (range: { startDate: string; endDate: string; preset: string | null }) => {
   startDate.value = range.startDate
   endDate.value = range.endDate
-  filters.value.start_date = range.startDate
-  filters.value.end_date = range.endDate
+  filters.value.startDate = range.startDate
+  filters.value.endDate = range.endDate
   granularity.value = getGranularityForRange(range.startDate, range.endDate)
   applyFilters()
 }
@@ -590,7 +591,6 @@ const handleIpGeoBatchFailed = () => {
 const getRequestTypeExportText = (log: UsageLog): string => {
   const requestType = resolveUsageRequestType(log)
   if (requestType === 'cyber') return 'Cyber'
-  if (requestType === 'live') return 'Live'
   if (requestType === 'ws_v2') return 'WS'
   if (requestType === 'stream') return 'Stream'
   if (requestType === 'sync') return 'Sync'
@@ -598,10 +598,10 @@ const getRequestTypeExportText = (log: UsageLog): string => {
 }
 
 const getDisplayBillingMode = (
-  row: Pick<UsageLog, 'billing_mode' | 'image_count'> | null | undefined
+  row: Pick<UsageLog, 'billingMode' | 'imageCount'> | null | undefined
 ): string | null | undefined => {
-  if ((row?.image_count ?? 0) > 0) return BILLING_MODE_IMAGE
-  return row?.billing_mode
+  if ((row?.imageCount ?? 0) > 0) return BILLING_MODE_IMAGE
+  return row?.billingMode
 }
 
 const escapeCSVValue = (value: unknown): string => {
@@ -625,7 +625,7 @@ const exportToCSV = async () => {
     const pageSize = 100
     const totalPages = Math.ceil(pagination.total / pageSize)
     for (let page = 1; page <= totalPages; page++) {
-      const response = await usageAPI.query(buildUsageListParams(page, pageSize))
+      const response = await usageStore.query(buildUsageListParams(page, pageSize))
       allLogs.push(...response.items)
     }
     if (allLogs.length === 0) {
@@ -653,23 +653,23 @@ const exportToCSV = async () => {
       'Output Speed (tokens/s)',
     ]
     const rows = allLogs.map((log) => [
-      log.created_at,
-      log.api_key?.name || '',
+      log.createdAt,
+      log.apiKey?.name || '',
       log.model,
-      formatReasoningEffort(log.reasoning_effort),
-      log.inbound_endpoint || '',
-      log.ip_address || '',
+      formatReasoningEffort(log.reasoningEffort),
+      log.inboundEndpoint || '',
+      log.ipAddress || '',
       getRequestTypeExportText(log),
       getBillingModeLabel(getDisplayBillingMode(log), t),
-      log.input_tokens,
-      log.output_tokens,
-      log.cache_read_tokens,
-      log.cache_creation_tokens,
-      log.rate_multiplier,
-      log.actual_cost.toFixed(8),
-      log.total_cost.toFixed(8),
-      log.first_token_ms ?? '',
-      log.duration_ms ?? '',
+      log.inputTokens,
+      log.outputTokens,
+      log.cacheReadTokens,
+      log.cacheCreationTokens,
+      log.rateMultiplier,
+      log.actualCost.toFixed(8),
+      log.totalCost.toFixed(8),
+      log.firstTokenMs ?? '',
+      log.durationMs ?? '',
       calculateOutputTokensPerSecond(log)?.toFixed(0) ?? '',
     ].map(escapeCSVValue))
     const csvContent = [
@@ -803,10 +803,11 @@ const handleColumnClickOutside = (event: MouseEvent) => {
 }
 
 const loadFilterOptions = async () => {
+  const keysQuery = useKeysQueryStore()
   try {
     const [keys, availableGroups] = await Promise.all([
-      keysAPI.list(1, 100),
-      userGroupsAPI.getAvailable(),
+      keysQuery.list(1, 100),
+      useGroupsUserQueryStore().getAvailable(),
     ])
     apiKeys.value = keys.items
     groups.value = availableGroups
@@ -828,17 +829,17 @@ const resetErrorRows = () => {
 const loadErrors = async () => {
   errorLoading.value = true
   try {
-    const resp = await usageAPI.listMyErrorRequests({
+    const resp = await usageStore.listMyErrorRequests({
       page: errorPage.value,
-      page_size: errorPageSize.value,
-      start_date: startDate.value,
-      end_date: endDate.value,
+      pageSize: errorPageSize.value,
+      startDate: startDate.value,
+      endDate: endDate.value,
       model: (errorFilter.value.model ?? '').trim() || undefined,
       category: errorFilter.value.category || undefined,
-      api_key_id: errorFilter.value.api_key_id ?? undefined,
-      status_code: errorFilter.value.status_code ?? undefined,
-      sort_by: errorSortBy.value,
-      sort_order: errorSortOrder.value,
+      apiKeyId: errorFilter.value.apiKeyId ?? undefined,
+      statusCode: errorFilter.value.statusCode ?? undefined,
+      sortBy: errorSortBy.value,
+      sortOrder: errorSortOrder.value,
     })
     errorRows.value = resp.items
     errorTotal.value = resp.total

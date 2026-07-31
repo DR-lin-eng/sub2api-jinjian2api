@@ -68,22 +68,22 @@
               </td>
               <td class="px-3 py-2">
                 <Icon
-                  :name="profile.enable_grease ? 'check' : 'lock'"
+                  :name="profile.enableGrease ? 'check' : 'lock'"
                   size="sm"
-                  :class="profile.enable_grease ? 'text-green-500' : 'text-gray-400'"
+                  :class="profile.enableGrease ? 'text-green-500' : 'text-gray-400'"
                 />
               </td>
               <td class="px-3 py-2">
-                <div v-if="profile.alpn_protocols?.length" class="flex flex-wrap gap-1">
+                <div v-if="profile.alpnProtocols?.length" class="flex flex-wrap gap-1">
                   <span
-                    v-for="proto in profile.alpn_protocols.slice(0, 3)"
+                    v-for="proto in profile.alpnProtocols.slice(0, 3)"
                     :key="proto"
                     class="badge badge-primary text-xs"
                   >
                     {{ proto }}
                   </span>
-                  <span v-if="profile.alpn_protocols.length > 3" class="text-xs text-gray-500">
-                    +{{ profile.alpn_protocols.length - 3 }}
+                  <span v-if="profile.alpnProtocols.length > 3" class="text-xs text-gray-500">
+                    +{{ profile.alpnProtocols.length - 3 }}
                   </span>
                 </div>
                 <div v-else class="text-xs text-gray-400 dark:text-gray-600">—</div>
@@ -330,8 +330,9 @@
 import { ref, reactive, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { TLSFingerprintProfile } from '@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource'
+import { useAdminSettingsQueryStore } from '@/features/admin-settings/presentation/stores/adminSettingsQueryStore'
+import { useAdminSettingsActionStore } from '@/features/admin-settings/presentation/stores/adminSettingsActionStore'
+import type { TlsFingerprintProfile } from '@/features/admin-settings/domain/models/tlsFingerprintProfile'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
@@ -344,20 +345,22 @@ const emit = defineEmits<{
   close: []
 }>()
 
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 void emit // suppress unused warning - emit is used via $emit in template
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const adminSettingsQueryStore = useAdminSettingsQueryStore()
+const adminSettingsActionStore = useAdminSettingsActionStore()
 
-const profiles = ref<TLSFingerprintProfile[]>([])
+const profiles = ref<TlsFingerprintProfile[]>([])
 const loading = ref(false)
 const submitting = ref(false)
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showDeleteDialog = ref(false)
-const editingProfile = ref<TLSFingerprintProfile | null>(null)
-const deletingProfile = ref<TLSFingerprintProfile | null>(null)
+const editingProfile = ref<TlsFingerprintProfile | null>(null)
+const deletingProfile = ref<TlsFingerprintProfile | null>(null)
 const yamlInput = ref('')
 
 // Raw string inputs for array fields
@@ -389,7 +392,7 @@ watch(() => props.show, (newVal) => {
 const loadProfiles = async () => {
   loading.value = true
   try {
-    profiles.value = await adminAPI.tlsFingerprintProfiles.list()
+    profiles.value = await adminSettingsQueryStore.listTlsProfiles()
   } catch (error) {
     appStore.showError(t('admin.tlsFingerprintProfiles.loadFailed'))
     console.error('Error loading TLS fingerprint profiles:', error)
@@ -545,24 +548,24 @@ const formatNumericArray = (arr: number[] | null | undefined): string => (arr ??
 // For point_formats and psk_modes (uint8), show as plain numbers (null-safe)
 const formatPlainNumericArray = (arr: number[] | null | undefined): string => (arr ?? []).join(', ')
 
-const handleEdit = (profile: TLSFingerprintProfile) => {
+const handleEdit = (profile: TlsFingerprintProfile) => {
   editingProfile.value = profile
   form.name = profile.name
   form.description = profile.description
-  form.enable_grease = profile.enable_grease
-  fieldInputs.cipher_suites = formatNumericArray(profile.cipher_suites)
+  form.enable_grease = profile.enableGrease
+  fieldInputs.cipher_suites = formatNumericArray(profile.cipherSuites)
   fieldInputs.curves = formatPlainNumericArray(profile.curves)
-  fieldInputs.point_formats = formatPlainNumericArray(profile.point_formats)
-  fieldInputs.signature_algorithms = formatNumericArray(profile.signature_algorithms)
-  fieldInputs.alpn_protocols = (profile.alpn_protocols ?? []).join(', ')
-  fieldInputs.supported_versions = formatNumericArray(profile.supported_versions)
-  fieldInputs.key_share_groups = formatPlainNumericArray(profile.key_share_groups)
-  fieldInputs.psk_modes = formatPlainNumericArray(profile.psk_modes)
+  fieldInputs.point_formats = formatPlainNumericArray(profile.pointFormats)
+  fieldInputs.signature_algorithms = formatNumericArray(profile.signatureAlgorithms)
+  fieldInputs.alpn_protocols = (profile.alpnProtocols ?? []).join(', ')
+  fieldInputs.supported_versions = formatNumericArray(profile.supportedVersions)
+  fieldInputs.key_share_groups = formatPlainNumericArray(profile.keyShareGroups)
+  fieldInputs.psk_modes = formatPlainNumericArray(profile.pskModes)
   fieldInputs.extensions = formatNumericArray(profile.extensions)
   showEditModal.value = true
 }
 
-const handleDelete = (profile: TLSFingerprintProfile) => {
+const handleDelete = (profile: TlsFingerprintProfile) => {
   deletingProfile.value = profile
   showDeleteDialog.value = true
 }
@@ -591,10 +594,10 @@ const handleSubmit = async () => {
     }
 
     if (showEditModal.value && editingProfile.value) {
-      await adminAPI.tlsFingerprintProfiles.update(editingProfile.value.id, data)
+      await adminSettingsActionStore.updateTlsProfile(editingProfile.value.id, data)
       appStore.showSuccess(t('admin.tlsFingerprintProfiles.updateSuccess'))
     } else {
-      await adminAPI.tlsFingerprintProfiles.create(data)
+      await adminSettingsActionStore.createTlsProfile(data)
       appStore.showSuccess(t('admin.tlsFingerprintProfiles.createSuccess'))
     }
 
@@ -612,7 +615,7 @@ const confirmDelete = async () => {
   if (!deletingProfile.value) return
 
   try {
-    await adminAPI.tlsFingerprintProfiles.delete(deletingProfile.value.id)
+    await adminSettingsActionStore.deleteTlsProfile(deletingProfile.value.id)
     appStore.showSuccess(t('admin.tlsFingerprintProfiles.deleteSuccess'))
     showDeleteDialog.value = false
     deletingProfile.value = null

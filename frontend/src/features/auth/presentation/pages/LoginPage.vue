@@ -145,7 +145,7 @@
           @open="showAgreementModal = true"
         />
 
-        <div v-if="showPasskeyLogin || showOAuthLogin" class="space-y-3 pt-1">
+        <div v-if="showOAuthLogin" class="space-y-3 pt-1">
           <div class="flex items-center gap-3">
             <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
             <span class="text-xs text-gray-500 dark:text-dark-400">
@@ -153,17 +153,6 @@
             </span>
             <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
           </div>
-
-          <button
-            v-if="showPasskeyLogin"
-            type="button"
-            class="btn btn-secondary w-full"
-            :disabled="authActionDisabled"
-            @click="handlePasskeyLogin"
-          >
-            <Icon name="key" size="md" class="mr-2" />
-            {{ passkeyLoading ? t('auth.passkeySigningIn') : t('auth.passkeySignIn') }}
-          </button>
 
           <EmailOAuthButtons
             :disabled="authActionDisabled"
@@ -237,21 +226,23 @@ import TotpLoginModal from '@/features/auth/presentation/widgets/TotpLoginDialog
 import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptchaWidget.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
-import { useAuthStore, useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import {
   clearCredentialKeyPrefetch,
-  getPublicSettings,
-  isTotp2FARequired,
-  isWeChatWebOAuthEnabled,
-  prefetchCredentialKey
-} from '@/features/auth/data/datasources/authDatasource'
-import type { LoginAgreementDocument, TotpLoginResponse } from '@/types'
+  prefetchCredentialKey,
+} from '@/core/networks/credentialEncryption'
+import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
+import { isTotp2FARequired } from '@/features/auth/presentation/utils/authUtils'
+import { isWeChatWebOAuthEnabled } from '@/features/auth/presentation/utils/wechatOAuthResolver'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import { clearAllAffiliateReferralCodes } from '@/core/utils/oauthAffiliate'
 import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
 } from '@/core/services/humanVerification'
+import type { LoginAgreementDocument } from '@/core/models/domain/loginAgreementDocument'
+import type { TotpLoginResponse } from '@/features/auth/domain/models/totpLoginResponse'
 
 const { t } = useI18n()
 const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'
@@ -261,11 +252,11 @@ const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'
 const router = useRouter()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const authQueryStore = useAuthQueryStore()
 
 // ==================== State ====================
 
 const isLoading = ref<boolean>(false)
-const passkeyLoading = ref<boolean>(false)
 const errorMessage = ref<string>('')
 const showPassword = ref<boolean>(false)
 const publicSettingsLoaded = ref<boolean>(false)
@@ -285,7 +276,6 @@ const oidcOAuthProviderName = ref<string>('OIDC')
 const githubOAuthEnabled = ref<boolean>(false)
 const googleOAuthEnabled = ref<boolean>(false)
 const passwordResetEnabled = ref<boolean>(false)
-const passkeyEnabled = ref<boolean>(false)
 const loginAgreementEnabled = ref<boolean>(false)
 const loginAgreementMode = ref<'modal' | 'checkbox' | string>('modal')
 const loginAgreementUpdatedAt = ref<string>('')
@@ -328,11 +318,7 @@ const agreementGateActive = computed(
 )
 
 const authActionDisabled = computed(
-  () => isLoading.value || passkeyLoading.value || !publicSettingsLoaded.value || agreementGateActive.value
-)
-
-const showPasskeyLogin = computed(
-  () => passkeyEnabled.value && typeof window.PublicKeyCredential !== 'undefined'
+  () => isLoading.value || !publicSettingsLoaded.value || agreementGateActive.value
 )
 
 const localCaptchaRequired = computed(
@@ -371,24 +357,23 @@ onMounted(async () => {
   }
 
   try {
-    const settings = await getPublicSettings()
+    const settings = await authQueryStore.getPublicSettings()
     const verification = resolveHumanVerification(settings)
     turnstileEnabled.value = verification.external
     turnstileSiteKey.value = verification.siteKey
     humanVerificationAPIEndpoint.value = verification.apiEndpoint
     humanVerificationProvider.value = verification.externalProvider
     localCaptchaEnabled.value = verification.provider === 'local'
-    linuxdoOAuthEnabled.value = settings.linuxdo_oauth_enabled
-    dingtalkOAuthEnabled.value = settings.dingtalk_oauth_enabled ?? false
+    linuxdoOAuthEnabled.value = settings.linuxdoOauthEnabled
+    dingtalkOAuthEnabled.value = settings.dingtalkOauthEnabled ?? false
     wechatOAuthEnabled.value = isWeChatWebOAuthEnabled(settings)
-    backendModeEnabled.value = settings.backend_mode_enabled
-    oidcOAuthEnabled.value = settings.oidc_oauth_enabled
-    oidcOAuthProviderName.value = settings.oidc_oauth_provider_name || 'OIDC'
-    githubOAuthEnabled.value = settings.github_oauth_enabled
-    googleOAuthEnabled.value = settings.google_oauth_enabled
-    backendModeEnabled.value = settings.backend_mode_enabled
-    passwordResetEnabled.value = settings.password_reset_enabled
-    passkeyEnabled.value = settings.passkey_enabled === true
+    backendModeEnabled.value = settings.backendModeEnabled
+    oidcOAuthEnabled.value = settings.oidcOauthEnabled
+    oidcOAuthProviderName.value = settings.oidcOauthProviderName || 'OIDC'
+    githubOAuthEnabled.value = settings.githubOauthEnabled
+    googleOAuthEnabled.value = settings.googleOauthEnabled
+    backendModeEnabled.value = settings.backendModeEnabled
+    passwordResetEnabled.value = settings.passwordResetEnabled
     applyLoginAgreementSettings(settings)
   } catch (error) {
     console.error('Failed to load public settings:', error)
@@ -402,21 +387,21 @@ onMounted(async () => {
 // ==================== Login Agreement ====================
 
 function applyLoginAgreementSettings(settings: {
-  login_agreement_enabled?: boolean
-  login_agreement_mode?: string
-  login_agreement_updated_at?: string
-  login_agreement_revision?: string
-  login_agreement_documents?: LoginAgreementDocument[]
+  loginAgreementEnabled?: boolean
+  loginAgreementMode?: string
+  loginAgreementUpdatedAt?: string
+  loginAgreementRevision?: string
+  loginAgreementDocuments?: LoginAgreementDocument[]
 }): void {
-  const documents = Array.isArray(settings.login_agreement_documents)
-    ? settings.login_agreement_documents.filter((doc) => doc.title?.trim())
+  const documents = Array.isArray(settings.loginAgreementDocuments)
+    ? settings.loginAgreementDocuments.filter((doc) => doc.title?.trim())
     : []
   loginAgreementDocuments.value = documents
-  loginAgreementEnabled.value = settings.login_agreement_enabled === true && documents.length > 0
-  loginAgreementMode.value = settings.login_agreement_mode === 'checkbox' ? 'checkbox' : 'modal'
-  loginAgreementUpdatedAt.value = settings.login_agreement_updated_at || ''
+  loginAgreementEnabled.value = settings.loginAgreementEnabled === true && documents.length > 0
+  loginAgreementMode.value = settings.loginAgreementMode === 'checkbox' ? 'checkbox' : 'modal'
+  loginAgreementUpdatedAt.value = settings.loginAgreementUpdatedAt || ''
   loginAgreementRevision.value =
-    settings.login_agreement_revision ||
+    settings.loginAgreementRevision ||
     `${loginAgreementUpdatedAt.value}:${documents.map((doc) => `${doc.id}:${doc.title}`).join('|')}`
 
   agreementAccepted.value = !loginAgreementEnabled.value || hasAcceptedLoginAgreement(loginAgreementRevision.value)
@@ -555,8 +540,8 @@ async function handleLogin(): Promise<void> {
     // Check if 2FA is required
     if (isTotp2FARequired(response)) {
       const totpResponse = response as TotpLoginResponse
-      totpTempToken.value = totpResponse.temp_token || ''
-      totpUserEmailMasked.value = totpResponse.user_email_masked || ''
+      totpTempToken.value = totpResponse.tempToken || ''
+      totpUserEmailMasked.value = totpResponse.userEmailMasked || ''
       show2FAModal.value = true
       isLoading.value = false
       return
@@ -586,33 +571,6 @@ async function handleLogin(): Promise<void> {
     appStore.showError(errorMessage.value)
   } finally {
     isLoading.value = false
-  }
-}
-
-async function handlePasskeyLogin(): Promise<void> {
-  if (agreementGateActive.value) {
-    appStore.showWarning(t('legal.loginAgreementPrompt.loginRequiredWarning'))
-    if (loginAgreementMode.value !== 'checkbox') {
-      showAgreementModal.value = true
-    }
-    return
-  }
-
-  passkeyLoading.value = true
-  try {
-    await authStore.loginWithPasskey()
-    clearAllAffiliateReferralCodes()
-    appStore.showSuccess(t('auth.loginSuccess'))
-    const redirectTo = (router.currentRoute.value.query.redirect as string) || '/dashboard'
-    await router.push(redirectTo)
-  } catch (error: unknown) {
-    const fallback = error instanceof DOMException && error.name === 'NotAllowedError'
-      ? t('auth.passkeyCancelled')
-      : t('auth.passkeyFailed')
-    errorMessage.value = extractI18nErrorMessage(error, t, 'auth.errors', fallback)
-    appStore.showError(errorMessage.value)
-  } finally {
-    passkeyLoading.value = false
   }
 }
 

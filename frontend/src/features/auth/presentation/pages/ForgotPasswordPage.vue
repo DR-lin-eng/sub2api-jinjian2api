@@ -140,8 +140,9 @@ import { AuthLayout } from '@/common/widgets/layout'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
 import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptchaWidget.vue'
-import { useAppStore } from '@/stores'
-import { getPublicSettings, forgotPassword } from '@/features/auth/data/datasources/authDatasource'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
+import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
 import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
@@ -152,6 +153,8 @@ const { t } = useI18n()
 // ==================== Stores ====================
 
 const appStore = useAppStore()
+const authActionStore = useAuthActionStore()
+const authQueryStore = useAuthQueryStore()
 
 // ==================== State ====================
 
@@ -194,7 +197,7 @@ watch(validationToastMessage, (value, previousValue) => {
 
 onMounted(async () => {
   try {
-    const settings = await getPublicSettings()
+    const settings = await authQueryStore.getPublicSettings()
     const verification = resolveHumanVerification(settings)
     turnstileEnabled.value = verification.external
     turnstileSiteKey.value = verification.siteKey
@@ -266,7 +269,7 @@ async function handleSubmit(): Promise<void> {
   isLoading.value = true
 
   try {
-    await forgotPassword({
+    await authActionStore.forgotPassword({
       email: formData.email,
       captcha_token: turnstileEnabled.value ? turnstileToken.value : undefined,
       captcha_id: localCaptchaEnabled.value ? localCaptchaId.value : undefined,

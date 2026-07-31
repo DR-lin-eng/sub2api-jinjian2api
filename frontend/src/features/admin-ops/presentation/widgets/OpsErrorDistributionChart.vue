@@ -3,11 +3,11 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Chart as ChartJS, ArcElement, Legend, Tooltip } from 'chart.js'
 import { Doughnut } from 'vue-chartjs'
-import type { OpsErrorDistributionResponse } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import type { ChartState } from '../opsTypeSignals'
+import type { OpsErrorDistributionResponse } from '@/features/admin-ops/domain/models/opsErrorDistributionResponse'
+import type { ChartState } from '@/features/admin-ops/presentation/utils/opsFormatter'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
-import { formatCompactNumber, formatExactNumber } from '../opsFormatter'
+import { formatCompactNumber, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
@@ -58,7 +58,7 @@ const categories = computed<ErrorCategory[]>(() => {
   let other = 0
 
   for (const item of props.data.items || []) {
-    const code = Number(item.status_code || 0)
+    const code = Number(item.statusCode || 0)
     const count = Number(item.sla || 0)
     if (!Number.isFinite(code) || !Number.isFinite(count)) continue
 

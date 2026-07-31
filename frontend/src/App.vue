@@ -6,8 +6,12 @@ import NavigationProgress from '@/common/widgets/feedback/NavigationProgress.vue
 import AdminComplianceDialog from '@/features/admin-settings/presentation/widgets/AdminComplianceDialog.vue'
 import { resolveRouteDocumentTitle } from '@/core/routes/title'
 import AnnouncementPopup from '@/common/widgets/data/AnnouncementPopup.vue'
-import { useAppStore, useAuthStore, useSubscriptionStore, useAnnouncementStore, useAdminComplianceStore, useAdminSettingsStore } from '@/stores'
-import { getSetupStatus } from '@/features/setup/data/datasources/setupDatasource'
+import { useAdminCompliance } from '@/features/admin-settings/presentation/composables/useAdminCompliance'
+import { useAnnouncementStore } from '@/features/announcements/presentation/stores/announcementsStore'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { useSubscriptionStore } from '@/features/subscriptions/presentation/stores/subscriptionsStore'
+import { setupQueryDatasource } from '@/features/setup/data/datasources/setupQueryDatasource'
 import { updateFavicon } from '@/core/services/branding'
 
 const router = useRouter()
@@ -16,13 +20,12 @@ const appStore = useAppStore()
 const authStore = useAuthStore()
 const subscriptionStore = useSubscriptionStore()
 const announcementStore = useAnnouncementStore()
-const adminComplianceStore = useAdminComplianceStore()
-const adminSettingsStore = useAdminSettingsStore()
+const adminCompliance = useAdminCompliance()
 
 function updateDocumentTitle() {
   const customMenuItems = [
-    ...(appStore.cachedPublicSettings?.custom_menu_items ?? []),
-    ...(authStore.isAdmin ? adminSettingsStore.customMenuItems : []),
+    ...(appStore.cachedPublicSettings?.customMenuItems ?? []),
+    ...(authStore.isAdmin ? appStore.customMenuItems : []),
   ]
   document.title = resolveRouteDocumentTitle(route, appStore.siteName, customMenuItems)
 }
@@ -44,9 +47,9 @@ watch(
     () => route.meta.title,
     () => route.meta.titleKey,
     () => appStore.siteName,
-    () => appStore.cachedPublicSettings?.custom_menu_items,
+    () => appStore.cachedPublicSettings?.customMenuItems,
     () => authStore.isAdmin,
-    () => adminSettingsStore.customMenuItems,
+    () => appStore.customMenuItems,
   ],
   updateDocumentTitle,
   { deep: true }
@@ -61,7 +64,7 @@ function onVisibilityChange() {
 
 function onAdminComplianceRequired(event: Event) {
   const detail = (event as CustomEvent<Record<string, string>>).detail || {}
-  adminComplianceStore.requireAcknowledgement(detail)
+  adminCompliance.requireAcknowledgement(detail)
 }
 
 watch(
@@ -69,7 +72,7 @@ watch(
   (isAuthenticated, oldValue) => {
     if (isAuthenticated) {
       if (authStore.isAdmin) {
-        adminComplianceStore.fetchStatus().catch((error) => {
+        adminCompliance.fetchStatus().catch((error) => {
           console.error('Failed to fetch admin compliance status:', error)
         })
       }
@@ -95,7 +98,7 @@ watch(
       // User logged out: clear data and stop polling
       subscriptionStore.clear()
       announcementStore.reset()
-      adminComplianceStore.reset()
+      adminCompliance.reset()
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
   },
@@ -119,8 +122,8 @@ onMounted(async () => {
 
   // Check if setup is needed
   try {
-    const status = await getSetupStatus()
-    if (status.needs_setup && route.path !== '/setup') {
+    const status = await setupQueryDatasource.getSetupStatus()
+    if (status.needsSetup && route.path !== '/setup') {
       await router.replace('/setup')
       return
     }

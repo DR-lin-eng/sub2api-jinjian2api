@@ -34,7 +34,7 @@
  *
  * For `opt-in` flags to render immediately on refresh, the backend **must**
  * inject the field through `PublicSettingsInjectionPayload`. A drift test in
- * `backend/internal/transport/http/handler/dto/public_settings_injection_schema_test.go`
+ * `backend/internal/handler/dto/public_settings_injection_schema_test.go`
  * catches omissions.
  *
  * ## Adding a new flag
@@ -70,8 +70,7 @@
  */
 
 import { useAppStore } from '@/core/stores/appStore'
-import type { PublicSettings } from '@/types'
-
+import type { PublicSettings } from '@/core/models/domain/publicSettings'
 export type FeatureFlagMode = 'opt-in' | 'opt-out'
 
 export interface FeatureFlagDefinition {
@@ -95,32 +94,27 @@ function defineFlag<K extends keyof PublicSettings>(
  */
 export const FeatureFlags = {
   channelMonitor: defineFlag({
-    key: 'channel_monitor_enabled',
+    key: 'channelMonitorEnabled',
     mode: 'opt-out',
     label: 'Channel Monitor',
   }),
   availableChannels: defineFlag({
-    key: 'available_channels_enabled',
+    key: 'availableChannelsEnabled',
     mode: 'opt-in',
     label: 'Available Channels',
   }),
-  modelPlaza: defineFlag({
-    key: 'model_plaza_enabled',
-    mode: 'opt-in',
-    label: 'Model Plaza',
-  }),
   payment: defineFlag({
-    key: 'payment_enabled',
+    key: 'paymentEnabled',
     mode: 'opt-out',
     label: 'Payment',
   }),
   riskControl: defineFlag({
-    key: 'risk_control_enabled',
+    key: 'riskControlEnabled',
     mode: 'opt-in',
     label: 'Risk Control',
   }),
   affiliate: defineFlag({
-    key: 'affiliate_enabled',
+    key: 'affiliateEnabled',
     mode: 'opt-in',
     label: 'Affiliate',
   }),

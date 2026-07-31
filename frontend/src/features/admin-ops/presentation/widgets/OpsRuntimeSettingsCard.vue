@@ -2,12 +2,16 @@
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { opsAPI } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import type { OpsAlertRuntimeSettings } from '../opsTypeSignals'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
+import { useAdminOpsActionStore } from '@/features/admin-ops/presentation/stores/adminOpsActionStore'
+import type { OpsAlertRuntimeSettings } from '@/features/admin-ops/domain/models/opsAlertRuntimeSettings'
+import type { UpdateAlertRuntimeSettingsRequest } from '@/features/admin-ops/data/requests_models/updateAlertRuntimeSettingsRequest'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const actionStore = useAdminOpsActionStore()
 
 const loading = ref(false)
 const saving = ref(false)
@@ -40,7 +44,7 @@ function normalizeSeverities(input: Array<string | null | undefined> | null | un
 function validateRuntimeSettings(settings: OpsAlertRuntimeSettings): ValidationResult {
   const errors: string[] = []
 
-  const evalSeconds = settings.evaluation_interval_seconds
+  const evalSeconds = settings.evaluationIntervalSeconds
   if (!Number.isFinite(evalSeconds) || evalSeconds < 1 || evalSeconds > 86400) {
     errors.push(t('admin.ops.runtime.validation.evalIntervalRange'))
   }
@@ -48,36 +52,36 @@ function validateRuntimeSettings(settings: OpsAlertRuntimeSettings): ValidationR
   // Thresholds validation
   const thresholds = settings.thresholds
   if (thresholds) {
-    if (thresholds.sla_percent_min != null) {
-      if (!Number.isFinite(thresholds.sla_percent_min) || thresholds.sla_percent_min < 0 || thresholds.sla_percent_min > 100) {
+    if (thresholds.slaPercentMin != null) {
+      if (!Number.isFinite(thresholds.slaPercentMin) || thresholds.slaPercentMin < 0 || thresholds.slaPercentMin > 100) {
         errors.push(t('admin.ops.runtime.validation.slaMinPercentRange'))
       }
     }
-    if (thresholds.ttft_p99_ms_max != null) {
-      if (!Number.isFinite(thresholds.ttft_p99_ms_max) || thresholds.ttft_p99_ms_max < 0) {
+    if (thresholds.ttftP99MsMax != null) {
+      if (!Number.isFinite(thresholds.ttftP99MsMax) || thresholds.ttftP99MsMax < 0) {
         errors.push(t('admin.ops.runtime.validation.ttftP99MaxRange'))
       }
     }
-    if (thresholds.request_error_rate_percent_max != null) {
-      if (!Number.isFinite(thresholds.request_error_rate_percent_max) || thresholds.request_error_rate_percent_max < 0 || thresholds.request_error_rate_percent_max > 100) {
+    if (thresholds.requestErrorRatePercentMax != null) {
+      if (!Number.isFinite(thresholds.requestErrorRatePercentMax) || thresholds.requestErrorRatePercentMax < 0 || thresholds.requestErrorRatePercentMax > 100) {
         errors.push(t('admin.ops.runtime.validation.requestErrorRateMaxRange'))
       }
     }
-    if (thresholds.upstream_error_rate_percent_max != null) {
-      if (!Number.isFinite(thresholds.upstream_error_rate_percent_max) || thresholds.upstream_error_rate_percent_max < 0 || thresholds.upstream_error_rate_percent_max > 100) {
+    if (thresholds.upstreamErrorRatePercentMax != null) {
+      if (!Number.isFinite(thresholds.upstreamErrorRatePercentMax) || thresholds.upstreamErrorRatePercentMax < 0 || thresholds.upstreamErrorRatePercentMax > 100) {
         errors.push(t('admin.ops.runtime.validation.upstreamErrorRateMaxRange'))
       }
     }
   }
 
-  const lock = settings.distributed_lock
+  const lock = settings.distributedLock
   if (lock?.enabled) {
     if (!lock.key || lock.key.trim().length < 3) {
       errors.push(t('admin.ops.runtime.validation.lockKeyRequired'))
     } else if (!lock.key.startsWith('ops:')) {
       errors.push(t('admin.ops.runtime.validation.lockKeyPrefix', { prefix: 'ops:' }))
     }
-    if (!Number.isFinite(lock.ttl_seconds) || lock.ttl_seconds < 1 || lock.ttl_seconds > 86400) {
+    if (!Number.isFinite(lock.ttlSeconds) || lock.ttlSeconds < 1 || lock.ttlSeconds > 86400) {
       errors.push(t('admin.ops.runtime.validation.lockTtlRange'))
     }
   }
@@ -85,7 +89,7 @@ function validateRuntimeSettings(settings: OpsAlertRuntimeSettings): ValidationR
   // Silencing validation (alert-only)
   const silencing = settings.silencing
   if (silencing?.enabled) {
-    const until = (silencing.global_until_rfc3339 || '').trim()
+    const until = (silencing.globalUntilRfc3339 || '').trim()
     if (until) {
       const parsed = Date.parse(until)
       if (!Number.isFinite(parsed)) errors.push(t('admin.ops.runtime.silencing.validation.timeFormat'))
@@ -94,7 +98,7 @@ function validateRuntimeSettings(settings: OpsAlertRuntimeSettings): ValidationR
     const entries = Array.isArray(silencing.entries) ? silencing.entries : []
     for (let idx = 0; idx < entries.length; idx++) {
       const entry = entries[idx]
-      const untilEntry = (entry?.until_rfc3339 || '').trim()
+      const untilEntry = (entry?.untilRfc3339 || '').trim()
       if (!untilEntry) {
         errors.push(t('admin.ops.runtime.silencing.entries.validation.untilRequired'))
         break
@@ -104,13 +108,13 @@ function validateRuntimeSettings(settings: OpsAlertRuntimeSettings): ValidationR
         errors.push(t('admin.ops.runtime.silencing.entries.validation.untilFormat'))
         break
       }
-      const ruleId = (entry as any)?.rule_id
+      const ruleId = entry?.ruleId
       if (typeof ruleId === 'number' && (!Number.isFinite(ruleId) || ruleId <= 0)) {
         errors.push(t('admin.ops.runtime.silencing.entries.validation.ruleIdPositive'))
         break
       }
-      if ((entry as any)?.severities) {
-        const raw = (entry as any).severities
+      if (entry?.severities) {
+        const raw = entry.severities
         const normalized = normalizeSeverities(Array.isArray(raw) ? raw : [raw])
         if (Array.isArray(raw) && raw.length > 0 && normalized.length === 0) {
           errors.push(t('admin.ops.runtime.silencing.entries.validation.severitiesFormat'))
@@ -131,7 +135,7 @@ const alertValidation = computed(() => {
 async function loadSettings() {
   loading.value = true
   try {
-    alertSettings.value = await opsAPI.getAlertRuntimeSettings()
+    alertSettings.value = await queryStore.getAlertRuntimeSettings()
   } catch (err: any) {
     console.error('[OpsRuntimeSettingsCard] Failed to load runtime settings', err)
     appStore.showError(err?.response?.data?.detail || t('admin.ops.runtime.loadFailed'))
@@ -146,21 +150,21 @@ function openAlertEditor() {
 
   // Backwards-compat: ensure nested settings exist even if API payload is older.
   if (draftAlert.value) {
-    if (!draftAlert.value.distributed_lock) {
-      draftAlert.value.distributed_lock = { enabled: true, key: 'ops:alert:evaluator:leader', ttl_seconds: 30 }
+    if (!draftAlert.value.distributedLock) {
+      draftAlert.value.distributedLock = { enabled: true, key: 'ops:alert:evaluator:leader', ttlSeconds: 30 }
     }
     if (!draftAlert.value.silencing) {
-      draftAlert.value.silencing = { enabled: false, global_until_rfc3339: '', global_reason: '', entries: [] }
+      draftAlert.value.silencing = { enabled: false, globalUntilRfc3339: '', globalReason: '', entries: [] }
     }
     if (!Array.isArray(draftAlert.value.silencing.entries)) {
       draftAlert.value.silencing.entries = []
     }
     if (!draftAlert.value.thresholds) {
       draftAlert.value.thresholds = {
-        sla_percent_min: 99.5,
-        ttft_p99_ms_max: 500,
-        request_error_rate_percent_max: 5,
-        upstream_error_rate_percent_max: 5
+        slaPercentMin: 99.5,
+        ttftP99MsMax: 500,
+        requestErrorRatePercentMax: 5,
+        upstreamErrorRatePercentMax: 5
       }
     }
   }
@@ -171,15 +175,15 @@ function openAlertEditor() {
 function addSilenceEntry() {
   if (!draftAlert.value) return
   if (!draftAlert.value.silencing) {
-    draftAlert.value.silencing = { enabled: true, global_until_rfc3339: '', global_reason: '', entries: [] }
+    draftAlert.value.silencing = { enabled: true, globalUntilRfc3339: '', globalReason: '', entries: [] }
   }
   if (!Array.isArray(draftAlert.value.silencing.entries)) {
     draftAlert.value.silencing.entries = []
   }
   draftAlert.value.silencing.entries.push({
-    rule_id: undefined,
+    ruleId: 0,
     severities: [],
-    until_rfc3339: '',
+    untilRfc3339: '',
     reason: ''
   })
 }
@@ -194,11 +198,11 @@ function updateSilenceEntryRuleId(index: number, raw: string) {
   if (!entries || !entries[index]) return
   const trimmed = raw.trim()
   if (!trimmed) {
-    delete (entries[index] as any).rule_id
+    delete entries[index].ruleId
     return
   }
   const n = Number.parseInt(trimmed, 10)
-  ;(entries[index] as any).rule_id = Number.isFinite(n) ? n : undefined
+  entries[index].ruleId = Number.isFinite(n) ? n : undefined
 }
 
 function updateSilenceEntrySeverities(index: number, raw: string) {
@@ -208,7 +212,7 @@ function updateSilenceEntrySeverities(index: number, raw: string) {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
-  ;(entries[index] as any).severities = normalizeSeverities(parts)
+  entries[index].severities = normalizeSeverities(parts)
 }
 
 async function saveAlertSettings() {
@@ -220,12 +224,38 @@ async function saveAlertSettings() {
 
   saving.value = true
   try {
-    alertSettings.value = await opsAPI.updateAlertRuntimeSettings(draftAlert.value)
+    const d = draftAlert.value
+    const req: UpdateAlertRuntimeSettingsRequest = {
+      evaluation_interval_seconds: d.evaluationIntervalSeconds,
+      distributed_lock: {
+        enabled: d.distributedLock.enabled,
+        key: d.distributedLock.key,
+        ttl_seconds: d.distributedLock.ttlSeconds,
+      },
+      silencing: {
+        enabled: d.silencing.enabled,
+        global_until_rfc3339: d.silencing.globalUntilRfc3339,
+        global_reason: d.silencing.globalReason,
+        entries: (d.silencing.entries ?? []).map(e => ({
+          rule_id: e.ruleId,
+          severities: e.severities,
+          until_rfc3339: e.untilRfc3339,
+          reason: e.reason,
+        })),
+      },
+      thresholds: {
+        sla_percent_min: d.thresholds?.slaPercentMin ?? null,
+        ttft_p99_ms_max: d.thresholds?.ttftP99MsMax ?? null,
+        request_error_rate_percent_max: d.thresholds?.requestErrorRatePercentMax ?? null,
+        upstream_error_rate_percent_max: d.thresholds?.upstreamErrorRatePercentMax ?? null,
+      },
+    }
+    alertSettings.value = await actionStore.updateAlertRuntimeSettings(req)
     showAlertEditor.value = false
     appStore.showSuccess(t('admin.ops.runtime.saveSuccess'))
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[OpsRuntimeSettingsCard] Failed to save alert runtime settings', err)
-    appStore.showError(err?.response?.data?.detail || t('admin.ops.runtime.saveFailed'))
+    appStore.showError(t('admin.ops.runtime.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -269,14 +299,14 @@ onMounted(() => {
         <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
           <div class="text-xs text-gray-600 dark:text-gray-300">
             {{ t('admin.ops.runtime.evalIntervalSeconds') }}:
-            <span class="ml-1 font-medium text-gray-900 dark:text-white">{{ alertSettings.evaluation_interval_seconds }}s</span>
+            <span class="ml-1 font-medium text-gray-900 dark:text-white">{{ alertSettings.evaluationIntervalSeconds }}s</span>
           </div>
           <div
-            v-if="alertSettings.silencing?.enabled && alertSettings.silencing.global_until_rfc3339"
+            v-if="alertSettings.silencing?.enabled && alertSettings.silencing.globalUntilRfc3339"
             class="text-xs text-gray-600 dark:text-gray-300 md:col-span-2"
           >
             {{ t('admin.ops.runtime.silencing.globalUntil') }}:
-            <span class="ml-1 font-mono text-gray-900 dark:text-white">{{ alertSettings.silencing.global_until_rfc3339 }}</span>
+            <span class="ml-1 font-mono text-gray-900 dark:text-white">{{ alertSettings.silencing.globalUntilRfc3339 }}</span>
           </div>
 
           <details class="col-span-1 md:col-span-2">
@@ -286,15 +316,15 @@ onMounted(() => {
             <div class="mt-2 grid grid-cols-1 gap-3 rounded-lg bg-gray-100 p-3 dark:bg-dark-800 md:grid-cols-2">
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 {{ t('admin.ops.runtime.lockEnabled') }}:
-                <span class="ml-1 font-mono text-gray-700 dark:text-gray-300">{{ alertSettings.distributed_lock.enabled }}</span>
+                <span class="ml-1 font-mono text-gray-700 dark:text-gray-300">{{ alertSettings.distributedLock.enabled }}</span>
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 {{ t('admin.ops.runtime.lockKey') }}:
-                <span class="ml-1 font-mono text-gray-700 dark:text-gray-300">{{ alertSettings.distributed_lock.key }}</span>
+                <span class="ml-1 font-mono text-gray-700 dark:text-gray-300">{{ alertSettings.distributedLock.key }}</span>
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 {{ t('admin.ops.runtime.lockTTLSeconds') }}:
-                <span class="ml-1 font-mono text-gray-700 dark:text-gray-300">{{ alertSettings.distributed_lock.ttl_seconds }}s</span>
+                <span class="ml-1 font-mono text-gray-700 dark:text-gray-300">{{ alertSettings.distributedLock.ttlSeconds }}s</span>
               </div>
             </div>
           </details>
@@ -318,7 +348,7 @@ onMounted(() => {
       <div>
         <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.evalIntervalSeconds') }}</div>
         <input
-          v-model.number="draftAlert.evaluation_interval_seconds"
+          v-model.number="draftAlert.evaluationIntervalSeconds"
           type="number"
           min="1"
           max="86400"
@@ -336,7 +366,7 @@ onMounted(() => {
           <div>
             <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.slaMinPercent') }}</div>
             <input
-              v-model.number="draftAlert.thresholds.sla_percent_min"
+              v-model.number="draftAlert.thresholds.slaPercentMin"
               type="number"
               min="0"
               max="100"
@@ -352,7 +382,7 @@ onMounted(() => {
           <div>
             <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.ttftP99MaxMs') }}</div>
             <input
-              v-model.number="draftAlert.thresholds.ttft_p99_ms_max"
+              v-model.number="draftAlert.thresholds.ttftP99MsMax"
               type="number"
               min="0"
               step="100"
@@ -365,7 +395,7 @@ onMounted(() => {
           <div>
             <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.requestErrorRateMaxPercent') }}</div>
             <input
-              v-model.number="draftAlert.thresholds.request_error_rate_percent_max"
+              v-model.number="draftAlert.thresholds.requestErrorRatePercentMax"
               type="number"
               min="0"
               max="100"
@@ -379,7 +409,7 @@ onMounted(() => {
           <div>
             <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.upstreamErrorRateMaxPercent') }}</div>
             <input
-              v-model.number="draftAlert.thresholds.upstream_error_rate_percent_max"
+              v-model.number="draftAlert.thresholds.upstreamErrorRatePercentMax"
               type="number"
               min="0"
               max="100"
@@ -404,7 +434,7 @@ onMounted(() => {
           <div>
             <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.silencing.globalUntil') }}</div>
             <input
-              v-model="draftAlert.silencing.global_until_rfc3339"
+              v-model="draftAlert.silencing.globalUntilRfc3339"
               type="text"
               class="input font-mono text-sm"
                       placeholder="2026-01-05T00:00:00Z"
@@ -415,7 +445,7 @@ onMounted(() => {
           <div>
             <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.silencing.reason') }}</div>
             <input
-              v-model="draftAlert.silencing.global_reason"
+              v-model="draftAlert.silencing.globalReason"
               type="text"
               class="input"
               :placeholder="t('admin.ops.runtime.silencing.reasonPlaceholder')"
@@ -454,7 +484,7 @@ onMounted(() => {
                   <div>
                     <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.silencing.entries.ruleId') }}</div>
                     <input
-                      :value="typeof (entry as any).rule_id === 'number' ? String((entry as any).rule_id) : ''"
+                      :value="typeof entry.ruleId === 'number' ? String(entry.ruleId) : ''"
                       type="text"
                       class="input font-mono text-sm"
                       :placeholder="t('admin.ops.runtime.silencing.entries.ruleIdPlaceholder')"
@@ -465,7 +495,7 @@ onMounted(() => {
                   <div>
                     <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.silencing.entries.severities') }}</div>
                     <input
-                      :value="Array.isArray((entry as any).severities) ? (entry as any).severities.join(', ') : ''"
+                      :value="Array.isArray(entry.severities) ? entry.severities.join(', ') : ''"
                       type="text"
                       class="input font-mono text-sm"
                       :placeholder="t('admin.ops.runtime.silencing.entries.severitiesPlaceholder')"
@@ -476,7 +506,7 @@ onMounted(() => {
                   <div>
                     <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.silencing.entries.until') }}</div>
                     <input
-                      v-model="(entry as any).until_rfc3339"
+                      v-model="entry.untilRfc3339"
                       type="text"
                       class="input font-mono text-sm"
               placeholder="2026-01-05T00:00:00Z"
@@ -486,7 +516,7 @@ onMounted(() => {
                   <div>
                     <div class="mb-1 text-xs font-medium text-gray-600 dark:text-gray-300">{{ t('admin.ops.runtime.silencing.entries.reason') }}</div>
                     <input
-                      v-model="(entry as any).reason"
+                      v-model="entry.reason"
                       type="text"
                       class="input"
                       :placeholder="t('admin.ops.runtime.silencing.reasonPlaceholder')"
@@ -504,20 +534,20 @@ onMounted(() => {
         <div class="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label class="inline-flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
-              <input v-model="draftAlert.distributed_lock.enabled" type="checkbox" class="h-4 w-4 rounded border-gray-300" />
+              <input v-model="draftAlert.distributedLock.enabled" type="checkbox" class="h-4 w-4 rounded border-gray-300" />
               <span>{{ t('admin.ops.runtime.lockEnabled') }}</span>
             </label>
           </div>
           <div class="md:col-span-2">
             <div class="mb-1 text-xs font-medium text-gray-500">{{ t('admin.ops.runtime.lockKey') }}</div>
-            <input v-model="draftAlert.distributed_lock.key" type="text" class="input text-xs font-mono" />
-            <p v-if="draftAlert.distributed_lock.enabled" class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+            <input v-model="draftAlert.distributedLock.key" type="text" class="input text-xs font-mono" />
+            <p v-if="draftAlert.distributedLock.enabled" class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
               {{ t('admin.ops.runtime.validation.lockKeyHint', { prefix: 'ops:' }) }}
             </p>
           </div>
           <div>
             <div class="mb-1 text-xs font-medium text-gray-500">{{ t('admin.ops.runtime.lockTTLSeconds') }}</div>
-            <input v-model.number="draftAlert.distributed_lock.ttl_seconds" type="number" min="1" max="86400" class="input text-xs font-mono" />
+            <input v-model.number="draftAlert.distributedLock.ttlSeconds" type="number" min="1" max="86400" class="input text-xs font-mono" />
           </div>
         </div>
       </details>

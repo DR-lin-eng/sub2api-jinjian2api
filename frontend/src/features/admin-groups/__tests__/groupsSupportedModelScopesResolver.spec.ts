@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeSupportedModelScopesForPlatform } from "../presentation/groupsSupportedModelScopesResolver";
+import { normalizeSupportedModelScopesForPlatform } from "@/features/admin-groups/presentation/utils/groupsSupportedModelScopesResolver";
 
 describe("normalizeSupportedModelScopesForPlatform", () => {
   it("preserves model scopes for Antigravity groups", () => {

@@ -245,8 +245,10 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { PreviewFromCRSResult } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
+import type { PreviewFromCRSResult, SyncFromCRSResult } from '@/features/admin-accounts/domain/repositories/adminAccountsActionRepository'
+
+const actionStore = useAdminAccountsActionStore()
 
 interface Props {
   show: boolean
@@ -269,7 +271,7 @@ const previewing = ref(false)
 const syncing = ref(false)
 const previewResult = ref<PreviewFromCRSResult | null>(null)
 const selectedIds = ref(new Set<string>())
-const result = ref<Awaited<ReturnType<typeof adminAPI.accounts.syncFromCrs>> | null>(null)
+const result = ref<SyncFromCRSResult | null>(null)
 
 const form = reactive({
   base_url: '',
@@ -286,7 +288,7 @@ const hasNewButNoneSelected = computed(() => {
 const errorItems = computed(() => {
   if (!result.value?.items) return []
   return result.value.items.filter(
-    (i) => i.action === 'failed' || (i.action === 'skipped' && i.error !== 'not selected')
+    (i: any) => i.action === 'failed' || (i.action === 'skipped' && i.error !== 'not selected')
   )
 })
 
@@ -321,7 +323,7 @@ const handleBack = () => {
 
 const selectAll = () => {
   if (!previewResult.value) return
-  selectedIds.value = new Set(previewResult.value.new_accounts.map((a) => a.crs_account_id))
+  selectedIds.value = new Set(previewResult.value.new_accounts.map((a: any) => a.crs_account_id))
 }
 
 const selectNone = () => {
@@ -346,14 +348,14 @@ const handlePreview = async () => {
 
   previewing.value = true
   try {
-    const res = await adminAPI.accounts.previewFromCrs({
+    const res = await actionStore.previewFromCrs({
       base_url: form.base_url.trim(),
       username: form.username.trim(),
       password: form.password
     })
     previewResult.value = res
     // Auto-select all new accounts
-    selectedIds.value = new Set(res.new_accounts.map((a) => a.crs_account_id))
+    selectedIds.value = new Set(res.new_accounts.map((a: any) => a.crs_account_id))
     currentStep.value = 'preview'
   } catch (error: any) {
     appStore.showError(error?.message || t('admin.accounts.crsPreviewFailed'))
@@ -370,7 +372,7 @@ const handleSync = async () => {
 
   syncing.value = true
   try {
-    const res = await adminAPI.accounts.syncFromCrs({
+    const res = await actionStore.syncFromCrs({
       base_url: form.base_url.trim(),
       username: form.username.trim(),
       password: form.password,
@@ -381,9 +383,9 @@ const handleSync = async () => {
     currentStep.value = 'result'
 
     if (res.failed > 0) {
-      appStore.showError(t('admin.accounts.syncCompletedWithErrors', res))
+      appStore.showError(t('admin.accounts.syncCompletedWithErrors', res as unknown as Record<string, unknown>))
     } else {
-      appStore.showSuccess(t('admin.accounts.syncCompleted', res))
+      appStore.showSuccess(t('admin.accounts.syncCompleted', res as unknown as Record<string, unknown>))
     }
     emit('synced')
   } catch (error: any) {

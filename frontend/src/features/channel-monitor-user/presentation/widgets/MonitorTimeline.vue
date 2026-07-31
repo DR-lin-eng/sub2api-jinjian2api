@@ -17,7 +17,7 @@
       <div
         v-for="(bar, idx) in displayBars"
         :key="idx"
-        class="flex-1 min-w-0 rounded-sm"
+        class="flex-1 min-w-[3px] rounded-sm"
         :class="bar.colorClass"
         :style="{ height: bar.heightPct + '%' }"
         :title="bar.title"
@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { MonitorTimelinePoint } from '@/features/channel-monitor-user/data/datasources/channelMonitorUserDatasource'
+import type { MonitorTimelinePoint } from '@/features/channel-monitor-user/domain/models/monitorTimelinePoint'
 import { useChannelMonitorFormat } from '@/features/channel-monitor-user/presentation/composables/useChannelMonitorFormat'
 
 const props = withDefaults(defineProps<{
@@ -100,8 +100,8 @@ const displayBars = computed<Bar[]>(() => {
     const status = point.status as keyof typeof STATUS_HEIGHT
     const colorClass = STATUS_COLOR[status] ?? STATUS_COLOR.empty
     const heightPct = STATUS_HEIGHT[status] ?? STATUS_HEIGHT.empty
-    const latency = formatLatency(point.latency_ms)
-    const relative = formatRelativeTime(point.checked_at)
+    const latency = formatLatency(point.latencyMs)
+    const relative = formatRelativeTime(point.checkedAt)
     const label = statusLabel(point.status)
     bars.push({
       colorClass,

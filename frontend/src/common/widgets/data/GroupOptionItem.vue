@@ -16,7 +16,7 @@
       <!-- Row 2: description with top spacing -->
       <span
         v-if="description"
-        class="mt-1.5 w-full whitespace-pre-line [overflow-wrap:anywhere] text-left text-xs leading-relaxed text-gray-500 dark:text-gray-400 line-clamp-3"
+        class="mt-1.5 w-full text-left text-xs leading-relaxed text-gray-500 dark:text-gray-400 line-clamp-2"
       >
         {{ description }}
       </span>
@@ -62,9 +62,9 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import GroupBadge from './GroupBadge.vue'
-import type { SubscriptionType, GroupPlatform } from '@/types'
 import { useAppStore } from '@/core/stores/appStore'
 import { formatPeakRateWindow, serverTimezoneLabel } from '@/core/utils/peak-rate'
+import type { SubscriptionType, GroupPlatform } from '@/features/admin-groups/domain/models/adminGroups'
 
 const { t } = useI18n()
 
@@ -110,12 +110,12 @@ const hasPeakRate = computed(() => {
 const peakRateText = computed(() => {
   return formatPeakRateWindow(
     {
-      peak_rate_enabled: props.peakRateEnabled,
-      peak_start: props.peakStart,
-      peak_end: props.peakEnd,
-      peak_rate_multiplier: props.peakRateMultiplier
+      peakRateEnabled: props.peakRateEnabled,
+      peakStart: props.peakStart,
+      peakEnd: props.peakEnd,
+      peakRateMultiplier: props.peakRateMultiplier
     },
-    serverTimezoneLabel(appStore.cachedPublicSettings?.server_utc_offset)
+    serverTimezoneLabel(appStore.cachedPublicSettings?.serverUtcOffset)
   )
 })
 

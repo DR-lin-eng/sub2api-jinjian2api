@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
 import { extractApiErrorMessage, extractI18nErrorMessage } from '@/core/utils/apiError'
 
 export interface OpenAITokenInfo {
@@ -29,6 +29,7 @@ export type OpenAIOAuthPlatform = 'openai'
 
 export function useOpenAIOAuth() {
   const appStore = useAppStore()
+  const actionStore = useAdminAccountsActionStore()
   const { t } = useI18n()
   const endpointPrefix = '/admin/openai'
 
@@ -62,13 +63,13 @@ export function useOpenAIOAuth() {
     try {
       const payload: Record<string, unknown> = {}
       if (proxyId) {
-        payload.proxy_id = proxyId
+        payload.proxyId = proxyId
       }
       if (redirectUri) {
         payload.redirect_uri = redirectUri
       }
 
-      const response = await adminAPI.accounts.generateAuthUrl(
+      const response = await actionStore.generateAuthUrl(
         `${endpointPrefix}/generate-auth-url`,
         payload
       )
@@ -115,7 +116,7 @@ export function useOpenAIOAuth() {
         payload.proxy_id = proxyId
       }
 
-      const tokenInfo = await adminAPI.accounts.exchangeCode(`${endpointPrefix}/exchange-code`, payload)
+      const tokenInfo = await actionStore.exchangeCode(`${endpointPrefix}/exchange-code`, payload)
       return tokenInfo as OpenAITokenInfo
     } catch (err: any) {
       error.value = extractI18nErrorMessage(
@@ -148,7 +149,7 @@ export function useOpenAIOAuth() {
 
     try {
       // Use dedicated refresh-token endpoint
-      const tokenInfo = await adminAPI.accounts.refreshOpenAIToken(
+      const tokenInfo = await actionStore.refreshOpenAIToken(
         refreshToken.trim(),
         proxyId,
         `${endpointPrefix}/refresh-token`,
@@ -173,7 +174,7 @@ export function useOpenAIOAuth() {
   const buildCredentials = (tokenInfo: OpenAITokenInfo): Record<string, unknown> => {
     const creds: Record<string, unknown> = {
       access_token: tokenInfo.access_token,
-      expires_at: tokenInfo.expires_at
+      expires_at: tokenInfo.expiresAt
     }
 
     // 仅在返回了新的 refresh_token 时才写入，防止用空值覆盖已有令牌

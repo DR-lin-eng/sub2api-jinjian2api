@@ -134,12 +134,6 @@
           </transition>
         </div>
 
-        <AffiliateInvitationCodeField
-          v-else-if="affiliateEnabled"
-          v-model="formData.aff_code"
-          :disabled="registrationActionDisabled"
-        />
-
         <!-- Promo Code Input (Optional) -->
         <div v-if="promoCodeEnabled">
           <label for="promo_code" class="input-label">
@@ -188,10 +182,7 @@
           </transition>
         </div>
 
-        <div
-          v-if="turnstileEnabled && (turnstileSiteKey || humanVerificationAPIEndpoint)"
-          data-testid="registration-human-verification"
-        >
+        <div v-if="turnstileEnabled && (turnstileSiteKey || humanVerificationAPIEndpoint)">
           <HumanVerificationWidget
             ref="turnstileRef"
             :provider="humanVerificationProvider"
@@ -331,18 +322,17 @@ import WechatOAuthSection from '@/features/auth/presentation/widgets/WechatOAuth
 import EmailOAuthButtons from '@/features/auth/presentation/widgets/EmailOAuthButtons.vue'
 import LoginAgreementPrompt from '@/features/auth/presentation/widgets/LoginAgreementPrompt.vue'
 import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptchaWidget.vue'
-import AffiliateInvitationCodeField from '@/features/auth/presentation/widgets/AffiliateInvitationCodeField.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
-import { useAuthStore, useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import {
-  getPublicSettings,
-  isWeChatWebOAuthEnabled,
-  validatePromoCode,
-  validateInvitationCode,
   clearCredentialKeyPrefetch,
-  prefetchCredentialKey
-} from '@/features/auth/data/datasources/authDatasource'
+  prefetchCredentialKey,
+} from '@/core/networks/credentialEncryption'
+import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
+import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
+import { isWeChatWebOAuthEnabled } from '@/features/auth/presentation/utils/wechatOAuthResolver'
 import { buildAuthErrorMessage } from '@/core/utils/authError'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import {
@@ -363,8 +353,7 @@ import {
   clearPendingRegistrationCredentials,
   setPendingRegistrationCredentials
 } from '@/core/utils/pendingRegistrationCredentials'
-import type { LoginAgreementDocument } from '@/types'
-
+import type { LoginAgreementDocument } from '@/core/models/domain/loginAgreementDocument'
 const { t, locale } = useI18n()
 const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'
 
@@ -374,6 +363,8 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const authActionStore = useAuthActionStore()
+const authQueryStore = useAuthQueryStore()
 
 // ==================== State ====================
 
@@ -387,7 +378,6 @@ const registrationEnabled = ref<boolean>(true)
 const emailVerifyEnabled = ref<boolean>(false)
 const promoCodeEnabled = ref<boolean>(true)
 const invitationCodeEnabled = ref<boolean>(false)
-const affiliateEnabled = ref<boolean>(false)
 const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
 const humanVerificationProvider = ref<ExternalHumanVerificationProvider>('turnstile')
@@ -506,27 +496,26 @@ onMounted(async () => {
   syncAffiliateReferralCode()
 
   try {
-    const settings = await getPublicSettings()
-    registrationEnabled.value = settings.registration_enabled
-    emailVerifyEnabled.value = settings.email_verify_enabled
-    promoCodeEnabled.value = settings.promo_code_enabled
-    invitationCodeEnabled.value = settings.invitation_code_enabled
-    affiliateEnabled.value = settings.affiliate_enabled
+    const settings = await authQueryStore.getPublicSettings()
+    registrationEnabled.value = settings.registrationEnabled
+    emailVerifyEnabled.value = settings.emailVerifyEnabled
+    promoCodeEnabled.value = settings.promoCodeEnabled
+    invitationCodeEnabled.value = settings.invitationCodeEnabled
     const verification = resolveHumanVerification(settings)
     turnstileEnabled.value = verification.external
     turnstileSiteKey.value = verification.siteKey
     humanVerificationAPIEndpoint.value = verification.apiEndpoint
     humanVerificationProvider.value = verification.externalProvider
     localCaptchaEnabled.value = verification.provider === 'local'
-    siteName.value = settings.site_name || 'Sub2API'
-    linuxdoOAuthEnabled.value = settings.linuxdo_oauth_enabled
+    siteName.value = settings.siteName || 'Sub2API'
+    linuxdoOAuthEnabled.value = settings.linuxdoOauthEnabled
     wechatOAuthEnabled.value = isWeChatWebOAuthEnabled(settings)
-    oidcOAuthEnabled.value = settings.oidc_oauth_enabled
-    oidcOAuthProviderName.value = settings.oidc_oauth_provider_name || 'OIDC'
-    githubOAuthEnabled.value = settings.github_oauth_enabled
-    googleOAuthEnabled.value = settings.google_oauth_enabled
+    oidcOAuthEnabled.value = settings.oidcOauthEnabled
+    oidcOAuthProviderName.value = settings.oidcOauthProviderName || 'OIDC'
+    githubOAuthEnabled.value = settings.githubOauthEnabled
+    googleOAuthEnabled.value = settings.googleOauthEnabled
     registrationEmailSuffixWhitelist.value = normalizeRegistrationEmailSuffixWhitelist(
-      settings.registration_email_suffix_whitelist || []
+      settings.registrationEmailSuffixWhitelist || []
     )
     applyLoginAgreementSettings(settings)
 
@@ -568,21 +557,21 @@ onUnmounted(() => {
 // ==================== Login Agreement ====================
 
 function applyLoginAgreementSettings(settings: {
-  login_agreement_enabled?: boolean
-  login_agreement_mode?: string
-  login_agreement_updated_at?: string
-  login_agreement_revision?: string
-  login_agreement_documents?: LoginAgreementDocument[]
+  loginAgreementEnabled?: boolean
+  loginAgreementMode?: string
+  loginAgreementUpdatedAt?: string
+  loginAgreementRevision?: string
+  loginAgreementDocuments?: LoginAgreementDocument[]
 }): void {
-  const documents = Array.isArray(settings.login_agreement_documents)
-    ? settings.login_agreement_documents.filter((doc) => doc.title?.trim())
+  const documents = Array.isArray(settings.loginAgreementDocuments)
+    ? settings.loginAgreementDocuments.filter((doc) => doc.title?.trim())
     : []
   loginAgreementDocuments.value = documents
-  loginAgreementEnabled.value = settings.login_agreement_enabled === true && documents.length > 0
-  loginAgreementMode.value = settings.login_agreement_mode === 'checkbox' ? 'checkbox' : 'modal'
-  loginAgreementUpdatedAt.value = settings.login_agreement_updated_at || ''
+  loginAgreementEnabled.value = settings.loginAgreementEnabled === true && documents.length > 0
+  loginAgreementMode.value = settings.loginAgreementMode === 'checkbox' ? 'checkbox' : 'modal'
+  loginAgreementUpdatedAt.value = settings.loginAgreementUpdatedAt || ''
   loginAgreementRevision.value =
-    settings.login_agreement_revision ||
+    settings.loginAgreementRevision ||
     `${loginAgreementUpdatedAt.value}:${documents.map((doc) => `${doc.id}:${doc.title}`).join('|')}`
 
   agreementAccepted.value = !loginAgreementEnabled.value || hasAcceptedLoginAgreement(loginAgreementRevision.value)
@@ -659,19 +648,19 @@ async function validatePromoCodeDebounced(code: string): Promise<void> {
   promoValidating.value = true
 
   try {
-    const result = await validatePromoCode(code)
+    const result = await authActionStore.validatePromoCode(code)
 
     if (result.valid) {
       promoValidation.valid = true
       promoValidation.invalid = false
-      promoValidation.bonusAmount = result.bonus_amount || 0
+      promoValidation.bonusAmount = result.bonusAmount || 0
       promoValidation.message = ''
     } else {
       promoValidation.valid = false
       promoValidation.invalid = true
       promoValidation.bonusAmount = null
       // 根据错误码显示对应的翻译
-      promoValidation.message = getPromoErrorMessage(result.error_code)
+      promoValidation.message = getPromoErrorMessage(result.errorCode)
     }
   } catch (error) {
     console.error('Failed to validate promo code:', error)
@@ -729,7 +718,7 @@ async function validateInvitationCodeDebounced(code: string): Promise<void> {
   invitationValidating.value = true
 
   try {
-    const result = await validateInvitationCode(code)
+    const result = await authActionStore.validateInvitationCode(code)
 
     if (result.valid) {
       invitationValidation.valid = true
@@ -738,7 +727,7 @@ async function validateInvitationCodeDebounced(code: string): Promise<void> {
     } else {
       invitationValidation.valid = false
       invitationValidation.invalid = true
-      invitationValidation.message = getInvitationErrorMessage(result.error_code)
+      invitationValidation.message = getInvitationErrorMessage(result.errorCode)
     }
   } catch {
     invitationValidation.valid = false

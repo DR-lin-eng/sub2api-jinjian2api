@@ -40,7 +40,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import { getPlatformTagClass } from '../adminChannelSignals'
+import { getPlatformTagClass } from '@/features/admin-channels/presentation/composables/useChannelPricingForm'
 
 const { t } = useI18n()
 

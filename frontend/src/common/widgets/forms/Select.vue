@@ -7,9 +7,7 @@
       :disabled="disabled"
       :aria-expanded="isOpen"
       :aria-haspopup="true"
-      :id="id"
-      :aria-label="ariaLabel ?? 'Select option'"
-      :aria-describedby="ariaDescribedby"
+      aria-label="Select option"
       :class="[
         'select-trigger',
         isOpen && 'select-trigger-open',
@@ -67,7 +65,6 @@
               v-model="searchQuery"
               type="text"
               :placeholder="searchPlaceholderText"
-              :aria-label="searchPlaceholderText"
               class="select-search-input"
               @click.stop
             />
@@ -151,9 +148,6 @@ interface Props {
   creatable?: boolean
   creatablePrefix?: string
   clearable?: boolean
-  id?: string
-  ariaLabel?: string
-  ariaDescribedby?: string
 }
 
 interface Emits {
@@ -184,8 +178,6 @@ const dropdownRef = ref<HTMLElement | null>(null)
 const optionsListRef = ref<HTMLElement | null>(null)
 const dropdownPosition = ref<'bottom' | 'top'>('bottom')
 const triggerRect = ref<DOMRect | null>(null)
-const dropdownViewportPadding = 8
-const dropdownMinimumWidth = 200
 
 // i18n placeholders
 const placeholderText = computed(() => props.placeholder ?? t('common.selectOption'))
@@ -202,21 +194,10 @@ const dropdownStyle = computed(() => {
   if (!triggerRect.value) return {}
 
   const rect = triggerRect.value
-  const viewportLeft = dropdownViewportPadding
-  const viewportRight = Math.max(dropdownViewportPadding, window.innerWidth - dropdownViewportPadding)
-  const viewportWidth = Math.max(0, viewportRight - viewportLeft)
-  const preferredWidth = Math.max(dropdownMinimumWidth, rect.width)
-  const dropdownWidth = Math.min(preferredWidth, viewportWidth)
-  const maximumLeft = Math.max(viewportLeft, viewportRight - dropdownWidth)
-  const left = Math.min(
-    Math.max(viewportLeft, rect.left),
-    maximumLeft
-  )
   const style: Record<string, string> = {
     position: 'fixed',
-    left: `${left}px`,
-    minWidth: `${dropdownWidth}px`,
-    maxWidth: `${dropdownWidth}px`,
+    left: `${rect.left}px`,
+    minWidth: `${rect.width}px`,
     zIndex: '100000020'
   }
 
@@ -277,7 +258,7 @@ const hasValue = computed(
 )
 
 const filteredOptions = computed(() => {
-  let opts = props.options as any[]
+  let opts = props.options as Array<Record<string, unknown>>
   if (isSearchable.value && searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
     opts = opts.filter((opt) => {

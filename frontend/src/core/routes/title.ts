@@ -1,6 +1,6 @@
 import { i18n } from '@/core/i18n'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
-import type { CustomMenuItem } from '@/types'
+import type { CustomMenuItem } from '@/core/models/domain/customMenuItem'
 
 /**
  * 统一生成页面标题，避免多处写入 document.title 产生覆盖冲突。

@@ -32,7 +32,7 @@ export function useAutoRefresh(options: UseAutoRefreshOptions) {
       const parsed = JSON.parse(saved) as { enabled?: boolean; interval_seconds?: number }
       enabled.value = parsed.enabled === true
       const iv = Number(parsed.interval_seconds)
-      if (intervals.includes(iv as any)) intervalSeconds.value = iv
+      if ((intervals as readonly number[]).includes(iv)) intervalSeconds.value = iv
     } catch { /* ignore */ }
   }
 

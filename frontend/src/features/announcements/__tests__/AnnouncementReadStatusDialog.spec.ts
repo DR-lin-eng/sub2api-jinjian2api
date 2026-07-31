@@ -1,19 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 
-import AnnouncementReadStatusDialog from '../presentation/widgets/AnnouncementReadStatusDialog.vue'
+import AnnouncementReadStatusDialog from '@/features/announcements/presentation/widgets/AnnouncementReadStatusDialog.vue'
 
 const { getReadStatus, showError } = vi.hoisted(() => ({
   getReadStatus: vi.fn(),
   showError: vi.fn(),
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    announcements: {
-      getReadStatus,
-    },
-  },
+vi.mock('@/features/announcements/presentation/stores/announcementsQueryStore', () => ({
+  useAnnouncementsQueryStore: () => ({
+    getReadStatus,
+  }),
 }))
 
 vi.mock('@/core/stores/appStore', () => ({

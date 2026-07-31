@@ -122,9 +122,6 @@ export default {
     keyEnabledSuccess: 'API 密钥已启用',
     keyDisabledSuccess: 'API 密钥已禁用',
     failedToLoad: '加载 API 密钥失败',
-    usageLoadFailed: '用量加载失败',
-    pendingSettlement: '其中待结算',
-    pendingUsageUnavailable: '待结算同步中',
     failedToSave: '保存 API 密钥失败',
     failedToDelete: '删除 API 密钥失败',
     failedToUpdateStatus: '更新 API 密钥状态失败',
@@ -392,7 +389,6 @@ export default {
     stream: '流式',
     sync: '同步',
     cyber: '安全策略',
-    live: 'Live',
     unknown: '未知',
     in: '输入',
     out: '输出',
@@ -563,6 +559,113 @@ export default {
     }
   },
 
+  modelSquare: {
+    title: '模型广场',
+    description: '发现适合不同场景的模型，比较能力、价格与分组倍率',
+    resultCount: '找到 {count} 个模型',
+    searchPlaceholder: '搜索模型名称、ID 或供应商...',
+    copySuccess: '已复制模型 ID：{id}',
+    filters: {
+      provider: '供应商',
+      group: '分组',
+      category: '模型类型',
+      allProviders: '全部供应商',
+      favorites: '只看收藏',
+      reset: '重置筛选'
+    },
+    categories: {
+      all: '全部模型',
+      chat: '文本对话',
+      reasoning: '深度推理',
+      image: '图像生成',
+      video: '视频生成',
+      embedding: '向量嵌入'
+    },
+    groups: {
+      default: '默认分组',
+      developer: '开发者分组',
+      vip: 'VIP 分组'
+    },
+    badges: {
+      recommended: '推荐',
+      new: '新上线',
+      popular: '热门'
+    },
+    fields: {
+      category: '类型',
+      context: '上下文窗口',
+      maxOutput: '最大输出',
+      inputPrice: '输入价格',
+      outputPrice: '输出价格',
+      multiplier: '当前倍率',
+      group: '分组',
+      inputMultiplier: '输入倍率',
+      outputMultiplier: '输出倍率',
+      effectiveInput: '实际输入价格',
+      effectiveOutput: '实际输出价格',
+      groupMultiplier: '分组倍率（输入 / 输出）'
+    },
+    units: {
+      perMillionTokens: '价格单位：每百万 Tokens',
+      perImage: '价格单位：每张图片',
+      perSecond: '价格单位：每秒视频'
+    },
+    capabilities: {
+      vision: '视觉理解',
+      tools: '工具调用',
+      reasoning: '深度推理',
+      streaming: '流式输出',
+      structuredOutput: '结构化输出',
+      imageGeneration: '图像生成',
+      videoGeneration: '视频生成',
+      embedding: '向量嵌入'
+    },
+    actions: {
+      favorite: '收藏模型',
+      unfavorite: '取消收藏',
+      compare: '加入对比',
+      copyId: '复制模型 ID',
+      details: '查看详情'
+    },
+    detail: {
+      title: '模型详情',
+      parameters: '模型参数与基础价格',
+      capabilities: '支持能力',
+      groupRates: '分组倍率与实际价格',
+      groupRatesHint: '实际价格由基础价格乘以对应分组倍率得出',
+      currentGroup: '当前'
+    },
+    compare: {
+      title: '模型对比',
+      dimension: '对比维度',
+      selected: '已选择 {count} / 3 个模型',
+      action: '开始对比',
+      clear: '清空',
+      remove: '移出对比',
+      limit: '最多同时对比 3 个模型',
+      groupHint: '当前按“{group}”展示输入与输出倍率。'
+    },
+    empty: {
+      title: '没有找到匹配的模型',
+      description: '尝试调整关键词、供应商、分组或模型类型。'
+    },
+    models: {
+      gpt41: '兼顾指令遵循、编程与长上下文处理的通用旗舰模型。',
+      claudeSonnet4: '擅长复杂编程、文档分析和需要稳定推理的专业任务。',
+      gemini25Pro: '原生多模态推理模型，适合长文档、视频理解与复杂分析。',
+      deepseekR1: '面向数学、代码和逻辑问题优化的高性价比推理模型。',
+      qwen3235b: '支持思考与非思考模式切换，适合多语言和工具调用场景。',
+      dalle3: '根据自然语言描述生成高质量图像，具备良好的文字理解能力。',
+      veo3: '支持原生音频的高质量视频生成模型，适合创意内容制作。',
+      embedding3Large: '高精度文本向量模型，适用于检索、聚类和语义搜索。'
+    }
+  },
+
+  mediaStudio: {
+    title: '媒体工坊',
+    description: '创建和管理图片、视频与其他媒体内容'
+  },
+
   // Available Channels (user-facing)
   availableChannels: {
     title: '可用渠道',
@@ -598,54 +701,6 @@ export default {
       intervals: '阶梯定价',
       unitPerMillion: '/ 1M token',
       unitPerRequest: '/ 次'
-    }
-  },
-
-  // Model Plaza (public group/model pricing showcase)
-  modelPlaza: {
-    title: '模型广场',
-    description: '按分组浏览可用模型与价格',
-    loading: '加载中...',
-    empty: '暂无可展示的分组',
-    loadFailed: '加载模型广场失败',
-    noSearchResult: '没有匹配的模型',
-    anonymousHint: '登录后可查看你的专属分组与专属倍率',
-    filters: {
-      platformLabel: '平台',
-      groupLabel: '分组',
-      rateLabel: '倍率',
-      modelLabel: '模型',
-      searchPlaceholder: '搜索模型名称',
-      all: '全部'
-    },
-    badges: {
-      exclusive: '专属分组',
-      subscription: '订阅'
-    },
-    detail: {
-      noModels: '该分组暂未配置模型',
-      noPricing: '未配置定价',
-      peakNote: '高峰时段 {window} 计费倍率 ×{multiplier}'
-    },
-    table: {
-      model: '模型',
-      input: '输入',
-      output: '输出',
-      cache: '缓存',
-      cacheWrite: '写入',
-      cacheRead: '读取',
-      paidPrice: '实付价格(折后)',
-      officialPrice: '官方价格',
-      rate: '折扣倍率',
-      unitPerMillion: '$ / 1M token',
-      perUnitRequest: '/ 次',
-      perUnitImage: '/ 张',
-      perRequest: '按次计费',
-      perImage: '按图片计费'
-    },
-    nav: {
-      login: '登录',
-      backToDashboard: '回到后台'
     }
   },
 
@@ -818,31 +873,6 @@ export default {
       sendCode: '发送验证码',
       codeSent: '验证码已发送到您的邮箱',
       sendCodeFailed: '发送验证码失败'
-    },
-    passkey: {
-      title: 'Passkey',
-      description: '使用面容 ID、触控 ID、Windows Hello 或安全密钥免密码登录。',
-      add: '添加 Passkey',
-      continue: '创建 Passkey',
-      name: 'Passkey 名称',
-      namePlaceholder: '例如：MacBook 触控 ID',
-      passwordPlaceholder: '输入当前登录密码以确认',
-      empty: '尚未添加任何 Passkey。',
-      synced: '已同步',
-      createdAt: '创建于 {date}',
-      lastUsed: '上次使用 {date}',
-      featureDisabled: '管理员尚未配置 Passkey 功能。',
-      unsupported: '当前浏览器或设备不支持 Passkey。',
-      loadFailed: '加载 Passkey 失败。',
-      added: 'Passkey 已添加。',
-      addFailed: '添加 Passkey 失败。',
-      renamePrompt: '请输入新的 Passkey 名称',
-      renamed: 'Passkey 已重命名。',
-      renameFailed: '重命名 Passkey 失败。',
-      deleteTitle: '删除 Passkey',
-      deleteConfirm: '删除“{name}”？删除后将无法再使用它登录。',
-      deleted: 'Passkey 已删除。',
-      deleteFailed: '删除 Passkey 失败。'
     },
     balanceNotify: {
       title: '余额不足提醒',

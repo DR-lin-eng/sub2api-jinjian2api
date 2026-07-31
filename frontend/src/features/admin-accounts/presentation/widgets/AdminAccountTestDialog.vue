@@ -252,9 +252,11 @@ import { useClipboard } from '@/common/composables/useClipboard'
 import { buildApiUrl } from '@/core/networks/client'
 import { ADMIN_UI_REQUEST_HEADER } from '@/core/networks/adminUIRequest'
 import { getAccessToken } from '@/core/networks/tokenStore'
-import { adminAPI } from '@/api/admin'
-import type { Account, ClaudeModel } from '@/types'
+import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
 
+const queryStore = useAdminAccountsQueryStore()
+import type { ClaudeModel } from '@/features/admin-accounts/domain/models/claudeModel'
+import type { Account } from '@/core/models/domain/account'
 const { t } = useI18n()
 const { copyToClipboard } = useClipboard()
 
@@ -361,7 +363,7 @@ const loadAvailableModels = async () => {
   loadingModels.value = true
   selectedModelId.value = '' // Reset selection before loading
   try {
-    const models = await adminAPI.accounts.getAvailableModels(props.account.id)
+    const models = await queryStore.getAvailableModels(props.account.id)
     availableModels.value = props.account.platform === 'gemini' || props.account.platform === 'antigravity'
       ? sortTestModels(models)
       : models

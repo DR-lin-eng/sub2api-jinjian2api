@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { buildApiKeyGroupFilterOptions } from '../presentation/apiKeyGroupFilterOptionsSignals'
-import type { AdminGroup } from '@/types'
+import { buildApiKeyGroupFilterOptions } from '@/features/admin-groups/presentation/utils/apiKeyGroupFilterOptionsSignals'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
 
 const labels = {
   all: 'All',
@@ -15,8 +15,8 @@ function g(partial: Partial<AdminGroup>): AdminGroup {
     id: 0,
     name: '',
     status: 'active',
-    is_exclusive: false,
-    subscription_type: 'standard',
+    isExclusive: false,
+    subscriptionType: 'standard',
     ...partial,
   } as AdminGroup
 }
@@ -24,9 +24,9 @@ function g(partial: Partial<AdminGroup>): AdminGroup {
 describe('buildApiKeyGroupFilterOptions', () => {
   it('partitions active groups into exclusive/public/subscription with headers', () => {
     const groups = [
-      g({ id: 1, name: 'Excl', is_exclusive: true, subscription_type: 'standard' }),
-      g({ id: 2, name: 'Pub', is_exclusive: false, subscription_type: 'standard' }),
-      g({ id: 3, name: 'Sub', is_exclusive: false, subscription_type: 'subscription' }),
+      g({ id: 1, name: 'Excl', isExclusive: true, subscriptionType: 'standard' }),
+      g({ id: 2, name: 'Pub', isExclusive: false, subscriptionType: 'standard' }),
+      g({ id: 3, name: 'Sub', isExclusive: false, subscriptionType: 'subscription' }),
     ]
     expect(buildApiKeyGroupFilterOptions(groups, labels)).toEqual([
       { value: null, label: 'All' },
@@ -40,7 +40,7 @@ describe('buildApiKeyGroupFilterOptions', () => {
   })
 
   it('treats subscription_type=subscription as subscription even if is_exclusive', () => {
-    const groups = [g({ id: 9, name: 'X', is_exclusive: true, subscription_type: 'subscription' })]
+    const groups = [g({ id: 9, name: 'X', isExclusive: true, subscriptionType: 'subscription' })]
     const opts = buildApiKeyGroupFilterOptions(groups, labels)
     expect(opts).toContainEqual({ value: 9, label: 'X' })
     expect(opts.find((o) => o.label === 'Subscription')).toBeDefined()
@@ -48,7 +48,7 @@ describe('buildApiKeyGroupFilterOptions', () => {
   })
 
   it('skips empty section headers', () => {
-    const groups = [g({ id: 2, name: 'Pub', is_exclusive: false, subscription_type: 'standard' })]
+    const groups = [g({ id: 2, name: 'Pub', isExclusive: false, subscriptionType: 'standard' })]
     const opts = buildApiKeyGroupFilterOptions(groups, labels)
     expect(opts.find((o) => o.label === 'Exclusive')).toBeUndefined()
     expect(opts.find((o) => o.label === 'Subscription')).toBeUndefined()
@@ -57,8 +57,8 @@ describe('buildApiKeyGroupFilterOptions', () => {
 
   it('places non-active groups in a separate disabled section (not omitted)', () => {
     const groups = [
-      g({ id: 1, name: 'Active', is_exclusive: true }),
-      g({ id: 2, name: 'Inactive', is_exclusive: true, status: 'inactive' }),
+      g({ id: 1, name: 'Active', isExclusive: true }),
+      g({ id: 2, name: 'Inactive', isExclusive: true, status: 'inactive' }),
     ]
     const opts = buildApiKeyGroupFilterOptions(groups, labels)
     // Active exclusive group appears in Exclusive section
@@ -75,9 +75,9 @@ describe('buildApiKeyGroupFilterOptions', () => {
 
   it('section headers use distinct negative values (no duplicate Vue :key)', () => {
     const groups = [
-      g({ id: 1, name: 'E', is_exclusive: true }),
-      g({ id: 2, name: 'P', is_exclusive: false }),
-      g({ id: 3, name: 'S', subscription_type: 'subscription' }),
+      g({ id: 1, name: 'E', isExclusive: true }),
+      g({ id: 2, name: 'P', isExclusive: false }),
+      g({ id: 3, name: 'S', subscriptionType: 'subscription' }),
       g({ id: 4, name: 'D', status: 'inactive' }),
     ]
     const opts = buildApiKeyGroupFilterOptions(groups, labels)

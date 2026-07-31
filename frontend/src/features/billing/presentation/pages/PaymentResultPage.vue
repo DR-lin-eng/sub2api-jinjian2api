@@ -39,29 +39,29 @@
               <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.orderId') }}</span>
               <span class="font-medium text-gray-900 dark:text-white">#{{ order.id }}</span>
             </div>
-            <div v-if="order.out_trade_no" class="flex justify-between">
+            <div v-if="orderNo(order)" class="flex justify-between">
               <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.orderNo') }}</span>
-              <span class="font-medium text-gray-900 dark:text-white">{{ order.out_trade_no }}</span>
+              <span class="font-medium text-gray-900 dark:text-white">{{ orderNo(order) }}</span>
             </div>
             <div v-if="hasAmountFields(order)" class="flex justify-between">
               <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.baseAmount') }}</span>
               <span class="font-medium text-gray-900 dark:text-white">{{ formatGatewayAmount(baseAmount) }}</span>
             </div>
-            <div v-if="hasAmountFields(order) && order.fee_rate > 0" class="flex justify-between">
-              <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.fee') }} ({{ order.fee_rate }}%)</span>
+            <div v-if="hasAmountFields(order) && order.feeRate > 0" class="flex justify-between">
+              <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.fee') }} ({{ order.feeRate }}%)</span>
               <span class="font-medium text-gray-900 dark:text-white">{{ formatGatewayAmount(feeAmount) }}</span>
             </div>
             <div v-if="hasAmountFields(order)" class="flex justify-between">
               <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.payAmount') }}</span>
-              <span class="font-bold text-primary-600 dark:text-primary-400">{{ formatGatewayAmount(order.pay_amount) }}</span>
+              <span class="font-bold text-primary-600 dark:text-primary-400">{{ formatGatewayAmount(order.payAmount) }}</span>
             </div>
-            <div v-if="hasAmountFields(order) && order.amount !== order.pay_amount" class="flex justify-between">
+            <div v-if="hasAmountFields(order) && order.amount !== order.payAmount" class="flex justify-between">
               <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.creditedAmount') }}</span>
-              <span class="font-medium text-gray-900 dark:text-white">{{ order.order_type === 'balance' ? '$' + order.amount.toFixed(2) : formatGatewayAmount(order.amount) }}</span>
+              <span class="font-medium text-gray-900 dark:text-white">{{ order.orderType === 'balance' ? '$' + order.amount.toFixed(2) : formatGatewayAmount(order.amount) }}</span>
             </div>
             <div v-if="hasPaymentType(order)" class="flex justify-between">
               <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.paymentMethod') }}</span>
-              <span class="font-medium text-gray-900 dark:text-white">{{ t(paymentMethodI18nKey(order.payment_type), normalizedOrderPaymentType(order.payment_type)) }}</span>
+              <span class="font-medium text-gray-900 dark:text-white">{{ t(paymentMethodI18nKey(order.paymentType), normalizedOrderPaymentType(order.paymentType)) }}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.status') }}</span>
@@ -105,19 +105,21 @@ import {
   PAYMENT_RECOVERY_STORAGE_KEY,
   clearPaymentRecoverySnapshot,
   readPaymentRecoverySnapshot,
-} from '@/features/billing/presentation/paymentFlowResolver'
+} from '@/features/billing/presentation/utils/paymentFlowResolver'
 import { usePaymentStore } from '@/features/billing/presentation/stores/paymentStore'
-import { paymentAPI } from '@/features/billing/data/datasources/paymentDatasource'
-import type { PublicOrderVerifyResult } from '@/features/billing/data/datasources/paymentDatasource'
-import type { OrderStatus, PaymentOrder } from '@/types/payment'
-import { formatPaymentAmount, normalizePaymentCurrency } from '@/features/billing/presentation/currencyFormatter'
-import { normalizePaymentMethodForDisplay, paymentMethodI18nKey } from '../paymentUxSignals'
+import { useBillingActionStore } from '@/features/billing/presentation/stores/billingActionStore'
+import type { PublicOrderVerifyResult } from '@/features/billing/domain/models/publicOrderVerifyResult'
+import type { OrderStatus } from '@/features/admin-orders/enums/orderTypes'
+import { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
+import { formatPaymentAmount, normalizePaymentCurrency } from '@/features/billing/presentation/utils/currencyFormatter'
+import { normalizePaymentMethodForDisplay, paymentMethodI18nKey } from '@/features/billing/presentation/utils/paymentUxSignals'
 
 const i18n = useI18n()
 const { t } = i18n
 const route = useRoute()
 const router = useRouter()
 const paymentStore = usePaymentStore()
+const billingAction = useBillingActionStore()
 
 type ResolvedOrder = PaymentOrder | PublicOrderVerifyResult
 
@@ -144,17 +146,17 @@ const refreshAttempts = ref(0)
 /** 充值金额 = pay_amount / (1 + fee_rate/100)，fee_rate=0 时等于 pay_amount */
 const baseAmount = computed(() => {
   if (!hasAmountFields(order.value)) return 0
-  const feeRate = Number(order.value.fee_rate) || 0
-  if (feeRate <= 0) return order.value.pay_amount ?? 0
-  return Math.round((order.value.pay_amount / (1 + feeRate / 100)) * 100) / 100
+  const feeRate = Number(order.value.feeRate) || 0
+  if (feeRate <= 0) return order.value.payAmount ?? 0
+  return Math.round((order.value.payAmount / (1 + feeRate / 100)) * 100) / 100
 })
 
 /** 手续费 = pay_amount - baseAmount */
 const feeAmount = computed(() => {
   if (!hasAmountFields(order.value)) return 0
-  const feeRate = Number(order.value.fee_rate) || 0
+  const feeRate = Number(order.value.feeRate) || 0
   if (feeRate <= 0) return 0
-  return Math.round((order.value.pay_amount - baseAmount.value) * 100) / 100
+  return Math.round((order.value.payAmount - baseAmount.value) * 100) / 100
 })
 
 const localeCode = computed(() => {
@@ -203,12 +205,18 @@ function hasOrderId(nextOrder: ResolvedOrder | null): nextOrder is PaymentOrder 
   return !!nextOrder && 'id' in nextOrder && typeof nextOrder.id === 'number'
 }
 
+function orderNo(nextOrder: ResolvedOrder | null): string {
+  if (!nextOrder) return ''
+  if ('outTradeNo' in nextOrder) return nextOrder.outTradeNo || ''
+  return ''
+}
+
 function hasAmountFields(nextOrder: ResolvedOrder | null): nextOrder is PaymentOrder {
-  return !!nextOrder && 'pay_amount' in nextOrder && typeof nextOrder.pay_amount === 'number' && 'amount' in nextOrder && typeof nextOrder.amount === 'number'
+  return !!nextOrder && 'payAmount' in nextOrder && typeof nextOrder.payAmount === 'number' && 'amount' in nextOrder && typeof nextOrder.amount === 'number'
 }
 
 function hasPaymentType(nextOrder: ResolvedOrder | null): nextOrder is PaymentOrder {
-  return !!nextOrder && 'payment_type' in nextOrder && typeof nextOrder.payment_type === 'string' && nextOrder.payment_type.trim() !== ''
+  return !!nextOrder && 'paymentType' in nextOrder && typeof nextOrder.paymentType === 'string' && nextOrder.paymentType.trim() !== ''
 }
 
 function normalizeOrderStatus(status: string | null | undefined): string {
@@ -277,22 +285,20 @@ function restoreRecoverySnapshot(context: {
 
 async function resolveOrderFromResumeToken(resumeToken: string): Promise<ResolvedOrder | null> {
   try {
-    const result = await paymentAPI.resolveOrderPublicByResumeToken(resumeToken)
-    return result.data
-  } catch {
+    return await billingAction.resolveOrderPublicByResumeToken(resumeToken)
+  } catch (_err: unknown) {
     return null
   }
 }
 
 async function resolveOrderFromOutTradeNo(outTradeNo: string): Promise<ResolvedOrder | null> {
   try {
-    const result = await paymentAPI.verifyOrder(outTradeNo)
-    return result.data
-  } catch {
+    const result = await billingAction.verifyOrder(outTradeNo)
+    return (result as { data?: ResolvedOrder }).data ?? null
+  } catch (_err: unknown) {
     try {
-      const result = await paymentAPI.verifyOrderPublic(outTradeNo)
-      return result.data
-    } catch {
+      return await billingAction.verifyOrderPublic(outTradeNo)
+    } catch (_innerErr: unknown) {
       return null
     }
   }
@@ -382,7 +388,7 @@ onMounted(async () => {
   if (!order.value && orderId && (!resumeToken || routeOrderId > 0)) {
     try {
       setResolvedOrder(await paymentStore.pollOrderStatus(orderId))
-    } catch {
+    } catch (_err: unknown) {
       // Order lookup failed, will try legacy fallback below when possible.
     }
   }
@@ -417,7 +423,7 @@ onMounted(async () => {
     if (orderId) {
       try {
         return await paymentStore.pollOrderStatus(orderId)
-      } catch {
+      } catch (_err: unknown) {
         // Fall through to legacy public verification when order polling is unavailable.
       }
     }

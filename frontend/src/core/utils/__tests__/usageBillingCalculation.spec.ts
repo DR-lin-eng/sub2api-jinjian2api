@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { UsageLog } from '@/types'
+import { UsageLog } from '@/core/models/domain/usageLog'
 import { buildUsageBillingCalculation } from '../usageBillingCalculation'
 
 const usage = (overrides: Partial<UsageLog>): UsageLog => ({
@@ -11,54 +11,54 @@ const usage = (overrides: Partial<UsageLog>): UsageLog => ({
   model: 'gpt-5.4',
   group_id: 1,
   subscription_id: null,
-  input_tokens: 0,
-  output_tokens: 0,
-  cache_creation_tokens: 0,
-  cache_read_tokens: 0,
-  cache_creation_5m_tokens: 0,
-  cache_creation_1h_tokens: 0,
-  input_cost: 0,
-  output_cost: 0,
-  cache_creation_cost: 0,
-  cache_read_cost: 0,
-  total_cost: 0,
-  actual_cost: 0,
-  rate_multiplier: 1,
-  long_context_billing_applied: false,
-  billing_type: 0,
+  inputTokens: 0,
+  outputTokens: 0,
+  cacheCreationTokens: 0,
+  cacheReadTokens: 0,
+  cacheCreation5mTokens: 0,
+  cacheCreation1hTokens: 0,
+  inputCost: 0,
+  outputCost: 0,
+  cacheCreationCost: 0,
+  cacheReadCost: 0,
+  totalCost: 0,
+  actualCost: 0,
+  rateMultiplier: 1,
+  longContextBillingApplied: false,
+  billingType: 0,
   stream: true,
   duration_ms: 1000,
   first_token_ms: 100,
-  image_count: 0,
-  image_size: null,
+  imageCount: 0,
+  imageSize: null,
   image_input_size: null,
   image_output_size: null,
-  image_size_source: null,
-  image_size_breakdown: null,
-  image_input_tokens: 0,
-  image_input_cost: 0,
-  image_output_tokens: 0,
-  image_output_cost: 0,
-  video_count: 0,
-  video_resolution: null,
-  video_duration_seconds: null,
+  imageSizeSource: null,
+  imageSizeBreakdown: null,
+  imageInputTokens: 0,
+  image_inputCost: 0,
+  imageOutputTokens: 0,
+  image_outputCost: 0,
+  videoCount: 0,
+  videoResolution: null,
+  videoDurationSeconds: null,
   user_agent: null,
   cache_ttl_overridden: false,
-  billing_mode: 'token',
-  created_at: '2026-07-20T00:00:00Z',
+  billingMode: 'token',
+  createdAt: '2026-07-20T00:00:00Z',
   ...overrides,
 })
 
 describe('buildUsageBillingCalculation', () => {
   it('reconciles token component costs and a direct group multiplier', () => {
     const result = buildUsageBillingCalculation(usage({
-      input_tokens: 1_000,
-      output_tokens: 200,
-      input_cost: 0.005,
-      output_cost: 0.006,
-      total_cost: 0.011,
-      actual_cost: 0.0088,
-      rate_multiplier: 0.8,
+      inputTokens: 1_000,
+      outputTokens: 200,
+      inputCost: 0.005,
+      outputCost: 0.006,
+      totalCost: 0.011,
+      actualCost: 0.0088,
+      rateMultiplier: 0.8,
     }))
 
     expect(result.formulaKind).toBe('direct')
@@ -69,13 +69,13 @@ describe('buildUsageBillingCalculation', () => {
 
   it('separates an independent image multiplier and marks the text rate as reconstructed', () => {
     const result = buildUsageBillingCalculation(usage({
-      input_tokens: 1_100,
-      image_input_tokens: 100,
-      input_cost: 0.1,
-      image_input_cost: 0.2,
-      total_cost: 0.3,
-      actual_cost: 0.45,
-      rate_multiplier: 2,
+      inputTokens: 1_100,
+      imageInputTokens: 100,
+      inputCost: 0.1,
+      imageInputCost: 0.2,
+      totalCost: 0.3,
+      actualCost: 0.45,
+      rateMultiplier: 2,
     }))
 
     expect(result.formulaKind).toBe('split')
@@ -87,13 +87,13 @@ describe('buildUsageBillingCalculation', () => {
 
   it('calculates video pricing by generated video-seconds', () => {
     const result = buildUsageBillingCalculation(usage({
-      billing_mode: 'video',
-      video_count: 2,
-      video_duration_seconds: 10,
-      video_resolution: '720p',
-      total_cost: 1.4,
-      actual_cost: 2.1,
-      rate_multiplier: 1.5,
+      billingMode: 'video',
+      videoCount: 2,
+      videoDurationSeconds: 10,
+      videoResolution: '720p',
+      totalCost: 1.4,
+      actualCost: 2.1,
+      rateMultiplier: 1.5,
     }))
 
     expect(result.lines[0]).toMatchObject({ quantity: 20, quantityUnit: 'video_seconds' })
@@ -104,12 +104,12 @@ describe('buildUsageBillingCalculation', () => {
 
   it('calculates image pricing by generated image count', () => {
     const result = buildUsageBillingCalculation(usage({
-      billing_mode: 'image',
-      image_count: 2,
-      image_size: '2K',
-      total_cost: 0.4,
-      actual_cost: 0.6,
-      rate_multiplier: 1.5,
+      billingMode: 'image',
+      imageCount: 2,
+      imageSize: '2K',
+      totalCost: 0.4,
+      actualCost: 0.6,
+      rateMultiplier: 1.5,
     }))
 
     expect(result.lines[0]).toMatchObject({ quantity: 2, quantityUnit: 'images' })
@@ -120,10 +120,10 @@ describe('buildUsageBillingCalculation', () => {
 
   it('uses the recorded blended rate when an old row cannot be reconstructed from one snapshot rate', () => {
     const result = buildUsageBillingCalculation(usage({
-      billing_mode: 'per_request',
-      total_cost: 1,
-      actual_cost: 0.75,
-      rate_multiplier: 1,
+      billingMode: 'per_request',
+      totalCost: 1,
+      actualCost: 0.75,
+      rateMultiplier: 1,
     }))
 
     expect(result.formulaKind).toBe('effective')

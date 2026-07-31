@@ -4,7 +4,7 @@
  */
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
-import type { ApiResponse } from '@/types'
+import type { ApiResponse } from '@/core/networks/apiResponse'
 import { getLocale } from '@/core/i18n'
 import {
   ADMIN_UI_REQUEST_HEADER,
@@ -241,7 +241,7 @@ apiClient.interceptors.response.use(
 
             // Refresh response was not successful, fall through to clear auth
             throw new Error('Token refresh failed')
-          } catch {
+          } catch (refreshError) {
             // Refresh failed - notify subscribers with empty token
             onTokenRefreshed('')
             isRefreshing = false

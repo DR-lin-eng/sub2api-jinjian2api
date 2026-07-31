@@ -99,9 +99,9 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 import { getLocale } from '@/core/i18n'
 import { sanitizeUrl } from '@/core/utils/url'
 import { useAppStore } from '@/core/stores/appStore'
-import type { LoginAgreementDocument } from '@/types'
 import zhAdminCompliance from '../../../../docs/legal/admin-compliance.zh.md?raw'
 import enAdminCompliance from '../../../../docs/legal/admin-compliance.en.md?raw'
+import type { LoginAgreementDocument } from '@/core/models/domain/loginAgreementDocument'
 
 type LegalDocumentIcon = 'document' | 'shield' | 'globe' | 'cog'
 
@@ -119,14 +119,14 @@ marked.setOptions({
 
 const documentId = computed(() => String(route.params.documentId || ''))
 const isAdminComplianceDocument = computed(() => documentId.value === 'admin-compliance')
-const documents = computed(() => settings.value?.login_agreement_documents ?? [])
-const siteName = computed(() => settings.value?.site_name || 'Sub2API')
-const siteLogo = computed(() => sanitizeUrl(settings.value?.site_logo || '', {
+const documents = computed(() => settings.value?.loginAgreementDocuments ?? [])
+const siteName = computed(() => settings.value?.siteName || 'Sub2API')
+const siteLogo = computed(() => sanitizeUrl(settings.value?.siteLogo || '', {
   allowRelative: true,
   allowDataUrl: true,
 }))
 const updatedAt = computed(() =>
-  isAdminComplianceDocument.value ? '' : settings.value?.login_agreement_updated_at || ''
+  isAdminComplianceDocument.value ? '' : settings.value?.loginAgreementUpdatedAt || ''
 )
 const documentTypeLabel = computed(() =>
   isAdminComplianceDocument.value ? t('legal.adminCompliance') : t('legal.loginAgreement')
@@ -137,7 +137,7 @@ const currentDocument = computed<LoginAgreementDocument | null>(() => {
     return {
       id: 'admin-compliance',
       title: t('adminCompliance.title'),
-      content_md: getLocale() === 'zh' ? zhAdminCompliance : enAdminCompliance
+      contentMd: getLocale() === 'zh' ? zhAdminCompliance : enAdminCompliance
     }
   }
   const id = documentId.value
@@ -147,10 +147,10 @@ const currentDocument = computed<LoginAgreementDocument | null>(() => {
   return documents.value.find((doc) => doc.id === id) ?? null
 })
 
-const hasContent = computed(() => Boolean(currentDocument.value?.content_md?.trim()))
+const hasContent = computed(() => Boolean(currentDocument.value?.contentMd?.trim()))
 
 const renderedHtml = computed(() => {
-  const content = currentDocument.value?.content_md?.trim() || ''
+  const content = currentDocument.value?.contentMd?.trim() || ''
   if (!content) {
     return ''
   }

@@ -27,22 +27,22 @@
                 :disabled="updatingKeyIds.has(key.id)"
               >
                 <GroupBadge
-                  v-if="key.group_id && key.group"
+                  v-if="key.groupId && key.group"
                   :name="key.group.name"
                   :platform="key.group.platform"
-                  :subscription-type="key.group.subscription_type"
-                  :rate-multiplier="key.group.rate_multiplier"
-                  :peak-rate-enabled="key.group.peak_rate_enabled"
-                  :peak-start="key.group.peak_start"
-                  :peak-end="key.group.peak_end"
-                  :peak-rate-multiplier="key.group.peak_rate_multiplier"
+                  :subscription-type="key.group.subscriptionType"
+                  :rate-multiplier="key.group.rateMultiplier"
+                  :peak-rate-enabled="key.group.peakRateEnabled"
+                  :peak-start="key.group.peakStart"
+                  :peak-end="key.group.peakEnd"
+                  :peak-rate-multiplier="key.group.peakRateMultiplier"
                 />
                 <span v-else class="text-gray-400 italic">{{ t('admin.users.none') }}</span>
                 <svg v-if="updatingKeyIds.has(key.id)" class="h-3 w-3 animate-spin text-primary-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 <svg v-else class="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" /></svg>
               </button>
             </div>
-            <div class="flex items-center gap-1"><span>{{ t('admin.users.columns.created') }}: {{ formatDateTime(key.created_at) }}</span></div>
+            <div class="flex items-center gap-1"><span>{{ t('admin.users.columns.created') }}: {{ formatDateTime(key.createdAt) }}</span></div>
           </div>
         </div>
       </div>
@@ -63,14 +63,14 @@
           @click="changeGroup(selectedKeyForGroup!, null)"
           :class="[
             'flex w-full items-center rounded-lg px-3 py-2 text-sm transition-colors',
-            !selectedKeyForGroup?.group_id
+            !selectedKeyForGroup?.groupId
               ? 'bg-primary-50 dark:bg-primary-900/20'
               : 'hover:bg-gray-100 dark:hover:bg-dark-700'
           ]"
         >
           <span class="text-gray-500 italic">{{ t('admin.users.none') }}</span>
           <svg
-            v-if="!selectedKeyForGroup?.group_id"
+            v-if="!selectedKeyForGroup?.groupId"
             class="ml-auto h-4 w-4 shrink-0 text-primary-600 dark:text-primary-400"
             fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"
           ><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
@@ -82,7 +82,7 @@
           @click="changeGroup(selectedKeyForGroup!, group.id)"
           :class="[
             'flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors',
-            selectedKeyForGroup?.group_id === group.id
+            selectedKeyForGroup?.groupId === group.id
               ? 'bg-primary-50 dark:bg-primary-900/20'
               : 'hover:bg-gray-100 dark:hover:bg-dark-700'
           ]"
@@ -90,14 +90,14 @@
           <GroupOptionItem
             :name="group.name"
             :platform="group.platform"
-            :subscription-type="group.subscription_type"
-            :rate-multiplier="group.rate_multiplier"
-            :peak-rate-enabled="group.peak_rate_enabled"
-            :peak-start="group.peak_start"
-            :peak-end="group.peak_end"
-            :peak-rate-multiplier="group.peak_rate_multiplier"
+            :subscription-type="group.subscriptionType"
+            :rate-multiplier="group.rateMultiplier"
+            :peak-rate-enabled="group.peakRateEnabled"
+            :peak-start="group.peakStart"
+            :peak-end="group.peakEnd"
+            :peak-rate-multiplier="group.peakRateMultiplier"
             :description="group.description"
-            :selected="selectedKeyForGroup?.group_id === group.id"
+            :selected="selectedKeyForGroup?.groupId === group.id"
           />
         </button>
       </div>
@@ -109,12 +109,20 @@
 import { ref, computed, watch, onMounted, onUnmounted, type ComponentPublicInstance } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
+import { useAdminUsers } from '@/features/admin-users/presentation/composables/useAdminUsers'
+import { useAdminGroupsQueryStore } from '@/features/admin-groups/presentation/stores/adminGroupsQueryStore'
+import { useAdminUsageActionStore } from '@/features/admin-usage/presentation/stores/adminUsageActionStore'
 import { formatDateTime } from '@/core/utils/format'
-import type { AdminUser, AdminGroup, ApiKey } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import GroupOptionItem from '@/common/widgets/data/GroupOptionItem.vue'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
+import type { ApiKey } from '@/core/models/domain/apiKey'
+
+const $adminUsers = useAdminUsers()
+const $adminGroups = useAdminGroupsQueryStore()
+const $adminUsage = useAdminUsageActionStore()
 
 const props = defineProps<{ show: boolean; user: AdminUser | null }>()
 const emit = defineEmits(['close'])
@@ -158,7 +166,7 @@ const load = async () => {
   loading.value = true
   groupButtonRefs.value.clear()
   try {
-    const res = await adminAPI.users.getUserApiKeys(props.user.id)
+    const res = await $adminUsers.getUserApiKeys(props.user.id)
     apiKeys.value = res.items || []
   } catch (error) {
     console.error('Failed to load API keys:', error)
@@ -169,7 +177,7 @@ const load = async () => {
 
 const loadGroups = async () => {
   try {
-    const groups = await adminAPI.groups.getAll()
+    const groups = await $adminGroups.getAll()
     allGroups.value = groups
   } catch (error) {
     console.error('Failed to load groups:', error)
@@ -204,18 +212,18 @@ const closeGroupSelector = () => {
 
 const changeGroup = async (key: ApiKey, newGroupId: number | null) => {
   closeGroupSelector()
-  if (key.group_id === newGroupId || (!key.group_id && newGroupId === null)) return
+  if (key.groupId === newGroupId || (!key.groupId && newGroupId === null)) return
 
   updatingKeyIds.value.add(key.id)
   try {
-    const result = await adminAPI.apiKeys.updateApiKeyGroup(key.id, newGroupId)
+    const result = await $adminUsage.updateApiKeyGroup(key.id, { group_id: newGroupId ?? 0 })
     // Update local data
     const idx = apiKeys.value.findIndex((k) => k.id === key.id)
     if (idx !== -1) {
-      apiKeys.value[idx] = result.api_key
+      apiKeys.value[idx].groupId = newGroupId ?? 0
     }
-    if (result.auto_granted_group_access && result.granted_group_name) {
-      appStore.showSuccess(t('admin.users.groupChangedWithGrant', { group: result.granted_group_name }))
+    if (result.autoGrantedGroupAccess && result.grantedGroupName) {
+      appStore.showSuccess(t('admin.users.groupChangedWithGrant', { group: result.grantedGroupName }))
     } else {
       appStore.showSuccess(t('admin.users.groupChangedSuccess'))
     }

@@ -22,7 +22,7 @@
           >
             {{ statusLabel(r.status) }}
           </span>
-          <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatLatency(r.latency_ms) }} ms</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatLatency(r.latencyMs) }} ms</span>
         </div>
       </div>
     </div>
@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import type { CheckResult } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
+import type { CheckResult } from '@/features/admin-channel-monitor/domain/models/checkResult'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import { useChannelMonitorFormat } from '@/features/channel-monitor-user/presentation/composables/useChannelMonitorFormat'
 

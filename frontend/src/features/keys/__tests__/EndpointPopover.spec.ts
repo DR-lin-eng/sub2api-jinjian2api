@@ -24,7 +24,7 @@ vi.mock('@/common/composables/useClipboard', () => ({
   }),
 }))
 
-import EndpointPopover from '../presentation/widgets/EndpointPopover.vue'
+import EndpointPopover from '@/features/keys/presentation/widgets/EndpointPopover.vue'
 
 describe('EndpointPopover', () => {
   beforeEach(() => {

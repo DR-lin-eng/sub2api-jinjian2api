@@ -69,8 +69,8 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores'
-import { totpAPI } from '@/api'
+import { useAppStore } from '@/core/stores/appStore'
+import { useTotpActionStore } from '@/features/profile/presentation/stores/totpActionStore'
 import type { StepUpController } from '@/common/composables/useStepUp'
 
 const props = defineProps<{
@@ -109,7 +109,7 @@ watch(
 async function submit(otp: string) {
   verifying.value = true
   try {
-    await totpAPI.stepUp(otp)
+    await useTotpActionStore().stepUp(otp)
     verifying.value = false
     resetInputs()
     props.controller.onVerified()

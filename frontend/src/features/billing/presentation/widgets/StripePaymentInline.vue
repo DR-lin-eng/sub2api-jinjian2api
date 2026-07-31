@@ -68,10 +68,10 @@ import { computed, ref, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
-import { paymentAPI } from '@/features/billing/data/datasources/paymentDatasource'
-import { useAppStore } from '@/stores'
-import { getPaymentPopupFeatures } from '@/features/billing/presentation/providerConfigSignals'
-import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
+import { useBillingActionStore } from '@/features/billing/presentation/stores/billingActionStore'
+import { useAppStore } from '@/core/stores/appStore'
+import { getPaymentPopupFeatures } from '@/features/billing/presentation/utils/providerConfigSignals'
+import { currencySymbol } from '@/features/billing/presentation/utils/currencyFormatter'
 import type { Stripe, StripeElements } from '@stripe/stripe-js'
 import Icon from '@/common/widgets/icons/Icon.vue'
 
@@ -92,6 +92,7 @@ const emit = defineEmits<{ success: []; done: []; back: []; redirect: [orderId: 
 
 const { t } = useI18n()
 const router = useRouter()
+const billingAction = useBillingActionStore()
 const appStore = useAppStore()
 
 const stripeMount = ref<HTMLElement | null>(null)
@@ -200,7 +201,7 @@ async function handleCancel() {
   if (!props.orderId || cancelling.value) return
   cancelling.value = true
   try {
-    await paymentAPI.cancelOrder(props.orderId)
+    await billingAction.cancelOrder(props.orderId)
     emit('back')
   } catch (err: unknown) {
     appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error')))

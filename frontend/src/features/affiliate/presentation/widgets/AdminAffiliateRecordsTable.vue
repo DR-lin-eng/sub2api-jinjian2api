@@ -28,75 +28,75 @@
         >
           <template #cell-inviter="{ row }">
             <UserCell
-              :id="row.inviter_id"
-              :email="row.inviter_email"
-              :username="row.inviter_username"
+              :id="row.inviterId"
+              :email="row.inviterEmail"
+              :username="row.inviterUsername"
               :clickable="props.type !== 'transfers'"
               @open="openUserOverview"
             />
           </template>
           <template #cell-invitee="{ row }">
             <UserCell
-              :id="row.invitee_id"
-              :email="row.invitee_email"
-              :username="row.invitee_username"
+              :id="row.inviteeId"
+              :email="row.inviteeEmail"
+              :username="row.inviteeUsername"
               :clickable="props.type !== 'transfers'"
               @open="openUserOverview"
             />
           </template>
           <template #cell-user="{ row }">
             <UserCell
-              :id="row.user_id"
-              :email="row.user_email"
+              :id="row.userId"
+              :email="row.userEmail"
               :username="row.username"
               :clickable="true"
               @open="openUserOverview"
             />
           </template>
-          <template #cell-aff_code="{ row }">
-            <span class="font-mono text-sm text-gray-700 dark:text-gray-300">{{ row.aff_code || '-' }}</span>
+          <template #cell-aff_code="{ row }: { row: AffiliateInviteRecord }">
+            <span class="font-mono text-sm text-gray-700 dark:text-gray-300">{{ row.affCode || '-' }}</span>
           </template>
-          <template #cell-order="{ row }">
+          <template #cell-order="{ row }: { row: AffiliateRebateRecord }">
             <div class="space-y-0.5">
-              <div class="font-mono text-sm text-gray-900 dark:text-white">#{{ row.order_id }}</div>
-              <div class="max-w-56 truncate text-sm text-gray-500 dark:text-dark-400">{{ row.out_trade_no }}</div>
+              <div class="font-mono text-sm text-gray-900 dark:text-white">#{{ row.orderId }}</div>
+              <div class="max-w-56 truncate text-sm text-gray-500 dark:text-dark-400">{{ row.outTradeNo }}</div>
             </div>
           </template>
-          <template #cell-payment_type="{ row }">
-            {{ t('payment.methods.' + row.payment_type, row.payment_type || '-') }}
+          <template #cell-payment_type="{ row }: { row: AffiliateRebateRecord }">
+            {{ t('payment.methods.' + row.paymentType, row.paymentType || '-') }}
           </template>
-          <template #cell-order_status="{ row }">
-            <OrderStatusBadge :status="row.order_status" />
+          <template #cell-order_status="{ row }: { row: AffiliateRebateRecord }">
+            <OrderStatusBadge :status="row.orderStatus" />
           </template>
-          <template #cell-total_rebate="{ row }">
-            <AmountText :value="row.total_rebate" />
+          <template #cell-total_rebate="{ row }: { row: AffiliateInviteRecord }">
+            <AmountText :value="row.totalRebate" />
           </template>
-          <template #cell-order_amount="{ row }">
-            <AmountText :value="row.order_amount" />
+          <template #cell-order_amount="{ row }: { row: AffiliateRebateRecord }">
+            <AmountText :value="row.orderAmount" />
           </template>
-          <template #cell-pay_amount="{ row }">
-            <span class="text-sm text-gray-900 dark:text-white">¥{{ formatAmount(row.pay_amount) }}</span>
+          <template #cell-pay_amount="{ row }: { row: AffiliateRebateRecord }">
+            <span class="text-sm text-gray-900 dark:text-white">¥{{ formatAmount(row.payAmount) }}</span>
           </template>
-          <template #cell-rebate_amount="{ row }">
-            <AmountText :value="row.rebate_amount" strong />
+          <template #cell-rebate_amount="{ row }: { row: AffiliateRebateRecord }">
+            <AmountText :value="row.rebateAmount" strong />
           </template>
-          <template #cell-amount="{ row }">
+          <template #cell-amount="{ row }: { row: AffiliateTransferRecord }">
             <AmountText :value="row.amount" strong />
           </template>
-          <template #cell-balance_after="{ row }">
-            <NullableAmountText :value="row.balance_after" />
+          <template #cell-balance_after="{ row }: { row: AffiliateTransferRecord }">
+            <NullableAmountText :value="row.balanceAfter" />
           </template>
-          <template #cell-available_quota_after="{ row }">
-            <NullableAmountText :value="row.available_quota_after" />
+          <template #cell-available_quota_after="{ row }: { row: AffiliateTransferRecord }">
+            <NullableAmountText :value="row.availableQuotaAfter" />
           </template>
-          <template #cell-frozen_quota_after="{ row }">
-            <NullableAmountText :value="row.frozen_quota_after" />
+          <template #cell-frozen_quota_after="{ row }: { row: AffiliateTransferRecord }">
+            <NullableAmountText :value="row.frozenQuotaAfter" />
           </template>
-          <template #cell-history_quota_after="{ row }">
-            <NullableAmountText :value="row.history_quota_after" />
+          <template #cell-history_quota_after="{ row }: { row: AffiliateTransferRecord }">
+            <NullableAmountText :value="row.historyQuotaAfter" />
           </template>
-          <template #cell-created_at="{ row }">
-            <span class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(row.created_at) }}</span>
+          <template #cell-created_at="{ row }: { row: AffiliateRecord }">
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{ formatDateTime(row.createdAt) }}</span>
           </template>
         </DataTable>
       </template>
@@ -124,17 +124,17 @@
       </div>
       <div v-else-if="selectedOverview" class="space-y-4">
         <div class="rounded-lg border border-gray-100 bg-gray-50 p-4 dark:border-dark-700 dark:bg-dark-800">
-          <div class="font-mono text-sm text-gray-900 dark:text-white">#{{ selectedOverview.user_id }}</div>
+          <div class="font-mono text-sm text-gray-900 dark:text-white">#{{ selectedOverview.userId }}</div>
           <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">{{ selectedOverview.email || '-' }}</div>
           <div class="mt-0.5 text-sm text-gray-500 dark:text-dark-400">{{ selectedOverview.username || '-' }}</div>
         </div>
         <div class="grid gap-3 sm:grid-cols-2">
-          <OverviewStat :label="t('admin.affiliates.overview.affCode')" :value="selectedOverview.aff_code || '-'" mono />
-          <OverviewStat :label="t('admin.affiliates.overview.rebateRate')" :value="formatPercent(selectedOverview.rebate_rate_percent)" />
-          <OverviewStat :label="t('admin.affiliates.overview.invitedCount')" :value="String(selectedOverview.invited_count)" />
-          <OverviewStat :label="t('admin.affiliates.overview.rebatedInviteeCount')" :value="String(selectedOverview.rebated_invitee_count)" />
-          <OverviewStat :label="t('admin.affiliates.overview.availableQuota')" :value="'$' + formatAmount(selectedOverview.available_quota)" />
-          <OverviewStat :label="t('admin.affiliates.overview.historyQuota')" :value="'$' + formatAmount(selectedOverview.history_quota)" />
+          <OverviewStat :label="t('admin.affiliates.overview.affCode')" :value="selectedOverview.affCode || '-'" mono />
+          <OverviewStat :label="t('admin.affiliates.overview.rebateRate')" :value="formatPercent(selectedOverview.rebateRatePercent)" />
+          <OverviewStat :label="t('admin.affiliates.overview.invitedCount')" :value="String(selectedOverview.invitedCount)" />
+          <OverviewStat :label="t('admin.affiliates.overview.rebatedInviteeCount')" :value="String(selectedOverview.rebatedInviteeCount)" />
+          <OverviewStat :label="t('admin.affiliates.overview.availableQuota')" :value="'$' + formatAmount(selectedOverview.availableQuota)" />
+          <OverviewStat :label="t('admin.affiliates.overview.historyQuota')" :value="'$' + formatAmount(selectedOverview.historyQuota)" />
         </div>
       </div>
     </BaseDialog>
@@ -151,22 +151,26 @@ import Pagination from '@/common/widgets/data/Pagination.vue'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import OrderStatusBadge from '@/features/billing/presentation/widgets/OrderStatusBadge.vue'
-import type { Column } from '@/common/types/uiTypes'
+import type { Column } from '@/common/widgets/types'
 import { useAppStore } from '@/core/stores/appStore'
-import { affiliatesAPI, type AffiliateInviteRecord, type AffiliateRebateRecord, type AffiliateTransferRecord, type AffiliateUserOverview, type ListAffiliateRecordsParams } from '@/features/affiliate/data/datasources/adminAffiliatesDatasource'
-import type { PaginatedResponse } from '@/types'
+import { useAffiliateQueryStore } from '@/features/affiliate/presentation/stores/affiliateQueryStore'
+import type { AffiliateInviteRecord } from '@/features/affiliate/domain/models/affiliateInviteRecord'
+import type { AffiliateRebateRecord } from '@/features/affiliate/domain/models/affiliateRebateRecord'
+import type { AffiliateTransferRecord } from '@/features/affiliate/domain/models/affiliateTransferRecord'
+import type { AffiliateUserOverview } from '@/features/affiliate/domain/models/affiliateUserOverview'
+import type { ListAffiliateRecordsParams } from '@/features/affiliate/data/requests_models/listAffiliateRecordsParams'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import { formatDateTime as formatDisplayDateTime } from '@/core/utils/format'
 
 type RecordType = 'invites' | 'rebates' | 'transfers'
 type AffiliateRecord = AffiliateInviteRecord | AffiliateRebateRecord | AffiliateTransferRecord
 
-const props = defineProps<{
-  type: RecordType
-}>()
+const props = defineProps<{ type: RecordType }>()
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const queryStore = useAffiliateQueryStore()
+
 const loading = ref(false)
 const records = ref<AffiliateRecord[]>([])
 const filters = reactive({ search: '', start_at: '', end_at: '' })
@@ -213,17 +217,14 @@ const columns = computed<Column[]>(() => {
 const sortStorageKey = computed(() => `admin-affiliate-${props.type}-table-sort`)
 
 function loadInitialSortState(): { sort_by: string; sort_order: 'asc' | 'desc' } {
-  const fallback = { sort_by: 'created_at', sort_order: 'desc' as 'asc' | 'desc' }
+  const fallback = { sort_by: 'created_at', sort_order: 'desc' as const }
   try {
     const raw = localStorage.getItem(sortStorageKey.value)
     if (!raw) return fallback
     const parsed = JSON.parse(raw) as { key?: string; order?: string }
     const key = typeof parsed.key === 'string' ? parsed.key : ''
-    if (!columns.value.some((column) => column.key === key && column.sortable)) return fallback
-    return {
-      sort_by: key,
-      sort_order: parsed.order === 'asc' ? 'asc' : 'desc',
-    }
+    if (!columns.value.some(c => c.key === key && c.sortable)) return fallback
+    return { sort_by: key, sort_order: parsed.order === 'asc' ? 'asc' : 'desc' }
   } catch {
     return fallback
   }
@@ -232,11 +233,7 @@ function loadInitialSortState(): { sort_by: string; sort_order: 'asc' | 'desc' }
 const sortState = reactive(loadInitialSortState())
 
 function userTimezone(): string {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone
-  } catch {
-    return 'UTC'
-  }
+  try { return Intl.DateTimeFormat().resolvedOptions().timeZone } catch { return 'UTC' }
 }
 
 function buildParams(): ListAffiliateRecordsParams {
@@ -252,22 +249,15 @@ function buildParams(): ListAffiliateRecordsParams {
   }
 }
 
-async function fetchRecords(params: ListAffiliateRecordsParams): Promise<PaginatedResponse<AffiliateRecord>> {
-  if (props.type === 'invites') {
-    return affiliatesAPI.listInviteRecords(params)
-  }
-  if (props.type === 'rebates') {
-    return affiliatesAPI.listRebateRecords(params)
-  }
-  return affiliatesAPI.listTransferRecords(params)
-}
-
 async function loadRecords() {
   loading.value = true
   try {
-    const res = await fetchRecords(buildParams())
-    records.value = res.items || []
-    pagination.total = res.total || 0
+    let res
+    if (props.type === 'invites') res = await queryStore.listInviteRecords(buildParams())
+    else if (props.type === 'rebates') res = await queryStore.listRebateRecords(buildParams())
+    else res = await queryStore.listTransferRecords(buildParams())
+    records.value = (res.items ?? []) as AffiliateRecord[]
+    pagination.total = res.total ?? 0
   } catch (error) {
     appStore.showError(extractI18nErrorMessage(error, t, 'admin.affiliates.errors', t('common.error')))
   } finally {
@@ -280,28 +270,10 @@ function debounceLoad() {
   debounceTimer = setTimeout(() => reloadFromFirstPage(), 300)
 }
 
-function reloadFromFirstPage() {
-  pagination.page = 1
-  void loadRecords()
-}
-
-function handlePageChange(page: number) {
-  pagination.page = page
-  void loadRecords()
-}
-
-function handlePageSizeChange(size: number) {
-  pagination.page_size = size
-  pagination.page = 1
-  void loadRecords()
-}
-
-function handleSort(key: string, order: 'asc' | 'desc') {
-  sortState.sort_by = key
-  sortState.sort_order = order
-  pagination.page = 1
-  void loadRecords()
-}
+function reloadFromFirstPage() { pagination.page = 1; void loadRecords() }
+function handlePageChange(page: number) { pagination.page = page; void loadRecords() }
+function handlePageSizeChange(size: number) { pagination.page_size = size; pagination.page = 1; void loadRecords() }
+function handleSort(key: string, order: 'asc' | 'desc') { sortState.sort_by = key; sortState.sort_order = order; pagination.page = 1; void loadRecords() }
 
 function formatAmount(value: number | null | undefined): string {
   return Number(value || 0).toFixed(2)
@@ -309,7 +281,7 @@ function formatAmount(value: number | null | undefined): string {
 
 function formatPercent(value: number | null | undefined): string {
   const rounded = Math.round(Number(value || 0) * 100) / 100
-  return `${Number.isInteger(rounded) ? rounded.toString() : rounded.toString()}%`
+  return `${rounded.toString()}%`
 }
 
 function formatDateTime(value: string | null | undefined): string {
@@ -322,7 +294,7 @@ async function openUserOverview(userId: number) {
   overviewLoading.value = true
   selectedOverview.value = null
   try {
-    selectedOverview.value = await affiliatesAPI.getUserOverview(userId)
+    selectedOverview.value = await queryStore.getUserOverview(userId)
   } catch (error) {
     overviewDialog.value = false
     appStore.showError(extractI18nErrorMessage(error, t, 'admin.affiliates.errors', t('common.error')))
@@ -355,53 +327,35 @@ const UserCell = defineComponent({
 })
 
 const AmountText = defineComponent({
-  props: {
-    value: { type: Number, default: 0 },
-    strong: { type: Boolean, default: false },
-  },
-  setup(amountProps) {
+  props: { value: { type: Number, default: 0 }, strong: { type: Boolean, default: false } },
+  setup(p) {
     return () => h('span', {
-      class: amountProps.strong
-        ? 'text-sm font-semibold text-emerald-600 dark:text-emerald-400'
-        : 'text-sm text-gray-900 dark:text-white',
-    }, `$${formatAmount(amountProps.value)}`)
+      class: p.strong ? 'text-sm font-semibold text-emerald-600 dark:text-emerald-400' : 'text-sm text-gray-900 dark:text-white',
+    }, `$${formatAmount(p.value)}`)
   },
 })
 
 const NullableAmountText = defineComponent({
-  props: {
-    value: { type: Number as PropType<number | null | undefined>, default: null },
-  },
-  setup(amountProps) {
+  props: { value: { type: Number as PropType<number | null | undefined>, default: null } },
+  setup(p) {
     return () => {
-      const value = amountProps.value
-      if (value === null || value === undefined) {
+      if (p.value === null || p.value === undefined) {
         return h('span', { class: 'text-sm text-gray-400 dark:text-dark-500' }, '-')
       }
-      return h(AmountText, { value })
+      return h(AmountText, { value: p.value })
     }
   },
 })
 
 const OverviewStat = defineComponent({
-  props: {
-    label: { type: String, required: true },
-    value: { type: String, required: true },
-    mono: { type: Boolean, default: false },
-  },
-  setup(statProps) {
+  props: { label: { type: String, required: true }, value: { type: String, required: true }, mono: { type: Boolean, default: false } },
+  setup(p) {
     return () => h('div', { class: 'rounded-lg border border-gray-100 bg-white p-3 dark:border-dark-700 dark:bg-dark-900' }, [
-      h('div', { class: 'text-sm text-gray-500 dark:text-dark-400' }, statProps.label),
-      h('div', {
-        class: statProps.mono
-          ? 'mt-1 font-mono text-base font-semibold text-gray-900 dark:text-white'
-          : 'mt-1 text-base font-semibold text-gray-900 dark:text-white',
-      }, statProps.value),
+      h('div', { class: 'text-sm text-gray-500 dark:text-dark-400' }, p.label),
+      h('div', { class: p.mono ? 'mt-1 font-mono text-base font-semibold text-gray-900 dark:text-white' : 'mt-1 text-base font-semibold text-gray-900 dark:text-white' }, p.value),
     ])
   },
 })
 
-onMounted(() => {
-  void loadRecords()
-})
+onMounted(() => { void loadRecords() })
 </script>

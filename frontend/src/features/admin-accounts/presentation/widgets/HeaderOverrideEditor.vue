@@ -58,7 +58,7 @@
 import { useI18n } from 'vue-i18n'
 import { createStableObjectKeyResolver } from '@/core/utils/stableObjectKey'
 import HeaderOverrideJsonTools from './HeaderOverrideJsonTools.vue'
-import type { HeaderOverrideRow } from '../credentialsBuilder'
+import type { HeaderOverrideRow } from '@/features/admin-accounts/presentation/utils/credentialsBuilder'
 
 const props = defineProps<{
   rows: HeaderOverrideRow[]

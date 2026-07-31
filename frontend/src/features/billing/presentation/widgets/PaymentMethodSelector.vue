@@ -24,10 +24,10 @@
           <span class="flex flex-col items-start leading-none">
             <span class="text-base font-semibold">{{ methodLabel(method) }}</span>
             <span
-              v-if="method.fee_rate > 0"
+              v-if="method.feeRate > 0"
               class="text-[10px] tracking-wide text-gray-500 dark:text-dark-400"
             >
-              {{ t('payment.fee') }} {{ method.fee_rate }}%
+              {{ t('payment.fee') }} {{ method.feeRate }}%
             </span>
           </span>
         </span>
@@ -39,7 +39,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { METHOD_ORDER, isBuiltInAlipayMethod, isBuiltInWxpayMethod } from '../providerConfigSignals'
+import { METHOD_ORDER, isBuiltInAlipayMethod, isBuiltInWxpayMethod } from '@/features/billing/presentation/utils/providerConfigSignals'
 import alipayIcon from '@/assets/icons/alipay.svg'
 import wxpayIcon from '@/assets/icons/wxpay.svg'
 import stripeIcon from '@/assets/icons/stripe.svg'
@@ -48,8 +48,8 @@ import paymentIcon from '@/assets/icons/payment.svg'
 
 export interface PaymentMethodOption {
   type: string
-  display_name?: string
-  fee_rate: number
+  displayName?: string
+  feeRate: number
   available: boolean
 }
 
@@ -89,7 +89,7 @@ function methodIcon(type: string): string {
 }
 
 function methodLabel(method: PaymentMethodOption): string {
-  return method.display_name || t(`payment.methods.${method.type}`, method.type)
+  return method.displayName || t(`payment.methods.${method.type}`, method.type)
 }
 
 function methodSelectedClass(type: string): string {

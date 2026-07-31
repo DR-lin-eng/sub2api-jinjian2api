@@ -439,7 +439,6 @@ export default {
         selectUser: 'Select {email}',
         enableConcurrency: 'Update concurrency',
         enableRPMLimit: 'Update RPM limit',
-        enableSchedulingTier: 'Update scheduling tier',
         unlimited: 'Unlimited',
         nonNegativeInteger: 'Enter a non-negative whole number.',
         apply: 'Apply limits',
@@ -447,7 +446,6 @@ export default {
         concurrencyValue: 'Concurrency: {value}',
         rpmValue: 'RPM: {value}',
         rpmUnlimitedValue: 'RPM: Unlimited',
-        schedulingTierValue: 'Scheduling tier: {value}',
         confirm: 'Overwrite limits for {count} users?\n{fields}',
         success: 'Updated limits for {count} users',
         failed: 'Failed to update user limits'
@@ -459,7 +457,6 @@ export default {
       searchUsers: 'Search by email, username, notes, or API key',
       roleFilter: 'Role Filter',
       allRoles: 'All Roles',
-      allSchedulingTiers: 'All Scheduling Tiers',
       allStatus: 'All Status',
       allGroups: 'All Groups',
       searchGroups: 'Search groups...',
@@ -512,9 +509,7 @@ export default {
         selectStatus: 'Select status',
         rpmLimit: 'Requests Per Minute (RPM)',
         rpmLimitPlaceholder: '0 = unlimited',
-        rpmLimitHint: 'Max requests per minute for this user; 0 = unlimited. Acts as a fallback only when the group has no rpm_limit set.',
-        schedulingTier: 'Scheduling Tier',
-        schedulingTierHint: 'Priority requests receive free capacity first; low-tier requests do not queue when capacity is exhausted.'
+        rpmLimitHint: 'Max requests per minute for this user; 0 = unlimited. Acts as a fallback only when the group has no rpm_limit set.'
       },
       columns: {
         user: 'User',
@@ -523,7 +518,6 @@ export default {
         username: 'Username',
         notes: 'Notes',
         role: 'Role',
-        schedulingTier: 'Scheduling Tier',
         groups: 'Groups',
         subscriptions: 'Subscriptions',
         balance: 'Balance',
@@ -672,11 +666,6 @@ export default {
       roles: {
         admin: 'Admin',
         user: 'User'
-      },
-      schedulingTiers: {
-        priority: 'Priority',
-        normal: 'Normal',
-        low: 'Low'
       },
       // Settings Dropdowns
       filterSettings: 'Filter Settings',
@@ -859,21 +848,6 @@ export default {
         rpmLimit: 'Requests Per Minute (RPM)',
         rpmLimitPlaceholder: '0 = unlimited',
         rpmLimitHint: 'Max requests per minute for each user in this group; 0 = unlimited. Once set, it takes over per-user rate limiting in this group (overrides the user-level rpm_limit fallback).',
-        maxReasoningEffort: 'Max reasoning effort',
-        maxReasoningEffortUnlimited: 'Unlimited (follow request)',
-        maxReasoningEffortHint: 'Limits explicit OpenAI reasoning effort requests only. Higher values are capped; omitted effort stays omitted. The ceiling takes precedence over reasoning effort mappings.',
-        reasoningEffortMappings: 'Reasoning effort mappings',
-        addReasoningEffortMapping: 'Add mapping',
-        removeReasoningEffortMapping: 'Remove mapping',
-        reasoningEffortFrom: 'Request value',
-        reasoningEffortTo: 'Forwarded value',
-        reasoningEffortFromPlaceholder: 'Select A',
-        reasoningEffortToPlaceholder: 'Select B',
-        fromRequired: 'Select request value A',
-        toRequired: 'Select forwarded value B',
-        unsupportedFrom: 'Request value is not supported by this platform',
-        unsupportedTo: 'Forwarded value is not supported by this platform',
-        duplicateFrom: 'Request value A must be unique',
         exclusiveLabel: 'Exclusive Group',
         exclusiveHint: 'Exclusive group, can be manually assigned to users',
         platformLabel: 'Platform Restriction',
@@ -1044,8 +1018,6 @@ export default {
         endpoint: 'Endpoint',
         targetPlatform: 'Target Platform',
         upstreamModel: 'Upstream Model',
-        upstreamModelHint: 'Leave empty to pass the original requested model through: under prefix match each matched model forwards verbatim (e.g. deepseek-v4-flash and deepseek-v4-pro each forwarded as-is); set a value to forward every matched request to that fixed model.',
-        passthroughRequestedModel: 'Requested model (passthrough)',
         notes: 'Notes',
         enabled: 'Enabled',
         preview: 'Preview',
@@ -1109,14 +1081,6 @@ export default {
         targetModel: 'Target Model',
         targetModelPlaceholder: 'e.g., gpt-5.4',
         removeExactMapping: 'Remove Exact Mapping'
-      },
-      openaiLive: {
-        title: 'OpenAI Live',
-        allow: 'Allow Live access',
-        hint: 'When enabled, API keys in this OpenAI group can create and control Live voice sessions. Disabled by default. The Sub2API server must run on Apple Silicon macOS with the official ChatGPT app installed; client platforms are unrestricted.',
-        unsupportedTitle: 'Current server does not support Live',
-        unsupportedMessage: 'This Sub2API server cannot generate the required Live attestation. Live will not work even if enabled. Continue anyway?',
-        enableAnyway: 'Enable anyway'
       },
       invalidRequestFallback: {
         title: 'Invalid Request Fallback Group',

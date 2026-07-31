@@ -105,8 +105,9 @@ import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
 import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptchaWidget.vue'
-import { getPublicSettings, sendPendingOAuthVerifyCode } from '@/features/auth/data/datasources/authDatasource'
-import { useAppStore } from '@/stores'
+import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
+import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
+import { useAppStore } from '@/core/stores/appStore'
 import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
@@ -133,6 +134,8 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const authActionStore = useAuthActionStore()
+const authQueryStore = useAuthQueryStore()
 
 const email = ref('')
 const password = ref('')
@@ -247,7 +250,7 @@ async function handleSendCode() {
   sendCodeSuccess.value = false
 
   try {
-    const response = await sendPendingOAuthVerifyCode({
+    const response = await authActionStore.sendPendingOAuthVerifyCode({
       email: trimmedEmail,
       ...(turnstileEnabled.value ? { captcha_token: turnstileToken.value } : {}),
       ...(localCaptchaEnabled.value
@@ -289,9 +292,9 @@ function emitSwitchToBind() {
 
 onMounted(async () => {
   try {
-    const settings = await getPublicSettings()
-    invitationCodeEnabled.value = settings.invitation_code_enabled === true
-    emailVerifyEnabled.value = settings.email_verify_enabled !== false
+    const settings = await authQueryStore.getPublicSettings()
+    invitationCodeEnabled.value = settings.invitationCodeEnabled === true
+    emailVerifyEnabled.value = settings.emailVerifyEnabled !== false
     const verification = resolveHumanVerification(settings)
     turnstileEnabled.value = verification.external
     turnstileSiteKey.value = verification.siteKey

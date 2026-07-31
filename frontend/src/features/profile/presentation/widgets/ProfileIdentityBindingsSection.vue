@@ -71,13 +71,13 @@
                 class="grid gap-1 text-sm text-gray-500 dark:text-gray-400"
               >
                 <p
-                  v-if="item.provider !== 'email' && item.details?.display_name"
+                  v-if="item.provider !== 'email' && item.details?.displayName"
                   class="font-medium text-gray-700 dark:text-gray-200"
                 >
-                  {{ item.details.display_name }}
+                  {{ item.details.displayName }}
                 </p>
-                <p v-if="item.provider !== 'email' && item.details?.subject_hint">
-                  {{ item.details.subject_hint }}
+                <p v-if="item.provider !== 'email' && item.details?.subjectHint">
+                  {{ item.details.subjectHint }}
                 </p>
                 <p v-if="bindingCountLabel(item.details)">
                   {{ bindingCountLabel(item.details) }}
@@ -200,17 +200,14 @@ import {
   hasExplicitWeChatOAuthCapabilities,
   resolveWeChatOAuthStartStrict,
   type WeChatOAuthPublicSettings,
-} from '@/features/auth/data/datasources/authDatasource'
-import {
-  bindEmailIdentity,
-  sendEmailBindingCode,
-  startOAuthBinding,
-  unbindAuthIdentity,
-} from '@/features/profile/data/datasources/profileDatasource'
+} from '@/features/auth/presentation/utils/wechatOAuthResolver'
+import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import { useAppStore, useAuthStore } from '@/stores'
-import type { User, UserAuthBindingStatus, UserAuthProvider } from '@/types'
-
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import type { User } from '@/core/models/domain/user'
+import type { UserAuthBindingStatus } from '@/core/models/domain/userAuthBindingStatus'
+import type { UserAuthProvider } from '@/core/models/domain/userAuthProvider'
 type BindableProvider = Exclude<UserAuthProvider, 'email'>
 
 const props = withDefaults(
@@ -311,8 +308,8 @@ const legacyBindingNoteKeys: Record<string, string> = {
 function resolveLegacyCompatibleWeChatSettings(
   settings: WeChatOAuthPublicSettings | null | undefined
 ): (WeChatOAuthPublicSettings & {
-  wechat_oauth_open_enabled: boolean
-  wechat_oauth_mp_enabled: boolean
+  wechatOauthOpenEnabled: boolean
+  wechatOauthMpEnabled: boolean
 }) | null {
   if (!settings) {
     return null
@@ -322,14 +319,14 @@ function resolveLegacyCompatibleWeChatSettings(
     return settings
   }
 
-  if (typeof settings.wechat_oauth_enabled !== 'boolean') {
+  if (typeof settings.wechatOauthEnabled !== 'boolean') {
     return null
   }
 
   return {
     ...settings,
-    wechat_oauth_open_enabled: settings.wechat_oauth_enabled,
-    wechat_oauth_mp_enabled: settings.wechat_oauth_enabled,
+    wechatOauthOpenEnabled: settings.wechatOauthEnabled,
+    wechatOauthMpEnabled: settings.wechatOauthEnabled,
   }
 }
 
@@ -340,9 +337,9 @@ const wechatOAuthSettings = computed<WeChatOAuthPublicSettings | null>(() => {
   }
 
   return resolveLegacyCompatibleWeChatSettings({
-    wechat_oauth_enabled: props.wechatEnabled,
-    wechat_oauth_open_enabled: props.wechatOpenEnabled,
-    wechat_oauth_mp_enabled: props.wechatMpEnabled,
+    wechatOauthEnabled: props.wechatEnabled,
+    wechatOauthOpenEnabled: props.wechatOpenEnabled,
+    wechatOauthMpEnabled: props.wechatMpEnabled,
   })
 })
 
@@ -358,7 +355,7 @@ function normalizeBindingStatus(binding: boolean | UserAuthBindingStatus | undef
   if (typeof binding.bound === 'boolean') {
     return binding.bound
   }
-  return Boolean(binding.provider_subject || binding.issuer || binding.provider_key)
+  return Boolean(binding.providerSubject || binding.issuer || binding.providerKey)
 }
 
 function getBindingStatus(provider: UserAuthProvider): boolean {
@@ -367,10 +364,10 @@ function getBindingStatus(provider: UserAuthProvider): boolean {
 
 function getBindingStatusForUser(user: User | null | undefined, provider: UserAuthProvider): boolean {
   if (provider === 'email') {
-    if (typeof user?.email_bound === 'boolean') {
-      return user.email_bound
+    if (typeof user?.emailBound === 'boolean') {
+      return user.emailBound
     }
-    const nested = user?.auth_bindings?.email ?? user?.identity_bindings?.email
+    const nested = user?.authBindings?.email ?? user?.identityBindings?.email
     const normalized = normalizeBindingStatus(nested)
     return normalized ?? false
   }
@@ -380,13 +377,13 @@ function getBindingStatusForUser(user: User | null | undefined, provider: UserAu
     return directFlag
   }
 
-  const nested = user?.auth_bindings?.[provider] ?? user?.identity_bindings?.[provider]
+  const nested = user?.authBindings?.[provider] ?? user?.identityBindings?.[provider]
   const normalized = normalizeBindingStatus(nested)
   return normalized ?? false
 }
 
 function getBindingDetails(provider: UserAuthProvider): UserAuthBindingStatus | null {
-  const binding = currentUser.value?.auth_bindings?.[provider] ?? currentUser.value?.identity_bindings?.[provider]
+  const binding = currentUser.value?.authBindings?.[provider] ?? currentUser.value?.identityBindings?.[provider]
   if (!binding || typeof binding === 'boolean') {
     return null
   }
@@ -433,8 +430,8 @@ const providerItems = computed(() => [
     canBind:
       !getBindingStatus('linuxdo') &&
       isProviderEnabledForBinding('linuxdo') &&
-      (getBindingDetails('linuxdo')?.can_bind ?? true),
-    canUnbind: Boolean(getBindingStatus('linuxdo') && getBindingDetails('linuxdo')?.can_unbind),
+      (getBindingDetails('linuxdo')?.canBind ?? true),
+    canUnbind: Boolean(getBindingStatus('linuxdo') && getBindingDetails('linuxdo')?.canUnbind),
     details: getBindingDetails('linuxdo'),
   },
   {
@@ -444,8 +441,8 @@ const providerItems = computed(() => [
     canBind:
       !getBindingStatus('dingtalk') &&
       isProviderEnabledForBinding('dingtalk') &&
-      (getBindingDetails('dingtalk')?.can_bind ?? true),
-    canUnbind: Boolean(getBindingStatus('dingtalk') && getBindingDetails('dingtalk')?.can_unbind),
+      (getBindingDetails('dingtalk')?.canBind ?? true),
+    canUnbind: Boolean(getBindingStatus('dingtalk') && getBindingDetails('dingtalk')?.canUnbind),
     details: getBindingDetails('dingtalk'),
   },
   {
@@ -455,8 +452,8 @@ const providerItems = computed(() => [
     canBind:
       !getBindingStatus('oidc') &&
       isProviderEnabledForBinding('oidc') &&
-      (getBindingDetails('oidc')?.can_bind ?? true),
-    canUnbind: Boolean(getBindingStatus('oidc') && getBindingDetails('oidc')?.can_unbind),
+      (getBindingDetails('oidc')?.canBind ?? true),
+    canUnbind: Boolean(getBindingStatus('oidc') && getBindingDetails('oidc')?.canUnbind),
     details: getBindingDetails('oidc'),
   },
   {
@@ -466,8 +463,8 @@ const providerItems = computed(() => [
     canBind:
       !getBindingStatus('wechat') &&
       isProviderEnabledForBinding('wechat') &&
-      (getBindingDetails('wechat')?.can_bind ?? true),
-    canUnbind: Boolean(getBindingStatus('wechat') && getBindingDetails('wechat')?.can_unbind),
+      (getBindingDetails('wechat')?.canBind ?? true),
+    canUnbind: Boolean(getBindingStatus('wechat') && getBindingDetails('wechat')?.canUnbind),
     details: getBindingDetails('wechat'),
   },
 ])
@@ -512,10 +509,10 @@ function providerSummary(provider: UserAuthProvider): string {
 }
 
 function bindingCountLabel(details: UserAuthBindingStatus | null): string {
-  if (!details || typeof details.bound_count !== 'number' || details.bound_count <= 1) {
+  if (!details || typeof details.boundCount !== 'number' || details.boundCount <= 1) {
     return ''
   }
-  return t('profile.authBindings.boundCount', { count: details.bound_count })
+  return t('profile.authBindings.boundCount', { count: details.boundCount })
 }
 
 function bindingNote(details: UserAuthBindingStatus | null): string {
@@ -523,7 +520,7 @@ function bindingNote(details: UserAuthBindingStatus | null): string {
     return ''
   }
 
-  const noteKey = details.note_key?.trim() || legacyBindingNoteKeys[details.note?.trim() || ''] || ''
+  const noteKey = details.noteKey?.trim() || legacyBindingNoteKeys[details.note?.trim() || ''] || ''
   if (noteKey) {
     const translated = t(noteKey)
     if (translated !== noteKey) {
@@ -543,7 +540,7 @@ function hasBindingDetails(
   }
 
   const showsProviderIdentityDetails =
-    provider !== 'email' && Boolean(details.display_name || details.subject_hint)
+    provider !== 'email' && Boolean(details.displayName || details.subjectHint)
 
   return Boolean(showsProviderIdentityDetails || bindingCountLabel(details) || bindingNote(details))
 }
@@ -556,7 +553,7 @@ function startBinding(provider: UserAuthProvider): void {
   if (provider === 'email') {
     return
   }
-  startOAuthBinding(provider, {
+  useProfileActionStore().startOAuthBinding(provider, {
     redirectTo: route.fullPath || '/profile',
     wechatOAuthSettings: provider === 'wechat' ? wechatOAuthSettings.value : null,
   })
@@ -570,7 +567,7 @@ function applyUpdatedUser(user: User): void {
 async function handleUnbind(provider: BindableProvider, providerLabel: string): Promise<void> {
   unbindingProvider.value = provider
   try {
-    const user = await unbindAuthIdentity(provider)
+    const user = await useProfileActionStore().unbindAuthIdentity(provider)
     applyUpdatedUser(user)
     appStore.showSuccess(t('profile.authBindings.unbindSuccess', { providerName: providerLabel }))
   } catch (error) {
@@ -618,7 +615,7 @@ async function sendEmailCode(): Promise<void> {
 
   isSendingEmailCode.value = true
   try {
-    await sendEmailBindingCode(emailBindingForm.email)
+    await useProfileActionStore().sendEmailBindingCode(emailBindingForm.email)
     appStore.showSuccess(t('profile.authBindings.codeSentTo', { email: emailBindingForm.email }))
   } catch (error) {
     appStore.showError((error as { message?: string }).message || t('auth.sendCodeFailed'))
@@ -634,7 +631,7 @@ async function bindEmail(): Promise<void> {
 
   isBindingEmail.value = true
   try {
-    const user = await bindEmailIdentity({
+    const user = await useProfileActionStore().bindEmailIdentity({
       email: emailBindingForm.email,
       verify_code: emailBindingForm.verifyCode,
       password: emailBindingForm.password,

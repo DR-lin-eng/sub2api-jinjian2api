@@ -51,8 +51,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { getLocalCaptcha } from '@/features/auth/data/datasources/authDatasource'
 import Icon from '@/common/widgets/icons/Icon.vue'
+import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
 
 withDefaults(defineProps<{
   captchaId: string
@@ -70,6 +70,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const authQuery = useAuthQueryStore()
 const imageData = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
@@ -88,9 +89,9 @@ async function reload(): Promise<void> {
   emit('update:captchaId', '')
   emit('update:captchaCode', '')
   try {
-    const challenge = await getLocalCaptcha()
-    imageData.value = challenge.image_data
-    emit('update:captchaId', challenge.captcha_id)
+    const challenge = await authQuery.getLocalCaptcha()
+    imageData.value = challenge.imageData
+    emit('update:captchaId', challenge.captchaId)
   } catch {
     errorMessage.value = t('auth.localCaptchaLoadFailed')
   } finally {

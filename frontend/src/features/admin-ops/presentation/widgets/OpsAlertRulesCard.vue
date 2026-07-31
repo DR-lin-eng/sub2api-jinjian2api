@@ -1,22 +1,24 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Select, { type SelectOption } from '@/common/widgets/forms/Select.vue'
-import { adminAPI } from '@/api'
-import { opsAPI } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import type { AlertRule, MetricType, Operator } from '../opsTypeSignals'
-import type { OpsSeverity } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import { formatCompactNumber, formatDateTime, formatExactNumber } from '../opsFormatter'
+import { useAdminGroupsQueryStore } from '@/features/admin-groups/presentation/stores/adminGroupsQueryStore'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
+import { useAdminOpsActionStore } from '@/features/admin-ops/presentation/stores/adminOpsActionStore'
+import { AlertRule } from '@/features/admin-ops/domain/models/alertRule'
+import type { MetricType, Operator } from '@/features/admin-ops/enums/alertEnums'
+import type { OpsSeverity } from '@/features/admin-ops/presentation/utils/opsFormatter'
+import type { CreateAlertRuleRequest } from '@/features/admin-ops/data/requests_models/createAlertRuleRequest'
+import type { UpdateAlertRuleRequest } from '@/features/admin-ops/data/requests_models/updateAlertRuleRequest'
+import { formatCompactNumber, formatDateTime, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 const { t } = useI18n()
 const appStore = useAppStore()
-
-// 与 DataTable 一致：< 768px 切换为卡片视图，避免宽表在移动端被截断。
-const isDesktopViewport = useMediaQuery('(min-width: 768px)')
+const actionStore = useAdminOpsActionStore()
 
 const loading = ref(false)
 const rules = ref<AlertRule[]>([])
@@ -24,7 +26,7 @@ const rules = ref<AlertRule[]>([])
 async function load() {
   loading.value = true
   try {
-    rules.value = await opsAPI.listAlertRules()
+    rules.value = await queryStore.listAlertRules()
   } catch (err: any) {
     console.error('[OpsAlertRulesCard] Failed to load rules', err)
     appStore.showError(err?.response?.data?.detail || t('admin.ops.alertRules.loadFailed'))
@@ -77,8 +79,8 @@ const groupOptionsBase = ref<SelectOption[]>([])
 
 async function loadGroups() {
   try {
-    const list = await adminAPI.groups.getAll()
-    groupOptionsBase.value = list.map((g) => ({ value: g.id, label: g.name }))
+    const list = await useAdminGroupsQueryStore().getAll()
+    groupOptionsBase.value = list.map((g: any) => ({ value: g.id, label: g.name }))
   } catch (err) {
     console.error('[OpsAlertRulesCard] Failed to load groups', err)
     groupOptionsBase.value = []
@@ -86,26 +88,23 @@ async function loadGroups() {
 }
 
 const isGroupMetricSelected = computed(() => {
-  const metricType = draft.value?.metric_type
+  const metricType = draft.value?.metricType
   return metricType ? groupMetricTypes.has(metricType) : false
 })
 
 const draftGroupId = computed<number | null>({
   get() {
-    return parsePositiveInt(draft.value?.filters?.group_id)
+    return parsePositiveInt(draft.value?.filters?.groupId)
   },
   set(value) {
     if (!draft.value) return
     if (value == null) {
       if (!draft.value.filters) return
-      delete draft.value.filters.group_id
-      if (Object.keys(draft.value.filters).length === 0) {
-        delete draft.value.filters
-      }
+      delete draft.value.filters.groupId
       return
     }
     if (!draft.value.filters) draft.value.filters = {}
-    draft.value.filters.group_id = value
+    draft.value.filters.groupId = value
   }
 })
 
@@ -245,7 +244,7 @@ const metricDefinitions = computed(() => {
 })
 
 const selectedMetricDefinition = computed(() => {
-  const metricType = draft.value?.metric_type
+  const metricType = draft.value?.metricType
   if (!metricType) return null
   return metricDefinitions.value.find((m) => m.type === metricType) ?? null
 })
@@ -285,19 +284,24 @@ const windowOptions = computed(() => {
 })
 
 function newRuleDraft(): AlertRule {
-  return {
-    name: '',
-    description: '',
-    enabled: true,
-    metric_type: 'error_rate',
-    operator: '>',
-    threshold: 1,
-    window_minutes: 1,
-    sustained_minutes: 2,
-    severity: 'P1',
-    cooldown_minutes: 10,
-    notify_email: true
-  }
+  const r = new AlertRule()
+  r.id = 0
+  r.name = ''
+  r.description = ''
+  r.enabled = true
+  r.metricType = 'error_rate'
+  r.operator = '>'
+  r.threshold = 1
+  r.windowMinutes = 1
+  r.sustainedMinutes = 2
+  r.severity = 'P1'
+  r.cooldownMinutes = 10
+  r.notifyEmail = true
+  r.filters = {}
+  r.createdAt = ''
+  r.updatedAt = ''
+  r.lastTriggeredAt = ''
+  return r
 }
 
 function openCreate() {
@@ -317,20 +321,20 @@ const editorValidation = computed(() => {
   const r = draft.value
   if (!r) return { valid: true, errors }
   if (!r.name || !r.name.trim()) errors.push(t('admin.ops.alertRules.validation.nameRequired'))
-  if (!r.metric_type) errors.push(t('admin.ops.alertRules.validation.metricRequired'))
-  if (groupMetricTypes.has(r.metric_type) && !parsePositiveInt(r.filters?.group_id)) {
+  if (!r.metricType) errors.push(t('admin.ops.alertRules.validation.metricRequired'))
+  if (groupMetricTypes.has(r.metricType) && !parsePositiveInt(r.filters?.groupId)) {
     errors.push(t('admin.ops.alertRules.validation.groupIdRequired'))
   }
   if (!r.operator) errors.push(t('admin.ops.alertRules.validation.operatorRequired'))
   if (!(typeof r.threshold === 'number' && Number.isFinite(r.threshold)))
     errors.push(t('admin.ops.alertRules.validation.thresholdRequired'))
-  if (!(typeof r.window_minutes === 'number' && Number.isFinite(r.window_minutes) && [1, 5, 60].includes(r.window_minutes))) {
+  if (!(typeof r.windowMinutes === 'number' && Number.isFinite(r.windowMinutes) && [1, 5, 60].includes(r.windowMinutes))) {
     errors.push(t('admin.ops.alertRules.validation.windowRange'))
   }
-  if (!(typeof r.sustained_minutes === 'number' && Number.isFinite(r.sustained_minutes) && r.sustained_minutes >= 1 && r.sustained_minutes <= 1440)) {
+  if (!(typeof r.sustainedMinutes === 'number' && Number.isFinite(r.sustainedMinutes) && r.sustainedMinutes >= 1 && r.sustainedMinutes <= 1440)) {
     errors.push(t('admin.ops.alertRules.validation.sustainedRange'))
   }
-  if (!(typeof r.cooldown_minutes === 'number' && Number.isFinite(r.cooldown_minutes) && r.cooldown_minutes >= 0 && r.cooldown_minutes <= 1440)) {
+  if (!(typeof r.cooldownMinutes === 'number' && Number.isFinite(r.cooldownMinutes) && r.cooldownMinutes >= 0 && r.cooldownMinutes <= 1440)) {
     errors.push(t('admin.ops.alertRules.validation.cooldownRange'))
   }
   return { valid: errors.length === 0, errors }
@@ -344,10 +348,18 @@ async function save() {
   }
   saving.value = true
   try {
+    const d = draft.value
+    const ruleReq: CreateAlertRuleRequest = {
+      name: d.name, description: d.description, enabled: d.enabled,
+      metric_type: d.metricType, operator: d.operator, threshold: d.threshold,
+      window_minutes: d.windowMinutes, sustained_minutes: d.sustainedMinutes,
+      severity: d.severity, cooldown_minutes: d.cooldownMinutes, notify_email: d.notifyEmail,
+      filters: d.filters,
+    }
     if (editingId.value) {
-      await opsAPI.updateAlertRule(editingId.value, draft.value)
+      await actionStore.updateAlertRule(editingId.value, ruleReq as UpdateAlertRuleRequest)
     } else {
-      await opsAPI.createAlertRule(draft.value)
+      await actionStore.createAlertRule(ruleReq)
     }
     showEditor.value = false
     draft.value = null
@@ -373,7 +385,7 @@ function requestDelete(rule: AlertRule) {
 async function confirmDelete() {
   if (!pendingDelete.value?.id) return
   try {
-    await opsAPI.deleteAlertRule(pendingDelete.value.id)
+    await actionStore.deleteAlertRule(pendingDelete.value.id)
     showDeleteConfirm.value = false
     pendingDelete.value = null
     await load()
@@ -392,7 +404,7 @@ function cancelDelete() {
 
 <template>
   <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-gray-900/5 dark:bg-dark-800 dark:ring-dark-700">
-    <div class="mb-4 flex flex-wrap items-start justify-between gap-3 sm:gap-4">
+    <div class="mb-4 flex items-start justify-between gap-4">
       <div>
         <h3 class="text-sm font-bold text-gray-900 dark:text-white">{{ t('admin.ops.alertRules.title') }}</h3>
         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('admin.ops.alertRules.description') }}</p>
@@ -425,37 +437,7 @@ function cancelDelete() {
 
     <div v-else class="max-h-[520px] overflow-hidden rounded-xl border border-gray-200 dark:border-dark-700">
       <div class="max-h-[520px] overflow-y-auto">
-        <div v-if="!isDesktopViewport" class="divide-y divide-gray-100 dark:divide-dark-800">
-          <div v-for="row in sortedRules" :key="row.id" class="space-y-2 p-4">
-            <div class="flex items-start justify-between gap-2">
-              <div class="min-w-0">
-                <div class="text-xs font-bold text-gray-900 dark:text-white">{{ row.name }}</div>
-                <div v-if="row.description" class="mt-0.5 line-clamp-2 text-[11px] text-gray-500 dark:text-gray-400">
-                  {{ row.description }}
-                </div>
-              </div>
-              <span class="shrink-0 text-xs font-bold text-gray-700 dark:text-gray-200">{{ row.severity }}</span>
-            </div>
-            <div class="text-xs text-gray-700 dark:text-gray-200">
-              <span class="font-mono">{{ row.metric_type }}</span>
-              <span class="mx-1 text-gray-400">{{ row.operator }}</span>
-              <span class="font-mono">{{ row.threshold }}</span>
-            </div>
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-xs text-gray-700 dark:text-gray-200">
-                {{ row.enabled ? t('common.enabled') : t('common.disabled') }}
-              </span>
-              <div class="flex items-center gap-2">
-                <button class="btn btn-sm btn-secondary" @click="openEdit(row)">{{ t('common.edit') }}</button>
-                <button class="btn btn-sm btn-danger" @click="requestDelete(row)">{{ t('common.delete') }}</button>
-              </div>
-            </div>
-            <div v-if="row.updated_at" class="text-[10px] text-gray-400">
-              {{ formatDateTime(row.updated_at) }}
-            </div>
-          </div>
-        </div>
-        <table v-else class="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
           <thead class="sticky top-0 z-10 bg-gray-50 dark:bg-dark-900">
             <tr>
               <th class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -482,12 +464,12 @@ function cancelDelete() {
                 <div v-if="row.description" class="mt-0.5 line-clamp-2 text-[11px] text-gray-500 dark:text-gray-400">
                   {{ row.description }}
                 </div>
-                <div v-if="row.updated_at" class="mt-1 text-[10px] text-gray-400">
-                  {{ formatDateTime(row.updated_at) }}
+                <div v-if="row.updatedAt" class="mt-1 text-[10px] text-gray-400">
+                  {{ formatDateTime(row.updatedAt) }}
                 </div>
               </td>
               <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-700 dark:text-gray-200">
-                <span class="font-mono">{{ row.metric_type }}</span>
+                <span class="font-mono">{{ row.metricType }}</span>
                 <span class="mx-1 text-gray-400">{{ row.operator }}</span>
                 <span class="font-mono tabular-nums" :title="formatExactNumber(row.threshold)">{{ formatCompactNumber(row.threshold, 2) }}</span>
               </td>
@@ -534,7 +516,7 @@ function cancelDelete() {
 
           <div>
             <label class="input-label">{{ t('admin.ops.alertRules.form.metric') }}</label>
-            <Select v-model="draft!.metric_type" :options="metricOptions" />
+            <Select v-model="draft!.metricType" :options="metricOptions" />
             <div v-if="selectedMetricDefinition" class="mt-1 space-y-0.5 text-xs text-gray-500 dark:text-gray-400">
               <p>{{ selectedMetricDefinition.description }}</p>
               <p>
@@ -583,17 +565,17 @@ function cancelDelete() {
 
           <div>
             <label class="input-label">{{ t('admin.ops.alertRules.form.window') }}</label>
-            <Select v-model="draft!.window_minutes" :options="windowOptions" />
+            <Select v-model="draft!.windowMinutes" :options="windowOptions" />
           </div>
 
           <div>
             <label class="input-label">{{ t('admin.ops.alertRules.form.sustained') }}</label>
-            <input v-model.number="draft!.sustained_minutes" class="input" type="number" min="1" max="1440" />
+            <input v-model.number="draft!.sustainedMinutes" class="input" type="number" min="1" max="1440" />
           </div>
 
           <div>
             <label class="input-label">{{ t('admin.ops.alertRules.form.cooldown') }}</label>
-            <input v-model.number="draft!.cooldown_minutes" class="input" type="number" min="0" max="1440" />
+            <input v-model.number="draft!.cooldownMinutes" class="input" type="number" min="0" max="1440" />
           </div>
 
           <div class="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 dark:bg-dark-800/50 md:col-span-2">
@@ -603,7 +585,7 @@ function cancelDelete() {
 
           <div class="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 dark:bg-dark-800/50 md:col-span-2">
             <span class="text-xs font-bold text-gray-700 dark:text-gray-200">{{ t('admin.ops.alertRules.form.notifyEmail') }}</span>
-            <input v-model="draft!.notify_email" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+            <input v-model="draft!.notifyEmail" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
           </div>
         </div>
       </div>

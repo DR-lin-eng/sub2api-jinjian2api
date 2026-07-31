@@ -1,4 +1,4 @@
-import type { PublicSettings } from '@/types'
+import type { PublicSettings } from '@/core/models/domain/publicSettings'
 
 export type ExternalHumanVerificationProvider = 'turnstile' | 'recaptcha' | 'cap'
 export type HumanVerificationProvider = 'none' | 'local' | ExternalHumanVerificationProvider
@@ -12,34 +12,34 @@ export interface HumanVerificationConfig {
 }
 
 export function resolveHumanVerification(settings: PublicSettings): HumanVerificationConfig {
-  if (settings.turnstile_enabled) {
+  if (settings.turnstileEnabled) {
     return {
       provider: 'turnstile',
       externalProvider: 'turnstile',
       external: true,
-      siteKey: settings.turnstile_site_key || '',
+      siteKey: settings.turnstileSiteKey || '',
       apiEndpoint: ''
     }
   }
-  if (settings.recaptcha_enabled) {
+  if (settings.recaptchaEnabled) {
     return {
       provider: 'recaptcha',
       externalProvider: 'recaptcha',
       external: true,
-      siteKey: settings.recaptcha_site_key || '',
+      siteKey: settings.recaptchaSiteKey || '',
       apiEndpoint: ''
     }
   }
-  if (settings.cap_enabled) {
+  if (settings.capEnabled) {
     return {
       provider: 'cap',
       externalProvider: 'cap',
       external: true,
       siteKey: '',
-      apiEndpoint: settings.cap_api_endpoint || ''
+      apiEndpoint: settings.capApiEndpoint || ''
     }
   }
-  if (settings.local_captcha_enabled) {
+  if (settings.localCaptchaEnabled) {
     return { provider: 'local', externalProvider: 'turnstile', external: false, siteKey: '', apiEndpoint: '' }
   }
   return { provider: 'none', externalProvider: 'turnstile', external: false, siteKey: '', apiEndpoint: '' }

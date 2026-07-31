@@ -3,10 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const { post } = vi.hoisted(() => ({ post: vi.fn() }))
 vi.mock('@/core/networks/client', () => ({ apiClient: { post } }))
 
-import {
-  getDashboardApiKeysPendingUsage,
-  getDashboardApiKeysUsage,
-} from '../data/datasources/usageDatasource'
+import { usageQueryDatasource } from '@/features/usage/data/datasources/usageQueryDatasource'
 
 describe('getDashboardApiKeysUsage', () => {
   beforeEach(() => {
@@ -15,9 +12,10 @@ describe('getDashboardApiKeysUsage', () => {
   })
 
   it('sends the selected inclusive date range with owned key IDs', async () => {
-    await getDashboardApiKeysUsage([4, 9], {
-      startDate: '2026-07-01',
-      endDate: '2026-07-07'
+    await usageQueryDatasource.getDashboardApiKeysUsage({
+      api_key_ids: [4, 9],
+      start_date: '2026-07-01',
+      end_date: '2026-07-07',
     })
 
     expect(post).toHaveBeenCalledWith(
@@ -25,19 +23,9 @@ describe('getDashboardApiKeysUsage', () => {
       expect.objectContaining({
         api_key_ids: [4, 9],
         start_date: '2026-07-01',
-        end_date: '2026-07-07'
+        end_date: '2026-07-07',
       }),
-      { signal: undefined }
-    )
-  })
-
-  it('uses the lightweight pending usage endpoint without a historical range', async () => {
-    await getDashboardApiKeysPendingUsage([4, 9])
-
-    expect(post).toHaveBeenCalledWith(
-      '/usage/dashboard/api-keys-pending-usage',
-      { api_key_ids: [4, 9] },
-      { signal: undefined }
+      { signal: undefined },
     )
   })
 })

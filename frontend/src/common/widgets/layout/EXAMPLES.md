@@ -41,7 +41,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AppLayout } from '@/common/widgets/layout'
+import { AppLayout } from '@/components/layout'
 import { useAuthStore } from '@/stores'
 
 const authStore = useAuthStore()
@@ -110,7 +110,7 @@ const balance = computed(() => authStore.user?.balance.toFixed(2) || '0.00')
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { AuthLayout } from '@/common/widgets/layout'
+import { AuthLayout } from '@/components/layout'
 import { useAuthStore, useAppStore } from '@/stores'
 
 const router = useRouter()
@@ -208,7 +208,7 @@ async function handleSubmit() {
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { AppLayout } from '@/common/widgets/layout'
+import { AppLayout } from '@/components/layout'
 import type { ApiKey } from '@/types'
 
 const showCreateModal = ref(false)
@@ -276,7 +276,7 @@ const apiKeys = ref<ApiKey[]>([])
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { AppLayout } from '@/common/widgets/layout'
+import { AppLayout } from '@/components/layout'
 import type { User } from '@/types'
 
 const showCreateUser = ref(false)
@@ -386,7 +386,7 @@ const users = ref<User[]>([])
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { AppLayout } from '@/common/widgets/layout'
+import { AppLayout } from '@/components/layout'
 import { useAuthStore, useAppStore } from '@/stores'
 
 const authStore = useAuthStore()

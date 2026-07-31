@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 
 // Mock i18n
-vi.mock('@/core/i18n', () => ({
+vi.mock('@/i18n', () => ({
   i18n: {
     global: {
       t: (key: string) => key,

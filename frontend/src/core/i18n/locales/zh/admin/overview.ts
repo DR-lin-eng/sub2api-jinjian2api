@@ -439,7 +439,6 @@ export default {
         selectUser: '选择 {email}',
         enableConcurrency: '修改并发数',
         enableRPMLimit: '修改 RPM 限制',
-        enableSchedulingTier: '修改调度等级',
         unlimited: '不限制',
         nonNegativeInteger: '请输入非负整数。',
         apply: '应用限制',
@@ -447,7 +446,6 @@ export default {
         concurrencyValue: '并发数：{value}',
         rpmValue: 'RPM：{value}',
         rpmUnlimitedValue: 'RPM：不限制',
-        schedulingTierValue: '调度等级：{value}',
         confirm: '确定覆盖 {count} 个用户的限制吗？\n{fields}',
         success: '已更新 {count} 个用户的限制',
         failed: '批量更新用户限制失败'
@@ -459,7 +457,6 @@ export default {
       searchUsers: '邮箱/用户名/备注/API Key 模糊搜索',
       roleFilter: '角色筛选',
       allRoles: '全部角色',
-      allSchedulingTiers: '全部调度等级',
       allStatus: '全部状态',
       allGroups: '全部分组',
       searchGroups: '搜索分组...',
@@ -501,7 +498,6 @@ export default {
         username: '用户名',
         notes: '备注',
         role: '角色',
-        schedulingTier: '调度等级',
         groups: '分组',
         subscriptions: '订阅分组',
         balance: '余额',
@@ -560,11 +556,6 @@ export default {
         admin: '管理员',
         user: '用户'
       },
-      schedulingTiers: {
-        priority: '优先',
-        normal: '普通',
-        low: '低调度'
-      },
       form: {
         emailLabel: '邮箱',
         emailPlaceholder: '请输入邮箱',
@@ -583,9 +574,7 @@ export default {
         selectStatus: '选择状态',
         rpmLimit: '每分钟请求数 (RPM)',
         rpmLimitPlaceholder: '0 表示不限制',
-        rpmLimitHint: '该用户每分钟最大请求数，0 = 不限制；仅在所用分组未设置 rpm_limit 时作为兜底生效',
-        schedulingTier: '调度等级',
-        schedulingTierHint: '优先请求先获得空闲容量；低调度请求在容量不足时不会排队。'
+        rpmLimitHint: '该用户每分钟最大请求数，0 = 不限制；仅在所用分组未设置 rpm_limit 时作为兜底生效'
       },
       adjustBalance: '调整余额',
       adjustConcurrency: '调整并发数',
@@ -841,21 +830,6 @@ export default {
         rpmLimit: '每分钟请求数 (RPM)',
         rpmLimitPlaceholder: '0 表示不限制',
         rpmLimitHint: '每用户在本分组每分钟最大请求数，0 = 不限制；一旦设置即接管该用户的限流（覆盖用户级 rpm_limit）',
-        maxReasoningEffort: '推理强度上限',
-        maxReasoningEffortUnlimited: '不限制（跟随请求）',
-        maxReasoningEffortHint: '仅限制客户端主动请求的 OpenAI reasoning effort；超过上限时自动降档，不会为缺省请求主动开启推理。上限优先级高于推理强度映射。',
-        reasoningEffortMappings: '推理强度映射',
-        addReasoningEffortMapping: '添加映射',
-        removeReasoningEffortMapping: '删除映射',
-        reasoningEffortFrom: '请求值',
-        reasoningEffortTo: '转发值',
-        reasoningEffortFromPlaceholder: '请选择 A',
-        reasoningEffortToPlaceholder: '请选择 B',
-        fromRequired: '请选择请求值 A',
-        toRequired: '请选择转发值 B',
-        unsupportedFrom: '请求值不受当前平台支持',
-        unsupportedTo: '转发值不受当前平台支持',
-        duplicateFrom: '请求值 A 不能重复',
         exclusiveLabel: '专属分组',
         exclusiveHint: '专属分组，可以手动指定给用户',
         platformLabel: '平台限制',
@@ -1041,8 +1015,6 @@ export default {
         endpoint: '端点',
         targetPlatform: '目标平台',
         upstreamModel: '上游模型',
-        upstreamModelHint: '留空表示透传原始请求模型：前缀匹配下每个命中模型各自原样转发（如 deepseek-v4-flash、deepseek-v4-pro 分别转发）；填写则所有命中请求都固定转发该模型。',
-        passthroughRequestedModel: '原始请求模型（透传）',
         notes: '备注',
         enabled: '启用',
         preview: '预览',
@@ -1107,14 +1079,6 @@ export default {
         targetModel: '目标模型',
         targetModelPlaceholder: '例如: gpt-5.4',
         removeExactMapping: '删除精确映射'
-      },
-      openaiLive: {
-        title: 'OpenAI Live',
-        allow: '允许访问 Live',
-        hint: '启用后，此 OpenAI 分组的 API Key 可以创建并控制 Live 语音会话。默认关闭。运行 Sub2API 的服务端必须是 Apple Silicon Mac，并安装官方 ChatGPT App；客户端平台不受限制。',
-        unsupportedTitle: '当前服务端不支持 Live',
-        unsupportedMessage: '当前 Sub2API 服务端无法生成 Live 所需的设备证明，即使开启也不能使用。是否仍然开启？',
-        enableAnyway: '仍然开启'
       },
       invalidRequestFallback: {
         title: '无效请求兜底分组',

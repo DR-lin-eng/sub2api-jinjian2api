@@ -60,8 +60,8 @@
           <div class="min-w-0 flex-1">
             <ProviderCard
               :provider="p"
-              :enabled="isEnabled(p.provider_key)"
-              :available-types="getTypes(p.provider_key)"
+              :enabled="isEnabled(p.providerKey)"
+              :available-types="getTypes(p.providerKey)"
               @toggle-field="(field) => emit('toggleField', p, field)"
               @toggle-type="(type) => emit('toggleType', p, type)"
               @edit="emit('edit', p)"
@@ -97,9 +97,9 @@ import { useI18n } from 'vue-i18n'
 import { VueDraggable } from 'vue-draggable-plus'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import ProviderCard from './ProviderCard.vue'
-import type { ProviderInstance } from '@/types/payment'
-import type { TypeOption } from '../providerConfigSignals'
-import { getAvailableTypes } from '../providerConfigSignals'
+import type { ProviderInstance } from '@/features/admin-orders/domain/models/providerInstance'
+import type { TypeOption } from '@/features/billing/presentation/utils/providerConfigSignals'
+import { getAvailableTypes } from '@/features/billing/presentation/utils/providerConfigSignals'
 
 const props = defineProps<{
   providers: ProviderInstance[]
@@ -115,9 +115,9 @@ const emit = defineEmits<{
   create: []
   edit: [provider: ProviderInstance]
   delete: [provider: ProviderInstance]
-  toggleField: [provider: ProviderInstance, field: 'enabled' | 'refund_enabled' | 'allow_user_refund']
+  toggleField: [provider: ProviderInstance, field: 'enabled' | 'refundEnabled' | 'allowUserRefund']
   toggleType: [provider: ProviderInstance, type: string]
-  reorder: [providers: { id: number; sort_order: number }[]]
+  reorder: [providers: { id: number; sortOrder: number }[]]
 }>()
 
 const { t } = useI18n()
@@ -131,7 +131,7 @@ watch(() => props.providers, (val) => {
 function onDragEnd() {
   const updates = localProviders.value.map((p, idx) => ({
     id: p.id,
-    sort_order: idx,
+    sortOrder: idx,
   }))
   emit('reorder', updates)
 }

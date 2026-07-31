@@ -11,12 +11,7 @@
         @click.self="handleClose"
       >
         <!-- Modal panel -->
-        <div
-          ref="dialogRef"
-          :class="['modal-content', widthClasses]"
-          tabindex="-1"
-          @click.stop
-        >
+        <div ref="dialogRef" :class="['modal-content', widthClasses]" @click.stop>
           <!-- Header -->
           <div class="modal-header">
             <h3 :id="dialogId" class="modal-title">
@@ -60,7 +55,6 @@ const dialogRef = ref<HTMLElement | null>(null)
 let previousActiveElement: HTMLElement | null = null
 
 type DialogWidth = 'narrow' | 'normal' | 'wide' | 'extra-wide' | 'full'
-type InitialFocus = 'first' | 'dialog'
 
 interface Props {
   show: boolean
@@ -70,7 +64,6 @@ interface Props {
   closeOnClickOutside?: boolean
   showCloseButton?: boolean
   zIndex?: number
-  initialFocus?: InitialFocus
 }
 
 interface Emits {
@@ -82,8 +75,7 @@ const props = withDefaults(defineProps<Props>(), {
   closeOnEscape: true,
   closeOnClickOutside: false,
   showCloseButton: true,
-  zIndex: 50,
-  initialFocus: 'first'
+  zIndex: 50
 })
 
 const emit = defineEmits<Emits>()
@@ -132,11 +124,6 @@ watch(
       // 等待DOM更新后设置焦点到对话框
       await nextTick()
       if (dialogRef.value) {
-        if (props.initialFocus === 'dialog') {
-          dialogRef.value.focus({ preventScroll: true })
-          return
-        }
-
         const firstFocusable = dialogRef.value.querySelector<HTMLElement>(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         )

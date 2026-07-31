@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   parseFingerprintSignalsToRows,
   serializeFingerprintRowsToJSON,
-} from "../presentation/codexFingerprintSignals";
+} from "@/features/admin-accounts/presentation/utils/codexFingerprintSignals";
 
 describe("codex fingerprint signals 行编解码", () => {
   it("解析: 变体数组 → / 合并字符串", () => {

@@ -12,9 +12,9 @@
       <!-- Plans Table -->
       <DataTable :columns="planColumns" :data="plans" :loading="plansLoading">
         <template #cell-name="{ value, row }">
-          <span class="text-sm font-medium" :class="getPlanNameClass(row.group_id)">{{ value }}</span>
+          <span class="text-sm font-medium" :class="getPlanNameClass(row.groupId)">{{ value }}</span>
         </template>
-        <template #cell-group_id="{ value }">
+        <template #cell-groupId="{ value }">
           <span v-if="isGroupMissing(value)" class="text-sm">
             <span class="text-gray-400">#{{ value }}</span>
             <span class="ml-1 badge badge-danger">{{ t('payment.admin.groupMissing') }}</span>
@@ -23,7 +23,7 @@
             v-else-if="getGroup(value)"
             :name="getGroup(value)!.name"
             :platform="getGroup(value)!.platform"
-            :rate-multiplier="getGroup(value)!.rate_multiplier"
+            :rate-multiplier="getGroup(value)!.rateMultiplier"
           />
           <span v-else class="text-sm text-gray-400">-</span>
         </template>
@@ -31,13 +31,13 @@
           <div class="text-sm">
             <span class="font-medium text-gray-900 dark:text-white">{{ planCurrencySymbol(row.currency) }}{{ (value ?? 0).toFixed(2) }}</span>
             <span v-if="row.currency" class="ml-1 text-xs text-gray-400">{{ row.currency }}</span>
-            <span v-if="row.original_price" class="ml-1 text-xs text-gray-400 line-through">{{ planCurrencySymbol(row.currency) }}{{ row.original_price.toFixed(2) }}</span>
+            <span v-if="row.originalPrice" class="ml-1 text-xs text-gray-400 line-through">{{ planCurrencySymbol(row.currency) }}{{ row.originalPrice.toFixed(2) }}</span>
           </div>
         </template>
-        <template #cell-validity_days="{ value, row }">
-          <span class="text-sm">{{ value }} {{ t('payment.admin.' + (row.validity_unit || 'days')) }}</span>
+        <template #cell-validityDays="{ value, row }">
+          <span class="text-sm">{{ value }} {{ t('payment.admin.' + (row.validityUnit || 'days')) }}</span>
         </template>
-        <template #cell-for_sale="{ value, row }">
+        <template #cell-forSale="{ value, row }">
           <button
             type="button"
             :class="[
@@ -78,24 +78,29 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminPaymentAPI } from '@/features/admin-orders/data/datasources/adminPaymentDatasource'
-import type { AdminPaymentConfig } from '@/features/admin-orders/data/datasources/adminPaymentDatasource'
+import { useAdminOrdersQueryStore } from '@/features/admin-orders/presentation/stores/adminOrdersQueryStore'
+import { useAdminOrdersActionStore } from '@/features/admin-orders/presentation/stores/adminOrdersActionStore'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
-import adminAPI from '@/api/admin'
-import type { SubscriptionPlan } from '@/types/payment'
-import type { AdminGroup } from '@/types'
-import type { Column } from '@/common/types/uiTypes'
+import type { SubscriptionPlan } from '@/features/admin-orders/domain/models/subscriptionPlan'
+import type { AdminPaymentConfig } from '@/features/admin-orders/domain/models/adminPaymentConfig'
+import type { UpdateSubscriptionPlanRequest } from '@/features/admin-orders/data/requests_models/updateSubscriptionPlanRequest'
+import type { Column } from '@/common/widgets/types'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import DataTable from '@/common/widgets/data/DataTable.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
-import PlanEditDialog from '../widgets/PlanEditDialog.vue'
-import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
+import PlanEditDialog from '@/features/admin-orders/presentation/widgets/PlanEditDialog.vue'
+import { currencySymbol } from '@/features/billing/presentation/utils/currencyFormatter'
 import { platformTextClass } from '@/core/utils/platformColors'
+import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
 
+const $groups = useAdminGroups()
 const { t } = useI18n()
 const appStore = useAppStore()
+const queryStore = useAdminOrdersQueryStore()
+const actionStore = useAdminOrdersActionStore()
 
 function planCurrencySymbol(currency?: string): string {
   return currencySymbol(currency || 'USD')
@@ -108,14 +113,13 @@ const paymentConfig = ref<AdminPaymentConfig | null>(null)
 
 async function loadGroups() {
   try {
-    groups.value = await adminAPI.groups.getAll()
+    groups.value = await $groups.getAll()
   } catch { /* ignore */ }
 }
 
 async function loadPaymentConfig() {
   try {
-    const res = await adminPaymentAPI.getConfig()
-    paymentConfig.value = res.data
+    paymentConfig.value = await queryStore.fetchConfig()
   } catch { /* preview only */ }
 }
 
@@ -132,7 +136,6 @@ function getPlanNameClass(groupId: number): string {
   return group ? platformTextClass(group.platform) : 'text-gray-900 dark:text-white'
 }
 
-
 // ==================== Plans ====================
 
 const plansLoading = ref(false)
@@ -145,28 +148,22 @@ const deletingPlanId = ref<number | null>(null)
 const planColumns = computed((): Column[] => [
   { key: 'id', label: 'ID' },
   { key: 'name', label: t('payment.admin.planName') },
-  { key: 'group_id', label: t('payment.admin.group') },
+  { key: 'groupId', label: t('payment.admin.group') },
   { key: 'price', label: t('payment.admin.price') },
-  { key: 'validity_days', label: t('payment.admin.validity') },
-  { key: 'for_sale', label: t('payment.admin.forSale') },
-  { key: 'sort_order', label: t('payment.admin.sortOrder') },
+  { key: 'validityDays', label: t('payment.admin.validity') },
+  { key: 'forSale', label: t('payment.admin.forSale') },
+  { key: 'sortOrder', label: t('payment.admin.sortOrder') },
   { key: 'actions', label: t('common.actions') },
 ])
 
 async function loadPlans() {
   plansLoading.value = true
   try {
-    const res = await adminPaymentAPI.getPlans()
-    // Backend returns features as newline-separated string; parse to array
-    plans.value = (res.data || []).map((p: Omit<SubscriptionPlan, 'features'> & { features: string | string[] }) => ({
-      ...p,
-      features: typeof p.features === 'string'
-        ? p.features.split('\n').map((f: string) => f.trim()).filter(Boolean)
-        : (p.features || []),
-    }))
-  }
-  catch (err: unknown) { appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error'))) }
-  finally { plansLoading.value = false }
+    plans.value = await queryStore.fetchPlans()
+  } catch (err: unknown) {
+    appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error')))
+  } finally {
+    plansLoading.value = false }
 }
 
 function openPlanEdit(plan: SubscriptionPlan | null) {
@@ -174,22 +171,28 @@ function openPlanEdit(plan: SubscriptionPlan | null) {
   showPlanDialog.value = true
 }
 
-
-/** Quick toggle for_sale from the list */
 async function toggleForSale(plan: SubscriptionPlan) {
   try {
-    await adminPaymentAPI.updatePlan(plan.id, { for_sale: !plan.for_sale })
-    plan.for_sale = !plan.for_sale
+    const req: UpdateSubscriptionPlanRequest = { for_sale: !plan.forSale }
+    await actionStore.updatePlan(plan.id, req)
+    plan.forSale = !plan.forSale
   } catch (err: unknown) {
     appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error')))
   }
 }
 
 function confirmDeletePlan(plan: SubscriptionPlan) { deletingPlanId.value = plan.id; showDeletePlanDialog.value = true }
+
 async function handleDeletePlan() {
   if (!deletingPlanId.value) return
-  try { await adminPaymentAPI.deletePlan(deletingPlanId.value); appStore.showSuccess(t('common.deleted')); showDeletePlanDialog.value = false; loadPlans() }
-  catch (err: unknown) { appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error'))) }
+  try {
+    await actionStore.deletePlan(deletingPlanId.value)
+    appStore.showSuccess(t('common.deleted'))
+    showDeletePlanDialog.value = false
+    loadPlans()
+  } catch (err: unknown) {
+    appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error')))
+  }
 }
 
 // ==================== Lifecycle ====================

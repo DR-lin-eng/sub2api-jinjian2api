@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { opsAPI, type OpsAccountAvailabilityStatsResponse, type OpsConcurrencyStatsResponse, type OpsUserConcurrencyStatsResponse } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import { formatCompactNumber, formatExactNumber } from '../opsFormatter'
+import type { OpsConcurrencyStats } from '@/features/admin-ops/domain/models/opsConcurrencyStats'
+import type { OpsUserConcurrencyStats } from '@/features/admin-ops/domain/models/opsUserConcurrencyStats'
+import type { OpsAccountAvailabilityStats } from '@/features/admin-ops/domain/models/opsAccountAvailabilityStats'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
+import { formatCompactNumber, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 interface Props {
   platformFilter?: string
@@ -19,9 +23,9 @@ const { t } = useI18n()
 
 const loading = ref(false)
 const errorMessage = ref('')
-const concurrency = ref<OpsConcurrencyStatsResponse | null>(null)
-const availability = ref<OpsAccountAvailabilityStatsResponse | null>(null)
-const userConcurrency = ref<OpsUserConcurrencyStatsResponse | null>(null)
+const concurrency = ref<OpsConcurrencyStats | null>(null)
+const availability = ref<OpsAccountAvailabilityStats | null>(null)
+const userConcurrency = ref<OpsUserConcurrencyStats | null>(null)
 
 // 用户视图开关
 const showByUser = ref(false)
@@ -108,25 +112,25 @@ const platformRows = computed((): SummaryRow[] => {
   const platforms = new Set([...Object.keys(concStats), ...Object.keys(availStats)])
 
   return Array.from(platforms).map(platform => {
-    const conc = concStats[platform] || {}
-    const avail = availStats[platform] || {}
+    const conc = concStats[platform]
+    const avail = availStats[platform]
 
-    const totalAccounts = safeNumber(avail.total_accounts)
-    const availableAccounts = safeNumber(avail.available_count)
-    const totalConcurrency = safeNumber(conc.max_capacity)
-    const usedConcurrency = safeNumber(conc.current_in_use)
+    const totalAccounts = safeNumber(avail?.totalAccounts)
+    const availableAccounts = safeNumber(avail?.availableCount)
+    const totalConcurrency = safeNumber(conc?.maxCapacity)
+    const usedConcurrency = safeNumber(conc?.currentInUse)
 
     return {
       key: platform,
       name: platform.toUpperCase(),
       total_accounts: totalAccounts,
       available_accounts: availableAccounts,
-      rate_limited_accounts: safeNumber(avail.rate_limit_count),
+      rate_limited_accounts: safeNumber(avail?.rateLimitCount),
 
-      error_accounts: safeNumber(avail.error_count),
+      error_accounts: safeNumber(avail?.errorCount),
       total_concurrency: totalConcurrency,
       used_concurrency: usedConcurrency,
-      waiting_in_queue: safeNumber(conc.waiting_in_queue),
+      waiting_in_queue: safeNumber(conc?.waitingInQueue),
       availability_percentage: totalAccounts > 0 ? Math.round((availableAccounts / totalAccounts) * 100) : 0,
       concurrency_percentage: totalConcurrency > 0 ? Math.round((usedConcurrency / totalConcurrency) * 100) : 0
     }
@@ -142,31 +146,31 @@ const groupRows = computed((): SummaryRow[] => {
 
   const rows = Array.from(groupIds)
     .map(gid => {
-      const conc = concStats[gid] || {}
-      const avail = availStats[gid] || {}
+      const conc = concStats[gid]
+      const avail = availStats[gid]
 
       // 只显示匹配的平台
-      if (props.platformFilter && conc.platform !== props.platformFilter && avail.platform !== props.platformFilter) {
+      if (props.platformFilter && conc?.platform !== props.platformFilter && avail?.platform !== props.platformFilter) {
         return null
       }
 
-      const totalAccounts = safeNumber(avail.total_accounts)
-      const availableAccounts = safeNumber(avail.available_count)
-      const totalConcurrency = safeNumber(conc.max_capacity)
-      const usedConcurrency = safeNumber(conc.current_in_use)
+      const totalAccounts = safeNumber(avail?.totalAccounts)
+      const availableAccounts = safeNumber(avail?.availableCount)
+      const totalConcurrency = safeNumber(conc?.maxCapacity)
+      const usedConcurrency = safeNumber(conc?.currentInUse)
 
       return {
         key: gid,
-        name: String(conc.group_name || avail.group_name || `Group ${gid}`),
-        platform: String(conc.platform || avail.platform || ''),
+        name: String(conc?.groupName || avail?.groupName || `Group ${gid}`),
+        platform: String(conc?.platform || avail?.platform || ''),
         total_accounts: totalAccounts,
         available_accounts: availableAccounts,
-        rate_limited_accounts: safeNumber(avail.rate_limit_count),
-  
-        error_accounts: safeNumber(avail.error_count),
+        rate_limited_accounts: safeNumber(avail?.rateLimitCount),
+
+        error_accounts: safeNumber(avail?.errorCount),
         total_concurrency: totalConcurrency,
         used_concurrency: usedConcurrency,
-        waiting_in_queue: safeNumber(conc.waiting_in_queue),
+        waiting_in_queue: safeNumber(conc?.waitingInQueue),
         availability_percentage: totalAccounts > 0 ? Math.round((availableAccounts / totalAccounts) * 100) : 0,
         concurrency_percentage: totalConcurrency > 0 ? Math.round((usedConcurrency / totalConcurrency) * 100) : 0
       }
@@ -185,32 +189,32 @@ const accountRows = computed((): AccountRow[] => {
 
   const rows = Array.from(accountIds)
     .map(aid => {
-      const conc = concStats[aid] || {}
-      const avail = availStats[aid] || {}
+      const conc = concStats[aid]
+      const avail = availStats[aid]
 
       // 只显示匹配的分组
       if (typeof props.groupIdFilter === 'number' && props.groupIdFilter > 0) {
-        if (conc.group_id !== props.groupIdFilter && avail.group_id !== props.groupIdFilter) {
+        if (conc?.groupId !== props.groupIdFilter && avail?.groupId !== props.groupIdFilter) {
           return null
         }
       }
 
       return {
         key: aid,
-        name: String(conc.account_name || avail.account_name || `Account ${aid}`),
-        platform: String(conc.platform || avail.platform || ''),
-        group_name: String(conc.group_name || avail.group_name || ''),
-        current_in_use: safeNumber(conc.current_in_use),
-        max_capacity: safeNumber(conc.max_capacity),
-        waiting_in_queue: safeNumber(conc.waiting_in_queue),
-        load_percentage: safeNumber(conc.load_percentage),
-        is_available: avail.is_available || false,
-        is_rate_limited: avail.is_rate_limited || false,
-        rate_limit_remaining_sec: avail.rate_limit_remaining_sec,
-        is_overloaded: avail.is_overloaded || false,
-        overload_remaining_sec: avail.overload_remaining_sec,
-        has_error: avail.has_error || false,
-        error_message: avail.error_message || ''
+        name: String(conc?.accountName || avail?.accountName || `Account ${aid}`),
+        platform: String(conc?.platform || avail?.platform || ''),
+        group_name: String(conc?.groupName || avail?.groupName || ''),
+        current_in_use: safeNumber(conc?.currentInUse),
+        max_capacity: safeNumber(conc?.maxCapacity),
+        waiting_in_queue: safeNumber(conc?.waitingInQueue),
+        load_percentage: safeNumber(conc?.loadPercentage),
+        is_available: avail?.isAvailable || false,
+        is_rate_limited: avail?.isRateLimited || false,
+        rate_limit_remaining_sec: avail?.rateLimitRemainingSec,
+        is_overloaded: avail?.isOverloaded || false,
+        overload_remaining_sec: avail?.overloadRemainingSec,
+        has_error: avail?.hasError || false,
+        error_message: avail?.errorMessage || ''
       }
     })
     .filter((row): row is NonNullable<typeof row> => row !== null)
@@ -230,16 +234,16 @@ const userRows = computed((): UserRow[] => {
 
   return Object.keys(userStats)
     .map(uid => {
-      const u = userStats[uid] || {}
+      const u = userStats[uid]
       return {
         key: uid,
-        user_id: safeNumber(u.user_id),
-        user_email: u.user_email || `User ${uid}`,
-        username: u.username || '',
-        current_in_use: safeNumber(u.current_in_use),
-        max_capacity: safeNumber(u.max_capacity),
-        waiting_in_queue: safeNumber(u.waiting_in_queue),
-        load_percentage: safeNumber(u.load_percentage)
+        user_id: safeNumber(u?.userId),
+        user_email: u?.userEmail || `User ${uid}`,
+        username: u?.username || '',
+        current_in_use: safeNumber(u?.currentInUse),
+        max_capacity: safeNumber(u?.maxCapacity),
+        waiting_in_queue: safeNumber(u?.waitingInQueue),
+        load_percentage: safeNumber(u?.loadPercentage)
       }
     })
     .sort((a, b) => b.current_in_use - a.current_in_use || b.load_percentage - a.load_percentage)
@@ -266,13 +270,16 @@ async function loadData() {
   try {
     if (showByUser.value) {
       // 用户视图模式只加载用户并发数据
-      const userData = await opsAPI.getUserConcurrencyStats()
+      const userData = await queryStore.getUserConcurrencyStats()
       userConcurrency.value = userData
     } else {
       // 常规模式加载账号/平台/分组数据
-      const snapshot = await opsAPI.getConcurrencySnapshot(props.platformFilter, props.groupIdFilter)
-      concurrency.value = snapshot.concurrency
-      availability.value = snapshot.availability
+      const [concData, availData] = await Promise.all([
+        queryStore.getConcurrencyStats(props.platformFilter, props.groupIdFilter),
+        queryStore.getAccountAvailabilityStats(props.platformFilter, props.groupIdFilter)
+      ])
+      concurrency.value = concData
+      availability.value = availData
     }
   } catch (err: any) {
     console.error('[OpsConcurrencyCard] Failed to load data', err)

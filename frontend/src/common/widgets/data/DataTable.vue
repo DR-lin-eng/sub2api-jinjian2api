@@ -70,13 +70,12 @@
           <div
             v-for="column in dataColumns"
             :key="column.key"
-            :data-field="column.key"
-            class="flex min-w-0 items-start justify-between gap-4"
+            class="flex items-start justify-between gap-4"
           >
             <span class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-dark-400">
               {{ column.label }}
             </span>
-            <div class="min-w-0 max-w-full text-right text-sm text-gray-900 dark:text-gray-100">
+            <div class="text-right text-sm text-gray-900 dark:text-gray-100">
               <slot :name="`cell-${column.key}`" :row="row" :value="row[column.key]" :expanded="actionsExpanded">
                 {{ column.formatter ? column.formatter(row[column.key], row) : row[column.key] }}
               </slot>
@@ -266,7 +265,7 @@
 import { computed, ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useVirtualizer, observeElementRect as observeElementRectDefault } from '@tanstack/vue-virtual'
 import { useI18n } from 'vue-i18n'
-import type { Column } from '@/common/types/uiTypes'
+import type { Column } from '@/common/widgets/types'
 import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()

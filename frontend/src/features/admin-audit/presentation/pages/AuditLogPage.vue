@@ -27,7 +27,7 @@
 
               <div class="w-full sm:w-auto sm:min-w-[200px]">
                 <label class="input-label">{{ t('admin.audit.filters.actorEmail') }}</label>
-                <input v-model.trim="filters.actor_email" type="text" class="input" @keyup.enter="search" />
+                <input v-model.trim="filters.actorEmail" type="text" class="input" @keyup.enter="search" />
               </div>
 
               <div class="w-full sm:w-auto sm:min-w-[180px]">
@@ -37,7 +37,7 @@
 
               <div class="w-full sm:w-auto sm:min-w-[160px]">
                 <label class="input-label">{{ t('admin.audit.filters.clientIp') }}</label>
-                <input v-model.trim="filters.client_ip" type="text" class="input" @keyup.enter="search" />
+                <input v-model.trim="filters.clientIp" type="text" class="input" @keyup.enter="search" />
               </div>
 
               <div class="w-full sm:w-auto sm:min-w-[140px]">
@@ -47,7 +47,7 @@
 
               <div class="w-full sm:w-auto sm:min-w-[170px]">
                 <label class="input-label">{{ t('admin.audit.filters.authMethod') }}</label>
-                <Select v-model="filters.auth_method" :options="authMethodOptions" @change="search" />
+                <Select v-model="filters.authMethod" :options="authMethodOptions" @change="search" />
               </div>
 
               <div class="w-full sm:w-auto sm:min-w-[140px]">
@@ -85,17 +85,17 @@
       <!-- Table -->
       <template #table>
         <DataTable :columns="columns" :data="logs" :loading="loading" row-key="id">
-          <template #cell-created_at="{ value }">
+          <template #cell-createdAt="{ value }">
             <span class="whitespace-nowrap text-gray-600 dark:text-gray-300">{{ formatTime(value) }}</span>
           </template>
 
           <template #cell-actor="{ row }">
             <div class="min-w-0 max-w-[220px]">
-              <div class="truncate font-medium text-gray-900 dark:text-white" :title="row.actor_email">
-                {{ row.actor_email || '—' }}
+              <div class="truncate font-medium text-gray-900 dark:text-white" :title="row.actorEmail">
+                {{ row.actorEmail || '—' }}
               </div>
               <div class="mt-0.5 truncate text-xs text-gray-400">
-                {{ row.actor_role }}<span v-if="row.auth_method"> · {{ authMethodLabel(row.auth_method) }}</span>
+                {{ row.actorRole }}<span v-if="row.authMethod"> · {{ authMethodLabel(row.authMethod) }}</span>
               </div>
             </div>
           </template>
@@ -111,18 +111,18 @@
             </div>
           </template>
 
-          <template #cell-status_code="{ row }">
-            <span :class="statusBadgeClass(row.status_code)">
-              <span class="h-1.5 w-1.5 rounded-full" :class="statusDotClass(row.status_code)"></span>
-              {{ row.status_code }}
+          <template #cell-statusCode="{ row }">
+            <span :class="statusBadgeClass(row.statusCode)">
+              <span class="h-1.5 w-1.5 rounded-full" :class="statusDotClass(row.statusCode)"></span>
+              {{ row.statusCode }}
             </span>
           </template>
 
-          <template #cell-latency_ms="{ value }">
+          <template #cell-latencyMs="{ value }">
             <span class="whitespace-nowrap text-gray-500 dark:text-gray-400">{{ value }} ms</span>
           </template>
 
-          <template #cell-client_ip="{ value }">
+          <template #cell-clientIp="{ value }">
             <span class="whitespace-nowrap font-mono text-gray-600 dark:text-gray-300">{{ value || '—' }}</span>
           </template>
 
@@ -178,9 +178,9 @@
         <!-- Hero: action + result at a glance -->
         <div class="rounded-2xl border border-gray-200 bg-gray-50/60 p-5 dark:border-dark-700 dark:bg-dark-900/60">
           <div class="flex flex-wrap items-center gap-3">
-            <span :class="statusBadgeClass(detail.status_code)">
-              <span class="h-1.5 w-1.5 rounded-full" :class="statusDotClass(detail.status_code)"></span>
-              {{ detail.status_code }} {{ statusText(detail.status_code) }}
+            <span :class="statusBadgeClass(detail.statusCode)">
+              <span class="h-1.5 w-1.5 rounded-full" :class="statusDotClass(detail.statusCode)"></span>
+              {{ detail.statusCode }} {{ statusText(detail.statusCode) }}
             </span>
             <span class="break-all font-mono text-base font-semibold text-gray-900 dark:text-white">
               {{ detail.action }}
@@ -197,12 +197,12 @@
           <div class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs text-gray-500 dark:text-gray-400">
             <span class="inline-flex items-center gap-1.5">
               <Icon name="clock" size="xs" />
-              {{ formatTime(detail.created_at) }}
+              {{ formatTime(detail.createdAt) }}
             </span>
-            <span>{{ t('admin.audit.detail.latency') }} {{ detail.latency_ms }} ms</span>
-            <span v-if="detail.request_id" class="inline-flex items-center gap-1">
+            <span>{{ t('admin.audit.detail.latency') }} {{ detail.latencyMs }} ms</span>
+            <span v-if="detail.requestId" class="inline-flex items-center gap-1">
               {{ t('admin.audit.detail.requestId') }}
-              <span class="break-all font-mono">{{ detail.request_id }}</span>
+              <span class="break-all font-mono">{{ detail.requestId }}</span>
             </span>
           </div>
         </div>
@@ -214,9 +214,9 @@
               {{ t('admin.audit.columns.actor') }}
             </div>
             <div class="mt-1 break-all text-sm font-medium text-gray-900 dark:text-white">
-              {{ detail.actor_email || '—' }}
+              {{ detail.actorEmail || '—' }}
             </div>
-            <div class="mt-0.5 text-xs text-gray-400">{{ detail.actor_role }}</div>
+            <div class="mt-0.5 text-xs text-gray-400">{{ detail.actorRole }}</div>
           </div>
 
           <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-900">
@@ -224,10 +224,10 @@
               {{ t('admin.audit.filters.authMethod') }}
             </div>
             <div class="mt-1 text-sm font-medium text-gray-900 dark:text-white">
-              {{ authMethodLabel(detail.auth_method) || '—' }}
+              {{ authMethodLabel(detail.authMethod) || '—' }}
             </div>
-            <div v-if="detail.credential_masked" class="mt-0.5 break-all font-mono text-xs text-gray-400">
-              {{ detail.credential_masked }}
+            <div v-if="detail.credentialMasked" class="mt-0.5 break-all font-mono text-xs text-gray-400">
+              {{ detail.credentialMasked }}
             </div>
           </div>
 
@@ -236,7 +236,7 @@
               {{ t('admin.audit.columns.clientIp') }}
             </div>
             <div class="mt-1 break-all font-mono text-sm font-medium text-gray-900 dark:text-white">
-              {{ detail.client_ip || '—' }}
+              {{ detail.clientIp || '—' }}
             </div>
           </div>
         </div>
@@ -247,16 +247,16 @@
             {{ t('admin.audit.detail.userAgent') }}
           </h4>
           <div class="break-all rounded-xl bg-gray-50 p-3 font-mono text-xs leading-relaxed text-gray-600 dark:bg-dark-900 dark:text-gray-400">
-            {{ detail.user_agent || '—' }}
+            {{ detail.userAgent || '—' }}
           </div>
         </section>
 
         <!-- Request body (redacted) -->
-        <section v-if="detail.request_body">
+        <section v-if="detail.requestBody">
           <h4 class="mb-1.5 text-xs font-bold uppercase tracking-wider text-gray-400">
             {{ t('admin.audit.detail.requestBody') }}
           </h4>
-          <pre class="max-h-72 overflow-auto rounded-xl bg-gray-50 p-4 font-mono text-xs leading-relaxed text-gray-600 dark:bg-dark-900 dark:text-gray-400">{{ prettyBody(detail.request_body) }}</pre>
+          <pre class="max-h-72 overflow-auto rounded-xl bg-gray-50 p-4 font-mono text-xs leading-relaxed text-gray-600 dark:bg-dark-900 dark:text-gray-400">{{ prettyBody(detail.requestBody) }}</pre>
         </section>
 
         <!-- Extra -->
@@ -354,18 +354,21 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { adminAPI, type AuditLog } from '@/api/admin'
-import { totpAPI } from '@/api'
+import type { AuditLog } from '@/features/admin-audit/domain/models/auditLog'
+import type { AuditLogQuery } from '@/features/admin-audit/domain/models/auditLogQuery'
+import { useTotpQueryStore } from '@/features/profile/presentation/stores/totpQueryStore'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
 import DataTable from '@/common/widgets/data/DataTable.vue'
-import type { Column } from '@/common/types/uiTypes'
+import type { Column } from '@/common/widgets/types'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import { useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAdminAudit } from '@/features/admin-audit/presentation/composables/useAdminAudit'
+const $audit = useAdminAudit()
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -378,11 +381,11 @@ const pageSize = ref(20)
 
 const filters = reactive({
   q: '',
-  actor_email: '',
+  actorEmail: '',
   action: '',
-  client_ip: '',
+  clientIp: '',
   method: '',
-  auth_method: '',
+  authMethod: '',
   success: ''
 })
 
@@ -464,12 +467,12 @@ function handleCustomTimeRangeCancel() {
 }
 
 const columns = computed<Column[]>(() => [
-  { key: 'created_at', label: t('admin.audit.columns.time') },
+  { key: 'createdAt', label: t('admin.audit.columns.time') },
   { key: 'actor', label: t('admin.audit.columns.actor') },
   { key: 'action', label: t('admin.audit.columns.action') },
-  { key: 'status_code', label: t('admin.audit.columns.result') },
-  { key: 'latency_ms', label: t('admin.audit.detail.latency') },
-  { key: 'client_ip', label: t('admin.audit.columns.clientIp') },
+  { key: 'statusCode', label: t('admin.audit.columns.result') },
+  { key: 'latencyMs', label: t('admin.audit.detail.latency') },
+  { key: 'clientIp', label: t('admin.audit.columns.clientIp') },
   { key: 'actions', label: t('common.actions') }
 ])
 
@@ -506,28 +509,28 @@ function toRFC3339(local: string): string | undefined {
   return d.toISOString()
 }
 
-function buildTimeRangeQuery(): { start_time?: string; end_time?: string } {
+function buildTimeRangeQuery(): { startTime?: string; endTime?: string } {
   if (timeRange.value === 'custom') {
     return {
-      start_time: toRFC3339(customStartTime.value),
-      end_time: toRFC3339(customEndTime.value)
+      startTime: toRFC3339(customStartTime.value),
+      endTime: toRFC3339(customEndTime.value)
     }
   }
   const minutes = TIME_RANGE_MINUTES[timeRange.value]
   if (!minutes) return {}
-  return { start_time: new Date(Date.now() - minutes * 60 * 1000).toISOString() }
+  return { startTime: new Date(Date.now() - minutes * 60 * 1000).toISOString() }
 }
 
-function buildQuery() {
+function buildQuery(): AuditLogQuery {
   return {
     page: page.value,
-    page_size: pageSize.value,
+    pageSize: pageSize.value,
     q: filters.q || undefined,
-    actor_email: filters.actor_email || undefined,
+    actorEmail: filters.actorEmail || undefined,
     action: filters.action || undefined,
-    client_ip: filters.client_ip || undefined,
+    clientIp: filters.clientIp || undefined,
     method: filters.method || undefined,
-    auth_method: filters.auth_method || undefined,
+    authMethod: filters.authMethod || undefined,
     success: filters.success || undefined,
     ...buildTimeRangeQuery()
   }
@@ -536,7 +539,7 @@ function buildQuery() {
 async function fetchLogs() {
   loading.value = true
   try {
-    const res = await adminAPI.audit.list(buildQuery())
+    const res = await $audit.list(buildQuery())
     logs.value = res.items
     total.value = res.total
   } catch (err: any) {
@@ -553,11 +556,11 @@ function search() {
 
 function resetFilters() {
   filters.q = ''
-  filters.actor_email = ''
+  filters.actorEmail = ''
   filters.action = ''
-  filters.client_ip = ''
+  filters.clientIp = ''
   filters.method = ''
-  filters.auth_method = ''
+  filters.authMethod = ''
   filters.success = ''
   timeRange.value = ''
   customStartTime.value = ''
@@ -586,7 +589,7 @@ async function openDetail(id: number) {
   detailLoading.value = true
   detail.value = null
   try {
-    detail.value = await adminAPI.audit.get(id)
+    detail.value = await $audit.getById(id)
   } catch (err: any) {
     appStore.showError(err?.message || t('admin.audit.loadFailed'))
     detailVisible.value = false
@@ -616,7 +619,7 @@ async function openClearDialog() {
   if (checkingTotpStatus.value) return
   checkingTotpStatus.value = true
   try {
-    const status = await totpAPI.getStatus()
+    const status = await useTotpQueryStore().getStatus()
     if (!status.enabled) {
       appStore.showError(t('stepUp.notEnabled'))
       return
@@ -645,7 +648,7 @@ async function submitClear() {
   if (clearTotpCode.value.length !== 6) return
   clearing.value = true
   try {
-    const res = await adminAPI.audit.clear(clearTotpCode.value)
+    const res = await $audit.clear({ totp_code: clearTotpCode.value })
     clearTotpVisible.value = false
     appStore.showSuccess(t('admin.audit.clearConfirm.success', { count: res.deleted }))
     search()

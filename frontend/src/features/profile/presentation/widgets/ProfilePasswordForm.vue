@@ -74,10 +74,11 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { userAPI } from '@/api'
+import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const profileAction = useProfileActionStore()
 const props = withDefaults(defineProps<{
   embedded?: boolean
 }>(), {
@@ -104,7 +105,7 @@ const handleChangePassword = async () => {
 
   loading.value = true
   try {
-    await userAPI.changePassword(form.value.old_password, form.value.new_password)
+    await profileAction.changePassword({ old_password: form.value.old_password, new_password: form.value.new_password })
     form.value = { old_password: '', new_password: '', confirm_password: '' }
     appStore.showSuccess(t('profile.passwordChangeSuccess'))
   } catch (error: any) {

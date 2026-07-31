@@ -6,7 +6,7 @@ import {
   isBuiltInWxpayMethod,
   parseEasyPayCustomMethods,
   serializeEasyPayCustomMethods,
-} from '@/features/billing/presentation/providerConfigSignals'
+} from '@/features/billing/presentation/utils/providerConfigSignals'
 
 function findField(providerKey: string, key: string) {
   const fields = PROVIDER_CONFIG_FIELDS[providerKey] || []

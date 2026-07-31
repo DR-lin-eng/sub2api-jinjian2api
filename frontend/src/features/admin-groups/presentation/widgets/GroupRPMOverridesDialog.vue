@@ -11,7 +11,7 @@
         <span class="font-medium text-gray-900 dark:text-white">{{ group.name }}</span>
         <span class="text-gray-400">|</span>
         <span class="text-gray-600 dark:text-gray-400">
-          {{ t('admin.groups.groupRpmDefault') }}: {{ group.rpm_limit || 0 }}
+          {{ t('admin.groups.groupRpmDefault') }}: {{ group.rpmLimit || 0 }}
         </span>
       </div>
 
@@ -102,8 +102,8 @@
 
         <div v-else>
           <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-dark-600">
-            <div class="max-h-[420px] overflow-auto">
-              <table class="w-full min-w-max text-sm">
+            <div class="max-h-[420px] overflow-y-auto">
+              <table class="w-full text-sm">
                 <thead class="sticky top-0 z-[1]">
                   <tr class="border-b border-gray-200 bg-gray-50 dark:border-dark-600 dark:bg-dark-700">
                     <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">{{ t('admin.groups.columns.userEmail') }}</th>
@@ -118,23 +118,23 @@
                 <tbody class="divide-y divide-gray-100 dark:divide-dark-600">
                   <tr
                     v-for="entry in paginatedLocalEntries"
-                    :key="entry.user_id"
+                    :key="entry.userId"
                     class="hover:bg-gray-50 dark:hover:bg-dark-700/50"
                   >
-                    <td class="px-3 py-2 text-gray-600 dark:text-gray-400">{{ entry.user_email }}</td>
-                    <td class="whitespace-nowrap px-3 py-2 text-gray-400 dark:text-gray-500">{{ entry.user_id }}</td>
-                    <td class="whitespace-nowrap px-3 py-2 text-gray-900 dark:text-white">{{ entry.user_name || '-' }}</td>
-                    <td class="max-w-[160px] truncate px-3 py-2 text-gray-500 dark:text-gray-400" :title="entry.user_notes">{{ entry.user_notes || '-' }}</td>
+                    <td class="px-3 py-2 text-gray-600 dark:text-gray-400">{{ entry.userEmail }}</td>
+                    <td class="whitespace-nowrap px-3 py-2 text-gray-400 dark:text-gray-500">{{ entry.userId }}</td>
+                    <td class="whitespace-nowrap px-3 py-2 text-gray-900 dark:text-white">{{ entry.userName || '-' }}</td>
+                    <td class="max-w-[160px] truncate px-3 py-2 text-gray-500 dark:text-gray-400" :title="entry.userNotes">{{ entry.userNotes || '-' }}</td>
                     <td class="whitespace-nowrap px-3 py-2">
                       <span
                         :class="[
                           'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
-                          entry.user_status === 'active'
+                          entry.userStatus === 'active'
                             ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                             : 'bg-gray-100 text-gray-600 dark:bg-dark-600 dark:text-gray-400'
                         ]"
                       >
-                        {{ entry.user_status }}
+                        {{ entry.userStatus }}
                       </span>
                     </td>
                     <td class="whitespace-nowrap px-3 py-2">
@@ -143,16 +143,16 @@
                         step="1"
                         min="0"
                         autocomplete="off"
-                        :value="entry.rpm_override"
+                        :value="entry.rpmOverride"
                         class="hide-spinner w-20 rounded border border-gray-200 bg-white px-2 py-1 text-center text-sm font-medium transition-colors focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500/20 dark:border-dark-500 dark:bg-dark-700 dark:focus:border-primary-500"
-                        @change="updateLocalRpm(entry.user_id, ($event.target as HTMLInputElement).value)"
+                        @change="updateLocalRpm(entry.userId, ($event.target as HTMLInputElement).value)"
                       />
                     </td>
                     <td class="px-2 py-2">
                       <button
                         type="button"
                         class="rounded p-1 text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                        @click="removeLocal(entry.user_id)"
+                        @click="removeLocal(entry.userId)"
                       >
                         <Icon name="trash" size="sm" />
                       </button>
@@ -209,15 +209,18 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { GroupRPMOverrideEntry } from '@/features/admin-groups/data/datasources/adminGroupsDatasource'
-import type { AdminGroup, AdminUser } from '@/types'
+import { useAdminGroupsQueryStore } from '@/features/admin-groups/presentation/stores/adminGroupsQueryStore'
+import { useAdminGroupsActionStore } from '@/features/admin-groups/presentation/stores/adminGroupsActionStore'
+import { useAdminUsersQueryStore } from '@/features/admin-users/presentation/stores/adminUsersQueryStore'
+import type { GroupRPMOverride } from '@/features/admin-groups/domain/models/groupRPMOverride'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
 
-interface LocalEntry extends GroupRPMOverrideEntry {}
+interface LocalEntry extends GroupRPMOverride {}
 
 const props = defineProps<{
   show: boolean
@@ -231,10 +234,13 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const adminGroupsQueryStore = useAdminGroupsQueryStore()
+const adminGroupsActionStore = useAdminGroupsActionStore()
+const adminUsersQueryStore = useAdminUsersQueryStore()
 
 const loading = ref(false)
 const saving = ref(false)
-const serverEntries = ref<GroupRPMOverrideEntry[]>([])
+const serverEntries = ref<GroupRPMOverride[]>([])
 const localEntries = ref<LocalEntry[]>([])
 const searchQuery = ref('')
 const searchResults = ref<AdminUser[]>([])
@@ -257,8 +263,8 @@ const platformColorClass = computed(() => {
 
 const isDirty = computed(() => {
   if (localEntries.value.length !== serverEntries.value.length) return true
-  const serverMap = new Map(serverEntries.value.map(e => [e.user_id, e.rpm_override]))
-  return localEntries.value.some(e => serverMap.get(e.user_id) !== e.rpm_override)
+  const serverMap = new Map(serverEntries.value.map(e => [e.userId, e.rpmOverride]))
+  return localEntries.value.some(e => serverMap.get(e.userId) !== e.rpmOverride)
 })
 
 const paginatedLocalEntries = computed(() => {
@@ -266,7 +272,7 @@ const paginatedLocalEntries = computed(() => {
   return localEntries.value.slice(start, start + pageSize.value)
 })
 
-const cloneEntries = (entries: GroupRPMOverrideEntry[]): LocalEntry[] => {
+const cloneEntries = (entries: GroupRPMOverride[]): LocalEntry[] => {
   return entries.map(e => ({ ...e }))
 }
 
@@ -274,7 +280,7 @@ const loadEntries = async () => {
   if (!props.group) return
   loading.value = true
   try {
-    serverEntries.value = await adminAPI.groups.getGroupRPMOverrides(props.group.id)
+    serverEntries.value = await adminGroupsQueryStore.getGroupRPMOverrides(props.group.id)
     localEntries.value = cloneEntries(serverEntries.value)
     adjustPage()
   } catch (error) {
@@ -316,7 +322,7 @@ const handleSearchUsers = () => {
   }
   searchTimeout = setTimeout(async () => {
     try {
-      const res = await adminAPI.users.list(1, 10, { search: searchQuery.value.trim() })
+      const res = await adminUsersQueryStore.list(1, 10, { search: searchQuery.value.trim() })
       searchResults.value = res.items
       showDropdown.value = true
     } catch {
@@ -335,14 +341,14 @@ const selectUser = (user: AdminUser) => {
 const handleAddLocal = () => {
   if (!selectedUser.value || newRpm.value == null || newRpm.value < 0) return
   const user = selectedUser.value
-  const idx = localEntries.value.findIndex(e => e.user_id === user.id)
+  const idx = localEntries.value.findIndex(e => e.userId === user.id)
   const entry: LocalEntry = {
-    user_id: user.id,
-    user_name: user.username || '',
-    user_email: user.email,
-    user_notes: user.notes || '',
-    user_status: user.status || 'active',
-    rpm_override: newRpm.value
+    userId: user.id,
+    userName: user.username || '',
+    userEmail: user.email,
+    userNotes: user.notes || '',
+    userStatus: user.status || 'active',
+    rpmOverride: newRpm.value
   }
   if (idx >= 0) {
     localEntries.value[idx] = entry
@@ -358,12 +364,12 @@ const handleAddLocal = () => {
 const updateLocalRpm = (userId: number, value: string) => {
   const num = parseInt(value, 10)
   if (isNaN(num) || num < 0) return
-  const entry = localEntries.value.find(e => e.user_id === userId)
-  if (entry) entry.rpm_override = num
+  const entry = localEntries.value.find(e => e.userId === userId)
+  if (entry) entry.rpmOverride = num
 }
 
 const removeLocal = (userId: number) => {
-  localEntries.value = localEntries.value.filter(e => e.user_id !== userId)
+  localEntries.value = localEntries.value.filter(e => e.userId !== userId)
   adjustPage()
 }
 
@@ -372,7 +378,7 @@ const clearAllLocal = async () => {
   if (!props.group || clearing.value) return
   clearing.value = true
   try {
-    await adminAPI.groups.clearGroupRPMOverrides(props.group.id)
+    await adminGroupsActionStore.clearGroupRPMOverrides(props.group.id)
     localEntries.value = []
     serverEntries.value = []
     appStore.showSuccess(t('admin.groups.rpmSaved'))
@@ -394,10 +400,10 @@ const handleSave = async () => {
   saving.value = true
   try {
     const entries = localEntries.value.map(e => ({
-      user_id: e.user_id,
-      rpm_override: e.rpm_override
+      user_id: e.userId,
+      rpm_override: e.rpmOverride
     }))
-    await adminAPI.groups.batchSetGroupRPMOverrides(props.group.id, entries)
+    await adminGroupsActionStore.batchSetGroupRPMOverrides(props.group.id, entries)
     appStore.showSuccess(t('admin.groups.rpmSaved'))
     emit('success')
     emit('close')

@@ -2,11 +2,7 @@
   <!-- .table-wrapper 是 TablePageLayout 滚动链的挂载点：外层 .table-scroll-container
        负责卡片外观并 overflow-hidden，本层接收 overflow-y-auto 才能在内容超高时滚动。 -->
   <div class="table-wrapper">
-    <table
-      v-if="isDesktopViewport"
-      data-testid="desktop-channels"
-      class="w-full table-fixed border-collapse text-sm"
-    >
+    <table class="w-full table-fixed border-collapse text-sm">
       <thead>
         <tr class="border-b border-gray-100 bg-gray-50/50 text-xs font-medium uppercase tracking-wide text-gray-500 dark:border-dark-700 dark:bg-dark-800/50 dark:text-gray-400">
           <th class="w-[180px] px-4 py-3 text-center">{{ columns.name }}</th>
@@ -99,8 +95,8 @@
                   <GroupBadge
                     :name="g.name"
                     :platform="g.platform as GroupPlatform"
-                    :subscription-type="(g.subscription_type || 'standard') as SubscriptionType"
-                    :rate-multiplier="g.rate_multiplier"
+                    :subscription-type="(g.subscriptionType || 'standard') as SubscriptionType"
+                    :rate-multiplier="g.rateMultiplier"
                     :user-rate-multiplier="userGroupRates[g.id] ?? null"
                     always-show-rate
                   />
@@ -133,8 +129,8 @@
                   <GroupBadge
                     :name="g.name"
                     :platform="g.platform as GroupPlatform"
-                    :subscription-type="(g.subscription_type || 'standard') as SubscriptionType"
-                    :rate-multiplier="g.rate_multiplier"
+                    :subscription-type="(g.subscriptionType || 'standard') as SubscriptionType"
+                    :rate-multiplier="g.rateMultiplier"
                     :user-rate-multiplier="userGroupRates[g.id] ?? null"
                     always-show-rate
                   />
@@ -156,7 +152,7 @@
           <td class="align-top px-4 py-3">
             <div class="flex flex-wrap gap-1">
               <SupportedModelChip
-                v-for="m in section.supported_models"
+                v-for="m in section.supportedModels"
                 :key="`${section.platform}-${m.name}`"
                 :model="m"
                 :pricing-key-prefix="pricingKeyPrefix"
@@ -164,7 +160,7 @@
                 :show-platform="false"
                 :platform-hint="section.platform"
               />
-              <span v-if="section.supported_models.length === 0" class="text-xs text-gray-400">
+              <span v-if="section.supportedModels.length === 0" class="text-xs text-gray-400">
                 {{ noModelsLabel }}
               </span>
             </div>
@@ -172,34 +168,22 @@
         </tr>
       </tbody>
     </table>
-
-    <AvailableChannelsMobileList
-      v-else
-      :columns="columns"
-      :rows="rows"
-      :loading="loading"
-      :pricing-key-prefix="pricingKeyPrefix"
-      :no-pricing-label="noPricingLabel"
-      :no-models-label="noModelsLabel"
-      :empty-label="emptyLabel"
-      :user-group-rates="userGroupRates"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { useMediaQuery } from '@vueuse/core'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import SupportedModelChip from './SupportedModelChip.vue'
-import AvailableChannelsMobileList from './AvailableChannelsMobileList.vue'
-import type { UserAvailableChannel, UserAvailableGroup, UserChannelPlatformSection } from '@/features/channels-user/data/datasources/channelsUserDatasource'
-import type { GroupPlatform, SubscriptionType } from '@/types'
+import type { UserAvailableChannel } from '@/features/channels-user/domain/models/userAvailableChannel'
+import type { UserAvailableGroup } from '@/features/channels-user/domain/models/userAvailableGroup'
+import type { UserChannelPlatformSection } from '@/features/channels-user/domain/models/userChannelPlatformSection'
 import { platformBadgeClass } from '@/core/utils/platformColors'
 import { useAppStore } from '@/core/stores/appStore'
 import { hasPeakRate as groupHasPeakRate, formatPeakRateWindow, serverTimezoneLabel } from '@/core/utils/peak-rate'
+import type { GroupPlatform, SubscriptionType } from '@/features/admin-groups/domain/models/adminGroups'
 
 const props = defineProps<{
   columns: {
@@ -224,24 +208,32 @@ const props = defineProps<{
 void props.userGroupRates
 
 const { t } = useI18n()
-const isDesktopViewport = useMediaQuery('(min-width: 1024px)')
 
 function exclusiveGroups(section: UserChannelPlatformSection): UserAvailableGroup[] {
-  return section.groups.filter((g) => g.is_exclusive)
+  return section.groups.filter((g) => g.isExclusive)
 }
 
 function publicGroups(section: UserChannelPlatformSection): UserAvailableGroup[] {
-  return section.groups.filter((g) => !g.is_exclusive)
+  return section.groups.filter((g) => !g.isExclusive)
 }
 
 const appStore = useAppStore()
 
+function toPeakRateFields(group: UserAvailableGroup) {
+  return {
+    peakRateEnabled: group.peakRateEnabled,
+    peakStart: group.peakStart,
+    peakEnd: group.peakEnd,
+    peakRateMultiplier: group.peakRateMultiplier,
+  }
+}
+
 function hasPeakRate(group: UserAvailableGroup): boolean {
-  return groupHasPeakRate(group)
+  return groupHasPeakRate(toPeakRateFields(group))
 }
 
 function peakRateLabel(group: UserAvailableGroup): string {
-  return formatPeakRateWindow(group, serverTimezoneLabel(appStore.cachedPublicSettings?.server_utc_offset))
+  return formatPeakRateWindow(toPeakRateFields(group), serverTimezoneLabel(appStore.cachedPublicSettings?.serverUtcOffset))
 }
 
 function peakRateTitle(group: UserAvailableGroup): string {

@@ -26,13 +26,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Provider } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
+import type { Provider } from '@/core/constants/channelMonitor'
 
 interface IconData {
   paths: string[]
 }
 
-// Provider SVG paths extracted from src/common/widgets/icons/ModelIcon.vue (which
+// Provider SVG paths extracted from src/components/common/ModelIcon.vue (which
 // in turn pulls from @lobehub/icons Mono.js). Keep in sync if upstream changes.
 // SVG uses fill="currentColor" so the wrapper controls the icon tint.
 const PROVIDER_ICONS: Record<Provider, IconData> = {

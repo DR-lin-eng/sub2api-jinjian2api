@@ -169,18 +169,21 @@ import { AuthLayout } from '@/common/widgets/layout'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
 import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptchaWidget.vue'
-import { useAuthStore, useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import {
   persistOAuthTokenContext,
-  getPublicSettings,
   isOAuthLoginCompletion,
+  type PendingOAuthSendVerifyCodeResponse,
+} from '@/features/auth/presentation/utils/oauthUtils'
+import {
   clearCredentialKeyPrefetch,
   createCredentialEnvelope,
   prefetchCredentialKey,
-  type PendingOAuthSendVerifyCodeResponse,
-  sendPendingOAuthVerifyCode,
-  sendVerifyCode,
-} from '@/features/auth/data/datasources/authDatasource'
+} from '@/core/networks/credentialEncryption'
+import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
+import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
+import type { EncryptedRegisterRequest } from '@/features/auth/data/requests_models/encryptedRegisterRequest'
 import { apiClient } from '@/core/networks/client'
 import { buildAuthErrorMessage } from '@/core/utils/authError'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
@@ -198,7 +201,6 @@ import {
   clearPendingRegistrationCredentials,
   getPendingRegistrationCredentials
 } from '@/core/utils/pendingRegistrationCredentials'
-import type { EncryptedRegisterRequest } from '@/types'
 import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
@@ -211,6 +213,8 @@ const { t, locale } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const authActionStore = useAuthActionStore()
+const authQueryStore = useAuthQueryStore()
 
 // ==================== State ====================
 
@@ -348,16 +352,16 @@ onMounted(async () => {
 
   // Load public settings
   try {
-    const settings = await getPublicSettings()
+    const settings = await authQueryStore.getPublicSettings()
     const verification = resolveHumanVerification(settings)
     turnstileEnabled.value = verification.external
     turnstileSiteKey.value = verification.siteKey
     humanVerificationAPIEndpoint.value = verification.apiEndpoint
     humanVerificationProvider.value = verification.externalProvider
     localCaptchaEnabled.value = verification.provider === 'local'
-    siteName.value = settings.site_name || 'Sub2API'
+    siteName.value = settings.siteName || 'Sub2API'
     registrationEmailSuffixWhitelist.value = normalizeRegistrationEmailSuffixWhitelist(
-      settings.registration_email_suffix_whitelist || []
+      settings.registrationEmailSuffixWhitelist || []
     )
   } catch (error) {
     console.error('Failed to load public settings:', error)
@@ -474,10 +478,10 @@ async function sendCode(): Promise<void> {
       captcha_token: resendTurnstileToken.value || initialTurnstileToken.value || undefined,
       captcha_id: resendLocalCaptchaId.value || initialLocalCaptchaId.value || undefined,
       captcha_code: resendLocalCaptchaCode.value || initialLocalCaptchaCode.value || undefined
-    } as Parameters<typeof sendVerifyCode>[0]
+    } as Parameters<typeof authActionStore.sendVerifyCode>[0]
     const response = isPendingOAuthFlow()
-      ? await sendPendingOAuthVerifyCode(requestPayload)
-      : await sendVerifyCode(requestPayload)
+      ? await authActionStore.sendPendingOAuthVerifyCode(requestPayload)
+      : await authActionStore.sendVerifyCode(requestPayload)
 
     const pendingSendCodeSession = isPendingOAuthFlow()
       ? getPendingOAuthSendCodeSessionResponse(response as PendingOAuthSendVerifyCodeResponse)

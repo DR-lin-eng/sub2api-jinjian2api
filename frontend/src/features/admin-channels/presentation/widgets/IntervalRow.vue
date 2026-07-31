@@ -71,8 +71,8 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import type { IntervalFormEntry } from '../adminChannelSignals'
-import type { BillingMode } from '@/features/admin-channels/data/datasources/adminChannelsDatasource'
+import type { IntervalFormEntry } from '@/features/admin-channels/presentation/composables/useChannelPricingForm'
+import type { BillingMode } from '@/core/constants/channel'
 
 const { t } = useI18n()
 

@@ -69,14 +69,14 @@
               </div>
             </div>
             <p class="text-2xl font-bold text-gray-900 dark:text-white">
-              ${{ formatCost(stats.summary.total_cost) }}
+              ${{ formatCost(stats.summary.totalCost) }}
             </p>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {{ t('admin.accounts.stats.accumulatedCost') }}
               <span class="text-gray-400 dark:text-gray-500">
-                ({{ t('usage.userBilled') }}: ${{ formatCost(stats.summary.total_user_cost) }} ·
+                ({{ t('usage.userBilled') }}: ${{ formatCost(stats.summary.totalUserCost) }} ·
                 {{ t('admin.accounts.stats.standardCost') }}: ${{
-                  formatCost(stats.summary.total_standard_cost)
+                  formatCost(stats.summary.totalStandardCost)
                 }})
               </span>
             </p>
@@ -95,7 +95,7 @@
               </div>
             </div>
             <p class="text-2xl font-bold text-gray-900 dark:text-white">
-              {{ formatNumber(stats.summary.total_requests) }}
+              {{ formatNumber(stats.summary.totalRequests) }}
             </p>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {{ t('admin.accounts.stats.totalCalls') }}
@@ -120,16 +120,16 @@
               </div>
             </div>
             <p class="text-2xl font-bold text-gray-900 dark:text-white">
-              ${{ formatCost(stats.summary.avg_daily_cost) }}
+              ${{ formatCost(stats.summary.avgDailyCost) }}
             </p>
              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {{
                 t('admin.accounts.stats.basedOnActualDays', {
-                  days: stats.summary.actual_days_used
+                  days: stats.summary.actualDaysUsed
                 })
               }}
               <span class="text-gray-400 dark:text-gray-500">
-                ({{ t('usage.userBilled') }}: ${{ formatCost(stats.summary.avg_daily_user_cost) }})
+                ({{ t('usage.userBilled') }}: ${{ formatCost(stats.summary.avgDailyUserCost) }})
               </span>
             </p>
           </div>
@@ -159,7 +159,7 @@
               </div>
             </div>
             <p class="text-2xl font-bold text-gray-900 dark:text-white">
-              {{ formatNumber(Math.round(stats.summary.avg_daily_requests)) }}
+              {{ formatNumber(Math.round(stats.summary.avgDailyRequests)) }}
             </p>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {{ t('admin.accounts.stats.avgDailyUsage') }}
@@ -201,7 +201,7 @@
               <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.userBilled') }}</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white"
-                  >${{ formatCost(stats.summary.today?.user_cost || 0) }}</span
+                  >${{ formatCost(stats.summary.today?.userCost || 0) }}</span
                 >
               </div>
               <div class="flex items-center justify-between">
@@ -244,19 +244,19 @@
                   t('admin.accounts.stats.date')
                 }}</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
-                  stats.summary.highest_cost_day?.label || '-'
+                  stats.summary.highestCostDay?.label || '-'
                 }}</span>
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.accountBilled') }}</span>
                 <span class="text-sm font-semibold text-orange-600 dark:text-orange-400"
-                  >${{ formatCost(stats.summary.highest_cost_day?.cost || 0) }}</span
+                  >${{ formatCost(stats.summary.highestCostDay?.cost || 0) }}</span
                 >
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.userBilled') }}</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white"
-                  >${{ formatCost(stats.summary.highest_cost_day?.user_cost || 0) }}</span
+                  >${{ formatCost(stats.summary.highestCostDay?.userCost || 0) }}</span
                 >
               </div>
               <div class="flex items-center justify-between">
@@ -264,7 +264,7 @@
                   t('admin.accounts.stats.requests')
                 }}</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
-                  formatNumber(stats.summary.highest_cost_day?.requests || 0)
+                  formatNumber(stats.summary.highestCostDay?.requests || 0)
                 }}</span>
               </div>
             </div>
@@ -291,7 +291,7 @@
                   t('admin.accounts.stats.date')
                 }}</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
-                  stats.summary.highest_request_day?.label || '-'
+                  stats.summary.highestRequestDay?.label || '-'
                 }}</span>
               </div>
               <div class="flex items-center justify-between">
@@ -299,19 +299,19 @@
                   t('admin.accounts.stats.requests')
                 }}</span>
                 <span class="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{{
-                  formatNumber(stats.summary.highest_request_day?.requests || 0)
+                  formatNumber(stats.summary.highestRequestDay?.requests || 0)
                 }}</span>
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.accountBilled') }}</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white"
-                  >${{ formatCost(stats.summary.highest_request_day?.cost || 0) }}</span
+                  >${{ formatCost(stats.summary.highestRequestDay?.cost || 0) }}</span
                 >
               </div>
               <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.userBilled') }}</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white"
-                  >${{ formatCost(stats.summary.highest_request_day?.user_cost || 0) }}</span
+                  >${{ formatCost(stats.summary.highestRequestDay?.userCost || 0) }}</span
                 >
               </div>
             </div>
@@ -336,7 +336,7 @@
                   t('admin.accounts.stats.totalTokens')
                 }}</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
-                  formatTokens(stats.summary.total_tokens)
+                  formatTokens(stats.summary.totalTokens)
                 }}</span>
               </div>
               <div class="flex items-center justify-between">
@@ -344,7 +344,7 @@
                   t('admin.accounts.stats.dailyAvgTokens')
                 }}</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
-                  formatTokens(Math.round(stats.summary.avg_daily_tokens))
+                  formatTokens(Math.round(stats.summary.avgDailyTokens))
                 }}</span>
               </div>
             </div>
@@ -366,7 +366,7 @@
                   t('admin.accounts.stats.avgResponseTime')
                 }}</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
-                  formatDuration(stats.summary.avg_duration_ms)
+                  formatDuration(stats.summary.avgDurationMs)
                 }}</span>
               </div>
               <div class="flex items-center justify-between">
@@ -374,9 +374,9 @@
                   t('admin.accounts.stats.avgTtft')
                 }}</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white">{{
-                  stats.summary.avg_first_token_ms == null
+                  stats.summary.avgFirstTokenMs == null
                     ? '--'
-                    : formatDuration(stats.summary.avg_first_token_ms)
+                    : formatDuration(stats.summary.avgFirstTokenMs)
                 }}</span>
               </div>
               <div class="flex items-center justify-between">
@@ -384,7 +384,7 @@
                   t('admin.accounts.stats.daysActive')
                 }}</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white"
-                  >{{ stats.summary.actual_days_used }} / {{ stats.summary.days }}</span
+                  >{{ stats.summary.actualDaysUsed }} / {{ stats.summary.days }}</span
                 >
               </div>
             </div>
@@ -431,7 +431,7 @@
               <div class="flex items-center justify-between">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{{ t('usage.userBilled') }}</span>
                 <span class="text-sm font-semibold text-gray-900 dark:text-white"
-                  >${{ formatCost(stats.summary.today?.user_cost || 0) }}</span
+                  >${{ formatCost(stats.summary.today?.userCost || 0) }}</span
                 >
               </div>
             </div>
@@ -464,7 +464,7 @@
         />
 
         <EndpointDistributionChart
-          :endpoint-stats="stats.upstream_endpoints || []"
+          :endpoint-stats="stats.upstreamEndpoints || []"
           :loading="false"
           :title="t('usage.upstreamEndpoint')"
         />
@@ -510,12 +510,14 @@ import {
 import { Line } from 'vue-chartjs'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
-import ModelDistributionChart from '@/common/widgets/charts/ModelDistributionChart.vue'
-import EndpointDistributionChart from '@/common/widgets/charts/EndpointDistributionChart.vue'
+import ModelDistributionChart from '@/features/admin-dashboard/presentation/widgets/ModelDistributionChart.vue'
+import EndpointDistributionChart from '@/features/admin-dashboard/presentation/widgets/EndpointDistributionChart.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import { adminAPI } from '@/api/admin'
-import type { Account, AccountUsageStatsResponse } from '@/types'
+import { useAdminAccountsQueryStore } from '@/features/admin-accounts/presentation/stores/adminAccountsQueryStore'
+import type { Account } from '@/core/models/domain/account'
+import type { AccountUsageStatsResponse } from '@/features/admin-accounts/domain/models/accountUsageStatsResponse'
 
+const queryStore = useAdminAccountsQueryStore()
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -561,7 +563,7 @@ const trendChartData = computed(() => {
     datasets: [
       {
         label: t('usage.accountBilled') + ' (USD)',
-        data: stats.value.history.map((h) => h.actual_cost),
+        data: stats.value.history.map((h) => h.actualCost),
         borderColor: '#3b82f6',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         fill: true,
@@ -570,7 +572,7 @@ const trendChartData = computed(() => {
       },
       {
         label: t('usage.userBilled') + ' (USD)',
-        data: stats.value.history.map((h) => h.user_cost),
+        data: stats.value.history.map((h) => h.userCost),
         borderColor: '#10b981',
         backgroundColor: 'rgba(16, 185, 129, 0.08)',
         fill: false,
@@ -705,7 +707,7 @@ const loadStats = async () => {
 
   loading.value = true
   try {
-    stats.value = await adminAPI.accounts.getStats(props.account.id, 30)
+    stats.value = await queryStore.getStats(props.account.id, 30)
   } catch (error) {
     console.error('Failed to load account stats:', error)
     stats.value = null

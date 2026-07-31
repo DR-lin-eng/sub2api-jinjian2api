@@ -24,7 +24,7 @@
         </div>
         <span class="text-sm font-medium text-gray-900 dark:text-white">{{ provider.name }}</span>
         <span class="text-xs text-gray-400 dark:text-gray-500">{{ keyLabel }}</span>
-        <span v-if="provider.payment_mode" class="text-xs text-gray-400 dark:text-gray-500">· {{ modeLabel }}</span>
+        <span v-if="provider.paymentMode" class="text-xs text-gray-400 dark:text-gray-500">· {{ modeLabel }}</span>
         <span v-if="enabled && availableTypes.length" class="text-xs text-gray-300 dark:text-gray-600">|</span>
         <div v-if="enabled" class="flex items-center gap-1">
           <button
@@ -45,8 +45,8 @@
       <!-- Right: toggles + actions -->
       <div class="flex items-center gap-4">
         <ToggleSwitch :label="t('common.enabled')" :checked="provider.enabled" @toggle="emit('toggleField', 'enabled')" />
-        <ToggleSwitch :label="t('admin.settings.payment.refundEnabled')" :checked="provider.refund_enabled" @toggle="emit('toggleField', 'refund_enabled')" />
-        <ToggleSwitch v-if="provider.refund_enabled" :label="t('admin.settings.payment.allowUserRefund')" :checked="provider.allow_user_refund" @toggle="emit('toggleField', 'allow_user_refund')" />
+        <ToggleSwitch :label="t('admin.settings.payment.refundEnabled')" :checked="provider.refundEnabled" @toggle="emit('toggleField', 'refundEnabled')" />
+        <ToggleSwitch v-if="provider.refundEnabled" :label="t('admin.settings.payment.allowUserRefund')" :checked="provider.allowUserRefund" @toggle="emit('toggleField', 'allowUserRefund')" />
         <div class="flex items-center gap-2 border-l border-gray-200 pl-3 dark:border-dark-600">
           <button type="button" @click="emit('edit')" class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400">
             <Icon name="edit" size="sm" />
@@ -67,9 +67,9 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import ToggleSwitch from './ToggleSwitch.vue'
-import type { ProviderInstance } from '@/types/payment'
-import type { TypeOption } from '../providerConfigSignals'
-import { PAYMENT_MODE_QRCODE, PAYMENT_MODE_POPUP, PAYMENT_MODE_REDIRECT } from '../providerConfigSignals'
+import type { ProviderInstance } from '@/features/admin-orders/domain/models/providerInstance'
+import type { TypeOption } from '@/features/billing/presentation/utils/providerConfigSignals'
+import { PAYMENT_MODE_QRCODE, PAYMENT_MODE_POPUP, PAYMENT_MODE_REDIRECT } from '@/features/billing/presentation/utils/providerConfigSignals'
 
 const PROVIDER_KEY_LABELS: Record<string, string> = {
   easypay: 'admin.settings.payment.providerEasypay',
@@ -86,7 +86,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  toggleField: [field: 'enabled' | 'refund_enabled' | 'allow_user_refund']
+  toggleField: [field: 'enabled' | 'refundEnabled' | 'allowUserRefund']
   toggleType: [type: string]
   edit: []
   delete: []
@@ -94,16 +94,16 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const keyLabel = computed(() => t(PROVIDER_KEY_LABELS[props.provider.provider_key] || props.provider.provider_key))
+const keyLabel = computed(() => t(PROVIDER_KEY_LABELS[props.provider.providerKey] || props.provider.providerKey))
 
 const modeLabel = computed(() => {
-  if (props.provider.payment_mode === PAYMENT_MODE_QRCODE) return t('admin.settings.payment.modeQRCode')
-  if (props.provider.payment_mode === PAYMENT_MODE_POPUP) return t('admin.settings.payment.modePopup')
-  if (props.provider.payment_mode === PAYMENT_MODE_REDIRECT) return t('admin.settings.payment.modeRedirect')
+  if (props.provider.paymentMode === PAYMENT_MODE_QRCODE) return t('admin.settings.payment.modeQRCode')
+  if (props.provider.paymentMode === PAYMENT_MODE_POPUP) return t('admin.settings.payment.modePopup')
+  if (props.provider.paymentMode === PAYMENT_MODE_REDIRECT) return t('admin.settings.payment.modeRedirect')
   return ''
 })
 
 function isSelected(type: string): boolean {
-  return Array.isArray(props.provider.supported_types) && props.provider.supported_types.includes(type)
+  return Array.isArray(props.provider.supportedTypes) && props.provider.supportedTypes.includes(type)
 }
 </script>

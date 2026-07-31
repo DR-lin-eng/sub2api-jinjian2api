@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'; import { useI18n } from 'vue-i18n'; import Select from '@/common/widgets/forms/Select.vue'; import SearchInput from '@/common/widgets/forms/SearchInput.vue'
-import type { AdminGroup } from '@/types'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroup'
 const props = defineProps<{ searchQuery: string; filters: Record<string, any>; groups?: AdminGroup[] }>()
 const emit = defineEmits(['update:searchQuery', 'update:filters', 'change']); const { t } = useI18n()
 const updatePlatform = (value: string | number | boolean | null) => { emit('update:filters', { ...props.filters, platform: value }) }

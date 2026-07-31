@@ -122,9 +122,6 @@ export default {
     keyEnabledSuccess: 'API key enabled successfully',
     keyDisabledSuccess: 'API key disabled successfully',
     failedToLoad: 'Failed to load API keys',
-    usageLoadFailed: 'Usage unavailable',
-    pendingSettlement: 'Of which pending',
-    pendingUsageUnavailable: 'Pending usage syncing',
     failedToSave: 'Failed to save API key',
     failedToDelete: 'Failed to delete API key',
     failedToUpdateStatus: 'Failed to update API key status',
@@ -387,7 +384,6 @@ export default {
     stream: 'Stream',
     sync: 'Sync',
     cyber: 'Cyber',
-    live: 'Live',
     unknown: 'Unknown',
     in: 'In',
     out: 'Out',
@@ -558,6 +554,113 @@ export default {
     }
   },
 
+  modelSquare: {
+    title: 'Model Square',
+    description: 'Discover models for every workflow and compare capabilities, pricing, and group rates',
+    resultCount: '{count} models found',
+    searchPlaceholder: 'Search by model name, ID, or provider...',
+    copySuccess: 'Model ID copied: {id}',
+    filters: {
+      provider: 'Provider',
+      group: 'Group',
+      category: 'Model type',
+      allProviders: 'All providers',
+      favorites: 'Favorites only',
+      reset: 'Reset filters'
+    },
+    categories: {
+      all: 'All models',
+      chat: 'Chat',
+      reasoning: 'Reasoning',
+      image: 'Image',
+      video: 'Video',
+      embedding: 'Embedding'
+    },
+    groups: {
+      default: 'Default group',
+      developer: 'Developer group',
+      vip: 'VIP group'
+    },
+    badges: {
+      recommended: 'Recommended',
+      new: 'New',
+      popular: 'Popular'
+    },
+    fields: {
+      category: 'Type',
+      context: 'Context window',
+      maxOutput: 'Max output',
+      inputPrice: 'Input price',
+      outputPrice: 'Output price',
+      multiplier: 'Current rate',
+      group: 'Group',
+      inputMultiplier: 'Input rate',
+      outputMultiplier: 'Output rate',
+      effectiveInput: 'Effective input',
+      effectiveOutput: 'Effective output',
+      groupMultiplier: 'Group rate (input / output)'
+    },
+    units: {
+      perMillionTokens: 'Price per 1M tokens',
+      perImage: 'Price per image',
+      perSecond: 'Price per second of video'
+    },
+    capabilities: {
+      vision: 'Vision',
+      tools: 'Tool use',
+      reasoning: 'Reasoning',
+      streaming: 'Streaming',
+      structuredOutput: 'Structured output',
+      imageGeneration: 'Image generation',
+      videoGeneration: 'Video generation',
+      embedding: 'Embedding'
+    },
+    actions: {
+      favorite: 'Favorite model',
+      unfavorite: 'Remove favorite',
+      compare: 'Add to compare',
+      copyId: 'Copy model ID',
+      details: 'View details'
+    },
+    detail: {
+      title: 'Model details',
+      parameters: 'Parameters and base pricing',
+      capabilities: 'Capabilities',
+      groupRates: 'Group rates and effective pricing',
+      groupRatesHint: 'Effective pricing is calculated from the base price and group rate',
+      currentGroup: 'Current'
+    },
+    compare: {
+      title: 'Compare models',
+      dimension: 'Dimension',
+      selected: '{count} / 3 models selected',
+      action: 'Compare',
+      clear: 'Clear',
+      remove: 'Remove from comparison',
+      limit: 'You can compare up to 3 models at once',
+      groupHint: 'Input and output rates are shown for “{group}”.'
+    },
+    empty: {
+      title: 'No matching models',
+      description: 'Try changing the search term, provider, group, or model type.'
+    },
+    models: {
+      gpt41: 'A versatile flagship model for instruction following, coding, and long-context work.',
+      claudeSonnet4: 'Built for complex coding, document analysis, and professional tasks requiring dependable reasoning.',
+      gemini25Pro: 'A native multimodal reasoning model for long documents, video understanding, and complex analysis.',
+      deepseekR1: 'A cost-effective reasoning model optimized for mathematics, code, and logic problems.',
+      qwen3235b: 'Switches between thinking and direct modes for multilingual work and tool-enabled workflows.',
+      dalle3: 'Generates high-quality images from natural-language prompts with strong instruction understanding.',
+      veo3: 'High-quality video generation with native audio for creative media production.',
+      embedding3Large: 'A high-accuracy text embedding model for retrieval, clustering, and semantic search.'
+    }
+  },
+
+  mediaStudio: {
+    title: 'Media Studio',
+    description: 'Create and manage images, videos, and other media'
+  },
+
   // Available Channels (user-facing)
   availableChannels: {
     title: 'Available Channels',
@@ -593,54 +696,6 @@ export default {
       intervals: 'Tiered Pricing',
       unitPerMillion: '/ 1M tokens',
       unitPerRequest: '/ request'
-    }
-  },
-
-  // Model Plaza (public group/model pricing showcase)
-  modelPlaza: {
-    title: 'Model Plaza',
-    description: 'Browse available models and pricing by group',
-    loading: 'Loading...',
-    empty: 'No groups to display',
-    loadFailed: 'Failed to load model plaza',
-    noSearchResult: 'No matching models',
-    anonymousHint: 'Sign in to see your exclusive groups and personal rates',
-    filters: {
-      platformLabel: 'Platform',
-      groupLabel: 'Group',
-      rateLabel: 'Rate',
-      modelLabel: 'Model',
-      searchPlaceholder: 'Search models',
-      all: 'All'
-    },
-    badges: {
-      exclusive: 'Exclusive',
-      subscription: 'Subscription'
-    },
-    detail: {
-      noModels: 'No models configured for this group',
-      noPricing: 'Pricing not configured',
-      peakNote: 'Peak hours {window}: billing rate ×{multiplier}'
-    },
-    table: {
-      model: 'Model',
-      input: 'Input',
-      output: 'Output',
-      cache: 'Cache',
-      cacheWrite: 'Write',
-      cacheRead: 'Read',
-      paidPrice: 'Your Price (Discounted)',
-      officialPrice: 'Official Price',
-      rate: 'Rate',
-      unitPerMillion: '$ / 1M tokens',
-      perUnitRequest: '/ request',
-      perUnitImage: '/ image',
-      perRequest: 'Per request',
-      perImage: 'Per image'
-    },
-    nav: {
-      login: 'Sign In',
-      backToDashboard: 'Back to Console'
     }
   },
 
@@ -813,31 +868,6 @@ export default {
       sendCode: 'Send Code',
       codeSent: 'Verification code sent to your email',
       sendCodeFailed: 'Failed to send verification code'
-    },
-    passkey: {
-      title: 'Passkeys',
-      description: 'Use Face ID, Touch ID, Windows Hello, or a security key to sign in without a password.',
-      add: 'Add passkey',
-      continue: 'Create passkey',
-      name: 'Passkey name',
-      namePlaceholder: 'For example, MacBook Touch ID',
-      passwordPlaceholder: 'Enter your current password to confirm',
-      empty: 'No passkeys are registered yet.',
-      synced: 'Synced',
-      createdAt: 'Created {date}',
-      lastUsed: 'Last used {date}',
-      featureDisabled: 'Passkeys have not been configured by the administrator.',
-      unsupported: 'This browser or device does not support passkeys.',
-      loadFailed: 'Failed to load passkeys.',
-      added: 'Passkey added.',
-      addFailed: 'Failed to add passkey.',
-      renamePrompt: 'Enter a new name for this passkey',
-      renamed: 'Passkey renamed.',
-      renameFailed: 'Failed to rename passkey.',
-      deleteTitle: 'Delete passkey',
-      deleteConfirm: 'Delete “{name}”? You will no longer be able to sign in with it.',
-      deleted: 'Passkey deleted.',
-      deleteFailed: 'Failed to delete passkey.'
     },
     balanceNotify: {
       title: 'Balance Low Notification',

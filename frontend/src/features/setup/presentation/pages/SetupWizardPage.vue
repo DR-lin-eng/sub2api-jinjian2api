@@ -29,16 +29,11 @@
                       : 'bg-gray-200 text-gray-500 dark:bg-dark-700 dark:text-dark-400'
                 ]"
               >
-                <Icon
-                  v-if="currentStep > index"
-                  name="check"
-                  size="md"
-                  :stroke-width="2"
-                />
+                <Icon v-if="currentStep > index" name="check" size="md" :stroke-width="2" />
                 <span v-else>{{ index + 1 }}</span>
               </div>
               <span
-                class="ml-2 hidden text-sm font-medium sm:inline"
+                class="ml-2 text-sm font-medium"
                 :class="
                   currentStep >= index
                     ? 'text-gray-900 dark:text-white'
@@ -50,7 +45,7 @@
             </div>
             <div
               v-if="index < steps.length - 1"
-              class="mx-2 h-0.5 w-6 sm:mx-3 sm:w-12"
+              class="mx-3 h-0.5 w-12"
               :class="currentStep > index ? 'bg-primary-500' : 'bg-gray-200 dark:bg-dark-700'"
             ></div>
           </template>
@@ -70,69 +65,32 @@
             </p>
           </div>
 
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="input-label">{{ t('setup.database.host') }}</label>
-              <input
-                v-model="formData.database.host"
-                type="text"
-                class="input"
-                placeholder="localhost"
-              />
+              <input v-model="formData.database.host" type="text" class="input" placeholder="localhost" />
             </div>
             <div>
               <label class="input-label">{{ t('setup.database.port') }}</label>
-              <input
-                v-model.number="formData.database.port"
-                type="number"
-                class="input"
-                placeholder="5432"
-              />
+              <input v-model.number="formData.database.port" type="number" class="input" placeholder="5432" />
             </div>
           </div>
 
-          <div class="flex items-center justify-between rounded-xl border border-gray-200 p-3 dark:border-dark-700">
-            <div>
-              <p class="text-sm font-medium text-gray-900 dark:text-white">
-                {{ t("setup.redis.enableTls") }}
-              </p>
-              <p class="text-xs text-gray-500 dark:text-dark-400">
-                {{ t("setup.redis.enableTlsHint") }}
-              </p>
-            </div>
-            <Toggle v-model="formData.redis.enable_tls" />
-          </div>
-
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="input-label">{{ t('setup.database.username') }}</label>
-              <input
-                v-model="formData.database.user"
-                type="text"
-                class="input"
-                placeholder="postgres"
-              />
+              <input v-model="formData.database.user" type="text" class="input" placeholder="postgres" />
             </div>
             <div>
               <label class="input-label">{{ t('setup.database.password') }}</label>
-              <input
-                v-model="formData.database.password"
-                type="password"
-                class="input"
-                :placeholder="t('setup.database.passwordPlaceholder')"
-              />
+              <input v-model="formData.database.password" type="password" class="input" :placeholder="t('setup.database.passwordPlaceholder')" />
             </div>
           </div>
 
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="input-label">{{ t('setup.database.databaseName') }}</label>
-              <input
-                v-model="formData.database.dbname"
-                type="text"
-                class="input"
-                placeholder="sub2api"
-              />
+              <input v-model="formData.database.dbname" type="text" class="input" placeholder="sub2api" />
             </div>
             <div>
               <label class="input-label">{{ t('setup.database.sslMode') }}</label>
@@ -148,39 +106,13 @@
             </div>
           </div>
 
-          <button
-            @click="testDatabaseConnection"
-            :disabled="testingDb"
-            class="btn btn-secondary w-full"
-          >
-            <svg
-              v-if="testingDb"
-              class="-ml-1 mr-2 h-4 w-4 animate-spin"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              ></circle>
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
+          <button @click="testDatabaseConnection" :disabled="testingDb" class="btn btn-secondary w-full">
+            <svg v-if="testingDb" class="-ml-1 mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             <Icon v-else-if="dbConnected" name="check" size="md" class="mr-2 text-green-500" :stroke-width="2" />
-            {{
-              testingDb
-                ? t('setup.status.testing')
-                : dbConnected
-                  ? t('setup.status.success')
-                  : t('setup.status.testConnection')
-            }}
+            {{ testingDb ? t('setup.status.testing') : dbConnected ? t('setup.status.success') : t('setup.status.testConnection') }}
           </button>
         </div>
 
@@ -195,108 +127,43 @@
             </p>
           </div>
 
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="input-label">{{ t('setup.redis.host') }}</label>
-              <input
-                v-model="formData.redis.host"
-                type="text"
-                class="input"
-                placeholder="localhost"
-              />
+              <input v-model="formData.redis.host" type="text" class="input" placeholder="localhost" />
             </div>
             <div>
               <label class="input-label">{{ t('setup.redis.port') }}</label>
-              <input
-                v-model.number="formData.redis.port"
-                type="number"
-                class="input"
-                placeholder="6379"
-              />
+              <input v-model.number="formData.redis.port" type="number" class="input" placeholder="6379" />
             </div>
           </div>
 
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label class="input-label">{{ t('setup.redis.username') }}</label>
-              <input
-                v-model="formData.redis.username"
-                type="text"
-                class="input"
-                :placeholder="t('setup.redis.usernamePlaceholder')"
-              />
-            </div>
+          <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="input-label">{{ t('setup.redis.password') }}</label>
-              <input
-                v-model="formData.redis.password"
-                type="password"
-                class="input"
-                :placeholder="t('setup.redis.passwordPlaceholder')"
-              />
+              <input v-model="formData.redis.password" type="password" class="input" :placeholder="t('setup.redis.passwordPlaceholder')" />
             </div>
             <div>
               <label class="input-label">{{ t('setup.redis.database') }}</label>
-              <input
-                v-model.number="formData.redis.db"
-                type="number"
-                class="input"
-                placeholder="0"
-              />
+              <input v-model.number="formData.redis.db" type="number" class="input" placeholder="0" />
             </div>
           </div>
 
           <div class="flex items-center justify-between rounded-xl border border-gray-200 p-3 dark:border-dark-700">
             <div>
-              <p class="text-sm font-medium text-gray-900 dark:text-white">
-                {{ t("setup.redis.enableTls") }}
-              </p>
-              <p class="text-xs text-gray-500 dark:text-dark-400">
-                {{ t("setup.redis.enableTlsHint") }}
-              </p>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">{{ t('setup.redis.enableTls') }}</p>
+              <p class="text-xs text-gray-500 dark:text-dark-400">{{ t('setup.redis.enableTlsHint') }}</p>
             </div>
             <Toggle v-model="formData.redis.enable_tls" />
           </div>
 
-          <button
-            @click="testRedisConnection"
-            :disabled="testingRedis"
-            class="btn btn-secondary w-full"
-          >
-            <svg
-              v-if="testingRedis"
-              class="-ml-1 mr-2 h-4 w-4 animate-spin"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              ></circle>
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
+          <button @click="testRedisConnection" :disabled="testingRedis" class="btn btn-secondary w-full">
+            <svg v-if="testingRedis" class="-ml-1 mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <Icon
-              v-else-if="redisConnected"
-              name="check"
-              size="md"
-              class="mr-2 text-green-500"
-              :stroke-width="2"
-            />
-            {{
-              testingRedis
-                ? t('setup.status.testing')
-                : redisConnected
-                  ? t('setup.status.success')
-                  : t('setup.status.testConnection')
-            }}
+            <Icon v-else-if="redisConnected" name="check" size="md" class="mr-2 text-green-500" :stroke-width="2" />
+            {{ testingRedis ? t('setup.status.testing') : redisConnected ? t('setup.status.success') : t('setup.status.testConnection') }}
           </button>
         </div>
 
@@ -313,36 +180,18 @@
 
           <div>
             <label class="input-label">{{ t('setup.admin.email') }}</label>
-            <input
-              v-model="formData.admin.email"
-              type="email"
-              class="input"
-              placeholder="admin@example.com"
-            />
+            <input v-model="formData.admin.email" type="email" class="input" placeholder="admin@example.com" />
           </div>
 
           <div>
             <label class="input-label">{{ t('setup.admin.password') }}</label>
-            <input
-              v-model="formData.admin.password"
-              type="password"
-              class="input"
-              :placeholder="t('setup.admin.passwordPlaceholder')"
-            />
+            <input v-model="formData.admin.password" type="password" class="input" :placeholder="t('setup.admin.passwordPlaceholder')" />
           </div>
 
           <div>
             <label class="input-label">{{ t('setup.admin.confirmPassword') }}</label>
-            <input
-              v-model="confirmPassword"
-              type="password"
-              class="input"
-              :placeholder="t('setup.admin.confirmPasswordPlaceholder')"
-            />
-            <p
-              v-if="confirmPassword && formData.admin.password !== confirmPassword"
-              class="input-error-text"
-            >
+            <input v-model="confirmPassword" type="password" class="input" :placeholder="t('setup.admin.confirmPasswordPlaceholder')" />
+            <p v-if="confirmPassword && formData.admin.password !== confirmPassword" class="input-error-text">
               {{ t('setup.admin.passwordMismatch') }}
             </p>
           </div>
@@ -365,9 +214,7 @@
                 {{ t('setup.ready.database') }}
               </h3>
               <p class="text-gray-900 dark:text-white">
-                {{ formData.database.user }}@{{ formData.database.host }}:{{
-                  formData.database.port
-                }}/{{ formData.database.dbname }}
+                {{ formData.database.user }}@{{ formData.database.host }}:{{ formData.database.port }}/{{ formData.database.dbname }}
               </p>
             </div>
 
@@ -375,9 +222,7 @@
               <h3 class="mb-2 text-sm font-medium text-gray-500 dark:text-dark-400">
                 {{ t('setup.ready.redis') }}
               </h3>
-              <p class="text-gray-900 dark:text-white">
-                {{ formData.redis.host }}:{{ formData.redis.port }}
-              </p>
+              <p class="text-gray-900 dark:text-white">{{ formData.redis.host }}:{{ formData.redis.port }}</p>
             </div>
 
             <div class="rounded-xl bg-gray-50 p-4 dark:bg-dark-700">
@@ -406,37 +251,15 @@
           class="mt-6 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-800/50 dark:bg-green-900/20"
         >
           <div class="flex items-start gap-3">
-            <svg
-              v-if="!serviceReady"
-              class="h-5 w-5 flex-shrink-0 animate-spin text-green-500"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              ></circle>
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
+            <svg v-if="!serviceReady" class="h-5 w-5 flex-shrink-0 animate-spin text-green-500" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             <Icon v-else name="checkCircle" size="md" class="flex-shrink-0 text-green-500" />
             <div>
-              <p class="text-sm font-medium text-green-700 dark:text-green-400">
-                {{ t('setup.status.completed') }}
-              </p>
+              <p class="text-sm font-medium text-green-700 dark:text-green-400">{{ t('setup.status.completed') }}</p>
               <p class="mt-1 text-sm text-green-600 dark:text-green-500">
-                {{
-                  serviceReady
-                    ? t('setup.status.redirecting')
-                    : t('setup.status.restarting')
-                }}
+                {{ serviceReady ? t('setup.status.redirecting') : t('setup.status.restarting') }}
               </p>
             </div>
           </div>
@@ -444,53 +267,23 @@
 
         <!-- Navigation Buttons -->
         <div class="mt-8 flex justify-between">
-          <button
-            v-if="currentStep > 0 && !installSuccess"
-            @click="currentStep--"
-            class="btn btn-secondary"
-          >
+          <button v-if="currentStep > 0 && !installSuccess" @click="currentStep--" class="btn btn-secondary">
             <Icon name="chevronLeft" size="sm" class="mr-2" :stroke-width="2" />
             {{ t('common.back') }}
           </button>
           <div v-else></div>
 
-          <button
-            v-if="currentStep < 3"
-            @click="nextStep"
-            :disabled="!canProceed"
-            class="btn btn-primary"
-          >
+          <button v-if="currentStep < 3" @click="nextStep" :disabled="!canProceed" class="btn btn-primary">
             {{ t('common.next') }}
             <Icon name="chevronRight" size="sm" class="ml-2" :stroke-width="2" />
           </button>
 
-          <button
-            v-else-if="!installSuccess"
-            @click="performInstall"
-            :disabled="installing"
-            class="btn btn-primary"
-          >
-            <svg
-              v-if="installing"
-              class="-ml-1 mr-2 h-4 w-4 animate-spin"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="4"
-              ></circle>
-              <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
+          <button v-else-if="!installSuccess" @click="performInstall" :disabled="setup.action.loading.install" class="btn btn-primary">
+            <svg v-if="setup.action.loading.install" class="-ml-1 mr-2 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            {{ installing ? t('setup.status.installing') : t('setup.status.completeInstallation') }}
+            {{ setup.action.loading.install ? t('setup.status.installing') : t('setup.status.completeInstallation') }}
           </button>
         </div>
       </div>
@@ -501,86 +294,56 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { testDatabase, testRedis, install, type InstallRequest } from '@/features/setup/data/datasources/setupDatasource'
 import { buildGatewayUrl } from '@/core/networks/client'
+import { useSetup } from '@/features/setup/presentation/composables/useSetup'
+import type { InstallRequest } from '@/features/setup/data/requests_models/installRequest'
 import Select from '@/common/widgets/forms/Select.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()
+const setup = useSetup()
 
 const steps = computed(() => [
   { id: 'database', title: t('setup.database.title') },
   { id: 'redis', title: t('setup.redis.title') },
   { id: 'admin', title: t('setup.admin.title') },
-  { id: 'complete', title: t('setup.ready.title') }
+  { id: 'complete', title: t('setup.ready.title') },
 ])
 
 const currentStep = ref(0)
 const errorMessage = ref('')
 const installSuccess = ref(false)
-
-// Connection test states
 const testingDb = ref(false)
 const testingRedis = ref(false)
 const dbConnected = ref(false)
 const redisConnected = ref(false)
-const installing = ref(false)
 const confirmPassword = ref('')
 const serviceReady = ref(false)
 
-// Default server port
 const getCurrentPort = (): number => {
   const port = window.location.port
-  if (port) {
-    return parseInt(port, 10)
-  }
-
-  return window.location.protocol === 'https:' ? 443 : 80
+  return port ? parseInt(port, 10) : window.location.protocol === 'https:' ? 443 : 80
 }
 
 const formData = reactive<InstallRequest>({
-  database: {
-    host: 'localhost',
-    port: 5432,
-    user: 'postgres',
-    password: '',
-    dbname: 'sub2api',
-    sslmode: 'disable'
-  },
-  redis: {
-    host: 'localhost',
-    port: 6379,
-    username: '',
-    password: '',
-    db: 0,
-    enable_tls: false
-  },
-  admin: {
-    email: '',
-    password: ''
-  },
-  server: {
-    host: '0.0.0.0',
-    port: getCurrentPort(), // Use current port from browser
-    mode: 'release'
-  }
+  database: { host: 'localhost', port: 5432, user: 'postgres', password: '', dbname: 'sub2api', sslmode: 'disable' },
+  redis: { host: 'localhost', port: 6379, password: '', db: 0, enable_tls: false },
+  admin: { email: '', password: '' },
+  server: { host: '0.0.0.0', port: getCurrentPort(), mode: 'release' },
 })
 
 const canProceed = computed(() => {
   switch (currentStep.value) {
-    case 0:
-      return dbConnected.value
-    case 1:
-      return redisConnected.value
+    case 0: return dbConnected.value
+    case 1: return redisConnected.value
     case 2:
       return (
         formData.admin.email &&
         formData.admin.password.length >= 8 &&
         formData.admin.password === confirmPassword.value
       )
-    default:
-      return true
+    default: return true
   }
 })
 
@@ -588,14 +351,12 @@ async function testDatabaseConnection() {
   testingDb.value = true
   errorMessage.value = ''
   dbConnected.value = false
-
   try {
-    await testDatabase(formData.database)
+    await setup.action.testDatabase(formData.database)
     dbConnected.value = true
   } catch (error: unknown) {
     const err = error as { response?: { data?: { detail?: string; message?: string } }; message?: string }
-    errorMessage.value =
-      err.response?.data?.detail || err.response?.data?.message || err.message || 'Connection failed'
+    errorMessage.value = err.response?.data?.detail || err.response?.data?.message || err.message || 'Connection failed'
   } finally {
     testingDb.value = false
   }
@@ -605,14 +366,12 @@ async function testRedisConnection() {
   testingRedis.value = true
   errorMessage.value = ''
   redisConnected.value = false
-
   try {
-    await testRedis(formData.redis)
+    await setup.action.testRedis(formData.redis)
     redisConnected.value = true
   } catch (error: unknown) {
     const err = error as { response?: { data?: { detail?: string; message?: string } }; message?: string }
-    errorMessage.value =
-      err.response?.data?.detail || err.response?.data?.message || err.message || 'Connection failed'
+    errorMessage.value = err.response?.data?.detail || err.response?.data?.message || err.message || 'Connection failed'
   } finally {
     testingRedis.value = false
   }
@@ -626,61 +385,36 @@ function nextStep() {
 }
 
 async function performInstall() {
-  installing.value = true
   errorMessage.value = ''
-
   try {
-    await install(formData)
+    await setup.action.install(formData)
     installSuccess.value = true
-    // Start polling for service restart
     waitForServiceRestart()
   } catch (error: unknown) {
     const err = error as { response?: { data?: { detail?: string; message?: string } }; message?: string }
-    errorMessage.value =
-      err.response?.data?.detail || err.response?.data?.message || err.message || 'Installation failed'
-  } finally {
-    installing.value = false
+    errorMessage.value = err.response?.data?.detail || err.response?.data?.message || err.message || 'Installation failed'
   }
 }
 
-// Wait for service to restart and become available
 async function waitForServiceRestart() {
-  const maxAttempts = 60 // Increase to 60 attempts, ~60 seconds max
-  const interval = 1000 // 1 second between attempts
-
-  // Wait a moment for the service to start restarting
+  const maxAttempts = 60
   await new Promise((resolve) => setTimeout(resolve, 3000))
-
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      // Use setup status endpoint as it tells us the real mode
-      // Service might return 404 or connection refused while restarting
-      const response = await fetch(buildGatewayUrl('/setup/status'), {
-        method: 'GET',
-        cache: 'no-store'
-      })
-
+      const response = await fetch(buildGatewayUrl('/setup/status'), { method: 'GET', cache: 'no-store' })
       if (response.ok) {
         const data = await response.json()
-        // If needs_setup is false, service has restarted in normal mode
         if (data.data && !data.data.needs_setup) {
           serviceReady.value = true
-          // Redirect to login page after a short delay
-          setTimeout(() => {
-            window.location.href = '/login'
-          }, 1500)
+          setTimeout(() => { window.location.href = '/login' }, 1500)
           return
         }
       }
     } catch {
-      // Service not ready or network error during restart, continue polling
+      // service restarting
     }
-
-    await new Promise((resolve) => setTimeout(resolve, interval))
+    await new Promise((resolve) => setTimeout(resolve, 1000))
   }
-
-  // If we reach here, service didn't restart in time
-  // Show a message to refresh manually
   errorMessage.value = t('setup.status.timeout')
 }
 </script>

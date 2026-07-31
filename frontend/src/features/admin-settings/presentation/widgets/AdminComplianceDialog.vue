@@ -7,7 +7,6 @@
     :close-on-click-outside="false"
     :show-close-button="false"
     :z-index="80"
-    initial-focus="dialog"
     @close="noop"
   >
     <div class="space-y-5">
@@ -32,7 +31,7 @@
               {{ t('adminCompliance.version') }}
             </p>
             <p class="mt-1 break-all font-mono text-gray-900 dark:text-white">
-              {{ complianceStore.status?.version || 'v2026.06.10' }}
+              {{ compliance.status.value?.version || 'v2026.06.10' }}
             </p>
           </div>
           <a
@@ -62,7 +61,7 @@
           v-model="typedPhrase"
           :placeholder="t('adminCompliance.inputPlaceholder')"
           autocomplete="off"
-          :disabled="complianceStore.submitting"
+          :disabled="compliance.acceptLoading.value"
           :error="inputError"
           @enter="submit"
         />
@@ -78,7 +77,7 @@
         <button
           type="button"
           class="btn btn-secondary"
-          :disabled="complianceStore.submitting"
+          :disabled="compliance.acceptLoading.value"
           @click="logout"
         >
           {{ t('adminCompliance.logout') }}
@@ -86,10 +85,10 @@
         <button
           type="button"
           class="btn btn-primary"
-          :disabled="!canSubmit || complianceStore.submitting"
+          :disabled="!canSubmit || compliance.acceptLoading.value"
           @click="submit"
         >
-          <span v-if="complianceStore.submitting">{{ t('common.submitting') }}</span>
+          <span v-if="compliance.acceptLoading.value">{{ t('common.compliance.acceptLoading.value') }}</span>
           <span v-else>{{ t('adminCompliance.accept') }}</span>
         </button>
       </div>
@@ -105,13 +104,15 @@ import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Input from '@/common/widgets/forms/Input.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import { useAdminComplianceStore, useAppStore, useAuthStore } from '@/stores'
+import { useAdminCompliance } from '@/features/admin-settings/presentation/composables/useAdminCompliance'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { getLocale } from '@/core/i18n'
 import zhDocument from '../../../../../../docs/legal/admin-compliance.zh.md?raw'
 import enDocument from '../../../../../../docs/legal/admin-compliance.en.md?raw'
 
 const { t } = useI18n()
-const complianceStore = useAdminComplianceStore()
+const compliance = useAdminCompliance()
 const authStore = useAuthStore()
 const appStore = useAppStore()
 const typedPhrase = ref('')
@@ -122,15 +123,15 @@ marked.setOptions({
   gfm: true,
 })
 
-const visible = computed(() => authStore.isAuthenticated && authStore.isAdmin && complianceStore.shouldShow)
-const expectedPhrase = computed(() => complianceStore.expectedPhrase)
+const visible = computed(() => authStore.isAuthenticated && authStore.isAdmin && compliance.shouldShow.value)
+const expectedPhrase = computed(() => compliance.expectedPhrase.value)
 const canSubmit = computed(() => typedPhrase.value.trim() === expectedPhrase.value)
 const currentDocument = computed(() => getLocale() === 'zh' ? zhDocument : enDocument)
 const documentUrl = computed(() => {
   if (getLocale() === 'zh') {
-    return complianceStore.status?.document_url_zh || 'https://github.com/DR-lin-eng/sub2api-no2api/blob/main/docs/legal/admin-compliance.zh.md'
+    return compliance.status.value?.documentUrlZh || 'https://github.com/Wei-Shaw/sub2api/blob/main/docs/legal/admin-compliance.zh.md'
   }
-  return complianceStore.status?.document_url_en || 'https://github.com/DR-lin-eng/sub2api-no2api/blob/main/docs/legal/admin-compliance.en.md'
+  return compliance.status.value?.documentUrlEn || 'https://github.com/Wei-Shaw/sub2api/blob/main/docs/legal/admin-compliance.en.md'
 })
 const inputError = computed(() => {
   if (!attemptedSubmit.value || canSubmit.value) {
@@ -166,7 +167,7 @@ async function submit(): Promise<void> {
   }
 
   try {
-    const status = await complianceStore.accept(typedPhrase.value.trim())
+    const status = await compliance.accept(typedPhrase.value.trim())
     if (!status.required) {
       appStore.showSuccess(t('adminCompliance.accepted'))
       typedPhrase.value = ''

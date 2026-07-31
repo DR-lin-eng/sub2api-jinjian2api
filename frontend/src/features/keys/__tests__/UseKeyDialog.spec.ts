@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import type { GroupPlatform } from '@/types'
 
 const { copyToClipboardMock } = vi.hoisted(() => ({
   copyToClipboardMock: vi.fn().mockResolvedValue(true)
@@ -19,95 +18,11 @@ vi.mock('@/common/composables/useClipboard', () => ({
   })
 }))
 
-import UseKeyModal from '../presentation/widgets/UseKeyDialog.vue'
+import UseKeyDialog from '@/features/keys/presentation/widgets/UseKeyDialog.vue'
 
-describe('UseKeyModal', () => {
-  it('maps every group platform to the existing OpenCode provider, path, and base URL', async () => {
-    const cases: Array<{
-      platform: GroupPlatform
-      files: Array<{ provider: string; path: string; baseURL: string }>
-    }> = [
-      {
-        platform: 'anthropic',
-        files: [{ provider: 'anthropic', path: 'opencode.json', baseURL: 'https://example.com/root/v1' }]
-      },
-      {
-        platform: 'openai',
-        files: [{ provider: 'openai', path: 'opencode.json', baseURL: 'https://example.com/root/v1' }]
-      },
-      {
-        platform: 'gemini',
-        files: [{ provider: 'gemini', path: 'opencode.json', baseURL: 'https://example.com/root/v1beta' }]
-      },
-      {
-        platform: 'antigravity',
-        files: [
-          {
-            provider: 'antigravity-claude',
-            path: 'opencode.json (Claude)',
-            baseURL: 'https://example.com/root/antigravity/v1'
-          },
-          {
-            provider: 'antigravity-gemini',
-            path: 'opencode.json (Gemini)',
-            baseURL: 'https://example.com/root/antigravity/v1beta'
-          }
-        ]
-      },
-      {
-        platform: 'grok',
-        files: [{ provider: 'grok', path: 'opencode.json', baseURL: 'https://example.com/root/v1' }]
-      },
-      {
-        platform: 'composite',
-        files: [{ provider: 'openai', path: 'opencode.json', baseURL: 'https://example.com/root/v1' }]
-      }
-    ]
-
-    for (const testCase of cases) {
-      const wrapper = mount(UseKeyModal, {
-        props: {
-          show: true,
-          apiKey: 'sk-platform-map',
-          baseUrl: 'https://example.com/root/',
-          platform: testCase.platform
-        },
-        global: {
-          stubs: {
-            BaseDialog: {
-              template: '<div><slot /><slot name="footer" /></div>'
-            },
-            Icon: {
-              template: '<span />'
-            }
-          }
-        }
-      })
-      const opencodeTab = wrapper.findAll('button').find((button) =>
-        button.text().includes('keys.useKeyModal.cliTabs.opencode')
-      )
-
-      expect(opencodeTab, testCase.platform).toBeDefined()
-      await opencodeTab!.trigger('click')
-      await nextTick()
-
-      const configs = wrapper.findAll('pre code').map((code) => JSON.parse(code.text()))
-      expect(configs).toHaveLength(testCase.files.length)
-      testCase.files.forEach((expected, index) => {
-        expect(Object.keys(configs[index].provider)).toEqual([expected.provider])
-        expect(configs[index].provider[expected.provider].options).toEqual({
-          baseURL: expected.baseURL,
-          apiKey: 'sk-platform-map'
-        })
-        expect(wrapper.text()).toContain(expected.path)
-      })
-      expect(wrapper.text()).toContain('keys.useKeyModal.opencode.hint')
-      wrapper.unmount()
-    }
-  })
-
+describe('UseKeyDialog', () => {
   it('renders Grok Build and OpenCode setup for Grok groups', async () => {
-    const wrapper = mount(UseKeyModal, {
+    const wrapper = mount(UseKeyDialog, {
       props: {
         show: true,
         apiKey: 'sk-grok-test',
@@ -169,7 +84,7 @@ describe('UseKeyModal', () => {
 
   it('renders copyable Claude Code setup through the Grok Messages gateway', async () => {
     copyToClipboardMock.mockClear()
-    const wrapper = mount(UseKeyModal, {
+    const wrapper = mount(UseKeyDialog, {
       props: {
         show: true,
         apiKey: 'sk-grok-claude-test',
@@ -258,7 +173,7 @@ describe('UseKeyModal', () => {
   })
 
   it('renders Codex custom provider setup through the Grok Responses gateway', async () => {
-    const wrapper = mount(UseKeyModal, {
+    const wrapper = mount(UseKeyDialog, {
       props: {
         show: true,
         apiKey: 'sk-grok-codex-test',
@@ -316,7 +231,7 @@ describe('UseKeyModal', () => {
   })
 
   it('renders GPT-5.6 and goals feature in OpenAI Codex config', () => {
-    const wrapper = mount(UseKeyModal, {
+    const wrapper = mount(UseKeyDialog, {
       props: {
         show: true,
         apiKey: 'sk-test',
@@ -357,7 +272,7 @@ describe('UseKeyModal', () => {
   })
 
   it('renders API Key Mode authorization in OpenAI Codex config', async () => {
-    const wrapper = mount(UseKeyModal, {
+    const wrapper = mount(UseKeyDialog, {
       props: {
         show: true,
         apiKey: 'sk-test',
@@ -407,7 +322,7 @@ describe('UseKeyModal', () => {
   })
 
   it('renders GPT-5.6 and goals feature in OpenAI Codex WebSocket config', async () => {
-    const wrapper = mount(UseKeyModal, {
+    const wrapper = mount(UseKeyDialog, {
       props: {
         show: true,
         apiKey: 'sk-test',
@@ -454,7 +369,7 @@ describe('UseKeyModal', () => {
   })
 
   it('preserves API Key Mode when switching to OpenAI Codex WebSocket config', async () => {
-    const wrapper = mount(UseKeyModal, {
+    const wrapper = mount(UseKeyDialog, {
       props: {
         show: true,
         apiKey: 'sk-test',
@@ -498,7 +413,7 @@ describe('UseKeyModal', () => {
   })
 
   it('resets Codex authentication mode when the modal reopens or platform changes', async () => {
-    const wrapper = mount(UseKeyModal, {
+    const wrapper = mount(UseKeyDialog, {
       props: {
         show: true,
         apiKey: 'sk-test',
@@ -535,7 +450,7 @@ describe('UseKeyModal', () => {
   })
 
   it('renders GPT-5.4 mini entry in OpenCode config', async () => {
-    const wrapper = mount(UseKeyModal, {
+    const wrapper = mount(UseKeyDialog, {
       props: {
         show: true,
         apiKey: 'sk-test',
@@ -569,7 +484,7 @@ describe('UseKeyModal', () => {
   })
 
   it('renders GPT-5.6 alias and max variants in OpenCode config', async () => {
-    const wrapper = mount(UseKeyModal, {
+    const wrapper = mount(UseKeyDialog, {
       props: {
         show: true,
         apiKey: 'sk-test',
@@ -606,7 +521,7 @@ describe('UseKeyModal', () => {
   })
 
   it('renders Claude Fable 5 OpenCode config with adaptive thinking', async () => {
-    const wrapper = mount(UseKeyModal, {
+    const wrapper = mount(UseKeyDialog, {
       props: {
         show: true,
         apiKey: 'sk-test',

@@ -18,9 +18,9 @@
           <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
             <dt class="text-gray-500">{{ t('admin.promptAudit.events.decision') }}</dt><dd class="font-medium text-gray-900 dark:text-white">{{ formatDecisionAction(event.decision, event.action) }}</dd>
             <dt class="text-gray-500">{{ t('admin.promptAudit.events.user') }}</dt><dd>{{ event.snapshot.username || '—' }}</dd>
-            <dt class="text-gray-500">{{ t('admin.promptAudit.events.email') }}</dt><dd>{{ event.snapshot.user_email || '—' }}</dd>
-            <dt class="text-gray-500">{{ t('admin.promptAudit.events.apiKey') }}</dt><dd>{{ event.snapshot.api_key_name || '—' }}</dd>
-            <dt class="text-gray-500">{{ t('admin.promptAudit.events.group') }}</dt><dd>{{ event.snapshot.group_name || '—' }}</dd>
+            <dt class="text-gray-500">{{ t('admin.promptAudit.events.email') }}</dt><dd>{{ event.snapshot.userEmail || '—' }}</dd>
+            <dt class="text-gray-500">{{ t('admin.promptAudit.events.apiKey') }}</dt><dd>{{ event.snapshot.apiKeyName || '—' }}</dd>
+            <dt class="text-gray-500">{{ t('admin.promptAudit.events.group') }}</dt><dd>{{ event.snapshot.groupName || '—' }}</dd>
             <dt class="text-gray-500">{{ t('admin.promptAudit.events.model') }}</dt><dd>{{ event.snapshot.model || '—' }}</dd>
             <dt class="text-gray-500">{{ t('admin.promptAudit.events.categories') }}</dt><dd>{{ formatCategories(event.categories) }}</dd>
           </dl>
@@ -42,31 +42,31 @@
 
           <div class="space-y-3">
             <h4 class="text-sm font-medium text-gray-900 dark:text-white">{{ t('admin.promptAudit.events.riskSummaries') }}</h4>
-            <article v-for="issue in event.issue_summaries" :key="`${issue.scanner_id}-${issue.code}`" class="border-l-2 border-red-400 pl-4" data-test="risk-issue">
+            <article v-for="issue in event.issueSummaries" :key="`${issue.scannerId}-${issue.code}`" class="border-l-2 border-red-400 pl-4" data-test="risk-issue">
               <div class="flex flex-wrap items-center gap-2">
                 <h5 class="font-medium text-gray-900 dark:text-white">{{ issueTitle(issue) }}</h5>
                 <span class="text-xs text-red-600 dark:text-red-300">{{ issueSeverity(issue) }} · {{ issueAction(issue) }}</span>
               </div>
               <p class="mt-1 text-sm text-gray-600 dark:text-dark-300">{{ issueDescription(issue) }}</p>
               <dl class="mt-2 grid gap-1 text-xs text-gray-500 dark:text-dark-400 sm:grid-cols-2">
-                <div><dt class="inline text-gray-400">{{ t('admin.promptAudit.events.categories') }} · </dt><dd class="inline">{{ translateCategory(issue.category || issue.scanner_id) }}</dd></div>
+                <div><dt class="inline text-gray-400">{{ t('admin.promptAudit.events.categories') }} · </dt><dd class="inline">{{ translateCategory(issue.category || issue.scannerId) }}</dd></div>
                 <div><dt class="inline text-gray-400">{{ t('admin.promptAudit.events.score') }} · </dt><dd class="inline">{{ issue.score }}</dd></div>
                 <div class="sm:col-span-2"><dt class="inline text-gray-400">{{ t('admin.promptAudit.events.evidence') }} · </dt><dd class="inline break-words">{{ issue.evidence ? translateEvidence(issue.evidence) : '—' }}</dd></div>
               </dl>
             </article>
-            <p v-if="event.issue_summaries.length === 0" class="py-6 text-center text-sm text-gray-500">{{ t('admin.promptAudit.events.noRisks') }}</p>
+            <p v-if="event.issueSummaries.length === 0" class="py-6 text-center text-sm text-gray-500">{{ t('admin.promptAudit.events.noRisks') }}</p>
           </div>
         </div>
 
         <dl v-show="activeTab === 'technical'" class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm" role="tabpanel">
-          <dt class="text-gray-500">{{ t('admin.promptAudit.events.requestId') }}</dt><dd class="break-all font-mono">{{ event.snapshot.request_id || '—' }}</dd>
-          <dt class="text-gray-500">{{ t('admin.promptAudit.events.promptHash') }}</dt><dd class="break-all font-mono">{{ event.snapshot.prompt_hash }}</dd>
-          <dt class="text-gray-500">{{ t('admin.promptAudit.events.technical.scanner') }}</dt><dd>{{ event.scanner_backend }} · {{ event.scanner_version }}</dd>
-          <dt class="text-gray-500">{{ t('admin.promptAudit.events.technical.policy') }}</dt><dd>{{ event.policy_id }} · v{{ event.policy_version }}</dd>
-          <dt class="text-gray-500">{{ t('admin.promptAudit.events.technical.guardEndpoint') }}</dt><dd>{{ event.guard_endpoint_id }}</dd>
-          <dt class="text-gray-500">{{ t('admin.promptAudit.events.technical.config') }}</dt><dd>v{{ event.config_version }}</dd>
-          <dt class="text-gray-500">{{ t('admin.promptAudit.events.technical.chunks') }}</dt><dd>{{ event.chunk_total }}</dd>
-          <dt class="text-gray-500">{{ t('admin.promptAudit.events.technical.latency') }}</dt><dd>{{ event.latency_ms }} ms</dd>
+          <dt class="text-gray-500">{{ t('admin.promptAudit.events.request_id') }}</dt><dd class="break-all font-mono">{{ event.snapshot.requestId || '—' }}</dd>
+          <dt class="text-gray-500">{{ t('admin.promptAudit.events.promptHash') }}</dt><dd class="break-all font-mono">{{ event.snapshot.promptHash }}</dd>
+          <dt class="text-gray-500">{{ t('admin.promptAudit.events.technical.scanner') }}</dt><dd>{{ event.scannerBackend }} · {{ event.scannerVersion }}</dd>
+          <dt class="text-gray-500">{{ t('admin.promptAudit.events.technical.policy') }}</dt><dd>{{ event.policyId }} · v{{ event.policyVersion }}</dd>
+          <dt class="text-gray-500">{{ t('admin.promptAudit.events.technical.guardEndpoint') }}</dt><dd>{{ event.guardEndpointId }}</dd>
+          <dt class="text-gray-500">{{ t('admin.promptAudit.events.technical.config') }}</dt><dd>v{{ event.configVersion }}</dd>
+          <dt class="text-gray-500">{{ t('admin.promptAudit.events.technical.chunks') }}</dt><dd>{{ event.chunkTotal }}</dd>
+          <dt class="text-gray-500">{{ t('admin.promptAudit.events.technical.latency') }}</dt><dd>{{ event.latencyMs }} ms</dd>
           <dt class="text-gray-500">{{ t('admin.promptAudit.events.stage') }}</dt><dd>{{ event.snapshot.stage || 'http' }}</dd>
           <dt class="text-gray-500">{{ t('admin.promptAudit.events.technical.protocol') }}</dt><dd>{{ event.snapshot.protocol }} · {{ event.snapshot.endpoint }}</dd>
         </dl>
@@ -79,8 +79,9 @@
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import type { PromptAuditEvent, PromptIssueSummary } from '../../domain/models/promptAuditTypes'
-import { SCANNER_CATALOG } from '../../domain/promptAuditViewModel'
+import type { PromptAuditEvent } from '@/features/prompt-audit/domain/models/promptAuditEvent'
+import type { PromptIssueSummary } from '@/features/prompt-audit/domain/models/promptIssueSummary'
+import { SCANNER_CATALOG } from '@/features/prompt-audit/presentation/utils/promptAuditViewModel'
 
 const props = defineProps<{ show: boolean; event: PromptAuditEvent | null; loading: boolean }>()
 defineEmits<{ (event: 'close'): void }>()
@@ -94,7 +95,7 @@ const ACTIONS = new Set(['Allow', 'Warn', 'Block'])
 const RISK_LEVELS = new Set(['low', 'medium', 'high', 'critical'])
 
 function displayPrompt(event: PromptAuditEvent): string {
-  return event.snapshot.full_prompt || event.snapshot.redacted_preview || '—'
+  return event.snapshot.fullPrompt || event.snapshot.redactedPreview || '—'
 }
 
 function formatDecisionAction(decision: string, action: string): string {
@@ -120,37 +121,37 @@ function translateEvidence(value: string): string {
 }
 function formatGuardReturn(event: PromptAuditEvent): string {
   const evidence: Record<string, string> = {}
-  for (const [key, value] of Object.entries(event.scanner_evidence || {})) {
+  for (const [key, value] of Object.entries(event.scannerEvidence || {})) {
     evidence[key] = translateEvidence(value)
   }
   return JSON.stringify({
     decision: DECISIONS.has(event.decision) ? t(`admin.promptAudit.decisions.${event.decision}`) : event.decision,
-    risk_level: RISK_LEVELS.has(event.risk_level) ? t(`admin.promptAudit.riskLevels.${event.risk_level}`) : event.risk_level,
+    risk_level: RISK_LEVELS.has(event.riskLevel) ? t(`admin.promptAudit.riskLevels.${event.riskLevel}`) : event.riskLevel,
     action: ACTIONS.has(event.action) ? t(`admin.promptAudit.actions.${event.action}`) : event.action,
     categories: event.categories.map(translateCategory),
-    matched_scanners: event.matched_scanners.map(translateCategory),
-    scanner_scores: event.scanner_scores,
+    matched_scanners: event.matchedScanners.map(translateCategory),
+    scanner_scores: event.scannerScores,
     scanner_evidence: evidence,
-    scanner_backend: event.scanner_backend,
-    scanner_version: event.scanner_version,
-    guard_endpoint_id: event.guard_endpoint_id,
-    chunk_total: event.chunk_total,
-    latency_ms: event.latency_ms,
+    scanner_backend: event.scannerBackend,
+    scanner_version: event.scannerVersion,
+    guard_endpoint_id: event.guardEndpointId,
+    chunk_total: event.chunkTotal,
+    latency_ms: event.latencyMs,
   }, null, 2)
 }
 function issueTitle(issue: PromptIssueSummary): string {
-  return translateCategory(issue.category || issue.scanner_id) || issue.title
+  return translateCategory(issue.category || issue.scannerId) || issue.title
 }
 function issueDescription(issue: PromptIssueSummary): string {
-  const category = issue.category || issue.scanner_id
+  const category = issue.category || issue.scannerId
   const key = `admin.promptAudit.scannerDescriptions.${category}`
   const label = t(key)
   return label === key ? issue.description : label
 }
 function issueSeverity(issue: PromptIssueSummary): string {
-  return RISK_LEVELS.has(issue.severity) ? t(`admin.promptAudit.riskLevels.${issue.severity}`) : issue.severity_label || issue.severity
+  return RISK_LEVELS.has(issue.severity) ? t(`admin.promptAudit.riskLevels.${issue.severity}`) : issue.severityLabel || issue.severity
 }
 function issueAction(issue: PromptIssueSummary): string {
-  return ACTIONS.has(issue.action) ? t(`admin.promptAudit.actions.${issue.action}`) : issue.action_label || issue.action
+  return ACTIONS.has(issue.action) ? t(`admin.promptAudit.actions.${issue.action}`) : issue.actionLabel || issue.action
 }
 </script>

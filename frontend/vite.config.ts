@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv, Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import checker from 'vite-plugin-checker'
+import swc from 'unplugin-swc'
 import { resolve } from 'path'
 
 function escapeHtml(value: string): string {
@@ -85,6 +86,19 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
+      // SWC transforms .ts files (emits decorator metadata for class-transformer/class-validator).
+      // Vue SFC <script setup lang="ts"> is still handled by @vitejs/plugin-vue; the SFC compiler
+      // preserves decorator syntax but esbuild strips metadata, so we place SWC before vue().
+      swc.vite({
+        include: [/\.ts$/] as unknown as string[],
+        exclude: [/node_modules/] as unknown as string[],
+        jsc: {
+          parser: { syntax: 'typescript', decorators: true },
+          transform: { legacyDecorator: true, decoratorMetadata: true },
+          target: 'es2020',
+          keepClassNames: true,
+        },
+      }),
       vue(),
       checker({
         vueTsc: true
@@ -104,7 +118,7 @@ export default defineConfig(({ mode }) => {
     __INTLIFY_JIT_COMPILATION__: true
   },
   build: {
-    outDir: '../backend/internal/transport/webassets/dist',
+    outDir: '../backend/internal/web/dist',
     emptyOutDir: true,
     rollupOptions: {
       output: {
@@ -124,14 +138,9 @@ export default defineConfig(({ mode }) => {
               return 'vendor-vue'
             }
 
-            // VueUse 被多个页面静态引用；保持为独立公共 chunk。
-            if (id.includes('/@vueuse/')) {
-              return 'vendor-vueuse'
-            }
-
-            // XLSX 仅在导出流程中动态加载，不能与 VueUse 合并后进入页面 preload。
-            if (id.includes('/xlsx/')) {
-              return 'vendor-xlsx'
+            // UI 工具库（较大，单独分离）
+            if (id.includes('/@vueuse/') || id.includes('/xlsx/')) {
+              return 'vendor-ui'
             }
 
             // 图表库

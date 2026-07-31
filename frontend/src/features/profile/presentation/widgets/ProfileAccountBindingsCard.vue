@@ -13,8 +13,7 @@
 
 <script setup lang="ts">
 import ProfileIdentityBindingsSection from '@/features/profile/presentation/widgets/ProfileIdentityBindingsSection.vue'
-import type { User } from '@/types'
-
+import type { User } from '@/core/models/domain/user'
 withDefaults(
   defineProps<{
     user: User | null

@@ -53,15 +53,15 @@
                   </button>
                 </div>
                 <div class="text-xs text-gray-400">
-                  {{ formatDateTime(task.created_at) }}
+                  {{ formatDateTime(task.createdAt) }}
                 </div>
               </div>
               <div class="flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                 <span>{{ t('admin.usage.cleanup.range') }}: {{ formatRange(task) }}</span>
-                <span>{{ t('admin.usage.cleanup.deletedRows') }}: {{ task.deleted_rows.toLocaleString() }}</span>
+                <span>{{ t('admin.usage.cleanup.deletedRows') }}: {{ task.deletedRows.toLocaleString() }}</span>
               </div>
-              <div v-if="task.error_message" class="text-xs text-rose-500">
-                {{ task.error_message }}
+              <div v-if="task.errorMessage" class="text-xs text-rose-500">
+                {{ task.errorMessage }}
               </div>
             </div>
           </div>
@@ -123,8 +123,10 @@ import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import UsageFilters from '@/features/admin-usage/presentation/widgets/UsageFilters.vue'
-import { adminUsageAPI } from '@/features/admin-usage/data/datasources/adminUsageDatasource'
-import type { AdminUsageQueryParams, UsageCleanupTask, CreateUsageCleanupTaskRequest } from '@/features/admin-usage/data/datasources/adminUsageDatasource'
+import { useAdminUsage } from '@/features/admin-usage/presentation/composables/useAdminUsage'
+import type { AdminUsageQueryParams } from '@/features/admin-usage/domain/models/adminUsageQueryParams'
+import type { UsageCleanupTask } from '@/features/admin-usage/domain/models/usageCleanupTask'
+import type { CreateUsageCleanupTaskRequest } from '@/features/admin-usage/data/requests_models/createUsageCleanupTaskRequest'
 import { requestTypeToLegacyStream } from '@/core/utils/usageRequestType'
 
 interface Props {
@@ -139,6 +141,7 @@ const emit = defineEmits(['close'])
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const $usage = useAdminUsage()
 
 const localFilters = ref<AdminUsageQueryParams>({})
 const localStartDate = ref('')
@@ -162,8 +165,8 @@ const resetFilters = () => {
   localFilters.value = { ...props.filters }
   localStartDate.value = props.startDate
   localEndDate.value = props.endDate
-  localFilters.value.start_date = localStartDate.value
-  localFilters.value.end_date = localEndDate.value
+  localFilters.value.startDate = localStartDate.value
+  localFilters.value.endDate = localEndDate.value
   tasksPage.value = 1
   tasksTotal.value = 0
 }
@@ -222,8 +225,9 @@ const formatDateTime = (value?: string | null) => {
 }
 
 const formatRange = (task: UsageCleanupTask) => {
-  const start = formatDateTime(task.filters.start_time)
-  const end = formatDateTime(task.filters.end_time)
+  const filters = task.filters ?? {}
+  const start = formatDateTime(filters.start_time)
+  const end = formatDateTime(filters.end_time)
   return `${start} ~ ${end}`
 }
 
@@ -239,7 +243,7 @@ const loadTasks = async () => {
   if (!props.show) return
   tasksLoading.value = true
   try {
-    const res = await adminUsageAPI.listCleanupTasks({
+    const res = await $usage.listCleanupTasks({
       page: tasksPage.value,
       page_size: tasksPageSize.value
     })
@@ -248,8 +252,8 @@ const loadTasks = async () => {
     if (res.page) {
       tasksPage.value = res.page
     }
-    if (res.page_size) {
-      tasksPageSize.value = res.page_size
+    if (res.pageSize) {
+      tasksPageSize.value = res.pageSize
     }
   } catch (error) {
     console.error('Failed to load cleanup tasks:', error)
@@ -296,32 +300,32 @@ const buildPayload = (): CreateUsageCleanupTaskRequest | null => {
     timezone: getUserTimezone()
   }
 
-  if (localFilters.value.user_id && localFilters.value.user_id > 0) {
-    payload.user_id = localFilters.value.user_id
+  if (localFilters.value.userId && localFilters.value.userId > 0) {
+    payload.user_id = localFilters.value.userId
   }
-  if (localFilters.value.api_key_id && localFilters.value.api_key_id > 0) {
-    payload.api_key_id = localFilters.value.api_key_id
+  if (localFilters.value.apiKeyId && localFilters.value.apiKeyId > 0) {
+    payload.api_key_id = localFilters.value.apiKeyId
   }
-  if (localFilters.value.account_id && localFilters.value.account_id > 0) {
-    payload.account_id = localFilters.value.account_id
+  if (localFilters.value.accountId && localFilters.value.accountId > 0) {
+    payload.account_id = localFilters.value.accountId
   }
-  if (localFilters.value.group_id && localFilters.value.group_id > 0) {
-    payload.group_id = localFilters.value.group_id
+  if (localFilters.value.groupId && localFilters.value.groupId > 0) {
+    payload.group_id = localFilters.value.groupId
   }
   if (localFilters.value.model) {
     payload.model = localFilters.value.model
   }
-  if (localFilters.value.request_type) {
-    payload.request_type = localFilters.value.request_type
-    const legacyStream = requestTypeToLegacyStream(localFilters.value.request_type)
+  if (localFilters.value.requestType) {
+    payload.request_type = localFilters.value.requestType
+    const legacyStream = requestTypeToLegacyStream(localFilters.value.requestType)
     if (legacyStream !== null && legacyStream !== undefined) {
       payload.stream = legacyStream
     }
   } else if (localFilters.value.stream !== null && localFilters.value.stream !== undefined) {
     payload.stream = localFilters.value.stream
   }
-  if (localFilters.value.billing_type !== null && localFilters.value.billing_type !== undefined) {
-    payload.billing_type = localFilters.value.billing_type
+  if (localFilters.value.billingType !== null && localFilters.value.billingType !== undefined) {
+    payload.billing_type = localFilters.value.billingType
   }
 
   return payload
@@ -336,7 +340,7 @@ const submitCleanup = async () => {
   submitting.value = true
   confirmVisible.value = false
   try {
-    await adminUsageAPI.createCleanupTask(payload)
+    await $usage.createCleanupTask(payload)
     appStore.showSuccess(t('admin.usage.cleanup.submitSuccess'))
     loadTasks()
   } catch (error) {
@@ -356,7 +360,7 @@ const cancelTask = async () => {
   canceling.value = true
   cancelConfirmVisible.value = false
   try {
-    await adminUsageAPI.cancelCleanupTask(task.id)
+    await $usage.cancelCleanupTask(task.id)
     appStore.showSuccess(t('admin.usage.cleanup.cancelSuccess'))
     loadTasks()
   } catch (error) {

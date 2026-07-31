@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import { useClipboard } from '@/common/composables/useClipboard'
-import { useAppStore } from '@/stores'
-import { opsAPI, type OpsRequestDetailsParams, type OpsRequestDetail } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import type { OpsRequestDetailsPreset } from '../opsTypeSignals'
-import { formatDateTime, formatDurationMs, formatExactDurationMs, parseTimeRangeMinutes } from '../opsFormatter'
+import { useAppStore } from '@/core/stores/appStore'
+import type { OpsRequestDetailsParams } from '@/features/admin-ops/data/requests_models/opsRequestDetailsParams'
+import type { OpsRequestDetail } from '@/features/admin-ops/domain/models/opsRequestDetail'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
+import { formatDateTime, formatDurationMs, formatExactDurationMs, parseTimeRangeMinutes } from '@/features/admin-ops/presentation/utils/opsFormatter'
+
+export interface OpsRequestDetailsPreset {
+  title: string
+  kind?: OpsRequestDetailsParams['kind']
+  sort?: OpsRequestDetailsParams['sort']
+}
 
 interface Props {
   modelValue: boolean
@@ -28,15 +35,12 @@ const { t } = useI18n()
 const appStore = useAppStore()
 const { copyToClipboard } = useClipboard()
 
-// 与 DataTable 一致：< 768px 切换为卡片视图，避免宽表在移动端被截断。
-const isDesktopViewport = useMediaQuery('(min-width: 768px)')
-
 const loading = ref(false)
 const items = ref<OpsRequestDetail[]>([])
 const total = ref(0)
 const page = ref(1)
 const pageSize = ref(10)
-const showsTTFT = computed(() => props.preset.sort === 'ttft_desc')
+const showsTTFT = computed(() => props.preset.sort === 'first_token_ms')
 
 const close = () => emit('update:modelValue', false)
 
@@ -65,19 +69,16 @@ const fetchData = async () => {
       page: page.value,
       page_size: pageSize.value,
       kind: props.preset.kind ?? 'all',
-      sort: props.preset.sort ?? 'created_at_desc'
+      sort: props.preset.sort ?? 'created_at',
+      sort_dir: 'desc'
     }
 
     const platform = (props.platform || '').trim()
     if (platform) params.platform = platform
     if (typeof props.groupId === 'number' && props.groupId > 0) params.group_id = props.groupId
 
-    if (typeof props.preset.min_duration_ms === 'number') params.min_duration_ms = props.preset.min_duration_ms
-    if (typeof props.preset.max_duration_ms === 'number') params.max_duration_ms = props.preset.max_duration_ms
-    if (props.preset.ttft_only) params.ttft_only = true
-
-    const res = await opsAPI.listRequestDetails(params)
-    items.value = res.items || []
+    const res = await queryStore.listRequestDetails(params)
+    items.value = (res.items ?? []) as OpsRequestDetail[]
     total.value = res.total || 0
   } catch (e: any) {
     console.error('[OpsRequestDetailsModal] Failed to fetch request details', e)
@@ -106,10 +107,7 @@ watch(
     props.platform,
     props.groupId,
     props.preset.kind,
-    props.preset.sort,
-    props.preset.min_duration_ms,
-    props.preset.max_duration_ms,
-    props.preset.ttft_only
+    props.preset.sort
   ],
   () => {
     if (!props.modelValue) return
@@ -189,41 +187,7 @@ const kindBadgeClass = (kind: string) => {
 
           <div v-else class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-gray-200 dark:border-dark-700">
             <div class="min-h-0 flex-1 overflow-auto">
-              <div v-if="!isDesktopViewport" class="divide-y divide-gray-100 dark:divide-dark-800">
-                <div v-for="(row, idx) in items" :key="idx" class="space-y-2 p-4">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <span class="rounded-full px-2 py-1 text-[10px] font-bold" :class="kindBadgeClass(row.kind)">
-                      {{ row.kind === 'error' ? t('admin.ops.requestDetails.kind.error') : t('admin.ops.requestDetails.kind.success') }}
-                    </span>
-                    <span class="text-xs font-medium text-gray-700 dark:text-gray-200">{{ (row.platform || 'unknown').toUpperCase() }}</span>
-                    <span class="ml-auto text-[11px] text-gray-500 dark:text-gray-400">{{ formatDateTime(row.created_at) }}</span>
-                  </div>
-                  <div class="break-all text-xs text-gray-600 dark:text-gray-300">{{ row.model || '-' }}</div>
-                  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600 dark:text-gray-300">
-                    <span>{{ typeof row.duration_ms === 'number' ? `${row.duration_ms} ms` : '-' }}</span>
-                    <span>{{ row.status_code ?? '-' }}</span>
-                  </div>
-                  <div v-if="row.request_id" class="flex items-center gap-2">
-                    <span class="min-w-0 flex-1 truncate font-mono text-[11px] text-gray-700 dark:text-gray-200" :title="row.request_id">
-                      {{ row.request_id }}
-                    </span>
-                    <button
-                      class="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-[10px] font-bold text-gray-600 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-300 dark:hover:bg-dark-600"
-                      @click="handleCopyRequestId(row.request_id)"
-                    >
-                      {{ t('admin.ops.requestDetails.copy') }}
-                    </button>
-                  </div>
-                  <button
-                    v-if="row.kind === 'error' && row.error_id"
-                    class="w-full rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/30"
-                    @click="openErrorDetail(row.error_id)"
-                  >
-                    {{ t('admin.ops.requestDetails.viewError') }}
-                  </button>
-                </div>
-              </div>
-              <table v-else class="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
+              <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
                 <thead class="sticky top-0 z-10 bg-gray-50 dark:bg-dark-900">
                 <tr>
                   <th class="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -255,7 +219,7 @@ const kindBadgeClass = (kind: string) => {
               <tbody class="divide-y divide-gray-200 bg-white dark:divide-dark-700 dark:bg-dark-800">
                 <tr v-for="(row, idx) in items" :key="idx" class="hover:bg-gray-50 dark:hover:bg-dark-700/50">
                   <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-600 dark:text-gray-300">
-                    {{ formatDateTime(row.created_at) }}
+                    {{ formatDateTime(row.createdAt) }}
                   </td>
                   <td class="whitespace-nowrap px-4 py-3">
                     <span class="rounded-full px-2 py-1 text-[10px] font-bold" :class="kindBadgeClass(row.kind)">
@@ -270,21 +234,21 @@ const kindBadgeClass = (kind: string) => {
                   </td>
                   <td
                     class="whitespace-nowrap px-4 py-3 text-xs tabular-nums text-gray-600 dark:text-gray-300"
-                    :title="formatExactDurationMs(showsTTFT ? row.first_token_ms : row.duration_ms)"
+                    :title="formatExactDurationMs(showsTTFT ? row.firstTokenMs : row.durationMs)"
                   >
-                    {{ formatDurationMs(showsTTFT ? row.first_token_ms : row.duration_ms) }}
+                    {{ formatDurationMs(showsTTFT ? row.firstTokenMs : row.durationMs) }}
                   </td>
                   <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-600 dark:text-gray-300">
-                    {{ row.status_code ?? '-' }}
+                    {{ row.statusCode ?? '-' }}
                   </td>
                   <td class="px-4 py-3">
-                    <div v-if="row.request_id" class="flex items-center gap-2">
-                      <span class="max-w-[220px] truncate font-mono text-[11px] text-gray-700 dark:text-gray-200" :title="row.request_id">
-                        {{ row.request_id }}
+                    <div v-if="row.requestId" class="flex items-center gap-2">
+                      <span class="max-w-[220px] truncate font-mono text-[11px] text-gray-700 dark:text-gray-200" :title="row.requestId">
+                        {{ row.requestId }}
                       </span>
                       <button
                         class="rounded-md bg-gray-100 px-2 py-1 text-[10px] font-bold text-gray-600 hover:bg-gray-200 dark:bg-dark-700 dark:text-gray-300 dark:hover:bg-dark-600"
-                        @click="handleCopyRequestId(row.request_id)"
+                        @click="handleCopyRequestId(row.requestId)"
                       >
                         {{ t('admin.ops.requestDetails.copy') }}
                       </button>
@@ -293,9 +257,9 @@ const kindBadgeClass = (kind: string) => {
                   </td>
                   <td class="whitespace-nowrap px-4 py-3 text-right">
                     <button
-                      v-if="row.kind === 'error' && row.error_id"
+                      v-if="row.kind === 'error' && row.errorId"
                       class="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:hover:bg-red-900/30"
-                      @click="openErrorDetail(row.error_id)"
+                      @click="openErrorDetail(row.errorId)"
                     >
                       {{ t('admin.ops.requestDetails.viewError') }}
                     </button>

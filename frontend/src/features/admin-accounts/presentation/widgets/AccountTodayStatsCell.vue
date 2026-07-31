@@ -40,10 +40,10 @@
         }}</span>
       </div>
       <!-- Cost (User/API Key) -->
-      <div v-if="props.stats.user_cost != null" class="flex items-center gap-1">
+      <div v-if="props.stats.userCost != null" class="flex items-center gap-1">
         <span class="text-gray-500 dark:text-gray-400">{{ t('usage.userBilled') }}:</span>
         <span class="font-medium text-gray-700 dark:text-gray-300">{{
-          formatCurrency(props.stats.user_cost)
+          formatCurrency(props.stats.userCost)
         }}</span>
       </div>
     </div>
@@ -55,8 +55,8 @@
 
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import type { WindowStats } from '@/types'
 import { formatNumber, formatCurrency } from '@/core/utils/format'
+import type { WindowStats } from '@/features/admin-accounts/domain/models/windowStats'
 
 const props = withDefaults(
   defineProps<{

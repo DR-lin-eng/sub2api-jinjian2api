@@ -31,11 +31,12 @@ import PendingOAuthCreateAccountForm, {
   type PendingOAuthCreateAccountPayload
 } from '@/features/auth/presentation/widgets/PendingOAuthCreateAccountForm.vue'
 import { apiClient } from '@/core/networks/client'
-import { useAuthStore, useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import {
   persistOAuthTokenContext,
-  type PendingOAuthExchangeResponse
-} from '@/features/auth/data/datasources/authDatasource'
+  type PendingOAuthExchangeResponse,
+} from '@/features/auth/presentation/utils/oauthUtils'
 import { clearAllAffiliateReferralCodes } from '@/core/utils/oauthAffiliate'
 
 const route = useRoute()

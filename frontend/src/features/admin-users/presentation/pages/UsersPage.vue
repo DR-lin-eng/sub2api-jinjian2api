@@ -3,37 +3,262 @@
     <TablePageLayout>
       <!-- Single Row: Search, Filters, and Actions -->
       <template #filters>
-        <UsersTableToolbar
-          ref="toolbarRef"
-          :search-query="searchQuery"
-          :loading="loading"
-          :selected-count="selectedCount"
-          :filters="filters"
-          :visible-filters="visibleFilters"
-          :active-attribute-filters="activeAttributeFilters"
-          :attribute-definitions="attributeDefinitions"
-          :group-filter-options="groupFilterOptions"
-          :api-key-group-filter-options="apiKeyGroupFilterOptions"
-          :toggleable-columns="toggleableColumns"
-          :hidden-columns="hiddenColumns"
-          :forced-visible-columns="FORCED_VISIBLE_COLUMNS"
-          @update-search-query="searchQuery = $event"
-          @update-role="filters.role = $event"
-          @update-scheduling-tier="filters.schedulingTier = $event"
-          @update-status="filters.status = $event"
-          @update-group="filters.group = $event"
-          @update-api-key-group="filters.apiKeyGroup = $event"
-          @update-attribute-filter="updateAttributeFilter"
-          @search="handleSearch"
-          @apply-filter="applyFilter"
-          @refresh="loadUsers"
-          @toggle-built-in-filter="toggleBuiltInFilter"
-          @toggle-attribute-filter="toggleAttributeFilter"
-          @toggle-column="toggleColumn"
-          @open-attributes="showAttributesModal = true"
-          @open-bulk-edit="showBulkEditModal = true"
-          @open-create="showCreateModal = true"
-        />
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Left: Search + Active Filters -->
+          <div class="flex flex-1 flex-wrap items-center gap-3">
+            <!-- Search Box -->
+            <div class="relative w-full md:w-64">
+              <Icon
+                name="search"
+                size="md"
+                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                v-model="searchQuery"
+                type="text"
+                :placeholder="t('admin.users.searchUsers')"
+                class="input pl-10"
+                @input="handleSearch"
+              />
+            </div>
+
+            <!-- Role Filter (visible when enabled) -->
+            <div v-if="visibleFilters.has('role')" class="w-full sm:w-32">
+              <Select
+                v-model="filters.role"
+                :options="[
+                  { value: '', label: t('admin.users.allRoles') },
+                  { value: 'admin', label: t('admin.users.admin') },
+                  { value: 'user', label: t('admin.users.user') }
+                ]"
+                @change="applyFilter"
+              />
+            </div>
+
+            <!-- Status Filter (visible when enabled) -->
+            <div v-if="visibleFilters.has('status')" class="w-full sm:w-32">
+              <Select
+                v-model="filters.status"
+                :options="[
+                  { value: '', label: t('admin.users.allStatus') },
+                  { value: 'active', label: t('common.active') },
+                  { value: 'disabled', label: t('admin.users.disabled') }
+                ]"
+                @change="applyFilter"
+              />
+            </div>
+
+            <!-- Group Filter (visible when enabled) -->
+            <div v-if="visibleFilters.has('group')" class="w-full sm:w-44">
+              <Select
+                v-model="filters.group"
+                :options="groupFilterOptions"
+                searchable
+                creatable
+                :creatable-prefix="t('admin.users.fuzzySearch')"
+                :search-placeholder="t('admin.users.searchAuthorizedGroups')"
+                @change="applyFilter"
+              />
+            </div>
+
+            <!-- API Key Group Filter (visible when enabled) -->
+            <div v-if="visibleFilters.has('apiKeyGroup')" class="w-full sm:w-44">
+              <Select
+                v-model="filters.apiKeyGroup"
+                :options="apiKeyGroupFilterOptions"
+                searchable
+                :search-placeholder="t('admin.users.searchApiKeyGroups')"
+                @change="applyFilter"
+              />
+            </div>
+
+            <!-- Dynamic Attribute Filters -->
+            <template v-for="(value, attrId) in activeAttributeFilters" :key="attrId">
+              <div
+                v-if="visibleFilters.has(`attr_${attrId}`)"
+                class="relative w-full sm:w-36"
+              >
+                <!-- Text/Email/URL/Textarea/Date type: styled input -->
+                <input
+                  v-if="['text', 'textarea', 'email', 'url', 'date'].includes(getAttributeDefinition(Number(attrId))?.type || 'text')"
+                  :value="value"
+                  @input="(e) => updateAttributeFilter(Number(attrId), (e.target as HTMLInputElement).value)"
+                  @keyup.enter="applyFilter"
+                  :placeholder="getAttributeDefinitionName(Number(attrId))"
+                  class="input w-full"
+                />
+                <!-- Number type: number input -->
+                <input
+                  v-else-if="getAttributeDefinition(Number(attrId))?.type === 'number'"
+                  :value="value"
+                  type="number"
+                  @input="(e) => updateAttributeFilter(Number(attrId), (e.target as HTMLInputElement).value)"
+                  @keyup.enter="applyFilter"
+                  :placeholder="getAttributeDefinitionName(Number(attrId))"
+                  class="input w-full"
+                />
+                <!-- Select/Multi-select type -->
+                <template v-else-if="['select', 'multi_select'].includes(getAttributeDefinition(Number(attrId))?.type || '')">
+                  <div class="w-full">
+                    <Select
+                      :model-value="value"
+                      :options="([
+                        { value: '', label: getAttributeDefinitionName(Number(attrId)) },
+                        ...(getAttributeDefinition(Number(attrId))?.options || [])
+                      ] as SelectOption[])"
+                      @update:model-value="(val) => { updateAttributeFilter(Number(attrId), String(val ?? '')); applyFilter() }"
+                    />
+                  </div>
+                </template>
+                <!-- Fallback -->
+                <input
+                  v-else
+                  :value="value"
+                  @input="(e) => updateAttributeFilter(Number(attrId), (e.target as HTMLInputElement).value)"
+                  @keyup.enter="applyFilter"
+                  :placeholder="getAttributeDefinitionName(Number(attrId))"
+                  class="input w-full"
+                />
+              </div>
+            </template>
+          </div>
+
+          <!-- Right: Actions and Settings -->
+          <div class="flex flex-wrap items-center justify-end gap-2">
+            <!-- Mobile: Secondary buttons (icon only) -->
+            <div class="flex items-center gap-2 md:contents">
+              <!-- Refresh Button -->
+              <button
+                @click="loadUsers"
+                :disabled="loading"
+                class="btn btn-secondary px-2 md:px-3"
+                :title="t('common.refresh')"
+              >
+                <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
+              </button>
+              <!-- Filter Settings Dropdown -->
+              <div class="relative" ref="filterDropdownRef">
+                <button
+                  @click="showFilterDropdown = !showFilterDropdown"
+                  class="btn btn-secondary px-2 md:px-3"
+                  :title="t('admin.users.filterSettings')"
+                >
+                  <Icon name="filter" size="sm" class="md:mr-1.5" />
+                  <span class="hidden md:inline">{{ t('admin.users.filterSettings') }}</span>
+                </button>
+                <!-- Dropdown menu -->
+                <div
+                  v-if="showFilterDropdown"
+                  class="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-dark-600 dark:bg-dark-800"
+                >
+                  <!-- Built-in filters -->
+                  <button
+                    v-for="filter in builtInFilters"
+                    :key="filter.key"
+                    @click="toggleBuiltInFilter(filter.key)"
+                    class="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
+                  >
+                    <span>{{ filter.name }}</span>
+                    <Icon
+                      v-if="visibleFilters.has(filter.key)"
+                      name="check"
+                      size="sm"
+                      class="text-primary-500"
+                      :stroke-width="2"
+                    />
+                  </button>
+                  <!-- Divider if custom attributes exist -->
+                  <div
+                    v-if="filterableAttributes.length > 0"
+                    class="my-1 border-t border-gray-100 dark:border-dark-700"
+                  ></div>
+                  <!-- Custom attribute filters -->
+                  <button
+                    v-for="attr in filterableAttributes"
+                    :key="attr.id"
+                    @click="toggleAttributeFilter(attr)"
+                    class="flex w-full items-center justify-between px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700"
+                  >
+                    <span>{{ attr.name }}</span>
+                    <Icon
+                      v-if="visibleFilters.has(`attr_${attr.id}`)"
+                      name="check"
+                      size="sm"
+                      class="text-primary-500"
+                      :stroke-width="2"
+                    />
+                  </button>
+                </div>
+              </div>
+              <!-- Column Settings Dropdown -->
+              <div class="relative" ref="columnDropdownRef">
+                <button
+                  @click="showColumnDropdown = !showColumnDropdown"
+                  class="btn btn-secondary px-2 md:px-3"
+                  :title="t('admin.users.columnSettings')"
+                >
+                  <svg class="h-4 w-4 md:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
+                  </svg>
+                  <span class="hidden md:inline">{{ t('admin.users.columnSettings') }}</span>
+                </button>
+                <!-- Dropdown menu -->
+                <div
+                  v-if="showColumnDropdown"
+                  class="absolute right-0 top-full z-50 mt-1 max-h-80 w-48 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-dark-600 dark:bg-dark-800"
+                >
+                  <button
+                    v-for="col in toggleableColumns"
+                    :key="col.key"
+                    :disabled="isForcedVisibleColumn(col.key)"
+                    @click="toggleColumn(col.key)"
+                    :class="[
+                      'flex w-full items-center justify-between px-4 py-2 text-left text-sm',
+                      isForcedVisibleColumn(col.key)
+                        ? 'cursor-not-allowed text-gray-400 dark:text-gray-500'
+                        : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-dark-700'
+                    ]"
+                    :title="isForcedVisibleColumn(col.key) ? t('admin.users.columnAlwaysVisible') : ''"
+                  >
+                    <span>{{ col.label }}</span>
+                    <Icon
+                      v-if="isColumnVisible(col.key)"
+                      name="check"
+                      size="sm"
+                      :class="isForcedVisibleColumn(col.key) ? 'text-gray-400 dark:text-gray-500' : 'text-primary-500'"
+                      :stroke-width="2"
+                    />
+                  </button>
+                </div>
+              </div>
+              <!-- Attributes Config Button -->
+              <button
+                @click="showAttributesModal = true"
+                class="btn btn-secondary px-2 md:px-3"
+                :title="t('admin.users.attributes.configButton')"
+              >
+                <Icon name="cog" size="sm" class="md:mr-1.5" />
+                <span class="hidden md:inline">{{ t('admin.users.attributes.configButton') }}</span>
+              </button>
+            </div>
+
+            <button
+              v-if="selectedCount > 0"
+              class="btn btn-secondary flex-1 md:flex-initial"
+              data-test="bulk-edit-limits"
+              @click="showBulkEditModal = true"
+            >
+              <Icon name="users" size="md" class="mr-2" />
+              {{ t('admin.users.bulkLimits.action', { count: selectedCount }) }}
+            </button>
+
+            <!-- Create User Button (full width on mobile, auto width on desktop) -->
+            <button @click="showCreateModal = true" class="btn btn-primary flex-1 md:flex-initial">
+              <Icon name="plus" size="md" class="mr-2" />
+              {{ t('admin.users.createUser') }}
+            </button>
+          </div>
+        </div>
       </template>
 
       <!-- Users Table -->
@@ -103,12 +328,6 @@
           <template #cell-role="{ value }">
             <span :class="['badge', value === 'admin' ? 'badge-purple' : 'badge-gray']">
               {{ t('admin.users.roles.' + value) }}
-            </span>
-          </template>
-
-          <template #cell-scheduling_tier="{ value }">
-            <span :class="['badge', schedulingTierBadgeClass(value)]">
-              {{ t(`admin.users.schedulingTiers.${schedulingTierKey(value)}`) }}
             </span>
           </template>
 
@@ -187,10 +406,10 @@
                 :key="sub.id"
                 :name="sub.group?.name || ''"
                 :platform="sub.group?.platform"
-                :subscription-type="sub.group?.subscription_type"
-                :rate-multiplier="sub.group?.rate_multiplier"
-                :days-remaining="sub.expires_at ? getDaysRemaining(sub.expires_at) : null"
-                :title="sub.expires_at ? formatDateTime(sub.expires_at) : ''"
+                :subscription-type="sub.group?.subscriptionType"
+                :rate-multiplier="sub.group?.rateMultiplier"
+                :days-remaining="sub.expiresAt ? getDaysRemaining(sub.expiresAt) : null"
+                :title="sub.expiresAt ? formatDateTime(sub.expiresAt) : ''"
               />
             </div>
             <span
@@ -321,9 +540,9 @@
 
           <template #cell-usage="{ row }">
             <PlatformUsageBreakdown
-              :today="usageStats[row.id]?.today_actual_cost ?? 0"
-              :total="usageStats[row.id]?.total_actual_cost ?? 0"
-              :by-platform="usageStats[row.id]?.by_platform"
+              :today="usageStats[row.id]?.todayActualCost ?? 0"
+              :total="usageStats[row.id]?.totalActualCost ?? 0"
+              :by-platform="usageStats[row.id]?.byPlatform"
             />
           </template>
 
@@ -345,7 +564,7 @@
 
           <template #cell-concurrency="{ row }">
             <UserConcurrencyCell
-              :current="row.current_concurrency ?? 0"
+              :current="row.currentConcurrency ?? 0"
               :max="row.concurrency"
             />
           </template>
@@ -562,11 +781,9 @@ import { formatDateTime } from '@/core/utils/format'
 import Icon from '@/common/widgets/icons/Icon.vue'
 
 const { t } = useI18n()
-import { adminAPI } from '@/api/admin'
-import type { AdminUser, AdminGroup, RequestSchedulingTier, UserAttributeDefinition } from '@/types'
-import type { BatchUserUsageStats } from '@/features/admin-dashboard/data/datasources/adminDashboardDatasource'
-import type { PlatformQuotaItem } from '@/features/admin-users/data/datasources/adminUsersDatasource'
-import type { Column } from '@/common/types/uiTypes'
+import type { BatchUserUsageStats } from '@/features/admin-dashboard/domain/models/batchUserUsageStats'
+import type { PlatformQuotaItem } from '@/features/admin-users/domain/models/platformQuotaItem'
+import type { Column } from '@/common/widgets/types'
 import type { SelectOption } from '@/common/widgets/forms/Select.vue'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
@@ -575,10 +792,10 @@ import Pagination from '@/common/widgets/data/Pagination.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
-import { buildApiKeyGroupFilterOptions } from '@/features/admin-groups/presentation/apiKeyGroupFilterOptionsSignals'
+import Select from '@/common/widgets/forms/Select.vue'
+import { buildApiKeyGroupFilterOptions } from '@/features/admin-groups/presentation/utils/apiKeyGroupFilterOptionsSignals'
 import UserAttributesConfigModal from '@/features/admin-users/presentation/widgets/UserAttributesConfigDialog.vue'
 import UserConcurrencyCell from '@/features/admin-users/presentation/widgets/UserConcurrencyCell.vue'
-import UsersTableToolbar from '@/features/admin-users/presentation/widgets/UsersTableToolbar.vue'
 import PlatformUsageBreakdown from '@/features/subscriptions/presentation/widgets/PlatformUsageBreakdown.vue'
 import PlatformCostCell from '@/features/subscriptions/presentation/widgets/PlatformCostCell.vue'
 import UserPlatformQuotaCell from '@/features/subscriptions/presentation/widgets/UserPlatformQuotaCell.vue'
@@ -591,26 +808,18 @@ import UserAllowedGroupsModal from '@/features/admin-users/presentation/widgets/
 import UserBalanceModal from '@/features/admin-users/presentation/widgets/UserBalanceDialog.vue'
 import UserBalanceHistoryModal from '@/features/admin-users/presentation/widgets/UserBalanceHistoryDialog.vue'
 import GroupReplaceModal from '@/features/admin-users/presentation/widgets/GroupReplaceDialog.vue'
+import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
+import { useAdminDashboard } from '@/features/admin-dashboard/presentation/composables/useAdminDashboard'
+import { useAdminUsers } from '@/features/admin-users/presentation/composables/useAdminUsers'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
+import type { UserAttributeDefinition } from '@/features/admin-users/domain/models/userAttributeDefinition'
+const $groups = useAdminGroups()
+const $dashboard = useAdminDashboard()
+const $userAttributes = useAdminUsers()
+const $users = useAdminUsers()
 
 const appStore = useAppStore()
-
-interface UsersTableToolbarExposed {
-  closeDropdownsOnOutsideClick: (target: HTMLElement) => void
-}
-
-const toolbarRef = ref<UsersTableToolbarExposed | null>(null)
-
-const schedulingTierKey = (tier: RequestSchedulingTier | number): 'priority' | 'normal' | 'low' => {
-  if (tier === 0) return 'priority'
-  if (tier === 2) return 'low'
-  return 'normal'
-}
-
-const schedulingTierBadgeClass = (tier: RequestSchedulingTier | number): string => {
-  if (tier === 0) return 'badge-primary'
-  if (tier === 2) return 'badge-warning'
-  return 'badge-gray'
-}
 
 // Generate dynamic attribute columns from enabled definitions
 const attributeColumns = computed<Column[]>(() =>
@@ -667,7 +876,6 @@ const allColumns = computed<Column[]>(() => [
   // Dynamic attribute columns
   ...attributeColumns.value,
   { key: 'role', label: t('admin.users.columns.role'), sortable: true },
-  { key: 'scheduling_tier', label: t('admin.users.columns.schedulingTier'), sortable: true },
   { key: 'groups', label: t('admin.users.columns.groups'), sortable: false },
   { key: 'subscriptions', label: t('admin.users.columns.subscriptions'), sortable: false },
   { key: 'balance', label: t('admin.users.columns.balance'), sortable: true },
@@ -764,6 +972,8 @@ const saveColumnsToStorage = () => {
   }
 }
 
+// Toggle column visibility
+const isForcedVisibleColumn = (key: string) => FORCED_VISIBLE_COLUMNS.has(key)
 const toggleColumn = (key: string) => {
   // 强制可见列(如 last_active_at)在加载时会被恢复成可见，
   // 这里阻止用户在当前会话隐藏它，避免"取消勾选 → 刷新又恢复"的反直觉行为。
@@ -786,6 +996,8 @@ const toggleColumn = (key: string) => {
   }
 }
 
+// Check if column is visible (not in hidden set)
+const isColumnVisible = (key: string) => !hiddenColumns.has(key)
 // usage 主列或任意 usage_<platform> 子列可见时都需要批量拉取用量数据
 // 列 key → 平台名（'usage' 主列汇总所有平台时为 null）
 // 显式数组取代 Object.keys()：保证迭代顺序（决定列头排序按钮渲染顺序）
@@ -821,7 +1033,7 @@ const searchQuery = ref('')
 const USER_SORT_STORAGE_KEY = 'admin-users-table-sort'
 const loadInitialSortState = (): { sort_by: string; sort_order: 'asc' | 'desc' } => {
   const fallback = { sort_by: 'created_at', sort_order: 'desc' as 'asc' | 'desc' }
-  const sortable = new Set(['email', 'id', 'username', 'role', 'scheduling_tier', 'balance', 'concurrency', 'status', 'last_used_at', 'last_active_at', 'created_at'])
+  const sortable = new Set(['email', 'id', 'username', 'role', 'balance', 'concurrency', 'status', 'last_used_at', 'last_active_at', 'created_at'])
   try {
     const raw = localStorage.getItem(USER_SORT_STORAGE_KEY)
     if (!raw) return fallback
@@ -843,7 +1055,7 @@ const allGroups = ref<AdminGroup[]>([])
 const loadAllGroups = async () => {
   if (allGroups.value.length > 0) return
   try {
-    allGroups.value = await adminAPI.groups.getAll()
+    allGroups.value = await $groups.getAll()
   } catch (e) {
     console.error('Failed to load groups:', e)
   }
@@ -855,7 +1067,7 @@ const allGroupsForApiKeyFilter = ref<AdminGroup[]>([])
 const loadAllGroupsForApiKeyFilter = async () => {
   if (allGroupsForApiKeyFilter.value.length > 0) return
   try {
-    allGroupsForApiKeyFilter.value = await adminAPI.groups.getAllIncludingInactive()
+    allGroupsForApiKeyFilter.value = await $groups.getAllIncludingInactive()
   } catch (e) {
     console.error('Failed to load groups for API key filter:', e)
   }
@@ -865,9 +1077,9 @@ const getUserGroups = (user: AdminUser) => {
   const exclusive: AdminGroup[] = []
   const publicGroups: AdminGroup[] = []
   for (const g of allGroups.value) {
-    if (g.status !== 'active' || g.subscription_type !== 'standard') continue
-    if (g.is_exclusive) {
-      if (user.allowed_groups?.includes(g.id)) {
+    if (g.status !== 'active' || g.subscriptionType !== 'standard') continue
+    if (g.isExclusive) {
+      if (user.allowedGroups?.includes(g.id)) {
         exclusive.push(g)
       }
     } else {
@@ -883,7 +1095,7 @@ const groupFilterOptions = computed(() => {
     { value: '', label: t('admin.users.allAuthorizedGroups') }
   ]
   for (const g of allGroups.value) {
-    if (g.status !== 'active' || !g.is_exclusive || g.subscription_type !== 'standard') continue
+    if (g.status !== 'active' || !g.isExclusive || g.subscriptionType !== 'standard') continue
     options.push({ value: g.name, label: g.name })
   }
   return options
@@ -902,12 +1114,18 @@ const apiKeyGroupFilterOptions = computed(() =>
 )
 
 // Filter values (role, status, and custom attributes)
-const filters = reactive({
+type UserRoleFilter = '' | 'admin' | 'user'
+type UserStatusFilter = '' | 'active' | 'disabled'
+const filters = reactive<{
+  role: UserRoleFilter
+  status: UserStatusFilter
+  group: string
+  apiKeyGroup: number | null
+}>({
   role: '',
-  schedulingTier: null as RequestSchedulingTier | null,
   status: '',
   group: '',  // group name for fuzzy match, '' = all
-  apiKeyGroup: null as number | null  // group id bound to the user's API keys, null = all
+  apiKeyGroup: null  // group id bound to the user's API keys, null = all
 })
 const activeAttributeFilters = reactive<Record<number, string>>({})
 
@@ -915,9 +1133,30 @@ const activeAttributeFilters = reactive<Record<number, string>>({})
 // Keys: 'role', 'status', 'attr_${id}'
 const visibleFilters = reactive<Set<string>>(new Set())
 
+// Dropdown states
+const showFilterDropdown = ref(false)
+const showColumnDropdown = ref(false)
+
+// Dropdown refs for click outside detection
+const filterDropdownRef = ref<HTMLElement | null>(null)
+const columnDropdownRef = ref<HTMLElement | null>(null)
+
 // localStorage keys
 const FILTER_VALUES_KEY = 'user-filter-values'
 const VISIBLE_FILTERS_KEY = 'user-visible-filters'
+
+// All filterable attribute definitions (enabled attributes)
+const filterableAttributes = computed(() =>
+  attributeDefinitions.value.filter(def => def.enabled)
+)
+
+// Built-in filter definitions
+const builtInFilters = computed(() => [
+  { key: 'role', name: t('admin.users.columns.role'), type: 'select' as const },
+  { key: 'status', name: t('admin.users.columns.status'), type: 'select' as const },
+  { key: 'group', name: t('admin.users.authorizedGroupFilter'), type: 'select' as const },
+  { key: 'apiKeyGroup', name: t('admin.users.apiKeyGroupFilter'), type: 'select' as const }
+])
 
 // Load saved filters from localStorage
 const loadSavedFilters = () => {
@@ -933,7 +1172,6 @@ const loadSavedFilters = () => {
     if (savedValues) {
       const parsed = JSON.parse(savedValues)
       if (parsed.role) filters.role = parsed.role
-      if ([0, 1, 2].includes(parsed.schedulingTier)) filters.schedulingTier = parsed.schedulingTier
       if (parsed.status) filters.status = parsed.status
       if (parsed.group) filters.group = parsed.group
       if (typeof parsed.apiKeyGroup === 'number') filters.apiKeyGroup = parsed.apiKeyGroup
@@ -954,7 +1192,6 @@ const saveFiltersToStorage = () => {
     // Save filter values
     const values = {
       role: filters.role,
-      schedulingTier: filters.schedulingTier,
       status: filters.status,
       group: filters.group,
       apiKeyGroup: filters.apiKeyGroup,
@@ -966,11 +1203,15 @@ const saveFiltersToStorage = () => {
   }
 }
 
+// Get attribute definition by ID
+const getAttributeDefinition = (attrId: number): UserAttributeDefinition | undefined => {
+  return attributeDefinitions.value.find(d => d.id === attrId)
+}
 const usageStats = ref<Record<string, BatchUserUsageStats>>({})
 const platformQuotaStats = ref<Record<number, PlatformQuotaItem[]>>({})
 
 const getPlatformUsage = (userId: number, platform: string) =>
-  usageStats.value[userId]?.by_platform?.find((p) => p.platform === platform)
+  usageStats.value[userId]?.byPlatform?.find((p) => p.platform === platform)
 
 // 用量列前端排序：DataTable 工作在 server-side-sort 模式，所有 sortable
 // 字段都会触发后端查询，而用量列数据是异步批量拉取后再合并到当前页，
@@ -1042,11 +1283,11 @@ const getUsageValue = (userId: number, key: string, metric: UsageMetric): number
   if (!stats) return 0
   const platform = USAGE_COLUMN_PLATFORMS[key]
   if (platform === null) {
-    return metric === 'today' ? stats.today_actual_cost ?? 0 : stats.total_actual_cost ?? 0
+    return metric === 'today' ? stats.todayActualCost ?? 0 : stats.totalActualCost ?? 0
   }
-  const p = stats.by_platform?.find((x) => x.platform === platform)
+  const p = stats.byPlatform?.find((x) => x.platform === platform)
   if (!p) return 0
-  return metric === 'today' ? p.today_actual_cost ?? 0 : p.total_actual_cost ?? 0
+  return metric === 'today' ? p.todayActualCost ?? 0 : p.totalActualCost ?? 0
 }
 
 // 在 server-side 排序结果之上叠加用量列的本地排序；无 usageSort 时直接透传原数组。
@@ -1129,7 +1370,7 @@ const loadUsersSecondaryData = async (
     tasks.push(
       (async () => {
         try {
-          const usageResponse = await adminAPI.dashboard.getBatchUsersUsage(userIds)
+          const usageResponse = await $dashboard.getBatchUsersUsage({ user_ids: userIds })
           if (signal?.aborted) return
           if (typeof expectedSeq === 'number' && expectedSeq !== secondaryDataSeq) return
           usageStats.value = usageResponse.stats
@@ -1145,10 +1386,10 @@ const loadUsersSecondaryData = async (
     tasks.push(
       (async () => {
         try {
-          const attrResponse = await adminAPI.userAttributes.getBatchUserAttributes(userIds)
+          const attrResponse = await $userAttributes.getBatchUserAttributes(userIds)
           if (signal?.aborted) return
           if (typeof expectedSeq === 'number' && expectedSeq !== secondaryDataSeq) return
-          userAttributeValues.value = attrResponse.attributes
+          userAttributeValues.value = attrResponse
         } catch (e) {
           if (signal?.aborted) return
           console.error('Failed to load user attribute values:', e)
@@ -1161,12 +1402,12 @@ const loadUsersSecondaryData = async (
     tasks.push(
       (async () => {
         try {
-          const response = await adminAPI.users.getBatchPlatformQuotas(userIds)
+          const response = await $users.getBatchPlatformQuotas(userIds)
           if (signal?.aborted) return
           if (typeof expectedSeq === 'number' && expectedSeq !== secondaryDataSeq) return
           platformQuotaStats.value = {
             ...platformQuotaStats.value,
-            ...response.platform_quotas
+            ...response
           }
         } catch (e) {
           if (signal?.aborted) return
@@ -1182,7 +1423,7 @@ const loadUsersSecondaryData = async (
 }
 
 const refreshCurrentPageSecondaryData = () => {
-  const userIds = users.value.map((u) => u.id)
+  const userIds = users.value.map((u: any) => u.id)
   if (userIds.length === 0) return
   const seq = ++secondaryDataSeq
   void loadUsersSecondaryData(userIds, undefined, seq)
@@ -1256,7 +1497,14 @@ const handleClickOutside = (event: MouseEvent) => {
   if (!target.closest('.action-menu-trigger') && !target.closest('.action-menu-content')) {
     closeActionMenu()
   }
-  toolbarRef.value?.closeDropdownsOnOutsideClick(target)
+  // Close filter dropdown when clicking outside
+  if (filterDropdownRef.value && !filterDropdownRef.value.contains(target)) {
+    showFilterDropdown.value = false
+  }
+  // Close column dropdown when clicking outside
+  if (columnDropdownRef.value && !columnDropdownRef.value.contains(target)) {
+    showColumnDropdown.value = false
+  }
   // Close usage sort dropdown when clicking outside any usage-sort-trigger
   if (openUsageSortMenu.value !== null && !target.closest('.usage-sort-trigger')) {
     openUsageSortMenu.value = null
@@ -1301,7 +1549,7 @@ const getDaysRemaining = (expiresAt: string): number => {
 
 const loadAttributeDefinitions = async () => {
   try {
-    attributeDefinitions.value = await adminAPI.userAttributes.listEnabledDefinitions()
+    attributeDefinitions.value = await $userAttributes.listEnabledDefinitions()
   } catch (e) {
     console.error('Failed to load attribute definitions:', e)
   }
@@ -1329,13 +1577,12 @@ const loadUsers = async () => {
       }
     }
 
-    const response = await adminAPI.users.list(
+    const response = await $users.list(
       pagination.page,
       pagination.page_size,
       {
-        role: filters.role as any,
-        scheduling_tier: filters.schedulingTier ?? undefined,
-        status: filters.status as any,
+        role: filters.role || undefined,
+        status: filters.status || undefined,
         search: searchQuery.value || undefined,
         group_name: filters.group || undefined,
         api_key_group_id: filters.apiKeyGroup ?? undefined,
@@ -1359,7 +1606,7 @@ const loadUsers = async () => {
 
     // Defer heavy secondary data so table can render first.
     if (response.items.length > 0) {
-      const userIds = response.items.map((u) => u.id)
+      const userIds = response.items.map((u: any) => u.id)
       const seq = ++secondaryDataSeq
       window.setTimeout(() => {
         if (signal.aborted || seq !== secondaryDataSeq) return
@@ -1416,12 +1663,17 @@ const handleSort = (key: string, order: 'asc' | 'desc') => {
   loadUsers()
 }
 
+// Filter helpers
+const getAttributeDefinitionName = (attrId: number): string => {
+  const def = attributeDefinitions.value.find(d => d.id === attrId)
+  return def?.name || String(attrId)
+}
+
 // Toggle a built-in filter (role/status)
 const toggleBuiltInFilter = (key: string) => {
   if (visibleFilters.has(key)) {
     visibleFilters.delete(key)
     if (key === 'role') filters.role = ''
-    if (key === 'schedulingTier') filters.schedulingTier = null
     if (key === 'status') filters.status = ''
     if (key === 'group') filters.group = ''
     if (key === 'apiKeyGroup') filters.apiKeyGroup = null
@@ -1473,7 +1725,7 @@ const closeEditModal = () => {
 const handleToggleStatus = async (user: AdminUser) => {
   const newStatus = user.status === 'active' ? 'disabled' : 'active'
   try {
-    await adminAPI.users.toggleStatus(user.id, newStatus)
+    await $users.update(user.id, { status: newStatus })
     appStore.showSuccess(
       newStatus === 'active' ? t('admin.users.userEnabled') : t('admin.users.userDisabled')
     )
@@ -1525,7 +1777,7 @@ const handleDelete = (user: AdminUser) => {
 const confirmDelete = async () => {
   if (!deletingUser.value) return
   try {
-    await adminAPI.users.delete(deletingUser.value.id)
+    await $users.deleteUser(deletingUser.value.id)
     appStore.showSuccess(t('common.success'))
     showDeleteDialog.value = false
     deletingUser.value = null

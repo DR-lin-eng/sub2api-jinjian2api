@@ -186,8 +186,10 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 import ProfileAvatarCard from '@/features/profile/presentation/widgets/ProfileAvatarCard.vue'
 import ProfileEditForm from '@/features/profile/presentation/widgets/ProfileEditForm.vue'
 import ProfileIdentityBindingsSection from '@/features/profile/presentation/widgets/ProfileIdentityBindingsSection.vue'
-import type { User, UserAuthBindingStatus, UserAuthProvider, UserProfileSourceContext } from '@/types'
-
+import { User } from '@/core/models/domain/user'
+import type { UserAuthBindingStatus } from '@/core/models/domain/userAuthBindingStatus'
+import type { UserAuthProvider } from '@/core/models/domain/userAuthProvider'
+import type { UserProfileSourceContext } from '@/core/models/domain/userProfileSourceContext'
 const props = withDefaults(defineProps<{
   user: User | null
   linuxdoEnabled?: boolean
@@ -219,20 +221,20 @@ function normalizeBindingStatus(binding: boolean | UserAuthBindingStatus | undef
   if (typeof binding.bound === 'boolean') {
     return binding.bound
   }
-  return Boolean(binding.provider_subject || binding.issuer || binding.provider_key)
+  return Boolean(binding.providerSubject || binding.issuer || binding.providerKey)
 }
 
 function isEmailBound(user: User | null | undefined): boolean {
-  if (typeof user?.email_bound === 'boolean') {
-    return user.email_bound
+  if (typeof user?.emailBound === 'boolean') {
+    return user.emailBound
   }
 
-  const nested = user?.auth_bindings?.email ?? user?.identity_bindings?.email
+  const nested = user?.authBindings?.email ?? user?.identityBindings?.email
   const normalized = normalizeBindingStatus(nested)
   return normalized ?? false
 }
 
-const avatarUrl = computed(() => props.user?.avatar_url?.trim() || '')
+const avatarUrl = computed(() => props.user?.avatarUrl?.trim() || '')
 const displayName = computed(() => props.user?.username?.trim() || props.user?.email?.trim() || t('profile.user'))
 const primaryEmailDisplay = computed(() => {
   const email = props.user?.email?.trim() || ''
@@ -246,7 +248,7 @@ const primaryEmailDisplay = computed(() => {
 })
 const avatarInitial = computed(() => displayName.value.charAt(0).toUpperCase() || 'U')
 const memberSinceLabel = computed(() => {
-  const raw = props.user?.created_at?.trim()
+  const raw = props.user?.createdAt?.trim()
   if (!raw) {
     return '-'
   }
@@ -293,16 +295,6 @@ function normalizeProvider(value: string): UserAuthProvider | null {
   return null
 }
 
-function readObjectString(source: Record<string, unknown>, ...keys: string[]): string {
-  for (const key of keys) {
-    const value = source[key]
-    if (typeof value === 'string' && value.trim()) {
-      return value.trim()
-    }
-  }
-  return ''
-}
-
 function resolveThirdPartySource(
   rawSource: string | UserProfileSourceContext | null | undefined
 ): { provider: UserAuthProvider; label: string } | null {
@@ -321,21 +313,14 @@ function resolveThirdPartySource(
     }
   }
 
-  const sourceRecord = rawSource as Record<string, unknown>
   const provider = normalizeProvider(
-    readObjectString(sourceRecord, 'provider', 'source', 'provider_type', 'auth_provider')
+    (typeof rawSource.provider === 'string' ? rawSource.provider : rawSource.source) || ''
   )
   if (!provider || provider === 'email') {
     return null
   }
 
-  const explicitLabel = readObjectString(
-    sourceRecord,
-    'provider_label',
-    'label',
-    'provider_name',
-    'providerName'
-  )
+  const explicitLabel = rawSource.providerLabel?.trim() || rawSource.label?.trim() || ''
 
   return {
     provider,
@@ -351,15 +336,15 @@ const sourceHints = computed(() => {
 
   const hints: Array<{ key: string; text: string }> = []
   const avatarSource = resolveThirdPartySource(
-    currentUser.profile_sources?.avatar ?? currentUser.avatar_source
+    currentUser.profileSources?.avatar ?? currentUser.avatarSource
   )
   const usernameSource = resolveThirdPartySource(
-    currentUser.profile_sources?.username ??
-      currentUser.profile_sources?.display_name ??
-      currentUser.profile_sources?.nickname ??
-      currentUser.display_name_source ??
-      currentUser.username_source ??
-      currentUser.nickname_source
+    currentUser.profileSources?.username ??
+      currentUser.profileSources?.displayName ??
+      currentUser.profileSources?.nickname ??
+      currentUser.displayNameSource ??
+      currentUser.usernameSource ??
+      currentUser.nicknameSource
   )
 
   if (avatarSource) {

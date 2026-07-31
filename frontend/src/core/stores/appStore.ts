@@ -5,14 +5,57 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Toast, ToastType, PublicSettings } from '@/types'
 import { i18n } from '@/core/i18n'
-import {
-  checkUpdates as checkUpdatesAPI,
-  type VersionInfo,
-  type ReleaseInfo
-} from '@/features/admin-settings/data/datasources/systemDatasource'
-import { getPublicSettings as fetchPublicSettingsAPI } from '@/features/auth/data/datasources/authDatasource'
+// TODO(spec-exception): core/stores/appStore imports two feature repository impls,
+// violating spec §3 R2 (core/** MUST NOT import features/**). Resolving this requires
+// either (a) lifting the SystemQueryRepository/AuthQueryRepository interfaces up to
+// `core/domain/repositories` and wiring impls via DI, or (b) moving app-version /
+// public-settings bootstrap out of appStore into a feature-level bootstrap orchestrator.
+// Deferred for a dedicated repository-layer refactor pass.
+import { systemQueryRepository } from '@/features/admin-settings/data/repositories/systemQueryRepositoryImpl'
+import { authQueryRepository } from '@/features/auth/data/repositories/authQueryRepositoryImpl'
+import { adminSettingsQueryRepository } from '@/features/admin-settings/data/repositories/adminSettingsQueryRepositoryImpl'
+import { adminOrdersQueryRepository } from '@/features/admin-orders/data/repositories/adminOrdersQueryRepositoryImpl'
+import type { VersionInfo } from '@/core/models/domain/versionInfo'
+import type { ReleaseInfo } from '@/core/models/domain/releaseInfo'
+import type { PublicSettings } from '@/core/models/domain/publicSettings'
+import type { CustomMenuItem } from '@/core/models/domain/customMenuItem'
+
+function _readCachedBool(key: string, defaultValue: boolean): boolean {
+  try {
+    const raw = localStorage.getItem(key)
+    if (raw === 'true') return true
+    if (raw === 'false') return false
+  } catch { /* ignore */ }
+  return defaultValue
+}
+
+function _writeCachedBool(key: string, value: boolean) {
+  try { localStorage.setItem(key, value ? 'true' : 'false') } catch { /* ignore */ }
+}
+
+function _readCachedString(key: string, defaultValue: string): string {
+  try {
+    const raw = localStorage.getItem(key)
+    if (typeof raw === 'string' && raw.length > 0) return raw
+  } catch { /* ignore */ }
+  return defaultValue
+}
+
+function _writeCachedString(key: string, value: string) {
+  try { localStorage.setItem(key, value) } catch { /* ignore */ }
+}
+
+type ToastType = 'success' | 'error' | 'info' | 'warning'
+
+interface Toast {
+  id: string
+  type: ToastType
+  message: string
+  title?: string
+  duration?: number
+  startTime?: number
+}
 
 export const useAppStore = defineStore('app', () => {
   // ==================== State ====================
@@ -44,13 +87,22 @@ export const useAppStore = defineStore('app', () => {
   const buildType = ref<string>('source')
   const releaseInfo = ref<ReleaseInfo | null>(null)
 
+  // Admin UI config cache state
+  const adminConfigLoaded = ref(false)
+  const adminConfigLoading = ref(false)
+  const opsMonitoringEnabled = ref(_readCachedBool('ops_monitoring_enabled_cached', true))
+  const opsRealtimeMonitoringEnabled = ref(_readCachedBool('ops_realtime_monitoring_enabled_cached', true))
+  const opsQueryModeDefault = ref(_readCachedString('ops_query_mode_default_cached', 'auto'))
+  const paymentEnabled = ref(_readCachedBool('payment_enabled_cached', false))
+  const customMenuItems = ref<CustomMenuItem[]>([])
+
   // Auto-incrementing ID for toasts
   let toastIdCounter = 0
 
   // ==================== Computed ====================
 
   const hasActiveToasts = computed(() => toasts.value.length > 0)
-  const backendModeEnabled = computed(() => cachedPublicSettings.value?.backend_mode_enabled ?? false)
+  const backendModeEnabled = computed(() => cachedPublicSettings.value?.backendModeEnabled ?? false)
 
   const loadingCount = ref<number>(0)
 
@@ -223,6 +275,64 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  async function fetchAdminConfig(force = false): Promise<void> {
+    if (adminConfigLoaded.value && !force) return
+    if (adminConfigLoading.value) return
+    adminConfigLoading.value = true
+    try {
+      const [settings, paymentConfig] = await Promise.all([
+        adminSettingsQueryRepository.getSettings(),
+        adminOrdersQueryRepository.getConfig(),
+      ])
+      opsMonitoringEnabled.value = settings.opsMonitoringEnabled ?? true
+      _writeCachedBool('ops_monitoring_enabled_cached', opsMonitoringEnabled.value)
+      opsRealtimeMonitoringEnabled.value = settings.opsRealtimeMonitoringEnabled ?? true
+      _writeCachedBool('ops_realtime_monitoring_enabled_cached', opsRealtimeMonitoringEnabled.value)
+      opsQueryModeDefault.value = settings.opsQueryModeDefault || 'auto'
+      _writeCachedString('ops_query_mode_default_cached', opsQueryModeDefault.value)
+      customMenuItems.value = Array.isArray(settings.customMenuItems) ? settings.customMenuItems : []
+      paymentEnabled.value = paymentConfig.enabled ?? false
+      _writeCachedBool('payment_enabled_cached', paymentEnabled.value)
+      adminConfigLoaded.value = true
+    } catch (err) {
+      adminConfigLoaded.value = true
+      console.error('[appStore] Failed to fetch admin config:', err)
+    } finally {
+      adminConfigLoading.value = false
+    }
+  }
+
+  function setOpsMonitoringEnabledLocal(value: boolean) {
+    opsMonitoringEnabled.value = value
+    _writeCachedBool('ops_monitoring_enabled_cached', value)
+    adminConfigLoaded.value = true
+  }
+
+  function setOpsRealtimeMonitoringEnabledLocal(value: boolean) {
+    opsRealtimeMonitoringEnabled.value = value
+    _writeCachedBool('ops_realtime_monitoring_enabled_cached', value)
+    adminConfigLoaded.value = true
+  }
+
+  function setPaymentEnabledLocal(value: boolean) {
+    paymentEnabled.value = value
+    _writeCachedBool('payment_enabled_cached', value)
+    adminConfigLoaded.value = true
+  }
+
+  function setOpsQueryModeDefaultLocal(value: string) {
+    opsQueryModeDefault.value = value || 'auto'
+    _writeCachedString('ops_query_mode_default_cached', opsQueryModeDefault.value)
+    adminConfigLoaded.value = true
+  }
+
+  // Keep UI consistent if ops is disabled via feature-gated 404s.
+  if (typeof window !== 'undefined') {
+    window.addEventListener('ops-monitoring-disabled', () => {
+      setOpsMonitoringEnabledLocal(false)
+    })
+  }
+
   /**
    * Reset app state to defaults
    * Useful for cleanup or testing
@@ -244,11 +354,11 @@ export const useAppStore = defineStore('app', () => {
     // Return cached data if available and not forcing refresh
     if (versionLoaded.value && !force) {
       return {
-        current_version: currentVersion.value,
-        latest_version: latestVersion.value,
-        has_update: hasUpdate.value,
-        build_type: buildType.value,
-        release_info: releaseInfo.value || undefined,
+        currentVersion: currentVersion.value,
+        latestVersion: latestVersion.value,
+        hasUpdate: hasUpdate.value,
+        buildType: buildType.value,
+        releaseInfo: releaseInfo.value || undefined,
         cached: true
       }
     }
@@ -260,12 +370,12 @@ export const useAppStore = defineStore('app', () => {
 
     versionLoading.value = true
     try {
-      const data = await checkUpdatesAPI(force)
-      currentVersion.value = data.current_version
-      latestVersion.value = data.latest_version
-      hasUpdate.value = data.has_update
-      buildType.value = data.build_type || 'source'
-      releaseInfo.value = data.release_info || null
+      const data = await systemQueryRepository.checkUpdates(force)
+      currentVersion.value = data.currentVersion
+      latestVersion.value = data.latestVersion
+      hasUpdate.value = data.hasUpdate
+      buildType.value = data.buildType || 'source'
+      releaseInfo.value = data.releaseInfo || null
       versionLoaded.value = true
       return data
     } catch (error) {
@@ -294,12 +404,12 @@ export const useAppStore = defineStore('app', () => {
       window.__APP_CONFIG__ = { ...config }
     }
     cachedPublicSettings.value = config
-    siteName.value = config.site_name || 'Sub2API'
-    siteLogo.value = config.site_logo || ''
+    siteName.value = config.siteName || 'Sub2API'
+    siteLogo.value = config.siteLogo || ''
     siteVersion.value = config.version || ''
-    contactInfo.value = config.contact_info || ''
-    apiBaseUrl.value = config.api_base_url || ''
-    docUrl.value = config.doc_url || ''
+    contactInfo.value = config.contactInfo || ''
+    apiBaseUrl.value = config.apiBaseUrl || ''
+    docUrl.value = config.docUrl || ''
     publicSettingsLoaded.value = true
   }
 
@@ -326,64 +436,61 @@ export const useAppStore = defineStore('app', () => {
         return Promise.resolve({ ...cachedPublicSettings.value })
       }
       return Promise.resolve({
-        registration_enabled: false,
-        email_verify_enabled: false,
-        force_email_on_third_party_signup: false,
-        registration_email_suffix_whitelist: [],
-        promo_code_enabled: true,
-        password_reset_enabled: false,
-        invitation_code_enabled: false,
-        turnstile_enabled: false,
-        turnstile_site_key: '',
-        recaptcha_enabled: false,
-        recaptcha_site_key: '',
-        cap_enabled: false,
-        cap_api_endpoint: '',
-        site_name: siteName.value,
-        site_logo: siteLogo.value,
-        site_subtitle: '',
-        api_base_url: apiBaseUrl.value,
-        contact_info: contactInfo.value,
-        doc_url: docUrl.value,
-        home_content: '',
-        hide_ccs_import_button: false,
-        payment_enabled: false,
-        table_default_page_size: 20,
-        table_page_size_options: [10, 20, 50, 100],
-        custom_menu_items: [],
-        custom_endpoints: [],
-        linuxdo_oauth_enabled: false,
-        wechat_oauth_enabled: false,
-        wechat_oauth_open_enabled: false,
-        wechat_oauth_mp_enabled: false,
-        wechat_oauth_mobile_enabled: false,
-        oidc_oauth_enabled: false,
-        oidc_oauth_provider_name: 'OIDC',
-        github_oauth_enabled: false,
-        google_oauth_enabled: false,
-        backend_mode_enabled: false,
-        passkey_enabled: false,
+        registrationEnabled: false,
+        emailVerifyEnabled: false,
+        forceEmailOnThirdPartySignup: false,
+        registrationEmailSuffixWhitelist: [],
+        promoCodeEnabled: true,
+        passwordResetEnabled: false,
+        invitationCodeEnabled: false,
+        turnstileEnabled: false,
+        turnstileSiteKey: '',
+        recaptchaEnabled: false,
+        recaptchaSiteKey: '',
+        capEnabled: false,
+        capApiEndpoint: '',
+        siteName: siteName.value,
+        siteLogo: siteLogo.value,
+        siteSubtitle: '',
+        apiBaseUrl: apiBaseUrl.value,
+        contactInfo: contactInfo.value,
+        docUrl: docUrl.value,
+        homeContent: '',
+        hideCcsImportButton: false,
+        paymentEnabled: false,
+        tableDefaultPageSize: 20,
+        tablePageSizeOptions: [10, 20, 50, 100],
+        customMenuItems: [],
+        customEndpoints: [],
+        linuxdoOauthEnabled: false,
+        wechatOauthEnabled: false,
+        wechatOauthOpenEnabled: false,
+        wechatOauthMpEnabled: false,
+        wechatOauthMobileEnabled: false,
+        oidcOauthEnabled: false,
+        oidcOauthProviderName: 'OIDC',
+        githubOauthEnabled: false,
+        googleOauthEnabled: false,
+        backendModeEnabled: false,
         version: siteVersion.value,
-        balance_low_notify_enabled: false,
-        account_quota_notify_enabled: false,
-        balance_low_notify_threshold: 0,
-        channel_monitor_enabled: true,
-        channel_monitor_default_interval_seconds: 60,
-        available_channels_enabled: false,
-        model_plaza_enabled: false,
-        model_plaza_require_auth: false,
-        risk_control_enabled: false,
-        service_quota_enabled: false,
-        affiliate_enabled: false,
-        allow_user_view_error_requests: false,
-        allow_user_view_usage_details: false,
+        balanceLowNotifyEnabled: false,
+        accountQuotaNotifyEnabled: false,
+        balanceLowNotifyThreshold: 0,
+        channelMonitorEnabled: true,
+        channelMonitorDefaultIntervalSeconds: 60,
+        availableChannelsEnabled: false,
+        riskControlEnabled: false,
+        serviceQuotaEnabled: false,
+        affiliateEnabled: false,
+        allowUserViewErrorRequests: false,
+        allowUserViewUsageDetails: false,
       })
     }
 
     publicSettingsLoading.value = true
     let apiRequest: Promise<PublicSettings>
     try {
-      apiRequest = fetchPublicSettingsAPI()
+      apiRequest = authQueryRepository.getPublicSettings()
     } catch (error) {
       console.error('Failed to fetch public settings:', error)
       publicSettingsLoading.value = false
@@ -484,6 +591,20 @@ export const useAppStore = defineStore('app', () => {
     // Version actions
     fetchVersion,
     clearVersionCache,
+
+    // Admin UI config
+    adminConfigLoaded,
+    adminConfigLoading,
+    opsMonitoringEnabled,
+    opsRealtimeMonitoringEnabled,
+    opsQueryModeDefault,
+    paymentEnabled,
+    customMenuItems,
+    fetchAdminConfig,
+    setOpsMonitoringEnabledLocal,
+    setOpsRealtimeMonitoringEnabledLocal,
+    setPaymentEnabledLocal,
+    setOpsQueryModeDefaultLocal,
 
     // Public settings actions
     fetchPublicSettings,

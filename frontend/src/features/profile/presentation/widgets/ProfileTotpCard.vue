@@ -15,7 +15,7 @@
       </div>
 
       <!-- Feature disabled globally -->
-      <div v-else-if="status && !status.feature_enabled" class="flex items-center gap-4 py-4">
+      <div v-else-if="status && !status.featureEnabled" class="flex items-center gap-4 py-4">
         <div class="flex-shrink-0 rounded-full bg-gray-100 p-3 dark:bg-dark-700">
           <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
@@ -43,8 +43,8 @@
             <p class="font-medium text-gray-900 dark:text-white">
               {{ t('profile.totp.enabled') }}
             </p>
-            <p v-if="status.enabled_at" class="text-sm text-gray-500 dark:text-gray-400">
-              {{ t('profile.totp.enabledAt') }}: {{ formatDate(status.enabled_at) }}
+            <p v-if="status.enabledAt" class="text-sm text-gray-500 dark:text-gray-400">
+              {{ t('profile.totp.enabledAt') }}: {{ formatDate(status.enabledAt) }}
             </p>
           </div>
         </div>
@@ -85,7 +85,7 @@
     </div>
 
     <!-- Setup Modal -->
-    <TotpSetupModal
+    <TotpSetupDialog
       v-if="showSetupModal"
       @close="showSetupModal = false"
       @success="handleSetupSuccess"
@@ -103,12 +103,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { totpAPI } from '@/api'
-import type { TotpStatus } from '@/types'
-import TotpSetupModal from './TotpSetupDialog.vue'
+import { useProfileQueryStore } from '@/features/profile/presentation/stores/profileQueryStore'
+import TotpSetupDialog from './TotpSetupDialog.vue'
 import TotpDisableDialog from './TotpDisableDialog.vue'
+import type { TotpStatus } from '@/features/profile/domain/models/totpStatus'
 
 const { t } = useI18n()
+const profileQuery = useProfileQueryStore()
 
 const loading = ref(true)
 const status = ref<TotpStatus | null>(null)
@@ -118,7 +119,7 @@ const showDisableDialog = ref(false)
 const loadStatus = async () => {
   loading.value = true
   try {
-    status.value = await totpAPI.getStatus()
+    status.value = await profileQuery.getStatus()
   } catch (error) {
     console.error('Failed to load TOTP status:', error)
   } finally {

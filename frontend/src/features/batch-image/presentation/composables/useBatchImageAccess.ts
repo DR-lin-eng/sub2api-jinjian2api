@@ -1,8 +1,9 @@
+// TODO: Remove this composable once backend exposes canUseBatchImage on /auth/me or /settings;
+// consumers should then read the flag from authStore directly.
 import { computed, ref } from 'vue'
-import { keysAPI } from '@/features/keys/data/datasources/keysDatasource'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
-import type { ApiKey } from '@/types'
-
+import { useKeysQueryStore } from '@/features/keys/presentation/stores/keysQueryStore'
+import type { ApiKey } from '@/core/models/domain/apiKey'
 const loaded = ref(false)
 const loading = ref(false)
 const hasAllowedBatchImageKey = ref(false)
@@ -13,7 +14,7 @@ function keyAllowsBatchImage(key: ApiKey): boolean {
   return (
     key.status === 'active' &&
     key.group?.platform === 'gemini' &&
-    key.group?.allow_batch_image_generation === true
+    key.group?.allowBatchImageGeneration === true
   )
 }
 
@@ -33,11 +34,12 @@ async function loadBatchImageAccess(force = false): Promise<boolean> {
     return pendingLoad
   }
 
+  const keysQuery = useKeysQueryStore()
   loading.value = true
   pendingLoad = (async () => {
     let page = 1
     while (true) {
-      const response = await keysAPI.list(page, pageSize, {
+      const response = await keysQuery.list(page, pageSize, {
         status: 'active',
         sort_by: 'created_at',
         sort_order: 'desc'

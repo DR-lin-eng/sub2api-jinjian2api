@@ -13,9 +13,9 @@ import {
   Tooltip
 } from 'chart.js'
 import { Line } from 'vue-chartjs'
-import type { OpsThroughputTrendPoint } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import type { ChartState } from '../opsTypeSignals'
-import { formatHistoryLabel, sumNumbers } from '../opsFormatter'
+import type { OpsThroughputTrendPoint } from '@/features/admin-ops/domain/models/opsThroughputTrendPoint'
+import type { ChartState } from '@/features/admin-ops/presentation/utils/opsFormatter'
+import { formatHistoryLabel, sumNumbers } from '@/features/admin-ops/presentation/utils/opsFormatter'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import EmptyState from '@/common/widgets/feedback/EmptyState.vue'
 
@@ -39,18 +39,18 @@ const colors = computed(() => ({
   text: isDarkMode.value ? '#9ca3af' : '#6b7280'
 }))
 
-const totalRequests = computed(() => sumNumbers(props.points.map((p) => p.request_count)))
+const totalRequests = computed(() => sumNumbers(props.points.map((p) => p.requestCount)))
 
 const chartData = computed(() => {
   if (!props.points.length || totalRequests.value <= 0) return null
   return {
-    labels: props.points.map((p) => formatHistoryLabel(p.bucket_start, props.timeRange)),
+    labels: props.points.map((p) => formatHistoryLabel(p.bucketStart, props.timeRange)),
     datasets: [
       {
         label: t('admin.ops.switchRate'),
         data: props.points.map((p) => {
-          const requests = p.request_count ?? 0
-          const switches = p.switch_count ?? 0
+          const requests = p.requestCount ?? 0
+          const switches = p.switchCount ?? 0
           if (requests <= 0) return 0
           return switches / requests
         }),

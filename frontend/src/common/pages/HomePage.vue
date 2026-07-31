@@ -139,7 +139,7 @@
           </div>
 
           <!-- Right: Terminal Animation -->
-          <div class="flex w-full min-w-0 flex-1 justify-center lg:justify-end">
+          <div class="flex flex-1 justify-center lg:justify-end">
             <div class="terminal-container">
               <div class="terminal-window">
                 <!-- Window header -->
@@ -407,7 +407,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore, useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import LocaleSwitcher from '@/common/widgets/data/LocaleSwitcher.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { sanitizeUrl } from '@/core/utils/url'
@@ -418,11 +419,11 @@ const authStore = useAuthStore()
 const appStore = useAppStore()
 
 // Site settings - directly from appStore (already initialized from injected config)
-const siteName = computed(() => appStore.cachedPublicSettings?.site_name || appStore.siteName || 'Sub2API')
-const siteLogo = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.site_logo || appStore.siteLogo || '', { allowRelative: true, allowDataUrl: true }))
-const siteSubtitle = computed(() => appStore.cachedPublicSettings?.site_subtitle || 'AI API Gateway Platform')
-const docUrl = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.doc_url || appStore.docUrl || ''))
-const homeContent = computed(() => appStore.cachedPublicSettings?.home_content || '')
+const siteName = computed(() => appStore.cachedPublicSettings?.siteName || appStore.siteName || 'Sub2API')
+const siteLogo = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.siteLogo || appStore.siteLogo || '', { allowRelative: true, allowDataUrl: true }))
+const siteSubtitle = computed(() => appStore.cachedPublicSettings?.siteSubtitle || 'AI API Gateway Platform')
+const docUrl = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.docUrl || appStore.docUrl || ''))
+const homeContent = computed(() => appStore.cachedPublicSettings?.homeContent || '')
 
 // Check if homeContent is a URL (for iframe display)
 const isHomeContentUrl = computed(() => {
@@ -434,7 +435,7 @@ const isHomeContentUrl = computed(() => {
 const isDark = ref(document.documentElement.classList.contains('dark'))
 
 // GitHub URL
-const githubUrl = 'https://github.com/DR-lin-eng/sub2api-no2api'
+const githubUrl = 'https://github.com/Wei-Shaw/sub2api'
 
 // Auth state
 const isAuthenticated = computed(() => authStore.isAuthenticated)
@@ -483,13 +484,11 @@ onMounted(() => {
 .terminal-container {
   position: relative;
   display: inline-block;
-  width: 100%;
-  max-width: 420px;
 }
 
 /* Terminal Window */
 .terminal-window {
-  width: 100%;
+  width: 420px;
   background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
   border-radius: 14px;
   box-shadow:
@@ -620,18 +619,6 @@ onMounted(() => {
   height: 16px;
   background: #22c55e;
   animation: blink 1s step-end infinite;
-}
-
-@media (max-width: 639px) {
-  .terminal-window,
-  .terminal-window:hover {
-    transform: none;
-  }
-
-  .terminal-body {
-    padding: 16px;
-    font-size: 12px;
-  }
 }
 
 @keyframes blink {

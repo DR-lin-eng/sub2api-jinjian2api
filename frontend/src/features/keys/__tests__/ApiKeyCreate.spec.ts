@@ -9,27 +9,17 @@ import { defineComponent, ref, reactive } from 'vue'
 
 // Mock keysAPI
 const mockCreate = vi.fn()
-const mockList = vi.fn()
 
-vi.mock('@/api', () => ({
-  keysAPI: {
-    create: (...args: any[]) => mockCreate(...args),
-    list: (...args: any[]) => mockList(...args),
+vi.mock('@/features/auth/data/repositories/authQueryRepositoryImpl', () => ({
+  authQueryRepository: {
+    getCurrentUser: vi.fn().mockResolvedValue({}),
+    getPublicSettings: vi.fn().mockResolvedValue({}),
+    getLocalCaptcha: vi.fn(),
   },
-  authAPI: {
-    getCurrentUser: vi.fn().mockResolvedValue({ data: {} }),
-    logout: vi.fn(),
-    refreshToken: vi.fn(),
-  },
-  isTotp2FARequired: () => false,
 }))
 
-vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
-  checkUpdates: vi.fn(),
-}))
-
-vi.mock('@/features/auth/data/datasources/authDatasource', () => ({
-  getPublicSettings: vi.fn().mockResolvedValue({}),
+vi.mock('@/features/admin-settings/data/repositories/systemQueryRepositoryImpl', () => ({
+  systemQueryRepository: { checkUpdates: vi.fn(), getVersion: vi.fn(), getRollbackVersions: vi.fn() },
 }))
 
 // Mock app store - 使用固定引用确保组件和测试共享同一对象

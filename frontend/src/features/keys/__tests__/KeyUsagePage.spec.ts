@@ -2,7 +2,7 @@ import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 
-import KeyUsageView from '../presentation/pages/KeyUsagePage.vue'
+import KeyUsagePage from '@/features/keys/presentation/pages/KeyUsagePage.vue'
 
 const { showInfo, showSuccess, showError, fetchPublicSettings } = vi.hoisted(() => ({
   showInfo: vi.fn(),
@@ -83,7 +83,7 @@ vi.mock('vue-i18n', async () => {
   }
 })
 
-vi.mock('@/stores', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     cachedPublicSettings: null,
     siteName: 'Sub2API',
@@ -97,7 +97,7 @@ vi.mock('@/stores', () => ({
   }),
 }))
 
-describe('KeyUsageView daily detail', () => {
+describe('KeyUsagePage daily detail', () => {
   beforeEach(() => {
     showInfo.mockReset()
     showSuccess.mockReset()
@@ -125,21 +125,21 @@ describe('KeyUsageView daily detail', () => {
         usage: {
           today: {
             requests: 1,
-            input_tokens: 10,
-            output_tokens: 20,
-            cache_creation_tokens: 0,
-            cache_read_tokens: 0,
+            inputTokens: 10,
+            outputTokens: 20,
+            cacheCreationTokens: 0,
+            cacheReadTokens: 0,
             total_tokens: 30,
-            actual_cost: 0.01,
+            actualCost: 0.01,
           },
           total: {
             requests: 12,
-            input_tokens: 100,
-            output_tokens: 200,
-            cache_creation_tokens: 10,
-            cache_read_tokens: 30,
+            inputTokens: 100,
+            outputTokens: 200,
+            cacheCreationTokens: 10,
+            cacheReadTokens: 30,
             total_tokens: 340,
-            actual_cost: 0.12,
+            actualCost: 0.12,
           },
           rpm: 0,
           tpm: 0,
@@ -148,13 +148,13 @@ describe('KeyUsageView daily detail', () => {
           {
             date: '2026-05-19',
             requests: 12,
-            input_tokens: 100,
-            output_tokens: 200,
-            cache_read_tokens: 30,
+            inputTokens: 100,
+            outputTokens: 200,
+            cacheReadTokens: 30,
             cache_write_tokens: 10,
             total_tokens: 340,
             cost: 0.15,
-            actual_cost: 0.12,
+            actualCost: 0.12,
           },
         ],
       }),
@@ -167,7 +167,7 @@ describe('KeyUsageView daily detail', () => {
   })
 
   it('renders daily usage detail rows after a successful query', async () => {
-    const wrapper = mount(KeyUsageView, {
+    const wrapper = mount(KeyUsagePage, {
       global: {
         stubs: {
           RouterLink: { template: '<a><slot /></a>' },
@@ -211,7 +211,7 @@ describe('KeyUsageView daily detail', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date(2026, 6, 13, 0, 30))
 
-    const wrapper = mount(KeyUsageView, {
+    const wrapper = mount(KeyUsagePage, {
       global: {
         stubs: {
           RouterLink: { template: '<a><slot /></a>' },

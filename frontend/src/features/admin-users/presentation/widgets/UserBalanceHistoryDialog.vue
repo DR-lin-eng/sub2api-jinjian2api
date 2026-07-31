@@ -13,7 +13,7 @@
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
               <p class="truncate font-medium text-gray-900 dark:text-white">{{ user.email }}</p>
-              <span v-if="user.deleted_at" class="flex-shrink-0 inline-flex items-center rounded px-1 py-px text-[10px] font-medium leading-tight bg-rose-100 text-rose-600 ring-1 ring-inset ring-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:ring-rose-500/30">
+              <span v-if="user.deletedAt" class="flex-shrink-0 inline-flex items-center rounded px-1 py-px text-[10px] font-medium leading-tight bg-rose-100 text-rose-600 ring-1 ring-inset ring-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:ring-rose-500/30">
                 {{ t('admin.usage.userDeletedBadge') }}
               </span>
               <span
@@ -24,7 +24,7 @@
               </span>
             </div>
             <p class="text-xs text-gray-400 dark:text-dark-500">
-              {{ t('admin.users.createdAt') }}: {{ formatDateTime(user.created_at) }}
+              {{ t('admin.users.createdAt') }}: {{ formatDateTime(user.createdAt) }}
             </p>
           </div>
           <!-- Current balance: prominent display on the right -->
@@ -121,7 +121,7 @@
                   {{ item.notes.length > 60 ? item.notes.substring(0, 55) + '...' : item.notes }}
                 </p>
                 <p class="mt-0.5 text-xs text-gray-400 dark:text-dark-500">
-                  {{ formatDateTime(item.used_at || item.created_at) }}
+                  {{ formatDateTime(item.usedAt || item.createdAt) }}
                 </p>
               </div>
             </div>
@@ -174,12 +174,15 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { adminAPI, type BalanceHistoryItem } from '@/api/admin'
+import { useAdminUsers } from '@/features/admin-users/presentation/composables/useAdminUsers'
+import type { BalanceHistoryItem } from '@/features/admin-users/domain/models/balanceHistoryItem'
 import { formatDateTime } from '@/core/utils/format'
-import type { AdminUser } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
+import type { AdminUser } from '@/features/admin-users/domain/models/adminUser'
+
+const $adminUsers = useAdminUsers()
 
 const props = defineProps<{ show: boolean; user: AdminUser | null; hideActions?: boolean }>()
 const emit = defineEmits(['close', 'deposit', 'withdraw'])
@@ -219,7 +222,7 @@ const loadHistory = async (page: number) => {
   loading.value = true
   currentPage.value = page
   try {
-    const res = await adminAPI.users.getUserBalanceHistory(
+    const res = await $adminUsers.getUserBalanceHistory(
       props.user.id,
       page,
       pageSize,
@@ -227,7 +230,7 @@ const loadHistory = async (page: number) => {
     )
     history.value = res.items || []
     total.value = res.total || 0
-    totalRecharged.value = res.total_recharged || 0
+    totalRecharged.value = res.totalRecharged || 0
   } catch (error) {
     console.error('Failed to load balance history:', error)
   } finally {
@@ -317,8 +320,8 @@ const formatValue = (item: BalanceHistoryItem) => {
     return `${sign}$${item.value.toFixed(2)}`
   }
   if (isSubscriptionType(item.type)) {
-    const days = item.validity_days || Math.round(item.value)
-    const groupName = item.group?.name || ''
+    const days = item.validityDays || Math.round(item.value)
+    const groupName = item.groupInfo?.name || ''
     return groupName ? `${days}d - ${groupName}` : `${days}d`
   }
   // concurrency types

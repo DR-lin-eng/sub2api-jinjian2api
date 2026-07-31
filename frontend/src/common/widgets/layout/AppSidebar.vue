@@ -191,11 +191,14 @@
 import { computed, h, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useAdminSettingsStore, useAppStore, useAuthStore, useOnboardingStore } from '@/stores'
-import VersionBadge from '@/common/widgets/data/VersionBadge.vue'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { useOnboardingStore } from '@/core/stores/onboardingStore'
+import VersionBadge from '@/features/admin-settings/presentation/widgets/VersionBadge.vue'
 import { sanitizeSvg } from '@/core/utils/sanitize'
 import { sanitizeUrl } from '@/core/utils/url'
 import { FeatureFlags, makeSidebarFlag } from '@/core/services/featureFlags'
+// TODO(spec-exception): useBatchImageAccess is a temporary cross-feature service; see .eslintrc.cjs override.
 import { useBatchImageAccess } from '@/features/batch-image/presentation/composables/useBatchImageAccess'
 
 interface NavItem {
@@ -241,7 +244,6 @@ const router = useRouter()
 const appStore = useAppStore()
 const authStore = useAuthStore()
 const onboardingStore = useOnboardingStore()
-const adminSettingsStore = useAdminSettingsStore()
 const { canUseBatchImage, refreshBatchImageAccess } = useBatchImageAccess()
 
 const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
@@ -397,6 +399,19 @@ const ChannelIcon = {
           'stroke-linecap': 'round',
           'stroke-linejoin': 'round',
           d: 'M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0l4.179 2.25L12 17.25 2.25 12m15.321-2.25l4.179 2.25L12 17.25l-9.75-5.25'
+        })
+      ]
+    )
+}
+
+const ModelSquareIcon = {
+  render: () =>
+    h(
+      'svg',
+      { fill: 'currentColor', viewBox: '0 0 1024 1024' },
+      [
+        h('path', {
+          d: 'M571.050667 75.264a118.215111 118.215111 0 0 0-118.101334 0L163.214222 242.460444A118.215111 118.215111 0 0 0 104.163556 344.746667v334.449777c0 42.211556 22.528 81.237333 59.164444 102.343112l289.564444 167.196444c36.579556 21.048889 81.635556 21.048889 118.158223 0l289.678222-167.253333a118.215111 118.215111 0 0 0 59.050667-102.343111V344.803556c0-42.211556-22.528-81.237333-59.107556-102.4l-289.621333-167.139556zM210.318222 296.96L488.277333 136.533333a47.445333 47.445333 0 0 1 47.388445 0l277.959111 160.426667L512 471.153778 210.318222 297.016889z m-35.328 61.326222v320.853334c0 17.009778 8.988444 32.597333 23.665778 41.073777l277.959111 160.426667V532.48L174.990222 358.4z m372.394667 174.08l301.624889-174.08v320.853334a47.445333 47.445333 0 0 1-23.722667 41.073777l-277.902222 160.426667V532.48z'
         })
       ]
     )
@@ -685,8 +700,8 @@ const flagPayment = makeSidebarFlag(FeatureFlags.payment)
 const flagAvailableChannels = makeSidebarFlag(FeatureFlags.availableChannels)
 const flagAffiliate = makeSidebarFlag(FeatureFlags.affiliate)
 const flagRiskControl = makeSidebarFlag(FeatureFlags.riskControl)
-const flagOpsMonitoring = () => adminSettingsStore.opsMonitoringEnabled
-const flagAdminPayment = () => adminSettingsStore.paymentEnabled
+const flagOpsMonitoring = () => appStore.opsMonitoringEnabled
+const flagAdminPayment = () => appStore.paymentEnabled
 const flagBatchImageAccess = () => canUseBatchImage.value
 
 // buildSelfNavItems 构造用户自己的导航项（用户端主菜单和管理员的"我的账户"子菜单共享这组声明）。
@@ -703,6 +718,8 @@ function buildSelfNavItems(withDashboard: boolean): NavItem[] {
     { path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon },
     { path: '/batch-image', label: t('nav.batchImage'), icon: BatchImageIcon, hideInSimpleMode: true, featureFlag: flagBatchImageAccess },
     { path: '/usage', label: t('nav.usage'), icon: ChartIcon, hideInSimpleMode: true },
+    { path: '/models', label: t('nav.modelSquare'), icon: ModelSquareIcon },
+    { path: '/media-studio', label: t('nav.mediaStudio'), icon: BatchImageIcon },
     { path: '/available-channels', label: t('nav.availableChannels'), icon: ChannelIcon, hideInSimpleMode: true, featureFlag: flagAvailableChannels },
     { path: '/monitor', label: t('nav.channelStatus'), icon: SignalIcon, featureFlag: flagChannelMonitor },
     { path: '/subscriptions', label: t('nav.mySubscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
@@ -715,7 +732,7 @@ function buildSelfNavItems(withDashboard: boolean): NavItem[] {
       path: `/custom/${item.id}`,
       label: item.label,
       icon: null,
-      iconSvg: item.icon_svg,
+      iconSvg: item.iconSvg,
     })),
   )
   return items
@@ -737,16 +754,16 @@ const personalNavItems = computed((): NavItem[] => finalizeNav(buildSelfNavItems
 
 // Custom menu items filtered by visibility
 const customMenuItemsForUser = computed(() => {
-  const items = appStore.cachedPublicSettings?.custom_menu_items ?? []
+  const items = appStore.cachedPublicSettings?.customMenuItems ?? []
   return items
-    .filter((item) => item.visibility === 'user')
-    .sort((a, b) => a.sort_order - b.sort_order)
+    .filter((item: any) => item.visibility === 'user')
+    .sort((a: any, b: any) => a.sortOrder - b.sortOrder)
 })
 
 const customMenuItemsForAdmin = computed(() => {
-  return adminSettingsStore.customMenuItems
-    .filter((item) => item.visibility === 'admin')
-    .sort((a, b) => a.sort_order - b.sort_order)
+  return appStore.customMenuItems
+    .filter((item: any) => item.visibility === 'admin')
+    .sort((a: any, b: any) => a.sortOrder - b.sortOrder)
 })
 
 // Admin navigation items
@@ -778,10 +795,10 @@ const adminNavItems = computed((): NavItem[] => {
       icon: ShieldIcon,
       hideInSimpleMode: true,
       expandOnly: true,
+      featureFlag: flagRiskControl,
       children: [
-        { path: '/admin/security-audit/ingress', label: t('nav.ingressRisk'), icon: ShieldIcon, featureFlag: flagOpsMonitoring },
-        { path: '/admin/risk-control', label: t('nav.contentModeration'), icon: ShieldIcon, featureFlag: flagRiskControl },
-        { path: '/admin/prompt-audit', label: t('nav.promptAudit'), icon: ShieldIcon, featureFlag: flagRiskControl },
+        { path: '/admin/risk-control', label: t('nav.contentModeration'), icon: ShieldIcon },
+        { path: '/admin/prompt-audit', label: t('nav.promptAudit'), icon: ShieldIcon },
       ],
     },
     { path: '/admin/redeem', label: t('nav.redeemCodes'), icon: TicketIcon, hideInSimpleMode: true },
@@ -824,14 +841,14 @@ const adminNavItems = computed((): NavItem[] => {
     filtered.push({ path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon })
     filtered.push({ path: '/admin/settings', label: t('nav.settings'), icon: CogIcon })
     for (const cm of customMenuItemsForAdmin.value) {
-      filtered.push({ path: `/custom/${cm.id}`, label: cm.label, icon: null, iconSvg: cm.icon_svg })
+      filtered.push({ path: `/custom/${cm.id}`, label: cm.label, icon: null, iconSvg: cm.iconSvg })
     }
     return filtered
   }
 
   visible.push({ path: '/admin/settings', label: t('nav.settings'), icon: CogIcon })
   for (const cm of customMenuItemsForAdmin.value) {
-    visible.push({ path: `/custom/${cm.id}`, label: cm.label, icon: null, iconSvg: cm.icon_svg })
+    visible.push({ path: `/custom/${cm.id}`, label: cm.label, icon: null, iconSvg: cm.iconSvg })
   }
   return visible
 })
@@ -928,7 +945,7 @@ watch(
   isAdmin,
   (v) => {
     if (v) {
-      adminSettingsStore.fetch()
+      appStore.fetchAdminConfig()
     }
   },
   { immediate: true }
@@ -937,7 +954,7 @@ watch(
 onMounted(() => {
   void refreshBatchImageAccess()
   if (isAdmin.value) {
-    adminSettingsStore.fetch()
+    appStore.fetchAdminConfig()
   }
   // Restore sidebar scroll position after route change re-mounts the component
   if (appStore.sidebarScrollTop > 0 && sidebarNavRef.value) {

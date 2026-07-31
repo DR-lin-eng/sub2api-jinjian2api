@@ -59,7 +59,7 @@ import { useRoute } from 'vue-router'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import { isMobileDevice } from '@/core/utils/device'
 import { buildApiUrl } from '@/core/networks/client'
-import { getAuthToken } from '@/api'
+import { getAccessToken as getAuthToken } from '@/core/networks/tokenStore'
 
 interface StripeWithWechatPay {
   confirmWechatPayPayment(clientSecret: string, options: Record<string, unknown>): Promise<{ error?: { message?: string }; paymentIntent?: { status: string } }>

@@ -47,44 +47,28 @@
           />
         </div>
         <div class="max-h-52 overflow-auto">
-          <div
+          <button
             v-for="model in filteredModels"
             :key="model.value"
-            data-testid="model-option"
-            class="group flex items-center hover:bg-gray-100 dark:hover:bg-dark-600"
+            type="button"
+            @click="toggleModel(model.value)"
+            class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-dark-600"
           >
-            <button
-              type="button"
-              data-testid="select-model"
-              class="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left text-sm"
-              @click="toggleModel(model.value)"
+            <span
+              :class="[
+                'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
+                modelValue.includes(model.value)
+                  ? 'border-primary-500 bg-primary-500 text-white'
+                  : 'border-gray-300 dark:border-dark-500'
+              ]"
             >
-              <span
-                :class="[
-                  'flex h-4 w-4 shrink-0 items-center justify-center rounded border',
-                  modelValue.includes(model.value)
-                    ? 'border-primary-500 bg-primary-500 text-white'
-                    : 'border-gray-300 dark:border-dark-500'
-                ]"
-              >
-                <svg v-if="modelValue.includes(model.value)" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
-                </svg>
-              </span>
-              <ModelIcon :model="model.value" size="18px" />
-              <span class="truncate text-gray-900 dark:text-white">{{ model.value }}</span>
-            </button>
-            <button
-              type="button"
-              data-testid="copy-model-id"
-              class="mr-2 rounded p-1.5 text-gray-400 opacity-70 transition-colors hover:bg-gray-200 hover:text-primary-600 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 group-hover:opacity-100 dark:text-gray-500 dark:hover:bg-dark-500 dark:hover:text-primary-400"
-              :title="`${t('common.copy')} ${model.value}`"
-              :aria-label="`${t('common.copy')} ${model.value}`"
-              @click="copyModelId(model.value)"
-            >
-              <Icon name="copy" size="sm" />
-            </button>
-          </div>
+              <svg v-if="modelValue.includes(model.value)" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+              </svg>
+            </span>
+            <ModelIcon :model="model.value" size="18px" />
+            <span class="truncate text-gray-900 dark:text-white">{{ model.value }}</span>
+          </button>
           <div v-if="filteredModels.length === 0" class="px-3 py-4 text-center text-sm text-gray-500">
             {{ t('admin.accounts.noMatchingModels') }}
           </div>
@@ -145,12 +129,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { accountsAPI } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
-import type { SyncUpstreamPreviewParams } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
-import { useClipboard } from '@/common/composables/useClipboard'
+import type { SyncUpstreamPreviewParams } from '@/features/admin-accounts/domain/repositories/adminAccountsActionRepository'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
 import ModelIcon from '@/common/widgets/icons/ModelIcon.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { allModels, getModelsByPlatform } from '@/features/admin-accounts/presentation/composables/useModelWhitelist'
@@ -175,7 +158,7 @@ const emit = defineEmits<{
 }>()
 
 const appStore = useAppStore()
-const { copyToClipboard } = useClipboard()
+const actionStore = useAdminAccountsActionStore()
 
 const showDropdown = ref(false)
 const searchQuery = ref('')
@@ -251,10 +234,6 @@ const toggleModel = (model: string) => {
   }
 }
 
-const copyModelId = async (model: string) => {
-  await copyToClipboard(model)
-}
-
 const addCustom = () => {
   const model = customModel.value.trim()
   if (!model) return
@@ -290,9 +269,9 @@ const syncUpstreamModels = async () => {
   try {
     let result
     if (props.accountId) {
-      result = await accountsAPI.syncUpstreamModels(props.accountId)
+      result = await actionStore.syncUpstreamModels(props.accountId)
     } else if (props.syncCredentials) {
-      result = await accountsAPI.syncUpstreamModelsPreview(props.syncCredentials as SyncUpstreamPreviewParams)
+      result = await actionStore.syncUpstreamModelsPreview(props.syncCredentials as SyncUpstreamPreviewParams)
     } else {
       return
     }

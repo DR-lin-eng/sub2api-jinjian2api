@@ -8,7 +8,7 @@
     </template>
     <template v-if="showUser" #cell-user_email="{ value, row }">
       <div class="text-sm">
-        <span class="text-gray-900 dark:text-white">{{ value || row.user_name || '#' + row.user_id }}</span>
+        <span class="text-gray-900 dark:text-white">{{ value || row.user_name || '#' + row.userId }}</span>
         <span v-if="row.user_notes" class="ml-1 text-xs text-gray-400">({{ row.user_notes }})</span>
       </div>
     </template>
@@ -41,11 +41,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { PaymentOrder } from '@/types/payment'
-import type { Column } from '@/common/types/uiTypes'
+import type { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
+import type { Column } from '@/common/widgets/types'
 import DataTable from '@/common/widgets/data/DataTable.vue'
 import OrderStatusBadge from '@/features/billing/presentation/widgets/OrderStatusBadge.vue'
-import { currencySymbol } from '@/features/billing/presentation/currencyFormatter'
+import { currencySymbol } from '@/features/billing/presentation/utils/currencyFormatter'
 
 const { t } = useI18n()
 

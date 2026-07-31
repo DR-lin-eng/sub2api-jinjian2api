@@ -56,7 +56,7 @@
               <div class="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-dark-400">
                 <span>#{{ row.id }}</span>
                 <span class="text-gray-300 dark:text-dark-700">·</span>
-                <span>{{ formatDateTime(row.created_at) }}</span>
+                <span>{{ formatDateTime(row.createdAt) }}</span>
               </div>
             </div>
           </template>
@@ -80,12 +80,12 @@
             <span
               :class="[
                 'badge',
-                row.notify_mode === 'popup'
+                row.notifyMode === 'popup'
                   ? 'badge-warning'
                   : 'badge-gray'
               ]"
             >
-              {{ row.notify_mode === 'popup' ? t('admin.announcements.notifyModeLabels.popup') : t('admin.announcements.notifyModeLabels.silent') }}
+              {{ row.notifyMode === 'popup' ? t('admin.announcements.notifyModeLabels.popup') : t('admin.announcements.notifyModeLabels.silent') }}
             </span>
           </template>
 
@@ -99,11 +99,11 @@
             <div class="text-sm text-gray-600 dark:text-gray-300">
               <div>
                 <span class="font-medium">{{ t('admin.announcements.form.startsAt') }}:</span>
-                <span class="ml-1">{{ row.starts_at ? formatDateTime(row.starts_at) : t('admin.announcements.timeImmediate') }}</span>
+                <span class="ml-1">{{ row.startsAt ? formatDateTime(row.startsAt) : t('admin.announcements.timeImmediate') }}</span>
               </div>
               <div class="mt-0.5">
                 <span class="font-medium">{{ t('admin.announcements.form.endsAt') }}:</span>
-                <span class="ml-1">{{ row.ends_at ? formatDateTime(row.ends_at) : t('admin.announcements.timeNever') }}</span>
+                <span class="ml-1">{{ row.endsAt ? formatDateTime(row.endsAt) : t('admin.announcements.timeNever') }}</span>
               </div>
             </div>
           </template>
@@ -115,18 +115,11 @@
           <template #cell-actions="{ row }">
             <div class="flex items-center space-x-1">
               <button
-                @click="openPreview(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-                :title="t('admin.announcements.preview')"
-              >
-                <Icon name="eye" size="sm" />
-              </button>
-              <button
                 @click="openReadStatus(row)"
                 class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
                 :title="t('admin.announcements.readStatus')"
               >
-                <Icon name="chartBar" size="sm" />
+                <Icon name="eye" size="sm" />
               </button>
               <button
                 @click="openEditDialog(row)"
@@ -247,12 +240,6 @@
       :announcement-id="readStatusAnnouncementId"
       @close="showReadStatusDialog = false"
     />
-
-    <AnnouncementPopup
-      :announcement="previewAnnouncement"
-      preview
-      @close="previewAnnouncement = null"
-    />
   </AppLayout>
 </template>
 
@@ -261,10 +248,8 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
-import { adminAPI } from '@/api/admin'
 import { formatDateTime, formatDateTimeLocalInput, parseDateTimeLocalInput } from '@/core/utils/format'
-import type { AdminGroup, Announcement, AnnouncementTargeting } from '@/types'
-import type { Column } from '@/common/types/uiTypes'
+import type { Column } from '@/common/widgets/types'
 
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
@@ -278,7 +263,15 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 
 import AnnouncementTargetingEditor from '@/features/announcements/presentation/widgets/AnnouncementTargetingEditor.vue'
 import AnnouncementReadStatusDialog from '@/features/announcements/presentation/widgets/AnnouncementReadStatusDialog.vue'
-import AnnouncementPopup from '@/common/widgets/data/AnnouncementPopup.vue'
+import { useAnnouncements } from '@/features/announcements/presentation/composables/useAnnouncements'
+import { useAdminGroups } from '@/features/admin-groups/presentation/composables/useAdminGroups'
+import type { AdminGroup } from '@/features/admin-groups/domain/models/adminGroups'
+import type { Announcement } from '@/features/announcements/domain/models/announcement'
+import type { AnnouncementTargeting } from '@/features/announcements/domain/models/announcementTargeting'
+import type { AnnouncementStatus } from '@/features/announcements/enums/announcementStatus'
+import type { AnnouncementNotifyMode } from '@/features/announcements/enums/announcementNotifyMode'
+const $announcements = useAnnouncements()
+const $groups = useAdminGroups()
 
 const { t } = useI18n()
 const appStore = useAppStore()
@@ -339,7 +332,7 @@ const statusLabel = (status: string) => {
 }
 
 const targetingSummary = (targeting: AnnouncementTargeting) => {
-  const anyOf = targeting?.any_of ?? []
+  const anyOf = targeting?.anyOf ?? []
   if (!anyOf || anyOf.length === 0) return t('admin.announcements.targetingSummaryAll')
   return t('admin.announcements.targetingSummaryCustom', { groups: anyOf.length })
 }
@@ -355,7 +348,7 @@ async function loadAnnouncements() {
 
   try {
     loading.value = true
-    const res = await adminAPI.announcements.list(pagination.page, pagination.page_size, {
+    const res = await $announcements.list(pagination.page, pagination.page_size, {
       status: filters.status || undefined,
       search: searchQuery.value || undefined,
       sort_by: sortState.sort_by,
@@ -368,7 +361,7 @@ async function loadAnnouncements() {
     pagination.total = res.total
     pagination.pages = res.pages
     pagination.page = res.page
-    pagination.page_size = res.page_size
+    pagination.page_size = res.pageSize
   } catch (error: any) {
     if (
       signal.aborted ||
@@ -427,22 +420,30 @@ const editingAnnouncement = ref<Announcement | null>(null)
 
 const isEditing = computed(() => !!editingAnnouncement.value)
 
-const form = reactive({
+const form = reactive<{
+  title: string
+  content: string
+  status: AnnouncementStatus
+  notify_mode: AnnouncementNotifyMode
+  starts_at_str: string
+  ends_at_str: string
+  targeting: AnnouncementTargeting
+}>({
   title: '',
   content: '',
   status: 'draft',
   notify_mode: 'silent',
   starts_at_str: '',
   ends_at_str: '',
-  targeting: { any_of: [] } as AnnouncementTargeting
+  targeting: { anyOf: [] }
 })
 
 const subscriptionGroups = ref<AdminGroup[]>([])
 
 async function loadSubscriptionGroups() {
   try {
-    const all = await adminAPI.groups.getAll()
-    subscriptionGroups.value = (all || []).filter((g) => g.subscription_type === 'subscription')
+    const all = await $groups.getAll()
+    subscriptionGroups.value = (all || []).filter((g: any) => g.subscriptionType === 'subscription')
   } catch (error: any) {
     console.error('Error loading groups:', error)
     // not fatal
@@ -456,20 +457,20 @@ function resetForm() {
   form.notify_mode = 'silent'
   form.starts_at_str = ''
   form.ends_at_str = ''
-  form.targeting = { any_of: [] }
+  form.targeting = { anyOf: [] }
 }
 
 function fillFormFromAnnouncement(a: Announcement) {
   form.title = a.title
   form.content = a.content
   form.status = a.status
-  form.notify_mode = a.notify_mode || 'silent'
+  form.notify_mode = a.notifyMode || 'silent'
 
   // Backend returns RFC3339 strings
-  form.starts_at_str = a.starts_at ? formatDateTimeLocalInput(Math.floor(new Date(a.starts_at).getTime() / 1000)) : ''
-  form.ends_at_str = a.ends_at ? formatDateTimeLocalInput(Math.floor(new Date(a.ends_at).getTime() / 1000)) : ''
+  form.starts_at_str = a.startsAt ? formatDateTimeLocalInput(Math.floor(new Date(a.startsAt).getTime() / 1000)) : ''
+  form.ends_at_str = a.endsAt ? formatDateTimeLocalInput(Math.floor(new Date(a.endsAt).getTime() / 1000)) : ''
 
-  form.targeting = a.targeting ?? { any_of: [] }
+  form.targeting = a.targeting ?? { anyOf: [] }
 }
 
 function openCreateDialog() {
@@ -496,8 +497,8 @@ function buildCreatePayload() {
   return {
     title: form.title,
     content: form.content,
-    status: form.status as any,
-    notify_mode: form.notify_mode as any,
+    status: form.status,
+    notify_mode: form.notify_mode,
     targeting: form.targeting,
     starts_at: startsAt ?? undefined,
     ends_at: endsAt ?? undefined
@@ -510,20 +511,20 @@ function buildUpdatePayload(original: Announcement) {
   if (form.title !== original.title) payload.title = form.title
   if (form.content !== original.content) payload.content = form.content
   if (form.status !== original.status) payload.status = form.status
-  if (form.notify_mode !== (original.notify_mode || 'silent')) payload.notify_mode = form.notify_mode
+  if (form.notify_mode !== (original.notifyMode || 'silent')) payload.notifyMode = form.notify_mode
 
   // starts_at / ends_at: distinguish unchanged vs clear(0) vs set
-  const originalStarts = original.starts_at ? Math.floor(new Date(original.starts_at).getTime() / 1000) : null
-  const originalEnds = original.ends_at ? Math.floor(new Date(original.ends_at).getTime() / 1000) : null
+  const originalStarts = original.startsAt ? Math.floor(new Date(original.startsAt).getTime() / 1000) : null
+  const originalEnds = original.endsAt ? Math.floor(new Date(original.endsAt).getTime() / 1000) : null
 
   const newStarts = parseDateTimeLocalInput(form.starts_at_str)
   const newEnds = parseDateTimeLocalInput(form.ends_at_str)
 
   if (newStarts !== originalStarts) {
-    payload.starts_at = newStarts === null ? 0 : newStarts
+    payload.startsAt = newStarts === null ? 0 : newStarts
   }
   if (newEnds !== originalEnds) {
-    payload.ends_at = newEnds === null ? 0 : newEnds
+    payload.endsAt = newEnds === null ? 0 : newEnds
   }
 
   // targeting: do shallow compare by JSON
@@ -536,13 +537,13 @@ function buildUpdatePayload(original: Announcement) {
 
 async function handleSave() {
   // Frontend validation for targeting (to avoid ANNOUNCEMENT_INVALID_TARGET)
-  const anyOf = form.targeting?.any_of ?? []
+  const anyOf = form.targeting?.anyOf ?? []
   if (anyOf.length > 50) {
     appStore.showError(t('admin.announcements.failedToCreate'))
     return
   }
   for (const g of anyOf) {
-    const allOf = g?.all_of ?? []
+    const allOf = g?.allOf ?? []
     if (allOf.length > 50) {
       appStore.showError(t('admin.announcements.failedToCreate'))
       return
@@ -553,7 +554,7 @@ async function handleSave() {
   try {
     if (!editingAnnouncement.value) {
       const payload = buildCreatePayload()
-      await adminAPI.announcements.create(payload)
+      await $announcements.create(payload)
       appStore.showSuccess(t('common.success'))
       showEditDialog.value = false
       await loadAnnouncements()
@@ -562,7 +563,7 @@ async function handleSave() {
 
     const original = editingAnnouncement.value
     const payload = buildUpdatePayload(original)
-    await adminAPI.announcements.update(original.id, payload)
+    await $announcements.update(original.id, payload)
     appStore.showSuccess(t('common.success'))
     showEditDialog.value = false
     editingAnnouncement.value = null
@@ -588,7 +589,7 @@ async function confirmDelete() {
   if (!deletingAnnouncement.value) return
 
   try {
-    await adminAPI.announcements.delete(deletingAnnouncement.value.id)
+    await $announcements.deleteAnnouncement(deletingAnnouncement.value.id)
     appStore.showSuccess(t('common.success'))
     showDeleteDialog.value = false
     deletingAnnouncement.value = null
@@ -602,11 +603,6 @@ async function confirmDelete() {
 // ===== Read status =====
 const showReadStatusDialog = ref(false)
 const readStatusAnnouncementId = ref<number | null>(null)
-const previewAnnouncement = ref<Announcement | null>(null)
-
-function openPreview(row: Announcement) {
-  previewAnnouncement.value = row
-}
 
 function openReadStatus(row: Announcement) {
   readStatusAnnouncementId.value = row.id

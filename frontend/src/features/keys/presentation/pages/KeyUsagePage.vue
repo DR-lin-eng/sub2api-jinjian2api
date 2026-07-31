@@ -375,12 +375,12 @@
                   >
                     <td class="px-4 py-3 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white">{{ m.model || '-' }}</td>
                     <td class="px-4 py-3 text-sm tabular-nums text-right text-gray-700 dark:text-dark-200">{{ fmtNum(m.requests) }}</td>
-                    <td class="px-4 py-3 text-sm tabular-nums text-right text-gray-700 dark:text-dark-200">{{ fmtNum(m.input_tokens) }}</td>
-                    <td class="px-4 py-3 text-sm tabular-nums text-right text-gray-700 dark:text-dark-200">{{ fmtNum(m.output_tokens) }}</td>
-                    <td class="px-4 py-3 text-sm tabular-nums text-right text-gray-700 dark:text-dark-200">{{ fmtNum(m.cache_creation_tokens) }}</td>
-                    <td class="px-4 py-3 text-sm tabular-nums text-right text-gray-700 dark:text-dark-200">{{ fmtNum(m.cache_read_tokens) }}</td>
-                    <td class="px-4 py-3 text-sm tabular-nums text-right text-gray-700 dark:text-dark-200">{{ fmtNum(m.total_tokens) }}</td>
-                    <td class="px-4 py-3 text-sm tabular-nums text-right font-medium text-gray-900 dark:text-white">{{ usd(m.actual_cost != null ? m.actual_cost : m.cost) }}</td>
+                    <td class="px-4 py-3 text-sm tabular-nums text-right text-gray-700 dark:text-dark-200">{{ fmtNum(m.inputTokens) }}</td>
+                    <td class="px-4 py-3 text-sm tabular-nums text-right text-gray-700 dark:text-dark-200">{{ fmtNum(m.outputTokens) }}</td>
+                    <td class="px-4 py-3 text-sm tabular-nums text-right text-gray-700 dark:text-dark-200">{{ fmtNum(m.cacheCreationTokens) }}</td>
+                    <td class="px-4 py-3 text-sm tabular-nums text-right text-gray-700 dark:text-dark-200">{{ fmtNum(m.cacheReadTokens) }}</td>
+                    <td class="px-4 py-3 text-sm tabular-nums text-right text-gray-700 dark:text-dark-200">{{ fmtNum(m.totalTokens) }}</td>
+                    <td class="px-4 py-3 text-sm tabular-nums text-right font-medium text-gray-900 dark:text-white">{{ usd(m.actualCost != null ? m.actualCost : m.cost) }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -419,7 +419,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAppStore } from '@/stores'
+import { useAppStore } from '@/core/stores/appStore'
 import LocaleSwitcher from '@/common/widgets/data/LocaleSwitcher.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { buildGatewayUrl } from '@/core/networks/client'
@@ -431,10 +431,10 @@ const appStore = useAppStore()
 
 // ==================== Site Settings (same as HomeView) ====================
 
-const siteName = computed(() => appStore.cachedPublicSettings?.site_name || appStore.siteName || 'Sub2API')
-const siteLogo = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.site_logo || appStore.siteLogo || '', { allowRelative: true, allowDataUrl: true }))
-const docUrl = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.doc_url || appStore.docUrl || ''))
-const githubUrl = 'https://github.com/DR-lin-eng/sub2api-no2api'
+const siteName = computed(() => appStore.cachedPublicSettings?.siteName || appStore.siteName || 'Sub2API')
+const siteLogo = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.siteLogo || appStore.siteLogo || '', { allowRelative: true, allowDataUrl: true }))
+const docUrl = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.docUrl || appStore.docUrl || ''))
+const githubUrl = 'https://github.com/Wei-Shaw/sub2api'
 
 // ==================== Theme (same as HomeView) ====================
 
@@ -456,7 +456,7 @@ const isQuerying = ref(false)
 const showResults = ref(false)
 const showLoading = ref(false)
 const showDatePicker = ref(false)
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const resultData = ref<any>(null)
 const now = ref(new Date())
 let resetTimer: ReturnType<typeof setInterval> | null = null
@@ -636,9 +636,9 @@ const ringItems = computed<RingItem[]>(() => {
     if (data.subscription) {
       const sub = data.subscription
       const limits = [
-        { label: t('keyUsage.limitDaily'), usage: sub.daily_usage_usd, limit: sub.daily_limit_usd },
-        { label: t('keyUsage.limitWeekly'), usage: sub.weekly_usage_usd, limit: sub.weekly_limit_usd },
-        { label: t('keyUsage.limitMonthly'), usage: sub.monthly_usage_usd, limit: sub.monthly_limit_usd },
+        { label: t('keyUsage.limitDaily'), usage: sub.dailyUsageUsd, limit: sub.dailyLimitUsd },
+        { label: t('keyUsage.limitWeekly'), usage: sub.weeklyUsageUsd, limit: sub.weeklyLimitUsd },
+        { label: t('keyUsage.limitMonthly'), usage: sub.monthlyUsageUsd, limit: sub.monthlyLimitUsd },
       ]
       for (const l of limits) {
         if (l.limit != null && l.limit > 0) {
@@ -697,9 +697,9 @@ const detailRows = computed<DetailRow[]>(() => {
         label: t('keyUsage.remainingQuota'), value: usd(data.quota.remaining), valueClass: remainColor,
       })
     }
-    if (data.expires_at) {
+    if (data.expiresAt) {
       const daysLeft = data.days_until_expiry
-      let expiryStr = formatDate(data.expires_at)
+      let expiryStr = formatDate(data.expiresAt)
       if (daysLeft != null) {
         expiryStr += daysLeft > 0 ? ` ${t('keyUsage.daysLeft', { days: daysLeft })}` : daysLeft === 0 ? ` ${t('keyUsage.todayExpires')}` : ''
       }
@@ -733,31 +733,31 @@ const detailRows = computed<DetailRow[]>(() => {
 
     if (data.subscription) {
       const sub = data.subscription
-      if (sub.daily_limit_usd > 0) {
-        const pct = (sub.daily_usage_usd / sub.daily_limit_usd) * 100
+      if (sub.dailyLimitUsd > 0) {
+        const pct = (sub.dailyUsageUsd / sub.dailyLimitUsd) * 100
         rows.push({
           iconBg: 'bg-primary-500/10', iconColor: 'text-primary-500', iconSvg: ICON_DOLLAR,
-          label: `${t('keyUsage.usedQuota')} (${locale.value === 'zh' ? '日' : 'D'})`, value: `${usd(sub.daily_usage_usd)} / ${usd(sub.daily_limit_usd)}`, valueClass: getUsageColor(pct),
+          label: `${t('keyUsage.usedQuota')} (${locale.value === 'zh' ? '日' : 'D'})`, value: `${usd(sub.dailyUsageUsd)} / ${usd(sub.dailyLimitUsd)}`, valueClass: getUsageColor(pct),
         })
       }
-      if (sub.weekly_limit_usd > 0) {
-        const pct = (sub.weekly_usage_usd / sub.weekly_limit_usd) * 100
+      if (sub.weeklyLimitUsd > 0) {
+        const pct = (sub.weeklyUsageUsd / sub.weeklyLimitUsd) * 100
         rows.push({
           iconBg: 'bg-indigo-500/10', iconColor: 'text-indigo-500', iconSvg: ICON_DOLLAR,
-          label: `${t('keyUsage.usedQuota')} (${locale.value === 'zh' ? '周' : 'W'})`, value: `${usd(sub.weekly_usage_usd)} / ${usd(sub.weekly_limit_usd)}`, valueClass: getUsageColor(pct),
+          label: `${t('keyUsage.usedQuota')} (${locale.value === 'zh' ? '周' : 'W'})`, value: `${usd(sub.weeklyUsageUsd)} / ${usd(sub.weeklyLimitUsd)}`, valueClass: getUsageColor(pct),
         })
       }
-      if (sub.monthly_limit_usd > 0) {
-        const pct = (sub.monthly_usage_usd / sub.monthly_limit_usd) * 100
+      if (sub.monthlyLimitUsd > 0) {
+        const pct = (sub.monthlyUsageUsd / sub.monthlyLimitUsd) * 100
         rows.push({
           iconBg: 'bg-emerald-500/10', iconColor: 'text-emerald-500', iconSvg: ICON_DOLLAR,
-          label: `${t('keyUsage.usedQuota')} (${locale.value === 'zh' ? '月' : 'M'})`, value: `${usd(sub.monthly_usage_usd)} / ${usd(sub.monthly_limit_usd)}`, valueClass: getUsageColor(pct),
+          label: `${t('keyUsage.usedQuota')} (${locale.value === 'zh' ? '月' : 'M'})`, value: `${usd(sub.monthlyUsageUsd)} / ${usd(sub.monthlyLimitUsd)}`, valueClass: getUsageColor(pct),
         })
       }
-      if (sub.expires_at) {
+      if (sub.expiresAt) {
         rows.push({
           iconBg: 'bg-amber-500/10', iconColor: 'text-amber-500', iconSvg: ICON_CALENDAR,
-          label: t('keyUsage.subscriptionExpires'), value: formatDate(sub.expires_at), valueClass: '',
+          label: t('keyUsage.subscriptionExpires'), value: formatDate(sub.expiresAt), valueClass: '',
         })
       }
     }
@@ -788,25 +788,25 @@ const usageStatCells = computed<StatCell[]>(() => {
 
   return [
     { label: t('keyUsage.todayRequests'), value: fmtNum(today.requests) },
-    { label: t('keyUsage.todayInputTokens'), value: fmtNum(today.input_tokens) },
-    { label: t('keyUsage.todayOutputTokens'), value: fmtNum(today.output_tokens) },
-    { label: t('keyUsage.todayTokens'), value: fmtNum(today.total_tokens) },
-    { label: t('keyUsage.todayCacheCreation'), value: fmtNum(today.cache_creation_tokens) },
-    { label: t('keyUsage.todayCacheRead'), value: fmtNum(today.cache_read_tokens) },
-    { label: t('keyUsage.todayCost'), value: usd(today.actual_cost) },
+    { label: t('keyUsage.todayInputTokens'), value: fmtNum(today.inputTokens) },
+    { label: t('keyUsage.todayOutputTokens'), value: fmtNum(today.outputTokens) },
+    { label: t('keyUsage.todayTokens'), value: fmtNum(today.totalTokens) },
+    { label: t('keyUsage.todayCacheCreation'), value: fmtNum(today.cacheCreationTokens) },
+    { label: t('keyUsage.todayCacheRead'), value: fmtNum(today.cacheReadTokens) },
+    { label: t('keyUsage.todayCost'), value: usd(today.actualCost) },
     { label: t('keyUsage.rpmTpm'), value: `${usage.rpm || 0} / ${usage.tpm || 0}` },
     { label: t('keyUsage.totalRequests'), value: fmtNum(total.requests) },
-    { label: t('keyUsage.totalInputTokens'), value: fmtNum(total.input_tokens) },
-    { label: t('keyUsage.totalOutputTokens'), value: fmtNum(total.output_tokens) },
-    { label: t('keyUsage.totalTokensLabel'), value: fmtNum(total.total_tokens) },
-    { label: t('keyUsage.totalCacheCreation'), value: fmtNum(total.cache_creation_tokens) },
-    { label: t('keyUsage.totalCacheRead'), value: fmtNum(total.cache_read_tokens) },
-    { label: t('keyUsage.totalCost'), value: usd(total.actual_cost) },
-    { label: t('keyUsage.avgDuration'), value: usage.average_duration_ms ? `${Math.round(usage.average_duration_ms)} ms` : '-' },
+    { label: t('keyUsage.totalInputTokens'), value: fmtNum(total.inputTokens) },
+    { label: t('keyUsage.totalOutputTokens'), value: fmtNum(total.outputTokens) },
+    { label: t('keyUsage.totalTokensLabel'), value: fmtNum(total.totalTokens) },
+    { label: t('keyUsage.totalCacheCreation'), value: fmtNum(total.cacheCreationTokens) },
+    { label: t('keyUsage.totalCacheRead'), value: fmtNum(total.cacheReadTokens) },
+    { label: t('keyUsage.totalCost'), value: usd(total.actualCost) },
+    { label: t('keyUsage.avgDuration'), value: usage.averageDurationMs ? `${Math.round(usage.averageDurationMs)} ms` : '-' },
   ]
 })
 
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const modelStats = computed<any[]>(() => resultData.value?.model_stats || [])
 
 interface DailyUsageRow {

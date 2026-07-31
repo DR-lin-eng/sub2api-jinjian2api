@@ -1,11 +1,14 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { AntigravityTokenInfo } from '@/features/admin-accounts/data/datasources/antigravityDatasource'
+import { useAdminAccountsActionStore } from '@/features/admin-accounts/presentation/stores/adminAccountsActionStore'
+import type { AntigravityTokenInfo } from '@/features/admin-accounts/domain/models/antigravityTokenInfo'
+import type { AntigravityAuthUrlRequest } from '@/features/admin-accounts/data/requests_models/antigravityAuthUrlRequest'
+import type { AntigravityExchangeCodeRequest } from '@/features/admin-accounts/data/requests_models/antigravityExchangeCodeRequest'
 
 export function useAntigravityOAuth() {
   const appStore = useAppStore()
+  const actionStore = useAdminAccountsActionStore()
   const { t } = useI18n()
 
   const authUrl = ref('')
@@ -30,12 +33,12 @@ export function useAntigravityOAuth() {
     error.value = ''
 
     try {
-      const payload: Record<string, unknown> = {}
+      const payload: AntigravityAuthUrlRequest = {}
       if (proxyId) payload.proxy_id = proxyId
 
-      const response = await adminAPI.antigravity.generateAuthUrl(payload as any)
-      authUrl.value = response.auth_url
-      sessionId.value = response.session_id
+      const response = await actionStore.antigravity_generateAuthUrl(payload)
+      authUrl.value = response.authUrl
+      sessionId.value = response.sessionId
       state.value = response.state
       return true
     } catch (err: any) {
@@ -64,14 +67,14 @@ export function useAntigravityOAuth() {
     error.value = ''
 
     try {
-      const payload: Record<string, unknown> = {
+      const payload: AntigravityExchangeCodeRequest = {
         session_id: params.sessionId,
         state: params.state,
         code
       }
       if (params.proxyId) payload.proxy_id = params.proxyId
 
-      const tokenInfo = await adminAPI.antigravity.exchangeCode(payload as any)
+      const tokenInfo = await actionStore.antigravity_exchangeCode(payload)
       return tokenInfo as AntigravityTokenInfo
     } catch (err: any) {
       error.value =
@@ -96,7 +99,7 @@ export function useAntigravityOAuth() {
     error.value = ''
 
     try {
-      const tokenInfo = await adminAPI.antigravity.refreshAntigravityToken(
+      const tokenInfo = await actionStore.refreshAntigravityToken(
         refreshToken.trim(),
         proxyId
       )
@@ -117,21 +120,21 @@ export function useAntigravityOAuth() {
     fallbackRefreshToken?: string
   ): Record<string, unknown> => {
     let expiresAt: string | undefined
-    if (typeof tokenInfo.expires_at === 'number' && Number.isFinite(tokenInfo.expires_at)) {
-      expiresAt = Math.floor(tokenInfo.expires_at).toString()
-    } else if (typeof tokenInfo.expires_at === 'string' && tokenInfo.expires_at.trim()) {
-      expiresAt = tokenInfo.expires_at.trim()
+    if (typeof (tokenInfo.expiresAt as unknown) === 'number' && Number.isFinite(tokenInfo.expiresAt as unknown)) {
+      expiresAt = Math.floor(tokenInfo.expiresAt).toString()
+    } else if (typeof (tokenInfo.expiresAt as unknown) === 'string' && (tokenInfo.expiresAt as unknown as string).trim()) {
+      expiresAt = (tokenInfo.expiresAt as unknown as string).trim()
     }
-    const refreshToken = tokenInfo.refresh_token?.trim()
-      ? tokenInfo.refresh_token
+    const refreshToken = tokenInfo.refreshToken?.trim()
+      ? tokenInfo.refreshToken
       : fallbackRefreshToken
 
     return {
-      access_token: tokenInfo.access_token,
+      access_token: tokenInfo.accessToken,
       refresh_token: refreshToken,
-      token_type: tokenInfo.token_type,
+      token_type: tokenInfo.tokenType,
       expires_at: expiresAt,
-      project_id: tokenInfo.project_id,
+      project_id: tokenInfo.projectId,
       email: tokenInfo.email
     }
   }

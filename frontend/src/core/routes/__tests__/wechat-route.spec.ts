@@ -21,13 +21,8 @@ vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => appStore,
 }))
 
-vi.mock('@/features/admin-settings/presentation/stores/adminSettingsStore', () => ({
-  useAdminSettingsStore: () => ({
-    customMenuItems: [],
-  }),
-}))
 
-vi.mock('@/common/composables/useNavigationLoading', () => ({
+vi.mock('@/core/routes/composables/useNavigationLoading', () => ({
   useNavigationLoadingState: () => ({
     startNavigation: vi.fn(),
     endNavigation: vi.fn(),
@@ -35,7 +30,7 @@ vi.mock('@/common/composables/useNavigationLoading', () => ({
   }),
 }))
 
-vi.mock('@/common/composables/useRoutePrefetch', () => ({
+vi.mock('@/core/routes/composables/useRoutePrefetch', () => ({
   useRoutePrefetch: () => ({
     triggerPrefetch: vi.fn(),
     cancelPendingPrefetch: vi.fn(),

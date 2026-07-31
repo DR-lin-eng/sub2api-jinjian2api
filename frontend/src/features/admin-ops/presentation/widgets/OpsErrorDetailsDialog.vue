@@ -4,8 +4,10 @@ import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import OpsErrorLogTable from './OpsErrorLogTable.vue'
-import { opsAPI, type OpsErrorLog } from '@/features/admin-ops/data/datasources/adminOpsDatasource'
-import { formatCompactNumber, formatExactNumber } from '../opsFormatter'
+import type { OpsErrorLog } from '@/features/admin-ops/domain/models/opsErrorLog'
+import { useAdminOpsQueryStore } from '@/features/admin-ops/presentation/stores/adminOpsQueryStore'
+const queryStore = useAdminOpsQueryStore()
+import { formatCompactNumber, formatExactNumber } from '@/features/admin-ops/presentation/utils/opsFormatter'
 
 interface Props {
   show: boolean
@@ -86,6 +88,26 @@ function close() {
   emit('update:show', false)
 }
 
+function handleStatusCodeChange(v: string | number | boolean | null) {
+  if (v === null) {
+    statusCode.value = null
+    return
+  }
+  if (v === 'other') {
+    statusCode.value = 'other'
+    return
+  }
+  if (typeof v === 'number') {
+    statusCode.value = v
+  }
+}
+
+function handleViewModeChange(v: string | number | boolean | null) {
+  if (v === 'errors' || v === 'excluded' || v === 'all') {
+    viewMode.value = v
+  }
+}
+
 const sortBy = ref('created_at')
 const sortOrder = ref<'asc' | 'desc'>('desc')
 
@@ -112,22 +134,22 @@ async function fetchErrorLogs() {
 
     const platform = String(props.platform || '').trim()
     if (platform) params.platform = platform
-    if (typeof props.groupId === 'number' && props.groupId > 0) params.group_id = props.groupId
+    if (typeof props.groupId === 'number' && props.groupId > 0) params.groupId = props.groupId
 
     if (q.value.trim()) params.q = q.value.trim()
-    if (statusCode.value === 'other') params.status_codes_other = '1'
-    else if (typeof statusCode.value === 'number') params.status_codes = String(statusCode.value)
+    if (statusCode.value === 'other') params.statusCodes_other = '1'
+    else if (typeof statusCode.value === 'number') params.statusCodes = String(statusCode.value)
 
     const phaseVal = String(phase.value || '').trim()
     if (phaseVal) params.phase = phaseVal
 
     const ownerVal = String(errorOwner.value || '').trim()
-    if (ownerVal) params.error_owner = ownerVal
+    if (ownerVal) params.errorOwner = ownerVal
 
 
     const res = props.errorType === 'upstream'
-      ? await opsAPI.listUpstreamErrors(params)
-      : await opsAPI.listRequestErrors(params)
+      ? await queryStore.listUpstreamErrors(params)
+      : await queryStore.listRequestErrors(params)
     rows.value = res.items || []
     total.value = res.total || 0
   } catch (err) {
@@ -205,7 +227,7 @@ watch(
     <div class="flex h-full min-h-0 flex-col">
       <!-- Filters -->
       <div class="mb-4 flex-shrink-0 border-b border-gray-200 pb-4 dark:border-dark-700">
-        <div class="grid grid-cols-2 gap-2 md:grid-cols-8">
+        <div class="grid grid-cols-8 gap-2">
           <div class="col-span-2 compact-select">
             <div class="relative group">
               <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -228,7 +250,7 @@ watch(
           </div>
 
           <div class="compact-select">
-            <Select :model-value="statusCode" :options="statusCodeSelectOptions" @update:model-value="statusCode = $event as any" />
+            <Select :model-value="statusCode" :options="statusCodeSelectOptions" @update:model-value="handleStatusCodeChange" />
           </div>
 
           <div class="compact-select">
@@ -242,7 +264,7 @@ watch(
 
 
           <div class="compact-select">
-            <Select :model-value="viewMode" :options="viewModeSelectOptions" @update:model-value="viewMode = $event as any" />
+            <Select :model-value="viewMode" :options="viewModeSelectOptions" @update:model-value="handleViewModeChange" />
           </div>
 
           <div class="flex items-center justify-end">

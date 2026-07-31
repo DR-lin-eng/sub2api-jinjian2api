@@ -16,7 +16,7 @@
           A ${{ formatAccountCost }}
         </span>
         <span
-          v-if="windowStats?.user_cost != null"
+          v-if="windowStats?.userCost != null"
           class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800"
           :title="t('usage.userBilled')"
         >
@@ -59,8 +59,8 @@
 import { computed, ref, watch } from 'vue'
 import { useIntervalFn } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
-import type { WindowStats } from '@/types'
 import { formatCompactNumber } from '@/core/utils/format'
+import type { WindowStats } from '@/features/admin-accounts/domain/models/windowStats'
 
 const props = defineProps<{
   label: string
@@ -214,8 +214,8 @@ const formatAccountCost = computed(() => {
 })
 
 const formatUserCost = computed(() => {
-  if (!props.windowStats || props.windowStats.user_cost == null) return '0.00'
-  return props.windowStats.user_cost.toFixed(2)
+  if (!props.windowStats || props.windowStats.userCost == null) return '0.00'
+  return props.windowStats.userCost.toFixed(2)
 })
 
 </script>

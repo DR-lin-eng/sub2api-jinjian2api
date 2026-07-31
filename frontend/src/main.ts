@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
@@ -5,22 +6,7 @@ import router from '@/core/routes'
 import i18n, { initI18n } from '@/core/i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { updateFavicon } from '@/core/services/branding'
-import { isIOSDevice } from '@/core/utils/device'
 import '@/core/themes/style.css'
-
-function initIOSViewportZoomFix() {
-  // iOS Safari 在输入框字号小于 16px 时聚焦会自动放大页面，且失焦后不会恢复。
-  // 限制 maximum-scale 可阻止该行为；iOS 10+ 用户仍可双指手动缩放，不影响可访问性。
-  // 仅在 iOS 设备上注入，避免影响 Android Chrome 的手动缩放能力。
-  if (!isIOSDevice()) return
-
-  const viewport = document.querySelector('meta[name="viewport"]')
-  if (!viewport) return
-
-  const content = viewport.getAttribute('content') || ''
-  if (/maximum-scale/i.test(content)) return
-  viewport.setAttribute('content', `${content}, maximum-scale=1.0`)
-}
 
 function initThemeClass() {
   const savedTheme = localStorage.getItem('theme')
@@ -33,7 +19,6 @@ function initThemeClass() {
 async function bootstrap() {
   // Apply theme class globally before app mount to keep all routes consistent.
   initThemeClass()
-  initIOSViewportZoomFix()
 
   const app = createApp(App)
   const pinia = createPinia()

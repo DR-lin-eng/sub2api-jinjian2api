@@ -32,15 +32,6 @@
           <option value="admin">{{ t('admin.users.roles.admin') }}</option>
         </select>
       </div>
-      <div>
-        <label class="input-label">{{ t('admin.users.form.schedulingTier') }}</label>
-        <select v-model.number="form.scheduling_tier" class="input" data-test="scheduling-tier-select">
-          <option :value="0">{{ t('admin.users.schedulingTiers.priority') }}</option>
-          <option :value="1">{{ t('admin.users.schedulingTiers.normal') }}</option>
-          <option :value="2">{{ t('admin.users.schedulingTiers.low') }}</option>
-        </select>
-        <p class="input-hint">{{ t('admin.users.form.schedulingTierHint') }}</p>
-      </div>
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="input-label">{{ t('admin.users.columns.balance') }}</label>
@@ -80,19 +71,21 @@
 
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'; import { adminAPI } from '@/api/admin'
+import { useI18n } from 'vue-i18n'
+import { useAdminUsers } from '@/features/admin-users/presentation/composables/useAdminUsers'
 import { useAppStore } from '@/core/stores/appStore'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { useStepUp, isStepUpBlocked, isStepUpCancelled, stepUpBlockReason } from '@/common/composables/useStepUp'
 import TotpStepUpDialog from '@/features/auth/presentation/widgets/TotpStepUpDialog.vue'
-import type { RequestSchedulingTier } from '@/types'
+
+const $adminUsers = useAdminUsers()
 
 const props = defineProps<{ show: boolean }>()
 const emit = defineEmits(['close', 'success']); const { t } = useI18n()
 const appStore = useAppStore()
 
-const form = reactive({ email: '', password: '', username: '', notes: '', role: 'user' as 'user' | 'admin', balance: '', concurrency: 1, rpm_limit: 0, scheduling_tier: 1 as RequestSchedulingTier })
+const form = reactive({ email: '', password: '', username: '', notes: '', role: 'user' as 'user' | 'admin', balance: '', concurrency: 1, rpm_limit: 0 })
 
 const stepUp = useStepUp()
 const loading = ref(false)
@@ -108,7 +101,7 @@ const submit = async () => {
       payload.balance = Number(balance)
     }
     // 创建管理员属敏感操作：后端返回 STEP_UP_REQUIRED 时弹 TOTP 验证并重试
-    await stepUp.run(() => adminAPI.users.create(payload))
+    await stepUp.run(() => $adminUsers.create(payload))
     appStore.showSuccess(t('admin.users.userCreated'))
     emit('success'); emit('close')
   } catch (e: any) {
@@ -126,7 +119,7 @@ const submit = async () => {
   } finally { loading.value = false }
 }
 
-watch(() => props.show, (v) => { if(v) Object.assign(form, { email: '', password: '', username: '', notes: '', role: 'user', balance: '', concurrency: 1, rpm_limit: 0, scheduling_tier: 1 }) })
+watch(() => props.show, (v) => { if(v) Object.assign(form, { email: '', password: '', username: '', notes: '', role: 'user', balance: '', concurrency: 1, rpm_limit: 0 }) })
 
 const generateRandomPassword = () => {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%^&*'

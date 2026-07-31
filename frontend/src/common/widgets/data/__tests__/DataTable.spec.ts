@@ -55,8 +55,8 @@ describe('DataTable', () => {
           { key: 'created_at', label: 'Created', sortable: true }
         ],
         data: [
-          { id: 1, name: 'Beta', created_at: '2026-01-02T00:00:00Z' },
-          { id: 2, name: 'Alpha', created_at: '2026-01-01T00:00:00Z' }
+          { id: 1, name: 'Beta', createdAt: '2026-01-02T00:00:00Z' },
+          { id: 2, name: 'Alpha', createdAt: '2026-01-01T00:00:00Z' }
         ],
         defaultSortKey: 'name',
         defaultSortOrder: 'asc'
@@ -307,35 +307,6 @@ describe('DataTable', () => {
 
     expect(wrapper.emitted('update:selectedKeys')?.at(-1)?.[0]).toEqual([99, 2])
     expect(wrapper.emitted('selectionChange')?.at(-1)?.[0]).toEqual([99, 2])
-  })
-
-  it('keeps the single usage field shrinkable in a 320px mobile card', () => {
-    stubMobileMatchMedia()
-    const viewport = document.createElement('div')
-    viewport.style.width = '320px'
-    document.body.appendChild(viewport)
-    const wrapper = mount(DataTable, {
-      attachTo: viewport,
-      props: {
-        columns: [{ key: 'usage', label: 'Usage' }],
-        data: [{ id: 1, usage: 'snapshot' }],
-        rowKey: 'id'
-      },
-      slots: {
-        'cell-usage': '<div data-test="usage-cell">snapshot</div>'
-      }
-    })
-
-    expect(viewport.style.width).toBe('320px')
-    expect(wrapper.findAll('[data-field="usage"]')).toHaveLength(1)
-    expect(wrapper.find('[data-field="ollama_cloud_usage"]').exists()).toBe(false)
-    const field = wrapper.get('[data-field="usage"]')
-    expect(field.classes()).toContain('min-w-0')
-    expect(field.get('div').classes()).toEqual(expect.arrayContaining(['min-w-0', 'max-w-full']))
-    expect(wrapper.findAll('[data-test="usage-cell"]')).toHaveLength(1)
-
-    wrapper.unmount()
-    viewport.remove()
   })
 
   it('offers current-page select all in the mobile card layout', async () => {

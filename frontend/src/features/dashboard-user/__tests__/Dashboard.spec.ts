@@ -7,32 +7,19 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { defineComponent, ref, onMounted, nextTick } from 'vue'
 
-// Mock API
+// Mock repository 层
 const mockGetDashboardStats = vi.fn()
 
-vi.mock('@/api', () => ({
-  authAPI: {
-    getCurrentUser: vi.fn().mockResolvedValue({
-      data: { id: 1, username: 'test', email: 'test@example.com', role: 'user', balance: 100, concurrency: 5, status: 'active', allowed_groups: null, created_at: '', updated_at: '' },
-    }),
-    logout: vi.fn(),
-    refreshToken: vi.fn(),
-  },
-  isTotp2FARequired: () => false,
-}))
-
-vi.mock('@/features/usage/data/datasources/usageDatasource', () => ({
-  usageAPI: {
-    getDashboardStats: (...args: any[]) => mockGetDashboardStats(...args),
+vi.mock('@/features/auth/data/repositories/authQueryRepositoryImpl', () => ({
+  authQueryRepository: {
+    getCurrentUser: vi.fn().mockResolvedValue({ id: 1, username: 'test', email: 'test@example.com', role: 'user', balance: 100, concurrency: 5, status: 'active', allowedGroups: null, createdAt: '', updatedAt: '' }),
+    getPublicSettings: vi.fn().mockResolvedValue({}),
+    getLocalCaptcha: vi.fn(),
   },
 }))
 
-vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
-  checkUpdates: vi.fn(),
-}))
-
-vi.mock('@/features/auth/data/datasources/authDatasource', () => ({
-  getPublicSettings: vi.fn().mockResolvedValue({}),
+vi.mock('@/features/admin-settings/data/repositories/systemQueryRepositoryImpl', () => ({
+  systemQueryRepository: { checkUpdates: vi.fn(), getVersion: vi.fn(), getRollbackVersions: vi.fn() },
 }))
 
 interface DashboardStats {

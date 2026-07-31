@@ -77,17 +77,17 @@
               <td class="px-3 py-2">
                 <div class="flex flex-wrap gap-1 max-w-48">
                   <span
-                    v-for="code in rule.error_codes.slice(0, 3)"
+                    v-for="code in rule.errorCodes.slice(0, 3)"
                     :key="code"
                     class="badge badge-danger text-xs"
                   >
                     {{ code }}
                   </span>
                   <span
-                    v-if="rule.error_codes.length > 3"
+                    v-if="rule.errorCodes.length > 3"
                     class="text-xs text-gray-500"
                   >
-                    +{{ rule.error_codes.length - 3 }}
+                    +{{ rule.errorCodes.length - 3 }}
                   </span>
                   <span
                     v-for="keyword in rule.keywords.slice(0, 1)"
@@ -104,7 +104,7 @@
                   </span>
                 </div>
                 <div class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                  {{ t('admin.errorPassthrough.matchMode.' + rule.match_mode) }}
+                  {{ t('admin.errorPassthrough.matchMode.' + rule.matchMode) }}
                 </div>
               </td>
               <td class="px-3 py-2">
@@ -128,27 +128,27 @@
                 <div class="text-xs space-y-0.5">
                   <div class="flex items-center gap-1">
                     <Icon
-                      :name="rule.passthrough_code ? 'checkCircle' : 'xCircle'"
+                      :name="rule.passthroughCode ? 'checkCircle' : 'xCircle'"
                       size="xs"
-                      :class="rule.passthrough_code ? 'text-green-500' : 'text-gray-400'"
+                      :class="rule.passthroughCode ? 'text-green-500' : 'text-gray-400'"
                     />
                     <span class="text-gray-600 dark:text-gray-400">
                       {{ t('admin.errorPassthrough.code') }}:
-                      {{ rule.passthrough_code ? t('admin.errorPassthrough.passthrough') : (rule.response_code || '-') }}
+                      {{ rule.passthroughCode ? t('admin.errorPassthrough.passthrough') : (rule.responseCode || '-') }}
                     </span>
                   </div>
                   <div class="flex items-center gap-1">
                     <Icon
-                      :name="rule.passthrough_body ? 'checkCircle' : 'xCircle'"
+                      :name="rule.passthroughBody ? 'checkCircle' : 'xCircle'"
                       size="xs"
-                      :class="rule.passthrough_body ? 'text-green-500' : 'text-gray-400'"
+                      :class="rule.passthroughBody ? 'text-green-500' : 'text-gray-400'"
                     />
                     <span class="text-gray-600 dark:text-gray-400">
                       {{ t('admin.errorPassthrough.body') }}:
-                      {{ rule.passthrough_body ? t('admin.errorPassthrough.passthrough') : t('admin.errorPassthrough.custom') }}
+                      {{ rule.passthroughBody ? t('admin.errorPassthrough.passthrough') : t('admin.errorPassthrough.custom') }}
                     </span>
                   </div>
-                  <div v-if="rule.skip_monitoring" class="flex items-center gap-1">
+                  <div v-if="rule.skipMonitoring" class="flex items-center gap-1">
                     <Icon
                       name="checkCircle"
                       size="xs"
@@ -433,11 +433,15 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { ErrorPassthroughRule } from '@/features/admin-settings/data/datasources/errorPassthroughDatasource'
+import { useAdminSettingsQueryStore } from '@/features/admin-settings/presentation/stores/adminSettingsQueryStore'
+import { useAdminSettingsActionStore } from '@/features/admin-settings/presentation/stores/adminSettingsActionStore'
+import type { ErrorPassthroughRule } from '@/features/admin-settings/domain/models/errorPassthrough'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
+
+const settingsQuery = useAdminSettingsQueryStore()
+const settingsAction = useAdminSettingsActionStore()
 
 const props = defineProps<{
   show: boolean
@@ -447,7 +451,7 @@ const emit = defineEmits<{
   close: []
 }>()
 
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 void emit // suppress unused warning - emit is used via $emit in template
 
 const { t } = useI18n()
@@ -503,7 +507,7 @@ watch(() => props.show, (newVal) => {
 const loadRules = async () => {
   loading.value = true
   try {
-    rules.value = await adminAPI.errorPassthrough.list()
+    rules.value = await settingsQuery.listErrorPassthroughRules()
   } catch (error) {
     appStore.showError(t('admin.errorPassthrough.failedToLoad'))
     console.error('Error loading rules:', error)
@@ -540,15 +544,15 @@ const handleEdit = (rule: ErrorPassthroughRule) => {
   form.name = rule.name
   form.enabled = rule.enabled
   form.priority = rule.priority
-  form.match_mode = rule.match_mode
+  form.match_mode = rule.matchMode
   form.platforms = [...rule.platforms]
-  form.passthrough_code = rule.passthrough_code
-  form.response_code = rule.response_code
-  form.passthrough_body = rule.passthrough_body
-  form.custom_message = rule.custom_message
-  form.skip_monitoring = rule.skip_monitoring
+  form.passthrough_code = rule.passthroughCode
+  form.response_code = rule.responseCode
+  form.passthrough_body = rule.passthroughBody
+  form.custom_message = rule.customMessage
+  form.skip_monitoring = rule.skipMonitoring
   form.description = rule.description
-  errorCodesInput.value = rule.error_codes.join(', ')
+  errorCodesInput.value = rule.errorCodes.join(', ')
   keywordsInput.value = rule.keywords.join('\n')
   showEditModal.value = true
 }
@@ -607,10 +611,10 @@ const handleSubmit = async () => {
     }
 
     if (showEditModal.value && editingRule.value) {
-      await adminAPI.errorPassthrough.update(editingRule.value.id, data)
+      await settingsAction.updateErrorPassthroughRule(editingRule.value.id, data)
       appStore.showSuccess(t('admin.errorPassthrough.ruleUpdated'))
     } else {
-      await adminAPI.errorPassthrough.create(data)
+      await settingsAction.createErrorPassthroughRule(data)
       appStore.showSuccess(t('admin.errorPassthrough.ruleCreated'))
     }
 
@@ -626,7 +630,7 @@ const handleSubmit = async () => {
 
 const toggleEnabled = async (rule: ErrorPassthroughRule) => {
   try {
-    await adminAPI.errorPassthrough.toggleEnabled(rule.id, !rule.enabled)
+    await settingsAction.toggleErrorPassthroughEnabled(rule.id, !rule.enabled)
     rule.enabled = !rule.enabled
   } catch (error: any) {
     appStore.showError(error.response?.data?.detail || t('admin.errorPassthrough.failedToToggle'))
@@ -638,7 +642,7 @@ const confirmDelete = async () => {
   if (!deletingRule.value) return
 
   try {
-    await adminAPI.errorPassthrough.delete(deletingRule.value.id)
+    await settingsAction.deleteErrorPassthroughRule(deletingRule.value.id)
     appStore.showSuccess(t('admin.errorPassthrough.ruleDeleted'))
     showDeleteDialog.value = false
     deletingRule.value = null
