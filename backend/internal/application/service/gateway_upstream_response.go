@@ -647,6 +647,49 @@ type streamingResult struct {
 	clientDisconnect bool // 客户端是否在流式传输过程中断开
 }
 
+func (u *ClaudeUsage) hasObservedTokens() bool {
+	if u == nil {
+		return false
+	}
+	return u.InputTokens > 0 || u.OutputTokens > 0 ||
+		u.CacheCreationInputTokens > 0 || u.CacheReadInputTokens > 0 ||
+		u.CacheCreation5mTokens > 0 || u.CacheCreation1hTokens > 0 ||
+		u.ImageOutputTokens > 0
+}
+
+// partialStreamUsageResult retains usage already observed before an interrupted
+// stream. Failover errors are excluded because a successful retry must be billed
+// exactly once.
+func partialStreamUsageResult(
+	resp *http.Response,
+	streamResult *streamingResult,
+	model, upstreamModel string,
+	startTime time.Time,
+	err error,
+) *ForwardResult {
+	if streamResult == nil || !streamResult.usage.hasObservedTokens() {
+		return nil
+	}
+	var failoverErr *UpstreamFailoverError
+	if errors.As(err, &failoverErr) {
+		return nil
+	}
+	requestID := ""
+	if resp != nil {
+		requestID = resp.Header.Get("x-request-id")
+	}
+	return &ForwardResult{
+		RequestID:        requestID,
+		Usage:            *streamResult.usage,
+		Model:            model,
+		UpstreamModel:    upstreamModel,
+		Stream:           true,
+		Duration:         time.Since(startTime),
+		FirstTokenMs:     streamResult.firstTokenMs,
+		ClientDisconnect: streamResult.clientDisconnect,
+	}
+}
+
 func (s *GatewayService) handleStreamingResponse(ctx context.Context, resp *http.Response, c *gin.Context, account *Account, startTime time.Time, originalModel, mappedModel string, mimicClaudeCode bool) (*streamingResult, error) {
 	// 更新5h窗口状态
 	s.rateLimitService.UpdateSessionWindow(ctx, account, resp.Header)

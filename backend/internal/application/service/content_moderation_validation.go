@@ -21,6 +21,14 @@ func (s *ContentModerationService) validateConfig(ctx context.Context, cfg *Cont
 	if _, err := url.ParseRequestURI(cfg.BaseURL); err != nil {
 		return infraerrors.BadRequest("INVALID_CONTENT_MODERATION_BASE_URL", "OpenAI Base URL 无效")
 	}
+	if cfg.ProxyID != nil {
+		if s.proxyRepo == nil {
+			return infraerrors.BadRequest("INVALID_CONTENT_MODERATION_PROXY", "代理服务不可用")
+		}
+		if _, err := s.proxyRepo.GetByID(ctx, *cfg.ProxyID); err != nil {
+			return infraerrors.BadRequest("INVALID_CONTENT_MODERATION_PROXY", fmt.Sprintf("代理服务器不存在: %d", *cfg.ProxyID))
+		}
+	}
 	if cfg.BlockStatus < 400 || cfg.BlockStatus > 599 {
 		return infraerrors.BadRequest("INVALID_CONTENT_MODERATION_BLOCK_STATUS", "拦截 HTTP 状态码必须在 400-599 之间")
 	}

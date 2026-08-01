@@ -535,6 +535,10 @@ func (s *stubAdminService) DeleteAccount(ctx context.Context, id int64) error {
 	return nil
 }
 
+func (s *stubAdminService) BatchDeleteAccounts(ctx context.Context, ids []int64) (*service.AccountBatchDeleteResult, error) {
+	return &service.AccountBatchDeleteResult{Total: len(ids), Success: len(ids), SuccessIDs: ids}, nil
+}
+
 func (s *stubAdminService) RefreshAccountCredentials(ctx context.Context, id int64) (*service.Account, error) {
 	account := service.Account{ID: id, Name: "account", Status: service.StatusActive}
 	return &account, nil

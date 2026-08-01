@@ -868,6 +868,9 @@ func (s *GatewayService) Forward(ctx context.Context, c *gin.Context, account *A
 					ResponseBody: body,
 				}
 			}
+			if partial := partialStreamUsageResult(resp, streamResult, originalModel, mappedModel, startTime, err); partial != nil {
+				return partial, err
+			}
 			return nil, err
 		}
 		usage = streamResult.usage

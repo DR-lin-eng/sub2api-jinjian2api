@@ -1825,6 +1825,32 @@ func TestOpenAIStreamingResponseFailedBeforeOutputServerOverloadedCodeReturnsFai
 	require.Empty(t, rec.Body.String())
 }
 
+func TestOpenAIStreamRateLimitFailureUses429RetrySemantics(t *testing.T) {
+	payload := []byte(`{"type":"response.failed","response":{"error":{"type":"invalid_request_error","code":"rate_limit_exceeded","message":"Concurrency limit exceeded"}}}`)
+	account := &Account{
+		Platform: PlatformOpenAI,
+		Type:     AccountTypeAPIKey,
+		Credentials: map[string]any{
+			"pool_mode":                    true,
+			"pool_mode_retry_count":        float64(1),
+			"pool_mode_retry_status_codes": []any{float64(http.StatusTooManyRequests)},
+		},
+	}
+
+	require.Equal(t, http.StatusTooManyRequests, openAIStreamFailedEventSemanticStatus(payload, "Concurrency limit exceeded"))
+	require.Equal(t, http.StatusTooManyRequests, openAIStreamFailureStatus(payload, "Concurrency limit exceeded"))
+	require.True(t, openAIStreamFailedEventShouldFailover(payload, "Concurrency limit exceeded"))
+
+	headers := http.Header{"Retry-After": []string{"1"}}
+	err := (&OpenAIGatewayService{}).newOpenAIStreamFailoverError(
+		nil, account, true, "rid-rate-limit", payload, "Concurrency limit exceeded", headers,
+	)
+	require.Equal(t, http.StatusTooManyRequests, err.StatusCode)
+	require.True(t, err.RetryableOnSameAccount)
+	require.Equal(t, "1", err.ResponseHeaders.Get("Retry-After"))
+	require.Equal(t, "rate_limit_error", gjson.GetBytes(err.ResponseBody, "error.type").String())
+}
+
 func TestOpenAIStreamingResponseFailedAfterOutputSanitizesVerboseResponseForClient(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	cfg := &config.Config{

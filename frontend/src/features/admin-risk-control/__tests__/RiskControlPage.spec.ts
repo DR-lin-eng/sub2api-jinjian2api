@@ -12,6 +12,7 @@ const {
   getStatus,
   listLogs,
   getGroups,
+  getProxies,
   showError,
   showSuccess,
 } = vi.hoisted(() => ({
@@ -20,6 +21,7 @@ const {
   getStatus: vi.fn(),
   listLogs: vi.fn(),
   getGroups: vi.fn(),
+  getProxies: vi.fn(),
   showError: vi.fn(),
   showSuccess: vi.fn(),
 }))
@@ -38,6 +40,9 @@ vi.mock('@/api/admin', () => ({
     },
     groups: {
       getAll: getGroups,
+    },
+    proxies: {
+      getAll: getProxies,
     },
   },
 }))
@@ -73,6 +78,7 @@ const baseConfig = (): ContentModerationConfig => ({
   mode: 'pre_block',
   base_url: 'https://api.openai.com',
   model: 'omni-moderation-latest',
+  proxy_id: null,
   api_key_configured: false,
   api_key_masked: '',
   api_key_count: 0,
@@ -191,6 +197,7 @@ describe('admin RiskControlView', () => {
     getStatus.mockReset()
     listLogs.mockReset()
     getGroups.mockReset()
+    getProxies.mockReset()
     showError.mockReset()
     showSuccess.mockReset()
 
@@ -198,6 +205,7 @@ describe('admin RiskControlView', () => {
     getStatus.mockResolvedValue(runtimeStatus())
     listLogs.mockResolvedValue({ items: [], total: 0, page: 1, page_size: 20, pages: 1 })
     getGroups.mockResolvedValue([])
+    getProxies.mockResolvedValue([])
     updateConfig.mockImplementation(async (payload: UpdateContentModerationConfig) => ({
       ...baseConfig(),
       ...payload,
@@ -221,6 +229,7 @@ describe('admin RiskControlView', () => {
           Toggle: true,
           Pagination: true,
           ModelWhitelistSelector: ModelWhitelistSelectorStub,
+          ProxySelector: true,
         },
       },
     })
@@ -254,6 +263,7 @@ describe('admin RiskControlView', () => {
           Toggle: true,
           Pagination: true,
           ModelWhitelistSelector: ModelWhitelistSelectorStub,
+          ProxySelector: true,
         },
       },
     })
@@ -294,6 +304,7 @@ describe('admin RiskControlView', () => {
           Toggle: true,
           Pagination: true,
           ModelWhitelistSelector: ModelWhitelistSelectorStub,
+          ProxySelector: true,
         },
       },
     })
@@ -361,6 +372,7 @@ describe('admin RiskControlView', () => {
           Toggle: true,
           Pagination: true,
           ModelWhitelistSelector: ModelWhitelistSelectorStub,
+          ProxySelector: true,
         },
       },
     })

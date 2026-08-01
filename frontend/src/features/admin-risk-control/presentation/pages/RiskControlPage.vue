@@ -90,6 +90,10 @@
                 <input v-model.trim="configForm.model" type="text" class="input" placeholder="omni-moderation-latest" />
               </div>
               <div>
+                <label class="input-label">{{ t('admin.riskControl.proxy') }}</label>
+                <ProxySelector v-model="configForm.proxy_id" :proxies="proxies" />
+              </div>
+              <div>
                 <label class="input-label">{{ t('admin.riskControl.timeoutMs') }}</label>
                 <input v-model.number="configForm.timeout_ms" type="number" min="500" max="30000" class="input" />
               </div>
@@ -746,6 +750,7 @@ import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
+import ProxySelector from '@/common/widgets/data/ProxySelector.vue'
 import ModelWhitelistSelector from '@/features/admin-accounts/presentation/widgets/ModelWhitelistSelector.vue'
 import RiskControlOverviewCards from '@/features/admin-risk-control/presentation/widgets/RiskControlOverviewCards.vue'
 import RiskControlRuntimeCards from '@/features/admin-risk-control/presentation/widgets/RiskControlRuntimeCards.vue'
@@ -780,7 +785,7 @@ import type {
   ModerationMode,
   UpdateContentModerationConfig,
 } from '@/features/admin-risk-control/data/datasources/adminRiskControlDatasource'
-import type { AdminGroup } from '@/types'
+import type { AdminGroup, Proxy } from '@/types'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { formatDateTime as formatDateTimeValue } from '@/core/utils/format'
@@ -830,6 +835,7 @@ const activeSettingsTab = ref<RiskControlSettingsTab>('basic')
 const groupSearch = ref('')
 const flaggedHashInput = ref('')
 const groups = ref<AdminGroup[]>([])
+const proxies = ref<Proxy[]>([])
 const logs = ref<ContentModerationLog[]>([])
 const status = ref<ContentModerationRuntimeStatus | null>(null)
 const testedApiKeyStatuses = ref<ContentModerationAPIKeyStatus[]>([])
@@ -844,6 +850,7 @@ const configForm = reactive({
   mode: 'pre_block' as ModerationMode,
   base_url: 'https://api.openai.com',
   model: 'omni-moderation-latest',
+  proxy_id: null as number | null,
   api_keys_text: '',
   api_key_configured: false,
   api_key_masked: '',
@@ -1096,6 +1103,7 @@ function applyConfig(config: ContentModerationConfig) {
   configForm.mode = config.mode
   configForm.base_url = config.base_url || 'https://api.openai.com'
   configForm.model = config.model || 'omni-moderation-latest'
+  configForm.proxy_id = config.proxy_id || null
   configForm.api_keys_text = ''
   configForm.api_key_configured = config.api_key_configured
   configForm.api_key_masked = config.api_key_masked || ''
@@ -1136,13 +1144,15 @@ function applyConfig(config: ContentModerationConfig) {
 async function loadAll() {
   loading.value = true
   try {
-    const [config, groupItems, runtimeStatus] = await Promise.all([
+    const [config, groupItems, runtimeStatus, proxyItems] = await Promise.all([
       adminAPI.riskControl.getConfig(),
       adminAPI.groups.getAll(),
       adminAPI.riskControl.getStatus(),
+      adminAPI.proxies.getAll().catch(() => [] as Proxy[]),
     ])
     applyConfig(config)
     groups.value = groupItems
+    proxies.value = proxyItems
     status.value = runtimeStatus
     if (Array.isArray(runtimeStatus.api_key_statuses)) {
       configForm.api_key_statuses = [...runtimeStatus.api_key_statuses]
@@ -1190,6 +1200,7 @@ async function saveConfig() {
       mode: configForm.mode,
       base_url: configForm.base_url,
       model: configForm.model,
+      proxy_id: configForm.proxy_id ?? 0,
       timeout_ms: Number(configForm.timeout_ms) || 3000,
       retry_count: Number(configForm.retry_count) || 0,
       sample_rate: Number(configForm.sample_rate) || 0,
@@ -1380,6 +1391,7 @@ async function testApiKeys(useInputKeys: boolean) {
       base_url: configForm.base_url,
       model: configForm.model,
       timeout_ms: Number(configForm.timeout_ms) || 3000,
+      proxy_id: configForm.proxy_id ?? 0,
       prompt: moderationTestPrompt.value,
       images: moderationTestImages.value,
     })

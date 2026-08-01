@@ -147,6 +147,51 @@ func TestResponsesToChatCompletionsRequest_ParallelToolCalls(t *testing.T) {
 	assert.Contains(t, string(payload), `"parallel_tool_calls":false`)
 }
 
+func TestResponsesInputToChatMessages_MovesToolOutputImagesToUserMessage(t *testing.T) {
+	input := json.RawMessage(`[
+		{"type":"function_call","call_id":"call_1","name":"inspect","arguments":"{}"},
+		{"type":"function_call_output","call_id":"call_1","output":[
+			{"type":"input_text","text":"visible result"},
+			{"type":"input_image","image_url":"data:image/png;base64,AAAA"}
+		]}
+	]`)
+
+	messages, err := responsesInputToChatMessages("", input)
+	require.NoError(t, err)
+	require.Len(t, messages, 3)
+	assert.Equal(t, []string{"assistant", "tool", "user"}, chatMessageRoles(messages))
+	assert.Contains(t, string(messages[1].Content), toolOutputMediaMarker)
+
+	var parts []ChatContentPart
+	require.NoError(t, json.Unmarshal(messages[2].Content, &parts))
+	require.Len(t, parts, 2)
+	assert.Equal(t, "[Tool output media for call call_1]", parts[0].Text)
+	require.NotNil(t, parts[1].ImageURL)
+	assert.Equal(t, "data:image/png;base64,AAAA", parts[1].ImageURL.URL)
+}
+
+func TestResponsesInputToChatMessages_PreservesMediaFreeToolOutput(t *testing.T) {
+	input := json.RawMessage(`[
+		{"type":"function_call","call_id":"call_1","name":"lookup","arguments":"{}"},
+		{"type":"function_call_output","call_id":"call_1","output":{"count":12,"ok":true}}
+	]`)
+
+	messages, err := responsesInputToChatMessages("", input)
+	require.NoError(t, err)
+	require.Len(t, messages, 2)
+	assert.JSONEq(t, `"{\"count\":12,\"ok\":true}"`, string(messages[1].Content))
+}
+
+func TestResponsesInputToChatMessages_DropsOrphanedToolOutputMedia(t *testing.T) {
+	input := json.RawMessage(`[
+		{"type":"function_call_output","call_id":"missing","output":"data:image/png;base64,AAAA"}
+	]`)
+
+	messages, err := responsesInputToChatMessages("", input)
+	require.NoError(t, err)
+	assert.Empty(t, messages)
+}
+
 func chatMessageRoles(messages []ChatMessage) []string {
 	roles := make([]string, 0, len(messages))
 	for _, message := range messages {

@@ -46,6 +46,7 @@ import { adminAPI } from '@/api/admin'
 import { useTableLoader } from '@/common/composables/useTableLoader'
 import { useSwipeSelect, type SwipeSelectVirtualContext } from '@/common/composables/useSwipeSelect'
 import { useTableSelection } from '@/common/composables/useTableSelection'
+import { fetchAllAccountIds } from '@/features/admin-accounts/presentation/composables/accountSelection'
 import { useStepUp, isStepUpBlocked, isStepUpCancelled, stepUpBlockReason } from '@/common/composables/useStepUp'
 import TotpStepUpDialog from '@/features/auth/presentation/widgets/TotpStepUpDialog.vue'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
@@ -364,6 +365,7 @@ const {
 registerQuotaHydrationWatch(accounts)
 
 const {
+  selectedSet,
   selectedIds: selIds,
   allVisibleSelected,
   isSelected,
@@ -371,15 +373,35 @@ const {
   select,
   deselect,
   toggle: toggleSel,
-  clear: clearSelection,
+  clear: clearSelectedIds,
   removeMany: removeSelectedAccounts,
   toggleVisible,
-  selectVisible: selectPage,
+  selectVisible: selectCurrentPage,
   batchUpdate
 } = useTableSelection<Account>({
   rows: accounts,
   getId: (account) => account.id
 })
+
+const selectingAllResults = ref(false)
+const selectedAllResultIDs = ref<Set<number> | null>(null)
+const selectionRequestVersion = ref(0)
+const allResultsSelected = computed(() => {
+  const snapshot = selectedAllResultIDs.value
+  if (!snapshot || snapshot.size === 0 || snapshot.size !== selectedSet.value.size) return false
+  return Array.from(snapshot).every(id => selectedSet.value.has(id))
+})
+
+const clearSelection = () => {
+  selectionRequestVersion.value++
+  selectingAllResults.value = false
+  selectedAllResultIDs.value = null
+  clearSelectedIds()
+}
+
+const selectPage = () => {
+  selectCurrentPage()
+}
 
 const swipeVirtualContext: SwipeSelectVirtualContext = {
   getVirtualizer: () => dataTableRef.value?.virtualizer ?? null,
@@ -441,6 +463,7 @@ const {
 )
 
 const debouncedReload = () => {
+  clearSelection()
   syncAccountListDerivedParams()
   hasPendingListSync.value = false
   resetAutoRefreshCache()
@@ -809,15 +832,25 @@ const toggleSelectAllVisible = (event: Event) => {
   toggleVisible(target.checked)
 }
 const handleBulkDelete = async () => {
-  if (!confirm(t('common.confirm'))) return
   const accountIDs = [...selIds.value]
-  const results = await Promise.allSettled(accountIDs.map(id => adminAPI.accounts.delete(id)))
-  const deletedIDs = accountIDs.filter((_, index) => results[index].status === 'fulfilled')
-  deletedIDs.forEach(id => invalidateUpstreamQuotaState(id))
-  removeSelectedAccounts(deletedIDs)
-  if (deletedIDs.length > 0) reload()
-  const failed = results.find((result): result is PromiseRejectedResult => result.status === 'rejected')
-  if (failed) console.error('Failed to bulk delete some accounts:', failed.reason)
+  if (!confirm(t('admin.accounts.bulkDeleteConfirm', { count: accountIDs.length }))) return
+  try {
+    const result = await adminAPI.accounts.batchDelete(accountIDs)
+    const successIDs = result.success_ids ?? []
+    successIDs.forEach(id => invalidateUpstreamQuotaState(id))
+    if (result.failed > 0) {
+      appStore.showError(t('admin.accounts.bulkDeletePartial', { success: result.success, failed: result.failed }))
+      selectedAllResultIDs.value = null
+      setSelectedIds(result.failed_ids?.length ? result.failed_ids : accountIDs)
+    } else {
+      appStore.showSuccess(t('admin.accounts.bulkDeleteSuccess', { count: result.success }))
+      clearSelection()
+    }
+    await reload()
+  } catch (error) {
+    console.error('Failed to bulk delete accounts:', error)
+    appStore.showError(t('admin.accounts.bulkDeleteFailed'))
+  }
 }
 const handleBulkResetStatus = async () => {
   if (!confirm(t('common.confirm'))) return
@@ -965,6 +998,35 @@ const buildBulkEditFilterSnapshot = () => {
     privacy_mode: typeof rawParams.privacy_mode === 'string' ? rawParams.privacy_mode : '',
     sort_by: typeof rawParams.sort_by === 'string' ? rawParams.sort_by : '',
     sort_order: sortOrder
+  }
+}
+
+const handleSelectAllResults = async () => {
+  if (selectingAllResults.value || pagination.total === 0) return
+
+  const requestVersion = ++selectionRequestVersion.value
+  const filters = buildBulkEditFilterSnapshot()
+  selectingAllResults.value = true
+  try {
+    const ids = await fetchAllAccountIds(
+      (page, pageSize, requestFilters) => adminAPI.accounts.list(
+        page,
+        pageSize,
+        requestFilters as Parameters<typeof adminAPI.accounts.list>[2],
+      ),
+      filters,
+    )
+    if (requestVersion !== selectionRequestVersion.value) return
+    setSelectedIds(ids)
+    selectedAllResultIDs.value = new Set(ids)
+  } catch (error) {
+    if (requestVersion !== selectionRequestVersion.value) return
+    console.error('Failed to select all account results:', error)
+    appStore.showError(t('admin.accounts.bulkActions.selectAllFailed'))
+  } finally {
+    if (requestVersion === selectionRequestVersion.value) {
+      selectingAllResults.value = false
+    }
   }
 }
 
@@ -1364,6 +1426,8 @@ const accountTableViewContext = {
   hasPendingListSync,
   syncPendingListChanges,
   selIds,
+  selectingAllResults,
+  allResultsSelected,
   bulkQueryingUpstreamQuota,
   handleBulkDelete,
   handleBulkResetStatus,
@@ -1374,6 +1438,7 @@ const accountTableViewContext = {
   openBulkEditFiltered,
   clearSelection,
   selectPage,
+  handleSelectAllResults,
   handleBulkToggleSchedulable,
   accountTableRef,
   dataTableRef,

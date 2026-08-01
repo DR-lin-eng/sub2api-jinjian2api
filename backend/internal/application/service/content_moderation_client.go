@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/Wei-Shaw/sub2api/internal/shared/httpclient"
 )
 
 func (s *ContentModerationService) callModeration(ctx context.Context, cfg *ContentModerationConfig, input any, trackKeyLoad ...bool) (*moderationAPIResult, error) {
@@ -89,9 +91,9 @@ func (s *ContentModerationService) callModerationOnceWithInput(ctx context.Conte
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 	req.Header.Set("Content-Type", "application/json")
 
-	client := s.httpClient
-	if client == nil {
-		client = http.DefaultClient
+	client, err := s.moderationHTTPClient(ctx, cfg)
+	if err != nil {
+		return nil, err
 	}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -114,4 +116,51 @@ func (s *ContentModerationService) callModerationOnceWithInput(ctx context.Conte
 		return nil, errors.New("moderation api returned empty results")
 	}
 	return &out.Results[0], nil
+}
+
+const contentModerationProxyURLCacheTTL = time.Minute
+
+type moderationProxyURLCacheEntry struct {
+	proxyID   int64
+	url       string
+	expiresAt time.Time
+}
+
+func (s *ContentModerationService) moderationHTTPClient(ctx context.Context, cfg *ContentModerationConfig) (*http.Client, error) {
+	if cfg == nil || cfg.ProxyID == nil {
+		if s.httpClient == nil {
+			return http.DefaultClient, nil
+		}
+		return s.httpClient, nil
+	}
+	proxyURL, err := s.resolveModerationProxyURL(ctx, *cfg.ProxyID)
+	if err != nil {
+		return nil, err
+	}
+	client, err := httpclient.GetClient(httpclient.Options{ProxyURL: proxyURL})
+	if err != nil {
+		return nil, fmt.Errorf("build moderation proxy client: %w", err)
+	}
+	return client, nil
+}
+
+func (s *ContentModerationService) resolveModerationProxyURL(ctx context.Context, proxyID int64) (string, error) {
+	now := time.Now()
+	if cached := s.moderationProxyCache.Load(); cached != nil && cached.proxyID == proxyID && now.Before(cached.expiresAt) {
+		return cached.url, nil
+	}
+	if s.proxyRepo == nil {
+		return "", errors.New("moderation proxy repository unavailable")
+	}
+	proxy, err := s.proxyRepo.GetByID(ctx, proxyID)
+	if err != nil {
+		return "", fmt.Errorf("resolve moderation proxy %d: %w", proxyID, err)
+	}
+	proxyURL := proxy.URL()
+	s.moderationProxyCache.Store(&moderationProxyURLCacheEntry{
+		proxyID:   proxyID,
+		url:       proxyURL,
+		expiresAt: now.Add(contentModerationProxyURLCacheTTL),
+	})
+	return proxyURL, nil
 }

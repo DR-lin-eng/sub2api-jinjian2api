@@ -14,6 +14,7 @@ export interface ContentModerationConfig {
   mode: ModerationMode
   base_url: string
   model: string
+  proxy_id: number | null
   api_key_configured: boolean
   api_key_masked: string
   api_key_count: number
@@ -66,6 +67,7 @@ export interface TestContentModerationAPIKeysPayload {
   base_url?: string
   model?: string
   timeout_ms?: number
+  proxy_id?: number
   prompt?: string
   images?: string[]
 }
@@ -90,6 +92,7 @@ export interface UpdateContentModerationConfig {
   mode?: ModerationMode
   base_url?: string
   model?: string
+  proxy_id?: number
   api_key?: string
   api_keys?: string[]
   api_keys_mode?: 'append' | 'replace'

@@ -40,14 +40,14 @@ func (h *GatewayHandler) submitUsageRecordTask(parent context.Context, task serv
 	}
 	task = wrapUsageRecordTaskContext(parent, task)
 	if h.usageRecordWorkerPool != nil {
-		if mode := h.usageRecordWorkerPool.Submit(task); mode != service.UsageRecordSubmitModeDropped {
+		if mode := h.usageRecordWorkerPool.Submit(task); !mode.Dropped() {
 			return
 		}
 		logger.L().With(
 			zap.String("component", "handler.gateway.usage"),
 		).Warn("gateway.usage_record_task_stopped_sync_fallback")
 	}
-	// 回退路径：worker 池未注入时同步执行，避免退回到无界 goroutine 模式。
+	// 计费任务在池拒绝或停止时同步执行；本项目不允许 drop/sample 造成漏账。
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	defer func() {

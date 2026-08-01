@@ -170,6 +170,7 @@ func (s *ContentModerationService) configView(cfg *ContentModerationConfig) *Con
 		Mode:                           cfg.Mode,
 		BaseURL:                        cfg.BaseURL,
 		Model:                          cfg.Model,
+		ProxyID:                        cloneInt64Ptr(cfg.ProxyID),
 		APIKeyConfigured:               len(keys) > 0,
 		APIKeyMasked:                   apiKeyMasked,
 		APIKeyCount:                    len(keys),

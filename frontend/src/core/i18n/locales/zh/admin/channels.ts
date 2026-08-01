@@ -214,6 +214,7 @@ export default {
       modeOffDesc: '不执行内容审计，也不会写入审核记录。',
       baseUrl: 'OpenAI Base URL',
       model: '模型名',
+      proxy: '审核请求代理',
       apiKey: 'OpenAI API Key',
       apiKeys: 'OpenAI API Keys',
       apiKeyCount: '{count} 个 Key',

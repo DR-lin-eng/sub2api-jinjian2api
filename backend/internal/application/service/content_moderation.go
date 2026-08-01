@@ -130,6 +130,7 @@ type ContentModerationConfig struct {
 	Mode                 string                       `json:"mode"`
 	BaseURL              string                       `json:"base_url"`
 	Model                string                       `json:"model"`
+	ProxyID              *int64                       `json:"proxy_id,omitempty"`
 	APIKey               string                       `json:"api_key,omitempty"`
 	APIKeys              []string                     `json:"api_keys,omitempty"`
 	TimeoutMS            int                          `json:"timeout_ms"`
@@ -164,6 +165,7 @@ type ContentModerationConfigView struct {
 	Mode                           string                          `json:"mode"`
 	BaseURL                        string                          `json:"base_url"`
 	Model                          string                          `json:"model"`
+	ProxyID                        *int64                          `json:"proxy_id"`
 	APIKeyConfigured               bool                            `json:"api_key_configured"`
 	APIKeyMasked                   string                          `json:"api_key_masked"`
 	APIKeyCount                    int                             `json:"api_key_count"`
@@ -228,8 +230,10 @@ type TestContentModerationAPIKeysInput struct {
 	BaseURL   string   `json:"base_url"`
 	Model     string   `json:"model"`
 	TimeoutMS int      `json:"timeout_ms"`
-	Prompt    string   `json:"prompt"`
-	Images    []string `json:"images"`
+	// ProxyID nil keeps the saved proxy, non-positive forces a direct test, and positive selects a proxy.
+	ProxyID *int64   `json:"proxy_id"`
+	Prompt  string   `json:"prompt"`
+	Images  []string `json:"images"`
 }
 
 type TestContentModerationAPIKeysResult struct {
@@ -248,10 +252,12 @@ type ContentModerationTestAuditResult struct {
 }
 
 type UpdateContentModerationConfigInput struct {
-	Enabled                        *bool                         `json:"enabled"`
-	Mode                           *string                       `json:"mode"`
-	BaseURL                        *string                       `json:"base_url"`
-	Model                          *string                       `json:"model"`
+	Enabled *bool   `json:"enabled"`
+	Mode    *string `json:"mode"`
+	BaseURL *string `json:"base_url"`
+	Model   *string `json:"model"`
+	// ProxyID nil leaves the setting unchanged, non-positive clears it, and positive selects a proxy.
+	ProxyID                        *int64                        `json:"proxy_id"`
 	APIKey                         *string                       `json:"api_key"`
 	APIKeys                        *[]string                     `json:"api_keys"`
 	APIKeysMode                    string                        `json:"api_keys_mode"`
@@ -483,9 +489,11 @@ type ContentModerationService struct {
 	hashCache                ContentModerationHashCache
 	groupRepo                GroupRepository
 	userRepo                 UserRepository
+	proxyRepo                ProxyRepository
 	authCacheInvalidator     APIKeyAuthCacheInvalidator
 	emailService             *EmailService
 	httpClient               *http.Client
+	moderationProxyCache     atomic.Pointer[moderationProxyURLCacheEntry]
 	asyncQueue               chan *contentModerationTask
 	lifecycleCtx             context.Context
 	lifecycleCancel          context.CancelFunc

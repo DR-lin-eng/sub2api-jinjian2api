@@ -41,11 +41,16 @@ type UsageRecordTask func(ctx context.Context)
 type UsageRecordSubmitMode string
 
 const (
-	UsageRecordSubmitModeEnqueued     UsageRecordSubmitMode = "enqueued"
-	UsageRecordSubmitModeDropped      UsageRecordSubmitMode = "dropped"
-	UsageRecordSubmitModeSync         UsageRecordSubmitMode = "sync_fallback"
-	UsageRecordSubmitModeBackpressure UsageRecordSubmitMode = "backpressured"
+	UsageRecordSubmitModeEnqueued       UsageRecordSubmitMode = "enqueued"
+	UsageRecordSubmitModeDropped        UsageRecordSubmitMode = "dropped"
+	UsageRecordSubmitModeDroppedStopped UsageRecordSubmitMode = "dropped_stopped"
+	UsageRecordSubmitModeSync           UsageRecordSubmitMode = "sync_fallback"
+	UsageRecordSubmitModeBackpressure   UsageRecordSubmitMode = "backpressured"
 )
+
+func (m UsageRecordSubmitMode) Dropped() bool {
+	return m == UsageRecordSubmitModeDropped || m == UsageRecordSubmitModeDroppedStopped
+}
 
 // UsageRecordWorkerPoolOptions 使用量记录池配置。
 type UsageRecordWorkerPoolOptions struct {
@@ -153,7 +158,7 @@ func (p *UsageRecordWorkerPool) Submit(task UsageRecordTask) UsageRecordSubmitMo
 	if p.pool == nil || p.pool.Stopped() {
 		p.droppedPoolStopped.Add(1)
 		p.logDrop("stopped")
-		return UsageRecordSubmitModeDropped
+		return UsageRecordSubmitModeDroppedStopped
 	}
 
 	_, ok := p.pool.TrySubmit(func() {
@@ -166,7 +171,7 @@ func (p *UsageRecordWorkerPool) Submit(task UsageRecordTask) UsageRecordSubmitMo
 	if p.pool.Stopped() {
 		p.droppedPoolStopped.Add(1)
 		p.logDrop("stopped")
-		return UsageRecordSubmitModeDropped
+		return UsageRecordSubmitModeDroppedStopped
 	}
 
 	switch p.overflowPolicy {
@@ -174,7 +179,7 @@ func (p *UsageRecordWorkerPool) Submit(task UsageRecordTask) UsageRecordSubmitMo
 		if err := p.pool.Go(func() { p.execute(task) }); err != nil {
 			p.droppedPoolStopped.Add(1)
 			p.logDrop("stopped")
-			return UsageRecordSubmitModeDropped
+			return UsageRecordSubmitModeDroppedStopped
 		}
 		p.backpressured.Add(1)
 		return UsageRecordSubmitModeBackpressure

@@ -63,6 +63,8 @@ export interface AccountTableViewContext {
   hasPendingListSync: Ref<boolean>
   syncPendingListChanges: () => Promise<void>
   selIds: ComputedRef<number[]>
+  selectingAllResults: Ref<boolean>
+  allResultsSelected: ComputedRef<boolean>
   bulkQueryingUpstreamQuota: Ref<boolean>
   handleBulkDelete: () => Promise<void>
   handleBulkResetStatus: () => Promise<void>
@@ -73,6 +75,7 @@ export interface AccountTableViewContext {
   openBulkEditFiltered: () => Promise<void>
   clearSelection: () => void
   selectPage: () => void
+  handleSelectAllResults: () => Promise<void>
   handleBulkToggleSchedulable: (schedulable: boolean) => Promise<void>
   accountTableRef: Ref<HTMLElement | null>
   dataTableRef: Ref<InstanceType<typeof DataTable> | null>

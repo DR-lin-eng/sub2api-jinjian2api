@@ -155,6 +155,8 @@ func TestClaudeCodeValidator_SecurityMonitorWithoutBillingBlock(t *testing.T) {
 			"metadata": map[string]any{"user_id": claudeCodeMetadataUserIDJSON},
 		}
 	}
+	sessionContext := "\n\n## Session Context\n\n- **User identity**: testuser\n" +
+		"- **Working directory**: /home/testuser/project\n- **Platform**: linux"
 
 	tests := []struct {
 		name       string
@@ -250,7 +252,7 @@ func TestClaudeCodeValidator_SecurityMonitorWithoutBillingBlock(t *testing.T) {
 				strings.Repeat("This is arbitrary altered classifier content. ", 300)),
 		},
 		{
-			name:    "multiple system entries without billing block",
+			name:    "classifier with trailing session context entry",
 			headers: validHeaders,
 			body: func() map[string]any {
 				body := validBody(string(monitorPrompt))
@@ -258,7 +260,44 @@ func TestClaudeCodeValidator_SecurityMonitorWithoutBillingBlock(t *testing.T) {
 				require.True(t, ok)
 				body["system"] = append(system, map[string]any{
 					"type": "text",
-					"text": "Additional unrelated system content.",
+					"text": sessionContext,
+				})
+				return body
+			}(),
+			wantAccept: true,
+		},
+		{
+			name:    "classifier with leading session context entry",
+			headers: validHeaders,
+			body: func() map[string]any {
+				body := validBody(string(monitorPrompt))
+				system, ok := body["system"].([]any)
+				require.True(t, ok)
+				body["system"] = append([]any{map[string]any{
+					"type": "text",
+					"text": sessionContext,
+				}}, system...)
+				return body
+			}(),
+			wantAccept: true,
+		},
+		{
+			name:       "session context entry alone",
+			headers:    validHeaders,
+			body:       validBody(sessionContext),
+			wantAccept: false,
+		},
+		{
+			name:    "tampered classifier with session context entry",
+			headers: validHeaders,
+			body: func() map[string]any {
+				body := validBody(strings.ReplaceAll(
+					string(monitorPrompt), "## HARD BLOCK", "## ALTERED BLOCK"))
+				system, ok := body["system"].([]any)
+				require.True(t, ok)
+				body["system"] = append(system, map[string]any{
+					"type": "text",
+					"text": sessionContext,
 				})
 				return body
 			}(),

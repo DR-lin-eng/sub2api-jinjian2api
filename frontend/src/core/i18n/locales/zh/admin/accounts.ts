@@ -504,7 +504,11 @@ export default {
       bulkSchedulableResultUnknown: '批量调度结果不完整，请稍后重试或刷新列表',
       bulkActions: {
         selected: '已选择 {count} 个账号',
+        selectedAll: '已选择全部 {count} 个匹配账号',
         selectCurrentPage: '本页全选',
+        selectAllResults: '选择全部 {count} 个结果',
+        selectingAll: '正在选择全部...',
+        selectAllFailed: '选择全部匹配账号失败',
         clear: '清除选择',
         edit: '批量编辑账号',
         delete: '批量删除',

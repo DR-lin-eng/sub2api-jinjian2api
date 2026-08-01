@@ -45,6 +45,7 @@ func cloneContentModerationConfig(cfg *ContentModerationConfig) *ContentModerati
 		return nil
 	}
 	clone := *cfg
+	clone.ProxyID = cloneInt64Ptr(cfg.ProxyID)
 	clone.APIKeys = append([]string(nil), cfg.APIKeys...)
 	clone.GroupIDs = append([]int64(nil), cfg.GroupIDs...)
 	clone.BlockedKeywords = append([]string(nil), cfg.BlockedKeywords...)
@@ -74,6 +75,9 @@ func (cfg *ContentModerationConfig) normalize() {
 		cfg.Model = defaultContentModerationModel
 	}
 	cfg.Model = strings.TrimSpace(cfg.Model)
+	if cfg.ProxyID != nil && *cfg.ProxyID <= 0 {
+		cfg.ProxyID = nil
+	}
 	if cfg.TimeoutMS <= 0 {
 		cfg.TimeoutMS = defaultContentModerationTimeoutMS
 	}

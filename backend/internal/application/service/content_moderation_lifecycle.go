@@ -46,6 +46,21 @@ func NewContentModerationService(
 	return svc
 }
 
+func ProvideContentModerationService(
+	settingRepo SettingRepository,
+	repo ContentModerationRepository,
+	hashCache ContentModerationHashCache,
+	groupRepo GroupRepository,
+	userRepo UserRepository,
+	proxyRepo ProxyRepository,
+	authCacheInvalidator APIKeyAuthCacheInvalidator,
+	emailService *EmailService,
+) *ContentModerationService {
+	svc := NewContentModerationService(settingRepo, repo, hashCache, groupRepo, userRepo, authCacheInvalidator, emailService)
+	svc.proxyRepo = proxyRepo
+	return svc
+}
+
 func (s *ContentModerationService) resizeWorkers(count int) {
 	if s == nil || s.stopped.Load() || s.asyncQueue == nil {
 		return

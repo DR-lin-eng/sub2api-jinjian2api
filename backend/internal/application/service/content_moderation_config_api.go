@@ -33,6 +33,14 @@ func (s *ContentModerationService) UpdateConfig(ctx context.Context, input Updat
 	if input.Model != nil {
 		cfg.Model = strings.TrimSpace(*input.Model)
 	}
+	if input.ProxyID != nil {
+		if *input.ProxyID > 0 {
+			id := *input.ProxyID
+			cfg.ProxyID = &id
+		} else {
+			cfg.ProxyID = nil
+		}
+	}
 	if input.TimeoutMS != nil {
 		cfg.TimeoutMS = *input.TimeoutMS
 	}
@@ -133,6 +141,7 @@ func (s *ContentModerationService) UpdateConfig(ctx context.Context, input Updat
 		return nil, fmt.Errorf("save content moderation config: %w", err)
 	}
 	s.replaceRuntimeConfig(cfg, raw)
+	s.moderationProxyCache.Store(nil)
 	s.pruneAPIKeyHealth(cfg.apiKeys())
 	s.resizeWorkers(cfg.WorkerCount)
 	return s.configView(cfg), nil
@@ -157,6 +166,14 @@ func (s *ContentModerationService) TestAPIKeys(ctx context.Context, input TestCo
 	}
 	if input.TimeoutMS > 0 {
 		cfg.TimeoutMS = input.TimeoutMS
+	}
+	if input.ProxyID != nil {
+		if *input.ProxyID > 0 {
+			id := *input.ProxyID
+			cfg.ProxyID = &id
+		} else {
+			cfg.ProxyID = nil
+		}
 	}
 	cfg.normalize()
 	testInput, imageCount, err := buildModerationTestInput(input.Prompt, input.Images)

@@ -434,7 +434,11 @@ export default {
       bulkSchedulableResultUnknown: 'Bulk scheduling result incomplete. Please retry or refresh.',
       bulkActions: {
         selected: '{count} account(s) selected',
+        selectedAll: 'All {count} matching account(s) selected',
         selectCurrentPage: 'Select this page',
+        selectAllResults: 'Select all {count} results',
+        selectingAll: 'Selecting all...',
+        selectAllFailed: 'Failed to select all matching accounts',
         clear: 'Clear selection',
         edit: 'Bulk Edit',
         delete: 'Bulk Delete',

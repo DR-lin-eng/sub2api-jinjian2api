@@ -111,6 +111,39 @@ describe('PlazaModelPricingTable', () => {
     expect(names).toEqual(['model-expensive', 'model-cheap', 'model-no-official'])
   })
 
+  it('官方输出价相同时按模型名降序', () => {
+    const wrapper = mountTable([
+      tokenModel({ name: 'gpt-5.5' }),
+      tokenModel({ name: 'gpt-5.6-sol' })
+    ], 1)
+    const names = wrapper.findAll('tbody tr').map((tr) => tr.find('td').text())
+    expect(names).toEqual(['gpt-5.6-sol', 'gpt-5.5'])
+  })
+
+  it('非 token 计费模型排在 token 模型之后', () => {
+    const image = tokenModel({
+      name: 'gpt-image-2',
+      pricing: {
+        billing_mode: 'image',
+        input_price: null,
+        output_price: null,
+        cache_write_price: null,
+        cache_read_price: null,
+        image_input_price: null,
+        image_output_price: null,
+        per_request_price: 0.002,
+        intervals: []
+      }
+    })
+    const wrapper = mountTable([
+      tokenModel({ name: 'gpt-5.6-terra' }),
+      image,
+      tokenModel({ name: 'gpt-5.6-luna' })
+    ], 1)
+    const names = wrapper.findAll('tbody tr').map((tr) => tr.find('td').text())
+    expect(names[2]).toContain('gpt-image-2')
+  })
+
   it('两级表头:实付区与官方区各拆输入/输出/缓存列', () => {
     const wrapper = mountTable([tokenModel()], 1)
     const text = wrapper.text()

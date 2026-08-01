@@ -173,7 +173,10 @@ func Relay(
 		return writeUpstream(msgType, payload)
 	}
 	writeClient := func(msgType coderws.MessageType, payload []byte) error {
-		writeCtx, cancel := context.WithTimeout(relayCtx, writeTimeout)
+		// coder/websocket hard-closes the connection when a write context is
+		// canceled. Keep downstream writes independent from relay cancellation so
+		// the explicit close path can still deliver its retry close frame.
+		writeCtx, cancel := context.WithTimeout(context.Background(), writeTimeout)
 		defer cancel()
 		return clientConn.WriteFrame(writeCtx, msgType, payload)
 	}

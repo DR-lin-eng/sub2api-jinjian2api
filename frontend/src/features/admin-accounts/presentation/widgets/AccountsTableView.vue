@@ -176,6 +176,9 @@
       <template #table>
         <AccountBulkActionsBar
           :selected-ids="selIds"
+          :total-results="pagination.total"
+          :selecting-all="selectingAllResults"
+          :all-results-selected="allResultsSelected"
           :querying-upstream-quota="bulkQueryingUpstreamQuota"
           @delete="handleBulkDelete"
           @reset-status="handleBulkResetStatus"
@@ -186,6 +189,7 @@
           @edit-filtered="openBulkEditFiltered"
           @clear="clearSelection"
           @select-page="selectPage"
+          @select-all-results="handleSelectAllResults"
           @toggle-schedulable="handleBulkToggleSchedulable"
         />
         <div ref="accountTableRef" class="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -520,6 +524,8 @@ const {
   hasPendingListSync,
   syncPendingListChanges,
   selIds,
+  selectingAllResults,
+  allResultsSelected,
   bulkQueryingUpstreamQuota,
   handleBulkDelete,
   handleBulkResetStatus,
@@ -530,6 +536,7 @@ const {
   openBulkEditFiltered,
   clearSelection,
   selectPage,
+  handleSelectAllResults,
   handleBulkToggleSchedulable,
   accountTableRef,
   dataTableRef,

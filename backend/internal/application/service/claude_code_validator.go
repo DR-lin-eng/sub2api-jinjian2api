@@ -205,43 +205,47 @@ func (v *ClaudeCodeValidator) hasClaudeCodeSystemPrompt(body map[string]any) boo
 	return false
 }
 
+var claudeCodeSecurityMonitorMarkers = []string{
+	"## Threat Model",
+	"- `<transcript>`:",
+	"## HARD BLOCK",
+	"## SOFT BLOCK",
+	"## Classification Process",
+	"## Output Format",
+	"<block>yes</block>",
+	"<block>no</block>",
+}
+
+// isClaudeCodeSecurityMonitorPrompt scans every system entry because current
+// Claude Code clients may append a separate session-context block.
 func isClaudeCodeSecurityMonitorPrompt(systemEntries []any) bool {
-	if len(systemEntries) != 1 {
-		return false
+	for _, raw := range systemEntries {
+		entry, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		entryType, ok := entry["type"].(string)
+		if !ok || entryType != "text" {
+			continue
+		}
+		text, ok := entry["text"].(string)
+		if !ok || len(text) < claudeCodeSecurityMonitorPromptMinLen ||
+			!strings.HasPrefix(text, claudeCodeSecurityMonitorPromptPrefix) {
+			continue
+		}
+		if hasAllClaudeCodeSecurityMonitorMarkers(text) {
+			return true
+		}
 	}
+	return false
+}
 
-	entry, ok := systemEntries[0].(map[string]any)
-	if !ok {
-		return false
-	}
-
-	entryType, ok := entry["type"].(string)
-	if !ok || entryType != "text" {
-		return false
-	}
-
-	text, ok := entry["text"].(string)
-	if !ok || len(text) < claudeCodeSecurityMonitorPromptMinLen ||
-		!strings.HasPrefix(text, claudeCodeSecurityMonitorPromptPrefix) {
-		return false
-	}
-
-	markers := []string{
-		"## Threat Model",
-		"- `<transcript>`:",
-		"## HARD BLOCK",
-		"## SOFT BLOCK",
-		"## Classification Process",
-		"## Output Format",
-		"<block>yes</block>",
-		"<block>no</block>",
-	}
-	for _, marker := range markers {
+func hasAllClaudeCodeSecurityMonitorMarkers(text string) bool {
+	for _, marker := range claudeCodeSecurityMonitorMarkers {
 		if !strings.Contains(text, marker) {
 			return false
 		}
 	}
-
 	return true
 }
 

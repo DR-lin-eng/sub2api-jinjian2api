@@ -1620,6 +1620,27 @@ func (h *AccountHandler) RevertProxyFallback(c *gin.Context) {
 	response.Success(c, gin.H{"message": "reverted"})
 }
 
+// BatchDelete handles deleting multiple accounts with bounded service-level concurrency.
+func (h *AccountHandler) BatchDelete(c *gin.Context) {
+	var req struct {
+		AccountIDs []int64 `json:"account_ids"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+	if len(normalizeInt64IDList(req.AccountIDs)) == 0 {
+		response.BadRequest(c, "account_ids is required")
+		return
+	}
+	result, err := h.adminService.BatchDeleteAccounts(c.Request.Context(), req.AccountIDs)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, result)
+}
+
 // BatchClearError handles batch clearing account errors
 // POST /api/v1/admin/accounts/batch-clear-error
 func (h *AccountHandler) BatchClearError(c *gin.Context) {

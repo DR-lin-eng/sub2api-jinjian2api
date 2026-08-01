@@ -91,6 +91,7 @@ type AdminService interface {
 	// 用于刷新流程持久化 account_uuid / org_uuid 等少量键，避免被全量快照覆盖。
 	UpdateAccountExtra(ctx context.Context, id int64, updates map[string]any) error
 	DeleteAccount(ctx context.Context, id int64) error
+	BatchDeleteAccounts(ctx context.Context, ids []int64) (*AccountBatchDeleteResult, error)
 	RefreshAccountCredentials(ctx context.Context, id int64) (*Account, error)
 	ClearAccountError(ctx context.Context, id int64) (*Account, error)
 	SetAccountError(ctx context.Context, id int64, errorMsg string) error
