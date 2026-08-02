@@ -42,6 +42,12 @@ class AuthActionRepositoryImpl implements AuthActionRepository {
     return dto.toEntity()
   }
 
+  loginWithPasskey = async () : Promise<AuthResult>  => {
+    const dto = await this.ds.loginWithPasskey()
+    persistTokens(dto)
+    return dto.toEntity()
+  }
+
   register = async (req: RegisterRequest | EncryptedRegisterRequest) : Promise<AuthResult>  => {
     const dto = await this.ds.register(req)
     persistTokens(dto)

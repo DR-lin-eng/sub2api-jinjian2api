@@ -429,7 +429,7 @@ async function loadProviders() {
   providersLoading.value = true;
   try {
     const res = await adminOrdersQueryStore.fetchProviders();
-    providers.value = (res || []).map((p) => ({
+    providers.value = (res || []).map((p: typeof providers.value[number]) => ({
       ...p,
       supportedTypes: Array.isArray(p.supportedTypes) ? p.supportedTypes : [],
     }));

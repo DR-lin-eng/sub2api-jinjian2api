@@ -133,7 +133,7 @@ const loadUserValues = async () => {
   try {
     const values = await $adminUsers.getUserAttributeValues(props.userId)
     const valuesMap: UserAttributeValuesMap = {}
-    values.forEach(v => {
+    values.forEach((v: { attributeId: number; value: string }) => {
       valuesMap[v.attributeId] = v.value
     })
     localValues.value = { ...valuesMap }

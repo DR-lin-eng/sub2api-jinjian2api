@@ -78,3 +78,6 @@ export const authRoutes: RouteRecordRaw[] = [
     meta: { requiresAuth: false, title: 'Reset Password' },
   },
 ]
+
+// Router guard composition export.
+export { useAuthStore } from '@/features/auth/presentation/stores/authStore'

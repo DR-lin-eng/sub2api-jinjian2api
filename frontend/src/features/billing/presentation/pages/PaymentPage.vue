@@ -287,6 +287,7 @@ import SubscriptionPlanCard from '@/features/subscriptions/presentation/widgets/
 import PaymentStatusPanel from '@/features/billing/presentation/widgets/PaymentStatusPanel.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { DEFAULT_PAYMENT_CURRENCY, formatPaymentAmount, normalizePaymentCurrency } from '@/features/billing/presentation/utils/currencyFormatter'
+import { planValiditySuffix as validitySuffixOf } from '@/features/billing/presentation/utils/validity'
 import type { PaymentMethodOption } from '@/features/billing/presentation/widgets/PaymentMethodSelector.vue'
 import { buildPaymentErrorToastMessage, describePaymentScenarioError } from '@/features/billing/presentation/utils/paymentUxSignals'
 import { hasWechatResumeQuery, parseWechatResumeRoute, stripWechatResumeQuery } from '@/features/billing/presentation/utils/paymentWechatResumeResolver'
@@ -720,13 +721,7 @@ const renewalPlans = computed(() => {
   return checkout.value.plans.filter(p => p.groupId === renewGroupId.value)
 })
 
-const planValiditySuffix = computed(() => {
-  if (!selectedPlan.value) return ''
-  const u = selectedPlan.value.validityUnit || 'day'
-  if (u === 'month') return t('payment.perMonth')
-  if (u === 'year') return t('payment.perYear')
-  return `${selectedPlan.value.validityDays}${t('payment.days')}`
-})
+const planValiditySuffix = computed(() => selectedPlan.value ? validitySuffixOf(selectedPlan.value, t) : '')
 
 function planHasPeakRate(plan: SubscriptionPlan): boolean {
   return hasPeakRate(plan)
@@ -1095,8 +1090,8 @@ async function resumeWechatPaymentFromQuery() {
 
 onMounted(async () => {
   try {
-    const res = await billingQuery.getCheckoutInfo()
-    checkout.value = res.data
+    const checkoutInfo = await billingQuery.getCheckoutInfo()
+    checkout.value = checkoutInfo
     if (enabledMethods.value.length) {
       const order: readonly string[] = METHOD_ORDER
       const sorted = [...enabledMethods.value].sort((a, b) => {

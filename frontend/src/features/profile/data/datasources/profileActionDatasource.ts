@@ -8,7 +8,7 @@ import type { UserAuthProvider } from '@/core/models/domain/userAuthProvider'
 import {
   resolveWeChatOAuthStartStrict,
   type WeChatOAuthPublicSettings,
-} from '@/features/auth/presentation/utils/wechatOAuthResolver'
+} from '@/core/utils/wechatOAuthResolver'
 import { authActionDatasource } from '@/features/auth/data/datasources/authActionDatasource'
 
 const prepareOAuthBindAccessTokenCookie = authActionDatasource.prepareOAuthBindAccessTokenCookie.bind(authActionDatasource)

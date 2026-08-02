@@ -37,6 +37,7 @@ export class PublicSettings {
   githubOauthEnabled!: boolean
   googleOauthEnabled!: boolean
   backendModeEnabled!: boolean
+  passkeyEnabled!: boolean
   version!: string
   balanceLowNotifyEnabled!: boolean
   accountQuotaNotifyEnabled!: boolean
@@ -44,6 +45,8 @@ export class PublicSettings {
   channelMonitorEnabled!: boolean
   channelMonitorDefaultIntervalSeconds!: number
   availableChannelsEnabled!: boolean
+  modelPlazaEnabled!: boolean
+  modelPlazaRequireAuth!: boolean
   serviceQuotaEnabled!: boolean
   affiliateEnabled!: boolean
   // optional fields

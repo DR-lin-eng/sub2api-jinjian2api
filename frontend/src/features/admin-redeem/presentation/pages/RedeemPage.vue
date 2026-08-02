@@ -1157,7 +1157,7 @@ const confirmDelete = async () => {
 const confirmDeleteUnused = async () => {
   try {
     const unusedCodesResponse = await $redeem.list(1, 1000, { status: 'unused' })
-    const unusedCodeIds = unusedCodesResponse.items.map((code) => code.id)
+    const unusedCodeIds = unusedCodesResponse.items.map((code: { id: number }) => code.id)
 
     if (unusedCodeIds.length === 0) {
       appStore.showInfo(t('admin.redeem.noUnusedCodes'))

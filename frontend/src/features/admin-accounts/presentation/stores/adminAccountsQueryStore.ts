@@ -19,15 +19,15 @@ export function createAdminAccountsQueryStore(
     const loading = reactive<Record<string, boolean>>({})
     const errors = reactive<Record<string, unknown>>({})
 
-    function track<F extends (...args: never[]) => Promise<unknown>>(task: string, fn: F): F {
-      return ((...args: Parameters<F>) => {
+    function track<Args extends unknown[], R>(task: string, fn: (...args: Args) => Promise<R>): (...args: Args) => Promise<R> {
+      return (...args: Args) => {
         loading[task] = true
         errors[task] = null
         return Promise.resolve()
           .then(() => fn(...args))
           .catch((error: unknown) => { errors[task] = error; throw error })
           .finally(() => { loading[task] = false })
-      }) as F
+      }
     }
 
     // adminAccounts query methods

@@ -332,6 +332,10 @@ type SettingsForm = Omit<
   password_reset_enabled: boolean;
   totp_enabled: boolean;
   totp_encryption_key_configured: boolean;
+  passkey_enabled: boolean;
+  passkey_configured: boolean;
+  passkey_rp_id: string;
+  passkey_rp_origins: string[];
   session_binding_enabled: boolean;
   step_up_enabled: boolean;
   audit_log_retention_days: number;
@@ -550,6 +554,14 @@ const initialFormOverrides = ({
   password_reset_enabled: false,
   totp_enabled: false,
   totp_encryption_key_configured: false,
+  passkeyEnabled: false,
+  passkeyConfigured: false,
+  passkeyRpId: "",
+  passkeyRpOrigins: [],
+  passkey_enabled: false,
+  passkey_configured: false,
+  passkey_rp_id: "",
+  passkey_rp_origins: [],
   session_binding_enabled: false,
   step_up_enabled: false,
   audit_log_retention_days: 180,
@@ -851,7 +863,6 @@ async function loadSettings() {
       if (!form.claudeOauthSystemPromptBlocks?.trim()) {
         gatewayTabRef.value.resetClaudeOAuthSystemPromptBlocks()
       } else {
-        gatewayTabRef.value.claudeOAuthSystemPromptBlocks = gatewayTabRef.value.claudeOAuthSystemPromptBlocks
         gatewayTabRef.value.syncClaudeOAuthSystemPromptBlocksFormField()
       }
       if (settings.openaiAdvancedFastPolicySettings &&
@@ -1068,6 +1079,7 @@ async function saveSettings() {
       invitation_code_enabled: form.invitationCodeEnabled,
       password_reset_enabled: form.passwordResetEnabled,
       totp_enabled: form.totpEnabled,
+      passkey_enabled: form.passkeyEnabled,
       session_binding_enabled: form.sessionBindingEnabled,
       step_up_enabled: form.stepUpEnabled,
       // 清空数字框时 v-model.number 会得到空串，后端 int 字段解析空串会 400 拒绝整次保存；

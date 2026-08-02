@@ -2,6 +2,12 @@ import { apiClient } from '@/core/networks/client'
 import { createCredentialEnvelope } from '@/core/networks/credentialEncryption'
 import { getAccessToken } from '@/core/networks/tokenStore'
 import { refreshBrowserSession } from '@/core/networks/sessionRefresh'
+import {
+  requestOptionsFromJSON,
+  requirePasskeySupport,
+  serializeAssertionCredential,
+  type PasskeyCeremonyOptionsResponse,
+} from '@/core/utils/passkeyCeremony'
 import { AuthResultDto } from '@/features/auth/data/models/authResultDto'
 import { TotpLoginResultDto } from '@/features/auth/data/models/totpLoginResultDto'
 import type { LoginRequest } from '@/features/auth/data/requests_models/loginRequest'
@@ -36,6 +42,22 @@ export class AuthActionDatasource {
 
   async login2FA(req: TotpLogin2FARequest): Promise<AuthResultDto> {
     const { data } = await apiClient.post<unknown>('/auth/login/2fa', req)
+    return AuthResultDto.fromJson(data)
+  }
+
+  async loginWithPasskey(): Promise<AuthResultDto> {
+    requirePasskeySupport()
+    const { data: begin } = await apiClient.post<PasskeyCeremonyOptionsResponse>('/auth/passkey/login/begin')
+    const credential = await navigator.credentials.get({
+      publicKey: requestOptionsFromJSON(begin.options.publicKey)
+    })
+    if (!(credential instanceof PublicKeyCredential)) {
+      throw new Error('Passkey sign-in was cancelled')
+    }
+    const { data } = await apiClient.post<unknown>('/auth/passkey/login/finish', {
+      session_token: begin.session_token,
+      credential: serializeAssertionCredential(credential)
+    })
     return AuthResultDto.fromJson(data)
   }
 

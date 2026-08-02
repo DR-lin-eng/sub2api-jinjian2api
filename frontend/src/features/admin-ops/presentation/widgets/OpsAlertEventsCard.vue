@@ -242,7 +242,7 @@ async function loadHistory() {
     })
 
     // Best-effort: narrow to same rule_id + dimensions
-    history.value = items.filter((it) => {
+    history.value = items.filter((it: AlertEvent) => {
       if (it.ruleId !== ev.ruleId) return false
       const p1 = getDimensionString(it, 'platform')
       const p2 = getDimensionString(ev, 'platform')

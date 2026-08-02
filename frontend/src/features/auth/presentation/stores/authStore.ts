@@ -285,6 +285,17 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function loginWithPasskey(): Promise<User> {
+    try {
+      const response = await authActionRepository.loginWithPasskey()
+      setAuthFromResponse(response)
+      return user.value!
+    } catch (error) {
+      clearAuth({ preservePendingAuthSession: pendingAuthSession.value !== null })
+      throw error
+    }
+  }
+
   /**
    * Complete login with 2FA code
    * @param tempToken - Temporary token from initial login
@@ -507,6 +518,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Actions
     login,
+    loginWithPasskey,
     login2FA,
     register,
     setToken,

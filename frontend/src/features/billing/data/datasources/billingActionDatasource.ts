@@ -6,6 +6,7 @@ import { RedeemCodeResultDto } from '@/features/billing/data/models/redeemCodeRe
 import type { PublicOrderVerifyResult } from '@/features/billing/domain/models/publicOrderVerifyResult'
 import type { RedeemCodeResult } from '@/features/billing/domain/models/redeemCodeResult'
 import type { RedeemCodeRequest } from '@/features/billing/data/requests_models/redeemCodeRequest'
+import type { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
 
 export class BillingActionDatasource {
   createOrder(data: CreateOrderRequest) {
@@ -17,7 +18,7 @@ export class BillingActionDatasource {
   }
 
   verifyOrder(outTradeNo: string) {
-    return apiClient.post('/payment/orders/verify', { out_trade_no: outTradeNo })
+    return apiClient.post<PaymentOrder>('/payment/orders/verify', { out_trade_no: outTradeNo })
   }
 
   async verifyOrderPublic(outTradeNo: string): Promise<PublicOrderVerifyResult> {

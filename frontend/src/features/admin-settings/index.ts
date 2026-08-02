@@ -11,3 +11,6 @@ export const adminSettingsRoutes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, requiresAdmin: true, title: 'System Settings', titleKey: 'admin.settings.title', descriptionKey: 'admin.settings.description' },
   },
 ]
+
+// Router guard composition export.
+export { useAdminCompliance } from '@/features/admin-settings/presentation/composables/useAdminCompliance'

@@ -193,6 +193,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import type { CustomMenuItem } from '@/core/models/domain/customMenuItem'
 import { useOnboardingStore } from '@/core/stores/onboardingStore'
 import VersionBadge from '@/features/admin-settings/presentation/widgets/VersionBadge.vue'
 import { sanitizeSvg } from '@/core/utils/sanitize'
@@ -753,17 +754,17 @@ const userNavItems = computed((): NavItem[] => finalizeNav(buildSelfNavItems(tru
 const personalNavItems = computed((): NavItem[] => finalizeNav(buildSelfNavItems(false)))
 
 // Custom menu items filtered by visibility
-const customMenuItemsForUser = computed(() => {
+const customMenuItemsForUser = computed<CustomMenuItem[]>(() => {
   const items = appStore.cachedPublicSettings?.customMenuItems ?? []
   return items
-    .filter((item: any) => item.visibility === 'user')
-    .sort((a: any, b: any) => a.sortOrder - b.sortOrder)
+    .filter((item: CustomMenuItem) => item.visibility === 'user')
+    .sort((a: CustomMenuItem, b: CustomMenuItem) => a.sortOrder - b.sortOrder)
 })
 
-const customMenuItemsForAdmin = computed(() => {
+const customMenuItemsForAdmin = computed<CustomMenuItem[]>(() => {
   return appStore.customMenuItems
-    .filter((item: any) => item.visibility === 'admin')
-    .sort((a: any, b: any) => a.sortOrder - b.sortOrder)
+    .filter((item: CustomMenuItem) => item.visibility === 'admin')
+    .sort((a: CustomMenuItem, b: CustomMenuItem) => a.sortOrder - b.sortOrder)
 })
 
 // Admin navigation items

@@ -7,6 +7,7 @@ export interface UpdateSettingsRequest {
   frontend_url?: string
   invitation_code_enabled?: boolean
   totp_enabled?: boolean
+  passkey_enabled?: boolean
   session_binding_enabled?: boolean
   step_up_enabled?: boolean
   audit_log_retention_days?: number

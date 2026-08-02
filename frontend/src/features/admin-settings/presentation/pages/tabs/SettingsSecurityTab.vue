@@ -315,6 +315,49 @@
           </div>
           <Toggle v-model="form.totpEnabled" :disabled="!form.totpEncryptionKeyConfigured"/>
         </div>
+        <!-- Passkey -->
+        <div
+          data-testid="passkey-settings"
+          class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700"
+        >
+          <div>
+            <label class="font-medium text-gray-900 dark:text-white">{{ t("admin.settings.security.passkey") }}</label>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ t("admin.settings.security.passkeyHint") }}</p>
+            <div
+              data-testid="passkey-config-status"
+              class="mt-2 text-sm"
+              :class="form.passkeyConfigured ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'"
+            >
+              <p>
+                {{
+                  form.passkeyConfigured
+                    ? t("admin.settings.security.passkeyConfigured")
+                    : t("admin.settings.security.passkeyNotConfigured")
+                }}
+              </p>
+              <p class="mt-1">
+                {{ t("admin.settings.security.passkeyRPID") }}:
+                {{ form.passkeyRpId || t("admin.settings.security.passkeyValueNotConfigured") }}
+              </p>
+              <p class="mt-1">
+                {{ t("admin.settings.security.passkeyOrigins") }}:
+                {{
+                  Array.isArray(form.passkeyRpOrigins) && form.passkeyRpOrigins.length > 0
+                    ? form.passkeyRpOrigins.join(", ")
+                    : t("admin.settings.security.passkeyValueNotConfigured")
+                }}
+              </p>
+              <p v-if="!form.passkeyConfigured" class="mt-2">
+                {{ t("admin.settings.security.passkeyDeploymentHint") }}
+              </p>
+            </div>
+          </div>
+          <Toggle
+            v-model="form.passkeyEnabled"
+            data-testid="passkey-toggle"
+            :disabled="!form.passkeyConfigured"
+          />
+        </div>
         <!-- Step-up 2FA -->
         <div class="flex items-center justify-between border-t border-gray-100 pt-4 dark:border-dark-700">
           <div>

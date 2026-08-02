@@ -271,7 +271,7 @@ async function tryRecoverPendingOrder(order: PaymentOrder): Promise<PaymentOrder
   verifyAttempts += 1
   try {
     const result = await billingActionStore.verifyOrder(outTradeNo)
-    return (result.data as PaymentOrder | undefined) ?? order
+    return result ?? order
   } catch {
     return order
   }

@@ -38,6 +38,16 @@
           <span class="hidden sm:inline">{{ t('nav.docs') }}</span>
         </a>
 
+        <!-- Model Plaza Entry -->
+        <RouterLink
+          v-if="user && modelPlazaEnabled"
+          :to="{ path: '/model-plaza', query: { embedded: '1' } }"
+          class="hidden items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-400 dark:hover:bg-dark-800 dark:hover:text-white sm:flex"
+        >
+          <Icon name="grid" size="sm" />
+          <span class="hidden sm:inline">{{ t('nav.modelPlaza') }}</span>
+        </RouterLink>
+
         <!-- Language Switcher -->
         <LocaleSwitcher />
 
@@ -251,6 +261,7 @@ import SubscriptionProgressMini from '@/features/subscriptions/presentation/widg
 import AnnouncementBell from '@/features/announcements/presentation/widgets/AnnouncementBell.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { sanitizeUrl } from '@/core/utils/url'
+import { FeatureFlags, isFeatureFlagEnabled } from '@/core/services/featureFlags'
 
 const router = useRouter()
 const route = useRoute()
@@ -264,6 +275,7 @@ const dropdownOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
 const contactInfo = computed(() => appStore.contactInfo)
 const docUrl = computed(() => sanitizeUrl(appStore.docUrl))
+const modelPlazaEnabled = computed(() => isFeatureFlagEnabled(FeatureFlags.modelPlaza))
 const avatarUrl = computed(() => user.value?.avatarUrl?.trim() || '')
 const availableBalance = computed(() => Number(user.value?.balance || 0))
 const frozenBalance = computed(() => Number(user.value?.frozenBalance || 0))

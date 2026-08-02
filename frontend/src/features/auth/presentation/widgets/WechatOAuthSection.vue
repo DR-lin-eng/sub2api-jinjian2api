@@ -31,7 +31,7 @@
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { resolveWeChatOAuthStart } from '@/features/auth/presentation/utils/wechatOAuthResolver'
+import { resolveWeChatOAuthStart } from '@/core/utils/wechatOAuthResolver'
 import { useAppStore } from '@/core/stores/appStore'
 import { resolveAffiliateReferralCode, storeOAuthAffiliateCode } from '@/core/utils/oauthAffiliate'
 

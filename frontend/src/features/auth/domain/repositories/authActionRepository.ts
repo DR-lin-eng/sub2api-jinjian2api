@@ -15,6 +15,7 @@ export type LoginResponse = AuthResult | TotpLoginResult
 export interface AuthActionRepository {
   login(req: LoginRequest): Promise<LoginResponse>
   login2FA(req: TotpLogin2FARequest): Promise<AuthResult>
+  loginWithPasskey(): Promise<AuthResult>
   register(req: RegisterRequest | EncryptedRegisterRequest): Promise<AuthResult>
   logout(): Promise<void>
   sendVerifyCode(req: SendVerifyCodeRequest): Promise<SendVerifyCodeResponse>

@@ -32,7 +32,8 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { formatPeakRateWindow, serverTimezoneLabel } from '@/core/utils/peak-rate'
 import PlatformIcon from '@/common/widgets/icons/PlatformIcon.vue'
-import type { SubscriptionType, GroupPlatform } from '@/features/admin-groups/domain/models/adminGroups'
+import type { GroupPlatform } from '@/core/enums/groupPlatform'
+import type { SubscriptionType } from '@/core/enums/subscriptionType'
 
 interface Props {
   name: string

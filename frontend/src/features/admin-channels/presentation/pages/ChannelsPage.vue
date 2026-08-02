@@ -888,7 +888,7 @@ async function syncLatestModels(sectionIdx: number) {
     for (const entry of form.platforms[sectionIdx].model_pricing) {
       for (const m of entry.models) existingModels.add(m)
     }
-    const newModels = result.models.filter(m => !existingModels.has(m))
+    const newModels = result.models.filter((m: string) => !existingModels.has(m))
     if (newModels.length === 0) {
       appStore.showSuccess(t('admin.channels.form.syncModelsAlreadyUpToDate'))
       return

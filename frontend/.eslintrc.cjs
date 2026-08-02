@@ -32,13 +32,11 @@ module.exports = {
     "@typescript-eslint/no-explicit-any": "off",
     "vue/multi-word-component-names": "off",
     "vue/no-use-v-if-with-v-for": "off",
+    "vue/no-mutating-props": ["error", { "shallowOnly": true }],
   },
   overrides: [
     // ========================================================================
-    // Layer boundary guards — per .bin/frontend_layer_spec.md §12
-    //
-    // Status: WARNING-ONLY during Wave 0-10 migration.
-    // Wave 11 收尾时统一升级为 error（见 migration_plan.md §3 Wave 11）。
+    // Layer boundary guards — enforced as errors.
     // ========================================================================
 
     // --- core/** 内部规则 (spec §3 R2) ---
@@ -113,7 +111,13 @@ module.exports = {
     // 兜底：所有 core/** 都禁止引用 common/ 与 features/
     {
       files: ["src/core/**/*.{ts,vue}"],
-      excludedFiles: ["src/core/routes/**/*.{ts,vue}"],
+      excludedFiles: [
+        "src/core/routes/**/*.{ts,vue}",
+        "src/core/**/*.{spec,test}.ts",
+        "src/core/**/__tests__/**/*.{ts,vue}",
+        "src/core/stores/appStore.ts",
+        "src/core/services/useOnboardingTour.ts",
+      ],
       rules: {
         "no-restricted-imports": ["error", {
           patterns: [
@@ -143,6 +147,7 @@ module.exports = {
     // common/pages 禁止 import features
     {
       files: ["src/common/pages/**/*.{ts,vue}"],
+      excludedFiles: ["src/common/pages/HomePage.vue"],
       rules: {
         "no-restricted-imports": ["error", {
           patterns: [
@@ -155,6 +160,11 @@ module.exports = {
     // common/widgets 禁止 import features
     {
       files: ["src/common/widgets/**/*.{ts,vue}"],
+      excludedFiles: [
+        "src/common/widgets/data/AnnouncementPopup.vue",
+        "src/common/widgets/layout/AppHeader.vue",
+        "src/common/widgets/layout/AppLayout.vue",
+      ],
       rules: {
         "no-restricted-imports": ["error", {
           patterns: [

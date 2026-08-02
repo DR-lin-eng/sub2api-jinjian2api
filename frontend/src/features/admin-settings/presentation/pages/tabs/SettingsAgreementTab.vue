@@ -239,7 +239,8 @@ function loginAgreementRoutePath(doc: LoginAgreementDocument, index: number): st
 }
 
 function addLoginAgreementDocument() {
-  ;(props.form.loginAgreementDocuments as LoginAgreementDocument[]).push({
+  const documents = props.form.loginAgreementDocuments as LoginAgreementDocument[]
+  documents.push({
     id: `custom-${Date.now().toString(36)}`,
     title: '',
     contentMd: '',
@@ -247,6 +248,7 @@ function addLoginAgreementDocument() {
 }
 
 function removeLoginAgreementDocument(index: number) {
-  ;(props.form.loginAgreementDocuments as LoginAgreementDocument[]).splice(index, 1)
+  const documents = props.form.loginAgreementDocuments as LoginAgreementDocument[]
+  documents.splice(index, 1)
 }
 </script>

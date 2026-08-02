@@ -200,7 +200,7 @@ import {
   hasExplicitWeChatOAuthCapabilities,
   resolveWeChatOAuthStartStrict,
   type WeChatOAuthPublicSettings,
-} from '@/features/auth/presentation/utils/wechatOAuthResolver'
+} from '@/core/utils/wechatOAuthResolver'
 import { useProfileActionStore } from '@/features/profile/presentation/stores/profileActionStore'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import { useAppStore } from '@/core/stores/appStore'

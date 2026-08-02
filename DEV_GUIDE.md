@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | Go | `backend/go.mod`，当前为 1.26.5 | 后端构建、生成和测试 |
 | Node.js | `.github/workflows/backend-ci.yml`，当前为 20 | 前端工具链 |
-| pnpm | CI 当前为 9 | 前端依赖和脚本；不要混用 npm/yarn |
+| pnpm | `frontend/package.json`，当前为 11.17.0 | 前端依赖和脚本；不要混用 npm/yarn |
 | PostgreSQL | `deploy/docker-compose.dev.yml` | 持久化数据和迁移 |
 | Redis | `deploy/docker-compose.dev.yml` | 缓存、调度、队列和并发状态 |
 | Docker + Compose | 推荐使用当前稳定版 | 一致的依赖环境与整栈验证 |
@@ -22,7 +22,7 @@
 1. [文档中心](docs/README.md)
 2. [架构总览](docs/ARCHITECTURE.md)
 3. [代码地图](docs/CODE_MAP.md)
-4. `backend/README.md` 或 `frontend/README.md`
+4. `backend/README.md`
 5. 目标目录最近的 `README.md`、入口实现和相邻测试
 
 代码代理还应读取根目录 `AGENTS.md`。
@@ -210,18 +210,21 @@ handler 不直接访问 repository，route 闭包不实现业务。
 常规调用顺序：
 
 ```text
-router -> view -> component/composable/store -> api -> backend route
+core/routes -> feature page -> widget/composable/store -> repository -> datasource -> core/networks -> backend route
 ```
 
-- 路由页面放在 `src/views/<domain>/`。
-- 可复用 UI 放在 `src/components/<domain>/`。
-- 可复用行为放在 `src/composables/`。
-- 只有跨页面共享、有明确生命周期的状态进入 Pinia store。
-- HTTP 调用通过 `src/api/`；统一 token、刷新和错误行为只在 `api/client.ts` 修改。
-- 新增用户可见文案时同步 `src/i18n/locales/`。
+- 业务归属 `frontend/src/features/<feature>/`，feature 名使用 kebab-case。
+- 路由页面放 `presentation/pages/`，领域组件放 `presentation/widgets/`，可复用交互放 `presentation/composables/`，有明确生命周期的状态放 `presentation/stores/`。
+- HTTP 调用只放所属 feature 的 `data/datasources/`，统一通过 `src/core/networks/client.ts`；页面和 widget 不直接 import `apiClient`、axios、datasource 或 DTO。
+- 数据模型按三层拆分：`domain/models/` 是 Entity class，`data/models/` 是 DTO class，`data/requests_models/` 是后端 snake_case Request interface；DTO 只在 datasource 与 repository impl 之间流动。
+- Query/Action 按读写拆分：`*QueryDatasource` / `*ActionDatasource`、`*QueryRepository` / `*ActionRepository`、`*QueryStore` / `*ActionStore`。
+- feature 根 `index.ts` 只导出路由级公开面；不要从 barrel 暴露 datasource、repository、store、composable 或 widget。
+- 跨 feature 共享 UI、页面、composable 和 UI 类型放 `src/common/`；应用级路由、网络、i18n、主题、全局 store、服务、常量和工具放 `src/core/`。
+- 本地规范不新增 `src/api/`、`src/types/`、`src/stores/` 兼容层；上游新增到这些旧入口的代码合并时要迁回 owner feature/core/common。
+- 新增用户可见文案时同步 `src/core/i18n/locales/`。
 - 管理端可见性不能代替后端权限检查。
 
-更多约定见 [frontend/README.md](frontend/README.md)。
+当前前端规范以本文件为准。
 
 ## 测试选择
 

@@ -1,7 +1,6 @@
 import { defineConfig, loadEnv, Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import checker from 'vite-plugin-checker'
-import swc from 'unplugin-swc'
 import { resolve } from 'path'
 
 function escapeHtml(value: string): string {
@@ -86,19 +85,6 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
-      // SWC transforms .ts files (emits decorator metadata for class-transformer/class-validator).
-      // Vue SFC <script setup lang="ts"> is still handled by @vitejs/plugin-vue; the SFC compiler
-      // preserves decorator syntax but esbuild strips metadata, so we place SWC before vue().
-      swc.vite({
-        include: [/\.ts$/] as unknown as string[],
-        exclude: [/node_modules/] as unknown as string[],
-        jsc: {
-          parser: { syntax: 'typescript', decorators: true },
-          transform: { legacyDecorator: true, decoratorMetadata: true },
-          target: 'es2020',
-          keepClassNames: true,
-        },
-      }),
       vue(),
       checker({
         vueTsc: true
@@ -118,7 +104,7 @@ export default defineConfig(({ mode }) => {
     __INTLIFY_JIT_COMPILATION__: true
   },
   build: {
-    outDir: '../backend/internal/web/dist',
+    outDir: '../backend/internal/transport/webassets/dist',
     emptyOutDir: true,
     rollupOptions: {
       output: {

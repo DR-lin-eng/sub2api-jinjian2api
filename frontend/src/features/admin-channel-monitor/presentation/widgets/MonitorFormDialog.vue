@@ -685,7 +685,7 @@ async function openMyKeyPicker() {
     ])
     const items = res.items || []
     const now = Date.now()
-    myActiveKeys.value = items.filter(k => {
+    myActiveKeys.value = items.filter((k: ApiKey) => {
       if (k.status !== 'active') return false
       if (!k.expiresAt) return true
       return new Date(k.expiresAt).getTime() > now

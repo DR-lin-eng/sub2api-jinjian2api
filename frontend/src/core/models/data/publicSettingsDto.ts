@@ -144,6 +144,10 @@ export class PublicSettingsDto {
   @Transform(({ value }) => value ?? false)
   backendModeEnabled!: boolean
 
+  @Expose({ name: 'passkey_enabled' })
+  @Transform(({ value }) => value ?? false)
+  passkeyEnabled!: boolean
+
   @Expose()
   @Transform(({ value }) => value ?? '')
   version!: string
@@ -171,6 +175,14 @@ export class PublicSettingsDto {
   @Expose({ name: 'available_channels_enabled' })
   @Transform(({ value }) => value ?? false)
   availableChannelsEnabled!: boolean
+
+  @Expose({ name: 'model_plaza_enabled' })
+  @Transform(({ value }) => value ?? false)
+  modelPlazaEnabled!: boolean
+
+  @Expose({ name: 'model_plaza_require_auth' })
+  @Transform(({ value }) => value ?? false)
+  modelPlazaRequireAuth!: boolean
 
   @Expose({ name: 'service_quota_enabled' })
   @Transform(({ value }) => value ?? false)
@@ -263,6 +275,7 @@ export class PublicSettingsDto {
     entity.githubOauthEnabled = this.githubOauthEnabled
     entity.googleOauthEnabled = this.googleOauthEnabled
     entity.backendModeEnabled = this.backendModeEnabled
+    entity.passkeyEnabled = this.passkeyEnabled
     entity.version = this.version
     entity.balanceLowNotifyEnabled = this.balanceLowNotifyEnabled
     entity.accountQuotaNotifyEnabled = this.accountQuotaNotifyEnabled
@@ -270,6 +283,8 @@ export class PublicSettingsDto {
     entity.channelMonitorEnabled = this.channelMonitorEnabled
     entity.channelMonitorDefaultIntervalSeconds = this.channelMonitorDefaultIntervalSeconds
     entity.availableChannelsEnabled = this.availableChannelsEnabled
+    entity.modelPlazaEnabled = this.modelPlazaEnabled
+    entity.modelPlazaRequireAuth = this.modelPlazaRequireAuth
     entity.serviceQuotaEnabled = this.serviceQuotaEnabled
     entity.affiliateEnabled = this.affiliateEnabled
     entity.loginAgreementEnabled = this.loginAgreementEnabled

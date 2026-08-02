@@ -1,5 +1,5 @@
 import type { DefaultPlatformQuotasMap } from '@/features/admin-settings/domain/models/adminSettings'
-import type { DefaultSubscriptionSetting } from '@/features/admin-settings/domain/models/defaultSubscriptionSetting'
+import { DefaultSubscriptionSetting } from '@/features/admin-settings/domain/models/defaultSubscriptionSetting'
 import type { AuthSourceDefaultsState } from '@/features/admin-settings/domain/models/adminSettings'
 import type { AuthSourceType } from '@/features/admin-settings/enums/authSourceType'
 import type { UpdateSettingsRequest } from '@/features/admin-settings/data/requests_models/updateSettingsRequest'
@@ -37,7 +37,7 @@ export function normalizeDefaultSubscriptionSettings(
   return subscriptions
     .filter(item => item.group_id > 0 && item.validity_days > 0)
     .map(item => {
-      const e = new (require('@/features/admin-settings/domain/models/defaultSubscriptionSetting').DefaultSubscriptionSetting)()
+      const e = new DefaultSubscriptionSetting()
       e.groupId = Math.floor(item.group_id)
       e.validityDays = Math.min(36500, Math.max(1, Math.floor(item.validity_days)))
       return e

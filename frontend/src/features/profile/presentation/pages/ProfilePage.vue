@@ -44,6 +44,8 @@
       />
 
       <ProfileTotpCard />
+
+      <ProfilePasskeyCard :enabled="passkeyEnabled" />
     </div>
   </AppLayout>
 </template>
@@ -57,7 +59,8 @@ import ProfileBalanceNotifyCard from '@/features/profile/presentation/widgets/Pr
 import ProfileInfoCard from '@/features/profile/presentation/widgets/ProfileInfoCard.vue'
 import ProfilePasswordForm from '@/features/profile/presentation/widgets/ProfilePasswordForm.vue'
 import ProfileTotpCard from '@/features/profile/presentation/widgets/ProfileTotpCard.vue'
-import { isWeChatWebOAuthEnabled } from '@/features/auth/presentation/utils/wechatOAuthResolver'
+import ProfilePasskeyCard from '@/features/passkeys/presentation/widgets/ProfilePasskeyCard.vue'
+import { isWeChatWebOAuthEnabled } from '@/core/utils/wechatOAuthResolver'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 
@@ -76,14 +79,15 @@ const wechatOAuthOpenEnabled = ref<boolean | undefined>(undefined)
 const wechatOAuthMPEnabled = ref<boolean | undefined>(undefined)
 const oidcOAuthEnabled = ref(false)
 const oidcOAuthProviderName = ref('OIDC')
+const passkeyEnabled = ref(false)
 
 onMounted(async () => {
-  const profileRefresh = authStore.refreshUser().catch((error) => {
+  const profileRefresh = authStore.refreshUser().catch((error: unknown) => {
     console.error('Failed to refresh profile:', error)
   })
 
   const settingsLoad = appStore.fetchPublicSettings()
-    .then((settings) => {
+    .then((settings: Awaited<ReturnType<typeof appStore.fetchPublicSettings>>) => {
       if (!settings) {
         return
       }
@@ -101,8 +105,9 @@ onMounted(async () => {
         : undefined
       oidcOAuthEnabled.value = settings.oidcOauthEnabled ?? false
       oidcOAuthProviderName.value = settings.oidcOauthProviderName || 'OIDC'
+      passkeyEnabled.value = settings.passkeyEnabled === true
     })
-    .catch((error) => {
+    .catch((error: unknown) => {
       console.error('Failed to load settings:', error)
     })
 

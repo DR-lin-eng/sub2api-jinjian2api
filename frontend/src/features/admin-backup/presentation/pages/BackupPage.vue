@@ -697,7 +697,7 @@ async function loadBackups() {
 async function createBackup() {
   creatingBackup.value = true
   try {
-    const record = await backupStepUp.run(() => $backup.createBackup({ expire_days: manualExpireDays.value }))
+    const record = await backupStepUp.run<BackupRecord>(() => $backup.createBackup({ expire_days: manualExpireDays.value }))
     // 插入到列表顶部
     backups.value.unshift(record)
     startPolling(record.id)
@@ -721,7 +721,7 @@ async function createBackup() {
 
 async function downloadBackup(id: string) {
   try {
-    const result = await backupStepUp.run(() => $backup.getDownloadURL(id))
+    const result = await backupStepUp.run<{ url: string }>(() => $backup.getDownloadURL(id))
     // 预签名 URL 带 attachment disposition，同页 anchor 导航直接触发下载；
     // 不用 window.open：step-up 弹窗 await 会耗尽瞬态用户激活，新标签页会被浏览器拦截。
     const link = document.createElement('a')
@@ -741,7 +741,7 @@ async function restoreBackup(id: string) {
   if (!password) return
   restoringId.value = id
   try {
-    const record = await backupStepUp.run(() => $backup.restoreBackup(id, password))
+    const record = await backupStepUp.run<BackupRecord>(() => $backup.restoreBackup(id, password))
     updateRecordInList(record)
     startRestorePolling(id)
   } catch (error: any) {

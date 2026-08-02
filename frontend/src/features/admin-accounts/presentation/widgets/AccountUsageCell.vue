@@ -1276,10 +1276,10 @@ const loadUsage = async (options?: { source?: 'passive' | 'active'; bypassCache?
   error.value = null
 
   try {
-    const fetchFn = () => options?.source
+    const fetchFn: () => Promise<AccountUsageInfo> = () => options?.source
       ? queryStore.getUsage(props.account.id, options.source)
       : queryStore.getUsage(props.account.id)
-    const result = await enqueueUsageRequest(props.account, fetchFn)
+    const result = await enqueueUsageRequest<AccountUsageInfo>(props.account, fetchFn)
     if (!unmounted.value) {
       usageInfo.value = result
       _usageCache.set(props.account.id, { data: result, ts: Date.now() })

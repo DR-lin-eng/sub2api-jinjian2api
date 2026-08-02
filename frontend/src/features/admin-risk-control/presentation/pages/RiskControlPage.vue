@@ -1993,7 +1993,7 @@ async function testApiKeys(useInputKeys: boolean) {
     })
     moderationTestResult.value = result.audit_result ?? null
     if (useInputKeys) {
-      testedApiKeyStatuses.value = result.items.map((item) => ({ ...item, configured: false }))
+      testedApiKeyStatuses.value = result.items.map((item: ContentModerationAPIKeyStatus) => ({ ...item, configured: false }))
     } else {
       mergeConfiguredAPIKeyStatuses(result.items)
       testedApiKeyStatuses.value = []

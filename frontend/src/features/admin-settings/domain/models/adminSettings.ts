@@ -24,6 +24,10 @@ export class SystemSettings {
   invitationCodeEnabled!: boolean
   totpEnabled!: boolean
   totpEncryptionKeyConfigured!: boolean
+  passkeyEnabled!: boolean
+  passkeyConfigured!: boolean
+  passkeyRpId!: string
+  passkeyRpOrigins!: string[]
   sessionBindingEnabled!: boolean
   stepUpEnabled!: boolean
   auditLogRetentionDays!: number

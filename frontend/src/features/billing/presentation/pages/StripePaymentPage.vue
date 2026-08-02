@@ -156,10 +156,10 @@ onMounted(async () => {
         currency.value = normalizePaymentCurrency(restored.currency)
       }
     }
-    const res = await billingQuery.getOrder(orderId)
-    order.value = res.data
-    if (res.data.currency) {
-      currency.value = normalizePaymentCurrency(res.data.currency)
+    const paymentOrder = await billingQuery.getOrder(orderId)
+    order.value = paymentOrder
+    if (paymentOrder.currency) {
+      currency.value = normalizePaymentCurrency(paymentOrder.currency)
     }
 
     await paymentStore.fetchConfig()

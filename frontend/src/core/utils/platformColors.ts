@@ -38,6 +38,17 @@ const BORDER: Record<Platform, string> = {
   composite: 'border-cyan-500/20 dark:border-cyan-500/20',
 }
 const BORDER_DEFAULT = 'border-gray-200 dark:border-dark-700'
+const BORDER_STRONG_DEFAULT = 'border-gray-200 dark:border-dark-700'
+
+const COLOR: Record<Platform, string> = {
+  anthropic: '#f97316',
+  openai: '#059669',
+  antigravity: '#a855f7',
+  gemini: '#3b82f6',
+  grok: '#27272a',
+  composite: '#0891b2',
+}
+const COLOR_DEFAULT = '#14b8a6'
 
 // ── Accent bar (gradient) ───────────────────────────────────────────
 const ACCENT_BAR: Record<Platform, string> = {
@@ -142,6 +153,14 @@ export function platformBadgeLightClass(p: string): string {
 
 export function platformBorderClass(p: string): string {
   return isPlatform(p) ? BORDER[p] : BORDER_DEFAULT
+}
+
+export function platformBorderStrongClass(p: string): string {
+  return isPlatform(p) ? BORDER[p] : BORDER_STRONG_DEFAULT
+}
+
+export function platformAccentColor(p: string): string {
+  return isPlatform(p) ? COLOR[p] : COLOR_DEFAULT
 }
 
 export function platformAccentBarClass(p: string): string {

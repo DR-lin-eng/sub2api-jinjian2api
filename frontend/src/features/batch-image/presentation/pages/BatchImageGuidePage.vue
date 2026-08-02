@@ -1275,13 +1275,13 @@ async function loadAvailableModels() {
     if (requestID !== modelRequestSeq) return
     const seen = new Set<string>()
     availableBatchImageModels.value = result
-      .map(model => String(model.id || '').trim())
-      .filter((model) => {
+      .map((model: { id?: string | number }) => String(model.id || '').trim())
+      .filter((model: string) => {
         if (!model || seen.has(model)) return false
         seen.add(model)
         return true
       })
-      .map(model => ({ value: model, label: model }))
+      .map((model: string) => ({ value: model, label: model }))
     form.model = availableBatchImageModels.value[0]?.value || ''
   } catch (error: any) {
     if (requestID !== modelRequestSeq) return
@@ -1503,7 +1503,7 @@ async function loadBatchJobs() {
       const result = await q.list(key.key, options)
       return {
         hasMore: Boolean(result.has_more),
-        rows: (result.data || []).map(job => toJobRow(job, key)),
+        rows: (result.data || []).map((job: any) => toJobRow(job, key)),
       }
     }))
     batchJobs.value = applyChildCounts(results
@@ -1798,9 +1798,9 @@ async function retryFailedJob(job: BatchImageJobRow | BatchImageJob) {
   try {
     const sourceItems = await ensureItemsForRetry(key.key, job.id)
     const failedItems = sourceItems
-      .filter(item => item.status === 'failed')
-      .map(item => ({ custom_id: retryCustomID(item.customId), prompt: String(item.promptPreview || '').trim() }))
-      .filter(item => item.prompt)
+      .filter((item: any) => item.status === 'failed')
+      .map((item: any) => ({ custom_id: retryCustomID(item.customId), prompt: String(item.promptPreview || '').trim() }))
+      .filter((item: { prompt: string }) => item.prompt)
     if (failedItems.length === 0) {
       appStore.showError(batchImageText('retryMissingPrompts'))
       return
@@ -2192,7 +2192,7 @@ async function loadItems() {
     const jobs = detailJobsForBatch(batchId)
     const results = await Promise.all(jobs.map(async (job) => {
       const result = await q.listItems(key.key, job.id)
-      return (result.data || []).map(item => ({
+      return (result.data || []).map((item: any) => ({
         ...item,
         batchId: job.id,
         sourceTaskName: detailSourceName(job, batchId),

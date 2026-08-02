@@ -5,21 +5,21 @@ import type { RedeemCodeResult } from '@/features/billing/domain/models/redeemCo
 import type { RedeemCodeRequest } from '@/features/billing/data/requests_models/redeemCodeRequest'
 import type { CreateOrderRequest } from '@/features/billing/data/requests_models/createOrderRequest'
 import type { CreateOrderResult } from '@/features/billing/domain/models/createOrderResult'
-import type { AxiosResponse } from 'axios'
+import type { PaymentOrder } from '@/features/admin-orders/domain/models/paymentOrder'
 
 class BillingActionRepositoryImpl implements BillingActionRepository {
   private readonly ds = billingActionDatasource
 
-  createOrder(data: CreateOrderRequest): Promise<AxiosResponse<CreateOrderResult>> {
-    return this.ds.createOrder(data)
+  async createOrder(data: CreateOrderRequest): Promise<CreateOrderResult> {
+    return (await this.ds.createOrder(data)).data
   }
 
-  cancelOrder(id: number): Promise<AxiosResponse<unknown>> {
-    return this.ds.cancelOrder(id)
+  async cancelOrder(id: number): Promise<unknown> {
+    return (await this.ds.cancelOrder(id)).data
   }
 
-  verifyOrder(outTradeNo: string): Promise<AxiosResponse<unknown>> {
-    return this.ds.verifyOrder(outTradeNo)
+  async verifyOrder(outTradeNo: string): Promise<PaymentOrder> {
+    return (await this.ds.verifyOrder(outTradeNo)).data
   }
 
   verifyOrderPublic(outTradeNo: string): Promise<PublicOrderVerifyResult> {
@@ -30,8 +30,8 @@ class BillingActionRepositoryImpl implements BillingActionRepository {
     return this.ds.resolveOrderPublicByResumeToken(resumeToken)
   }
 
-  requestRefund(id: number, data: { reason: string }): Promise<AxiosResponse<unknown>> {
-    return this.ds.requestRefund(id, data)
+  async requestRefund(id: number, data: { reason: string }): Promise<unknown> {
+    return (await this.ds.requestRefund(id, data)).data
   }
 
   redeem(req: RedeemCodeRequest): Promise<RedeemCodeResult> {

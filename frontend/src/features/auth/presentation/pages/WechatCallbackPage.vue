@@ -337,7 +337,7 @@ import {
 import {
   hasExplicitWeChatOAuthCapabilities,
   resolveWeChatOAuthStartStrict,
-} from '@/features/auth/presentation/utils/wechatOAuthResolver'
+} from '@/core/utils/wechatOAuthResolver'
 import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
 import { getAccessToken } from '@/core/networks/tokenStore'
 import {

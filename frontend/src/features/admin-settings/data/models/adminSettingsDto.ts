@@ -13,6 +13,10 @@ export class AdminSettingsDto {
   @Expose({ name: 'invitation_code_enabled' }) @Transform(({ value }) => value ?? false) invitationCodeEnabled!: boolean
   @Expose({ name: 'totp_enabled' }) @Transform(({ value }) => value ?? false) totpEnabled!: boolean
   @Expose({ name: 'totp_encryption_key_configured' }) @Transform(({ value }) => value ?? false) totpEncryptionKeyConfigured!: boolean
+  @Expose({ name: 'passkey_enabled' }) @Transform(({ value }) => value ?? false) passkeyEnabled!: boolean
+  @Expose({ name: 'passkey_configured' }) @Transform(({ value }) => value ?? false) passkeyConfigured!: boolean
+  @Expose({ name: 'passkey_rp_id' }) @Transform(({ value }) => value ?? '') passkeyRpId!: string
+  @Expose({ name: 'passkey_rp_origins' }) @Transform(({ value }) => value ?? []) passkeyRpOrigins!: string[]
   @Expose({ name: 'session_binding_enabled' }) @Transform(({ value }) => value ?? false) sessionBindingEnabled!: boolean
   @Expose({ name: 'step_up_enabled' }) @Transform(({ value }) => value ?? false) stepUpEnabled!: boolean
   @Expose({ name: 'audit_log_retention_days' }) @Transform(({ value }) => value ?? 90) auditLogRetentionDays!: number
@@ -255,6 +259,10 @@ export class AdminSettingsDto {
     e.invitationCodeEnabled = this.invitationCodeEnabled
     e.totpEnabled = this.totpEnabled
     e.totpEncryptionKeyConfigured = this.totpEncryptionKeyConfigured
+    e.passkeyEnabled = this.passkeyEnabled
+    e.passkeyConfigured = this.passkeyConfigured
+    e.passkeyRpId = this.passkeyRpId
+    e.passkeyRpOrigins = this.passkeyRpOrigins
     e.sessionBindingEnabled = this.sessionBindingEnabled
     e.stepUpEnabled = this.stepUpEnabled
     e.auditLogRetentionDays = this.auditLogRetentionDays

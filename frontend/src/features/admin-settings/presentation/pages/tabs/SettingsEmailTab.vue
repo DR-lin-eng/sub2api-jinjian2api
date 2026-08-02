@@ -450,7 +450,8 @@ const addQuotaNotifyEmail = () => {
   if (!props.form.accountQuotaNotifyEmails) {
     (props.form as Record<string, unknown>).accountQuotaNotifyEmails = []
   }
-  ;(props.form.accountQuotaNotifyEmails as { email: string; disabled: boolean; verified: boolean }[]).push({
+  const emails = props.form.accountQuotaNotifyEmails as { email: string; disabled: boolean; verified: boolean }[]
+  emails.push({
     email: '',
     disabled: false,
     verified: true,

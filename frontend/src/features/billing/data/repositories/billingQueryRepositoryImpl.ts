@@ -7,37 +7,36 @@ import type { CheckoutInfoResponse } from '@/features/billing/domain/models/chec
 import type { MethodLimitsResponse } from '@/features/billing/domain/models/methodLimitsResponse'
 import type { PaymentConfig } from '@/features/billing/domain/models/paymentConfig'
 import type { PaginatedResponse } from '@/core/networks/paginatedResponse'
-import type { AxiosResponse } from 'axios'
 
 class BillingQueryRepositoryImpl implements BillingQueryRepository {
   private readonly ds = billingQueryDatasource
 
-  getConfig(): Promise<AxiosResponse<PaymentConfig>> {
-    return this.ds.getConfig()
+  async getConfig(): Promise<PaymentConfig> {
+    return (await this.ds.getConfig()).data
   }
 
-  getPlans(): Promise<AxiosResponse<SubscriptionPlan[]>> {
-    return this.ds.getPlans()
+  async getPlans(): Promise<SubscriptionPlan[]> {
+    return (await this.ds.getPlans()).data
   }
 
-  getCheckoutInfo(): Promise<AxiosResponse<CheckoutInfoResponse>> {
-    return this.ds.getCheckoutInfo()
+  async getCheckoutInfo(): Promise<CheckoutInfoResponse> {
+    return (await this.ds.getCheckoutInfo()).data
   }
 
-  getLimits(): Promise<AxiosResponse<MethodLimitsResponse>> {
-    return this.ds.getLimits()
+  async getLimits(): Promise<MethodLimitsResponse> {
+    return (await this.ds.getLimits()).data
   }
 
-  getMyOrders(params?: { page?: number; page_size?: number; status?: string }): Promise<AxiosResponse<PaginatedResponse<PaymentOrder>>> {
-    return this.ds.getMyOrders(params)
+  async getMyOrders(params?: { page?: number; page_size?: number; status?: string }): Promise<PaginatedResponse<PaymentOrder>> {
+    return (await this.ds.getMyOrders(params)).data
   }
 
-  getOrder(id: number): Promise<AxiosResponse<PaymentOrder>> {
-    return this.ds.getOrder(id)
+  async getOrder(id: number): Promise<PaymentOrder> {
+    return (await this.ds.getOrder(id)).data
   }
 
-  getRefundEligibleProviders(): Promise<AxiosResponse<{ provider_instance_ids: string[] }>> {
-    return this.ds.getRefundEligibleProviders()
+  async getRefundEligibleProviders(): Promise<{ provider_instance_ids: string[] }> {
+    return (await this.ds.getRefundEligibleProviders()).data
   }
 
   getHistory(): Promise<RedeemHistoryItem[]> {

@@ -1,13 +1,12 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { authRoutes, useAuthStore } from '@/features/auth'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAdminCompliance } from '@/features/admin-settings/presentation/composables/useAdminCompliance'
+import { adminSettingsRoutes, useAdminCompliance } from '@/features/admin-settings'
 import { useNavigationLoadingState } from '@/core/routes/composables/useNavigationLoading'
 import { useRoutePrefetch } from '@/core/routes/composables/useRoutePrefetch'
 import { resolveRouteDocumentTitle } from './title'
 import { commonRoutes } from './commonRoutes'
 import { setupRoutes } from '@/features/setup'
-import { authRoutes } from '@/features/auth'
 import { keysRoutes } from '@/features/keys'
 import { dashboardUserRoutes } from '@/features/dashboard-user'
 import { batchImageRoutes } from '@/features/batch-image'
@@ -15,6 +14,7 @@ import { usageRoutes } from '@/features/usage'
 import { billingRoutes } from '@/features/billing'
 import { affiliateRoutes } from '@/features/affiliate'
 import { modelSquareRoutes } from '@/features/model-square'
+import { modelPlazaRoutes } from '@/features/model-plaza'
 import { mediaStudioRoutes } from '@/features/media-studio'
 import { channelsUserRoutes } from '@/features/channels-user'
 import { profileRoutes } from '@/features/profile'
@@ -33,7 +33,6 @@ import { announcementsRoutes } from '@/features/announcements'
 import { adminProxiesRoutes } from '@/features/admin-proxies'
 import { adminRedeemRoutes } from '@/features/admin-redeem'
 import { adminPromoRoutes } from '@/features/admin-promo'
-import { adminSettingsRoutes } from '@/features/admin-settings'
 import { adminRiskControlRoutes } from '@/features/admin-risk-control'
 import { promptAuditRoutes } from '@/features/prompt-audit'
 import { adminUsageRoutes } from '@/features/admin-usage'
@@ -54,6 +53,7 @@ const routes: RouteRecordRaw[] = [
   ...billingRoutes,
   ...affiliateRoutes,
   ...modelSquareRoutes,
+  ...modelPlazaRoutes,
   ...mediaStudioRoutes,
   ...channelsUserRoutes,
   ...profileRoutes,
@@ -134,6 +134,25 @@ router.beforeEach(async (to, _from, next) => {
       next(authStore.isAdmin ? '/admin/dashboard' : '/dashboard')
       return
     }
+    if (to.meta.requiresModelPlaza) {
+      if (!appStore.publicSettingsLoaded) {
+        try {
+          await appStore.fetchPublicSettings()
+        } catch (error) {
+          console.warn('Failed to load public settings in route guard', error)
+        }
+      }
+      const settings = appStore.cachedPublicSettings
+      if (appStore.publicSettingsLoaded && settings?.modelPlazaEnabled === false) {
+        next(authStore.isAuthenticated ? (authStore.isAdmin ? '/admin/dashboard' : '/dashboard') : '/login')
+        return
+      }
+      if (settings?.modelPlazaRequireAuth && !authStore.isAuthenticated) {
+        next({ path: '/login', query: { redirect: to.fullPath } })
+        return
+      }
+    }
+
     if (appStore.backendModeEnabled && !authStore.isAuthenticated) {
       const isAllowed = isBackendModePublicRouteAllowed(to, authStore.hasPendingAuthSession)
       if (!isAllowed) {

@@ -128,8 +128,8 @@ async function fetchOrders() {
       page_size: pagination.page_size,
       status: currentFilter.value || undefined,
     })
-    orders.value = res.data.items || []
-    pagination.total = res.data.total || 0
+    orders.value = res.items || []
+    pagination.total = res.total || 0
   } catch (err: unknown) {
     appStore.showError(extractI18nErrorMessage(err, t, 'payment.errors', t('common.error')))
   } finally {
@@ -184,7 +184,7 @@ function canRequestRefund(order: PaymentOrder): boolean {
 async function loadRefundEligibility() {
   try {
     const res = await billingQuery.getRefundEligibleProviders()
-    refundEligibleProviders.value = new Set(res.data.provider_instance_ids || [])
+    refundEligibleProviders.value = new Set(res.provider_instance_ids || [])
   } catch { /* ignore — default to hiding refund button */ }
 }
 

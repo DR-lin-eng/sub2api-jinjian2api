@@ -131,7 +131,9 @@ const handleProbe = async () => {
   try {
     data.value = await queryStore.queryQuota(props.account.id)
     error.value = data.value?.probeError || null
-    emit('probed', data.value)
+    if (data.value) {
+      emit('probed', data.value)
+    }
   } catch (e) {
     error.value = extractErrorMessage(e)
   } finally {

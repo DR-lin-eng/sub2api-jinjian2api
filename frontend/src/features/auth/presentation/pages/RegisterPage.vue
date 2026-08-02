@@ -332,7 +332,7 @@ import {
 } from '@/core/networks/credentialEncryption'
 import { useAuthActionStore } from '@/features/auth/presentation/stores/authActionStore'
 import { useAuthQueryStore } from '@/features/auth/presentation/stores/authQueryStore'
-import { isWeChatWebOAuthEnabled } from '@/features/auth/presentation/utils/wechatOAuthResolver'
+import { isWeChatWebOAuthEnabled } from '@/core/utils/wechatOAuthResolver'
 import { buildAuthErrorMessage } from '@/core/utils/authError'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import {

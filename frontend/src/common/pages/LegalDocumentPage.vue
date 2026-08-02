@@ -119,7 +119,7 @@ marked.setOptions({
 
 const documentId = computed(() => String(route.params.documentId || ''))
 const isAdminComplianceDocument = computed(() => documentId.value === 'admin-compliance')
-const documents = computed(() => settings.value?.loginAgreementDocuments ?? [])
+const documents = computed<LoginAgreementDocument[]>(() => settings.value?.loginAgreementDocuments ?? [])
 const siteName = computed(() => settings.value?.siteName || 'Sub2API')
 const siteLogo = computed(() => sanitizeUrl(settings.value?.siteLogo || '', {
   allowRelative: true,
@@ -144,7 +144,7 @@ const currentDocument = computed<LoginAgreementDocument | null>(() => {
   if (!id) {
     return null
   }
-  return documents.value.find((doc) => doc.id === id) ?? null
+  return documents.value.find((doc: LoginAgreementDocument) => doc.id === id) ?? null
 })
 
 const hasContent = computed(() => Boolean(currentDocument.value?.contentMd?.trim()))

@@ -18,8 +18,8 @@ export const usePaymentStore = defineStore('payment', () => {
     if (configLoading.value) return config.value
     configLoading.value = true
     try {
-      const response = await billingQueryRepository.getConfig()
-      config.value = response.data
+      const paymentConfig = await billingQueryRepository.getConfig()
+      config.value = paymentConfig
       configLoaded.value = true
       return config.value
     } catch (error: unknown) {
@@ -32,8 +32,8 @@ export const usePaymentStore = defineStore('payment', () => {
 
   async function fetchPlans(): Promise<SubscriptionPlan[]> {
     try {
-      const response = await billingQueryRepository.getPlans()
-      plans.value = (response.data || []).map((p: Omit<SubscriptionPlan, 'features'> & { features: string | string[] }) => ({
+      const planList = await billingQueryRepository.getPlans()
+      plans.value = (planList || []).map((p: Omit<SubscriptionPlan, 'features'> & { features: string | string[] }) => ({
         ...p,
         features: typeof p.features === 'string'
           ? p.features.split('\n').map((f: string) => f.trim()).filter(Boolean)
@@ -47,14 +47,12 @@ export const usePaymentStore = defineStore('payment', () => {
   }
 
   async function createOrder(params: CreateOrderRequest) {
-    const response = await billingActionRepository.createOrder(params)
-    return response.data
+    return billingActionRepository.createOrder(params)
   }
 
   async function pollOrderStatus(orderId: number): Promise<PaymentOrder | null> {
     try {
-      const response = await billingQueryRepository.getOrder(orderId)
-      const order = response.data
+      const order = await billingQueryRepository.getOrder(orderId)
       if (currentOrder.value?.id === orderId) {
         currentOrder.value = order
       }

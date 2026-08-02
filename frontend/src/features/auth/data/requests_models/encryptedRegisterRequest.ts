@@ -1,4 +1,4 @@
-import type { CredentialEnvelope } from '@/features/auth/data/requests_models/credentialEnvelope'
+import type { CredentialEnvelope } from '@/core/networks/credentialEnvelope'
 
 export interface EncryptedRegisterRequest {
   credential_envelope: CredentialEnvelope

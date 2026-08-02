@@ -94,7 +94,7 @@ function mountView() {
 function dtoWrap<T>(entity: T) {
   return { toEntity: () => entity, ...entity }
 }
-function dtoArrayWrap<T>(items: T[]) {
+function _dtoArrayWrap<T>(items: T[]) {
   return items.map((item) => dtoWrap(item))
 }
 
