@@ -25,7 +25,7 @@ func (s *GatewayCacheSuite) SetupTest() {
 
 func (s *GatewayCacheSuite) TestGetSessionAccountID_Missing() {
 	_, err := s.cache.GetSessionAccountID(s.ctx, 1, "nonexistent")
-	require.True(s.T(), errors.Is(err, redis.Nil), "expected redis.Nil for missing session")
+	require.ErrorIs(s.T(), err, service.ErrStickySessionNotFound, "expected service sentinel for missing session")
 }
 
 func (s *GatewayCacheSuite) TestSetAndGetSessionAccountID() {
@@ -88,7 +88,7 @@ func (s *GatewayCacheSuite) TestDeleteSessionAccountID() {
 	require.NoError(s.T(), s.cache.DeleteSessionAccountID(s.ctx, groupID, sessionID), "DeleteSessionAccountID")
 
 	_, err := s.cache.GetSessionAccountID(s.ctx, groupID, sessionID)
-	require.True(s.T(), errors.Is(err, redis.Nil), "expected redis.Nil after delete")
+	require.ErrorIs(s.T(), err, service.ErrStickySessionNotFound, "expected service sentinel after delete")
 }
 
 func (s *GatewayCacheSuite) TestOpenAIWSSharedState() {
