@@ -88,7 +88,7 @@
         </div>
 
         <div
-          v-if="form.platform === 'openai'"
+          v-if="isUpstreamBillingProbeEligible(form.platform, form.type)"
           class="flex items-center justify-between gap-4 border-t border-gray-200 pt-4 dark:border-dark-600"
         >
           <div>
@@ -1100,6 +1100,7 @@ import ModelWhitelistSelector from '../ModelWhitelistSelector.vue'
 import QuotaLimitCard from '../QuotaLimitCard.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
 import type { CreateAccountCredentialContext } from '../../accountEditorContext'
+import { isUpstreamBillingProbeEligible } from '../../upstreamBillingProbeEligibility'
 
 const props = defineProps<{ context: CreateAccountCredentialContext }>()
 const { DEFAULT_POOL_MODE_RETRY_COUNT, DEFAULT_POOL_MODE_RETRY_STATUS_CODES, MAX_POOL_MODE_RETRY_COUNT, accountCategory, addCustomErrorCode, addMethod, addModelMapping, addPresetMapping, allowedModels, apiKeyBaseUrl, apiKeyHint, apiKeyValue, autoDisableOnUpstreamInsufficientBalance, baseUrlHint, bedrockAccessKeyId, bedrockApiKeyValue, bedrockAuthMode, bedrockForceGlobal, bedrockPresets, bedrockRegion, bedrockSecretAccessKey, bedrockSessionToken, commonErrorCodes, customErrorCodeInput, customErrorCodesEnabled, editDailyResetHour, editDailyResetMode, editQuotaDailyLimit, editQuotaLimit, editQuotaWeeklyLimit, editResetTimezone, editWeeklyResetDay, editWeeklyResetHour, editWeeklyResetMode, form, geminiTierAIStudio, getModelMappingKey, grokOAuthBaseUrl, grokOAuthCustomBaseUrlEnabled, headerOverrideEnabled, headerOverrideRows, isHeaderOverrideCapable, isOAuthFlow, isOpenAIModelRestrictionDisabled, modelMappings, modelRestrictionMode, poolModeEnabled, poolModeRetryCount, poolModeRetryStatusCodesInput, presetMappings, quotaNotifyGlobalEnabled, quotaNotifyState, removeErrorCode, removeModelMapping, selectedErrorCodes, syncPreviewCredentials, t, toggleErrorCode, upstreamBillingAutoProbeEnabled } = props.context

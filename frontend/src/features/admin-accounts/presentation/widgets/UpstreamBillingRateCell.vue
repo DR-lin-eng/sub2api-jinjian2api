@@ -164,6 +164,8 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import HelpTooltip from '@/common/widgets/feedback/HelpTooltip.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
+import { formatMultiplier } from '@/core/utils/formatters'
+import { isUpstreamBillingProbeEligible } from '@/features/admin-accounts/presentation/upstreamBillingProbeEligibility'
 import type { Account, UpstreamBillingProbeSnapshot, UpstreamQuotaQueryResult, UpstreamQuotaWindow } from '@/types'
 
 type ActionFeedback = 'success' | 'error'
@@ -194,7 +196,9 @@ defineEmits<{
 
 const { t } = useI18n()
 const CLOCK_SKEW_TOLERANCE_MS = 5 * 60 * 1000
-const eligible = computed(() => props.account.platform === 'openai' && props.account.type === 'apikey')
+const eligible = computed(() =>
+  isUpstreamBillingProbeEligible(props.account.platform, props.account.type)
+)
 const snapshot = computed<UpstreamBillingProbeSnapshot | undefined>(() => props.account.extra?.upstream_billing_probe)
 const data = computed(() => snapshot.value?.data)
 const quota = computed(() => props.quotaResult?.quota ?? null)
@@ -280,7 +284,7 @@ const elapsedSinceLastSuccess = computed(() => {
 const effectiveRate = computed(() => {
   if (!validTimestamps.value || stale.value || !['ok', 'failed'].includes(snapshot.value?.status ?? '')) return '-'
   const value = currentEffectiveRate.value
-  return value == null ? '-' : `${Number(value.toPrecision(12))}x`
+  return value == null ? '-' : `${formatMultiplier(value)}x`
 })
 const statusLabel = computed(() => {
   if (!snapshot.value) return t('admin.accounts.upstreamBilling.notProbed')

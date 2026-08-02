@@ -17,6 +17,11 @@ import {
 } from "../groupsModelsListResolver";
 import { normalizeSupportedModelScopesForPlatform } from "../groupsSupportedModelScopesResolver";
 import {
+  isProfitControlPlatform,
+  profitPercentToDecimal,
+  validateProfitControlFormState,
+} from "../groupsProfitControl";
+import {
   normalizeReasoningEffortForPlatform,
   reasoningEffortMappingsToAPI,
   reasoningEffortMappingsToRows,
@@ -219,6 +224,9 @@ export function useCreateGroupController({
     createForm.peak_start = "";
     createForm.peak_end = "";
     createForm.peak_rate_multiplier = 1.0;
+    createForm.profit_control_enabled = false;
+    createForm.profit_min_margin_percent = 0;
+    createForm.profit_safety_buffer_percent = 0;
     createForm.claude_code_only = false;
     createForm.fallback_group_id = null;
     createForm.fallback_group_id_on_invalid_request = null;
@@ -246,6 +254,13 @@ export function useCreateGroupController({
       appStore.showError(t("admin.groups.nameRequired"));
       return;
     }
+    const profitControlError = validateProfitControlFormState(createForm);
+    if (profitControlError) {
+      appStore.showError(
+        t(`admin.groups.profitControl.${profitControlError}`),
+      );
+      return;
+    }
     if (
       createForm.platform === "openai" &&
       reasoningEffortPolicyRef.value &&
@@ -255,8 +270,23 @@ export function useCreateGroupController({
     }
     runtime.submitting.value = true;
     try {
+      const {
+        profit_min_margin_percent: profitMinMarginPercent,
+        profit_safety_buffer_percent: profitSafetyBufferPercent,
+        ...formData
+      } = createForm;
+      const profitControlEnabled =
+        isProfitControlPlatform(createForm.platform) &&
+        createForm.profit_control_enabled;
       const requestData = {
-        ...createForm,
+        ...formData,
+        profit_control_enabled: profitControlEnabled,
+        profit_min_margin: profitControlEnabled
+          ? profitPercentToDecimal(profitMinMarginPercent)
+          : 0,
+        profit_safety_buffer: profitControlEnabled
+          ? profitPercentToDecimal(profitSafetyBufferPercent)
+          : 0,
         daily_limit_usd: normalizeOptionalLimit(createForm.daily_limit_usd),
         weekly_limit_usd: normalizeOptionalLimit(createForm.weekly_limit_usd),
         monthly_limit_usd: normalizeOptionalLimit(createForm.monthly_limit_usd),
@@ -366,6 +396,11 @@ export function useCreateGroupController({
       ) {
         createForm.require_oauth_only = false;
         createForm.require_privacy_set = false;
+      }
+      if (!isProfitControlPlatform(newValue)) {
+        createForm.profit_control_enabled = false;
+        createForm.profit_min_margin_percent = 0;
+        createForm.profit_safety_buffer_percent = 0;
       }
       resetDisabledBatchImagePricing(createForm);
       resetModelsListState(modelsListState);

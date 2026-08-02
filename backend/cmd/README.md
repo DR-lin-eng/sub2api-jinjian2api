@@ -7,5 +7,6 @@
 | `server/` | 主 HTTP 服务和后台任务进程 |
 | `jwtgen/` | 生成维护所需的 JWT |
 | `cleanup-ingress-reject-logs/` | 清理入口拒绝日志的运维命令 |
+| `profit-preview/` | 使用只读 JSON 离线预演分组利润控制准入 |
 
 新增命令应建立独立子目录，不在 `cmd` 根目录放共享实现。

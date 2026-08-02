@@ -451,6 +451,8 @@ var allowedHeaders = map[string]bool{
 //
 // GatewayCache defines cache operations for gateway service.
 // Provides sticky session storage, retrieval, refresh and deletion capabilities.
+var ErrStickySessionNotFound = errors.New("sticky session not found")
+
 type GatewayCache interface {
 	// GetSessionAccountID 获取粘性会话绑定的账号 ID
 	// Get the account ID bound to a sticky session
@@ -540,6 +542,11 @@ type AccountSelectionResult struct {
 	ReleaseFunc               func()
 	WaitPlan                  *AccountWaitPlan // nil means no wait allowed
 	PriorityAdmissionTerminal bool             // low tier failed its only account probe
+	profitGate                *profitControlGate
+}
+
+func (r *AccountSelectionResult) ProfitGateActive() bool {
+	return r != nil && r.profitGate != nil
 }
 
 func priorityAdmissionTerminalSelection(account *Account, timeout time.Duration, maxWaiting int) *AccountSelectionResult {

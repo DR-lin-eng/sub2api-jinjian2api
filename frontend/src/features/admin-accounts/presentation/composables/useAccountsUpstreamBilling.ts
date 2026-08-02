@@ -285,6 +285,14 @@ export function useAccountsUpstreamBilling(options: AccountsUpstreamBillingOptio
     await refreshUpstreamBillingRates(force)
   }
 
+  const refreshAccountsAfterUpstreamBillingProbe = async () => {
+    try {
+      await options.loadAccounts({ refreshTodayStats: false })
+    } catch (error) {
+      console.error('Failed to refresh accounts after upstream billing probe:', error)
+    }
+  }
+
   const patchUpstreamBillingSnapshot = (accountID: number, snapshot: UpstreamBillingProbeSnapshot) => {
     const account = options.getAccounts().find(item => item.id === accountID)
     if (!account) return
@@ -304,7 +312,7 @@ export function useAccountsUpstreamBilling(options: AccountsUpstreamBillingOptio
       const result = await adminAPI.accounts.probeUpstreamBilling(account.id)
       if (result.snapshot) {
         patchUpstreamBillingSnapshot(account.id, result.snapshot)
-        await refreshUpstreamBillingSortedList(true)
+        await refreshAccountsAfterUpstreamBillingProbe()
       }
       feedback = result.snapshot?.status === 'ok' ? 'success' : 'error'
     } catch (error) {
@@ -409,7 +417,7 @@ export function useAccountsUpstreamBilling(options: AccountsUpstreamBillingOptio
           }))
         }
       }
-      if (patched) await refreshUpstreamBillingSortedList(true)
+      if (patched) await refreshAccountsAfterUpstreamBillingProbe()
       if (failed > 0) {
         options.showError(t('admin.accounts.upstreamBilling.batchPartial', { success: resultCount - failed, failed }))
       } else {

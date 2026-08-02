@@ -245,7 +245,15 @@ const autoPause7dThreshold = ref<number | null>(null)
 const autoPause5hDisabled = ref(false)
 const autoPause7dDisabled = ref(false)
 const upstreamBillingAutoProbeEnabled = ref(false)
+const upstreamBillingRateSyncEnabled = ref(false)
 const autoDisableOnUpstreamInsufficientBalance = ref(false)
+
+watch(upstreamBillingRateSyncEnabled, (enabled) => {
+  if (enabled) upstreamBillingAutoProbeEnabled.value = true
+})
+watch(upstreamBillingAutoProbeEnabled, (enabled) => {
+  if (!enabled) upstreamBillingRateSyncEnabled.value = false
+})
 const mixedScheduling = ref(false) // For antigravity accounts: enable mixed scheduling
 const allowOverages = ref(false) // For antigravity accounts: enable AI Credits overages
 const antigravityProjectId = ref('')
@@ -750,6 +758,9 @@ const syncFormFromAccount = (newAccount: Account | null) => {
 	autoPause5hDisabled.value = extra?.auto_pause_5h_disabled === true
 	autoPause7dDisabled.value = extra?.auto_pause_7d_disabled === true
 	upstreamBillingAutoProbeEnabled.value = extra?.upstream_billing_probe_enabled === true
+	upstreamBillingRateSyncEnabled.value =
+		upstreamBillingAutoProbeEnabled.value &&
+		extra?.upstream_billing_rate_sync_enabled === true
 	autoDisableOnUpstreamInsufficientBalance.value = extra?.auto_disable_on_upstream_insufficient_balance === true
 
   // Load OpenAI passthrough toggle (OpenAI OAuth/SetupToken/API Key)
@@ -1393,6 +1404,7 @@ const {
   rpmStrategy, selectedErrorCodes, sessionIdMaskingEnabled, sessionIdleTimeout,
   sessionLimitEnabled, showMixedChannelWarning, submitting, t, tlsFingerprintEnabled,
   tlsFingerprintProfileId, upstreamBillingAutoProbeEnabled, userMsgQueueMode,
+  upstreamBillingRateSyncEnabled,
   webSearchEmulationMode, windowCostEnabled, windowCostLimit, windowCostStickyReserve,
   writeQuotaNotifyToExtra,
 })
@@ -1431,6 +1443,7 @@ const editAccountAdvancedContext = {
   openaiResponsesWebSocketV2Mode, proxies: availableProxies, quotaNotifyGlobalEnabled,
   quotaNotifyState, removeTempUnschedRule, t, tempUnschedEnabled, tempUnschedPresets,
   tempUnschedRules, toggleOpenAIEndpointCapability, upstreamBillingAutoProbeEnabled,
+  upstreamBillingRateSyncEnabled,
   webSearchEmulationMode, webSearchGlobalEnabled,
 } satisfies EditAccountAdvancedContext
 

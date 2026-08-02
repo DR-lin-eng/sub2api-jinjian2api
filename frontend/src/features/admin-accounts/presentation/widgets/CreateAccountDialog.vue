@@ -163,6 +163,7 @@ import type {
   CreateAccountStepIndicatorContext,
   GeminiAccountHelpContext,
 } from '@/features/admin-accounts/presentation/accountEditorContext'
+import { isUpstreamBillingProbeEligible } from '@/features/admin-accounts/presentation/upstreamBillingProbeEligibility'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
@@ -792,8 +793,7 @@ const submitCreateAccount = async (payload: CreateAccountRequest) => {
   try {
     const account = await adminAPI.accounts.create(withAntigravityConfirmFlag(payload))
     if (
-      payload.platform === 'openai' &&
-      payload.type === 'apikey' &&
+      isUpstreamBillingProbeEligible(payload.platform, payload.type) &&
       payload.upstream_billing_probe_enabled === true
     ) {
       try {
@@ -1356,7 +1356,9 @@ const handleSubmit = async () => {
     group_ids: form.group_ids,
     extra,
     upstream_billing_probe_enabled:
-      form.platform === 'openai' ? upstreamBillingAutoProbeEnabled.value : undefined,
+      isUpstreamBillingProbeEligible(form.platform, form.type)
+        ? upstreamBillingAutoProbeEnabled.value
+        : undefined,
     auto_pause_on_expired: autoPauseOnExpired.value
   })
 }

@@ -469,7 +469,7 @@ describe('admin AccountsView bulk edit scope', () => {
     await flushPromises()
 
     expect(probeUpstreamBillingBatch).toHaveBeenCalledWith([7])
-    expect(getUpstreamBillingRatesWithEtag).toHaveBeenCalledTimes(1)
-    expect(listAccounts).toHaveBeenCalledTimes(1)
+    expect(getUpstreamBillingRatesWithEtag).not.toHaveBeenCalled()
+    expect(listAccounts).toHaveBeenCalledTimes(2)
   })
 })

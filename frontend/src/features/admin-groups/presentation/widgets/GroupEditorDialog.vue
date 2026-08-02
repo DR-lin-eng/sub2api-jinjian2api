@@ -6,6 +6,7 @@ import GroupEditorAccountRoutingFields from "./GroupEditorAccountRoutingFields.v
 import GroupEditorAntigravityFields from "./GroupEditorAntigravityFields.vue";
 import GroupEditorCoreFields from "./GroupEditorCoreFields.vue";
 import GroupEditorProviderFields from "./GroupEditorProviderFields.vue";
+import GroupEditorProfitControlFields from "./GroupEditorProfitControlFields.vue";
 import type {
   EditGroupDialogContext,
   GroupEditorDialogContext,
@@ -53,6 +54,7 @@ const {
     />
     <GroupEditorAntigravityFields :context="editorContext" />
     <GroupEditorProviderFields :context="editorContext" />
+    <GroupEditorProfitControlFields :context="editorContext" />
     <GroupEditorAccountRoutingFields :context="editorContext" />
   </form>
 

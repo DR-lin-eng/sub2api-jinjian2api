@@ -40,17 +40,51 @@ const (
 	// Service 层在 SingleAccountRetry 模式下已做充分原地重试（最多 3 次、总等待 30s），
 	// Handler 层只需短暂间隔后重新进入 Service 层即可。
 	singleAccountBackoffDelay = 2 * time.Second
+	// 利润终检不会产生上游请求，也不会推进账号切换计数，因此需要独立预算。
+	maxProfitVetoAttempts = 10
 )
+
+const profitVetoExhaustedMessage = "No available accounts: all candidates rejected by group profit control"
 
 // FailoverState 跨循环迭代共享的 failover 状态
 type FailoverState struct {
-	SwitchCount           int
-	MaxSwitches           int
-	FailedAccountIDs      map[int64]struct{}
-	SameAccountRetryCount map[int64]int
-	LastFailoverErr       *service.UpstreamFailoverError
-	ForceCacheBilling     bool
-	hasBoundSession       bool
+	SwitchCount            int
+	MaxSwitches            int
+	FailedAccountIDs       map[int64]struct{}
+	SameAccountRetryCount  map[int64]int
+	LastFailoverErr        *service.UpstreamFailoverError
+	ForceCacheBilling      bool
+	hasBoundSession        bool
+	profitVetoedAccountIDs map[int64]struct{}
+	profitVetoCount        int
+}
+
+// RecordProfitVeto excludes an account without consuming an upstream switch.
+func (s *FailoverState) RecordProfitVeto(accountID int64) FailoverAction {
+	s.ExcludeAccount(accountID)
+	if s.profitVetoedAccountIDs == nil {
+		s.profitVetoedAccountIDs = make(map[int64]struct{}, 1)
+	}
+	s.profitVetoedAccountIDs[accountID] = struct{}{}
+	s.profitVetoCount++
+	if s.profitVetoCount >= maxProfitVetoAttempts {
+		return FailoverExhausted
+	}
+	return FailoverContinue
+}
+
+func (s *FailoverState) ProfitVetoCount() int { return s.profitVetoCount }
+
+func (s *FailoverState) allExclusionsAreProfitVetoed() bool {
+	if len(s.profitVetoedAccountIDs) == 0 || len(s.FailedAccountIDs) == 0 {
+		return false
+	}
+	for accountID := range s.FailedAccountIDs {
+		if _, ok := s.profitVetoedAccountIDs[accountID]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 // NewFailoverState 创建 failover 状态
@@ -66,6 +100,12 @@ func addFailedAccountID(failedAccountIDs *map[int64]struct{}, accountID int64) {
 		*failedAccountIDs = make(map[int64]struct{}, 1)
 	}
 	(*failedAccountIDs)[accountID] = struct{}{}
+}
+
+func recordOpenAIProfitVeto(failedAccountIDs *map[int64]struct{}, accountID int64, vetoCount *int) bool {
+	addFailedAccountID(failedAccountIDs, accountID)
+	*vetoCount++
+	return *vetoCount < maxProfitVetoAttempts
 }
 
 func tryIncrementSameAccountRetry(counts *map[int64]int, accountID int64, limit int) (int, bool) {
@@ -182,6 +222,13 @@ func (s *FailoverState) HandleSelectionExhausted(ctx context.Context) FailoverAc
 	if s.LastFailoverErr != nil &&
 		s.LastFailoverErr.StatusCode == http.StatusServiceUnavailable &&
 		s.SwitchCount <= s.MaxSwitches {
+		if s.allExclusionsAreProfitVetoed() {
+			logger.FromContext(ctx).Warn("gateway.failover_selection_exhausted_by_profit_veto",
+				zap.Int("profit_veto_count", s.profitVetoCount),
+				zap.Int("excluded_accounts", len(s.FailedAccountIDs)),
+			)
+			return FailoverExhausted
+		}
 
 		logger.FromContext(ctx).Warn("gateway.failover_single_account_backoff",
 			zap.Duration("backoff_delay", singleAccountBackoffDelay),
@@ -196,6 +243,9 @@ func (s *FailoverState) HandleSelectionExhausted(ctx context.Context) FailoverAc
 			zap.Int("max_switches", s.MaxSwitches),
 		)
 		s.FailedAccountIDs = nil
+		for accountID := range s.profitVetoedAccountIDs {
+			s.ExcludeAccount(accountID)
+		}
 		return FailoverContinue
 	}
 	return FailoverExhausted

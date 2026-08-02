@@ -213,8 +213,42 @@
         </div>
         <div>
           <label class="input-label">{{ t('admin.accounts.billingRateMultiplier') }}</label>
-          <input v-model.number="form.rate_multiplier" type="number" min="0" step="0.001" class="input" />
-          <p class="input-hint">{{ t('admin.accounts.billingRateMultiplierHint') }}</p>
+          <input
+            v-model.number="form.rate_multiplier"
+            type="number"
+            min="0"
+            step="0.001"
+            class="input disabled:cursor-not-allowed disabled:opacity-60"
+            data-testid="account-rate-multiplier"
+            :disabled="upstreamBillingRateSyncEnabled"
+          />
+          <p class="input-hint">
+            {{
+              t(
+                upstreamBillingRateSyncEnabled
+                  ? 'admin.accounts.upstreamBilling.syncRateManagedHint'
+                  : 'admin.accounts.billingRateMultiplierHint'
+              )
+            }}
+          </p>
+          <div
+            v-if="isUpstreamBillingProbeEligible(account.platform, account.type)"
+            class="mt-3 flex items-center justify-between gap-3"
+          >
+            <div class="min-w-0">
+              <p class="text-xs font-medium text-gray-700 dark:text-gray-200">
+                {{ t('admin.accounts.upstreamBilling.syncRate') }}
+              </p>
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {{ t('admin.accounts.upstreamBilling.syncRateHint') }}
+              </p>
+            </div>
+            <Toggle
+              v-model="upstreamBillingRateSyncEnabled"
+              data-testid="upstream-billing-rate-sync"
+              :aria-label="t('admin.accounts.upstreamBilling.syncRate')"
+            />
+          </div>
         </div>
       </div>
       <div class="border-t border-gray-200 pt-4 dark:border-dark-600">
@@ -386,7 +420,7 @@
 
       <!-- OpenAI APIKey Responses API support mode -->
       <div
-        v-if="account?.platform === 'openai' && account?.type === 'apikey'"
+        v-if="isUpstreamBillingProbeEligible(account.platform, account.type)"
         class="space-y-4 border-t border-gray-200 pt-4 dark:border-dark-600"
       >
         <div class="flex items-center justify-between gap-4">
@@ -750,7 +784,8 @@ import QuotaLimitCard from '../QuotaLimitCard.vue'
 import Select from '@/common/widgets/forms/Select.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
 import type { EditAccountAdvancedContext } from '../../accountEditorContext'
+import { isUpstreamBillingProbeEligible } from '../../upstreamBillingProbeEligibility'
 
 const props = defineProps<{ context: EditAccountAdvancedContext }>()
-const { account, addTempUnschedRule, anthropicAPIKeyAuthScheme, anthropicPassthroughEnabled, codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled, codexImageToolBadgeClass, codexImageToolBadgeLabel, codexImageToolMode, codexImageToolOptions, codexWebSearchEnabled, editDailyResetHour, editDailyResetMode, editQuotaDailyLimit, editQuotaLimit, editQuotaWeeklyLimit, editResetTimezone, editWeeklyResetDay, editWeeklyResetHour, editWeeklyResetMode, expiresAtInput, form, getTempUnschedRuleKey, handleOllamaCloudUsageUpdated, interceptWarmupRequests, isOpenAIPersonalAccessTokenAccount, isSparkShadow, moveTempUnschedRule, openAIEndpointCapabilities, openAIEndpointCapabilityOptions, openAIForceImageAPIEnabled, openAILongContextBillingEnabled, openAIResponsesMode, openAIResponsesModeOptions, openAIResponsesStatusKey, openAITextGenerationCapabilityEnabled, openAIWSModeConcurrencyHintKey, openAIWSModeOptions, openaiPassthroughEnabled, openaiFlattenNamespacesEnabled, openaiResponsesWebSocketV2Mode, proxies, quotaNotifyGlobalEnabled, quotaNotifyState, removeTempUnschedRule, t, tempUnschedEnabled, tempUnschedPresets, tempUnschedRules, toggleOpenAIEndpointCapability, upstreamBillingAutoProbeEnabled, webSearchEmulationMode, webSearchGlobalEnabled } = props.context
+const { account, addTempUnschedRule, anthropicAPIKeyAuthScheme, anthropicPassthroughEnabled, codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled, codexImageToolBadgeClass, codexImageToolBadgeLabel, codexImageToolMode, codexImageToolOptions, codexWebSearchEnabled, editDailyResetHour, editDailyResetMode, editQuotaDailyLimit, editQuotaLimit, editQuotaWeeklyLimit, editResetTimezone, editWeeklyResetDay, editWeeklyResetHour, editWeeklyResetMode, expiresAtInput, form, getTempUnschedRuleKey, handleOllamaCloudUsageUpdated, interceptWarmupRequests, isOpenAIPersonalAccessTokenAccount, isSparkShadow, moveTempUnschedRule, openAIEndpointCapabilities, openAIEndpointCapabilityOptions, openAIForceImageAPIEnabled, openAILongContextBillingEnabled, openAIResponsesMode, openAIResponsesModeOptions, openAIResponsesStatusKey, openAITextGenerationCapabilityEnabled, openAIWSModeConcurrencyHintKey, openAIWSModeOptions, openaiPassthroughEnabled, openaiFlattenNamespacesEnabled, openaiResponsesWebSocketV2Mode, proxies, quotaNotifyGlobalEnabled, quotaNotifyState, removeTempUnschedRule, t, tempUnschedEnabled, tempUnschedPresets, tempUnschedRules, toggleOpenAIEndpointCapability, upstreamBillingAutoProbeEnabled, upstreamBillingRateSyncEnabled, webSearchEmulationMode, webSearchGlobalEnabled } = props.context
 </script>

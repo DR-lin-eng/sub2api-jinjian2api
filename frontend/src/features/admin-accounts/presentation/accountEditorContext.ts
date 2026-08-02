@@ -391,6 +391,7 @@ export interface EditAccountAdvancedContext
   quotaNotifyState: QuotaNotifyState
   t: Translate
   upstreamBillingAutoProbeEnabled: Ref<boolean>
+  upstreamBillingRateSyncEnabled: Ref<boolean>
   webSearchEmulationMode: Ref<string>
   webSearchGlobalEnabled: Ref<boolean>
 }

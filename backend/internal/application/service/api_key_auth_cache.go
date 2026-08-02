@@ -123,6 +123,10 @@ type APIKeyAuthGroupSnapshot struct {
 	PeakStart          string  `json:"peak_start"`
 	PeakEnd            string  `json:"peak_end"`
 	PeakRateMultiplier float64 `json:"peak_rate_multiplier"`
+
+	ProfitControlEnabled bool    `json:"profit_control_enabled"`
+	ProfitMinMargin      float64 `json:"profit_min_margin"`
+	ProfitSafetyBuffer   float64 `json:"profit_safety_buffer"`
 }
 
 // APIKeyAuthCacheEntry 缓存条目，支持负缓存

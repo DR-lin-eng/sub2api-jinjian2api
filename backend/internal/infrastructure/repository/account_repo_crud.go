@@ -325,16 +325,28 @@ func (r *accountRepository) ListCRSAccountIDs(ctx context.Context) (map[string]i
 }
 
 func (r *accountRepository) Update(ctx context.Context, account *service.Account) error {
-	return r.updateAccount(ctx, account, nil)
+	return r.updateAccount(ctx, account, nil, nil, account.RateMultiplier)
 }
 
-// UpdateWithUpstreamBillingProbeEnabled applies an explicit probe switch in the
-// same row-lock transaction as the rest of an admin account edit.
-func (r *accountRepository) UpdateWithUpstreamBillingProbeEnabled(ctx context.Context, account *service.Account, enabled bool) error {
-	return r.updateAccount(ctx, account, &enabled)
+// UpdateWithAccountBillingSettings preserves a concurrently synchronized rate
+// unless the administrative request explicitly edits the rate itself.
+func (r *accountRepository) UpdateWithAccountBillingSettings(
+	ctx context.Context,
+	account *service.Account,
+	probeEnabled *bool,
+	rateSyncEnabled *bool,
+	rateMultiplier *float64,
+) error {
+	return r.updateAccount(ctx, account, probeEnabled, rateSyncEnabled, rateMultiplier)
 }
 
-func (r *accountRepository) updateAccount(ctx context.Context, account *service.Account, explicitProbeEnabled *bool) error {
+func (r *accountRepository) updateAccount(
+	ctx context.Context,
+	account *service.Account,
+	explicitProbeEnabled *bool,
+	explicitRateSyncEnabled *bool,
+	explicitRateMultiplier *float64,
+) error {
 	if account == nil {
 		return nil
 	}
@@ -358,7 +370,14 @@ func (r *accountRepository) updateAccount(ctx context.Context, account *service.
 		}
 	}
 
-	updated, err := r.updateLockedAccount(ctx, client, account, explicitProbeEnabled)
+	updated, err := r.updateLockedAccount(
+		ctx,
+		client,
+		account,
+		explicitProbeEnabled,
+		explicitRateSyncEnabled,
+		explicitRateMultiplier,
+	)
 	if err != nil {
 		return translatePersistenceError(err, service.ErrAccountNotFound, nil)
 	}
@@ -380,8 +399,15 @@ func (r *accountRepository) updateAccount(ctx context.Context, account *service.
 	return nil
 }
 
-func (r *accountRepository) updateLockedAccount(ctx context.Context, client *dbent.Client, account *service.Account, explicitProbeEnabled *bool) (*dbent.Account, error) {
-	extra, err := lockAndMergeAccountProbeExtra(ctx, client, account, explicitProbeEnabled)
+func (r *accountRepository) updateLockedAccount(
+	ctx context.Context,
+	client *dbent.Client,
+	account *service.Account,
+	explicitProbeEnabled *bool,
+	explicitRateSyncEnabled *bool,
+	explicitRateMultiplier *float64,
+) (*dbent.Account, error) {
+	extra, err := lockAndMergeAccountProbeExtra(ctx, client, account, explicitProbeEnabled, explicitRateSyncEnabled)
 	if err != nil {
 		return nil, err
 	}
@@ -406,8 +432,8 @@ func (r *accountRepository) updateLockedAccount(ctx context.Context, client *dbe
 		SetSchedulable(schedulable).
 		SetAutoPauseOnExpired(account.AutoPauseOnExpired)
 
-	if account.RateMultiplier != nil {
-		builder.SetRateMultiplier(*account.RateMultiplier)
+	if explicitRateMultiplier != nil {
+		builder.SetRateMultiplier(*explicitRateMultiplier)
 	}
 	if account.LoadFactor != nil {
 		builder.SetLoadFactor(*account.LoadFactor)
@@ -470,7 +496,13 @@ func (r *accountRepository) updateLockedAccount(ctx context.Context, client *dbe
 	return builder.Save(ctx)
 }
 
-func lockAndMergeAccountProbeExtra(ctx context.Context, client *dbent.Client, account *service.Account, explicitProbeEnabled *bool) (map[string]any, error) {
+func lockAndMergeAccountProbeExtra(
+	ctx context.Context,
+	client *dbent.Client,
+	account *service.Account,
+	explicitProbeEnabled *bool,
+	explicitRateSyncEnabled *bool,
+) (map[string]any, error) {
 	credentials, err := json.Marshal(normalizeJSONMap(account.Credentials))
 	if err != nil {
 		return nil, err
@@ -497,6 +529,7 @@ func lockAndMergeAccountProbeExtra(ctx context.Context, client *dbent.Client, ac
 			),
 			proxy_id IS NOT DISTINCT FROM $5,
 			extra -> 'upstream_billing_probe_enabled',
+			extra -> 'upstream_billing_rate_sync_enabled',
 			extra -> 'upstream_billing_probe',
 			extra -> 'ollama_cloud_usage_session',
 			extra -> 'ollama_cloud_usage_auto_refresh',
@@ -521,6 +554,7 @@ func lockAndMergeAccountProbeExtra(ctx context.Context, client *dbent.Client, ac
 		ollamaGroupIdentityUnchanged bool
 		ollamaProxyIdentityUnchanged bool
 		currentEnabled               []byte
+		currentRateSyncEnabled       []byte
 		currentSnapshot              []byte
 		currentOllamaSession         []byte
 		currentOllamaAutoRefresh     []byte
@@ -531,6 +565,7 @@ func lockAndMergeAccountProbeExtra(ctx context.Context, client *dbent.Client, ac
 		&ollamaGroupIdentityUnchanged,
 		&ollamaProxyIdentityUnchanged,
 		&currentEnabled,
+		&currentRateSyncEnabled,
 		&currentSnapshot,
 		&currentOllamaSession,
 		&currentOllamaAutoRefresh,
@@ -545,6 +580,7 @@ func lockAndMergeAccountProbeExtra(ctx context.Context, client *dbent.Client, ac
 	extra := copyJSONMap(normalizeJSONMap(account.Extra))
 	for _, key := range []string{
 		service.UpstreamBillingProbeEnabledExtraKey,
+		service.UpstreamBillingRateSyncEnabledExtraKey,
 		service.UpstreamBillingProbeExtraKey,
 		service.OllamaCloudUsageSessionExtraKey,
 		service.OllamaCloudUsageAutoRefreshExtraKey,
@@ -552,21 +588,49 @@ func lockAndMergeAccountProbeExtra(ctx context.Context, client *dbent.Client, ac
 	} {
 		delete(extra, key)
 	}
-	probeExplicitlyDisabled := false
-	probeAccount := account.Platform == service.PlatformOpenAI && account.Type == service.AccountTypeAPIKey
-	if probeAccount && explicitProbeEnabled != nil {
-		extra[service.UpstreamBillingProbeEnabledExtraKey] = *explicitProbeEnabled
-		probeExplicitlyDisabled = !*explicitProbeEnabled
-	} else if probeAccount {
+	probeAccount := service.IsUpstreamBillingProbeIdentity(account.Platform, account.Type)
+	probeEnabled := false
+	probeEnabledPresent := false
+	if probeAccount {
 		if enabled, ok, err := decodeAccountExtraJSON(currentEnabled); err != nil {
 			return nil, err
-		} else if ok {
-			extra[service.UpstreamBillingProbeEnabledExtraKey] = enabled
-			if value, isBool := enabled.(bool); isBool && !value {
-				probeExplicitlyDisabled = true
-			}
+		} else if value, isBool := enabled.(bool); ok && isBool {
+			probeEnabled = value
+			probeEnabledPresent = true
+		}
+		if explicitProbeEnabled != nil {
+			probeEnabled = *explicitProbeEnabled
+			probeEnabledPresent = true
 		}
 	}
+	rateSyncEnabled := false
+	rateSyncEnabledPresent := false
+	if probeAccount {
+		if enabled, ok, err := decodeAccountExtraJSON(currentRateSyncEnabled); err != nil {
+			return nil, err
+		} else if value, isBool := enabled.(bool); ok && isBool {
+			rateSyncEnabled = value
+			rateSyncEnabledPresent = true
+		}
+		if explicitRateSyncEnabled != nil {
+			rateSyncEnabled = *explicitRateSyncEnabled
+			rateSyncEnabledPresent = true
+		}
+		if explicitProbeEnabled != nil && !*explicitProbeEnabled {
+			rateSyncEnabled = false
+			rateSyncEnabledPresent = true
+		}
+		if !probeEnabled {
+			rateSyncEnabled = false
+		}
+		if probeEnabledPresent {
+			extra[service.UpstreamBillingProbeEnabledExtraKey] = probeEnabled
+		}
+		if rateSyncEnabledPresent {
+			extra[service.UpstreamBillingRateSyncEnabledExtraKey] = rateSyncEnabled
+		}
+	}
+	probeExplicitlyDisabled := probeEnabledPresent && !probeEnabled
 	if identityUnchanged && !probeExplicitlyDisabled {
 		if snapshot, ok, err := decodeAccountExtraJSON(currentSnapshot); err != nil {
 			return nil, err
@@ -637,7 +701,7 @@ func (r *accountRepository) UpdateCredentials(ctx context.Context, id int64, cre
 			credentials = $1::jsonb,
 			extra = CASE
 				-- 凭证整体未变化 ⇒ Ollama 组身份必然未变化；顶层 DISTINCT 守卫防止
-				-- 非 Ollama 账号的无变化持久化误清 openai 探测快照或重写 NULL extra。
+				-- 非 Ollama 账号的无变化持久化误清探测快照或重写 NULL extra。
 				WHEN platform IN ('openai', 'anthropic')
 					AND type = 'apikey'
 					AND credentials IS DISTINCT FROM $1::jsonb
@@ -648,15 +712,12 @@ func (r *accountRepository) UpdateCredentials(ctx context.Context, id int64, cre
 							AND `+ollamaCloudBaseURLMatchesSQL("$1::jsonb ->> 'base_url'")+`
 						)
 					)
-				THEN (CASE
-						WHEN platform = 'openai' THEN COALESCE(extra, '{}'::jsonb) - 'upstream_billing_probe'
-						ELSE COALESCE(extra, '{}'::jsonb)
-					END)
+				THEN COALESCE(extra, '{}'::jsonb)
+					- 'upstream_billing_probe'
 					- 'ollama_cloud_usage_session'
 					- 'ollama_cloud_usage_auto_refresh'
 					- 'ollama_cloud_usage_snapshot'
-				WHEN platform = 'openai'
-					AND type = 'apikey'
+				WHEN type = 'apikey'
 					AND credentials IS DISTINCT FROM $1::jsonb
 				THEN COALESCE(extra, '{}'::jsonb) - 'upstream_billing_probe'
 				ELSE extra

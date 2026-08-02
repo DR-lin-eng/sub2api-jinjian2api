@@ -178,6 +178,14 @@
             aria-labelledby="bulk-edit-rate-multiplier-label"
           />
           <p class="input-hint">{{ t('admin.accounts.billingRateMultiplierHint') }}</p>
+          <p
+            v-if="enableRateMultiplier"
+            class="mt-2 flex items-start gap-1 text-xs text-amber-700 dark:text-amber-300"
+            data-testid="bulk-rate-sync-warning"
+          >
+            <Icon name="exclamationTriangle" size="xs" class="mt-0.5 flex-shrink-0" />
+            <span>{{ t('admin.accounts.bulkEdit.rateSyncWarning') }}</span>
+          </p>
         </div>
       </div>
 
@@ -333,8 +341,8 @@
         </div>
       </div>
 
-      <!-- Upstream billing auto probe (OpenAI API Key only) -->
-      <div v-if="allOpenAIAPIKey" class="border-t border-gray-200 pt-4 dark:border-dark-600">
+      <!-- Upstream billing auto probe -->
+      <div v-if="allBillingProbeCapable" class="border-t border-gray-200 pt-4 dark:border-dark-600">
         <div class="mb-3 flex items-center justify-between">
           <div class="flex-1 pr-4">
             <label
@@ -749,6 +757,7 @@ import type { OpenAIWSMode } from '@/core/utils/openaiWsMode'
 import { buildBulkAccountUpdatePayload } from '@/features/admin-accounts/presentation/accountBulkUpdatePayload'
 import type { ModelMapping } from '@/features/admin-accounts/presentation/accountFormPolicy'
 import type { BulkEditRoutingPolicyContext } from '@/features/admin-accounts/presentation/bulkEditAccountContext'
+import { areUpstreamBillingProbeTargetsEligible } from '@/features/admin-accounts/presentation/upstreamBillingProbeEligibility'
 import BulkEditRoutingPolicyFields from './BulkEditRoutingPolicyFields.vue'
 
 interface Props {
@@ -824,6 +833,13 @@ const allOpenAIAPIKey = computed(() => {
     targetSelectedTypes.value.every(t => t === 'apikey')
   )
 })
+
+const allBillingProbeCapable = computed(() =>
+  areUpstreamBillingProbeTargetsEligible(
+    targetSelectedPlatforms.value,
+    targetSelectedTypes.value
+  )
+)
 
 // 是否全部为 anthropic/openai 平台的 apikey 账号（请求头覆写仅在此条件下显示）
 // 所选平台 × 所选类型的全组合均需具备覆写资格（实际选中账号是该组合的子集，
@@ -1292,6 +1308,10 @@ const submitBulkUpdate = async (baseUpdates: Record<string, unknown>) => {
       pendingUpdatesForConfirm.value = baseUpdates
       mixedChannelWarningMessage.value = error.message
       showMixedChannelWarning.value = true
+    } else if (error.reason === 'UPSTREAM_BILLING_RATE_SYNC_BULK_CONFLICT') {
+      appStore.showError(t('admin.accounts.bulkEdit.rateSyncConflict', {
+        count: error.metadata?.count ?? 1
+      }))
     } else {
       appStore.showError(error.message || t('admin.accounts.bulkEdit.failed'))
       console.error('Error bulk updating accounts:', error)

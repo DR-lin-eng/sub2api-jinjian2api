@@ -110,7 +110,7 @@ func (r *upstreamBillingProbeAccountRepo) UpdateExtra(_ context.Context, id int6
 	return nil
 }
 
-func (r *upstreamBillingProbeAccountRepo) UpdateUpstreamBillingProbeSnapshot(_ context.Context, expected *Account, snapshot *UpstreamBillingProbeSnapshot) error {
+func (r *upstreamBillingProbeAccountRepo) UpdateUpstreamBillingProbeSnapshot(_ context.Context, expected *Account, snapshot *UpstreamBillingProbeSnapshot, rateMultiplier *float64) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	account := r.accounts[expected.ID]
@@ -121,6 +121,9 @@ func (r *upstreamBillingProbeAccountRepo) UpdateUpstreamBillingProbeSnapshot(_ c
 		account.Extra = make(map[string]any)
 	}
 	account.Extra[UpstreamBillingProbeExtraKey] = snapshot
+	if rateMultiplier != nil {
+		account.RateMultiplier = rateMultiplier
+	}
 	return nil
 }
 
@@ -566,14 +569,14 @@ func TestUpstreamBillingProbeUnsupportedAndAccountToggle(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, UpstreamBillingProbeStatusUnsupported, snapshot.Status)
 	require.Equal(t, "unsupported", snapshot.LastError)
-	require.False(t, snapshot.NextProbeAt.Before(fixedNow.Add(24*time.Minute)))
-	require.False(t, snapshot.NextProbeAt.After(fixedNow.Add(36*time.Minute)))
+	require.False(t, snapshot.NextProbeAt.Before(fixedNow.Add(192*time.Minute)))
+	require.False(t, snapshot.NextProbeAt.After(fixedNow.Add(288*time.Minute)))
 
 	snapshot, err = svc.ProbeAccount(context.Background(), account.ID)
 	require.NoError(t, err)
 	require.Equal(t, 2, snapshot.FailureCount)
-	require.False(t, snapshot.NextProbeAt.Before(fixedNow.Add(24*time.Minute)))
-	require.False(t, snapshot.NextProbeAt.After(fixedNow.Add(36*time.Minute)))
+	require.False(t, snapshot.NextProbeAt.Before(fixedNow.Add(192*time.Minute)))
+	require.False(t, snapshot.NextProbeAt.After(fixedNow.Add(288*time.Minute)))
 
 	invalid := &Account{ID: 20, Platform: PlatformOpenAI, Type: AccountTypeOAuth}
 	repo.accounts[invalid.ID] = invalid

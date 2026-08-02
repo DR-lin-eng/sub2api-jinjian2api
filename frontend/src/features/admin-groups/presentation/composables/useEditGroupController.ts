@@ -17,6 +17,12 @@ import {
 } from "../groupsModelsListResolver";
 import { normalizeSupportedModelScopesForPlatform } from "../groupsSupportedModelScopesResolver";
 import {
+  isProfitControlPlatform,
+  profitDecimalToPercent,
+  profitPercentToDecimal,
+  validateProfitControlFormState,
+} from "../groupsProfitControl";
+import {
   normalizeReasoningEffortForPlatform,
   reasoningEffortMappingsToAPI,
   reasoningEffortMappingsToRows,
@@ -223,6 +229,13 @@ export function useEditGroupController({
     editForm.peak_start = group.peak_start ?? "";
     editForm.peak_end = group.peak_end ?? "";
     editForm.peak_rate_multiplier = group.peak_rate_multiplier ?? 1.0;
+    editForm.profit_control_enabled = group.profit_control_enabled ?? false;
+    editForm.profit_min_margin_percent = profitDecimalToPercent(
+      group.profit_min_margin,
+    );
+    editForm.profit_safety_buffer_percent = profitDecimalToPercent(
+      group.profit_safety_buffer,
+    );
     editForm.claude_code_only = group.claude_code_only || false;
     editForm.fallback_group_id = group.fallback_group_id;
     editForm.fallback_group_id_on_invalid_request =
@@ -280,6 +293,9 @@ export function useEditGroupController({
     editForm.peak_start = "";
     editForm.peak_end = "";
     editForm.peak_rate_multiplier = 1.0;
+    editForm.profit_control_enabled = false;
+    editForm.profit_min_margin_percent = 0;
+    editForm.profit_safety_buffer_percent = 0;
     editForm.video_rate_independent = false;
     editForm.video_rate_multiplier = 1;
     editForm.video_price_480p = null;
@@ -297,6 +313,13 @@ export function useEditGroupController({
       appStore.showError(t("admin.groups.nameRequired"));
       return;
     }
+    const profitControlError = validateProfitControlFormState(editForm);
+    if (profitControlError) {
+      appStore.showError(
+        t(`admin.groups.profitControl.${profitControlError}`),
+      );
+      return;
+    }
     if (
       editForm.platform === "openai" &&
       reasoningEffortPolicyRef.value &&
@@ -306,8 +329,23 @@ export function useEditGroupController({
     }
     runtime.submitting.value = true;
     try {
+      const {
+        profit_min_margin_percent: profitMinMarginPercent,
+        profit_safety_buffer_percent: profitSafetyBufferPercent,
+        ...formData
+      } = editForm;
+      const profitControlEnabled =
+        isProfitControlPlatform(editForm.platform) &&
+        editForm.profit_control_enabled;
       const payload = {
-        ...editForm,
+        ...formData,
+        profit_control_enabled: profitControlEnabled,
+        profit_min_margin: profitControlEnabled
+          ? profitPercentToDecimal(profitMinMarginPercent)
+          : 0,
+        profit_safety_buffer: profitControlEnabled
+          ? profitPercentToDecimal(profitSafetyBufferPercent)
+          : 0,
         daily_limit_usd: normalizeOptionalLimit(editForm.daily_limit_usd),
         weekly_limit_usd: normalizeOptionalLimit(editForm.weekly_limit_usd),
         monthly_limit_usd: normalizeOptionalLimit(editForm.monthly_limit_usd),
@@ -420,6 +458,11 @@ export function useEditGroupController({
       ) {
         editForm.require_oauth_only = false;
         editForm.require_privacy_set = false;
+      }
+      if (!isProfitControlPlatform(newValue)) {
+        editForm.profit_control_enabled = false;
+        editForm.profit_min_margin_percent = 0;
+        editForm.profit_safety_buffer_percent = 0;
       }
       resetDisabledBatchImagePricing(editForm);
       if (editingGroup.value) {

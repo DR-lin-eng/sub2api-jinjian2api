@@ -384,6 +384,25 @@ describe('BulkEditAccountModal', () => {
     })
   })
 
+  it('多平台 API Key 目标可统一设置上游倍率自动探测', () => {
+    const wrapper = mountModal({
+      selectedPlatforms: ['anthropic', 'gemini', 'grok'],
+      selectedTypes: ['apikey']
+    })
+
+    expect(wrapper.find('#bulk-edit-upstream-billing-auto-probe-enabled').exists()).toBe(true)
+  })
+
+  it('批量手工倍率修改显示自动同步冲突警告', async () => {
+    const wrapper = mountModal()
+
+    await wrapper.get('#bulk-edit-rate-multiplier-enabled').setValue(true)
+
+    expect(wrapper.get('[data-testid="bulk-rate-sync-warning"]').text()).toBe(
+      'admin.accounts.bulkEdit.rateSyncWarning'
+    )
+  })
+
   it('OpenAI API Key 批量编辑可统一关闭上游倍率自动探测', async () => {
     const wrapper = mountModal({
       selectedPlatforms: ['openai'],

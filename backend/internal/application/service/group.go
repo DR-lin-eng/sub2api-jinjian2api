@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -99,6 +100,10 @@ type Group struct {
 	MaxReasoningEffort string
 	// ReasoningEffortMappings rewrites explicit request values before applying the ceiling.
 	ReasoningEffortMappings []ReasoningEffortMapping
+
+	ProfitControlEnabled bool
+	ProfitMinMargin      float64
+	ProfitSafetyBuffer   float64
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -337,4 +342,58 @@ func computePeakAwareMultipliers(apiKey *APIKey, base float64, now time.Time) (t
 	}
 	text = base * peak
 	return
+}
+
+func validProfitControlRatio(v float64) bool {
+	return !math.IsNaN(v) && !math.IsInf(v, 0) && v >= 0 && v < 1
+}
+
+func NormalizeGroupPlatform(platform string) string {
+	if platform == "" {
+		return PlatformAnthropic
+	}
+	return platform
+}
+
+func ValidateProfitControlConfig(platform string, enabled bool, minMargin, safetyBuffer float64) error {
+	if !enabled {
+		return nil
+	}
+	if !profitControlPlatformSupported(platform) {
+		return errors.New("利润控制仅支持 openai、anthropic、gemini、grok、antigravity 平台分组")
+	}
+	if !validProfitControlRatio(minMargin) {
+		return fmt.Errorf("profit_min_margin 应为 [0,1) 的小数，got %v", minMargin)
+	}
+	if !validProfitControlRatio(safetyBuffer) {
+		return fmt.Errorf("profit_safety_buffer 应为 [0,1) 的小数，got %v", safetyBuffer)
+	}
+	if minMargin+safetyBuffer >= 1 {
+		return errors.New("profit_min_margin 与 profit_safety_buffer 之和必须小于 1，否则将排除全部账号")
+	}
+	return nil
+}
+
+func NormalizeProfitControlConfig(platform string, enabled bool, minMargin, safetyBuffer float64) (bool, float64, float64) {
+	if !profitControlPlatformSupported(platform) {
+		return false, 0, 0
+	}
+	if !enabled {
+		if !validProfitControlRatio(minMargin) {
+			minMargin = 0
+		}
+		if !validProfitControlRatio(safetyBuffer) {
+			safetyBuffer = 0
+		}
+	}
+	return enabled, minMargin, safetyBuffer
+}
+
+func profitControlPlatformSupported(platform string) bool {
+	switch platform {
+	case PlatformOpenAI, PlatformAnthropic, PlatformGemini, PlatformGrok, PlatformAntigravity:
+		return true
+	default:
+		return false
+	}
 }

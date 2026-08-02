@@ -280,12 +280,12 @@ describe('CreateAccountModal OpenAI long-context billing', () => {
     expect(createAccountMock.mock.calls[0]?.[0]?.extra?.openai_force_image_api).toBe(true)
   })
 
-  it('omits the OpenAI setting for non-OpenAI account creation', async () => {
+  it('keeps OpenAI-only settings out of Anthropic accounts while enabling supported probes', async () => {
     await submitApiKeyAccount('anthropic')
 
     expect(createAccountMock).toHaveBeenCalledTimes(1)
     expect(createAccountMock.mock.calls[0]?.[0]?.extra?.openai_long_context_billing_enabled).toBeUndefined()
-    expect(createAccountMock.mock.calls[0]?.[0]?.upstream_billing_probe_enabled).toBeUndefined()
+    expect(createAccountMock.mock.calls[0]?.[0]?.upstream_billing_probe_enabled).toBe(true)
   })
 
   it('leaves Codex session import billing ownership to the backend', async () => {

@@ -83,7 +83,7 @@ func (r *accountRepository) ListDueUpstreamBillingProbeAccounts(ctx context.Cont
 			FROM accounts
 			WHERE deleted_at IS NULL
 				AND status = 'active'
-				AND platform = 'openai'
+				AND platform IN ('openai', 'anthropic', 'gemini', 'antigravity', 'grok')
 				AND type = 'apikey'
 				AND extra @> '{"upstream_billing_probe_enabled": true}'::jsonb
 				AND (
@@ -134,7 +134,7 @@ func (r *accountRepository) ListDueUpstreamBillingProbeAccounts(ctx context.Cont
 			FROM accounts
 			WHERE deleted_at IS NULL
 				AND status = 'active'
-				AND platform = 'openai'
+				AND platform IN ('openai', 'anthropic', 'gemini', 'antigravity', 'grok')
 				AND type = 'apikey'
 				AND extra @> '{"upstream_billing_probe_enabled": true}'::jsonb
 				AND jsonb_typeof(extra #> '{upstream_billing_probe,next_probe_unix}') = 'number'

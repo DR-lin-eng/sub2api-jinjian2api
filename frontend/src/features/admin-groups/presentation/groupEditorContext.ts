@@ -71,6 +71,9 @@ export interface GroupEditorFormState {
   peak_start: string;
   peak_end: string;
   peak_rate_multiplier: number | string;
+  profit_control_enabled: boolean;
+  profit_min_margin_percent: number | string;
+  profit_safety_buffer_percent: number | string;
   claude_code_only: boolean;
   fallback_group_id: number | null;
   fallback_group_id_on_invalid_request: number | null;

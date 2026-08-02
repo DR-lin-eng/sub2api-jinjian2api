@@ -237,6 +237,18 @@ func (Group) Fields() []ent.Field {
 			Default([]domain.ReasoningEffortMapping{}).
 			SchemaType(map[string]string{dialect.Postgres: "jsonb"}).
 			Comment("OpenAI reasoning effort 自定义精确映射；先映射再应用上限"),
+
+		field.Bool("profit_control_enabled").
+			Default(false).
+			Comment("是否启用利润控制：仅允许账号倍率满足毛利率要求的候选进入调度"),
+		field.Float("profit_min_margin").
+			SchemaType(map[string]string{dialect.Postgres: "decimal(10,4)"}).
+			Default(0).
+			Comment("最低毛利率，小数（0.30=30%）"),
+		field.Float("profit_safety_buffer").
+			SchemaType(map[string]string{dialect.Postgres: "decimal(10,4)"}).
+			Default(0).
+			Comment("利润控制安全缓冲，小数"),
 	}
 }
 

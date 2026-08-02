@@ -22,6 +22,7 @@ import type {
 } from './accountEditorContext'
 import { buildModelMappingObject } from './composables/useModelWhitelist'
 import type { useQuotaNotifyState } from './composables/useQuotaNotifyState'
+import { isUpstreamBillingProbeEligible } from './upstreamBillingProbeEligibility'
 
 type UpdatePayload = Record<string, unknown>
 
@@ -84,6 +85,7 @@ type EditorFields =
     | 'openaiFlattenNamespacesEnabled'
     | 'openaiPassthroughEnabled'
     | 'upstreamBillingAutoProbeEnabled'
+    | 'upstreamBillingRateSyncEnabled'
     | 'webSearchEmulationMode'
   > &
   Pick<
@@ -853,8 +855,6 @@ function applyOpenAIExtra(
     } else {
       extra.openai_responses_mode = context.openAIResponsesMode.value
     }
-    extra.upstream_billing_probe_enabled =
-      context.upstreamBillingAutoProbeEnabled.value
     if (context.openAIForceImageAPIEnabled.value) {
       extra.openai_force_image_api = true
     } else {
@@ -982,6 +982,15 @@ export function buildEditAccountUpdatePayload(
     payload.load_factor = 0
   }
   payload.auto_pause_on_expired = context.autoPauseOnExpired.value
+  if (isUpstreamBillingProbeEligible(account.platform, account.type)) {
+    payload.upstream_billing_probe_enabled =
+      context.upstreamBillingAutoProbeEnabled.value
+    payload.upstream_billing_rate_sync_enabled =
+      context.upstreamBillingRateSyncEnabled.value
+    if (context.upstreamBillingRateSyncEnabled.value) {
+      delete payload.rate_multiplier
+    }
+  }
 
   if (!applyAccountTypeCredentials(payload, account, context)) return null
   applyOAuthModelCredentials(payload, account, context)

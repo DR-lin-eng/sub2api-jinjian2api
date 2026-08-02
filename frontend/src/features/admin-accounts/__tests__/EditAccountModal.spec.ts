@@ -644,7 +644,33 @@ describe('EditAccountModal', () => {
     await wrapper.get('form#edit-account-form').trigger('submit.prevent')
 
     expect(updateAccountMock).toHaveBeenCalledTimes(1)
-    expect(updateAccountMock.mock.calls[0]?.[1]?.extra?.upstream_billing_probe_enabled).toBe(true)
+    expect(updateAccountMock.mock.calls[0]?.[1]?.upstream_billing_probe_enabled).toBe(true)
+    expect(updateAccountMock.mock.calls[0]?.[1]?.extra).not.toHaveProperty(
+      'upstream_billing_probe_enabled'
+    )
+  })
+
+  it('links upstream rate sync to probing and omits manual rate edits', async () => {
+    const account = buildAccount()
+    account.rate_multiplier = 1.25
+    updateAccountMock.mockReset()
+    checkMixedChannelRiskMock.mockReset()
+    checkMixedChannelRiskMock.mockResolvedValue({ has_risk: false })
+    updateAccountMock.mockResolvedValue(account)
+
+    const wrapper = mountModal(account)
+    const syncToggle = wrapper.get('[data-testid="upstream-billing-rate-sync"]')
+    await syncToggle.trigger('click')
+
+    expect(wrapper.get('[data-testid="upstream-billing-auto-probe"]').attributes('aria-checked')).toBe('true')
+    expect(wrapper.get('[data-testid="account-rate-multiplier"]').attributes('disabled')).toBeDefined()
+
+    await wrapper.get('form#edit-account-form').trigger('submit.prevent')
+
+    const payload = updateAccountMock.mock.calls[0]?.[1]
+    expect(payload?.upstream_billing_probe_enabled).toBe(true)
+    expect(payload?.upstream_billing_rate_sync_enabled).toBe(true)
+    expect(payload).not.toHaveProperty('rate_multiplier')
   })
 
   it('clears OpenAI APIKey Responses override when set back to auto', async () => {
