@@ -241,6 +241,7 @@ func buildSystemSettingsUpdate(prepared *preparedSettingsUpdate) *service.System
 		AvailableChannelsEnabled:                           boolValueOrDefault(req.AvailableChannelsEnabled, previousSettings.AvailableChannelsEnabled),
 		ModelPlazaEnabled:                                  boolValueOrDefault(req.ModelPlazaEnabled, previousSettings.ModelPlazaEnabled),
 		ModelPlazaRequireAuth:                              boolValueOrDefault(req.ModelPlazaRequireAuth, previousSettings.ModelPlazaRequireAuth),
+		ModelPlazaAutoPublicModels:                         boolValueOrDefault(req.ModelPlazaAutoPublicModels, previousSettings.ModelPlazaAutoPublicModels),
 		ModelPlazaDescription:                              stringSetting(req.ModelPlazaDescription, previousSettings.ModelPlazaDescription),
 		AffiliateEnabled:                                   boolValueOrDefault(req.AffiliateEnabled, previousSettings.AffiliateEnabled),
 		RiskControlEnabled:                                 boolValueOrDefault(req.RiskControlEnabled, previousSettings.RiskControlEnabled),

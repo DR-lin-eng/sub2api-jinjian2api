@@ -698,6 +698,7 @@ export interface SystemSettings {
   // Model Plaza feature switches + description
   model_plaza_enabled: boolean;
   model_plaza_require_auth: boolean;
+  model_plaza_auto_public_models: boolean;
   model_plaza_description: string;
 
   // Affiliate (邀请返利) feature switch
@@ -993,6 +994,7 @@ export interface UpdateSettingsRequest {
   // Model Plaza feature switches + description
   model_plaza_enabled?: boolean;
   model_plaza_require_auth?: boolean;
+  model_plaza_auto_public_models?: boolean;
   model_plaza_description?: string;
 
   // Affiliate (邀请返利) feature switch

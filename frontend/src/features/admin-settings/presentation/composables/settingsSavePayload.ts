@@ -381,6 +381,7 @@ function buildNotificationAndFeatureSettingsPayload({
     available_channels_enabled: form.available_channels_enabled,
     model_plaza_enabled: form.model_plaza_enabled,
     model_plaza_require_auth: form.model_plaza_require_auth,
+    model_plaza_auto_public_models: form.model_plaza_auto_public_models,
     model_plaza_description: form.model_plaza_description,
     affiliate_enabled: form.affiliate_enabled,
     allow_user_view_error_requests: form.allow_user_view_error_requests,

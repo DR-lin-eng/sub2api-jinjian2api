@@ -319,9 +319,10 @@ type UpdateSettingsRequest struct {
 	AvailableChannelsEnabled *bool `json:"available_channels_enabled"`
 
 	// Model Plaza feature switch and public-page description
-	ModelPlazaEnabled     *bool   `json:"model_plaza_enabled"`
-	ModelPlazaRequireAuth *bool   `json:"model_plaza_require_auth"`
-	ModelPlazaDescription *string `json:"model_plaza_description"`
+	ModelPlazaEnabled          *bool   `json:"model_plaza_enabled"`
+	ModelPlazaRequireAuth      *bool   `json:"model_plaza_require_auth"`
+	ModelPlazaAutoPublicModels *bool   `json:"model_plaza_auto_public_models"`
+	ModelPlazaDescription      *string `json:"model_plaza_description"`
 
 	// Affiliate (邀请返利) feature switch
 	AffiliateEnabled *bool `json:"affiliate_enabled"`

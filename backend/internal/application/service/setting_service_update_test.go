@@ -67,6 +67,16 @@ func TestSettingService_UpdateSettings_PersistsCompactHomeEnabled(t *testing.T) 
 	require.Equal(t, "true", repo.updates[SettingKeyCompactHomeEnabled])
 }
 
+func TestSettingService_UpdateSettings_PersistsModelPlazaAutoPublicModels(t *testing.T) {
+	repo := &settingUpdateRepoStub{}
+	err := NewSettingService(repo, &config.Config{}).UpdateSettings(
+		context.Background(),
+		&SystemSettings{ModelPlazaAutoPublicModels: true},
+	)
+	require.NoError(t, err)
+	require.Equal(t, "true", repo.updates[SettingKeyModelPlazaAutoPublicModels])
+}
+
 func (s *settingGetAllRepoStub) Get(ctx context.Context, key string) (*Setting, error) {
 	panic("unexpected Get call")
 }

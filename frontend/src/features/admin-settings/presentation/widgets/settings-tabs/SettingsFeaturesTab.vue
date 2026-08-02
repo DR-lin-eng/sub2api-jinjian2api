@@ -118,6 +118,18 @@
               <Toggle v-model="form.model_plaza_require_auth" />
             </div>
 
+            <div v-if="form.model_plaza_enabled" class="flex items-center justify-between gap-6">
+              <div>
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {{ t('admin.settings.features.modelPlaza.autoPublicModels') }}
+                </label>
+                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t('admin.settings.features.modelPlaza.autoPublicModelsHint') }}
+                </p>
+              </div>
+              <Toggle v-model="form.model_plaza_auto_public_models" />
+            </div>
+
             <div v-if="form.model_plaza_enabled">
               <label class="input-label">
                 {{ t('admin.settings.features.modelPlaza.priceDescription') }}

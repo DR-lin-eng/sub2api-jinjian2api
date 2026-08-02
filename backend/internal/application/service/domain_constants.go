@@ -403,6 +403,11 @@ const (
 	// non-exclusive groups.
 	SettingKeyModelPlazaRequireAuth = "model_plaza_require_auth"
 
+	// SettingKeyModelPlazaAutoPublicModels controls whether public groups are
+	// automatically populated from their platform defaults and schedulable account
+	// model mappings. Channel pricing remains authoritative when configured.
+	SettingKeyModelPlazaAutoPublicModels = "model_plaza_auto_public_models"
+
 	// SettingKeyModelPlazaDescription stores the Markdown blurb rendered at the top of
 	// the Model Plaza page (global pricing notes, exchange rate, promotions, ...).
 	SettingKeyModelPlazaDescription = "model_plaza_description"

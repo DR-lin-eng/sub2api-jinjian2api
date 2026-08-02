@@ -36,6 +36,15 @@ func plazaPricedChannel(id int64, name string, groupIDs []int64, platform string
 	}
 }
 
+type plazaModelSourceStub map[int64]map[string][]string
+
+func (s plazaModelSourceStub) GetAvailableModels(_ context.Context, groupID *int64, platform string) []string {
+	if groupID == nil {
+		return nil
+	}
+	return s[*groupID][platform]
+}
+
 func TestListPlazaGroups_GroupCentricAggregation(t *testing.T) {
 	// 两个渠道挂同一分组:模型并入同一 PlazaGroup;无模型的分组不返回。
 	channels := []Channel{
@@ -47,7 +56,7 @@ func TestListPlazaGroups_GroupCentricAggregation(t *testing.T) {
 		{ID: 20, Name: "g-empty", Platform: "anthropic", RateMultiplier: 0.5},
 	}
 	svc := newPlazaChannelService(channels, groups, nil)
-	out, err := svc.ListPlazaGroups(context.Background())
+	out, err := svc.ListPlazaGroups(context.Background(), PlazaListOptions{})
 	require.NoError(t, err)
 	require.Len(t, out, 1, "无模型的分组不应返回")
 	require.Equal(t, int64(10), out[0].ID)
@@ -72,7 +81,7 @@ func TestListPlazaGroups_DedupFirstWinsWithPricingUpgrade(t *testing.T) {
 
 	// alpha(无价)按名称序先于 beta(有价):先见者无价,应被有价条目升级。
 	svc := newPlazaChannelService([]Channel{priced, unpriced}, groups, nil)
-	out, err := svc.ListPlazaGroups(context.Background())
+	out, err := svc.ListPlazaGroups(context.Background(), PlazaListOptions{})
 	require.NoError(t, err)
 	require.Len(t, out, 1)
 	require.Len(t, out[0].Models, 1)
@@ -94,7 +103,7 @@ func TestListPlazaGroups_PlatformIsolation(t *testing.T) {
 		{ID: 20, Name: "g-gpt", Platform: "openai", RateMultiplier: 1},
 	}
 	svc := newPlazaChannelService([]Channel{ch}, groups, nil)
-	out, err := svc.ListPlazaGroups(context.Background())
+	out, err := svc.ListPlazaGroups(context.Background(), PlazaListOptions{})
 	require.NoError(t, err)
 	require.Len(t, out, 2)
 	byName := map[string][]PlazaModel{}
@@ -112,7 +121,7 @@ func TestListPlazaGroups_InactiveChannelSkipped(t *testing.T) {
 	inactive.Status = "inactive"
 	groups := []Group{{ID: 10, Name: "g", Platform: "anthropic", RateMultiplier: 1}}
 	svc := newPlazaChannelService([]Channel{inactive}, groups, nil)
-	out, err := svc.ListPlazaGroups(context.Background())
+	out, err := svc.ListPlazaGroups(context.Background(), PlazaListOptions{})
 	require.NoError(t, err)
 	require.Empty(t, out)
 }
@@ -127,7 +136,7 @@ func TestListPlazaGroups_SortedByRateMultiplierAsc(t *testing.T) {
 		{ID: 30, Name: "cheap", Platform: "anthropic", RateMultiplier: 0.5},
 	}
 	svc := newPlazaChannelService(channels, groups, nil)
-	out, err := svc.ListPlazaGroups(context.Background())
+	out, err := svc.ListPlazaGroups(context.Background(), PlazaListOptions{})
 	require.NoError(t, err)
 	require.Len(t, out, 3)
 	require.Equal(t, "cheap", out[0].Name, "倍率低者在前")
@@ -152,7 +161,7 @@ func TestListPlazaGroups_OfficialPricingFill(t *testing.T) {
 	}
 	groups := []Group{{ID: 10, Name: "g", Platform: "anthropic", RateMultiplier: 1}}
 	svc := newPlazaChannelService(channels, groups, pricingSvc)
-	out, err := svc.ListPlazaGroups(context.Background())
+	out, err := svc.ListPlazaGroups(context.Background(), PlazaListOptions{})
 	require.NoError(t, err)
 	require.Len(t, out, 1)
 	require.Len(t, out[0].Models, 3)
@@ -173,13 +182,73 @@ func TestListPlazaGroups_OfficialPricingFill(t *testing.T) {
 	require.Nil(t, byName["token-absent"].OfficialPricing)
 }
 
+func TestListPlazaGroups_AutoPublicModelsAddsDefaultsAndAccountModels(t *testing.T) {
+	pricingSvc := newStubPricingServiceFromMap(map[string]*LiteLLMModelPricing{
+		"account-only-model": {
+			LiteLLMProvider:    "anthropic",
+			Mode:               "chat",
+			InputCostPerToken:  2e-6,
+			OutputCostPerToken: 8e-6,
+		},
+	})
+	groups := []Group{
+		{ID: 10, Name: "public-configured", Platform: PlatformAnthropic, RateMultiplier: 0.5},
+		{ID: 20, Name: "public-auto", Platform: PlatformAnthropic, RateMultiplier: 1},
+		{ID: 30, Name: "exclusive", Platform: PlatformAnthropic, RateMultiplier: 1, IsExclusive: true},
+	}
+	channels := []Channel{
+		plazaPricedChannel(1, "configured", []int64{10}, PlatformAnthropic, "configured-model"),
+	}
+	source := plazaModelSourceStub{
+		20: {PlatformAnthropic: {"account-only-model"}},
+		30: {PlatformAnthropic: {"exclusive-account-model"}},
+	}
+	svc := newPlazaChannelService(channels, groups, pricingSvc)
+
+	out, err := svc.ListPlazaGroups(context.Background(), PlazaListOptions{
+		AutoPublicModels: true,
+		ModelSource:      source,
+	})
+	require.NoError(t, err)
+	require.Len(t, out, 2, "automatic discovery must not populate exclusive groups")
+
+	byGroupID := make(map[int64]PlazaGroup, len(out))
+	for _, group := range out {
+		byGroupID[group.ID] = group
+	}
+	require.Contains(t, byGroupID, int64(10))
+	require.Contains(t, byGroupID, int64(20))
+	require.NotContains(t, byGroupID, int64(30))
+
+	autoModels := make(map[string]PlazaModel, len(byGroupID[20].Models))
+	for _, model := range byGroupID[20].Models {
+		autoModels[model.Name] = model
+	}
+	require.Contains(t, autoModels, "account-only-model")
+	require.NotNil(t, autoModels["account-only-model"].Pricing)
+	require.InDelta(t, 2e-6, *autoModels["account-only-model"].Pricing.InputPrice, 1e-12)
+	require.NotEmpty(t, plazaDefaultModelCandidateIDs(PlatformAnthropic))
+	require.Contains(t, autoModels, plazaDefaultModelCandidateIDs(PlatformAnthropic)[0])
+}
+
+func TestListPlazaGroups_AutoPublicModelsDisabledPreservesConfiguredOnlyBehavior(t *testing.T) {
+	groups := []Group{{ID: 10, Name: "public", Platform: PlatformAnthropic, RateMultiplier: 1}}
+	svc := newPlazaChannelService(nil, groups, nil)
+
+	out, err := svc.ListPlazaGroups(context.Background(), PlazaListOptions{
+		ModelSource: plazaModelSourceStub{10: {PlatformAnthropic: {"account-only-model"}}},
+	})
+	require.NoError(t, err)
+	require.Empty(t, out)
+}
+
 func TestListPlazaGroups_RepoErrorsPropagate(t *testing.T) {
 	sentinel := errors.New("boom")
 	repo := &mockChannelRepository{
 		listAllFn: func(ctx context.Context) ([]Channel, error) { return nil, sentinel },
 	}
 	svc := NewChannelService(repo, &stubGroupRepoForAvailable{}, nil, nil)
-	out, err := svc.ListPlazaGroups(context.Background())
+	out, err := svc.ListPlazaGroups(context.Background(), PlazaListOptions{})
 	require.Nil(t, out)
 	require.ErrorIs(t, err, sentinel)
 
@@ -188,7 +257,7 @@ func TestListPlazaGroups_RepoErrorsPropagate(t *testing.T) {
 		&stubGroupRepoForAvailable{listActiveErr: sentinel},
 		nil, nil,
 	)
-	out2, err2 := svc2.ListPlazaGroups(context.Background())
+	out2, err2 := svc2.ListPlazaGroups(context.Background(), PlazaListOptions{})
 	require.Nil(t, out2)
 	require.ErrorIs(t, err2, sentinel)
 }

@@ -155,6 +155,7 @@ describe("settings save payload", () => {
   it("preserves compatibility fields and omits unloaded fast policy", () => {
     const form = createForm();
     form.balance_low_notify_recharge_url = "";
+    form.model_plaza_auto_public_models = true;
 
     const payload = buildSettingsSavePayload({
       form,
@@ -192,6 +193,7 @@ describe("settings save payload", () => {
     expect(payload.balance_low_notify_recharge_url).toBe(
       "https://admin.example.com",
     );
+    expect(payload.model_plaza_auto_public_models).toBe(true);
     expect(form.balance_low_notify_recharge_url).toBe(
       "https://admin.example.com",
     );

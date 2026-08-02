@@ -47,6 +47,8 @@ export default {
           enabledHint: '开启后顶栏显示入口，页面可通过 /model-plaza 独立访问。',
           requireAuth: '需要登录才可访问',
           requireAuthHint: '开启后未登录访问将跳转登录页；关闭则公开可见，匿名访客仅展示非专属分组。',
+          autoPublicModels: '自动展示公开分组模型',
+          autoPublicModelsHint: '自动汇总全部活跃公开分组的平台默认模型和可调度账号模型，并按分组倍率展示费用；已配置的渠道价格优先。',
           priceDescription: '价格说明（Markdown）',
           priceDescriptionHint: '展示在模型广场页面顶部，可用于说明计费规则、汇率、优惠活动等。',
         },

@@ -63,6 +63,34 @@ func TestSettingService_IsUserUsageDetailViewAllowed_DefaultsOffAndRequiresExpli
 	}
 }
 
+func TestSettingService_GetModelPlazaRuntime_AutoPublicModelsRequiresExplicitTrue(t *testing.T) {
+	ctx := context.Background()
+	enabled := NewSettingService(&settingPublicRepoStub{values: map[string]string{
+		SettingKeyModelPlazaEnabled:          "true",
+		SettingKeyModelPlazaRequireAuth:      "true",
+		SettingKeyModelPlazaAutoPublicModels: "true",
+		SettingKeyModelPlazaDescription:      "pricing notes",
+	}}, &config.Config{}).GetModelPlazaRuntime(ctx)
+	require.True(t, enabled.Enabled)
+	require.True(t, enabled.RequireAuth)
+	require.True(t, enabled.AutoPublicModels)
+	require.Equal(t, "pricing notes", enabled.Description)
+
+	missing := NewSettingService(
+		&settingPublicRepoStub{values: map[string]string{SettingKeyModelPlazaEnabled: "true"}},
+		&config.Config{},
+	).GetModelPlazaRuntime(ctx)
+	require.True(t, missing.Enabled)
+	require.False(t, missing.AutoPublicModels)
+
+	failed := NewSettingService(
+		&settingPublicRepoStub{err: errors.New("database unavailable")},
+		&config.Config{},
+	).GetModelPlazaRuntime(ctx)
+	require.False(t, failed.Enabled)
+	require.False(t, failed.AutoPublicModels)
+}
+
 func (s *settingPublicRepoStub) SetMultiple(ctx context.Context, settings map[string]string) error {
 	panic("unexpected SetMultiple call")
 }

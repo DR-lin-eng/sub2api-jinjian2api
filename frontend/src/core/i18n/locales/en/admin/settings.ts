@@ -47,6 +47,8 @@ export default {
           enabledHint: 'When enabled, an entry appears in the header and the page is reachable at /model-plaza.',
           requireAuth: 'Require sign-in to access',
           requireAuthHint: 'When on, anonymous visitors are redirected to the login page; when off, the page is public and anonymous visitors only see non-exclusive groups.',
+          autoPublicModels: 'Automatically show public-group models',
+          autoPublicModelsHint: 'Collect platform defaults and schedulable-account models for every active public group, then show prices with the group rate. Configured channel prices take precedence.',
           priceDescription: 'Pricing notes (Markdown)',
           priceDescriptionHint: 'Rendered at the top of the plaza page. Use it for billing rules, exchange rates, promotions, etc.',
         },

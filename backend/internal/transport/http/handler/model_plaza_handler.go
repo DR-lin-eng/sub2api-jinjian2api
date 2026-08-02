@@ -18,6 +18,7 @@ import (
 //   - 登录：非专属分组 + user_allowed_groups 授权的专属分组（不检查订阅有效性）。
 type ModelPlazaHandler struct {
 	channelService *service.ChannelService
+	gatewayService *service.GatewayService
 	apiKeyService  *service.APIKeyService
 	settingService *service.SettingService
 }
@@ -25,11 +26,13 @@ type ModelPlazaHandler struct {
 // NewModelPlazaHandler 创建模型广场 handler。
 func NewModelPlazaHandler(
 	channelService *service.ChannelService,
+	gatewayService *service.GatewayService,
 	apiKeyService *service.APIKeyService,
 	settingService *service.SettingService,
 ) *ModelPlazaHandler {
 	return &ModelPlazaHandler{
 		channelService: channelService,
+		gatewayService: gatewayService,
 		apiKeyService:  apiKeyService,
 		settingService: settingService,
 	}
@@ -94,7 +97,10 @@ func (h *ModelPlazaHandler) Get(c *gin.Context) {
 		return
 	}
 
-	groups, err := h.channelService.ListPlazaGroups(c.Request.Context())
+	groups, err := h.channelService.ListPlazaGroups(c.Request.Context(), service.PlazaListOptions{
+		AutoPublicModels: rt.AutoPublicModels,
+		ModelSource:      h.gatewayService,
+	})
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return

@@ -182,9 +182,10 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		SettingKeyAvailableChannelsEnabled: "false",
 
 		// Model plaza feature (default disabled; public access when enabled)
-		SettingKeyModelPlazaEnabled:     "false",
-		SettingKeyModelPlazaRequireAuth: "false",
-		SettingKeyModelPlazaDescription: "",
+		SettingKeyModelPlazaEnabled:          "false",
+		SettingKeyModelPlazaRequireAuth:      "false",
+		SettingKeyModelPlazaAutoPublicModels: "false",
+		SettingKeyModelPlazaDescription:      "",
 
 		// Affiliate (邀请返利) feature (default disabled; opt-in)
 		SettingKeyAffiliateEnabled:              "false",

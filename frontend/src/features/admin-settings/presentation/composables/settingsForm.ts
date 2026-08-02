@@ -324,6 +324,7 @@ export function createSettingsForm(localText: LocalText): SettingsForm {
     available_channels_enabled: false,
     model_plaza_enabled: false,
     model_plaza_require_auth: false,
+    model_plaza_auto_public_models: false,
     model_plaza_description: "",
     affiliate_enabled: false,
     allow_user_view_error_requests: false,

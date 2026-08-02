@@ -36,6 +36,9 @@ func appendNotificationAndRiskSettingChanges(changed []string, before, after *se
 	if before.ModelPlazaRequireAuth != after.ModelPlazaRequireAuth {
 		changed = append(changed, "model_plaza_require_auth")
 	}
+	if before.ModelPlazaAutoPublicModels != after.ModelPlazaAutoPublicModels {
+		changed = append(changed, "model_plaza_auto_public_models")
+	}
 	if before.ModelPlazaDescription != after.ModelPlazaDescription {
 		changed = append(changed, "model_plaza_description")
 	}

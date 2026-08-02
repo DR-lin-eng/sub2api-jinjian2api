@@ -44,6 +44,19 @@ type PlazaGroup struct {
 	Models             []PlazaModel
 }
 
+// PlazaModelSource supplies the schedulable-account model names used by the
+// optional automatic public-group catalog. GatewayService implements this
+// interface without making ChannelService depend on gateway orchestration.
+type PlazaModelSource interface {
+	GetAvailableModels(ctx context.Context, groupID *int64, platform string) []string
+}
+
+// PlazaListOptions controls display-only model discovery for the plaza.
+type PlazaListOptions struct {
+	AutoPublicModels bool
+	ModelSource      PlazaModelSource
+}
+
 // ListPlazaGroups 返回模型广场数据：每个活跃分组附带其可用模型与定价。
 //
 // 聚合口径与 ListAvailable 一致（Active 渠道、SupportedModels ∪ 全局定价回落、
@@ -51,11 +64,12 @@ type PlazaGroup struct {
 //   - 渠道按 lower(name) 排序后遍历，保证同名模型去重结果确定；
 //   - 同分组同名模型「先见者胜」，仅当已存条目无定价而新条目有定价时升级替换；
 //   - 每个模型附带 LiteLLM 官方参考价（查不到为 nil）；
+//   - AutoPublicModels 开启时，非专属分组会补齐平台默认模型与可调度账号模型；
 //   - 只返回 Models 非空的分组；分组按 RateMultiplier 升序（同倍率按名称），
 //     组内模型按名称排序。
 //
 // 可见性过滤（专属分组）不在此层做，由 handler 按登录态裁剪。
-func (s *ChannelService) ListPlazaGroups(ctx context.Context) ([]PlazaGroup, error) {
+func (s *ChannelService) ListPlazaGroups(ctx context.Context, opts PlazaListOptions) ([]PlazaGroup, error) {
 	channels, err := s.repo.ListAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list channels: %w", err)
@@ -89,8 +103,31 @@ func (s *ChannelService) ListPlazaGroups(ctx context.Context) ([]PlazaGroup, err
 		order = append(order, g.ID)
 	}
 
-	// modelIdx[groupID][modelName] = index into byGroup[groupID].Models
+	// modelIdx[groupID][platform/modelName] = index into byGroup[groupID].Models
 	modelIdx := make(map[int64]map[string]int, len(groups))
+	addModel := func(pg *PlazaGroup, model PlazaModel) {
+		model.Name = strings.TrimSpace(model.Name)
+		model.Platform = strings.TrimSpace(model.Platform)
+		if model.Name == "" || model.Platform == "" {
+			return
+		}
+		idx := modelIdx[pg.ID]
+		if idx == nil {
+			idx = make(map[string]int)
+			modelIdx[pg.ID] = idx
+		}
+		key := strings.ToLower(model.Platform) + "\x00" + strings.ToLower(model.Name)
+		if at, seen := idx[key]; seen {
+			// 先见者胜；仅当已存条目无定价而新条目有定价时升级。
+			if pg.Models[at].Pricing == nil && model.Pricing != nil {
+				pg.Models[at].Pricing = model.Pricing
+			}
+			return
+		}
+		idx[key] = len(pg.Models)
+		pg.Models = append(pg.Models, model)
+	}
+
 	for i := range channels {
 		ch := &channels[i]
 		if ch.Status != StatusActive {
@@ -105,29 +142,38 @@ func (s *ChannelService) ListPlazaGroups(ctx context.Context) ([]PlazaGroup, err
 			if !ok {
 				continue
 			}
-			idx := modelIdx[gid]
-			if idx == nil {
-				idx = make(map[string]int, len(supported))
-				modelIdx[gid] = idx
-			}
 			for j := range supported {
 				m := supported[j]
-				if m.Platform != pg.Platform {
+				if !isPlatformPricingMatch(pg.Platform, m.Platform) {
 					continue
 				}
-				if at, seen := idx[m.Name]; seen {
-					// 先见者胜；仅当已存条目无定价而新条目有定价时升级。
-					if pg.Models[at].Pricing == nil && m.Pricing != nil {
-						pg.Models[at].Pricing = m.Pricing
-					}
-					continue
-				}
-				idx[m.Name] = len(pg.Models)
-				pg.Models = append(pg.Models, PlazaModel{
+				addModel(pg, PlazaModel{
 					Name:     m.Name,
 					Platform: m.Platform,
 					Pricing:  m.Pricing,
 				})
+			}
+		}
+	}
+
+	if opts.AutoPublicModels {
+		for _, gid := range order {
+			pg := byGroup[gid]
+			if pg.IsExclusive {
+				continue
+			}
+			for _, platform := range plazaAutoPlatforms(pg.Platform) {
+				candidates := plazaDefaultModelCandidateIDs(platform)
+				if opts.ModelSource != nil {
+					candidates = mergePlazaModelIDs(candidates, opts.ModelSource.GetAvailableModels(ctx, &pg.ID, platform))
+				}
+				for _, modelName := range candidates {
+					addModel(pg, PlazaModel{
+						Name:     modelName,
+						Platform: platform,
+						Pricing:  s.plazaFallbackPricing(modelName),
+					})
+				}
 			}
 		}
 	}
@@ -139,7 +185,12 @@ func (s *ChannelService) ListPlazaGroups(ctx context.Context) ([]PlazaGroup, err
 		if len(pg.Models) == 0 {
 			continue
 		}
-		sort.SliceStable(pg.Models, func(i, j int) bool { return pg.Models[i].Name < pg.Models[j].Name })
+		sort.SliceStable(pg.Models, func(i, j int) bool {
+			if pg.Models[i].Name != pg.Models[j].Name {
+				return pg.Models[i].Name < pg.Models[j].Name
+			}
+			return pg.Models[i].Platform < pg.Models[j].Platform
+		})
 		for j := range pg.Models {
 			pg.Models[j].OfficialPricing = s.lookupOfficialPricing(pg.Models[j].Name, officialMemo)
 		}
@@ -153,6 +204,56 @@ func (s *ChannelService) ListPlazaGroups(ctx context.Context) ([]PlazaGroup, err
 		return out[i].Name < out[j].Name
 	})
 	return out, nil
+}
+
+func plazaAutoPlatforms(groupPlatform string) []string {
+	switch groupPlatform {
+	case PlatformComposite:
+		return matchingPlatforms(groupPlatform)
+	case PlatformAnthropic, PlatformGemini, PlatformOpenAI, PlatformAntigravity, PlatformGrok:
+		return []string{groupPlatform}
+	default:
+		return nil
+	}
+}
+
+func plazaDefaultModelCandidateIDs(platform string) []string {
+	switch platform {
+	case PlatformAnthropic, PlatformGemini, PlatformOpenAI, PlatformAntigravity, PlatformGrok:
+		return defaultModelsListCandidateIDs(platform)
+	default:
+		return nil
+	}
+}
+
+func mergePlazaModelIDs(primary, secondary []string) []string {
+	seen := make(map[string]struct{}, len(primary)+len(secondary))
+	merged := make([]string, 0, len(primary)+len(secondary))
+	for _, models := range [][]string{primary, secondary} {
+		for _, model := range models {
+			model = strings.TrimSpace(model)
+			if model == "" {
+				continue
+			}
+			key := strings.ToLower(model)
+			if _, ok := seen[key]; ok {
+				continue
+			}
+			seen[key] = struct{}{}
+			merged = append(merged, model)
+		}
+	}
+	return merged
+}
+
+// plazaFallbackPricing converts the global catalog price into the same
+// display-only channel shape used by existing plaza rows. It never changes the
+// channel cache or the billing path.
+func (s *ChannelService) plazaFallbackPricing(modelName string) *ChannelModelPricing {
+	if s.pricingService == nil {
+		return nil
+	}
+	return synthesizePricingFromLiteLLM(s.pricingService.GetModelPricing(modelName), nil)
 }
 
 // lookupOfficialPricing 查询模型的 LiteLLM 官方参考价，带 memo 避免同名模型重复转换。

@@ -711,6 +711,16 @@ async function openGeneralTab(wrapper: ReturnType<typeof mountView>) {
   await flushPromises();
 }
 
+async function openFeaturesTab(wrapper: ReturnType<typeof mountView>) {
+  const featuresTabButton = wrapper
+    .findAll("button")
+    .find((node) => node.text().includes("admin.settings.tabs.features"));
+
+  expect(featuresTabButton).toBeDefined();
+  await featuresTabButton?.trigger("click");
+  await flushPromises();
+}
+
 async function openGatewayTab(wrapper: ReturnType<typeof mountView>) {
   const gatewayTabButton = wrapper
     .findAll("button")
@@ -867,6 +877,34 @@ describe("admin SettingsView payment visible method controls", () => {
 
     const payload = updateSettings.mock.calls.at(-1)?.[0] as Record<string, unknown>;
     expect(payload.stream_mode_performance_enabled).toBe(true);
+  });
+
+  it("shows and saves automatic public models under the enabled model plaza", async () => {
+    getSettings.mockResolvedValueOnce({
+      ...baseSettingsResponse,
+      model_plaza_enabled: true,
+      model_plaza_require_auth: false,
+      model_plaza_auto_public_models: false,
+      model_plaza_description: "",
+    });
+    const wrapper = mountView();
+    await flushPromises();
+    await openFeaturesTab(wrapper);
+
+    const card = wrapper
+      .findAll(".card")
+      .find((node) => node.text().includes("admin.settings.features.modelPlaza.title"));
+    expect(card).toBeDefined();
+
+    const toggles = card!.findAll('input[type="checkbox"]');
+    expect(toggles).toHaveLength(3);
+    expect((toggles[2]!.element as HTMLInputElement).checked).toBe(false);
+    await toggles[2]!.setValue(true);
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    const payload = updateSettings.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+    expect(payload.model_plaza_auto_public_models).toBe(true);
   });
 
   it("loads and saves the compact home setting from the general tab", async () => {

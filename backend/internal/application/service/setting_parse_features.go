@@ -50,6 +50,7 @@ func (s *SettingService) applyFeatureSettings(result *SystemSettings, settings m
 	// Model plaza feature (default: disabled and anonymously visible when enabled)
 	result.ModelPlazaEnabled = settings[SettingKeyModelPlazaEnabled] == "true"
 	result.ModelPlazaRequireAuth = settings[SettingKeyModelPlazaRequireAuth] == "true"
+	result.ModelPlazaAutoPublicModels = settings[SettingKeyModelPlazaAutoPublicModels] == "true"
 	result.ModelPlazaDescription = settings[SettingKeyModelPlazaDescription]
 
 	// Affiliate (邀请返利) feature (default: disabled; strict true)
