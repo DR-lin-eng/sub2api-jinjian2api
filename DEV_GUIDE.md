@@ -7,8 +7,8 @@
 | 工具 | 版本来源 | 用途 |
 | --- | --- | --- |
 | Go | `backend/go.mod`，当前为 1.26.5 | 后端构建、生成和测试 |
-| Node.js | `.github/workflows/backend-ci.yml`，当前为 20 | 前端工具链 |
-| pnpm | CI 当前为 9 | 前端依赖和脚本；不要混用 npm/yarn |
+| Node.js | `.github/workflows/backend-ci.yml`，当前为 24 | 前端工具链 |
+| pnpm | `frontend/package.json`，当前为 11.17.0 | 前端依赖和脚本；不要混用 npm/yarn |
 | PostgreSQL | `deploy/docker-compose.dev.yml` | 持久化数据和迁移 |
 | Redis | `deploy/docker-compose.dev.yml` | 缓存、调度、队列和并发状态 |
 | Docker + Compose | 推荐使用当前稳定版 | 一致的依赖环境与整栈验证 |
@@ -210,15 +210,14 @@ handler 不直接访问 repository，route 闭包不实现业务。
 常规调用顺序：
 
 ```text
-router -> view -> component/composable/store -> api -> backend route
+main / core routes -> feature presentation -> feature data datasource -> core networks -> backend route
 ```
 
-- 路由页面放在 `src/views/<domain>/`。
-- 可复用 UI 放在 `src/components/<domain>/`。
-- 可复用行为放在 `src/composables/`。
-- 只有跨页面共享、有明确生命周期的状态进入 Pinia store。
-- HTTP 调用通过 `src/api/`；统一 token、刷新和错误行为只在 `api/client.ts` 修改。
-- 新增用户可见文案时同步 `src/i18n/locales/`。
+- 业务默认归属 `frontend/src/features/<domain>/`；页面、领域组件、交互和 Store 分别进入 `presentation/pages/`, `widgets/`, `composables/`, `stores/`。
+- 领域 HTTP 调用进入所属 feature 的 `data/datasources/`，统一通过 `frontend/src/core/networks/client.ts`。
+- 跨业务复用 UI、页面、composable 和 UI 类型放 `frontend/src/common/`；应用级 Router、HTTP/session、i18n、主题、全局 Store、服务、常量和工具放 `frontend/src/core/`。
+- `frontend/src/api/`、`frontend/src/stores/` 仍保留迁移期兼容导出；`frontend/src/types/` 是稳定共享类型入口。新代码按 owner 路径导入，不继续扩充兼容 barrel。
+- 新增用户可见文案时同步 `frontend/src/core/i18n/locales/`。
 - 管理端可见性不能代替后端权限检查。
 
 更多约定见 [frontend/README.md](frontend/README.md)。
@@ -279,7 +278,7 @@ pnpm install --frozen-lockfile
 
 - HTTP 路由以 `backend/internal/transport/http/server/routes/` 为准。
 - 配置字段以 `backend/internal/platform/config/`、`deploy/config.example.yaml` 和 `deploy/.env.example` 为准。
-- 前端路由以 `frontend/src/router/index.ts` 为准。
+- 前端路由以 `frontend/src/core/routes/index.ts` 为准。
 - 构建/测试命令以根 `Makefile`、`backend/Makefile` 和 `frontend/package.json` 为准。
 
 确认漂移后，在同一改动中修正文档。

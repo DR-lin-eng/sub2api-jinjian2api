@@ -155,3 +155,4 @@ docs/*
 frontend/coverage/
 aicodex
 output/
+.bin/
