@@ -7,7 +7,7 @@
     <AccountTestModal :show="showTest" :account="testingAcc" @close="closeTestModal" />
     <AccountStatsModal :show="showStats" :account="statsAcc" @close="closeStatsModal" />
     <ScheduledTestsPanel :show="showSchedulePanel" :account-id="scheduleAcc?.id ?? null" :model-options="scheduleModelOptions" @close="closeSchedulePanel" />
-    <AccountActionMenu :show="menu.show" :account="menu.acc" :position="menu.pos" @close="menu.show = false" @test="handleTest" @stats="handleViewStats" @schedule="handleSchedule" @duplicate="handleDuplicateAccount" @reauth="handleReAuth" @refresh-token="handleRefresh" @recover-state="handleRecoverState" @reset-quota="handleResetQuota" @set-privacy="handleSetPrivacy" @create-spark-shadow="handleCreateSparkShadow" />
+    <AccountActionMenu :show="menu.show" :account="menu.acc" :position="menu.pos" @close="menu.show = false" @test="handleTest" @sync-cpa="handleSyncCPA" @stats="handleViewStats" @schedule="handleSchedule" @duplicate="handleDuplicateAccount" @reauth="handleReAuth" @refresh-token="handleRefresh" @recover-state="handleRecoverState" @reset-quota="handleResetQuota" @set-privacy="handleSetPrivacy" @create-spark-shadow="handleCreateSparkShadow" />
     <SyncFromCrsModal :show="showSync" @close="showSync = false" @synced="handleSyncCompleted" />
     <ImportDataModal :show="showImportData" @close="showImportData = false" @imported="handleDataImported" />
     <BulkEditAccountModal
@@ -547,6 +547,7 @@ const shouldReplaceAutoRefreshRow = (current: Account, next: Account) => {
     current.current_concurrency !== next.current_concurrency ||
     current.current_window_cost !== next.current_window_cost ||
     current.active_sessions !== next.active_sessions ||
+    JSON.stringify(current.cpa_capacity) !== JSON.stringify(next.cpa_capacity) ||
     current.hourly_usage?.total_requests !== next.hourly_usage?.total_requests ||
     current.hourly_usage?.avg_first_token_ms !== next.hourly_usage?.avg_first_token_ms ||
     current.hourly_usage?.success_rate !== next.hourly_usage?.success_rate ||
@@ -1131,7 +1132,8 @@ const mergeRuntimeFields = (oldAccount: Account, updatedAccount: Account): Accou
   ...updatedAccount,
   current_concurrency: updatedAccount.current_concurrency ?? oldAccount.current_concurrency,
   current_window_cost: updatedAccount.current_window_cost ?? oldAccount.current_window_cost,
-  active_sessions: updatedAccount.active_sessions ?? oldAccount.active_sessions
+  active_sessions: updatedAccount.active_sessions ?? oldAccount.active_sessions,
+  cpa_capacity: updatedAccount.cpa_capacity ?? oldAccount.cpa_capacity
 })
 
 const syncPaginationAfterLocalRemoval = () => {
@@ -1231,6 +1233,24 @@ const closeTestModal = () => { showTest.value = false; testingAcc.value = null }
 const closeStatsModal = () => { showStats.value = false; statsAcc.value = null }
 const closeReAuthModal = () => { showReAuth.value = false; reAuthAcc.value = null }
 const handleTest = (a: Account) => { testingAcc.value = a; showTest.value = true }
+const syncingCPAAccountIDs = new Set<number>()
+const handleSyncCPA = async (a: Account) => {
+  if (syncingCPAAccountIDs.has(a.id)) return
+  syncingCPAAccountIDs.add(a.id)
+  try {
+    const capacity = await adminAPI.accounts.syncCPACapacity(a.id)
+    patchAccountInList({ ...a, cpa_capacity: capacity })
+    appStore.showSuccess(t('admin.accounts.syncCPASuccess', {
+      enabled: capacity.enabled_credentials,
+      abnormal: capacity.abnormal_credentials,
+      available: capacity.available_credentials,
+    }))
+  } catch (error: any) {
+    appStore.showError(error?.message || t('admin.accounts.syncCPAFailed'))
+  } finally {
+    syncingCPAAccountIDs.delete(a.id)
+  }
+}
 const handleViewStats = (a: Account) => { statsAcc.value = a; showStats.value = true }
 const handleSchedule = async (a: Account) => {
   scheduleAcc.value = a

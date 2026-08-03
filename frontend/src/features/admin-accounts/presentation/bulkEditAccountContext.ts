@@ -48,3 +48,14 @@ export interface BulkEditRoutingPolicyContext {
   targetSelectedPlatforms: ComputedRef<AccountPlatform[]>
   toggleErrorCode: (code: number) => void
 }
+
+export interface BulkEditCPAContext {
+  MAX_CPA_CONCURRENCY_PER_CREDENTIAL: number
+  cpaConcurrencyPerCredential: Ref<number>
+  cpaManagementPassword: Ref<string>
+  cpaManagementUrl: Ref<string>
+  cpaModeEnabled: Ref<boolean>
+  cpaUseBaseUrl: Ref<boolean>
+  enableCPA: Ref<boolean>
+  t: Translate
+}

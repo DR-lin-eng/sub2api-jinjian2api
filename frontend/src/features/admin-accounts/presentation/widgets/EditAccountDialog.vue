@@ -217,9 +217,11 @@ const poolModeEnabled = ref(false)
 const poolModeRetryCount = ref(DEFAULT_POOL_MODE_RETRY_COUNT)
 const poolModeRetryStatusCodesInput = ref('')
 const cpaModeEnabled = ref(false)
+const cpaUseBaseUrl = ref(true)
 const cpaManagementUrl = ref('')
 const cpaManagementKey = ref('')
-const cpaConcurrencyPerCredential = ref(1)
+const cpaConcurrencyPerCredential = ref(10)
+const isTestingCPA = ref(false)
 
 const customErrorCodesEnabled = ref(false)
 const selectedErrorCodes = ref<number[]>([])
@@ -976,13 +978,12 @@ const syncFormFromAccount = (newAccount: Account | null) => {
     poolModeRetryStatusCodesInput.value = formatPoolModeRetryStatusCodes(credentials.pool_mode_retry_status_codes)
 
     cpaModeEnabled.value = credentials.cpa_mode === true
-    cpaManagementUrl.value = typeof credentials.cpa_management_url === 'string'
-      ? credentials.cpa_management_url
-      : ''
-    const storedCPAConcurrency = Number(credentials.cpa_concurrency_per_credential ?? 1)
+    cpaUseBaseUrl.value = typeof credentials.cpa_management_url !== 'string' || !credentials.cpa_management_url.trim()
+    cpaManagementUrl.value = cpaUseBaseUrl.value ? '' : credentials.cpa_management_url as string
+    const storedCPAConcurrency = Number(credentials.cpa_concurrency_per_credential ?? 10)
     cpaConcurrencyPerCredential.value = Number.isInteger(storedCPAConcurrency) && storedCPAConcurrency > 0
       ? Math.min(storedCPAConcurrency, MAX_CPA_CONCURRENCY_PER_CREDENTIAL)
-      : 1
+      : 10
     cpaManagementKey.value = ''
 
     // Load custom error codes
@@ -1059,9 +1060,10 @@ const syncFormFromAccount = (newAccount: Account | null) => {
     poolModeRetryCount.value = DEFAULT_POOL_MODE_RETRY_COUNT
     poolModeRetryStatusCodesInput.value = ''
     cpaModeEnabled.value = false
+    cpaUseBaseUrl.value = true
     cpaManagementUrl.value = ''
     cpaManagementKey.value = ''
-    cpaConcurrencyPerCredential.value = 1
+    cpaConcurrencyPerCredential.value = 10
     customErrorCodesEnabled.value = false
     selectedErrorCodes.value = []
   }
@@ -1381,6 +1383,7 @@ const {
   buildModelRestrictionMapping, cacheTTLOverrideEnabled, cacheTTLOverrideTarget,
   codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled, codexImageToolMode,
   cpaConcurrencyPerCredential, cpaManagementKey, cpaManagementUrl, cpaModeEnabled,
+  cpaUseBaseUrl,
   customBaseUrl, customBaseUrlEnabled, customErrorCodesEnabled, defaultBaseUrl,
   editApiKey, editBaseUrl, editBedrockAccessKeyId, editBedrockApiKeyValue,
   editBedrockForceGlobal, editBedrockRegion, editBedrockSecretAccessKey,
@@ -1408,6 +1411,29 @@ const {
   webSearchEmulationMode, windowCostEnabled, windowCostLimit, windowCostStickyReserve,
   writeQuotaNotifyToExtra,
 })
+
+const testCPAConnection = async () => {
+  if (!props.account || isTestingCPA.value) return
+  isTestingCPA.value = true
+  try {
+    const result = await adminAPI.accounts.testCPAConnection(props.account.id, {
+      use_account_base_url: cpaUseBaseUrl.value,
+      base_url: editBaseUrl.value.trim(),
+      management_url: cpaUseBaseUrl.value ? undefined : cpaManagementUrl.value.trim(),
+      management_password: cpaManagementKey.value.trim() || undefined,
+      concurrency_per_credential: Math.trunc(Number(cpaConcurrencyPerCredential.value)),
+    })
+    appStore.showSuccess(t('admin.accounts.cpaTestSuccess', {
+      available: result.available_credentials,
+      concurrency: result.effective_concurrency,
+      latency: result.latency_ms,
+    }))
+  } catch (error: any) {
+    appStore.showError(error?.message || t('admin.accounts.cpaTestFailed'))
+  } finally {
+    isTestingCPA.value = false
+  }
+}
 const editAccountCredentialContext = {
   CPA_SNAPSHOT_INTERVAL_SECONDS, DEFAULT_POOL_MODE_RETRY_COUNT, DEFAULT_POOL_MODE_RETRY_STATUS_CODES,
   MAX_CPA_CONCURRENCY_PER_CREDENTIAL, MAX_POOL_MODE_RETRY_COUNT, VERTEX_LOCATION_OPTIONS,
@@ -1415,16 +1441,17 @@ const editAccountCredentialContext = {
   addModelMapping, addPresetMapping, allowedModels, antigravityModelMappings,
   antigravityPresetMappings, antigravityProjectId, autoDisableOnUpstreamInsufficientBalance,
   baseUrlHint, bedrockPresets, commonErrorCodes, cpaConcurrencyPerCredential, cpaManagementKey,
-  cpaManagementUrl, cpaModeEnabled, customErrorCodeInput, customErrorCodesEnabled, editApiKey,
+  cpaManagementUrl, cpaModeEnabled, cpaUseBaseUrl, customErrorCodeInput, customErrorCodesEnabled, editApiKey,
   editBaseUrl, editBedrockAccessKeyId, editBedrockApiKeyValue, editBedrockForceGlobal,
   editBedrockRegion, editBedrockSecretAccessKey, editBedrockSessionToken, editVertexLocation,
   editVertexProjectId, form, getAntigravityModelMappingKey, getModelMappingKey,
   grokClientToolCacheEnabled, grokOAuthBaseUrl, grokOAuthCustomBaseUrlEnabled,
   headerOverrideCapable, headerOverrideEnabled, headerOverrideRows, isBedrockAPIKeyMode,
-  isOpenAIModelRestrictionDisabled, isSyncingAntigravityUpstream, isValidWildcardPattern,
+  isOpenAIModelRestrictionDisabled, isSyncingAntigravityUpstream, isTestingCPA, isValidWildcardPattern,
   modelMappings, modelRestrictionMode, poolModeEnabled, poolModeRetryCount,
   poolModeRetryStatusCodesInput, presetMappings, removeAntigravityModelMapping, removeErrorCode,
-  removeModelMapping, selectedErrorCodes, syncAntigravityUpstreamModels, t, toggleErrorCode,
+  removeModelMapping, selectedErrorCodes, syncAntigravityUpstreamModels, t, testCPAConnection,
+  toggleErrorCode,
 } satisfies EditAccountCredentialContext
 
 const editAccountAdvancedContext = {

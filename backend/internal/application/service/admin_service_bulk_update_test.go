@@ -74,6 +74,88 @@ func TestAdminServiceBulkUpdateAccountsPreservesLoadFactorClearIntent(t *testing
 	require.Zero(t, *repo.bulkUpdate.LoadFactor)
 }
 
+func TestNormalizeBulkCPACredentialsPreservesPasswordAndFollowsBaseURL(t *testing.T) {
+	account := &Account{
+		Type: AccountTypeAPIKey,
+		Credentials: map[string]any{
+			"base_url":                               "https://cpa.example.com/v1",
+			CPAManagementURLCredentialKey:            "https://old-management.example.com",
+			CPAManagementKeyCredentialKey:            "stored-password",
+			CPAConcurrencyPerCredentialCredentialKey: 2,
+		},
+	}
+
+	patch, deleted, err := normalizeBulkCPACredentials(account, map[string]any{
+		CPAModeCredentialKey:                     true,
+		CPAManagementURLCredentialKey:            nil,
+		CPAConcurrencyPerCredentialCredentialKey: 10,
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, true, patch[CPAModeCredentialKey])
+	require.Equal(t, 10, patch[CPAConcurrencyPerCredentialCredentialKey])
+	require.NotContains(t, patch, CPAManagementKeyCredentialKey)
+	require.Equal(t, []string{CPAManagementURLCredentialKey}, deleted)
+}
+
+func TestNormalizeBulkCPACredentialsDisableDeletesCPAFields(t *testing.T) {
+	account := &Account{Type: AccountTypeAPIKey, Credentials: map[string]any{
+		"api_key":                                "sk-existing",
+		CPAModeCredentialKey:                     true,
+		CPAManagementURLCredentialKey:            "https://cpa.example.com",
+		CPAManagementKeyCredentialKey:            "stored-password",
+		CPAConcurrencyPerCredentialCredentialKey: 10,
+	}}
+
+	patch, deleted, err := normalizeBulkCPACredentials(account, map[string]any{CPAModeCredentialKey: false})
+
+	require.NoError(t, err)
+	require.Empty(t, patch)
+	require.ElementsMatch(t, []string{
+		CPAModeCredentialKey,
+		CPAManagementURLCredentialKey,
+		CPAManagementKeyCredentialKey,
+		CPAConcurrencyPerCredentialCredentialKey,
+	}, deleted)
+}
+
+func TestAdminServiceBulkUpdateAccountsWithCPAPartialFailures(t *testing.T) {
+	repo := &accountRepoStubForBulkUpdate{getByIDsAccounts: []*Account{
+		{ID: 1, Type: AccountTypeAPIKey, Credentials: map[string]any{
+			"base_url":                    "https://one.example.com/v1",
+			CPAManagementKeyCredentialKey: "stored-password",
+		}},
+		{ID: 2, Type: AccountTypeAPIKey, Credentials: map[string]any{
+			"base_url": "https://two.example.com/v1",
+		}},
+		{ID: 3, Type: AccountTypeOAuth, Credentials: map[string]any{
+			"base_url":                    "https://three.example.com/v1",
+			CPAManagementKeyCredentialKey: "stored-password",
+		}},
+	}}
+	svc := &adminServiceImpl{accountRepo: repo}
+
+	result, err := svc.BulkUpdateAccounts(context.Background(), &BulkUpdateAccountsInput{
+		AccountIDs: []int64{1, 2, 3},
+		Credentials: map[string]any{
+			CPAModeCredentialKey:                     true,
+			CPAManagementURLCredentialKey:            nil,
+			CPAConcurrencyPerCredentialCredentialKey: 10,
+		},
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, 1, result.Success)
+	require.Equal(t, 2, result.Failed)
+	require.Equal(t, []int64{1}, result.SuccessIDs)
+	require.ElementsMatch(t, []int64{2, 3}, result.FailedIDs)
+	require.Equal(t, []int64{1}, repo.bulkUpdateIDs)
+	require.NotContains(t, repo.bulkUpdate.Credentials, CPAManagementKeyCredentialKey)
+	require.Equal(t, []string{CPAManagementURLCredentialKey}, repo.bulkUpdate.CredentialKeysToDelete)
+	require.Contains(t, result.Results[1].Error, "cpa_management_key is required")
+	require.Contains(t, result.Results[2].Error, "only supported for API-key accounts")
+}
+
 func (s *accountRepoStubForBulkUpdate) Create(_ context.Context, account *Account) error {
 	s.createAccount = account
 	if s.createID > 0 {

@@ -29,7 +29,7 @@ func cpaTestAccount(serverURL string, concurrency, perCredential int) *Account {
 	}
 }
 
-func TestCPAPoolCapacityCountsOnlyCurrentlySchedulableCredentials(t *testing.T) {
+func TestCPAPoolCapacityUsesEnabledMinusAbnormalCredentials(t *testing.T) {
 	now := time.Date(2026, 7, 26, 12, 0, 0, 0, time.UTC)
 	future := now.Add(time.Hour)
 	past := now.Add(-time.Minute)
@@ -54,15 +54,24 @@ func TestCPAPoolCapacityCountsOnlyCurrentlySchedulableCredentials(t *testing.T) 
 
 	effective, available := service.effectiveConcurrency(context.Background(), account)
 	require.True(t, available)
-	require.Equal(t, 4, effective)
+	require.Equal(t, 2, effective)
 	require.Equal(t, int64(1), requests.Load())
 
-	// The local account limit remains the hard ceiling even if CPA capacity is larger.
-	account.Concurrency = 3
+	// CPA capacity replaces the configured fallback concurrency while enabled.
+	account.Concurrency = 1
 	effective, available = service.effectiveConcurrency(context.Background(), account)
 	require.True(t, available)
-	require.Equal(t, 3, effective)
+	require.Equal(t, 2, effective)
 	require.Equal(t, int64(1), requests.Load())
+
+	status, err := service.capacityStatus(context.Background(), account)
+	require.NoError(t, err)
+	require.Equal(t, 5, status.TotalCredentials)
+	require.Equal(t, 3, status.EnabledCredentials)
+	require.Equal(t, 2, status.AbnormalCredentials)
+	require.Equal(t, 1, status.AvailableCredentials)
+	require.Equal(t, 2, status.EffectiveConcurrency)
+	require.Equal(t, CPACapacityStateFresh, status.State)
 }
 
 func TestCPAPoolCapacitySingleflightAndNinetySecondCache(t *testing.T) {
@@ -195,7 +204,7 @@ func TestApplyCPAPoolCapacityBatchCopiesOnlyWhenCapacityChanges(t *testing.T) {
 	config, enabled := cpaPoolConfigFromAccount(cpaAccount)
 	require.True(t, enabled)
 	service.cpaPoolCapacity.cache.Store(service.cpaPoolCapacity.cacheKey(config), cpaCapacityCacheEntry{
-		snapshot: &cpaCapacitySnapshot{schedulableCredentials: 2, fetchedAt: time.Now()},
+		snapshot: &cpaCapacitySnapshot{totalCredentials: 2, enabledCredentials: 2, availableCredentials: 2, fetchedAt: time.Now()},
 	})
 	accounts := []Account{
 		{ID: 1, Type: AccountTypeAPIKey, Concurrency: 5},
@@ -231,6 +240,119 @@ func TestNormalizeCPACredentials(t *testing.T) {
 	require.NotContains(t, credentials, CPAManagementURLCredentialKey)
 	require.NotContains(t, credentials, CPAManagementKeyCredentialKey)
 	require.NotContains(t, credentials, CPAConcurrencyPerCredentialCredentialKey)
+}
+
+func TestNormalizeCPACredentialsFallsBackToBaseURLAndDefaultsToTen(t *testing.T) {
+	credentials := map[string]any{
+		CPAModeCredentialKey:          true,
+		"base_url":                    "https://cpa.example.com/v1",
+		CPAManagementKeyCredentialKey: " secret ",
+	}
+	require.NoError(t, NormalizeCPACredentials(AccountTypeAPIKey, credentials))
+	require.NotContains(t, credentials, CPAManagementURLCredentialKey)
+	require.Equal(t, DefaultCPAConcurrencyPerCredential, credentials[CPAConcurrencyPerCredentialCredentialKey])
+	account := &Account{Type: AccountTypeAPIKey, Credentials: credentials}
+	config, enabled := cpaPoolConfigFromAccount(account)
+	require.True(t, enabled)
+	require.Equal(t, "https://cpa.example.com/v1", config.managementURL)
+	require.Equal(t, "https://cpa.example.com/v0/management/auth-files", cpaAuthFilesURL(config.managementURL))
+}
+
+func TestCPAPoolCapacityForceSnapshotBypassesFreshCache(t *testing.T) {
+	var available atomic.Int64
+	available.Store(1)
+	var requests atomic.Int64
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		files := make([]map[string]any, available.Load())
+		for index := range files {
+			files[index] = map[string]any{"status": "active"}
+		}
+		require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"files": files}))
+	}))
+	defer server.Close()
+
+	capacityService := newCPAPoolCapacityService()
+	account := cpaTestAccount(server.URL, 1, 10)
+	status, err := capacityService.capacityStatus(context.Background(), account)
+	require.NoError(t, err)
+	require.Equal(t, 10, status.EffectiveConcurrency)
+
+	available.Store(3)
+	config, enabled := cpaPoolConfigFromAccount(account)
+	require.True(t, enabled)
+	snapshot, err := capacityService.forceSnapshot(context.Background(), config)
+	require.NoError(t, err)
+	status = cpaCapacityFromSnapshot(snapshot, config, CPACapacityStateFresh)
+	require.Equal(t, 3, status.AvailableCredentials)
+	require.Equal(t, 30, status.EffectiveConcurrency)
+	require.Equal(t, int64(2), requests.Load())
+}
+
+func TestCPAPoolCapacityTestDoesNotPopulateSchedulerCache(t *testing.T) {
+	var requests atomic.Int64
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		_, _ = w.Write([]byte(`{"files":[{"status":"active"}]}`))
+	}))
+	defer server.Close()
+
+	concurrencyService := NewConcurrencyService(nil)
+	account := cpaTestAccount(server.URL, 1, 10)
+	result, err := concurrencyService.TestCPACapacity(context.Background(), account, CPATestInput{})
+	require.NoError(t, err)
+	require.Equal(t, 10, result.EffectiveConcurrency)
+	require.Equal(t, int64(1), requests.Load())
+
+	status, err := concurrencyService.GetCPACapacityStatus(context.Background(), account)
+	require.NoError(t, err)
+	require.Equal(t, 10, status.EffectiveConcurrency)
+	require.Equal(t, int64(2), requests.Load(), "connection tests must not warm the scheduler cache")
+}
+
+func TestCPAPoolCapacityFailedForceRefreshPreservesStaleSnapshot(t *testing.T) {
+	now := time.Date(2026, 7, 26, 12, 0, 0, 0, time.UTC)
+	var fail atomic.Bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if fail.Load() {
+			http.Error(w, "unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		_, _ = w.Write([]byte(`{"files":[{"status":"active"},{"status":"active"}]}`))
+	}))
+	defer server.Close()
+
+	concurrencyService := NewConcurrencyService(nil)
+	concurrencyService.cpaPoolCapacity.now = func() time.Time { return now }
+	account := cpaTestAccount(server.URL, 1, 10)
+	status, err := concurrencyService.GetCPACapacityStatus(context.Background(), account)
+	require.NoError(t, err)
+	require.Equal(t, 20, status.EffectiveConcurrency)
+
+	fail.Store(true)
+	now = now.Add(time.Second)
+	_, err = concurrencyService.ForceRefreshCPACapacity(context.Background(), account)
+	require.Error(t, err)
+
+	status, err = concurrencyService.GetCPACapacityStatus(context.Background(), account)
+	require.NoError(t, err)
+	require.Equal(t, CPACapacityStateStale, status.State)
+	require.Equal(t, 2, status.AvailableCredentials)
+	require.Equal(t, 20, status.EffectiveConcurrency)
+}
+
+func TestCPATestCapacityFailureDoesNotExposeAdministratorPassword(t *testing.T) {
+	const administratorPassword = "do-not-leak-this-password"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+	}))
+	defer server.Close()
+
+	account := cpaTestAccount(server.URL, 1, 10)
+	account.Credentials[CPAManagementKeyCredentialKey] = administratorPassword
+	_, err := NewConcurrencyService(nil).TestCPACapacity(context.Background(), account, CPATestInput{})
+	require.Error(t, err)
+	require.NotContains(t, err.Error(), administratorPassword)
 }
 
 func TestNormalizeCPACredentialsRejectsIncompleteConfig(t *testing.T) {
@@ -280,7 +402,7 @@ func BenchmarkCPAPoolCapacityCachedHit(b *testing.B) {
 		b.Fatal("CPA configuration was not enabled")
 	}
 	service.cpaPoolCapacity.cache.Store(service.cpaPoolCapacity.cacheKey(config), cpaCapacityCacheEntry{
-		snapshot: &cpaCapacitySnapshot{schedulableCredentials: 20, fetchedAt: time.Now()},
+		snapshot: &cpaCapacitySnapshot{totalCredentials: 20, enabledCredentials: 20, availableCredentials: 20, fetchedAt: time.Now()},
 	})
 	ctx := context.Background()
 	b.ReportAllocs()

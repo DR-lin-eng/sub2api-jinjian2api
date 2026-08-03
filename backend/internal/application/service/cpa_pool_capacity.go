@@ -26,7 +26,7 @@ const (
 	CPAManagementKeyCredentialKey            = "cpa_management_key"
 	CPAConcurrencyPerCredentialCredentialKey = "cpa_concurrency_per_credential"
 
-	defaultCPAConcurrencyPerCredential = 1
+	DefaultCPAConcurrencyPerCredential = 10
 	maxCPAConcurrencyPerCredential     = 10000
 	defaultCPASnapshotTTL              = 90 * time.Second
 	defaultCPAStaleSnapshotTTL         = 180 * time.Second
@@ -40,6 +40,38 @@ type cpaPoolConfig struct {
 	managementURL            string
 	managementKey            string
 	concurrencyPerCredential int
+}
+
+const (
+	CPACapacityStateFresh       = "fresh"
+	CPACapacityStateStale       = "stale"
+	CPACapacityStateUnavailable = "unavailable"
+)
+
+// CPACapacityStatus is safe to expose through admin APIs. It never includes
+// the management URL or administrator password.
+type CPACapacityStatus struct {
+	TotalCredentials         int       `json:"total_credentials"`
+	EnabledCredentials       int       `json:"enabled_credentials"`
+	AbnormalCredentials      int       `json:"abnormal_credentials"`
+	AvailableCredentials     int       `json:"available_credentials"`
+	EffectiveConcurrency     int       `json:"effective_concurrency"`
+	ConcurrencyPerCredential int       `json:"concurrency_per_credential"`
+	FetchedAt                time.Time `json:"fetched_at"`
+	State                    string    `json:"state"`
+}
+
+type CPATestInput struct {
+	UseAccountBaseURL        bool
+	BaseURL                  string
+	ManagementURL            string
+	ManagementPassword       string
+	ConcurrencyPerCredential *int
+}
+
+type CPATestResult struct {
+	*CPACapacityStatus
+	LatencyMS int64 `json:"latency_ms"`
 }
 
 func cpaBool(value any) (bool, bool) {
@@ -129,9 +161,24 @@ func NormalizeCPACredentials(accountType string, credentials map[string]any) err
 		return infraerrors.BadRequest("CPA_MODE_REQUIRES_API_KEY_ACCOUNT", "CPA mode is only supported for API-key accounts")
 	}
 
-	managementURL, ok := credentials[CPAManagementURLCredentialKey].(string)
-	if !ok || strings.TrimSpace(managementURL) == "" {
-		return infraerrors.BadRequest("CPA_MANAGEMENT_URL_REQUIRED", "cpa_management_url is required when CPA mode is enabled")
+	managementURL := ""
+	if rawManagementURL, provided := credentials[CPAManagementURLCredentialKey]; provided {
+		if rawManagementURL != nil {
+			var ok bool
+			managementURL, ok = rawManagementURL.(string)
+			if !ok {
+				return infraerrors.BadRequest("INVALID_CPA_MANAGEMENT_URL", "cpa_management_url must be a string")
+			}
+		}
+	}
+	managementURL = strings.TrimSpace(managementURL)
+	if managementURL == "" {
+		delete(credentials, CPAManagementURLCredentialKey)
+		baseURL, _ := credentials["base_url"].(string)
+		managementURL = strings.TrimSpace(baseURL)
+	}
+	if managementURL == "" {
+		return infraerrors.BadRequest("CPA_MANAGEMENT_URL_REQUIRED", "account base_url or cpa_management_url is required when CPA mode is enabled")
 	}
 	normalizedURL, err := normalizeCPAManagementURL(managementURL)
 	if err != nil {
@@ -142,7 +189,7 @@ func NormalizeCPACredentials(accountType string, credentials map[string]any) err
 		return infraerrors.BadRequest("CPA_MANAGEMENT_KEY_REQUIRED", "cpa_management_key is required when CPA mode is enabled")
 	}
 
-	perCredential := defaultCPAConcurrencyPerCredential
+	perCredential := DefaultCPAConcurrencyPerCredential
 	if raw, provided := credentials[CPAConcurrencyPerCredentialCredentialKey]; provided {
 		parsed, valid := cpaPositiveInt(raw)
 		if !valid {
@@ -155,7 +202,9 @@ func NormalizeCPACredentials(accountType string, credentials map[string]any) err
 	}
 
 	credentials[CPAModeCredentialKey] = true
-	credentials[CPAManagementURLCredentialKey] = normalizedURL
+	if _, overridden := credentials[CPAManagementURLCredentialKey]; overridden {
+		credentials[CPAManagementURLCredentialKey] = normalizedURL
+	}
 	credentials[CPAManagementKeyCredentialKey] = strings.TrimSpace(managementKey)
 	credentials[CPAConcurrencyPerCredentialCredentialKey] = perCredential
 	return nil
@@ -169,18 +218,26 @@ func cpaModeEnabled(account *Account) bool {
 	return ok && enabled
 }
 
+// IsCPAModeEnabled reports whether an account has the optional CPA integration enabled.
+func IsCPAModeEnabled(account *Account) bool {
+	return cpaModeEnabled(account)
+}
+
 func cpaPoolConfigFromAccount(account *Account) (cpaPoolConfig, bool) {
 	if !cpaModeEnabled(account) {
 		return cpaPoolConfig{}, false
 	}
-	managementURL, okURL := account.Credentials[CPAManagementURLCredentialKey].(string)
+	managementURL, _ := account.Credentials[CPAManagementURLCredentialKey].(string)
+	if strings.TrimSpace(managementURL) == "" {
+		managementURL, _ = account.Credentials["base_url"].(string)
+	}
 	managementKey, okKey := account.Credentials[CPAManagementKeyCredentialKey].(string)
 	managementURL = strings.TrimSpace(managementURL)
 	managementKey = strings.TrimSpace(managementKey)
-	if !okURL || !okKey || managementURL == "" || managementKey == "" {
+	if !okKey || managementURL == "" || managementKey == "" {
 		return cpaPoolConfig{}, true
 	}
-	perCredential := defaultCPAConcurrencyPerCredential
+	perCredential := DefaultCPAConcurrencyPerCredential
 	if parsed, ok := cpaPositiveInt(account.Credentials[CPAConcurrencyPerCredentialCredentialKey]); ok {
 		perCredential = parsed
 	}
@@ -198,6 +255,8 @@ func cpaAuthFilesURL(managementURL string) string {
 		return base
 	case strings.HasSuffix(base, "/v0/management"):
 		return base + "/auth-files"
+	case strings.HasSuffix(base, "/v1"):
+		return strings.TrimSuffix(base, "/v1") + "/v0/management/auth-files"
 	default:
 		return base + "/v0/management/auth-files"
 	}
@@ -215,8 +274,11 @@ type cpaAuthFilesResponse struct {
 }
 
 type cpaCapacitySnapshot struct {
-	schedulableCredentials int
-	fetchedAt              time.Time
+	totalCredentials     int
+	enabledCredentials   int
+	abnormalCredentials  int
+	availableCredentials int
+	fetchedAt            time.Time
 }
 
 type cpaCapacityCacheKey struct {
@@ -264,40 +326,40 @@ func (s *cpaPoolCapacityService) cacheKey(config cpaPoolConfig) cpaCapacityCache
 	}
 }
 
-func (s *cpaPoolCapacityService) cachedSnapshot(key cpaCapacityCacheKey, now time.Time) (*cpaCapacitySnapshot, error, bool) {
+func (s *cpaPoolCapacityService) cachedSnapshot(key cpaCapacityCacheKey, now time.Time) (*cpaCapacitySnapshot, string, error, bool) {
 	raw, ok := s.cache.Load(key)
 	if !ok {
-		return nil, nil, false
+		return nil, "", nil, false
 	}
 	entry, ok := raw.(cpaCapacityCacheEntry)
 	if !ok {
-		return nil, nil, false
-	}
-	if entry.snapshot != nil && now.Sub(entry.snapshot.fetchedAt) < s.cacheTTL {
-		return entry.snapshot, nil, true
+		return nil, "", nil, false
 	}
 	if entry.lastErr != nil && now.Sub(entry.lastAttemptAt) < s.cacheTTL {
 		if entry.snapshot != nil && now.Sub(entry.snapshot.fetchedAt) <= s.staleTTL {
-			return entry.snapshot, nil, true
+			return entry.snapshot, CPACapacityStateStale, nil, true
 		}
-		return nil, entry.lastErr, true
+		return nil, CPACapacityStateUnavailable, entry.lastErr, true
 	}
-	return nil, nil, false
+	if entry.snapshot != nil && now.Sub(entry.snapshot.fetchedAt) < s.cacheTTL {
+		return entry.snapshot, CPACapacityStateFresh, nil, true
+	}
+	return nil, "", nil, false
 }
 
-func (s *cpaPoolCapacityService) snapshot(ctx context.Context, config cpaPoolConfig) (*cpaCapacitySnapshot, error) {
+func (s *cpaPoolCapacityService) snapshot(ctx context.Context, config cpaPoolConfig) (*cpaCapacitySnapshot, string, error) {
 	if s == nil {
-		return nil, errCPAPoolCapacityUnavailable
+		return nil, CPACapacityStateUnavailable, errCPAPoolCapacityUnavailable
 	}
 	now := s.now()
 	key := s.cacheKey(config)
-	if snapshot, err, ok := s.cachedSnapshot(key, now); ok {
-		return snapshot, err
+	if snapshot, state, err, ok := s.cachedSnapshot(key, now); ok {
+		return snapshot, state, err
 	}
 
 	value, err, _ := s.group.Do(key.singleflightKey(), func() (any, error) {
 		checkNow := s.now()
-		if snapshot, cachedErr, ok := s.cachedSnapshot(key, checkNow); ok {
+		if snapshot, _, cachedErr, ok := s.cachedSnapshot(key, checkNow); ok {
 			return snapshot, cachedErr
 		}
 		previousRaw, _ := s.cache.Load(key)
@@ -315,6 +377,40 @@ func (s *cpaPoolCapacityService) snapshot(ctx context.Context, config cpaPoolCon
 			return nil, fetchErr
 		}
 		s.cache.Store(key, cpaCapacityCacheEntry{snapshot: snapshot, lastAttemptAt: checkNow})
+		return snapshot, nil
+	})
+	if err != nil {
+		return nil, CPACapacityStateUnavailable, err
+	}
+	snapshot, ok := value.(*cpaCapacitySnapshot)
+	if !ok || snapshot == nil {
+		return nil, CPACapacityStateUnavailable, errCPAPoolCapacityUnavailable
+	}
+	if _, state, _, ok := s.cachedSnapshot(key, s.now()); ok {
+		return snapshot, state, nil
+	}
+	return snapshot, CPACapacityStateFresh, nil
+}
+
+func (s *cpaPoolCapacityService) forceSnapshot(ctx context.Context, config cpaPoolConfig) (*cpaCapacitySnapshot, error) {
+	if s == nil {
+		return nil, errCPAPoolCapacityUnavailable
+	}
+	key := s.cacheKey(config)
+	value, err, _ := s.group.Do(key.singleflightKey()+"\x00force", func() (any, error) {
+		now := s.now()
+		previousRaw, _ := s.cache.Load(key)
+		previous, _ := previousRaw.(cpaCapacityCacheEntry)
+		snapshot, fetchErr := s.fetch(ctx, config, now)
+		if fetchErr != nil {
+			s.cache.Store(key, cpaCapacityCacheEntry{
+				snapshot:      previous.snapshot,
+				lastAttemptAt: now,
+				lastErr:       fetchErr,
+			})
+			return nil, fetchErr
+		}
+		s.cache.Store(key, cpaCapacityCacheEntry{snapshot: snapshot, lastAttemptAt: now})
 		return snapshot, nil
 	})
 	if err != nil {
@@ -356,17 +452,64 @@ func (s *cpaPoolCapacityService) fetch(ctx context.Context, config cpaPoolConfig
 		return nil, fmt.Errorf("decode CPA auth-files response: %w", err)
 	}
 
-	schedulable := 0
+	enabled := 0
+	abnormal := 0
 	for _, file := range payload.Files {
 		if file.Disabled || strings.EqualFold(strings.TrimSpace(file.Status), "disabled") {
 			continue
 		}
-		if file.Unavailable && file.NextRetryAfter != nil && file.NextRetryAfter.After(now) {
-			continue
+		enabled++
+		if file.Unavailable || strings.EqualFold(strings.TrimSpace(file.Status), "error") {
+			abnormal++
 		}
-		schedulable++
 	}
-	return &cpaCapacitySnapshot{schedulableCredentials: schedulable, fetchedAt: now}, nil
+	available := enabled - abnormal
+	if available < 0 {
+		available = 0
+	}
+	return &cpaCapacitySnapshot{
+		totalCredentials:     len(payload.Files),
+		enabledCredentials:   enabled,
+		abnormalCredentials:  abnormal,
+		availableCredentials: available,
+		fetchedAt:            now,
+	}, nil
+}
+
+func cpaCapacityFromSnapshot(snapshot *cpaCapacitySnapshot, config cpaPoolConfig, state string) *CPACapacityStatus {
+	if snapshot == nil {
+		return &CPACapacityStatus{ConcurrencyPerCredential: config.concurrencyPerCredential, State: CPACapacityStateUnavailable}
+	}
+	capacity64 := int64(snapshot.availableCredentials) * int64(config.concurrencyPerCredential)
+	maxInt := int64(^uint(0) >> 1)
+	if capacity64 > maxInt {
+		capacity64 = maxInt
+	}
+	return &CPACapacityStatus{
+		TotalCredentials:         snapshot.totalCredentials,
+		EnabledCredentials:       snapshot.enabledCredentials,
+		AbnormalCredentials:      snapshot.abnormalCredentials,
+		AvailableCredentials:     snapshot.availableCredentials,
+		EffectiveConcurrency:     int(capacity64),
+		ConcurrencyPerCredential: config.concurrencyPerCredential,
+		FetchedAt:                snapshot.fetchedAt,
+		State:                    state,
+	}
+}
+
+func (s *cpaPoolCapacityService) capacityStatus(ctx context.Context, account *Account) (*CPACapacityStatus, error) {
+	config, enabled := cpaPoolConfigFromAccount(account)
+	if !enabled {
+		return nil, nil
+	}
+	if config.managementURL == "" || config.managementKey == "" {
+		return &CPACapacityStatus{ConcurrencyPerCredential: config.concurrencyPerCredential, State: CPACapacityStateUnavailable}, errCPAPoolCapacityUnavailable
+	}
+	snapshot, state, err := s.snapshot(ctx, config)
+	if err != nil {
+		return cpaCapacityFromSnapshot(nil, config, CPACapacityStateUnavailable), err
+	}
+	return cpaCapacityFromSnapshot(snapshot, config, state), nil
 }
 
 func (s *cpaPoolCapacityService) effectiveConcurrency(ctx context.Context, account *Account) (int, bool) {
@@ -377,24 +520,87 @@ func (s *cpaPoolCapacityService) effectiveConcurrency(ctx context.Context, accou
 	if config.managementURL == "" || config.managementKey == "" {
 		return 0, false
 	}
-	snapshot, err := s.snapshot(ctx, config)
+	snapshot, _, err := s.snapshot(ctx, config)
 	if err != nil {
 		slog.Warn("cpa_pool_capacity_unavailable", "account_id", account.ID, "management_url", config.managementURL, "error", err)
 		return 0, false
 	}
-	if snapshot.schedulableCredentials <= 0 {
+	if snapshot.availableCredentials <= 0 {
 		return 0, false
 	}
-	capacity64 := int64(snapshot.schedulableCredentials) * int64(config.concurrencyPerCredential)
+	capacity64 := int64(snapshot.availableCredentials) * int64(config.concurrencyPerCredential)
 	maxInt := int64(^uint(0) >> 1)
 	if capacity64 > maxInt {
 		capacity64 = maxInt
 	}
 	capacity := int(capacity64)
-	if account.Concurrency > 0 && account.Concurrency < capacity {
-		capacity = account.Concurrency
-	}
 	return capacity, capacity > 0
+}
+
+func (s *ConcurrencyService) GetCPACapacityStatus(ctx context.Context, account *Account) (*CPACapacityStatus, error) {
+	if s == nil || s.cpaPoolCapacity == nil {
+		return nil, errCPAPoolCapacityUnavailable
+	}
+	return s.cpaPoolCapacity.capacityStatus(ctx, account)
+}
+
+func (s *ConcurrencyService) ForceRefreshCPACapacity(ctx context.Context, account *Account) (*CPACapacityStatus, error) {
+	if s == nil || s.cpaPoolCapacity == nil {
+		return nil, errCPAPoolCapacityUnavailable
+	}
+	config, enabled := cpaPoolConfigFromAccount(account)
+	if !enabled || config.managementURL == "" || config.managementKey == "" {
+		return nil, infraerrors.BadRequest("CPA_MODE_NOT_CONFIGURED", "CPA mode is not enabled or is incomplete")
+	}
+	snapshot, err := s.cpaPoolCapacity.forceSnapshot(ctx, config)
+	if err != nil {
+		return nil, infraerrors.Newf(http.StatusBadGateway, "CPA_CONNECTION_FAILED", "CPA connection failed: %v", err)
+	}
+	return cpaCapacityFromSnapshot(snapshot, config, CPACapacityStateFresh), nil
+}
+
+func (s *ConcurrencyService) TestCPACapacity(ctx context.Context, account *Account, input CPATestInput) (*CPATestResult, error) {
+	if s == nil || s.cpaPoolCapacity == nil || account == nil {
+		return nil, errCPAPoolCapacityUnavailable
+	}
+	credentials := make(map[string]any, len(account.Credentials)+4)
+	for key, value := range account.Credentials {
+		credentials[key] = value
+	}
+	credentials[CPAModeCredentialKey] = true
+	if input.UseAccountBaseURL {
+		if strings.TrimSpace(input.BaseURL) != "" {
+			credentials["base_url"] = strings.TrimSpace(input.BaseURL)
+		}
+		delete(credentials, CPAManagementURLCredentialKey)
+	} else if strings.TrimSpace(input.ManagementURL) != "" {
+		credentials[CPAManagementURLCredentialKey] = input.ManagementURL
+	}
+	if strings.TrimSpace(input.ManagementPassword) != "" {
+		credentials[CPAManagementKeyCredentialKey] = input.ManagementPassword
+	}
+	if input.ConcurrencyPerCredential != nil {
+		credentials[CPAConcurrencyPerCredentialCredentialKey] = *input.ConcurrencyPerCredential
+	}
+	if err := NormalizeCPACredentials(account.Type, credentials); err != nil {
+		return nil, err
+	}
+	testAccount := *account
+	testAccount.Credentials = credentials
+	config, enabled := cpaPoolConfigFromAccount(&testAccount)
+	if !enabled || config.managementURL == "" || config.managementKey == "" {
+		return nil, infraerrors.BadRequest("CPA_MODE_NOT_CONFIGURED", "CPA mode is not configured")
+	}
+	startedAt := time.Now()
+	snapshot, err := s.cpaPoolCapacity.fetch(ctx, config, s.cpaPoolCapacity.now())
+	latency := time.Since(startedAt).Milliseconds()
+	if err != nil {
+		return nil, infraerrors.Newf(http.StatusBadGateway, "CPA_CONNECTION_FAILED", "CPA connection failed: %v", err)
+	}
+	return &CPATestResult{
+		CPACapacityStatus: cpaCapacityFromSnapshot(snapshot, config, CPACapacityStateFresh),
+		LatencyMS:         latency,
+	}, nil
 }
 
 func (s *ConcurrencyService) applyCPAPoolCapacity(ctx context.Context, account *Account) (*Account, bool) {

@@ -1122,6 +1122,9 @@ func (s *adminServiceImpl) BulkUpdateAccounts(ctx context.Context, input *BulkUp
 	if input.Schedulable != nil {
 		repoUpdates.Schedulable = input.Schedulable
 	}
+	if _, updatesCPA := input.Credentials[CPAModeCredentialKey]; updatesCPA {
+		return s.bulkUpdateAccountsWithCPA(ctx, input, cachedTargets, repoUpdates, result)
+	}
 
 	// Run bulk update for column/jsonb fields first.
 	if _, err := s.accountRepo.BulkUpdate(ctx, input.AccountIDs, repoUpdates); err != nil {
@@ -1162,6 +1165,133 @@ func (s *adminServiceImpl) BulkUpdateAccounts(ctx context.Context, input *BulkUp
 		result.Results = append(result.Results, entry)
 	}
 
+	return result, nil
+}
+
+func normalizeBulkCPACredentials(account *Account, incoming map[string]any) (map[string]any, []string, error) {
+	if account == nil || account.Type != AccountTypeAPIKey {
+		return nil, nil, infraerrors.BadRequest("CPA_MODE_REQUIRES_API_KEY_ACCOUNT", "CPA mode is only supported for API-key accounts")
+	}
+	patch := maps.Clone(incoming)
+	if rawPassword, provided := patch[CPAManagementKeyCredentialKey]; provided {
+		password, ok := rawPassword.(string)
+		if ok && strings.TrimSpace(password) == "" {
+			delete(patch, CPAManagementKeyCredentialKey)
+		}
+	}
+
+	merged := maps.Clone(account.Credentials)
+	if merged == nil {
+		merged = make(map[string]any)
+	}
+	for key, value := range patch {
+		if key == CPAManagementURLCredentialKey {
+			if value == nil || strings.TrimSpace(fmt.Sprint(value)) == "" {
+				delete(merged, key)
+				continue
+			}
+		}
+		merged[key] = value
+	}
+	if err := NormalizeCPACredentials(account.Type, merged); err != nil {
+		return nil, nil, err
+	}
+
+	for _, key := range []string{
+		CPAModeCredentialKey,
+		CPAManagementURLCredentialKey,
+		CPAManagementKeyCredentialKey,
+		CPAConcurrencyPerCredentialCredentialKey,
+	} {
+		delete(patch, key)
+	}
+	if !cpaModeEnabled(&Account{Type: account.Type, Credentials: merged}) {
+		return patch, []string{
+			CPAModeCredentialKey,
+			CPAManagementURLCredentialKey,
+			CPAManagementKeyCredentialKey,
+			CPAConcurrencyPerCredentialCredentialKey,
+		}, nil
+	}
+
+	patch[CPAModeCredentialKey] = true
+	patch[CPAConcurrencyPerCredentialCredentialKey] = merged[CPAConcurrencyPerCredentialCredentialKey]
+	credentialKeysToDelete := make([]string, 0, 1)
+	if managementURL, overridden := merged[CPAManagementURLCredentialKey]; overridden {
+		patch[CPAManagementURLCredentialKey] = managementURL
+	} else {
+		credentialKeysToDelete = append(credentialKeysToDelete, CPAManagementURLCredentialKey)
+	}
+	if password, supplied := incoming[CPAManagementKeyCredentialKey]; supplied {
+		if value, ok := password.(string); ok && strings.TrimSpace(value) != "" {
+			patch[CPAManagementKeyCredentialKey] = merged[CPAManagementKeyCredentialKey]
+		}
+	}
+	return patch, credentialKeysToDelete, nil
+}
+
+func cloneBulkUpdateJSONMap(value map[string]any) map[string]any {
+	if value == nil {
+		return nil
+	}
+	return maps.Clone(value)
+}
+
+func (s *adminServiceImpl) bulkUpdateAccountsWithCPA(
+	ctx context.Context,
+	input *BulkUpdateAccountsInput,
+	targets []*Account,
+	baseUpdates AccountBulkUpdate,
+	result *BulkUpdateAccountsResult,
+) (*BulkUpdateAccountsResult, error) {
+	targetsByID := make(map[int64]*Account, len(targets))
+	for _, account := range targets {
+		if account != nil {
+			targetsByID[account.ID] = account
+		}
+	}
+	for _, accountID := range input.AccountIDs {
+		entry := BulkUpdateAccountResult{AccountID: accountID}
+		account := targetsByID[accountID]
+		if account == nil {
+			entry.Error = ErrAccountNotFound.Error()
+		} else {
+			credentialPatch, credentialKeysToDelete, err := normalizeBulkCPACredentials(account, input.Credentials)
+			if err == nil {
+				updates := baseUpdates
+				updates.Credentials = credentialPatch
+				updates.CredentialKeysToDelete = credentialKeysToDelete
+				updates.Extra = cloneBulkUpdateJSONMap(baseUpdates.Extra)
+				var rows int64
+				rows, err = s.accountRepo.BulkUpdate(ctx, []int64{accountID}, updates)
+				if err == nil && rows != 1 {
+					err = ErrAccountNotFound
+				}
+				if err == nil && updates.ProxyID != nil {
+					var effectiveProxyID *int64
+					if *updates.ProxyID != 0 {
+						effectiveProxyID = updates.ProxyID
+					}
+					err = s.propagateProxyToShadows(ctx, accountID, effectiveProxyID)
+				}
+				if err == nil && input.GroupIDs != nil {
+					err = s.accountRepo.BindGroups(ctx, accountID, *input.GroupIDs)
+				}
+			}
+			if err != nil {
+				entry.Error = err.Error()
+			}
+		}
+		if entry.Error != "" {
+			result.Failed++
+			result.FailedIDs = append(result.FailedIDs, accountID)
+		} else {
+			entry.Success = true
+			result.Success++
+			result.SuccessIDs = append(result.SuccessIDs, accountID)
+		}
+		result.Results = append(result.Results, entry)
+	}
 	return result, nil
 }
 

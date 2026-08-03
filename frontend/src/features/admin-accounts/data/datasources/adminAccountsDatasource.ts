@@ -301,6 +301,39 @@ export async function testAccount(id: number): Promise<{
   return data
 }
 
+export interface CPATestRequest {
+  use_account_base_url?: boolean
+  base_url?: string
+  management_url?: string
+  management_password?: string
+  concurrency_per_credential?: number
+}
+
+export interface CPACapacityStatus {
+  total_credentials: number
+  enabled_credentials: number
+  abnormal_credentials: number
+  available_credentials: number
+  effective_concurrency: number
+  concurrency_per_credential: number
+  fetched_at?: string
+  state: 'fresh' | 'stale' | 'unavailable'
+}
+
+export interface CPATestResult extends CPACapacityStatus {
+  latency_ms: number
+}
+
+export async function testCPAConnection(id: number, payload: CPATestRequest): Promise<CPATestResult> {
+  const { data } = await apiClient.post<CPATestResult>(`/admin/accounts/${id}/cpa/test`, payload)
+  return data
+}
+
+export async function syncCPACapacity(id: number): Promise<CPACapacityStatus> {
+  const { data } = await apiClient.post<CPACapacityStatus>(`/admin/accounts/${id}/cpa/sync`)
+  return data
+}
+
 /**
  * Refresh account credentials
  * @param id - Account ID
@@ -1012,6 +1045,8 @@ export const accountsAPI = {
   delete: deleteAccount,
   toggleStatus,
   testAccount,
+  testCPAConnection,
+  syncCPACapacity,
   refreshCredentials,
   applyOAuthCredentials,
   getStats,

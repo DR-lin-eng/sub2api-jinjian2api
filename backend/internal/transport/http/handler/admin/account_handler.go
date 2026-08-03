@@ -192,6 +192,7 @@ type CheckMixedChannelRequest struct {
 type AccountWithConcurrency struct {
 	*dto.Account
 	CurrentConcurrency        int                                 `json:"current_concurrency"`
+	CPACapacity               *service.CPACapacityStatus          `json:"cpa_capacity,omitempty"`
 	StreamDegraded            bool                                `json:"stream_degraded"`
 	StreamDegradationLevel    int                                 `json:"stream_degradation_level,omitempty"`
 	StreamDegradationTimeouts int                                 `json:"stream_degradation_timeouts,omitempty"`
@@ -247,6 +248,7 @@ func (h *AccountHandler) buildAccountResponseWithRuntime(ctx context.Context, ac
 			item.CurrentConcurrency = counts[account.ID]
 		}
 	}
+	item.CPACapacity = h.getCPACapacityStatus(ctx, account)
 	h.enrichOpenAIStreamDegradation(&item, account.ID)
 
 	if account.IsAnthropicOAuthOrSetupToken() {
@@ -683,6 +685,7 @@ func (h *AccountHandler) List(c *gin.Context) {
 	if hourlyUsageDone != nil {
 		<-hourlyUsageDone
 	}
+	cpaCapacities := h.getCPACapacityStatuses(c.Request.Context(), accounts)
 
 	// Build response with concurrency info
 	result := make([]AccountWithConcurrency, len(accounts))
@@ -691,6 +694,7 @@ func (h *AccountHandler) List(c *gin.Context) {
 		item := AccountWithConcurrency{
 			Account:            h.accountResponseFromService(acc),
 			CurrentConcurrency: concurrencyCounts[acc.ID],
+			CPACapacity:        cpaCapacities[acc.ID],
 			SchedulerScore:     schedulerScores[acc.ID],
 			SchedulerScores:    schedulerGroupScores[acc.ID],
 			HourlyUsage:        hourlyUsage[acc.ID],

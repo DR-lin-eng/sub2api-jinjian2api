@@ -32,6 +32,12 @@
 | [调度候选索引优化](SCHEDULER_CANDIDATE_INDEX_OPTIMIZATION_CN.md) | 实验调度引擎、索引一致性和回退行为 |
 | [支付系统（中文）](PAYMENT_CN.md) / [English](PAYMENT.md) | 支付服务商、订单、回调和配置 |
 
+## 长期优化计划
+
+| 文档 | 内容 |
+| --- | --- |
+| [前端架构优化计划](FRONTEND_ARCHITECTURE_OPTIMIZATION_PLAN.md) | Feature owner 收口、DTO、Query/Action、依赖门禁与分阶段迁移路线 |
+
 处于方案或交付阶段的功能记录在 `openspec/changes/`。使用这些文档前，应同时核对实现和测试，不能把 proposal 当作当前运行事实。
 
 ## 部署与运维

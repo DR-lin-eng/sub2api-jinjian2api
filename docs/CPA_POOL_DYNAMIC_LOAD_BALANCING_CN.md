@@ -17,8 +17,8 @@
 
 ```mermaid
 flowchart LR
-    CPA_A["CPA 号池 A"] -->|"管理接口：可调度凭据数"| SNAPSHOT["容量快照缓存"]
-    CPA_B["CPA 号池 B"] -->|"管理接口：可调度凭据数"| SNAPSHOT
+    CPA_A["CPA 号池 A"] -->|"管理接口：凭据状态"| SNAPSHOT["容量快照缓存"]
+    CPA_B["CPA 号池 B"] -->|"管理接口：凭据状态"| SNAPSHOT
     SNAPSHOT --> CAPACITY["计算每个外层账号的有效并发"]
     CAPACITY --> LOAD["读取当前并发与等待数"]
     LOAD --> POLICY["优先级、负载率、渠道公平、LRU、粘性"]
@@ -29,47 +29,45 @@ flowchart LR
 对每个开启 CPA 并发联动的外层账号，Sub2API 请求 CPA 管理接口：
 
 ```text
-GET {cpa_management_url}/v0/management/auth-files
-Authorization: Bearer {cpa_management_key}
+GET {CPA 管理地址}/v0/management/auth-files
+Authorization: Bearer {CPA 管理员密码}
 ```
 
-如果管理地址已经以 `/v0/management` 或 `/v0/management/auth-files` 结尾，系统会避免重复拼接路径。
+这里使用的是 CPA 配置中的 `remote-management.secret-key`（环境变量通常为 `MANAGEMENT_PASSWORD`），不是用于 API 转发的 `sk-...` API Key。底层存储字段仍叫 `cpa_management_key`，仅用于保持已有配置兼容。
 
-## 3. 可调度凭据与有效容量
+管理地址默认跟随账号 Base URL，也可以为该账号单独指定。系统兼容根地址、以 `/v1` 结尾的转发地址、`/v0/management` 和完整的 `/v0/management/auth-files` 地址，并统一请求 CPA 管理接口。
 
-### 3.1 可调度凭据
+## 3. 可用凭据与有效容量
 
-响应中的凭据符合下列任一条件时不计入容量：
+### 3.1 统计口径
 
-- `disabled=true`；
-- `status` 忽略大小写后等于 `disabled`；
-- `unavailable=true`，并且 `next_retry_after` 仍在未来。
+容量统计使用以下固定口径：
 
-其他凭据计入当前可调度凭据数。
+- 启用凭据：`disabled` 不为 `true`，并且 `status` 忽略大小写后不等于 `disabled`；
+- 异常凭据：启用凭据中，`status=error` 或 `unavailable=true` 的凭据；
+- 可用凭据：`max(0, 启用凭据数 - 异常凭据数)`。
+
+`next_retry_after` 不改变上述异常统计口径。
 
 ### 3.2 有效并发
 
 计算公式为：
 
 ```text
-池计算容量 = 可调度凭据数 × 单凭据折算并发
-
-本地并发上限 > 0 时：
-有效并发 = min(本地并发上限, 池计算容量)
-
-本地并发上限 <= 0 时：
-有效并发 = 池计算容量
+有效并发 = 可用凭据数 × 单凭据折算并发
 ```
+
+CPA 联动开启后，这个有效并发完全替代管理员设置的账号并发，不再与其取最小值。管理员设置的原始并发只作为关闭 CPA 联动后的备用值。
 
 示例：
 
-| 号池 | 可调度凭据 | 单凭据折算并发 | 本地并发上限 | 有效并发 |
+| 号池 | 可用凭据 | 单凭据折算并发 | 备用账号并发 | 有效并发 |
 | --- | ---: | ---: | ---: | ---: |
 | A | 20 | 2 | 100 | 40 |
 | B | 5 | 2 | 100 | 10 |
-| C | 20 | 2 | 30 | 30 |
+| C | 20 | 2 | 30 | 40 |
 
-池内没有可调度凭据，或者无法获得可用容量快照时，该外层账号会从本次候选中排除。
+池内没有可用凭据，或者无法获得可用容量快照时，该外层账号会从本次候选中排除。
 
 ## 4. 动态负载分配
 
@@ -97,7 +95,7 @@ Authorization: Bearer {cpa_management_key}
 
 ### 5.1 一个物理池对应一个外层账号
 
-不要让多个 Sub2API 外层账号指向相同的 CPA 管理地址和管理员 Key。相同管理地址与 Key 会共享同一份容量快照，但每个外层账号仍会被当成独立容量参与调度，可能重复计算物理池容量并导致过量准入。
+不要让多个 Sub2API 外层账号指向相同的 CPA 管理地址和管理员密码。相同管理地址与密码会共享同一份容量快照，但每个外层账号仍会被当成独立容量参与调度，可能重复计算物理池容量并导致过量准入。
 
 ### 5.2 保持调度条件一致
 
@@ -118,29 +116,38 @@ Authorization: Bearer {cpa_management_key}
 
 ### 5.4 正确设置单凭据折算并发
 
-`cpa_concurrency_per_credential` 表示一个可调度凭据可承载的并发数，允许范围为 `1` 到 `10000`，默认值为 `1`。应依据上游真实限制和稳定性设置，不应仅为了提高表面容量而调大。
+`cpa_concurrency_per_credential` 表示一个可用凭据可承载的并发数，允许范围为 `1` 到 `10000`，默认值为 `10`。已有显式配置保持不变。应依据上游真实限制和稳定性设置，不应仅为了提高表面容量而调大。
 
 ## 6. 管理后台配置
 
 CPA 并发联动只支持 API Key 类型账号。在管理后台编辑账号时：
 
 1. 打开“CPA 并发联动”。
-2. 填写“CPA 管理地址”，必须是绝对 HTTP 或 HTTPS 地址，不能包含用户信息、查询参数或 fragment。
-3. 填写“CPA 管理员 Key”。
-4. 设置“单凭据折算并发”。
-5. 设置外层账号的本地并发上限；需要按池计算容量作为唯一上限时可使用系统允许的无限制值。
+2. 选择管理地址跟随账号 Base URL，或填写独立的绝对 HTTP/HTTPS 管理地址。地址不能包含用户信息、查询参数或 fragment。
+3. 填写“CPA 管理员密码”。
+4. 设置“单凭据折算并发”，默认值为 `10`。
+5. 点击“连接测试”，用当前表单中尚未保存的地址和密码执行只读检查。
 6. 将需要共同分流的账号调整为相同优先级，并清除手工负载因子。
+
+账号列表的容量列会显示 CPA 有效并发，并在下一行显示“可用凭据 N”。旧快照仍显示最后数量并标记为过期；无快照时显示“可用凭据 --”；确认容量为零时显示“可用凭据 0”。原始账号并发只在提示中作为关闭 CPA 后的备用值。已开启 CPA 的账号可从“更多”菜单点击“同步 CPA”强制获取新快照。
 
 底层凭据字段为：
 
 | 字段 | 含义 |
 | --- | --- |
 | `cpa_mode` | 是否启用 CPA 并发联动 |
-| `cpa_management_url` | CPA 管理接口基础地址 |
-| `cpa_management_key` | CPA 管理员 Key |
-| `cpa_concurrency_per_credential` | 单个可调度凭据折算的并发数 |
+| `cpa_management_url` | 可选的 CPA 管理接口地址；缺省时跟随账号 `base_url` |
+| `cpa_management_key` | CPA 管理员密码，字段名为兼容旧配置而保留 |
+| `cpa_concurrency_per_credential` | 单个可用凭据折算的并发数 |
 
-管理员 Key 属于敏感凭据，不应写入日志、公开配置、工单截图或本文档示例。
+管理员密码属于敏感凭据，不会由账号响应回传，也不应写入日志、公开配置、工单截图或文档示例。
+
+批量编辑仅在全部目标都是 API Key 账号时显示 CPA 区域。外层复选框决定本次是否修改 CPA，内层开关决定统一启用或关闭。启用时可让每个账号跟随自己的 Base URL，或使用统一管理地址；管理员密码留空会逐账号保留原密码，没有旧密码的账号会单独失败，不影响其他账号。关闭时删除四个 CPA 专用字段，不影响其他凭据。
+
+管理 API 提供两个只读/容量操作：
+
+- `POST /api/v1/admin/accounts/:id/cpa/test`：测试未保存的地址、管理员密码和折算并发，不修改账号或容量缓存；密码留空时使用已保存密码。
+- `POST /api/v1/admin/accounts/:id/cpa/sync`：仅对配置完整且已启用 CPA 的账号强制刷新容量；失败时保留旧快照供调度降级。
 
 ## 7. 缓存、超时与故障行为
 
@@ -150,7 +157,7 @@ CPA 并发联动只支持 API Key 类型账号。在管理后台编辑账号时�
 | 失败后的旧快照最长使用时间 | 180 秒 |
 | CPA 管理请求超时 | 2 秒 |
 | 管理响应读取上限 | 2 MiB |
-| 并发刷新合并 | 相同管理地址与 Key 使用 singleflight 合并 |
+| 并发刷新合并 | 相同管理地址与管理员密码使用 singleflight 合并 |
 | HTTP 重定向 | 不跟随 |
 
 典型故障行为：
@@ -160,10 +167,10 @@ CPA 并发联动只支持 API Key 类型账号。在管理后台编辑账号时�
 | 首次读取管理接口失败，没有旧快照 | 排除该 CPA 外层账号 |
 | 已有快照，刷新失败且快照未超过 180 秒 | 临时继续使用旧容量 |
 | 旧快照超过 180 秒且刷新仍失败 | 排除该 CPA 外层账号 |
-| 可调度凭据数为 0 | 排除该 CPA 外层账号 |
+| 可用凭据数为 0 | 排除该 CPA 外层账号 |
 | 管理响应不是 HTTP 200，或无法在 2 MiB 读取上限内解析 | 视为容量读取失败 |
 
-失败时后端会记录 `cpa_pool_capacity_unavailable` 警告，其中包含外层账号 ID、管理地址和错误，但不会记录管理员 Key。
+失败时后端会记录 `cpa_pool_capacity_unavailable` 警告，其中包含外层账号 ID、管理地址和错误，但不会记录管理员密码。
 
 ## 8. 渠道公平与会话粘性
 
@@ -185,14 +192,14 @@ OpenAI 兼容 API Key 账号还会按标准化后的上游 `base_url` 识别渠�
 
 ```bash
 export CPA_POOL_URL='https://cpa.example.com'
-export CPA_POOL_MANAGEMENT_KEY='replace-with-secret'
+export CPA_POOL_MANAGEMENT_PASSWORD='replace-with-secret'
 curl -fsS \
-  -H "Authorization: Bearer ${CPA_POOL_MANAGEMENT_KEY}" \
+  -H "Authorization: Bearer ${CPA_POOL_MANAGEMENT_PASSWORD}" \
   -H 'Accept: application/json' \
   "${CPA_POOL_URL}/v0/management/auth-files"
 ```
 
-不要把带有真实管理员 Key 的命令历史或输出提交到仓库。
+不要把带有真实管理员密码的命令历史或输出提交到仓库。生产环境应使用 HTTPS；HTTP 会以明文传输管理员密码，只适合可信隔离网络中的临时诊断。
 
 ### 9.2 检查分流配置
 
@@ -200,15 +207,15 @@ curl -fsS \
 
 - 是否为 API Key 类型并处于可调度状态；
 - `cpa_mode` 是否启用；
-- 管理地址和管理员 Key 是否对应正确的物理池；
+- 管理地址和管理员密码是否对应正确的物理池；
 - 分组、平台和优先级是否一致；
 - `load_factor` 是否为空；
-- 本地并发上限是否意外压低池计算容量；
+- 容量列的有效并发和可用凭据是否符合预期；
 - 模型、端点能力和渠道限制是否使某个池无法进入候选。
 
 ### 9.3 判断是否正常动态调整
 
-1. 记录各池当前可调度凭据数和计算出的预期有效并发。
+1. 记录各池当前启用、异常、可用凭据数和计算出的预期有效并发。
 2. 使用持续并发请求观察各外层账号的当前并发与等待数，而不是只比较累计请求数。
 3. 等待至少一个 90 秒容量刷新窗口后，再判断增减 CPA 凭据是否已经反映。
 4. 比较各池负载率是否趋近，而不是要求累计请求数绝对相等。
@@ -217,7 +224,7 @@ curl -fsS \
 ## 10. 已知限制
 
 - 容量来自 CPA 管理接口的周期快照，不是推送或逐请求实时数据。
-- 当前只同步“可调度凭据数量”，不会读取每个凭据不同的限额、RPM、余额或实际并发能力。
+- 当前只同步凭据状态并计算启用、异常、可用数量，不会读取每个凭据不同的限额、RPM、余额或实际并发能力。
 - 所有凭据使用同一个 `cpa_concurrency_per_credential` 折算值。
 - Sub2API 不掌握 CPA 池内的最终选凭据算法和池内排队情况。
 - 手工负载因子、硬优先级、渠道公平、会话粘性和请求能力过滤都会使短期分布偏离容量比例。
@@ -226,6 +233,8 @@ curl -fsS \
 ## 11. 实现位置
 
 - CPA 配置校验、容量请求、缓存和有效并发计算：`backend/internal/application/service/cpa_pool_capacity.go`
+- CPA 连接测试、主动同步与运行时容量响应：`backend/internal/transport/http/handler/admin/account_cpa_handler.go`
+- CPA 批量敏感凭据合并：`backend/internal/application/service/admin_account.go`
 - OpenAI 调度前应用 CPA 容量：`backend/internal/application/service/openai_gateway_scheduling.go`
 - 通用网关调度前应用 CPA 容量：`backend/internal/application/service/gateway_scheduling.go`
 - 账号负载因子回退逻辑：`backend/internal/application/service/account.go`

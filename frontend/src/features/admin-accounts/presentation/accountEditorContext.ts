@@ -300,6 +300,7 @@ export interface EditAccountCredentialContext extends SharedMappingActions {
   cpaManagementKey: Ref<string>
   cpaManagementUrl: Ref<string>
   cpaModeEnabled: Ref<boolean>
+  cpaUseBaseUrl: Ref<boolean>
   customErrorCodeInput: Ref<number | null>
   customErrorCodesEnabled: Ref<boolean>
   editApiKey: Ref<string>
@@ -324,6 +325,7 @@ export interface EditAccountCredentialContext extends SharedMappingActions {
   isBedrockAPIKeyMode: ComputedRef<boolean>
   isOpenAIModelRestrictionDisabled: ComputedRef<boolean>
   isSyncingAntigravityUpstream: Ref<boolean>
+  isTestingCPA: Ref<boolean>
   isValidWildcardPattern: (pattern: string) => boolean
   modelMappings: Ref<ModelMapping[]>
   modelRestrictionMode: Ref<ModelRestrictionMode>
@@ -335,6 +337,7 @@ export interface EditAccountCredentialContext extends SharedMappingActions {
   removeErrorCode: (code: number) => void
   selectedErrorCodes: Ref<number[]>
   syncAntigravityUpstreamModels: () => Promise<void>
+  testCPAConnection: () => Promise<void>
   t: Translate
   toggleErrorCode: (code: number) => void
 }

@@ -1,3 +1,5 @@
+import cpaMessages from './accounts.cpa'
+
 export default {
     accounts: {
       title: 'Account Management',
@@ -21,6 +23,7 @@ export default {
       dataExportIncludeProxies: 'Include proxies linked to the exported accounts',
       dataImport: 'Import',
       moreActions: 'More Actions',
+      ...cpaMessages,
       dataActions: 'Data',
       toolActions: 'Tools',
       viewColumns: 'Columns',
@@ -317,6 +320,11 @@ export default {
       subscriptionExpires: 'Expires',
       // Capacity status tooltips
       capacity: {
+        cpaAvailableCredentials: 'Available credentials {count}',
+        cpaAvailableCredentialsUnknown: 'Available credentials --',
+        cpaFresh: 'CPA capacity is fresh. Fallback concurrency after disabling CPA: {fallback}',
+        cpaStale: 'CPA is using a stale snapshot. Fallback concurrency after disabling CPA: {fallback}',
+        cpaUnavailable: 'CPA capacity is unavailable and scheduling is stopped. Fallback concurrency after disabling CPA: {fallback}',
         windowCost: {
           blocked: '5h window cost exceeded, account scheduling paused',
           stickyOnly: '5h window cost at threshold, only sticky sessions allowed',
@@ -471,7 +479,10 @@ export default {
         noFieldsSelected: 'Select at least one field to update',
         rateSyncWarning: 'Accounts with upstream rate sync enabled cannot be changed in bulk. Disable sync in the account editor first.',
         rateSyncConflict: 'Cannot change account rates: {count} target account(s) have upstream rate sync enabled.',
-        mixedPlatformWarning: 'Selected accounts span multiple platforms ({platforms}). Model mapping presets shown are combined — ensure mappings are appropriate for each platform.'
+        mixedPlatformWarning: 'Selected accounts span multiple platforms ({platforms}). Model mapping presets shown are combined — ensure mappings are appropriate for each platform.',
+        cpaAddressFollowBaseUrl: 'Follow each account Base URL',
+        cpaAddressCustom: 'Use one management URL',
+        cpaPasswordHint: 'Leave blank to preserve each account\'s administrator password. Accounts without one fail individually.'
       },
       bulkDeleteTitle: 'Bulk Delete Accounts',
       bulkDeleteConfirm: 'Delete the selected {count} account(s)? This action cannot be undone.',
@@ -741,15 +752,6 @@ export default {
       poolModeRetryStatusCodes: 'Retry Status Codes',
       poolModeRetryStatusCodesHint:
         'Comma-separated HTTP status codes (100-599) that trigger same-account retry in pool mode. Leave blank to use defaults ({default}).',
-      cpaMode: 'CPA concurrency sync',
-      cpaModeHint: 'Read CPA schedulable credential count and use it to reduce this account concurrency limit',
-      cpaManagementUrl: 'CPA management URL',
-      cpaManagementKey: 'CPA management key',
-      cpaConcurrencyPerCredential: 'Concurrency per credential',
-      cpaConcurrencyHint: 'Effective limit = min(local limit, schedulable credentials x per-credential concurrency). Read at most once every {seconds} seconds.',
-      cpaManagementUrlRequired: 'CPA management URL is required when CPA concurrency sync is enabled',
-      cpaManagementKeyRequired: 'CPA management key is required when CPA concurrency sync is enabled',
-      cpaConcurrencyInvalid: 'Concurrency per credential must be an integer between 1 and {max}',
       customErrorCodes: 'Custom Error Codes',
       customErrorCodesHint: 'Only stop scheduling for selected error codes',
       customErrorCodesWarning:

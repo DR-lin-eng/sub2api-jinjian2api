@@ -218,6 +218,28 @@ func TestBulkUpdateDisablingProbeRemovesSnapshot(t *testing.T) {
 	require.Equal(t, `{"upstream_billing_probe_enabled":false}`, string(payload))
 }
 
+func TestBulkUpdateMergesAndDeletesCredentialKeys(t *testing.T) {
+	exec := &recordingSQLExecutor{result: rowsAffectedResult(1)}
+	repo := newAccountRepositoryWithSQL(nil, exec, nil)
+
+	_, err := repo.BulkUpdate(context.Background(), []int64{27}, service.AccountBulkUpdate{
+		Credentials: map[string]any{
+			service.CPAModeCredentialKey:                     true,
+			service.CPAConcurrencyPerCredentialCredentialKey: 10,
+		},
+		CredentialKeysToDelete: []string{service.CPAManagementURLCredentialKey},
+	})
+
+	require.NoError(t, err)
+	require.NotEmpty(t, exec.execQueries)
+	query := normalizeSQLWhitespace(exec.execQueries[0])
+	require.Contains(t, query, "credentials = (COALESCE(credentials, '{}'::jsonb) || $1::jsonb) - $2")
+	require.Equal(t, service.CPAManagementURLCredentialKey, exec.execArgs[0][1])
+	payload, ok := exec.execArgs[0][0].([]byte)
+	require.True(t, ok)
+	require.JSONEq(t, `{"cpa_concurrency_per_credential":10,"cpa_mode":true}`, string(payload))
+}
+
 func TestBulkUpdateClearsLoadFactor(t *testing.T) {
 	exec := &recordingSQLExecutor{result: rowsAffectedResult(1)}
 	repo := newAccountRepositoryWithSQL(nil, exec, nil)

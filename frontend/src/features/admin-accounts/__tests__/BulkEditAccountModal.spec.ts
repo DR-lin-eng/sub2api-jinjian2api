@@ -291,6 +291,59 @@ describe('BulkEditAccountModal', () => {
     expect(wrapper.find('#bulk-edit-openai-ws-mode-enabled').exists()).toBe(false)
   })
 
+  it('API Key 批量编辑默认启用 CPA 并跟随各账号 Base URL', async () => {
+    const wrapper = mountModal({ selectedPlatforms: ['openai'], selectedTypes: ['apikey'] })
+
+    await wrapper.get('#bulk-edit-cpa-enabled').setValue(true)
+    expect((wrapper.get('[data-testid="bulk-edit-cpa-concurrency-per-credential"]').element as HTMLInputElement).value).toBe('10')
+    await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
+    await flushPromises()
+
+    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+      credentials: {
+        cpa_mode: true,
+        cpa_management_url: null,
+        cpa_concurrency_per_credential: 10
+      }
+    })
+  })
+
+  it('API Key 批量编辑可统一设置 CPA 管理地址和管理员密码', async () => {
+    const wrapper = mountModal({ selectedPlatforms: ['anthropic'], selectedTypes: ['apikey'] })
+
+    await wrapper.get('#bulk-edit-cpa-enabled').setValue(true)
+    await wrapper.get('[data-testid="bulk-edit-cpa-use-custom-url"]').trigger('click')
+    await wrapper.get('[data-testid="bulk-edit-cpa-management-url"]').setValue('https://cpa.example.com/v0/management/')
+    await wrapper.get('[data-testid="bulk-edit-cpa-management-password"]').setValue('rotated-password')
+    await wrapper.get('[data-testid="bulk-edit-cpa-concurrency-per-credential"]').setValue('4')
+    await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
+    await flushPromises()
+
+    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+      credentials: {
+        cpa_mode: true,
+        cpa_management_url: 'https://cpa.example.com/v0/management',
+        cpa_management_key: 'rotated-password',
+        cpa_concurrency_per_credential: 4
+      }
+    })
+  })
+
+  it('API Key 批量编辑可关闭 CPA，非 API Key 目标不展示 CPA 区域', async () => {
+    const wrapper = mountModal({ selectedPlatforms: ['openai'], selectedTypes: ['apikey'] })
+    await wrapper.get('#bulk-edit-cpa-enabled').setValue(true)
+    await wrapper.get('[data-testid="bulk-edit-cpa-mode-toggle"]').trigger('click')
+    await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
+    await flushPromises()
+
+    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+      credentials: { cpa_mode: false }
+    })
+
+    const oauthWrapper = mountModal({ selectedPlatforms: ['openai'], selectedTypes: ['oauth'] })
+    expect(oauthWrapper.find('#bulk-edit-cpa-enabled').exists()).toBe(false)
+  })
+
   it('OpenAI OAuth 批量编辑应提交 codex_cli_only 字段', async () => {
     const wrapper = mountModal({
       selectedPlatforms: ['openai'],

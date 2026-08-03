@@ -282,7 +282,25 @@ func ollamaCloudUsageSnapshotClearRequested(extra map[string]any) bool {
 }
 
 func accountBulkUpdateRequiresImmediateSchedulerSync(updates service.AccountBulkUpdate) bool {
-	return updates.Concurrency != nil || updates.Priority != nil || updates.LoadFactor != nil
+	if updates.Concurrency != nil || updates.Priority != nil || updates.LoadFactor != nil {
+		return true
+	}
+	for _, key := range []string{
+		service.CPAModeCredentialKey,
+		service.CPAManagementURLCredentialKey,
+		service.CPAManagementKeyCredentialKey,
+		service.CPAConcurrencyPerCredentialCredentialKey,
+	} {
+		if _, ok := updates.Credentials[key]; ok {
+			return true
+		}
+		for _, deletedKey := range updates.CredentialKeysToDelete {
+			if deletedKey == key {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (r *accountRepository) BulkUpdate(ctx context.Context, ids []int64, updates service.AccountBulkUpdate) (int64, error) {
@@ -358,15 +376,24 @@ func (r *accountRepository) BulkUpdate(ctx context.Context, ids []int64, updates
 	}
 	// JSONB 需要合并而非覆盖，使用 raw SQL 保持旧行为。
 	credentialPlaceholder := ""
+	credentialExpression := "COALESCE(credentials, '{}'::jsonb)"
 	if len(updates.Credentials) > 0 {
 		payload, err := json.Marshal(updates.Credentials)
 		if err != nil {
 			return 0, err
 		}
 		credentialPlaceholder = "$" + itoa(idx)
-		setClauses = append(setClauses, "credentials = COALESCE(credentials, '{}'::jsonb) || "+credentialPlaceholder+"::jsonb")
+		credentialExpression += " || " + credentialPlaceholder + "::jsonb"
 		args = append(args, payload)
 		idx++
+	}
+	for _, key := range updates.CredentialKeysToDelete {
+		credentialExpression = "(" + credentialExpression + ") - $" + itoa(idx)
+		args = append(args, key)
+		idx++
+	}
+	if len(updates.Credentials) > 0 || len(updates.CredentialKeysToDelete) > 0 {
+		setClauses = append(setClauses, "credentials = "+credentialExpression)
 	}
 
 	ollamaGroupIdentityChanges := make([]string, 0, 2)

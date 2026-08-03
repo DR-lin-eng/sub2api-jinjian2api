@@ -32,6 +32,7 @@
       </div>
 
       <BulkEditRoutingPolicyFields :context="bulkEditRoutingPolicyContext" />
+      <BulkEditCPAFields v-if="allTargetsAPIKey" :context="bulkEditCPAContext" />
 
       <!-- Proxy -->
       <div class="border-t border-gray-200 pt-4 dark:border-dark-600">
@@ -756,9 +757,10 @@ import {
 import type { OpenAIWSMode } from '@/core/utils/openaiWsMode'
 import { buildBulkAccountUpdatePayload } from '@/features/admin-accounts/presentation/accountBulkUpdatePayload'
 import type { ModelMapping } from '@/features/admin-accounts/presentation/accountFormPolicy'
-import type { BulkEditRoutingPolicyContext } from '@/features/admin-accounts/presentation/bulkEditAccountContext'
+import type { BulkEditCPAContext, BulkEditRoutingPolicyContext } from '@/features/admin-accounts/presentation/bulkEditAccountContext'
 import { areUpstreamBillingProbeTargetsEligible } from '@/features/admin-accounts/presentation/upstreamBillingProbeEligibility'
 import BulkEditRoutingPolicyFields from './BulkEditRoutingPolicyFields.vue'
+import BulkEditCPAFields from './BulkEditCPAFields.vue'
 
 interface Props {
   show: boolean
@@ -833,6 +835,9 @@ const allOpenAIAPIKey = computed(() => {
     targetSelectedTypes.value.every(t => t === 'apikey')
   )
 })
+const allTargetsAPIKey = computed(() =>
+  targetSelectedTypes.value.length > 0 && targetSelectedTypes.value.every(type => type === 'apikey')
+)
 
 const allBillingProbeCapable = computed(() =>
   areUpstreamBillingProbeTargetsEligible(
@@ -902,6 +907,7 @@ const enableCodexCLIOnlyAppServer = ref(false)
 const enableOpenAICompactMode = ref(false)
 const enableOpenAICompactModelMapping = ref(false)
 const enableRpmLimit = ref(false)
+const enableCPA = ref(false)
 
 // State - field values
 const submitting = ref(false)
@@ -938,6 +944,12 @@ const bulkBaseRpm = ref<number | null>(null)
 const bulkRpmStrategy = ref<'tiered' | 'sticky_exempt'>('tiered')
 const bulkRpmStickyBuffer = ref<number | null>(null)
 const userMsgQueueMode = ref<string | null>(null)
+const cpaModeEnabled = ref(true)
+const cpaUseBaseUrl = ref(true)
+const cpaManagementUrl = ref('')
+const cpaManagementPassword = ref('')
+const cpaConcurrencyPerCredential = ref(10)
+const MAX_CPA_CONCURRENCY_PER_CREDENTIAL = 10000
 const umqModeOptions = computed(() => [
   { value: '', label: t('admin.accounts.quotaControl.rpmLimit.umqModeOff') },
   { value: 'throttle', label: t('admin.accounts.quotaControl.rpmLimit.umqModeThrottle') },
@@ -1101,6 +1113,17 @@ const bulkEditRoutingPolicyContext = {
   toggleErrorCode,
 } satisfies BulkEditRoutingPolicyContext
 
+const bulkEditCPAContext = {
+  MAX_CPA_CONCURRENCY_PER_CREDENTIAL,
+  cpaConcurrencyPerCredential,
+  cpaManagementPassword,
+  cpaManagementUrl,
+  cpaModeEnabled,
+  cpaUseBaseUrl,
+  enableCPA,
+  t,
+} satisfies BulkEditCPAContext
+
 const buildUpdatePayload = (): Record<string, unknown> | null => {
   return buildBulkAccountUpdatePayload({
     enableProxy: enableProxy.value,
@@ -1156,6 +1179,12 @@ const buildUpdatePayload = (): Record<string, unknown> | null => {
     bulkRpmStrategy: bulkRpmStrategy.value,
     bulkRpmStickyBuffer: bulkRpmStickyBuffer.value,
     userMsgQueueMode: userMsgQueueMode.value,
+    enableCPA: enableCPA.value,
+    cpaModeEnabled: cpaModeEnabled.value,
+    cpaUseBaseUrl: cpaUseBaseUrl.value,
+    cpaManagementUrl: cpaManagementUrl.value,
+    cpaManagementPassword: cpaManagementPassword.value,
+    cpaConcurrencyPerCredential: cpaConcurrencyPerCredential.value,
   })
 }
 
@@ -1228,6 +1257,7 @@ const handleSubmit = async () => {
     enableOpenAICompactMode.value ||
     enableOpenAICompactModelMapping.value ||
     enableRpmLimit.value ||
+    enableCPA.value ||
     userMsgQueueMode.value !== null
 
   if (!hasAnyFieldEnabled) {
@@ -1256,6 +1286,21 @@ const handleSubmit = async () => {
     if (headerError) {
       appStore.showError(t(`admin.accounts.headerOverride.${headerError}`))
       return
+    }
+  }
+
+  if (enableCPA.value && cpaModeEnabled.value) {
+    const perCredential = Number(cpaConcurrencyPerCredential.value)
+    if (!Number.isInteger(perCredential) || perCredential < 1 || perCredential > MAX_CPA_CONCURRENCY_PER_CREDENTIAL) {
+      appStore.showError(t('admin.accounts.cpaConcurrencyInvalid', { max: MAX_CPA_CONCURRENCY_PER_CREDENTIAL }))
+      return
+    }
+    if (!cpaUseBaseUrl.value) {
+      const managementURL = cpaManagementUrl.value.trim()
+      if (!/^https?:\/\//i.test(managementURL)) {
+        appStore.showError(t('admin.accounts.cpaManagementUrlRequired'))
+        return
+      }
     }
   }
 
@@ -1362,6 +1407,7 @@ watch(
       enableOpenAICompactMode.value = false
       enableOpenAICompactModelMapping.value = false
       enableRpmLimit.value = false
+      enableCPA.value = false
 
       // Reset all values
       baseUrl.value = ''
@@ -1394,6 +1440,11 @@ watch(
       bulkRpmStrategy.value = 'tiered'
       bulkRpmStickyBuffer.value = null
       userMsgQueueMode.value = null
+      cpaModeEnabled.value = true
+      cpaUseBaseUrl.value = true
+      cpaManagementUrl.value = ''
+      cpaManagementPassword.value = ''
+      cpaConcurrencyPerCredential.value = 10
 
       // Reset mixed channel warning state
       showMixedChannelWarning.value = false

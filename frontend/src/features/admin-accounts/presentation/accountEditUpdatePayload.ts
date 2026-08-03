@@ -36,6 +36,7 @@ type EditorFields =
     | 'cpaManagementKey'
     | 'cpaManagementUrl'
     | 'cpaModeEnabled'
+    | 'cpaUseBaseUrl'
     | 'customErrorCodesEnabled'
     | 'editApiKey'
     | 'editBaseUrl'
@@ -224,7 +225,7 @@ function buildAPIKeyCredentials(
     const managementURL = context.cpaManagementUrl.value
       .trim()
       .replace(/\/+$/, '')
-    if (!managementURL) {
+    if (!context.cpaUseBaseUrl.value && !managementURL) {
       context.notifications.showError(
         context.t('admin.accounts.cpaManagementUrlRequired'),
       )
@@ -255,7 +256,11 @@ function buildAPIKeyCredentials(
       return null
     }
     credentials.cpa_mode = true
-    credentials.cpa_management_url = managementURL
+    if (context.cpaUseBaseUrl.value) {
+      delete credentials.cpa_management_url
+    } else {
+      credentials.cpa_management_url = managementURL
+    }
     credentials.cpa_concurrency_per_credential = perCredential
     if (managementKey) credentials.cpa_management_key = managementKey
   } else {

@@ -58,6 +58,12 @@ export interface BulkAccountUpdatePayloadState {
   bulkRpmStrategy: 'tiered' | 'sticky_exempt'
   bulkRpmStickyBuffer: number | null
   userMsgQueueMode: string | null
+  enableCPA: boolean
+  cpaModeEnabled: boolean
+  cpaUseBaseUrl: boolean
+  cpaManagementUrl: string
+  cpaManagementPassword: string
+  cpaConcurrencyPerCredential: number
 }
 
 export function buildBulkAccountUpdatePayload(
@@ -123,6 +129,19 @@ export function buildBulkAccountUpdatePayload(
       ? buildHeaderOverridesObject(state.headerOverrideRows)
       : {}
     credentialsChanged = true
+  }
+
+  if (state.enableCPA) {
+    credentials.cpa_mode = state.cpaModeEnabled
+    credentialsChanged = true
+    if (state.cpaModeEnabled) {
+      credentials.cpa_management_url = state.cpaUseBaseUrl
+        ? null
+        : state.cpaManagementUrl.trim().replace(/\/+$/, '')
+      credentials.cpa_concurrency_per_credential = Math.trunc(state.cpaConcurrencyPerCredential)
+      const password = state.cpaManagementPassword.trim()
+      if (password) credentials.cpa_management_key = password
+    }
   }
 
   if (state.enableOpenAIWSMode) {

@@ -1,3 +1,5 @@
+import cpaMessages from './accounts.cpa'
+
 export default {
     accounts: {
       title: '账号管理',
@@ -21,6 +23,7 @@ export default {
       dataExportIncludeProxies: '导出代理（导出账号关联的代理）',
       dataImport: '导入',
       moreActions: '更多操作',
+      ...cpaMessages,
       dataActions: '数据操作',
       toolActions: '工具',
       viewColumns: '列显示',
@@ -265,6 +268,11 @@ export default {
       subscriptionExpires: '到期',
       // 容量状态提示
       capacity: {
+        cpaAvailableCredentials: '可用凭据 {count}',
+        cpaAvailableCredentialsUnknown: '可用凭据 --',
+        cpaFresh: 'CPA 容量为最新快照；关闭联动后的备用并发为 {fallback}',
+        cpaStale: 'CPA 当前使用过期快照；关闭联动后的备用并发为 {fallback}',
+        cpaUnavailable: 'CPA 容量不可用，当前已停止调度；关闭联动后的备用并发为 {fallback}',
         windowCost: {
           blocked: '5h窗口费用超限，账号暂停调度',
           stickyOnly: '5h窗口费用达阈值，仅允许粘性会话',
@@ -540,7 +548,10 @@ export default {
         noFieldsSelected: '请至少选择一个要更新的字段',
         rateSyncWarning: '已开启上游倍率同步的账号不能批量手工修改倍率，请先在账号编辑页关闭同步。',
         rateSyncConflict: '无法修改账号倍率：{count} 个目标账号已开启上游倍率同步。',
-        mixedPlatformWarning: '所选账号跨越多个平台（{platforms}）。显示的模型映射预设为合并结果——请确保映射对每个平台都适用。'
+        mixedPlatformWarning: '所选账号跨越多个平台（{platforms}）。显示的模型映射预设为合并结果——请确保映射对每个平台都适用。',
+        cpaAddressFollowBaseUrl: '跟随各账号 Base URL',
+        cpaAddressCustom: '使用统一管理地址',
+        cpaPasswordHint: '留空时逐账号保留已有管理员密码；没有旧密码的账号会单独失败。'
       },
       bulkDeleteTitle: '批量删除账号',
       bulkDeleteConfirm: '确定要删除选中的 {count} 个账号吗？此操作无法撤销。',
@@ -765,15 +776,6 @@ export default {
       poolModeRetryCountHint: '仅在池模式下生效。0 表示不原地重试；默认 {default}，最大 {max}。',
       poolModeRetryStatusCodes: '同账号重试状态码',
       poolModeRetryStatusCodesHint: '仅在池模式下生效。以英文逗号分隔的 HTTP 状态码（100-599），命中时触发同账号重试。留空使用默认值（{default}）。',
-      cpaMode: 'CPA 并发联动',
-      cpaModeHint: '只读 CPA 当前可调度凭据数，并据此收缩本地账号并发上限',
-      cpaManagementUrl: 'CPA 管理地址',
-      cpaManagementKey: 'CPA 管理员 Key',
-      cpaConcurrencyPerCredential: '单凭据折算并发',
-      cpaConcurrencyHint: '有效上限 = min(本地并发上限, 可调度凭据数 x 单凭据折算并发)。每 {seconds} 秒最多读取一次。',
-      cpaManagementUrlRequired: '启用 CPA 并发联动时必须填写 CPA 管理地址',
-      cpaManagementKeyRequired: '启用 CPA 并发联动时必须填写 CPA 管理员 Key',
-      cpaConcurrencyInvalid: '单凭据折算并发必须是 1 到 {max} 之间的整数',
       customErrorCodes: '自定义错误码',
       customErrorCodesHint: '仅对选中的错误码停止调度',
       customErrorCodesWarning: '仅选中的错误码会停止调度，其他错误将返回 500。',

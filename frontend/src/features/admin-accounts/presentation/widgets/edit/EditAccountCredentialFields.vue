@@ -316,76 +316,7 @@
           </div>
         </div>
 
-        <div class="border-t border-gray-200 pt-4 dark:border-dark-600">
-          <div class="mb-3 flex items-center justify-between gap-4">
-            <div>
-              <label class="input-label mb-0">{{ t('admin.accounts.cpaMode') }}</label>
-              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {{ t('admin.accounts.cpaModeHint') }}
-              </p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              data-testid="cpa-mode-toggle"
-              :aria-checked="cpaModeEnabled"
-              @click="cpaModeEnabled = !cpaModeEnabled"
-              :class="[
-                'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2',
-                cpaModeEnabled ? 'bg-primary-600' : 'bg-gray-200 dark:bg-dark-600'
-              ]"
-            >
-              <span
-                :class="[
-                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
-                  cpaModeEnabled ? 'translate-x-5' : 'translate-x-0'
-                ]"
-              />
-            </button>
-          </div>
-
-          <div v-if="cpaModeEnabled" class="space-y-3" data-testid="cpa-mode-settings">
-            <div>
-              <label class="input-label">{{ t('admin.accounts.cpaManagementUrl') }}</label>
-              <input
-                v-model="cpaManagementUrl"
-                type="url"
-                class="input font-mono"
-                data-testid="cpa-management-url"
-                placeholder="http://cpa:8317"
-              />
-            </div>
-            <div>
-              <label class="input-label">{{ t('admin.accounts.cpaManagementKey') }}</label>
-              <input
-                v-model="cpaManagementKey"
-                type="password"
-                class="input font-mono"
-                autocomplete="new-password"
-                data-testid="cpa-management-key"
-                data-1p-ignore
-                data-lpignore="true"
-                data-bwignore="true"
-                :placeholder="t('admin.accounts.leaveEmptyToKeep')"
-              />
-            </div>
-            <div>
-              <label class="input-label">{{ t('admin.accounts.cpaConcurrencyPerCredential') }}</label>
-              <input
-                v-model.number="cpaConcurrencyPerCredential"
-                type="number"
-                min="1"
-                :max="MAX_CPA_CONCURRENCY_PER_CREDENTIAL"
-                step="1"
-                class="input"
-                data-testid="cpa-concurrency-per-credential"
-              />
-              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {{ t('admin.accounts.cpaConcurrencyHint', { seconds: CPA_SNAPSHOT_INTERVAL_SECONDS }) }}
-              </p>
-            </div>
-          </div>
-        </div>
+        <EditAccountCPAFields :context="context" />
 
         <!-- Custom Error Codes Section -->
         <div class="border-t border-gray-200 pt-4 dark:border-dark-600">
@@ -1312,8 +1243,9 @@ import HeaderOverrideEditor from '../HeaderOverrideEditor.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import ModelWhitelistSelector from '../ModelWhitelistSelector.vue'
 import Toggle from '@/common/widgets/forms/Toggle.vue'
+import EditAccountCPAFields from './EditAccountCPAFields.vue'
 import type { EditAccountCredentialContext } from '../../accountEditorContext'
 
 const props = defineProps<{ context: EditAccountCredentialContext }>()
-const { CPA_SNAPSHOT_INTERVAL_SECONDS, DEFAULT_POOL_MODE_RETRY_COUNT, DEFAULT_POOL_MODE_RETRY_STATUS_CODES, MAX_CPA_CONCURRENCY_PER_CREDENTIAL, MAX_POOL_MODE_RETRY_COUNT, VERTEX_LOCATION_OPTIONS, account, addAntigravityModelMapping, addAntigravityPresetMapping, addCustomErrorCode, addModelMapping, addPresetMapping, allowedModels, antigravityModelMappings, antigravityPresetMappings, antigravityProjectId, autoDisableOnUpstreamInsufficientBalance, baseUrlHint, bedrockPresets, commonErrorCodes, cpaConcurrencyPerCredential, cpaManagementKey, cpaManagementUrl, cpaModeEnabled, customErrorCodeInput, customErrorCodesEnabled, editApiKey, editBaseUrl, editBedrockAccessKeyId, editBedrockApiKeyValue, editBedrockForceGlobal, editBedrockRegion, editBedrockSecretAccessKey, editBedrockSessionToken, editVertexLocation, editVertexProjectId, form, getAntigravityModelMappingKey, getModelMappingKey, grokClientToolCacheEnabled, grokOAuthBaseUrl, grokOAuthCustomBaseUrlEnabled, headerOverrideCapable, headerOverrideEnabled, headerOverrideRows, isBedrockAPIKeyMode, isOpenAIModelRestrictionDisabled, isSyncingAntigravityUpstream, isValidWildcardPattern, modelMappings, modelRestrictionMode, poolModeEnabled, poolModeRetryCount, poolModeRetryStatusCodesInput, presetMappings, removeAntigravityModelMapping, removeErrorCode, removeModelMapping, selectedErrorCodes, syncAntigravityUpstreamModels, t, toggleErrorCode } = props.context
+const { DEFAULT_POOL_MODE_RETRY_COUNT, DEFAULT_POOL_MODE_RETRY_STATUS_CODES, MAX_POOL_MODE_RETRY_COUNT, VERTEX_LOCATION_OPTIONS, account, addAntigravityModelMapping, addAntigravityPresetMapping, addCustomErrorCode, addModelMapping, addPresetMapping, allowedModels, antigravityModelMappings, antigravityPresetMappings, antigravityProjectId, autoDisableOnUpstreamInsufficientBalance, baseUrlHint, bedrockPresets, commonErrorCodes, customErrorCodeInput, customErrorCodesEnabled, editApiKey, editBaseUrl, editBedrockAccessKeyId, editBedrockApiKeyValue, editBedrockForceGlobal, editBedrockRegion, editBedrockSecretAccessKey, editBedrockSessionToken, editVertexLocation, editVertexProjectId, form, getAntigravityModelMappingKey, getModelMappingKey, grokClientToolCacheEnabled, grokOAuthBaseUrl, grokOAuthCustomBaseUrlEnabled, headerOverrideCapable, headerOverrideEnabled, headerOverrideRows, isBedrockAPIKeyMode, isOpenAIModelRestrictionDisabled, isSyncingAntigravityUpstream, isValidWildcardPattern, modelMappings, modelRestrictionMode, poolModeEnabled, poolModeRetryCount, poolModeRetryStatusCodesInput, presetMappings, removeAntigravityModelMapping, removeErrorCode, removeModelMapping, selectedErrorCodes, syncAntigravityUpstreamModels, t, toggleErrorCode } = props.context
 </script>

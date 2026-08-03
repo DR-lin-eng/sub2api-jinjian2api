@@ -2,16 +2,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 import { mount } from '@vue/test-utils'
 
-const { updateAccountMock, checkMixedChannelRiskMock, showErrorMock } = vi.hoisted(() => ({
+const { updateAccountMock, testCPAConnectionMock, checkMixedChannelRiskMock, showErrorMock, showSuccessMock } = vi.hoisted(() => ({
   updateAccountMock: vi.fn(),
+  testCPAConnectionMock: vi.fn(),
   checkMixedChannelRiskMock: vi.fn(),
-  showErrorMock: vi.fn()
+  showErrorMock: vi.fn(),
+  showSuccessMock: vi.fn()
 }))
 
 vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError: showErrorMock,
-    showSuccess: vi.fn(),
+    showSuccess: showSuccessMock,
     showInfo: vi.fn()
   })
 }))
@@ -24,6 +26,7 @@ vi.mock('@/api/admin', () => ({
   adminAPI: {
     accounts: {
       update: updateAccountMock,
+      testCPAConnection: testCPAConnectionMock,
       checkMixedChannelRisk: checkMixedChannelRiskMock
     },
     settings: {
@@ -40,6 +43,7 @@ vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', ()
   getAntigravityDefaultModelMapping: vi.fn(),
   accountsAPI: {
     update: updateAccountMock,
+    testCPAConnection: testCPAConnectionMock,
     checkMixedChannelRisk: checkMixedChannelRiskMock
   }
 }))
@@ -53,6 +57,7 @@ vi.mock('vue-i18n', async () => {
 })
 
 import EditAccountModal from '@/features/admin-accounts/presentation/widgets/EditAccountDialog.vue'
+import zhAccounts from '@/core/i18n/locales/zh/admin/accounts'
 
 const BaseDialogStub = defineComponent({
   name: 'BaseDialog',
@@ -110,6 +115,22 @@ describe('EditAccountModal CPA concurrency sync', () => {
     checkMixedChannelRiskMock.mockReset()
     checkMixedChannelRiskMock.mockResolvedValue({ has_risk: false })
     showErrorMock.mockReset()
+    showSuccessMock.mockReset()
+    testCPAConnectionMock.mockReset()
+    testCPAConnectionMock.mockResolvedValue({
+      total_credentials: 4,
+      enabled_credentials: 3,
+      abnormal_credentials: 1,
+      available_credentials: 2,
+      effective_concurrency: 20,
+      concurrency_per_credential: 10,
+      state: 'fresh',
+      latency_ms: 12
+    })
+  })
+
+  it('labels the CPA secret as the administrator password', () => {
+    expect(zhAccounts.accounts.cpaManagementKey).toBe('CPA 管理员密码')
   })
 
   it('loads CPA settings and keeps the redacted management key on save', async () => {
@@ -145,5 +166,29 @@ describe('EditAccountModal CPA concurrency sync', () => {
       cpa_mode: false,
       cpa_management_key: ''
     })
+  })
+
+  it('defaults to the account Base URL and 10 concurrency per credential', async () => {
+    const account = buildAccount({
+      credentials: {
+        base_url: 'http://cpa:8317/v1',
+        cpa_mode: true
+      }
+    })
+    const wrapper = mountModal(account)
+
+    expect(wrapper.find('[data-testid="cpa-management-url"]').exists()).toBe(false)
+    expect((wrapper.get('[data-testid="cpa-concurrency-per-credential"]').element as HTMLInputElement).value).toBe('10')
+
+    await wrapper.get('[data-testid="cpa-test-connection"]').trigger('click')
+    await vi.waitFor(() => expect(testCPAConnectionMock).toHaveBeenCalledTimes(1))
+    expect(testCPAConnectionMock).toHaveBeenCalledWith(9, {
+      use_account_base_url: true,
+      base_url: 'http://cpa:8317/v1',
+      management_url: undefined,
+      management_password: undefined,
+      concurrency_per_credential: 10
+    })
+    expect(showSuccessMock).toHaveBeenCalledWith('admin.accounts.cpaTestSuccess')
   })
 })

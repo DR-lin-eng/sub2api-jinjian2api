@@ -638,6 +638,7 @@ export interface Account {
   concurrency: number
   load_factor?: number | null
   current_concurrency?: number // Real-time concurrency count from Redis
+  cpa_capacity?: CPACapacityStatus | null
   stream_degraded?: boolean
   stream_degradation_level?: number
   stream_degradation_timeouts?: number
@@ -739,6 +740,17 @@ export interface Account {
   parent_privacy_mode?: string
   parent_subscription_expires_at?: string
   parent_chatgpt_account_id?: string
+}
+
+export interface CPACapacityStatus {
+  total_credentials: number
+  enabled_credentials: number
+  abnormal_credentials: number
+  available_credentials: number
+  effective_concurrency: number
+  concurrency_per_credential: number
+  fetched_at?: string
+  state: 'fresh' | 'stale' | 'unavailable'
 }
 
 export interface AccountSchedulerGroupScore {
