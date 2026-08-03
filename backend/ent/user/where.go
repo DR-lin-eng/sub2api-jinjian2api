@@ -1545,6 +1545,29 @@ func HasAnnouncementReadsWith(preds ...predicate.AnnouncementRead) predicate.Use
 	})
 }
 
+// HasChatConversation applies the HasEdge predicate on the "chat_conversation" edge.
+func HasChatConversation() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, ChatConversationTable, ChatConversationColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasChatConversationWith applies the HasEdge predicate on the "chat_conversation" edge with a given conditions (other predicates).
+func HasChatConversationWith(preds ...predicate.ChatConversation) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newChatConversationStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasAllowedGroups applies the HasEdge predicate on the "allowed_groups" edge.
 func HasAllowedGroups() predicate.User {
 	return predicate.User(func(s *sql.Selector) {

@@ -75,6 +75,8 @@ const (
 	EdgeAssignedSubscriptions = "assigned_subscriptions"
 	// EdgeAnnouncementReads holds the string denoting the announcement_reads edge name in mutations.
 	EdgeAnnouncementReads = "announcement_reads"
+	// EdgeChatConversation holds the string denoting the chat_conversation edge name in mutations.
+	EdgeChatConversation = "chat_conversation"
 	// EdgeAllowedGroups holds the string denoting the allowed_groups edge name in mutations.
 	EdgeAllowedGroups = "allowed_groups"
 	// EdgeUsageLogs holds the string denoting the usage_logs edge name in mutations.
@@ -132,6 +134,13 @@ const (
 	AnnouncementReadsInverseTable = "announcement_reads"
 	// AnnouncementReadsColumn is the table column denoting the announcement_reads relation/edge.
 	AnnouncementReadsColumn = "user_id"
+	// ChatConversationTable is the table that holds the chat_conversation relation/edge.
+	ChatConversationTable = "chat_conversations"
+	// ChatConversationInverseTable is the table name for the ChatConversation entity.
+	// It exists in this package in order to avoid circular dependency with the "chatconversation" package.
+	ChatConversationInverseTable = "chat_conversations"
+	// ChatConversationColumn is the table column denoting the chat_conversation relation/edge.
+	ChatConversationColumn = "user_id"
 	// AllowedGroupsTable is the table that holds the allowed_groups relation/edge. The primary key declared below.
 	AllowedGroupsTable = "user_allowed_groups"
 	// AllowedGroupsInverseTable is the table name for the Group entity.
@@ -509,6 +518,13 @@ func ByAnnouncementReads(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption
 	}
 }
 
+// ByChatConversationField orders the results by chat_conversation field.
+func ByChatConversationField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newChatConversationStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByAllowedGroupsCount orders the results by allowed_groups count.
 func ByAllowedGroupsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -681,6 +697,13 @@ func newAnnouncementReadsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AnnouncementReadsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, AnnouncementReadsTable, AnnouncementReadsColumn),
+	)
+}
+func newChatConversationStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ChatConversationInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, ChatConversationTable, ChatConversationColumn),
 	)
 }
 func newAllowedGroupsStep() *sqlgraph.Step {

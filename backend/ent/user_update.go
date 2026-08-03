@@ -14,6 +14,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/announcementread"
 	"github.com/Wei-Shaw/sub2api/ent/apikey"
 	"github.com/Wei-Shaw/sub2api/ent/authidentity"
+	"github.com/Wei-Shaw/sub2api/ent/chatconversation"
 	"github.com/Wei-Shaw/sub2api/ent/group"
 	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
 	"github.com/Wei-Shaw/sub2api/ent/pendingauthsession"
@@ -529,6 +530,25 @@ func (_u *UserUpdate) AddAnnouncementReads(v ...*AnnouncementRead) *UserUpdate {
 	return _u.AddAnnouncementReadIDs(ids...)
 }
 
+// SetChatConversationID sets the "chat_conversation" edge to the ChatConversation entity by ID.
+func (_u *UserUpdate) SetChatConversationID(id int64) *UserUpdate {
+	_u.mutation.SetChatConversationID(id)
+	return _u
+}
+
+// SetNillableChatConversationID sets the "chat_conversation" edge to the ChatConversation entity by ID if the given value is not nil.
+func (_u *UserUpdate) SetNillableChatConversationID(id *int64) *UserUpdate {
+	if id != nil {
+		_u = _u.SetChatConversationID(*id)
+	}
+	return _u
+}
+
+// SetChatConversation sets the "chat_conversation" edge to the ChatConversation entity.
+func (_u *UserUpdate) SetChatConversation(v *ChatConversation) *UserUpdate {
+	return _u.SetChatConversationID(v.ID)
+}
+
 // AddAllowedGroupIDs adds the "allowed_groups" edge to the Group entity by IDs.
 func (_u *UserUpdate) AddAllowedGroupIDs(ids ...int64) *UserUpdate {
 	_u.mutation.AddAllowedGroupIDs(ids...)
@@ -772,6 +792,12 @@ func (_u *UserUpdate) RemoveAnnouncementReads(v ...*AnnouncementRead) *UserUpdat
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveAnnouncementReadIDs(ids...)
+}
+
+// ClearChatConversation clears the "chat_conversation" edge to the ChatConversation entity.
+func (_u *UserUpdate) ClearChatConversation() *UserUpdate {
+	_u.mutation.ClearChatConversation()
+	return _u
 }
 
 // ClearAllowedGroups clears all "allowed_groups" edges to the Group entity.
@@ -1381,6 +1407,35 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(announcementread.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ChatConversationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.ChatConversationTable,
+			Columns: []string{user.ChatConversationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(chatconversation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ChatConversationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.ChatConversationTable,
+			Columns: []string{user.ChatConversationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(chatconversation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -2313,6 +2368,25 @@ func (_u *UserUpdateOne) AddAnnouncementReads(v ...*AnnouncementRead) *UserUpdat
 	return _u.AddAnnouncementReadIDs(ids...)
 }
 
+// SetChatConversationID sets the "chat_conversation" edge to the ChatConversation entity by ID.
+func (_u *UserUpdateOne) SetChatConversationID(id int64) *UserUpdateOne {
+	_u.mutation.SetChatConversationID(id)
+	return _u
+}
+
+// SetNillableChatConversationID sets the "chat_conversation" edge to the ChatConversation entity by ID if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableChatConversationID(id *int64) *UserUpdateOne {
+	if id != nil {
+		_u = _u.SetChatConversationID(*id)
+	}
+	return _u
+}
+
+// SetChatConversation sets the "chat_conversation" edge to the ChatConversation entity.
+func (_u *UserUpdateOne) SetChatConversation(v *ChatConversation) *UserUpdateOne {
+	return _u.SetChatConversationID(v.ID)
+}
+
 // AddAllowedGroupIDs adds the "allowed_groups" edge to the Group entity by IDs.
 func (_u *UserUpdateOne) AddAllowedGroupIDs(ids ...int64) *UserUpdateOne {
 	_u.mutation.AddAllowedGroupIDs(ids...)
@@ -2556,6 +2630,12 @@ func (_u *UserUpdateOne) RemoveAnnouncementReads(v ...*AnnouncementRead) *UserUp
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveAnnouncementReadIDs(ids...)
+}
+
+// ClearChatConversation clears the "chat_conversation" edge to the ChatConversation entity.
+func (_u *UserUpdateOne) ClearChatConversation() *UserUpdateOne {
+	_u.mutation.ClearChatConversation()
+	return _u
 }
 
 // ClearAllowedGroups clears all "allowed_groups" edges to the Group entity.
@@ -3195,6 +3275,35 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(announcementread.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ChatConversationCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.ChatConversationTable,
+			Columns: []string{user.ChatConversationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(chatconversation.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ChatConversationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.ChatConversationTable,
+			Columns: []string{user.ChatConversationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(chatconversation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

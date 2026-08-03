@@ -718,6 +718,13 @@ function buildSelfNavItems(withDashboard: boolean): NavItem[] {
       iconSvg: item.icon_svg,
     })),
   )
+  if (withDashboard) {
+    items.splice(items.findIndex((item) => item.path === '/profile'), 0, {
+      path: '/support',
+      label: t('nav.support'),
+      icon: TicketIcon,
+    })
+  }
   return items
 }
 
@@ -771,6 +778,7 @@ const adminNavItems = computed((): NavItem[] => {
     { path: '/admin/subscriptions', label: t('nav.subscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
     { path: '/admin/accounts', label: t('nav.accounts'), icon: GlobeIcon },
     { path: '/admin/announcements', label: t('nav.announcements'), icon: BellIcon },
+    { path: '/admin/support', label: t('nav.supportInbox'), icon: TicketIcon },
     { path: '/admin/proxies', label: t('nav.proxies'), icon: ServerIcon },
     {
       path: '/admin/security-audit',

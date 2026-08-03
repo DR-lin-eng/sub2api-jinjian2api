@@ -301,6 +301,18 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/support',
+    name: 'SupportChat',
+    component: () => import('@/features/support-chat/presentation/pages/SupportChatPage.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'Support',
+      titleKey: 'supportChat.title',
+      descriptionKey: 'supportChat.description'
+    }
+  },
+  {
     path: '/purchase',
     name: 'PurchaseSubscription',
     component: () => import('@/features/billing/presentation/pages/PaymentPage.vue'),
@@ -546,6 +558,18 @@ const routes: RouteRecordRaw[] = [
       title: 'Announcements',
       titleKey: 'admin.announcements.title',
       descriptionKey: 'admin.announcements.description'
+    }
+  },
+  {
+    path: '/admin/support',
+    name: 'AdminSupportChat',
+    component: () => import('@/features/support-chat/presentation/pages/AdminSupportChatPage.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: true,
+      title: 'Support Inbox',
+      titleKey: 'supportChat.adminTitle',
+      descriptionKey: 'supportChat.adminDescription'
     }
   },
   {

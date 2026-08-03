@@ -19,6 +19,8 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/channelmonitordailyrollup"
 	"github.com/Wei-Shaw/sub2api/ent/channelmonitorhistory"
 	"github.com/Wei-Shaw/sub2api/ent/channelmonitorrequesttemplate"
+	"github.com/Wei-Shaw/sub2api/ent/chatconversation"
+	"github.com/Wei-Shaw/sub2api/ent/chatmessage"
 	"github.com/Wei-Shaw/sub2api/ent/compositemodelroute"
 	"github.com/Wei-Shaw/sub2api/ent/errorpassthroughrule"
 	"github.com/Wei-Shaw/sub2api/ent/group"
@@ -855,6 +857,53 @@ func init() {
 	channelmonitorrequesttemplate.DefaultBodyOverrideMode = channelmonitorrequesttemplateDescBodyOverrideMode.Default.(string)
 	// channelmonitorrequesttemplate.BodyOverrideModeValidator is a validator for the "body_override_mode" field. It is called by the builders before save.
 	channelmonitorrequesttemplate.BodyOverrideModeValidator = channelmonitorrequesttemplateDescBodyOverrideMode.Validators[0].(func(string) error)
+	chatconversationMixin := schema.ChatConversation{}.Mixin()
+	chatconversationMixinFields0 := chatconversationMixin[0].Fields()
+	_ = chatconversationMixinFields0
+	chatconversationFields := schema.ChatConversation{}.Fields()
+	_ = chatconversationFields
+	// chatconversationDescCreatedAt is the schema descriptor for created_at field.
+	chatconversationDescCreatedAt := chatconversationMixinFields0[0].Descriptor()
+	// chatconversation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	chatconversation.DefaultCreatedAt = chatconversationDescCreatedAt.Default.(func() time.Time)
+	// chatconversationDescUpdatedAt is the schema descriptor for updated_at field.
+	chatconversationDescUpdatedAt := chatconversationMixinFields0[1].Descriptor()
+	// chatconversation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	chatconversation.DefaultUpdatedAt = chatconversationDescUpdatedAt.Default.(func() time.Time)
+	// chatconversation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	chatconversation.UpdateDefaultUpdatedAt = chatconversationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// chatconversationDescUnreadByUser is the schema descriptor for unread_by_user field.
+	chatconversationDescUnreadByUser := chatconversationFields[2].Descriptor()
+	// chatconversation.DefaultUnreadByUser holds the default value on creation for the unread_by_user field.
+	chatconversation.DefaultUnreadByUser = chatconversationDescUnreadByUser.Default.(int)
+	// chatconversationDescUnreadByAdmin is the schema descriptor for unread_by_admin field.
+	chatconversationDescUnreadByAdmin := chatconversationFields[3].Descriptor()
+	// chatconversation.DefaultUnreadByAdmin holds the default value on creation for the unread_by_admin field.
+	chatconversation.DefaultUnreadByAdmin = chatconversationDescUnreadByAdmin.Default.(int)
+	chatmessageFields := schema.ChatMessage{}.Fields()
+	_ = chatmessageFields
+	// chatmessageDescContent is the schema descriptor for content field.
+	chatmessageDescContent := chatmessageFields[3].Descriptor()
+	// chatmessage.ContentValidator is a validator for the "content" field. It is called by the builders before save.
+	chatmessage.ContentValidator = func() func(string) error {
+		validators := chatmessageDescContent.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(content string) error {
+			for _, fn := range fns {
+				if err := fn(content); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// chatmessageDescCreatedAt is the schema descriptor for created_at field.
+	chatmessageDescCreatedAt := chatmessageFields[4].Descriptor()
+	// chatmessage.DefaultCreatedAt holds the default value on creation for the created_at field.
+	chatmessage.DefaultCreatedAt = chatmessageDescCreatedAt.Default.(func() time.Time)
 	compositemodelrouteMixin := schema.CompositeModelRoute{}.Mixin()
 	compositemodelrouteMixinHooks1 := compositemodelrouteMixin[1].Hooks()
 	compositemodelroute.Hooks[0] = compositemodelrouteMixinHooks1[0]

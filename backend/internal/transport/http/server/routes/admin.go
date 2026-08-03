@@ -121,6 +121,20 @@ func RegisterAdminRoutes(
 
 		// 操作审计日志
 		registerAuditLogRoutes(admin, h, stepUpAuth)
+
+		// 在线客服（管理端收件箱）
+		registerChatRoutes(admin, h)
+	}
+}
+
+func registerChatRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
+	chat := admin.Group("/chat")
+	{
+		chat.GET("/conversations", h.Admin.Chat.ListConversations)
+		chat.GET("/conversations/:id/messages", h.Admin.Chat.ListMessages)
+		chat.POST("/conversations/:id/messages", h.Admin.Chat.SendMessage)
+		chat.POST("/conversations/:id/read", h.Admin.Chat.MarkRead)
+		chat.GET("/ws", h.Admin.Chat.WS)
 	}
 }
 
