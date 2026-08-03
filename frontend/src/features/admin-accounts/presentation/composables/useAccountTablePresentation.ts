@@ -193,7 +193,12 @@ export function useAccountTablePresentation(hiddenColumns: Reactive<Set<string>>
       { key: 'platform_type', label: t('admin.accounts.columns.platformType'), sortable: false },
       { key: 'capacity', label: t('admin.accounts.columns.capacity'), sortable: false },
       { key: 'status', label: t('admin.accounts.columns.status'), sortable: true },
-      { key: 'schedulable', label: t('admin.accounts.columns.schedulable'), sortable: true },
+      {
+        key: 'schedulable',
+        label: t('admin.accounts.columns.schedulable'),
+        sortable: true,
+        class: 'w-px whitespace-nowrap text-center'
+      },
       { key: 'today_stats', label: t('admin.accounts.columns.todayStats'), sortable: false },
       { key: 'hourly_usage', label: t('admin.accounts.columns.hourlyUsage'), sortable: false }
     ]

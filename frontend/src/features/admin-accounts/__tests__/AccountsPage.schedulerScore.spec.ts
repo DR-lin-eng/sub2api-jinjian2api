@@ -215,6 +215,16 @@ describe('admin AccountsView scheduler score column', () => {
     expect(ungroupedCell.text()).not.toBe('-')
   })
 
+  it('keeps the schedulable switch column shrink-wrapped and centered', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+
+    const columns = wrapper.findComponent(DataTableStub).props('columns') as Array<{ key: string; class?: string }>
+    expect(columns.find(column => column.key === 'schedulable')?.class).toBe(
+      'w-px whitespace-nowrap text-center'
+    )
+  })
+
   it('loads hourly usage only after the hidden column is enabled', async () => {
     const wrapper = mountView()
     await flushPromises()
