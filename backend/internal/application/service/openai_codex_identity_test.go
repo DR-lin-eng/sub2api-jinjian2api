@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/Wei-Shaw/sub2api/internal/platform/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,18 +30,18 @@ func TestEnsureCodexIdentityHeaders(t *testing.T) {
 		require.Equal(t, "responses=experimental", h.Get("OpenAI-Beta"))
 	})
 
-	t.Run("保留已有官方UA和合法version并重新配对", func(t *testing.T) {
-		const tuiUA = "codex-tui/9.9.9 (Mac OS X 14.0; arm64) iTerm (codex-tui; 9.9.9)"
+	t.Run("保留非降载官方UA和合法version并重新配对", func(t *testing.T) {
+		const vscodeUA = "codex_vscode/9.9.9 (Mac OS X 14.0; arm64) vscode (codex_vscode; 9.9.9)"
 		h := make(http.Header)
-		h.Set("user-agent", tuiUA)
+		h.Set("user-agent", vscodeUA)
 		h.Set("version", "9.9.9")
 		h.Set("OpenAI-Beta", "assistants=v2")
 
 		ensureCodexIdentityHeaders(h)
 		enforceCodexIdentityHeaders(h)
 
-		require.Equal(t, "codex-tui", h.Get("originator"))
-		require.Equal(t, tuiUA, h.Get("user-agent"))
+		require.Equal(t, "codex_vscode", h.Get("originator"))
+		require.Equal(t, vscodeUA, h.Get("user-agent"))
 		require.Equal(t, "9.9.9", h.Get("version"))
 		require.Equal(t, "responses=experimental", h.Get("OpenAI-Beta"))
 	})
@@ -48,6 +49,7 @@ func TestEnsureCodexIdentityHeaders(t *testing.T) {
 
 func TestEnforceCodexIdentityHeaders(t *testing.T) {
 	const tuiUA = "codex-tui/0.140.2 (Mac OS X 14.0; arm64) iTerm (codex-tui; 0.140.2)"
+	const normalizedTUIUA = "codex_cli_rs/0.140.2 (Mac OS X 14.0; arm64) iTerm"
 
 	tests := []struct {
 		name           string
@@ -59,18 +61,18 @@ func TestEnforceCodexIdentityHeaders(t *testing.T) {
 		wantVersion    string
 	}{
 		{
-			name:           "错配 originator 按最终 UA 重配",
+			name:           "错配 originator 按最终 UA 重配并归一化",
 			originator:     "codex_cli_rs",
 			userAgent:      tuiUA,
-			wantOriginator: "codex-tui",
-			wantUA:         tuiUA,
+			wantOriginator: "codex_cli_rs",
+			wantUA:         normalizedTUIUA,
 		},
 		{
-			name:           "官方配套身份原样保留",
+			name:           "降载身份改写为 CLI 身份",
 			originator:     "codex-tui",
 			userAgent:      tuiUA,
-			wantOriginator: "codex-tui",
-			wantUA:         tuiUA,
+			wantOriginator: "codex_cli_rs",
+			wantUA:         normalizedTUIUA,
 		},
 		{
 			name:           "第三方 UA 整体回退默认身份",
@@ -86,11 +88,11 @@ func TestEnforceCodexIdentityHeaders(t *testing.T) {
 			wantUA:         codexCLIUserAgent,
 		},
 		{
-			name:           "originator override UA 首段被尾部真实身份重写",
+			name:           "originator override 真实身份归一化",
 			originator:     "cccc",
 			userAgent:      "cccc/0.142.0 (Ubuntu 22.4.0; x86_64) screen (codex-tui; 0.142.0)",
-			wantOriginator: "codex-tui",
-			wantUA:         "codex-tui/0.142.0 (Ubuntu 22.4.0; x86_64) screen (codex-tui; 0.142.0)",
+			wantOriginator: "codex_cli_rs",
+			wantUA:         "codex_cli_rs/0.142.0 (Ubuntu 22.4.0; x86_64) screen",
 		},
 		{
 			name:           "低于门槛的 version 提升为内置版本",
@@ -139,6 +141,34 @@ func TestEnforceCodexIdentityHeaders(t *testing.T) {
 			require.Equal(t, tt.wantVersion, h.Get("version"))
 		})
 	}
+}
+
+func TestCodexOriginatorNormalizationZeroValueConfigKeepsItEnabled(t *testing.T) {
+	var cfg config.Config
+	require.False(t, cfg.Gateway.DisableCodexOriginatorNormalization)
+
+	SetCodexOriginatorNormalizationEnabled(!cfg.Gateway.DisableCodexOriginatorNormalization)
+	t.Cleanup(func() { SetCodexOriginatorNormalizationEnabled(true) })
+
+	h := make(http.Header)
+	h.Set("originator", "codex-tui")
+	h.Set("user-agent", "codex-tui/0.140.2 (Mac OS X 14.0; arm64) iTerm (codex-tui; 0.140.2)")
+	enforceCodexIdentityHeaders(h)
+	require.Equal(t, "codex_cli_rs", h.Get("originator"))
+}
+
+func TestEnforceCodexIdentityHeadersNormalizationDisabled(t *testing.T) {
+	const tuiUA = "codex-tui/0.140.2 (Mac OS X 14.0; arm64) iTerm (codex-tui; 0.140.2)"
+	SetCodexOriginatorNormalizationEnabled(false)
+	t.Cleanup(func() { SetCodexOriginatorNormalizationEnabled(true) })
+
+	h := make(http.Header)
+	h.Set("originator", "codex-tui")
+	h.Set("user-agent", tuiUA)
+	enforceCodexIdentityHeaders(h)
+
+	require.Equal(t, "codex-tui", h.Get("originator"))
+	require.Equal(t, tuiUA, h.Get("user-agent"))
 }
 
 // enforce 本身仍只负责收口：缺少 originator 时必须保持 no-op，由需要恢复身份的

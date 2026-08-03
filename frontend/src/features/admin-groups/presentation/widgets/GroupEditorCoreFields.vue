@@ -8,6 +8,7 @@ import {
   invertModelsListSelection,
   selectAllModelsListItems,
 } from "../groupsModelsListResolver";
+import { supportsReasoningEffortPolicyPlatform } from "../groupsReasoningEffort";
 import type {
   GroupEditorDialogContext,
   GroupEditorOption,
@@ -210,7 +211,7 @@ const {
       <p class="input-hint">{{ t("admin.groups.form.rpmLimitHint") }}</p>
     </div>
     <ReasoningEffortPolicyFields
-      v-if="form.platform === 'openai'"
+      v-if="supportsReasoningEffortPolicyPlatform(form.platform)"
       ref="reasoningEffortPolicyRef"
       :id-prefix="isEdit ? 'edit-group-reasoning' : 'create-group-reasoning'"
       :platform="form.platform"

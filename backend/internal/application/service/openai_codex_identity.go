@@ -3,6 +3,7 @@ package service
 import (
 	"net/http"
 	"strings"
+	"sync/atomic"
 
 	"github.com/Wei-Shaw/sub2api/internal/shared/openai"
 	"github.com/google/uuid"
@@ -11,6 +12,18 @@ import (
 // codexUpstreamMinVersion 上游 /backend-api/codex 接受的最低 version 头：
 // 若请求携带 version 且低于该值，上游直接 404（issue #3901，2026-07 实测）。
 const codexUpstreamMinVersion = "0.144.0"
+
+var codexOriginatorNormalization = func() *atomic.Bool {
+	enabled := &atomic.Bool{}
+	enabled.Store(true)
+	return enabled
+}()
+
+// SetCodexOriginatorNormalizationEnabled publishes the process-wide snapshot
+// used by the shared outbound identity normalization point.
+func SetCodexOriginatorNormalizationEnabled(enabled bool) {
+	codexOriginatorNormalization.Store(enabled)
+}
 
 // ensureCodexIdentityHeaders 补齐 OAuth（ChatGPT 内部接口）出站请求所需的 Codex 身份头。
 // 已有 User-Agent 与 version 保持不变，交给紧随其后的 enforceCodexIdentityHeaders
@@ -23,7 +36,7 @@ func ensureCodexIdentityHeaders(h http.Header) {
 		h.Set("user-agent", codexCLIUserAgent)
 	}
 	if strings.TrimSpace(h.Get("originator")) == "" {
-		h.Set("originator", "codex_cli_rs")
+		h.Set("originator", openai.CodexCLIOriginator)
 	}
 	if strings.TrimSpace(h.Get("version")) == "" {
 		h.Set("version", codexCLIVersion)
@@ -54,7 +67,10 @@ func enforceCodexIdentityHeaders(h http.Header) {
 	}
 	originator, pairedUA, ok := openai.PairCodexClientIdentity(h.Get("user-agent"))
 	if !ok {
-		originator, pairedUA = "codex_cli_rs", codexCLIUserAgent
+		originator, pairedUA = openai.CodexCLIOriginator, codexCLIUserAgent
+	}
+	if codexOriginatorNormalization.Load() {
+		originator, pairedUA, _ = openai.NormalizeCodexClientIdentityToCLI(originator, pairedUA)
 	}
 	h.Set("user-agent", pairedUA)
 	h.Set("originator", originator)

@@ -33,6 +33,18 @@ type stubOpenAIAccountRepo struct {
 	listErr  error
 }
 
+type tempUnschedulableOpenAIAccountRepo struct {
+	stubOpenAIAccountRepo
+	modelRateLimitAccountID int64
+	modelRateLimitKey       string
+}
+
+func (r *tempUnschedulableOpenAIAccountRepo) SetModelRateLimit(_ context.Context, accountID int64, modelKey string, _ time.Time, _ ...string) error {
+	r.modelRateLimitAccountID = accountID
+	r.modelRateLimitKey = modelKey
+	return nil
+}
+
 type snapshotUpdateAccountRepo struct {
 	stubOpenAIAccountRepo
 	updateExtraCalls chan map[string]any
@@ -93,6 +105,68 @@ func (r stubOpenAIAccountRepo) ListSchedulableByPlatform(ctx context.Context, pl
 
 func (r stubOpenAIAccountRepo) ListSchedulableUngroupedByPlatform(ctx context.Context, platform string) ([]Account, error) {
 	return r.ListSchedulableByPlatform(ctx, platform)
+}
+
+func TestFailoverOpenAIUpstreamHTTPErrorAppliesTempUnschedulablePolicyBeforeCommit(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	repo := &tempUnschedulableOpenAIAccountRepo{}
+	svc := &OpenAIGatewayService{
+		rateLimitService: NewRateLimitService(repo, nil, &config.Config{}, nil, nil),
+	}
+	account := &Account{
+		ID: 5099, Platform: PlatformOpenAI, Type: AccountTypeAPIKey,
+		Credentials: map[string]any{
+			"temp_unschedulable_enabled": true,
+			"temp_unschedulable_rules": []any{map[string]any{
+				"error_code":       float64(http.StatusBadRequest),
+				"keywords":         []any{"servers are currently overloaded"},
+				"duration_minutes": float64(1),
+			}},
+		},
+	}
+	body := []byte(`{"error":{"message":"Our servers are currently overloaded."}}`)
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
+	resp := &http.Response{StatusCode: http.StatusBadRequest, Header: http.Header{}}
+
+	got := svc.failoverOpenAIUpstreamHTTPError(
+		context.Background(), c, account, resp, body,
+		"Our servers are currently overloaded.", "gpt-5.4",
+	)
+
+	require.NotNil(t, got)
+	require.Equal(t, account.ID, repo.modelRateLimitAccountID)
+	require.Equal(t, "gpt-5.4", repo.modelRateLimitKey)
+	require.False(t, IsResponseCommitted(c))
+}
+
+func TestFailoverOpenAIUpstreamHTTPErrorNilGinContextSkipsTempUnschedulablePolicy(t *testing.T) {
+	repo := &tempUnschedulableOpenAIAccountRepo{}
+	svc := &OpenAIGatewayService{
+		rateLimitService: NewRateLimitService(repo, nil, &config.Config{}, nil, nil),
+	}
+	account := &Account{
+		ID: 5099, Platform: PlatformOpenAI, Type: AccountTypeAPIKey,
+		Credentials: map[string]any{
+			"temp_unschedulable_enabled": true,
+			"temp_unschedulable_rules": []any{map[string]any{
+				"error_code":       float64(http.StatusBadRequest),
+				"keywords":         []any{"servers are currently overloaded"},
+				"duration_minutes": float64(1),
+			}},
+		},
+	}
+	body := []byte(`{"error":{"message":"Our servers are currently overloaded."}}`)
+	resp := &http.Response{StatusCode: http.StatusBadRequest, Header: http.Header{}}
+
+	got := svc.failoverOpenAIUpstreamHTTPError(
+		context.Background(), nil, account, resp, body,
+		"Our servers are currently overloaded.", "gpt-5.4",
+	)
+
+	require.Nil(t, got)
+	require.Zero(t, repo.modelRateLimitAccountID)
 }
 
 type groupAwareStubOpenAIAccountRepo struct {
@@ -3186,10 +3260,17 @@ func TestOpenAIBuildUpstreamRequestOAuthOfficialClientOriginatorCompatibility(t 
 		{name: "official ua pairs originator", userAgent: "Codex Desktop/1.2.3", wantOriginator: "Codex Desktop", wantUA: "Codex Desktop/1.2.3"},
 		{
 			name:           "mismatched originator repaired from ua",
-			userAgent:      "codex-tui/0.140.2 (Mac OS X 14.0; arm64) iTerm (codex-tui; 0.140.2)",
+			userAgent:      "codex_vscode/0.140.2 (Mac OS X 14.0; arm64) vscode (codex_vscode; 0.140.2)",
 			originator:     "codex_cli_rs",
-			wantOriginator: "codex-tui",
-			wantUA:         "codex-tui/0.140.2 (Mac OS X 14.0; arm64) iTerm (codex-tui; 0.140.2)",
+			wantOriginator: "codex_vscode",
+			wantUA:         "codex_vscode/0.140.2 (Mac OS X 14.0; arm64) vscode (codex_vscode; 0.140.2)",
+		},
+		{
+			name:           "load-shed originator normalized to cli identity",
+			userAgent:      "codex-tui/0.140.2 (Mac OS X 14.0; arm64) iTerm (codex-tui; 0.140.2)",
+			originator:     "codex-tui",
+			wantOriginator: "codex_cli_rs",
+			wantUA:         "codex_cli_rs/0.140.2 (Mac OS X 14.0; arm64) iTerm",
 		},
 		{name: "official originator without ua falls back to default identity", originator: "codex_vscode", wantOriginator: "codex_cli_rs", wantUA: codexCLIUserAgent},
 		{name: "third-party ua masked to default identity", userAgent: "luna/1.2.0", wantOriginator: "codex_cli_rs", wantUA: codexCLIUserAgent},

@@ -255,6 +255,42 @@ func canonicalizeCodexOriginator(name string) string {
 	return name
 }
 
+// CodexCLIOriginator is the official codex-rs default originator and the
+// target identity used when an upstream load-shed bucket must be avoided.
+const CodexCLIOriginator = "codex_cli_rs"
+
+const codexLoadShedOriginator = "codex-tui"
+
+// IsCodexLoadShedOriginator reports whether upstream currently assigns the
+// originator to a capacity load-shed bucket. Keep this snapshot narrow and
+// revisit it when the upstream scheduling policy changes.
+func IsCodexLoadShedOriginator(originator string) bool {
+	return strings.EqualFold(strings.TrimSpace(originator), codexLoadShedOriginator)
+}
+
+// NormalizeCodexClientIdentityToCLI preserves the version and machine
+// fingerprint of a paired Codex identity while moving a load-shed originator
+// to the official CLI bucket. A trailing official client marker is removed to
+// keep the rewritten User-Agent consistent with the real CLI shape.
+func NormalizeCodexClientIdentityToCLI(originator, userAgent string) (string, string, bool) {
+	if !IsCodexLoadShedOriginator(originator) {
+		return originator, userAgent, false
+	}
+
+	ua := strings.TrimSpace(userAgent)
+	slash := strings.IndexByte(ua, '/')
+	if slash <= 0 {
+		return CodexCLIOriginator, ua, true
+	}
+	remaining := ua[slash:]
+	if trailer := codexUATrailerName(ua); trailer != "" && IsCodexOfficialClientOriginator(trailer) {
+		if open := strings.LastIndex(remaining, "("); open > 0 {
+			remaining = strings.TrimRight(remaining[:open], " ")
+		}
+	}
+	return CodexCLIOriginator, CodexCLIOriginator + remaining, true
+}
+
 // codexEngineVersionPattern 提取版本段开头的三段数字 X.Y.Z（忽略 -alpha 等后缀）。
 var codexEngineVersionPattern = regexp.MustCompile(`^(\d+\.\d+\.\d+)`)
 

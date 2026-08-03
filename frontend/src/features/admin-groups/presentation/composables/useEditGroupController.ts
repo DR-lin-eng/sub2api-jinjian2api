@@ -26,6 +26,7 @@ import {
   normalizeReasoningEffortForPlatform,
   reasoningEffortMappingsToAPI,
   reasoningEffortMappingsToRows,
+  supportsReasoningEffortPolicyPlatform,
 } from "../groupsReasoningEffort";
 import type {
   EditGroupDialogContext,
@@ -321,7 +322,7 @@ export function useEditGroupController({
       return;
     }
     if (
-      editForm.platform === "openai" &&
+      supportsReasoningEffortPolicyPlatform(editForm.platform) &&
       reasoningEffortPolicyRef.value &&
       !reasoningEffortPolicyRef.value.validate()
     ) {

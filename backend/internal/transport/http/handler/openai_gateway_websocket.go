@@ -525,12 +525,7 @@ func (h *OpenAIGatewayHandler) ResponsesWebSocket(c *gin.Context) {
 			zap.Int("candidate_count", scheduleDecision.CandidateCount),
 		)
 
-		maxReasoningEffort := ""
-		var reasoningEffortMappings []service.ReasoningEffortMapping
-		if apiKey.Group != nil && apiKey.Group.Platform == service.PlatformOpenAI {
-			maxReasoningEffort = apiKey.Group.MaxReasoningEffort
-			reasoningEffortMappings = apiKey.Group.ReasoningEffortMappings
-		}
+		maxReasoningEffort, reasoningEffortMappings, _ := openAIReasoningEffortPolicyForRequest(c, apiKey)
 		var requestPayloadHash string
 		var turnChannelMapping openAIWSTurnChannelMappingState
 		turnChannelMapping.Store(1, reqModel, channelMappingWS)

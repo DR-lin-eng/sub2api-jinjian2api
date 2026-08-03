@@ -19,6 +19,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/shared/openai_compat"
 	"github.com/Wei-Shaw/sub2api/internal/shared/responseheaders"
 	"github.com/gin-gonic/gin"
+	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 )
 
@@ -290,6 +291,14 @@ func (s *OpenAIGatewayService) ForwardAsAnthropic(
 		responsesBody, _, err = sanitizeOpenAIResponsesInputIDs(responsesBody, account.IsOpenAIOAuth())
 		if err != nil {
 			return nil, fmt.Errorf("sanitize Responses input ids: %w", err)
+		}
+	}
+	if account.Platform == PlatformOpenAI {
+		if policyBody, changed := ApplyOpenAIReasoningEffortPolicyFromContext(ctx, responsesBody); changed {
+			responsesBody = policyBody
+			if responsesReq.Reasoning != nil {
+				responsesReq.Reasoning.Effort = gjson.GetBytes(responsesBody, "reasoning.effort").String()
+			}
 		}
 	}
 
