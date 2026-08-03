@@ -42,7 +42,7 @@ export default {
         },
         supportChat: {
           title: '在线客服',
-          description: '控制用户端在线客服入口和管理员客服收件箱入口。默认开启。',
+          description: '控制用户端在线客服入口和管理员客服收件箱入口。默认关闭，确认发布后再显式开启。',
           enabled: '启用在线客服',
           enabledHint: '关闭后隐藏用户端在线客服和管理员客服收件箱，并停止侧边栏未读红点轮询。',
         },

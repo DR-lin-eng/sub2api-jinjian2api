@@ -42,7 +42,7 @@ export default {
         },
         supportChat: {
           title: 'Support Chat',
-          description: 'Control the user Support Chat entry and the admin Support Inbox entry. Enabled by default.',
+          description: 'Control the user Support Chat entry and the admin Support Inbox entry. Disabled by default; enable it explicitly after reviewing the rollout.',
           enabled: 'Enable Support Chat',
           enabledHint: 'When off, both support sidebar entries are hidden and unread badge polling stops.',
         },

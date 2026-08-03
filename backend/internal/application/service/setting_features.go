@@ -86,17 +86,6 @@ func (s *SettingService) IsAffiliateEnabled(ctx context.Context) bool {
 	return value == "true"
 }
 
-// IsSupportChatEnabled checks whether online support chat is enabled.
-// Missing rows and read failures keep the feature enabled to preserve the
-// historical default and avoid hiding support during transient setting outages.
-func (s *SettingService) IsSupportChatEnabled(ctx context.Context) bool {
-	value, err := s.settingRepo.GetValue(ctx, SettingKeySupportChatEnabled)
-	if err != nil {
-		return true
-	}
-	return value != "false"
-}
-
 // IsAffiliateAdminRechargeEnabled reports whether admin balance
 // deposits should participate in the affiliate rebate program.
 func (s *SettingService) IsAffiliateAdminRechargeEnabled(ctx context.Context) bool {

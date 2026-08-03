@@ -36,6 +36,7 @@ rg -n 'path:|name:|component:' frontend/src/core/routes/index.ts
 | `requiresAdmin` | 是否要求管理员 |
 | `requiresPayment` | 是否要求内部支付功能启用 |
 | `requiresRiskControl` | 是否要求风控功能启用 |
+| `requiresSupportChat` | 是否要求在线客服功能显式启用 |
 | `title`, `titleKey`, `descriptionKey` | 页面标题和 i18n 元数据 |
 | `breadcrumbs`, `icon`, `hideInMenu` | 导航展示元数据 |
 

@@ -395,7 +395,7 @@ const (
 
 	// SettingKeySupportChatEnabled is a DB-backed soft switch for the online support chat
 	// entry points. When false: user/admin sidebar entries are hidden and frontend routes
-	// redirect away. Defaults to true (opt-out feature).
+	// redirect away. Defaults to false (explicit opt-in feature).
 	SettingKeySupportChatEnabled = "support_chat_enabled"
 
 	// SettingKeyModelPlazaEnabled is a DB-backed soft switch for the Model Plaza page

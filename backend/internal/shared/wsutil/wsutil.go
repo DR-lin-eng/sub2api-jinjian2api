@@ -25,8 +25,10 @@ const (
 // IsAllowedOrigin reports whether r's Origin header is acceptable for a
 // WebSocket upgrade. A missing Origin header is allowed unless originPolicy
 // is OriginPolicyStrict. Otherwise the Origin host must match the request
-// host, optionally resolved through X-Forwarded-Host when the peer is a
-// trusted proxy.
+// origin host must match the request authority, optionally resolved through
+// X-Forwarded-Host when the peer is a trusted proxy. The Origin scheme must be
+// HTTP(S), but is not compared to the backend connection because TLS is often
+// terminated before the request reaches the application.
 func IsAllowedOrigin(r *http.Request, trustProxy bool, trustedProxies []netip.Prefix, originPolicy string) bool {
 	if r == nil {
 		return false
@@ -36,23 +38,43 @@ func IsAllowedOrigin(r *http.Request, trustProxy bool, trustedProxies []netip.Pr
 		return strings.ToLower(strings.TrimSpace(originPolicy)) != OriginPolicyStrict
 	}
 	parsed, err := url.Parse(origin)
-	if err != nil || parsed.Hostname() == "" {
+	if err != nil || parsed.Hostname() == "" || !isWebOrigin(parsed) {
 		return false
 	}
 	originHost := strings.ToLower(parsed.Hostname())
+	originPort := parsed.Port()
 
-	reqHost := hostWithoutPort(r.Host)
+	reqHost := strings.TrimSpace(r.Host)
 	if trustProxy {
 		if peerIP, ok := requestPeerIP(r); ok && isAddrInTrustedProxies(peerIP, trustedProxies) {
 			if xfHost := strings.TrimSpace(r.Header.Get("X-Forwarded-Host")); xfHost != "" {
 				if first := strings.TrimSpace(strings.Split(xfHost, ",")[0]); first != "" {
-					reqHost = hostWithoutPort(first)
+					reqHost = first
 				}
 			}
 		}
 	}
-	reqHost = strings.ToLower(reqHost)
-	return reqHost != "" && originHost == reqHost
+	reqHostname, reqPort := splitRequestHost(reqHost)
+	return reqHostname != "" && originHost == strings.ToLower(reqHostname) && originPort == reqPort
+}
+
+func isWebOrigin(parsed *url.URL) bool {
+	if parsed == nil || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || parsed.Path != "" {
+		return false
+	}
+	return isWebScheme(parsed.Scheme)
+}
+
+func isWebScheme(scheme string) bool {
+	return strings.EqualFold(scheme, "http") || strings.EqualFold(scheme, "https")
+}
+
+func splitRequestHost(hostport string) (string, string) {
+	parsed, err := url.Parse("//" + strings.TrimSpace(hostport))
+	if err != nil || parsed.Hostname() == "" || parsed.User != nil || parsed.Path != "" || parsed.RawQuery != "" || parsed.Fragment != "" {
+		return "", ""
+	}
+	return parsed.Hostname(), parsed.Port()
 }
 
 // DefaultTrustedProxies returns loopback-only trusted proxy ranges.
@@ -128,20 +150,6 @@ func isAddrInTrustedProxies(addr netip.Addr, trusted []netip.Prefix) bool {
 		}
 	}
 	return false
-}
-
-func hostWithoutPort(hostport string) string {
-	hostport = strings.TrimSpace(hostport)
-	if hostport == "" {
-		return ""
-	}
-	if host, _, err := net.SplitHostPort(hostport); err == nil {
-		return host
-	}
-	if strings.HasPrefix(hostport, "[") && strings.HasSuffix(hostport, "]") {
-		return strings.Trim(hostport, "[]")
-	}
-	return strings.Split(hostport, ":")[0]
 }
 
 // ConnLimiter bounds the number of concurrent connections, both globally and
@@ -240,10 +248,12 @@ func (l *ConnLimiter) releasePerIP(clientIP string) {
 
 // PumpConfig controls timing for PumpWebSocket.
 type PumpConfig struct {
-	WriteTimeout time.Duration
-	PongWait     time.Duration
-	PingInterval time.Duration
-	MaxReadBytes int64
+	WriteTimeout  time.Duration
+	PongWait      time.Duration
+	PingInterval  time.Duration
+	MaxReadBytes  int64
+	AuthExpiresAt time.Time
+	MaxAuthAge    time.Duration
 }
 
 // PumpWebSocket runs a connection's read and write pumps until either side
@@ -285,6 +295,26 @@ func PumpWebSocket(conn *websocket.Conn, send <-chan []byte, cfg PumpConfig) {
 	pingTicker := time.NewTicker(cfg.PingInterval)
 	defer pingTicker.Stop()
 
+	authDeadline := cfg.AuthExpiresAt
+	if cfg.MaxAuthAge > 0 {
+		maxDeadline := time.Now().Add(cfg.MaxAuthAge)
+		if authDeadline.IsZero() || maxDeadline.Before(authDeadline) {
+			authDeadline = maxDeadline
+		}
+	}
+
+	var authExpiry <-chan time.Time
+	var authTimer *time.Timer
+	if !authDeadline.IsZero() {
+		delay := time.Until(authDeadline)
+		if delay < 0 {
+			delay = 0
+		}
+		authTimer = time.NewTimer(delay)
+		authExpiry = authTimer.C
+		defer authTimer.Stop()
+	}
+
 	writeWithTimeout := func(messageType int, data []byte) error {
 		if err := conn.SetWriteDeadline(time.Now().Add(cfg.WriteTimeout)); err != nil {
 			return err
@@ -307,6 +337,9 @@ func PumpWebSocket(conn *websocket.Conn, send <-chan []byte, cfg PumpConfig) {
 			}
 		case <-done:
 			_ = writeWithTimeout(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+			return
+		case <-authExpiry:
+			_ = writeWithTimeout(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "authentication expired"))
 			return
 		}
 	}

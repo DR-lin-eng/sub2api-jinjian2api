@@ -100,6 +100,12 @@ func BadRequest(c *gin.Context, message string) {
 	Error(c, http.StatusBadRequest, message)
 }
 
+// RequestEntityTooLarge returns a bounded-body rejection without exposing
+// parser internals to the caller.
+func RequestEntityTooLarge(c *gin.Context, message string) {
+	Error(c, http.StatusRequestEntityTooLarge, message)
+}
+
 // Unauthorized 返回401错误
 func Unauthorized(c *gin.Context, message string) {
 	Error(c, http.StatusUnauthorized, message)

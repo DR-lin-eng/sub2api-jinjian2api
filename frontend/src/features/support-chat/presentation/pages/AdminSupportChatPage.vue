@@ -142,6 +142,7 @@ const userProfileLoading = ref(false)
 const userProfile = ref<AdminUser | null>(null)
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 let fallbackPollTimer: ReturnType<typeof setInterval> | null = null
+const SUPPORT_CHAT_RESYNC_MS = 15000
 
 const selectedConversation = computed(() => {
   if (!selectedConversationID.value) return null
@@ -193,6 +194,7 @@ function upsertConversationActivity(message: ChatMessage) {
   existing.last_message_at = message.created_at
   if (message.sender_type === 'user') {
     existing.unread_by_admin += 1
+    appStore.setSupportInboxUnread(true)
     supportChatAdminStore.markHasUnread()
   }
   conversations.value = [...conversations.value].sort((a, b) => {
@@ -242,6 +244,7 @@ async function selectConversation(conversationID: number) {
   selectedConversationID.value = conversationID
   messages.value = []
   await reloadSelectedMessages()
+  await markSelectedRead()
 }
 
 function backToConversationList() {
@@ -287,7 +290,8 @@ async function markSelectedRead() {
   await markAdminChatRead(selectedConversationID.value)
   const existing = conversations.value.find((item) => item.id === selectedConversationID.value)
   if (existing) existing.unread_by_admin = 0
-  void supportChatAdminStore.refreshUnreadIndicator(true)
+  await supportChatAdminStore.refreshUnreadIndicator(true)
+  appStore.setSupportInboxUnread(supportChatAdminStore.hasUnread)
 }
 
 async function handleSend(content: string) {
@@ -307,8 +311,8 @@ async function handleSend(content: string) {
   }
 }
 
-async function pollWhenOffline() {
-  if (socketConnected.value || sending.value) return
+async function resyncMessages() {
+  if (sending.value) return
   await loadConversations()
   if (selectedConversationID.value) {
     await reloadSelectedMessages()
@@ -330,8 +334,8 @@ onMounted(async () => {
   await loadConversations()
   socket.connect()
   fallbackPollTimer = setInterval(() => {
-    void pollWhenOffline()
-  }, 5000)
+    void resyncMessages()
+  }, SUPPORT_CHAT_RESYNC_MS)
 })
 
 onBeforeUnmount(() => {

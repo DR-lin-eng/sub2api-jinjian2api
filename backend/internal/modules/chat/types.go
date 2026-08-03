@@ -77,15 +77,20 @@ type ConversationRepository interface {
 
 	// List returns conversations for the admin inbox, sorted by most recent activity.
 	List(ctx context.Context, params pagination.PaginationParams, filters ConversationListFilters) ([]Conversation, *pagination.PaginationResult, error)
+	// CountUnreadByAdmin returns the number of conversations with messages waiting for support.
+	CountUnreadByAdmin(ctx context.Context) (int, error)
+	// GetUnreadByUserID returns the user's unread count without creating a conversation.
+	GetUnreadByUserID(ctx context.Context, userID int64) (int, error)
 
-	// TouchOnMessage updates last_message_at and bumps the recipient-side unread counter.
-	TouchOnMessage(ctx context.Context, conversationID int64, at time.Time, sender SenderType) error
 	// MarkRead zeroes the unread counter for the given side.
 	MarkRead(ctx context.Context, conversationID int64, sender SenderType) error
 }
 
 // MessageRepository persists chat messages.
 type MessageRepository interface {
-	Create(ctx context.Context, m *Message) error
+	// CreateAndTouch atomically persists the message and updates the
+	// conversation activity/unread state. Implementations must not degrade to
+	// separate writes because callers broadcast only after this method succeeds.
+	CreateAndTouch(ctx context.Context, m *Message, at time.Time, sender SenderType) error
 	List(ctx context.Context, conversationID int64, params pagination.PaginationParams) ([]Message, *pagination.PaginationResult, error)
 }

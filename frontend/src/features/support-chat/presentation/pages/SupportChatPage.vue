@@ -44,7 +44,6 @@ import { useI18n } from 'vue-i18n'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import { useAppStore } from '@/core/stores/appStore'
 import {
-  getUserChatConversation,
   listUserChatMessages,
   markUserChatRead,
   sendUserChatMessage,
@@ -64,6 +63,7 @@ const messages = ref<ChatMessage[]>([])
 const messagePaneRef = ref<HTMLElement | null>(null)
 const socketConnected = ref(false)
 let fallbackPollTimer: ReturnType<typeof setInterval> | null = null
+const SUPPORT_CHAT_RESYNC_MS = 15000
 
 const socket = useSupportChatSocket({
   scope: 'user',
@@ -72,10 +72,14 @@ const socket = useSupportChatSocket({
   },
   onMessage: (message) => {
     appendMessage(message)
-    if (message.sender_type === 'admin') supportChatAdminStore.markUserHasUnread()
-    void markUserChatRead().then(() => {
-      supportChatAdminStore.markUserRead()
-    })
+    if (message.sender_type === 'admin') {
+      appStore.setSupportUserUnread(true)
+      supportChatAdminStore.markUserHasUnread()
+      void markUserChatRead().then(() => {
+        appStore.setSupportUserUnread(false)
+        supportChatAdminStore.markUserRead()
+      })
+    }
     void scrollToBottom()
   },
 })
@@ -104,25 +108,31 @@ async function scrollToBottom() {
   if (pane) pane.scrollTop = pane.scrollHeight
 }
 
-async function reload() {
-  loading.value = true
+async function syncMessages(showLoading: boolean) {
+  if (showLoading) loading.value = true
   try {
-    await getUserChatConversation()
     const page = await listUserChatMessages({ page: 1, page_size: 100 })
     messages.value = page.items
-    await markUserChatRead()
-    supportChatAdminStore.markUserRead()
+    if (page.total > 0) {
+      await markUserChatRead()
+      appStore.setSupportUserUnread(false)
+      supportChatAdminStore.markUserRead()
+    }
     await scrollToBottom()
   } catch (error) {
     appStore.showError(errorMessage(error, t('supportChat.loadFailed')))
   } finally {
-    loading.value = false
+    if (showLoading) loading.value = false
   }
 }
 
-async function pollWhenOffline() {
-  if (socketConnected.value || loading.value || sending.value) return
-  await reload()
+async function reload() {
+  await syncMessages(true)
+}
+
+async function resyncMessages() {
+  if (loading.value || sending.value) return
+  await syncMessages(false)
 }
 
 async function handleSend(content: string) {
@@ -142,8 +152,8 @@ onMounted(async () => {
   await reload()
   socket.connect()
   fallbackPollTimer = setInterval(() => {
-    void pollWhenOffline()
-  }, 5000)
+    void resyncMessages()
+  }, SUPPORT_CHAT_RESYNC_MS)
 })
 
 watch(messageScrollSignature, () => {

@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import {
-  getUserChatConversation,
-  listAdminChatConversations,
+  getAdminChatUnreadCount,
+  getUserChatUnreadCount,
   type ChatConversation,
 } from '@/features/support-chat/data/datasources/supportChatDatasource'
 
-const UNREAD_REFRESH_THROTTLE_MS = 5000
+const UNREAD_REFRESH_THROTTLE_MS = 15000
 
 export const useSupportChatAdminStore = defineStore('supportChatAdmin', () => {
   const unreadConversationCount = ref(0)
@@ -27,12 +27,7 @@ export const useSupportChatAdminStore = defineStore('supportChatAdmin', () => {
     loadingUnread.value = true
     lastUnreadFetchAt.value = now
     try {
-      const page = await listAdminChatConversations({
-        page: 1,
-        page_size: 1,
-        unread_only: true,
-      })
-      unreadConversationCount.value = page.total
+      unreadConversationCount.value = await getAdminChatUnreadCount()
     } catch (error) {
       lastUnreadFetchAt.value = 0
       console.error('[supportChatAdmin] Failed to refresh unread indicator:', error)
@@ -49,8 +44,7 @@ export const useSupportChatAdminStore = defineStore('supportChatAdmin', () => {
     loadingUserUnread.value = true
     lastUserUnreadFetchAt.value = now
     try {
-      const conversation = await getUserChatConversation()
-      userUnreadCount.value = conversation.unread_by_user
+      userUnreadCount.value = await getUserChatUnreadCount()
     } catch (error) {
       lastUserUnreadFetchAt.value = 0
       console.error('[supportChatAdmin] Failed to refresh user unread indicator:', error)

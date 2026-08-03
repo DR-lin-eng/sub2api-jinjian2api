@@ -147,6 +147,7 @@ func RegisterUserRoutes(
 		chat := authenticated.Group("/chat", middleware.SupportChatFeatureGuard(settingService))
 		{
 			chat.GET("/conversation", h.Chat.GetConversation)
+			chat.GET("/unread-count", h.Chat.GetUnreadCount)
 			chat.GET("/messages", h.Chat.ListMessages)
 			chat.POST("/messages", h.Chat.SendMessage)
 			chat.POST("/read", h.Chat.MarkRead)

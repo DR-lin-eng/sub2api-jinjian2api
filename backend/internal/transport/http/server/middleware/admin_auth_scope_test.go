@@ -27,6 +27,9 @@ func TestAdminAPIKeyScopePolicy(t *testing.T) {
 		{http.MethodGet, "/api/v1/admin/accounts/data", []string{service.AdminAPIKeyScopeRead}, false},
 		{http.MethodGet, "/api/v1/admin/ops/concurrency", []string{service.AdminAPIKeyScopeRead}, true},
 		{http.MethodPost, "/api/v1/admin/redeem-codes/export-generated", []string{service.AdminAPIKeyScopeRead}, true},
+		{http.MethodGet, "/api/v1/admin/chat/conversations", []string{service.AdminAPIKeyScopeRead}, false},
+		{http.MethodPost, "/api/v1/admin/chat/conversations/1/messages", []string{service.AdminAPIKeyScopeWrite}, false},
+		{http.MethodGet, "/api/v1/admin/chat/ws", []string{service.AdminAPIKeyScopeRead}, false},
 	}
 	for _, check := range checks {
 		c, _ := gin.CreateTestContext(httptest.NewRecorder())

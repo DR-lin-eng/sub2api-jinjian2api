@@ -131,6 +131,7 @@ func registerChatRoutes(admin *gin.RouterGroup, h *handler.Handlers, settingServ
 	chat := admin.Group("/chat", middleware.SupportChatFeatureGuard(settingService))
 	{
 		chat.GET("/conversations", h.Admin.Chat.ListConversations)
+		chat.GET("/unread-count", h.Admin.Chat.GetUnreadCount)
 		chat.GET("/conversations/:id/messages", h.Admin.Chat.ListMessages)
 		chat.POST("/conversations/:id/messages", h.Admin.Chat.SendMessage)
 		chat.POST("/conversations/:id/read", h.Admin.Chat.MarkRead)

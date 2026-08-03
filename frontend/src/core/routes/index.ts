@@ -976,8 +976,7 @@ router.beforeEach(async (to, _from, next) => {
 
   if (
     to.meta.requiresSupportChat &&
-    appStore.publicSettingsLoaded &&
-    appStore.cachedPublicSettings?.support_chat_enabled === false
+    (!appStore.publicSettingsLoaded || appStore.cachedPublicSettings?.support_chat_enabled !== true)
   ) {
     next(authStore.isAdmin ? '/admin/dashboard' : '/dashboard')
     return

@@ -167,9 +167,19 @@ export async function markUserChatRead(): Promise<void> {
   await apiClient.post('/chat/read')
 }
 
+export async function getUserChatUnreadCount(): Promise<number> {
+  const { data } = await apiClient.get<{ unread_count?: number }>('/chat/unread-count')
+  return numberValue(data?.unread_count)
+}
+
 export async function listAdminChatConversations(params: ChatConversationListParams): Promise<PaginatedResponse<ChatConversation>> {
   const { data } = await apiClient.get<PaginatedResponse<RawChatConversation>>('/admin/chat/conversations', { params })
   return normalizePaginatedConversations(data)
+}
+
+export async function getAdminChatUnreadCount(): Promise<number> {
+  const { data } = await apiClient.get<{ unread_count?: number }>('/admin/chat/unread-count')
+  return numberValue(data?.unread_count)
 }
 
 export async function listAdminChatMessages(conversationID: number, params: ChatMessageListParams): Promise<PaginatedResponse<ChatMessage>> {

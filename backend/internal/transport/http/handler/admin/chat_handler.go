@@ -1,10 +1,12 @@
 package admin
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/Wei-Shaw/sub2api/internal/modules/chat"
 	"github.com/Wei-Shaw/sub2api/internal/shared/logger"
@@ -47,16 +49,26 @@ type adminSendMessageRequest struct {
 	Content string `json:"content" binding:"required"`
 }
 
+const (
+	maxChatRequestBodyBytes = 32 << 10
+	maxChatSearchRunes      = 200
+)
+
+func limitChatSearch(search string) string {
+	search = strings.TrimSpace(search)
+	if utf8.RuneCountInString(search) <= maxChatSearchRunes {
+		return search
+	}
+	return string([]rune(search)[:maxChatSearchRunes])
+}
+
 // ListConversations returns the admin inbox, paginated and optionally
 // filtered to unread-by-admin conversations or a user email/username search.
 // GET /api/v1/admin/chat/conversations
 func (h *ChatHandler) ListConversations(c *gin.Context) {
 	page, pageSize := response.ParsePagination(c)
 	unreadOnly := parseBoolQueryWithDefault(c.Query("unread_only"), false)
-	search := strings.TrimSpace(c.Query("search"))
-	if len(search) > 200 {
-		search = search[:200]
-	}
+	search := limitChatSearch(c.Query("search"))
 
 	items, paginationResult, err := h.chatService.ListConversations(
 		c.Request.Context(),
@@ -68,6 +80,17 @@ func (h *ChatHandler) ListConversations(c *gin.Context) {
 		return
 	}
 	response.Paginated(c, items, paginationResult.Total, page, pageSize)
+}
+
+// GetUnreadCount returns the number of conversations waiting for support.
+// GET /api/v1/admin/chat/unread-count
+func (h *ChatHandler) GetUnreadCount(c *gin.Context) {
+	count, err := h.chatService.CountUnreadConversationsForAdmin(c.Request.Context())
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, gin.H{"unread_count": count})
 }
 
 // ListMessages returns a conversation's message history, paginated.
@@ -106,9 +129,15 @@ func (h *ChatHandler) SendMessage(c *gin.Context) {
 		return
 	}
 
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxChatRequestBodyBytes)
 	var req adminSendMessageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "Invalid request: "+err.Error())
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			response.RequestEntityTooLarge(c, "Request body too large")
+			return
+		}
+		response.BadRequest(c, "Invalid request")
 		return
 	}
 
@@ -144,6 +173,7 @@ const (
 	chatAdminWSPingInterval   = 30 * time.Second
 	chatAdminWSMaxReadBytes   = 1024
 	chatAdminWSSendBufferSize = 32
+	chatAdminWSMaxAuthAge     = 5 * time.Minute
 )
 
 // WS handles the realtime push connection shared by every connected admin:
@@ -168,11 +198,14 @@ func (h *ChatHandler) WS(c *gin.Context) {
 	send := make(chan []byte, chatAdminWSSendBufferSize)
 	handle := h.hub.RegisterAdmin(send)
 	defer h.hub.UnregisterAdmin(handle)
+	authExpiresAt, _ := middleware2.GetJWTExpiresAtFromContext(c)
 
 	wsutil.PumpWebSocket(conn, send, wsutil.PumpConfig{
-		WriteTimeout: chatAdminWSWriteTimeout,
-		PongWait:     chatAdminWSPongWait,
-		PingInterval: chatAdminWSPingInterval,
-		MaxReadBytes: chatAdminWSMaxReadBytes,
+		WriteTimeout:  chatAdminWSWriteTimeout,
+		PongWait:      chatAdminWSPongWait,
+		PingInterval:  chatAdminWSPingInterval,
+		MaxReadBytes:  chatAdminWSMaxReadBytes,
+		AuthExpiresAt: authExpiresAt,
+		MaxAuthAge:    chatAdminWSMaxAuthAge,
 	})
 }

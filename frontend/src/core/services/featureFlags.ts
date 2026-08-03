@@ -106,7 +106,7 @@ export const FeatureFlags = {
   }),
   supportChat: defineFlag({
     key: 'support_chat_enabled',
-    mode: 'opt-out',
+    mode: 'opt-in',
     label: 'Support Chat',
   }),
   modelPlaza: defineFlag({

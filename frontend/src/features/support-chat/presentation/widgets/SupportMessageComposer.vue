@@ -178,9 +178,9 @@
 </template>
 
 <script setup lang="ts">
-import DOMPurify from 'dompurify'
 import { computed, h, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { sanitizeChatHtml } from '@/features/support-chat/presentation/utils/sanitizeChatHtml'
 
 interface QuickReply {
   id: string
@@ -277,10 +277,7 @@ const customReplyPreview = computed(() => sanitizeHtml(customReplyContent.value 
 const canSaveCustomReply = computed(() => customReplyTitle.value.trim() !== '' && customReplyContent.value.trim() !== '')
 
 function sanitizeHtml(content: string): string {
-  return DOMPurify.sanitize(content, {
-    ALLOWED_TAGS: ['a', 'b', 'br', 'code', 'div', 'em', 'i', 'li', 'ol', 'p', 'pre', 'span', 'strong', 'u', 'ul'],
-    ALLOWED_ATTR: ['href', 'target', 'rel', 'title', 'class', 'style'],
-  })
+  return sanitizeChatHtml(content)
 }
 
 function togglePanel(panel: 'tools' | 'replies') {

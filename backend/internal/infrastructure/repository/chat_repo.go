@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -119,20 +120,24 @@ func (r *chatConversationRepository) List(
 	return out, paginationResultFromTotal(int64(total), params), nil
 }
 
-func (r *chatConversationRepository) TouchOnMessage(ctx context.Context, conversationID int64, at time.Time, sender chat.SenderType) error {
-	client := clientFromContext(ctx, r.client)
-	builder := client.ChatConversation.UpdateOneID(conversationID).
-		SetLastMessageAt(at)
+func (r *chatConversationRepository) CountUnreadByAdmin(ctx context.Context) (int, error) {
+	count, err := clientFromContext(ctx, r.client).ChatConversation.Query().
+		Where(chatconversation.UnreadByAdminGT(0)).
+		Count(ctx)
+	return count, err
+}
 
-	// The sender's own unread counter stays untouched; the recipient side increments.
-	if sender == chat.SenderTypeUser {
-		builder = builder.AddUnreadByAdmin(1)
-	} else {
-		builder = builder.AddUnreadByUser(1)
+func (r *chatConversationRepository) GetUnreadByUserID(ctx context.Context, userID int64) (int, error) {
+	conversation, err := clientFromContext(ctx, r.client).ChatConversation.Query().
+		Where(chatconversation.UserIDEQ(userID)).
+		Only(ctx)
+	if dbent.IsNotFound(err) {
+		return 0, nil
 	}
-
-	_, err := builder.Save(ctx)
-	return translatePersistenceError(err, chat.ErrConversationNotFound, nil)
+	if err != nil {
+		return 0, err
+	}
+	return conversation.UnreadByUser, nil
 }
 
 func (r *chatConversationRepository) MarkRead(ctx context.Context, conversationID int64, sender chat.SenderType) error {
@@ -172,8 +177,36 @@ func NewChatMessageRepository(client *dbent.Client) chat.MessageRepository {
 	return &chatMessageRepository{client: client}
 }
 
-func (r *chatMessageRepository) Create(ctx context.Context, m *chat.Message) error {
-	client := clientFromContext(ctx, r.client)
+// CreateAndTouch keeps the message row and the recipient unread counter in a
+// single transaction. The context-aware transaction branch lets callers that
+// already own an Ent transaction reuse it without nesting transactions.
+func (r *chatMessageRepository) CreateAndTouch(ctx context.Context, m *chat.Message, at time.Time, sender chat.SenderType) error {
+	if tx := dbent.TxFromContext(ctx); tx != nil {
+		return r.createAndTouchWithClient(ctx, tx.Client(), m, at, sender)
+	}
+
+	tx, err := r.client.Tx(ctx)
+	if err != nil {
+		return fmt.Errorf("begin chat message transaction: %w", err)
+	}
+	txCtx := dbent.NewTxContext(ctx, tx)
+	if err := r.createAndTouchWithClient(txCtx, tx.Client(), m, at, sender); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit chat message transaction: %w", err)
+	}
+	return nil
+}
+
+func (r *chatMessageRepository) createAndTouchWithClient(
+	ctx context.Context,
+	client *dbent.Client,
+	m *chat.Message,
+	at time.Time,
+	sender chat.SenderType,
+) error {
 	created, err := client.ChatMessage.Create().
 		SetConversationID(m.ConversationID).
 		SetSenderType(chatmessage.SenderType(m.SenderType)).
@@ -185,6 +218,17 @@ func (r *chatMessageRepository) Create(ctx context.Context, m *chat.Message) err
 	}
 	m.ID = created.ID
 	m.CreatedAt = created.CreatedAt
+
+	builder := client.ChatConversation.UpdateOneID(m.ConversationID).
+		SetLastMessageAt(at)
+	if sender == chat.SenderTypeUser {
+		builder = builder.AddUnreadByAdmin(1)
+	} else {
+		builder = builder.AddUnreadByUser(1)
+	}
+	if _, err := builder.Save(ctx); err != nil {
+		return translatePersistenceError(err, chat.ErrConversationNotFound, nil)
+	}
 	return nil
 }
 

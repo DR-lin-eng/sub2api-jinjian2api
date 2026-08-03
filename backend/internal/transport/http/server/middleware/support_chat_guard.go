@@ -8,11 +8,11 @@ import (
 )
 
 // SupportChatFeatureGuard blocks support chat APIs when the runtime feature
-// switch is disabled. It is intentionally fail-open to keep existing support
-// flows available when settings storage is temporarily unreachable.
+// switch is disabled. The guard is fail-closed so a missing service or a
+// settings storage outage cannot expose a newly added privileged surface.
 func SupportChatFeatureGuard(settingService *service.SettingService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if settingService == nil || settingService.IsSupportChatEnabled(c.Request.Context()) {
+		if settingService != nil && settingService.IsSupportChatEnabled(c.Request.Context()) {
 			c.Next()
 			return
 		}

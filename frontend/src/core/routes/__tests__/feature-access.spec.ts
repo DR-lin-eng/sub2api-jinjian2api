@@ -159,7 +159,6 @@ describe('feature route guard', () => {
   it.each([
     ['payment', { requiresPayment: true }, '/purchase'],
     ['risk control', { requiresRiskControl: true }, '/admin/risk-control'],
-    ['support chat', { requiresSupportChat: true }, '/support'],
   ])('does not treat a failed %s settings load as explicitly disabled', async (_name, meta, path) => {
     authStore.isAdmin = meta.requiresRiskControl === true
     appStore.fetchPublicSettings.mockResolvedValue(null)
@@ -170,6 +169,16 @@ describe('feature route guard', () => {
     expect(appStore.publicSettingsLoaded).toBe(false)
     expect(next).toHaveBeenCalledOnce()
     expect(next).toHaveBeenCalledWith()
+  })
+
+  it('fails closed for support chat when public settings cannot be loaded', async () => {
+    appStore.fetchPublicSettings.mockResolvedValue(null)
+
+    const { navigation, next } = runGuard({ requiresSupportChat: true }, '/support')
+    await navigation
+
+    expect(next).toHaveBeenCalledOnce()
+    expect(next).toHaveBeenCalledWith('/dashboard')
   })
 
   it.each([
@@ -197,5 +206,25 @@ describe('feature route guard', () => {
     expect(appStore.fetchPublicSettings).not.toHaveBeenCalled()
     expect(next).toHaveBeenCalledOnce()
     expect(next).toHaveBeenCalledWith(target)
+  })
+
+  it('redirects support chat unless settings explicitly enable it', async () => {
+    appStore.cachedPublicSettings = {}
+    appStore.publicSettingsLoaded = true
+
+    const { navigation, next } = runGuard({ requiresSupportChat: true }, '/support')
+    await navigation
+
+    expect(next).toHaveBeenCalledWith('/dashboard')
+  })
+
+  it('allows support chat only when settings explicitly enable it', async () => {
+    appStore.cachedPublicSettings = { support_chat_enabled: true }
+    appStore.publicSettingsLoaded = true
+
+    const { navigation, next } = runGuard({ requiresSupportChat: true }, '/support')
+    await navigation
+
+    expect(next).toHaveBeenCalledWith()
   })
 })

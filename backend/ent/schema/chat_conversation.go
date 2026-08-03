@@ -64,5 +64,8 @@ func (ChatConversation) Edges() []ent.Edge {
 func (ChatConversation) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("last_message_at"),
+		index.Fields("unread_by_admin").
+			StorageKey("idx_chat_conversations_unread_by_admin_active").
+			Annotations(entsql.IndexWhere("unread_by_admin > 0")),
 	}
 }

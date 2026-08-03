@@ -11,7 +11,7 @@ export interface SupportChatSocketOptions {
   onStatusChange?: (connected: boolean) => void
 }
 
-const RECONNECT_DELAYS_MS = [800, 1600, 3000, 5000]
+const RECONNECT_DELAYS_MS = [800, 1600, 3000, 5000, 15_000, 30_000]
 
 export function useSupportChatSocket(options: SupportChatSocketOptions) {
   const connected = ref(false)

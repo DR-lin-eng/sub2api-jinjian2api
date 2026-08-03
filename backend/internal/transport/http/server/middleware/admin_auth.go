@@ -162,6 +162,9 @@ func adminAPIKeyRequestAllowed(c *gin.Context, scopes []string) bool {
 	path := strings.TrimSpace(c.Request.URL.Path)
 	// These endpoints return credentials, account exports, or database backup
 	// access even though they use GET; a machine key must never reach them.
+	if path == "/api/v1/admin/chat" || strings.HasPrefix(path, "/api/v1/admin/chat/") {
+		return false
+	}
 	for _, denied := range []string{
 		"/api/v1/admin/accounts/data",
 		"/api/v1/admin/proxies/data",
@@ -268,6 +271,9 @@ func validateJWTForAdmin(
 	c.Set(string(ContextKeyUserRole), user.Role)
 	c.Set(ContextKeyAuthEmail, user.Email)
 	c.Set(ContextKeySessionID, claims.SessionID)
+	if claims.ExpiresAt != nil {
+		c.Set(string(ContextKeyJWTExpiresAt), claims.ExpiresAt.Time)
+	}
 	c.Set("auth_method", "jwt")
 
 	return true

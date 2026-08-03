@@ -33,6 +33,10 @@ export const useAppStore = defineStore('app', () => {
   const apiBaseUrl = ref<string>('')
   const docUrl = ref<string>('')
   const cachedPublicSettings = ref<PublicSettings | null>(null)
+  // App-level primitive indicators are owned here so common layout widgets do
+  // not import a feature's private store just to render a badge.
+  const supportInboxHasUnread = ref(false)
+  const supportUserHasUnread = ref(false)
   let publicSettingsRequest: Promise<PublicSettings | null> | null = null
 
   // Version cache state
@@ -232,6 +236,21 @@ export const useAppStore = defineStore('app', () => {
     loading.value = false
     loadingCount.value = 0
     toasts.value = []
+    supportInboxHasUnread.value = false
+    supportUserHasUnread.value = false
+  }
+
+  function setSupportInboxUnread(value: boolean): void {
+    supportInboxHasUnread.value = value
+  }
+
+  function setSupportUserUnread(value: boolean): void {
+    supportUserHasUnread.value = value
+  }
+
+  function resetSupportUnread(): void {
+    supportInboxHasUnread.value = false
+    supportUserHasUnread.value = false
   }
 
   // ==================== Version Management ====================
@@ -371,7 +390,7 @@ export const useAppStore = defineStore('app', () => {
         channel_monitor_enabled: true,
         channel_monitor_default_interval_seconds: 60,
         available_channels_enabled: false,
-        support_chat_enabled: true,
+        support_chat_enabled: false,
         model_plaza_enabled: false,
         model_plaza_require_auth: false,
         risk_control_enabled: false,
@@ -452,6 +471,8 @@ export const useAppStore = defineStore('app', () => {
     apiBaseUrl,
     docUrl,
     cachedPublicSettings,
+    supportInboxHasUnread,
+    supportUserHasUnread,
 
     // Version state
     versionLoaded,
@@ -482,6 +503,9 @@ export const useAppStore = defineStore('app', () => {
     withLoading,
     withLoadingAndError,
     reset,
+    setSupportInboxUnread,
+    setSupportUserUnread,
+    resetSupportUnread,
 
     // Version actions
     fetchVersion,

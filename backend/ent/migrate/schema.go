@@ -871,6 +871,14 @@ var (
 				Unique:  false,
 				Columns: []*schema.Column{ChatConversationsColumns[3]},
 			},
+			{
+				Name:    "idx_chat_conversations_unread_by_admin_active",
+				Unique:  false,
+				Columns: []*schema.Column{ChatConversationsColumns[5]},
+				Annotation: &entsql.IndexAnnotation{
+					Where: "unread_by_admin > 0",
+				},
+			},
 		},
 	}
 	// ChatMessagesColumns holds the columns for the "chat_messages" table.

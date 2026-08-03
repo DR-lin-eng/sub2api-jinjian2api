@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -44,6 +45,8 @@ type sendMessageRequest struct {
 	Content string `json:"content" binding:"required"`
 }
 
+const maxChatRequestBodyBytes = 32 << 10
+
 // GetConversation returns (creating if necessary) the caller's own conversation.
 // GET /api/v1/chat/conversation
 func (h *ChatHandler) GetConversation(c *gin.Context) {
@@ -82,6 +85,23 @@ func (h *ChatHandler) ListMessages(c *gin.Context) {
 	response.Paginated(c, items, paginationResult.Total, page, pageSize)
 }
 
+// GetUnreadCount returns the caller's unread count without creating a
+// conversation. GET /api/v1/chat/unread-count
+func (h *ChatHandler) GetUnreadCount(c *gin.Context) {
+	subject, ok := middleware2.GetAuthSubjectFromContext(c)
+	if !ok {
+		response.Unauthorized(c, "User not found in context")
+		return
+	}
+
+	count, err := h.chatService.GetUnreadCountForUser(c.Request.Context(), subject.UserID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, gin.H{"unread_count": count})
+}
+
 // SendMessage appends a message to the caller's own conversation.
 // POST /api/v1/chat/messages
 func (h *ChatHandler) SendMessage(c *gin.Context) {
@@ -91,9 +111,15 @@ func (h *ChatHandler) SendMessage(c *gin.Context) {
 		return
 	}
 
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxChatRequestBodyBytes)
 	var req sendMessageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "Invalid request: "+err.Error())
+		var maxBytesErr *http.MaxBytesError
+		if errors.As(err, &maxBytesErr) {
+			response.RequestEntityTooLarge(c, "Request body too large")
+			return
+		}
+		response.BadRequest(c, "Invalid request")
 		return
 	}
 
@@ -129,6 +155,7 @@ const (
 	chatWSPingInterval   = 30 * time.Second
 	chatWSMaxReadBytes   = 1024
 	chatWSSendBufferSize = 16
+	chatWSMaxAuthAge     = 5 * time.Minute
 )
 
 // WS handles the realtime push connection for the caller's own conversation.
@@ -158,11 +185,14 @@ func (h *ChatHandler) WS(c *gin.Context) {
 	send := make(chan []byte, chatWSSendBufferSize)
 	handle := h.hub.RegisterUser(subject.UserID, send)
 	defer h.hub.UnregisterUser(subject.UserID, handle)
+	authExpiresAt, _ := middleware2.GetJWTExpiresAtFromContext(c)
 
 	wsutil.PumpWebSocket(conn, send, wsutil.PumpConfig{
-		WriteTimeout: chatWSWriteTimeout,
-		PongWait:     chatWSPongWait,
-		PingInterval: chatWSPingInterval,
-		MaxReadBytes: chatWSMaxReadBytes,
+		WriteTimeout:  chatWSWriteTimeout,
+		PongWait:      chatWSPongWait,
+		PingInterval:  chatWSPingInterval,
+		MaxReadBytes:  chatWSMaxReadBytes,
+		AuthExpiresAt: authExpiresAt,
+		MaxAuthAge:    chatWSMaxAuthAge,
 	})
 }

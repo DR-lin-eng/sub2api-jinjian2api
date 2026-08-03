@@ -2,9 +2,11 @@ package chat
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/Wei-Shaw/sub2api/internal/shared/pagination"
 )
@@ -63,17 +65,45 @@ func (s *Service) ListConversations(
 	return s.conversationRepo.List(ctx, params, filters)
 }
 
+// CountUnreadConversationsForAdmin returns the number of conversations that
+// have user messages waiting for an administrator.
+func (s *Service) CountUnreadConversationsForAdmin(ctx context.Context) (int, error) {
+	return s.conversationRepo.CountUnreadByAdmin(ctx)
+}
+
+// GetUnreadCountForUser reads the user's unread counter without creating an
+// empty conversation as a side effect of a sidebar poll.
+func (s *Service) GetUnreadCountForUser(ctx context.Context, userID int64) (int, error) {
+	return s.conversationRepo.GetUnreadByUserID(ctx, userID)
+}
+
 // ListMessagesForUser returns messages in the caller's own conversation.
 func (s *Service) ListMessagesForUser(
 	ctx context.Context,
 	userID int64,
 	params pagination.PaginationParams,
 ) ([]Message, *pagination.PaginationResult, error) {
-	conv, err := s.conversationRepo.GetOrCreateByUserID(ctx, userID)
+	conv, err := s.conversationRepo.GetByUserID(ctx, userID)
+	if errors.Is(err, ErrConversationNotFound) {
+		return []Message{}, emptyPaginationResult(params), nil
+	}
 	if err != nil {
 		return nil, nil, err
 	}
 	return s.messageRepo.List(ctx, conv.ID, params)
+}
+
+func emptyPaginationResult(params pagination.PaginationParams) *pagination.PaginationResult {
+	page := params.Page
+	if page < 1 {
+		page = 1
+	}
+	return &pagination.PaginationResult{
+		Total:    0,
+		Page:     page,
+		PageSize: params.Limit(),
+		Pages:    0,
+	}
 }
 
 // ListMessagesForAdmin returns messages in any conversation by ID.
@@ -112,7 +142,7 @@ func (s *Service) postMessage(ctx context.Context, conv *Conversation, sender Se
 	if content == "" {
 		return nil, ErrMessageContentEmpty
 	}
-	if len(content) > MaxMessageContentLen {
+	if utf8.RuneCountInString(content) > MaxMessageContentLen {
 		return nil, ErrMessageContentTooLong
 	}
 
@@ -122,13 +152,9 @@ func (s *Service) postMessage(ctx context.Context, conv *Conversation, sender Se
 		SenderID:       senderID,
 		Content:        content,
 	}
-	if err := s.messageRepo.Create(ctx, msg); err != nil {
-		return nil, fmt.Errorf("create chat message: %w", err)
-	}
-
 	now := time.Now()
-	if err := s.conversationRepo.TouchOnMessage(ctx, conv.ID, now, sender); err != nil {
-		return nil, fmt.Errorf("touch chat conversation: %w", err)
+	if err := s.messageRepo.CreateAndTouch(ctx, msg, now, sender); err != nil {
+		return nil, fmt.Errorf("create chat message and update conversation: %w", err)
 	}
 
 	// A user message needs pushing to admins; an admin message needs pushing

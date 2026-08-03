@@ -217,7 +217,6 @@ import { sanitizeSvg } from '@/core/utils/sanitize'
 import { sanitizeUrl } from '@/core/utils/url'
 import { FeatureFlags, makeSidebarFlag } from '@/core/services/featureFlags'
 import { useBatchImageAccess } from '@/features/batch-image/presentation/composables/useBatchImageAccess'
-import { useSupportChatAdminStore } from '@/features/support-chat/presentation/stores/supportChatAdminStore'
 
 interface NavItem {
   path: string
@@ -264,18 +263,14 @@ const authStore = useAuthStore()
 const onboardingStore = useOnboardingStore()
 const adminSettingsStore = useAdminSettingsStore()
 const { canUseBatchImage, refreshBatchImageAccess } = useBatchImageAccess()
-const supportChatAdminStore = useSupportChatAdminStore()
 
 const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
 const mobileOpen = computed(() => appStore.mobileOpen)
 const isAdmin = computed(() => authStore.isAdmin)
 const sidebarNavRef = ref<HTMLElement | null>(null)
 const isDark = ref(document.documentElement.classList.contains('dark'))
-const supportInboxHasUnread = computed(() => supportChatAdminStore.hasUnread)
-const supportUserHasUnread = computed(() => supportChatAdminStore.userHasUnread)
-let supportInboxPollTimer: ReturnType<typeof setInterval> | null = null
-let supportInboxVisibilityHandler: (() => void) | null = null
-let supportInboxFocusHandler: (() => void) | null = null
+const supportInboxHasUnread = computed(() => appStore.supportInboxHasUnread)
+const supportUserHasUnread = computed(() => appStore.supportUserHasUnread)
 
 const homePath = computed(() => (isAdmin.value ? '/admin/dashboard' : '/dashboard'))
 
@@ -741,7 +736,6 @@ const flagRiskControl = makeSidebarFlag(FeatureFlags.riskControl)
 const flagOpsMonitoring = () => adminSettingsStore.opsMonitoringEnabled
 const flagAdminPayment = () => adminSettingsStore.paymentEnabled
 const flagBatchImageAccess = () => canUseBatchImage.value
-const supportChatEnabled = computed(() => flagSupportChat())
 
 // buildSelfNavItems 构造用户自己的导航项（用户端主菜单和管理员的"我的账户"子菜单共享这组声明）。
 // withDashboard=true 时包含仪表盘（用户端），false 时不含（管理员的个人区已经有独立仪表盘入口）。
@@ -941,65 +935,6 @@ function shouldShowSupportUserDot(item: NavItem): boolean {
   return item.path === '/support' && supportUserHasUnread.value
 }
 
-function startSupportInboxPolling() {
-  stopSupportInboxPolling()
-  if (!authStore.isAuthenticated || !supportChatEnabled.value) return
-  refreshSupportUnreadIndicators(true)
-  supportInboxPollTimer = setInterval(() => {
-    if (authStore.isAuthenticated && supportChatEnabled.value) {
-      refreshSupportUnreadIndicators()
-    }
-  }, 4000)
-}
-
-function refreshSupportUnreadIndicators(force = false) {
-  if (!supportChatEnabled.value) {
-    supportChatAdminStore.reset()
-    return
-  }
-  if (isAdmin.value) {
-    void supportChatAdminStore.refreshUnreadIndicator(force)
-    return
-  }
-  if (!appStore.backendModeEnabled) {
-    void supportChatAdminStore.refreshUserUnreadIndicator(force)
-  }
-}
-
-function stopSupportInboxPolling() {
-  if (supportInboxPollTimer) {
-    clearInterval(supportInboxPollTimer)
-    supportInboxPollTimer = null
-  }
-}
-
-function startSupportInboxVisibilityRefresh() {
-  stopSupportInboxVisibilityRefresh()
-  supportInboxVisibilityHandler = () => {
-    if (document.visibilityState === 'visible' && authStore.isAuthenticated && supportChatEnabled.value) {
-      refreshSupportUnreadIndicators(true)
-    }
-  }
-  supportInboxFocusHandler = () => {
-    if (authStore.isAuthenticated && supportChatEnabled.value) {
-      refreshSupportUnreadIndicators(true)
-    }
-  }
-  document.addEventListener('visibilitychange', supportInboxVisibilityHandler)
-  window.addEventListener('focus', supportInboxFocusHandler)
-}
-
-function stopSupportInboxVisibilityRefresh() {
-  if (supportInboxVisibilityHandler) {
-    document.removeEventListener('visibilitychange', supportInboxVisibilityHandler)
-    supportInboxVisibilityHandler = null
-  }
-  if (supportInboxFocusHandler) {
-    window.removeEventListener('focus', supportInboxFocusHandler)
-    supportInboxFocusHandler = null
-  }
-}
-
 function isActive(path: string): boolean {
   return route.path === path || route.path.startsWith(path + '/')
 }
@@ -1060,12 +995,6 @@ watch(
       if (isAdmin.value) {
         adminSettingsStore.fetch()
       }
-      startSupportInboxPolling()
-      startSupportInboxVisibilityRefresh()
-    } else {
-      stopSupportInboxPolling()
-      stopSupportInboxVisibilityRefresh()
-      supportChatAdminStore.reset()
     }
   },
   { immediate: true }
@@ -1077,43 +1006,13 @@ watch(
   (v) => {
     if (v) {
       adminSettingsStore.fetch()
-      startSupportInboxPolling()
-      startSupportInboxVisibilityRefresh()
     }
   },
   { immediate: true }
 )
 
-watch(
-  () => route.fullPath,
-  () => {
-    if (authStore.isAuthenticated) {
-      refreshSupportUnreadIndicators(true)
-    }
-  }
-)
-
-watch(
-  supportChatEnabled,
-  (enabled) => {
-    if (!authStore.isAuthenticated) return
-    if (enabled) {
-      startSupportInboxPolling()
-      startSupportInboxVisibilityRefresh()
-    } else {
-      stopSupportInboxPolling()
-      stopSupportInboxVisibilityRefresh()
-      supportChatAdminStore.reset()
-    }
-  }
-)
-
 onMounted(() => {
   void refreshBatchImageAccess()
-  if (authStore.isAuthenticated) {
-    startSupportInboxPolling()
-    startSupportInboxVisibilityRefresh()
-  }
   if (isAdmin.value) {
     adminSettingsStore.fetch()
   }
@@ -1128,8 +1027,6 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  stopSupportInboxPolling()
-  stopSupportInboxVisibilityRefresh()
   if (sidebarNavRef.value) {
     appStore.sidebarScrollTop = sidebarNavRef.value.scrollTop
   }

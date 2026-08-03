@@ -29,10 +29,10 @@
 </template>
 
 <script setup lang="ts">
-import DOMPurify from 'dompurify'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ChatMessage, ChatSenderType } from '@/features/support-chat/data/datasources/supportChatDatasource'
+import { sanitizeChatHtml } from '@/features/support-chat/presentation/utils/sanitizeChatHtml'
 
 const props = defineProps<{
   messages: ChatMessage[]
@@ -67,26 +67,7 @@ function formatTime(value: string): string {
 }
 
 function renderMessageContent(content: string): string {
-  return DOMPurify.sanitize(content, {
-    ALLOWED_TAGS: [
-      'a',
-      'b',
-      'br',
-      'code',
-      'div',
-      'em',
-      'i',
-      'li',
-      'ol',
-      'p',
-      'pre',
-      'span',
-      'strong',
-      'u',
-      'ul',
-    ],
-    ALLOWED_ATTR: ['href', 'target', 'rel', 'title', 'class', 'style'],
-  })
+  return sanitizeChatHtml(content)
 }
 </script>
 

@@ -8,6 +8,7 @@ import { resolveRouteDocumentTitle } from '@/core/routes/title'
 import AnnouncementPopup from '@/common/widgets/data/AnnouncementPopup.vue'
 import { useAppStore, useAuthStore, useSubscriptionStore, useAnnouncementStore, useAdminComplianceStore, useAdminSettingsStore } from '@/stores'
 import { getSetupStatus } from '@/features/setup/data/datasources/setupDatasource'
+import { useSupportUnreadPolling } from '@/features/support-chat/presentation/composables/useSupportUnreadPolling'
 import { updateFavicon } from '@/core/services/branding'
 
 const router = useRouter()
@@ -18,6 +19,10 @@ const subscriptionStore = useSubscriptionStore()
 const announcementStore = useAnnouncementStore()
 const adminComplianceStore = useAdminComplianceStore()
 const adminSettingsStore = useAdminSettingsStore()
+useSupportUnreadPolling({
+  isAuthenticated: () => authStore.isAuthenticated,
+  isAdmin: () => authStore.isAdmin,
+})
 
 function updateDocumentTitle() {
   const customMenuItems = [

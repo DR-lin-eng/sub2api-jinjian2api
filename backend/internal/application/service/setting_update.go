@@ -259,6 +259,13 @@ func (s *SettingService) refreshCachedSettings(settings *SystemSettings) {
 		value:     settings.BackendModeEnabled,
 		expiresAt: time.Now().Add(backendModeCacheTTL).UnixNano(),
 	})
+	s.supportChatCacheMu.Lock()
+	s.supportChatSF.Forget(supportChatRefreshKey)
+	s.supportChatCache.Store(&cachedSupportChatEnabled{
+		value:     settings.SupportChatEnabled,
+		expiresAt: time.Now().Add(supportChatCacheTTL).UnixNano(),
+	})
+	s.supportChatCacheMu.Unlock()
 	s.streamModePerformanceEnabled.Store(settings.StreamModePerformanceEnabled)
 	s.streamModePerformanceLoaded.Store(time.Now().UnixNano())
 	s.storeRequestPriorityAdmissionSettings(RequestPriorityAdmissionSettings{

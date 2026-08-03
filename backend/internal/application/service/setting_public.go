@@ -348,7 +348,7 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		ChannelMonitorDefaultIntervalSeconds: parseChannelMonitorInterval(settings[SettingKeyChannelMonitorDefaultIntervalSeconds]),
 
 		AvailableChannelsEnabled: settings[SettingKeyAvailableChannelsEnabled] == "true",
-		SupportChatEnabled:       !isFalseSettingValue(settings[SettingKeySupportChatEnabled]),
+		SupportChatEnabled:       settings[SettingKeySupportChatEnabled] == "true",
 
 		ModelPlazaEnabled:     settings[SettingKeyModelPlazaEnabled] == "true",
 		ModelPlazaRequireAuth: settings[SettingKeyModelPlazaRequireAuth] == "true",

@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
 	"github.com/Wei-Shaw/sub2api/internal/shared/ctxkey"
@@ -29,7 +30,24 @@ const (
 	// apiKey 已加载但尚未写入 ContextKeyAPIKey；该键让 Ops 错误日志仍能取到
 	// user/group/platform。仅供 Ops 错误日志读取，不代表请求已通过鉴权。
 	ContextKeyOpsFallbackAPIKey ContextKey = "ops_fallback_api_key"
+	// ContextKeyJWTExpiresAt records the verified access-token expiry so
+	// long-lived transports can stop when the authentication grant expires.
+	ContextKeyJWTExpiresAt ContextKey = "jwt_expires_at"
 )
+
+// GetJWTExpiresAtFromContext returns the expiry of the JWT authenticated for
+// this request. Admin API Key requests intentionally have no JWT expiry.
+func GetJWTExpiresAtFromContext(c *gin.Context) (time.Time, bool) {
+	if c == nil {
+		return time.Time{}, false
+	}
+	value, exists := c.Get(string(ContextKeyJWTExpiresAt))
+	if !exists {
+		return time.Time{}, false
+	}
+	expiresAt, ok := value.(time.Time)
+	return expiresAt, ok && !expiresAt.IsZero()
+}
 
 // ForcePlatform 返回设置强制平台的中间件
 // 同时设置 request.Context（供 Service 使用）和 gin.Context（供 Handler 快速检查）
