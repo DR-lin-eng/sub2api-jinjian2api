@@ -393,6 +393,11 @@ const (
 	// sidebar entry is hidden. Defaults to false (opt-in feature).
 	SettingKeyAvailableChannelsEnabled = "available_channels_enabled"
 
+	// SettingKeySupportChatEnabled is a DB-backed soft switch for the online support chat
+	// entry points. When false: user/admin sidebar entries are hidden and frontend routes
+	// redirect away. Defaults to true (opt-out feature).
+	SettingKeySupportChatEnabled = "support_chat_enabled"
+
 	// SettingKeyModelPlazaEnabled is a DB-backed soft switch for the Model Plaza page
 	// (public group/model pricing showcase). When false: the plaza endpoint returns 404
 	// and the header entry is hidden. Defaults to false (opt-in feature).

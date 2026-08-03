@@ -379,6 +379,7 @@ function buildNotificationAndFeatureSettingsPayload({
     channel_monitor_default_interval_seconds:
       Number(form.channel_monitor_default_interval_seconds) || 60,
     available_channels_enabled: form.available_channels_enabled,
+    support_chat_enabled: form.support_chat_enabled,
     model_plaza_enabled: form.model_plaza_enabled,
     model_plaza_require_auth: form.model_plaza_require_auth,
     model_plaza_auto_public_models: form.model_plaza_auto_public_models,

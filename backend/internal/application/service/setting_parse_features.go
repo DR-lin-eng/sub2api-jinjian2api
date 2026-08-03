@@ -47,6 +47,9 @@ func (s *SettingService) applyFeatureSettings(result *SystemSettings, settings m
 	// Available channels feature (default: disabled; strict true)
 	result.AvailableChannelsEnabled = settings[SettingKeyAvailableChannelsEnabled] == "true"
 
+	// Support chat feature (default: enabled; explicit false disables)
+	result.SupportChatEnabled = !isFalseSettingValue(settings[SettingKeySupportChatEnabled])
+
 	// Model plaza feature (default: disabled and anonymously visible when enabled)
 	result.ModelPlazaEnabled = settings[SettingKeyModelPlazaEnabled] == "true"
 	result.ModelPlazaRequireAuth = settings[SettingKeyModelPlazaRequireAuth] == "true"

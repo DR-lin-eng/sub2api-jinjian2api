@@ -123,12 +123,12 @@ func RegisterAdminRoutes(
 		registerAuditLogRoutes(admin, h, stepUpAuth)
 
 		// 在线客服（管理端收件箱）
-		registerChatRoutes(admin, h)
+		registerChatRoutes(admin, h, settingService)
 	}
 }
 
-func registerChatRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
-	chat := admin.Group("/chat")
+func registerChatRoutes(admin *gin.RouterGroup, h *handler.Handlers, settingService *service.SettingService) {
+	chat := admin.Group("/chat", middleware.SupportChatFeatureGuard(settingService))
 	{
 		chat.GET("/conversations", h.Admin.Chat.ListConversations)
 		chat.GET("/conversations/:id/messages", h.Admin.Chat.ListMessages)

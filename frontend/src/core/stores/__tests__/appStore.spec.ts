@@ -55,6 +55,7 @@ function createPublicSettings(overrides: Partial<PublicSettings> = {}): PublicSe
     channel_monitor_enabled: true,
     channel_monitor_default_interval_seconds: 60,
     available_channels_enabled: false,
+    support_chat_enabled: true,
     model_plaza_enabled: false,
     model_plaza_require_auth: false,
     service_quota_enabled: false,
@@ -463,6 +464,7 @@ describe('useAppStore', () => {
         custom_endpoints: [],
         linuxdo_oauth_enabled: false,
         backend_mode_enabled: false,
+        support_chat_enabled: true,
         version: '1.0.0'
       })
 

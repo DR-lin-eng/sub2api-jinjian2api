@@ -51,11 +51,13 @@ import {
   type ChatMessage,
 } from '@/features/support-chat/data/datasources/supportChatDatasource'
 import { useSupportChatSocket } from '@/features/support-chat/presentation/composables/useSupportChatSocket'
+import { useSupportChatAdminStore } from '@/features/support-chat/presentation/stores/supportChatAdminStore'
 import SupportMessageComposer from '@/features/support-chat/presentation/widgets/SupportMessageComposer.vue'
 import SupportMessageList from '@/features/support-chat/presentation/widgets/SupportMessageList.vue'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const supportChatAdminStore = useSupportChatAdminStore()
 const loading = ref(false)
 const sending = ref(false)
 const messages = ref<ChatMessage[]>([])
@@ -70,7 +72,10 @@ const socket = useSupportChatSocket({
   },
   onMessage: (message) => {
     appendMessage(message)
-    void markUserChatRead()
+    if (message.sender_type === 'admin') supportChatAdminStore.markUserHasUnread()
+    void markUserChatRead().then(() => {
+      supportChatAdminStore.markUserRead()
+    })
     void scrollToBottom()
   },
 })
@@ -106,6 +111,7 @@ async function reload() {
     const page = await listUserChatMessages({ page: 1, page_size: 100 })
     messages.value = page.items
     await markUserChatRead()
+    supportChatAdminStore.markUserRead()
     await scrollToBottom()
   } catch (error) {
     appStore.showError(errorMessage(error, t('supportChat.loadFailed')))

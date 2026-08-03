@@ -16,12 +16,12 @@
           <time :datetime="message.created_at">{{ formatTime(message.created_at) }}</time>
         </div>
         <div
-          class="whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm"
+          class="rounded-2xl px-4 py-3 text-sm leading-6 shadow-sm"
           :class="message.sender_type === ownSender
             ? 'bg-primary-600 text-white dark:bg-primary-500'
             : 'border border-gray-200 bg-white text-gray-900 dark:border-dark-700 dark:bg-dark-800 dark:text-white'"
         >
-          {{ message.content }}
+          <div class="support-chat-message-content" v-html="renderMessageContent(message.content)"></div>
         </div>
       </div>
     </div>
@@ -29,6 +29,7 @@
 </template>
 
 <script setup lang="ts">
+import DOMPurify from 'dompurify'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ChatMessage, ChatSenderType } from '@/features/support-chat/data/datasources/supportChatDatasource'
@@ -64,4 +65,89 @@ function formatTime(value: string): string {
     minute: '2-digit',
   }).format(date)
 }
+
+function renderMessageContent(content: string): string {
+  return DOMPurify.sanitize(content, {
+    ALLOWED_TAGS: [
+      'a',
+      'b',
+      'br',
+      'code',
+      'div',
+      'em',
+      'i',
+      'li',
+      'ol',
+      'p',
+      'pre',
+      'span',
+      'strong',
+      'u',
+      'ul',
+    ],
+    ALLOWED_ATTR: ['href', 'target', 'rel', 'title', 'class', 'style'],
+  })
+}
 </script>
+
+<style scoped>
+.support-chat-message-content {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.support-chat-message-content :deep(a) {
+  text-decoration: underline;
+}
+
+.support-chat-message-content :deep(p),
+.support-chat-message-content :deep(div) {
+  margin: 0.25rem 0;
+}
+
+.support-chat-message-content :deep(p:first-child),
+.support-chat-message-content :deep(div:first-child),
+.support-chat-message-content :deep(ul:first-child),
+.support-chat-message-content :deep(ol:first-child),
+.support-chat-message-content :deep(pre:first-child) {
+  margin-top: 0;
+}
+
+.support-chat-message-content :deep(p:last-child),
+.support-chat-message-content :deep(div:last-child),
+.support-chat-message-content :deep(ul:last-child),
+.support-chat-message-content :deep(ol:last-child),
+.support-chat-message-content :deep(pre:last-child) {
+  margin-bottom: 0;
+}
+
+.support-chat-message-content :deep(ul),
+.support-chat-message-content :deep(ol) {
+  margin: 0.35rem 0;
+  padding-left: 1.25rem;
+}
+
+.support-chat-message-content :deep(ul) {
+  list-style: disc;
+}
+
+.support-chat-message-content :deep(ol) {
+  list-style: decimal;
+}
+
+.support-chat-message-content :deep(pre) {
+  max-width: 100%;
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  margin: 0.5rem 0;
+  padding: 0.75rem;
+  background: rgb(17 24 39 / 0.12);
+  white-space: pre;
+}
+
+.support-chat-message-content :deep(code) {
+  border-radius: 0.375rem;
+  padding: 0.1rem 0.25rem;
+  background: rgb(17 24 39 / 0.12);
+}
+</style>

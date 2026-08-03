@@ -144,7 +144,7 @@ func RegisterUserRoutes(
 		}
 
 		// 在线客服（用户与管理员之间的单一长期会话）
-		chat := authenticated.Group("/chat")
+		chat := authenticated.Group("/chat", middleware.SupportChatFeatureGuard(settingService))
 		{
 			chat.GET("/conversation", h.Chat.GetConversation)
 			chat.GET("/messages", h.Chat.ListMessages)

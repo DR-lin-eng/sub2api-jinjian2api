@@ -318,6 +318,9 @@ type UpdateSettingsRequest struct {
 	// Available Channels feature switch (user-facing)
 	AvailableChannelsEnabled *bool `json:"available_channels_enabled"`
 
+	// Support Chat feature switch
+	SupportChatEnabled *bool `json:"support_chat_enabled"`
+
 	// Model Plaza feature switch and public-page description
 	ModelPlazaEnabled          *bool   `json:"model_plaza_enabled"`
 	ModelPlazaRequireAuth      *bool   `json:"model_plaza_require_auth"`

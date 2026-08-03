@@ -36,19 +36,27 @@
       <div v-else-if="conversations.length === 0" class="p-6 text-center text-sm text-gray-500 dark:text-dark-400">
         {{ t('supportChat.noConversations') }}
       </div>
-      <button
+      <div
         v-for="conversation in conversations"
         :key="conversation.id"
-        type="button"
+        role="button"
+        tabindex="0"
         class="block w-full border-b border-gray-100 px-4 py-3 text-left transition-colors hover:bg-gray-50 dark:border-dark-800 dark:hover:bg-dark-800/70"
         :class="conversation.id === selectedId ? 'bg-primary-50 dark:bg-primary-900/20' : ''"
         @click="$emit('select', conversation.id)"
+        @keydown.enter.prevent="$emit('select', conversation.id)"
+        @keydown.space.prevent="$emit('select', conversation.id)"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
-            <div class="truncate text-sm font-medium text-gray-900 dark:text-white">
+            <button
+              type="button"
+              class="-mx-1 -my-0.5 max-w-full truncate rounded-md px-1 py-0.5 text-sm font-medium text-gray-900 transition-colors hover:bg-primary-50 hover:text-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 dark:text-white dark:hover:bg-primary-900/20 dark:hover:text-primary-200"
+              :title="t('supportChat.userProfile.viewProfile')"
+              @click.stop="$emit('viewUser', conversation)"
+            >
               {{ displayUser(conversation) }}
-            </div>
+            </button>
             <div class="truncate text-xs text-gray-500 dark:text-dark-400">
               #{{ conversation.user_id }} · {{ conversation.user_email || t('supportChat.noEmail') }}
             </div>
@@ -63,7 +71,7 @@
         <div class="mt-2 text-xs text-gray-500 dark:text-dark-400">
           {{ lastActiveLabel(conversation.last_message_at || conversation.updated_at) }}
         </div>
-      </button>
+      </div>
     </div>
 
     <div class="border-t border-gray-200 p-3 text-xs text-gray-500 dark:border-dark-700 dark:text-dark-400">
@@ -87,6 +95,7 @@ defineProps<{
 
 defineEmits<{
   select: [conversationID: number]
+  viewUser: [conversation: ChatConversation]
   refresh: []
   'update:search': [value: string]
   'update:unreadOnly': [value: boolean]
@@ -110,4 +119,3 @@ function lastActiveLabel(value: string | null): string {
   }).format(date)
 }
 </script>
-

@@ -262,6 +262,7 @@ func buildSettingsUpdateResponsePayload(
 		ChannelMonitorDefaultIntervalSeconds: updatedSettings.ChannelMonitorDefaultIntervalSeconds,
 
 		AvailableChannelsEnabled: updatedSettings.AvailableChannelsEnabled,
+		SupportChatEnabled:       updatedSettings.SupportChatEnabled,
 
 		ModelPlazaEnabled:          updatedSettings.ModelPlazaEnabled,
 		ModelPlazaRequireAuth:      updatedSettings.ModelPlazaRequireAuth,

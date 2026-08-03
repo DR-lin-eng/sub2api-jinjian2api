@@ -239,6 +239,7 @@ func buildSystemSettingsUpdate(prepared *preparedSettingsUpdate) *service.System
 		ChannelMonitorEnabled:                              boolValueOrDefault(req.ChannelMonitorEnabled, previousSettings.ChannelMonitorEnabled),
 		ChannelMonitorDefaultIntervalSeconds:               intValueOrDefault(req.ChannelMonitorDefaultIntervalSeconds, previousSettings.ChannelMonitorDefaultIntervalSeconds),
 		AvailableChannelsEnabled:                           boolValueOrDefault(req.AvailableChannelsEnabled, previousSettings.AvailableChannelsEnabled),
+		SupportChatEnabled:                                 boolValueOrDefault(req.SupportChatEnabled, previousSettings.SupportChatEnabled),
 		ModelPlazaEnabled:                                  boolValueOrDefault(req.ModelPlazaEnabled, previousSettings.ModelPlazaEnabled),
 		ModelPlazaRequireAuth:                              boolValueOrDefault(req.ModelPlazaRequireAuth, previousSettings.ModelPlazaRequireAuth),
 		ModelPlazaAutoPublicModels:                         boolValueOrDefault(req.ModelPlazaAutoPublicModels, previousSettings.ModelPlazaAutoPublicModels),

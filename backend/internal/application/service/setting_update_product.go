@@ -86,6 +86,7 @@ func writeFeatureSystemSettingUpdates(updates map[string]string, settings *Syste
 		updates[SettingKeyChannelMonitorDefaultIntervalSeconds] = strconv.Itoa(v)
 	}
 	updates[SettingKeyAvailableChannelsEnabled] = strconv.FormatBool(settings.AvailableChannelsEnabled)
+	updates[SettingKeySupportChatEnabled] = strconv.FormatBool(settings.SupportChatEnabled)
 	updates[SettingKeyModelPlazaEnabled] = strconv.FormatBool(settings.ModelPlazaEnabled)
 	updates[SettingKeyModelPlazaRequireAuth] = strconv.FormatBool(settings.ModelPlazaRequireAuth)
 	updates[SettingKeyModelPlazaAutoPublicModels] = strconv.FormatBool(settings.ModelPlazaAutoPublicModels)
