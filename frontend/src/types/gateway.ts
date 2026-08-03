@@ -631,6 +631,10 @@ export interface Account {
     upstream_billing_rate_sync_enabled?: boolean
     upstream_billing_probe?: UpstreamBillingProbeSnapshot
     auto_disable_on_upstream_insufficient_balance?: boolean
+    codex_reset_credit_snapshot?: {
+      available_count?: number
+      credits?: { expires_at?: string }[]
+    }
   } & Record<string, unknown>)
   proxy_id: number | null
   proxy_fallback_origin_id?: number | null

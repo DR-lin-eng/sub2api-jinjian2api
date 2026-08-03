@@ -2,10 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import OpenAIQuotaResetCell from '@/features/admin-accounts/presentation/widgets/OpenAIQuotaResetCell.vue'
 import type { Account } from '@/types'
-import { queryOpenAIQuota } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
+import {
+  refreshOpenAIQuota,
+  resetOpenAIQuota
+} from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
 
 vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', () => ({
-  queryOpenAIQuota: vi.fn(),
+  refreshOpenAIQuota: vi.fn(),
   resetOpenAIQuota: vi.fn(),
 }))
 
@@ -54,7 +57,8 @@ const resetButton = (wrapper: ReturnType<typeof mount>) =>
   wrapper.findAll('button')[1]
 
 beforeEach(() => {
-  vi.mocked(queryOpenAIQuota).mockReset()
+  vi.mocked(refreshOpenAIQuota).mockReset()
+  vi.mocked(resetOpenAIQuota).mockReset()
 })
 
 describe('OpenAIQuotaResetCell — 外审 F6:影子禁用重置', () => {
@@ -79,7 +83,7 @@ describe('OpenAIQuotaResetCell — 外审 F6:影子禁用重置', () => {
   })
 
   it('查询后默认折叠为最早到期时间,点击 +N 展开完整列表', async () => {
-    vi.mocked(queryOpenAIQuota).mockResolvedValue({
+    vi.mocked(refreshOpenAIQuota).mockResolvedValue({
       rate_limit_reset_credits: {
         available_count: 3,
         credits: [
@@ -89,6 +93,7 @@ describe('OpenAIQuotaResetCell — 外审 F6:影子禁用重置', () => {
         ],
       },
       fetched_at: 1770000000,
+      cache_persisted: true,
     })
 
     const account = makeAccount({ parent_account_id: null })
@@ -97,7 +102,7 @@ describe('OpenAIQuotaResetCell — 外审 F6:影子禁用重置', () => {
     await wrapper.findAll('button')[0].trigger('click')
     await flushPromises()
 
-    expect(queryOpenAIQuota).toHaveBeenCalledWith(1)
+    expect(refreshOpenAIQuota).toHaveBeenCalledWith(1)
     expect(wrapper.text()).toContain('admin.accounts.openaiQuotaReset.expiresAt:')
     expect(wrapper.text()).toContain('+2')
     expect(wrapper.text()).not.toContain('not-a-date')
@@ -115,7 +120,7 @@ describe('OpenAIQuotaResetCell — 外审 F6:影子禁用重置', () => {
   })
 
   it('只有一张重置卡时不显示展开按钮', async () => {
-    vi.mocked(queryOpenAIQuota).mockResolvedValue({
+    vi.mocked(refreshOpenAIQuota).mockResolvedValue({
       rate_limit_reset_credits: {
         available_count: 1,
         credits: [
@@ -123,6 +128,7 @@ describe('OpenAIQuotaResetCell — 外审 F6:影子禁用重置', () => {
         ],
       },
       fetched_at: 1770000000,
+      cache_persisted: true,
     })
 
     const account = makeAccount({ parent_account_id: null })
@@ -134,6 +140,48 @@ describe('OpenAIQuotaResetCell — 外审 F6:影子禁用重置', () => {
     expect(wrapper.find('[data-testid="reset-credit-expiry-toggle"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="reset-credit-expiry-details"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('admin.accounts.openaiQuotaReset.expiresAt:')
+    wrapper.unmount()
+  })
+
+  it('从账号缓存恢复次数时会丢弃过期卡并收紧可用次数', () => {
+    const account = makeAccount({
+      extra: {
+        codex_reset_credit_snapshot: {
+          available_count: 2,
+          credits: [
+            { expires_at: '2026-08-01T00:00:00Z' },
+            { expires_at: '2026-08-10T00:00:00Z' },
+          ],
+        },
+      },
+    })
+
+    const wrapper = mount(OpenAIQuotaResetCell, { props: { account } })
+
+    expect(wrapper.findAll('button')[0].text()).toContain('1')
+    expect(resetButton(wrapper).attributes('disabled')).toBeUndefined()
+    expect(wrapper.text()).toContain('admin.accounts.openaiQuotaReset.expiresAt:')
+    wrapper.unmount()
+  })
+
+  it('实时查询成功但缓存写入失败时仍显示次数并给出局部失败提示', async () => {
+    vi.mocked(refreshOpenAIQuota).mockResolvedValue({
+      rate_limit_reset_credits: {
+        available_count: 1,
+        credits: [],
+      },
+      fetched_at: 1770000000,
+      cache_persisted: false,
+    })
+    const wrapper = mount(OpenAIQuotaResetCell, {
+      props: { account: makeAccount({}) },
+    })
+
+    await wrapper.findAll('button')[0].trigger('click')
+    await flushPromises()
+
+    expect(wrapper.findAll('button')[0].text()).toContain('1')
+    expect(wrapper.text()).toContain('admin.accounts.openaiQuotaReset.refreshCachePersistFailed')
     wrapper.unmount()
   })
 })

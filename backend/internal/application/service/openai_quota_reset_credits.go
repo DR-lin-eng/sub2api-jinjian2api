@@ -2,10 +2,39 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"net/http"
 	"strconv"
 	"strings"
+
+	infraerrors "github.com/Wei-Shaw/sub2api/internal/shared/errors"
 )
+
+const openAIQuotaResetCreditsKey = "codex_reset_credit_snapshot"
+
+// CacheResetCreditsSnapshot persists a complete display snapshot after an
+// explicit admin refresh. Positive counts without expiration details are not
+// cacheable because readers would have no safe way to expire them.
+func (s *OpenAIQuotaService) CacheResetCreditsSnapshot(ctx context.Context, accountID int64, credits *OpenAIRateLimitResetCredits) error {
+	if credits == nil || (credits.AvailableCount > 0 && len(credits.Credits) == 0) {
+		return infraerrors.New(
+			http.StatusBadGateway,
+			"OPENAI_QUOTA_RESET_CREDITS_REFRESH_FAILED",
+			"failed to refresh reset-credit expiration details; cached data was preserved",
+		)
+	}
+	if err := s.accountRepo.UpdateExtra(ctx, accountID, map[string]any{
+		openAIQuotaResetCreditsKey: credits,
+	}); err != nil {
+		return infraerrors.New(
+			http.StatusInternalServerError,
+			"OPENAI_QUOTA_CACHE_WRITE_FAILED",
+			"failed to cache reset-credit details",
+		).WithCause(err)
+	}
+	return nil
+}
 
 type openAIRateLimitResetCreditDetailPayload struct {
 	ExpiresAt      string `json:"expires_at,omitempty"`

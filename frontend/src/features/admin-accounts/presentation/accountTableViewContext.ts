@@ -101,6 +101,7 @@ export interface AccountTableViewContext {
   handleShowTempUnsched: (account: Account) => void
   togglingSchedulable: Ref<number | null>
   handleToggleSchedulable: (account: Account) => Promise<void>
+  handleAccountUpdated: (account: Account) => void
   todayStatsByAccountId: Ref<Record<string, WindowStats>>
   todayStatsLoading: Ref<boolean>
   todayStatsError: Ref<string | null>

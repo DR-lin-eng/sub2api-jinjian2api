@@ -342,6 +342,7 @@
               :manual-refresh-token="usageManualRefreshToken"
               :upstream-quota-result="upstreamQuotaResults.get(row.id)"
               :now="upstreamBillingNow"
+              @account-updated="handleAccountUpdated"
             />
           </template>
           <template #cell-proxy="{ row }">
@@ -572,6 +573,7 @@ const {
   handleShowTempUnsched,
   togglingSchedulable,
   handleToggleSchedulable,
+  handleAccountUpdated,
   todayStatsByAccountId,
   todayStatsLoading,
   todayStatsError,

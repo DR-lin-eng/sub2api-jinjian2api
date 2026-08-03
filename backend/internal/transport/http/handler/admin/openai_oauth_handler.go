@@ -17,7 +17,8 @@ import (
 type OpenAIOAuthHandler struct {
 	openaiOAuthService *service.OpenAIOAuthService
 	adminService       service.AdminService
-	quotaService       *service.OpenAIQuotaService
+	quotaService       openAIQuotaService
+	rateLimitService   openAIAccountStateRecoverer
 }
 
 func oauthPlatformFromPath(c *gin.Context) string {
@@ -29,12 +30,19 @@ func NewOpenAIOAuthHandler(
 	openaiOAuthService *service.OpenAIOAuthService,
 	adminService service.AdminService,
 	quotaService *service.OpenAIQuotaService,
+	rateLimitService *service.RateLimitService,
 ) *OpenAIOAuthHandler {
-	return &OpenAIOAuthHandler{
+	h := &OpenAIOAuthHandler{
 		openaiOAuthService: openaiOAuthService,
 		adminService:       adminService,
-		quotaService:       quotaService,
 	}
+	if quotaService != nil {
+		h.quotaService = quotaService
+	}
+	if rateLimitService != nil {
+		h.rateLimitService = rateLimitService
+	}
+	return h
 }
 
 // OpenAIGenerateAuthURLRequest represents the request for generating OpenAI auth URL
@@ -408,26 +416,6 @@ func buildOpenAICodexPATAccountName(name string, tokenInfo *service.OpenAITokenI
 	return "Codex PAT Account"
 }
 
-// QueryQuota queries the rate-limit / quota usage for an OpenAI account.
-// GET /api/v1/admin/openai/accounts/:id/quota
-func (h *OpenAIOAuthHandler) QueryQuota(c *gin.Context) {
-	accountID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		response.BadRequest(c, "Invalid account ID")
-		return
-	}
-	if h.quotaService == nil {
-		response.BadRequest(c, "openai quota service is not enabled")
-		return
-	}
-	usage, err := h.quotaService.QueryUsage(c.Request.Context(), accountID)
-	if err != nil {
-		response.ErrorFrom(c, err)
-		return
-	}
-	response.Success(c, usage)
-}
-
 // CreateShadowRequest is the request body for CreateShadow.
 type CreateShadowRequest struct {
 	Name        string  `json:"name"`
@@ -463,24 +451,4 @@ func (h *OpenAIOAuthHandler) CreateShadow(c *gin.Context) {
 	}
 
 	response.Success(c, dto.AccountFromServiceShallow(shadow))
-}
-
-// ResetQuota consumes one rate-limit reset credit for an OpenAI account.
-// POST /api/v1/admin/openai/accounts/:id/reset-quota
-func (h *OpenAIOAuthHandler) ResetQuota(c *gin.Context) {
-	accountID, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		response.BadRequest(c, "Invalid account ID")
-		return
-	}
-	if h.quotaService == nil {
-		response.BadRequest(c, "openai quota service is not enabled")
-		return
-	}
-	result, err := h.quotaService.ResetCredit(c.Request.Context(), accountID)
-	if err != nil {
-		response.ErrorFrom(c, err)
-		return
-	}
-	response.Success(c, result)
 }

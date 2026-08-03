@@ -1484,6 +1484,7 @@ const accountTableViewContext = {
   handleShowTempUnsched,
   togglingSchedulable,
   handleToggleSchedulable,
+  handleAccountUpdated,
   todayStatsByAccountId,
   todayStatsLoading,
   todayStatsError,
