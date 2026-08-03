@@ -55,6 +55,26 @@ vi.mock('@/api/admin', () => ({
   }
 }))
 
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountQueries', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/admin-accounts/data/datasources/adminAccountQueries')>()),
+  list: listAccounts,
+  listWithEtag,
+  getBatchTodayStats,
+  getUpstreamBillingRatesWithEtag,
+  getUpstreamBillingProbeSettings,
+  getById: getAccountById
+}))
+
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountActions', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/admin-accounts/data/datasources/adminAccountActions')>()),
+  probeUpstreamBilling: vi.fn(),
+  probeUpstreamBillingBatch: vi.fn().mockResolvedValue([]),
+  queryUpstreamQuota
+}))
+
+vi.mock('@/features/admin-proxies/data/datasources/adminProxiesDatasource', () => ({ getAll: getAllProxies }))
+vi.mock('@/features/admin-groups/data/datasources/adminGroupsDatasource', () => ({ getAll: getAllGroups }))
+
 vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({ showToast, hideToast, showError, showSuccess })
 }))

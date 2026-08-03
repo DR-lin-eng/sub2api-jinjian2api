@@ -31,6 +31,8 @@ const tableViewSource = readFeatureSource('presentation/widgets/AccountsTableVie
 const upstreamSource = readFeatureSource('presentation/composables/useAccountsUpstreamBilling.ts')
 const bulkDialogSource = readFeatureSource('presentation/widgets/BulkEditAccountDialog.vue')
 const usageCellSource = readFeatureSource('presentation/widgets/AccountUsageCell.vue')
+const quotaNotifySource = readFeatureSource('presentation/composables/useQuotaNotifyState.ts')
+const scheduledTestsSource = readFeatureSource('presentation/widgets/ScheduledTestsPanel.vue')
 const maintenanceTargets = new Map([
   ['presentation/pages/AccountsPage.vue', 1550]
 ])
@@ -61,6 +63,35 @@ describe('admin accounts modularization', () => {
     expect(tableViewSource).not.toContain('useIntervalFn')
     expect(tableViewSource).not.toContain('useAppStore')
     expect(tableViewSource).not.toContain('useAuthStore')
+  })
+
+  it('routes page requests through feature owners instead of the admin compatibility barrel', () => {
+    expect(pageSource).not.toContain("from '@/api/admin'")
+    expect(pageSource).toContain("from '@/features/admin-accounts/data/datasources/adminAccountQueries'")
+    expect(pageSource).toContain("from '@/features/admin-accounts/data/datasources/adminAccountActions'")
+    expect(pageSource).toContain("from '@/features/admin-proxies/data/datasources/adminProxiesDatasource'")
+    expect(pageSource).toContain("from '@/features/admin-groups/data/datasources/adminGroupsDatasource'")
+  })
+
+  it('routes bulk edit actions through the account action owner', () => {
+    expect(bulkDialogSource).not.toContain("from '@/api/admin'")
+    expect(bulkDialogSource).toContain(
+      "from '@/features/admin-accounts/data/datasources/adminAccountActions'"
+    )
+  })
+
+  it('reads the global quota notification switch from its settings owner', () => {
+    expect(quotaNotifySource).not.toContain("from '@/api/admin'")
+    expect(quotaNotifySource).toContain(
+      "from '@/features/admin-settings/data/datasources/adminSettingsDatasource'"
+    )
+  })
+
+  it('routes scheduled test lifecycle calls through their datasource owner', () => {
+    expect(scheduledTestsSource).not.toContain("from '@/api/admin'")
+    expect(scheduledTestsSource).toContain(
+      "from '@/features/admin-accounts/data/datasources/scheduledTestsDatasource'"
+    )
   })
 
   it('preserves quota hydration, bounded batches, feedback timing, and refresh cadence', () => {

@@ -8,12 +8,8 @@ const { getAvailableModelsMock } = vi.hoisted(() => ({
   getAvailableModelsMock: vi.fn()
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    accounts: {
-      getAvailableModels: getAvailableModelsMock
-    }
-  }
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountQueries', () => ({
+  getAvailableModels: getAvailableModelsMock
 }))
 
 vi.mock('@/common/composables/useClipboard', () => ({

@@ -138,7 +138,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { adminAPI } from '@/api/admin'
+import {
+  deleteOllamaCloudUsageSession,
+  refreshOllamaCloudUsage,
+  saveOllamaCloudUsageSession,
+  setOllamaCloudUsageAutoRefresh
+} from '@/features/admin-accounts/data/datasources/adminAccountActions'
+import { getOllamaCloudUsage } from '@/features/admin-accounts/data/datasources/adminAccountQueries'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage, extractI18nErrorMessage } from '@/core/utils/apiError'
 import type { Account, OllamaCloudUsageState, OllamaCloudUsageWindow } from '@/types'
@@ -194,7 +200,7 @@ const applyState = (next: OllamaCloudUsageState) => {
 const load = async () => {
   loading.value = true
   try {
-    applyState(await adminAPI.accounts.getOllamaCloudUsage(props.account.id))
+    applyState(await getOllamaCloudUsage(props.account.id))
   } catch (error) {
     appStore.showError(extractApiErrorMessage(error, t('admin.accounts.ollamaCloud.loadFailed')))
   } finally {
@@ -206,7 +212,7 @@ const saveSession = async () => {
   if (!session.value.trim()) return
   saving.value = true
   try {
-    applyState(await adminAPI.accounts.saveOllamaCloudUsageSession(props.account.id, session.value))
+    applyState(await saveOllamaCloudUsageSession(props.account.id, session.value))
     session.value = ''
     appStore.showSuccess(t('admin.accounts.ollamaCloud.sessionSaved'))
   } catch (error) {
@@ -220,7 +226,7 @@ const deleteSession = async () => {
   saving.value = true
   showDeleteConfirm.value = false
   try {
-    applyState(await adminAPI.accounts.deleteOllamaCloudUsageSession(props.account.id))
+    applyState(await deleteOllamaCloudUsageSession(props.account.id))
     session.value = ''
     appStore.showSuccess(t('admin.accounts.ollamaCloud.sessionDeleted'))
   } catch (error) {
@@ -233,7 +239,7 @@ const deleteSession = async () => {
 const setAutoRefresh = async (enabled: boolean) => {
   saving.value = true
   try {
-    applyState(await adminAPI.accounts.setOllamaCloudUsageAutoRefresh(props.account.id, enabled))
+    applyState(await setOllamaCloudUsageAutoRefresh(props.account.id, enabled))
   } catch (error) {
     appStore.showError(extractApiErrorMessage(error, t('admin.accounts.ollamaCloud.autoRefreshFailed')))
   } finally {
@@ -244,7 +250,7 @@ const setAutoRefresh = async (enabled: boolean) => {
 const refreshUsage = async () => {
   refreshing.value = true
   try {
-    applyState(await adminAPI.accounts.refreshOllamaCloudUsage(props.account.id))
+    applyState(await refreshOllamaCloudUsage(props.account.id))
     appStore.showSuccess(t('admin.accounts.ollamaCloud.refreshSuccess'))
   } catch (error) {
     appStore.showError(extractI18nErrorMessage(

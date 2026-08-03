@@ -42,11 +42,20 @@ import { useIntervalFn } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
-import { adminAPI } from '@/api/admin'
+import * as accountQueries from '@/features/admin-accounts/data/datasources/adminAccountQueries'
+import * as accountActions from '@/features/admin-accounts/data/datasources/adminAccountActions'
+import { getAll as getAllProxies } from '@/features/admin-proxies/data/datasources/adminProxiesDatasource'
+import { getAll as getAllGroups } from '@/features/admin-groups/data/datasources/adminGroupsDatasource'
 import { useTableLoader } from '@/common/composables/useTableLoader'
 import { useSwipeSelect, type SwipeSelectVirtualContext } from '@/common/composables/useSwipeSelect'
 import { useTableSelection } from '@/common/composables/useTableSelection'
 import { fetchAllAccountIds } from '@/features/admin-accounts/presentation/composables/accountSelection'
+import {
+  ACCOUNT_SORT_STORAGE_KEY,
+  loadInitialAccountSortState,
+  type AccountSortOrder,
+  type AccountSortState
+} from '@/features/admin-accounts/presentation/accountSortState'
 import { useStepUp, isStepUpBlocked, isStepUpCancelled, stepUpBlockReason } from '@/common/composables/useStepUp'
 import TotpStepUpDialog from '@/features/auth/presentation/widgets/TotpStepUpDialog.vue'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
@@ -220,41 +229,6 @@ const {
   reloadAccounts: () => load()
 })
 
-// Sorting settings
-const ACCOUNT_SORT_STORAGE_KEY = 'account-table-sort'
-type AccountSortOrder = 'asc' | 'desc'
-type AccountSortState = {
-  sort_by: string
-  sort_order: AccountSortOrder
-}
-const ACCOUNT_SORTABLE_KEYS = new Set([
-  'id',
-  'name',
-  'status',
-  'schedulable',
-  'priority',
-  'rate_multiplier',
-  'upstream_billing_rate',
-  'last_used_at',
-  'created_at',
-  'expires_at'
-])
-const loadInitialAccountSortState = (): AccountSortState => {
-  const fallback: AccountSortState = { sort_by: 'name', sort_order: 'asc' }
-  try {
-    const raw = localStorage.getItem(ACCOUNT_SORT_STORAGE_KEY)
-    if (!raw) return fallback
-    const parsed = JSON.parse(raw) as { key?: string; order?: string }
-    const key = typeof parsed.key === 'string' ? parsed.key : ''
-    if (!ACCOUNT_SORTABLE_KEYS.has(key)) return fallback
-    return {
-      sort_by: key,
-      sort_order: parsed.order === 'desc' ? 'desc' : 'asc'
-    }
-  } catch {
-    return fallback
-  }
-}
 const sortState = reactive<AccountSortState>(loadInitialAccountSortState())
 
 // Auto refresh settings
@@ -348,7 +322,7 @@ const {
   handlePageChange: baseHandlePageChange,
   handlePageSizeChange: baseHandlePageSizeChange
 } = useTableLoader<Account, any>({
-  fetchFn: adminAPI.accounts.list,
+  fetchFn: accountQueries.list,
   initialParams: {
     platform: '',
     type: '',
@@ -608,7 +582,7 @@ const refreshAccountsIncrementally = async () => {
   syncAccountListDerivedParams()
   autoRefreshFetching.value = true
   try {
-    const result = await adminAPI.accounts.listWithEtag(
+    const result = await accountQueries.listWithEtag(
       pagination.page,
       pagination.page_size,
       toRaw(params) as {
@@ -653,7 +627,7 @@ const handleManualRefresh = async () => {
 
 const loadUpstreamBillingProbeGlobalState = async () => {
   try {
-    const settings = await adminAPI.accounts.getUpstreamBillingProbeSettings()
+    const settings = await accountQueries.getUpstreamBillingProbeSettings()
     upstreamBillingProbeGloballyEnabled.value = settings.enabled
   } catch (error) {
     console.error('Failed to load upstream billing probe settings:', error)
@@ -836,7 +810,7 @@ const handleBulkDelete = async () => {
   const accountIDs = [...selIds.value]
   if (!confirm(t('admin.accounts.bulkDeleteConfirm', { count: accountIDs.length }))) return
   try {
-    const result = await adminAPI.accounts.batchDelete(accountIDs)
+    const result = await accountActions.batchDelete(accountIDs)
     const successIDs = result.success_ids ?? []
     successIDs.forEach(id => invalidateUpstreamQuotaState(id))
     if (result.failed > 0) {
@@ -856,7 +830,7 @@ const handleBulkDelete = async () => {
 const handleBulkResetStatus = async () => {
   if (!confirm(t('common.confirm'))) return
   try {
-    const result = await adminAPI.accounts.batchClearError(selIds.value)
+    const result = await accountActions.batchClearError(selIds.value)
     if (result.failed > 0) {
       appStore.showError(t('admin.accounts.bulkActions.partialSuccess', { success: result.success, failed: result.failed }))
     } else {
@@ -872,7 +846,7 @@ const handleBulkResetStatus = async () => {
 const handleBulkRefreshToken = async () => {
   if (!confirm(t('common.confirm'))) return
   try {
-    const result = await adminAPI.accounts.batchRefresh(selIds.value)
+    const result = await accountActions.batchRefresh(selIds.value)
     if (result.failed > 0) {
       appStore.showError(t('admin.accounts.bulkActions.partialSuccess', { success: result.success, failed: result.failed }))
     } else {
@@ -953,7 +927,7 @@ const normalizeBulkSchedulableResult = (
 const handleBulkToggleSchedulable = async (schedulable: boolean) => {
   const accountIds = [...selIds.value]
   try {
-    const result = await adminAPI.accounts.bulkUpdate(accountIds, { schedulable })
+    const result = await accountActions.bulkUpdate(accountIds, { schedulable })
     const { successIds, failedIds, successCount, failedCount, hasIds, hasCounts } = normalizeBulkSchedulableResult(result, accountIds)
     if (!hasIds && !hasCounts) {
       appStore.showError(t('admin.accounts.bulkSchedulableResultUnknown'))
@@ -1010,10 +984,10 @@ const handleSelectAllResults = async () => {
   selectingAllResults.value = true
   try {
     const ids = await fetchAllAccountIds(
-      (page, pageSize, requestFilters) => adminAPI.accounts.list(
+      (page, pageSize, requestFilters) => accountQueries.list(
         page,
         pageSize,
-        requestFilters as Parameters<typeof adminAPI.accounts.list>[2],
+        requestFilters as Parameters<typeof accountQueries.list>[2],
       ),
       filters,
     )
@@ -1049,7 +1023,7 @@ const openBulkEditSelected = () => {
 
 const openBulkEditFiltered = async () => {
   const filters = buildBulkEditFilterSnapshot()
-  const preview = await adminAPI.accounts.list(1, 100, filters)
+  const preview = await accountQueries.list(1, 100, filters)
   const { selectedPlatforms, selectedTypes } = collectSelectionMetadata(preview.items)
   bulkEditTarget.value = {
     mode: 'filtered',
@@ -1187,7 +1161,7 @@ const handleExportData = async () => {
   if (exportingData.value) return
   exportingData.value = true
   try {
-    const dataPayload = await accountExportStepUp.run(() => adminAPI.accounts.exportData(
+    const dataPayload = await accountExportStepUp.run(() => accountActions.exportData(
       selIds.value.length > 0
         ? { ids: selIds.value, includeProxies: includeProxyOnExport.value }
         : {
@@ -1238,7 +1212,7 @@ const handleSyncCPA = async (a: Account) => {
   if (syncingCPAAccountIDs.has(a.id)) return
   syncingCPAAccountIDs.add(a.id)
   try {
-    const capacity = await adminAPI.accounts.syncCPACapacity(a.id)
+    const capacity = await accountActions.syncCPACapacity(a.id)
     patchAccountInList({ ...a, cpa_capacity: capacity })
     appStore.showSuccess(t('admin.accounts.syncCPASuccess', {
       enabled: capacity.enabled_credentials,
@@ -1257,7 +1231,7 @@ const handleSchedule = async (a: Account) => {
   scheduleModelOptions.value = []
   showSchedulePanel.value = true
   try {
-    const models = await adminAPI.accounts.getAvailableModels(a.id)
+    const models = await accountQueries.getAvailableModels(a.id)
     scheduleModelOptions.value = models.map((m: ClaudeModel) => ({ value: m.id, label: m.display_name || m.id }))
   } catch {
     scheduleModelOptions.value = []
@@ -1270,8 +1244,8 @@ const handleDuplicateAccount = async (a: Account) => {
   if (duplicatingAccountIDs.has(a.id)) return
   duplicatingAccountIDs.add(a.id)
   try {
-    const duplicate = await adminAPI.accounts.duplicate(a.id)
-    appStore.showSuccess(t('admin.accounts.duplicateSuccess', { name: duplicate.name }))
+    const duplicateAccountResult = await accountActions.duplicate(a.id)
+    appStore.showSuccess(t('admin.accounts.duplicateSuccess', { name: duplicateAccountResult.name }))
     reload()
   } catch (error: any) {
     console.error('Failed to duplicate account:', error)
@@ -1282,7 +1256,7 @@ const handleDuplicateAccount = async (a: Account) => {
 }
 const handleRefresh = async (a: Account) => {
   try {
-    const updated = await adminAPI.accounts.refreshCredentials(a.id)
+    const updated = await accountActions.refreshCredentials(a.id)
     invalidateUpstreamQuotaState(a.id)
     patchAccountInList(updated)
     enterAutoRefreshSilentWindow()
@@ -1292,7 +1266,7 @@ const handleRefresh = async (a: Account) => {
 }
 const handleRecoverState = async (a: Account) => {
   try {
-    const updated = await adminAPI.accounts.recoverState(a.id)
+    const updated = await accountActions.recoverState(a.id)
     patchAccountInList(updated)
     enterAutoRefreshSilentWindow()
     appStore.showSuccess(t('admin.accounts.recoverStateSuccess'))
@@ -1303,7 +1277,7 @@ const handleRecoverState = async (a: Account) => {
 }
 const handleResetQuota = async (a: Account) => {
   try {
-    const updated = await adminAPI.accounts.resetAccountQuota(a.id)
+    const updated = await accountActions.resetAccountQuota(a.id)
     patchAccountInList(updated)
     enterAutoRefreshSilentWindow()
     appStore.showSuccess(t('common.success'))
@@ -1335,7 +1309,7 @@ const privacyResultMessageKey = (account: Account): { type: 'success' | 'error';
 
 const handleSetPrivacy = async (a: Account) => {
   try {
-    const updated = await adminAPI.accounts.setPrivacy(a.id)
+    const updated = await accountActions.setPrivacy(a.id)
     patchAccountInList(updated)
     enterAutoRefreshSilentWindow()
     const result = privacyResultMessageKey(updated)
@@ -1351,7 +1325,7 @@ const handleSetPrivacy = async (a: Account) => {
 }
 const onRevertFallback = async (a: Account) => {
   try {
-    await adminAPI.accounts.revertProxyFallback(a.id)
+    await accountActions.revertProxyFallback(a.id)
     invalidateUpstreamQuotaState(a.id)
     appStore.showSuccess(t('admin.accounts.revertProxySuccess'))
     reload()
@@ -1368,7 +1342,7 @@ const confirmCreateSparkShadow = async () => {
   const a = creatingShadowAcc.value
   if (!a) return
   try {
-    await adminAPI.accounts.createSparkShadow(a.id, { name: `${a.name} (Spark)` })
+    await accountActions.createSparkShadow(a.id, { name: `${a.name} (Spark)` })
     showCreateShadowDialog.value = false
     creatingShadowAcc.value = null
     appStore.showSuccess(t('admin.accounts.createSparkShadowSuccess'))
@@ -1383,7 +1357,7 @@ const confirmDelete = async () => {
   if (!deletingAcc.value) return
   const accountID = deletingAcc.value.id
   try {
-    await adminAPI.accounts.delete(accountID)
+    await accountActions.deleteAccount(accountID)
     invalidateUpstreamQuotaState(accountID)
     showDeleteDialog.value = false
     deletingAcc.value = null
@@ -1396,7 +1370,7 @@ const handleToggleSchedulable = async (a: Account) => {
   const nextSchedulable = !a.schedulable
   togglingSchedulable.value = a.id
   try {
-    const updated = await adminAPI.accounts.setSchedulable(a.id, nextSchedulable)
+    const updated = await accountActions.setSchedulable(a.id, nextSchedulable)
     updateSchedulableInList([a.id], updated?.schedulable ?? nextSchedulable)
     enterAutoRefreshSilentWindow()
   } catch (error) {
@@ -1539,7 +1513,7 @@ onMounted(async () => {
   loadUpstreamBillingProbeGlobalState()
   resumeUpstreamBillingRateRefresh()
   try {
-    const [p, g] = await Promise.all([adminAPI.proxies.getAll(), adminAPI.groups.getAll()])
+    const [p, g] = await Promise.all([getAllProxies(), getAllGroups()])
     proxies.value = p
     groups.value = g
   } catch (error) {

@@ -8,12 +8,8 @@ const { getAvailableModels, copyToClipboard } = vi.hoisted(() => ({
   copyToClipboard: vi.fn()
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    accounts: {
-      getAvailableModels
-    }
-  }
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountQueries', () => ({
+  getAvailableModels
 }))
 
 vi.mock('@/common/composables/useClipboard', () => ({

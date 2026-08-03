@@ -69,6 +69,8 @@ feature presentation -> common widgets/composables + core services/stores/utils
 
 所有运行时 TypeScript/Vue 模块受 ESLint 的 1500 有效行硬门禁约束，空行和注释不计入。接近上限时按领域职责拆分，不以新增全局 Store、无归属 barrel、一对一 DTO/反射层或把代码搬进 composable/datasource 来转移复杂度。
 
+ESLint 还对迁移期架构债务执行“只减不增”门禁：禁止新增 `@/api`、`@/api/admin`、`@/stores` 引用，禁止新增跨 feature 的私有 `presentation` 导入，并阻止相对路径绕过 `domain -> data -> presentation` 依赖方向。现有引用逐条记录在 `eslint/architecture-debt-baseline.cjs`；迁移一条引用时必须在同一改动中删除对应基线项，不得为新代码扩充基线。
+
 ## 认证和权限
 
 短期 access token 保存在内存中，刷新凭据由后端 HttpOnly cookie 管理。`src/core/networks/client.ts` 会合并并发 401 刷新并重试请求。
@@ -133,6 +135,7 @@ pnpm run typecheck
 - 不混用 npm/yarn，不提交 `node_modules/` 和构建缓存。
 - 不在页面中创建第二套 Axios client 或 token 刷新逻辑。
 - 不在新代码中继续依赖或扩充 `@/api`、`@/api/admin`、`@/stores` 兼容 barrel。
+- 不为新增旧 barrel 或跨 feature 私有 presentation 依赖扩充 `eslint/architecture-debt-baseline.cjs`；该文件只随迁移缩小。
 - 不把后端实体直接当作 UI 状态；通过类型和映射隔离可选字段与兼容字段。
 - 大页面在所属 feature 内按 page 编排、widget 展示、composable 交互和 datasource 协议拆分；保持原路由 chunk、请求时序与局部状态 owner。
 - 目录或公共约定变化时更新本 README 和最近的子目录 README。

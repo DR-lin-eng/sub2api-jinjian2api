@@ -30,13 +30,16 @@ vi.mock('@/api/admin', () => ({
       checkMixedChannelRisk: checkMixedChannelRiskMock
     },
     settings: {
-      getWebSearchEmulationConfig: vi.fn().mockResolvedValue({ enabled: false, providers: [] }),
-      getSettings: vi.fn().mockResolvedValue({})
+      getWebSearchEmulationConfig: vi.fn().mockResolvedValue({ enabled: false, providers: [] })
     },
     tlsFingerprintProfiles: {
       list: vi.fn().mockResolvedValue([])
     }
   }
+}))
+
+vi.mock('@/features/admin-settings/data/datasources/adminSettingsDatasource', () => ({
+  getSettings: vi.fn().mockResolvedValue({})
 }))
 
 vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', () => ({

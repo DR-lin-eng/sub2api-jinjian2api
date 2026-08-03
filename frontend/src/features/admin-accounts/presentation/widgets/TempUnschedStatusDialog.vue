@@ -146,7 +146,8 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
+import { recoverState } from '@/features/admin-accounts/data/datasources/adminAccountActions'
+import { getTempUnschedulableStatus } from '@/features/admin-accounts/data/datasources/adminAccountQueries'
 import type { Account, TempUnschedulableStatus } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import { formatDateTime } from '@/core/utils/format'
@@ -212,7 +213,7 @@ const loadStatus = async () => {
   if (!props.account) return
   loading.value = true
   try {
-    status.value = await adminAPI.accounts.getTempUnschedulableStatus(props.account.id)
+    status.value = await getTempUnschedulableStatus(props.account.id)
   } catch (error: any) {
     appStore.showError(error?.message || t('admin.accounts.tempUnschedulable.failedToLoad'))
     status.value = null
@@ -229,7 +230,7 @@ const handleReset = async () => {
   if (!props.account) return
   resetting.value = true
   try {
-    const updated = await adminAPI.accounts.recoverState(props.account.id)
+    const updated = await recoverState(props.account.id)
     appStore.showSuccess(t('admin.accounts.recoverStateSuccess'))
     emit('reset', updated)
     handleClose()

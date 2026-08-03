@@ -13,12 +13,24 @@ vi.mock('@/core/networks/client', () => ({
 
 import {
   deleteOllamaCloudUsageSession,
-  getOllamaCloudUsage,
-  getOllamaCloudUsageSettings,
   refreshOllamaCloudUsage,
   saveOllamaCloudUsageSession,
   setOllamaCloudUsageAutoRefresh,
   updateOllamaCloudUsageSettings
+} from '@/features/admin-accounts/data/datasources/adminAccountActions'
+import {
+  getOllamaCloudUsage,
+  getOllamaCloudUsageSettings
+} from '@/features/admin-accounts/data/datasources/adminAccountQueries'
+import {
+  accountsAPI,
+  deleteOllamaCloudUsageSession as deleteOllamaCloudUsageSessionFromFacade,
+  getOllamaCloudUsage as getOllamaCloudUsageFromFacade,
+  getOllamaCloudUsageSettings as getOllamaCloudUsageSettingsFromFacade,
+  refreshOllamaCloudUsage as refreshOllamaCloudUsageFromFacade,
+  saveOllamaCloudUsageSession as saveOllamaCloudUsageSessionFromFacade,
+  setOllamaCloudUsageAutoRefresh as setOllamaCloudUsageAutoRefreshFromFacade,
+  updateOllamaCloudUsageSettings as updateOllamaCloudUsageSettingsFromFacade
 } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
 
 const state = {
@@ -64,5 +76,22 @@ describe('admin Ollama Cloud usage API', () => {
     expect(put).toHaveBeenNthCalledWith(2, '/admin/accounts/7/ollama-cloud-usage/auto-refresh', { enabled: true })
     expect(post).toHaveBeenCalledWith('/admin/accounts/7/ollama-cloud-usage/refresh')
     expect(del).toHaveBeenCalledWith('/admin/accounts/7/ollama-cloud-usage/session')
+  })
+
+  it('keeps compatibility facade exports on the owner function identities', () => {
+    expect(getOllamaCloudUsageSettingsFromFacade).toBe(getOllamaCloudUsageSettings)
+    expect(getOllamaCloudUsageFromFacade).toBe(getOllamaCloudUsage)
+    expect(updateOllamaCloudUsageSettingsFromFacade).toBe(updateOllamaCloudUsageSettings)
+    expect(saveOllamaCloudUsageSessionFromFacade).toBe(saveOllamaCloudUsageSession)
+    expect(deleteOllamaCloudUsageSessionFromFacade).toBe(deleteOllamaCloudUsageSession)
+    expect(setOllamaCloudUsageAutoRefreshFromFacade).toBe(setOllamaCloudUsageAutoRefresh)
+    expect(refreshOllamaCloudUsageFromFacade).toBe(refreshOllamaCloudUsage)
+    expect(accountsAPI.getOllamaCloudUsageSettings).toBe(getOllamaCloudUsageSettings)
+    expect(accountsAPI.getOllamaCloudUsage).toBe(getOllamaCloudUsage)
+    expect(accountsAPI.updateOllamaCloudUsageSettings).toBe(updateOllamaCloudUsageSettings)
+    expect(accountsAPI.saveOllamaCloudUsageSession).toBe(saveOllamaCloudUsageSession)
+    expect(accountsAPI.deleteOllamaCloudUsageSession).toBe(deleteOllamaCloudUsageSession)
+    expect(accountsAPI.setOllamaCloudUsageAutoRefresh).toBe(setOllamaCloudUsageAutoRefresh)
+    expect(accountsAPI.refreshOllamaCloudUsage).toBe(refreshOllamaCloudUsage)
   })
 })

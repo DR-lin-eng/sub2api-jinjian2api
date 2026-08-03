@@ -251,7 +251,7 @@ import { Icon } from '@/common/widgets/icons'
 import { useClipboard } from '@/common/composables/useClipboard'
 import { buildApiUrl } from '@/core/networks/client'
 import { getAccessToken } from '@/core/networks/tokenStore'
-import { adminAPI } from '@/api/admin'
+import { getAvailableModels } from '@/features/admin-accounts/data/datasources/adminAccountQueries'
 import type { Account, ClaudeModel } from '@/types'
 
 const { t } = useI18n()
@@ -360,7 +360,7 @@ const loadAvailableModels = async () => {
   loadingModels.value = true
   selectedModelId.value = '' // Reset selection before loading
   try {
-    const models = await adminAPI.accounts.getAvailableModels(props.account.id)
+    const models = await getAvailableModels(props.account.id)
     availableModels.value = props.account.platform === 'gemini' || props.account.platform === 'antigravity'
       ? sortTestModels(models)
       : models

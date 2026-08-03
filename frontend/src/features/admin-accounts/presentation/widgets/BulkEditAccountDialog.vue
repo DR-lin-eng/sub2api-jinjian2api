@@ -731,7 +731,10 @@
 import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
+import {
+  bulkUpdate,
+  checkMixedChannelRisk
+} from '@/features/admin-accounts/data/datasources/adminAccountActions'
 import type { Proxy as ProxyConfig, AdminGroup, AccountPlatform, AccountType, OpenAICompactMode } from '@/types'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
@@ -1212,7 +1215,7 @@ const preCheckMixedChannelRisk = async (built: Record<string, unknown>): Promise
   if (mixedChannelConfirmed.value) return true
 
   try {
-    const result = await adminAPI.accounts.checkMixedChannelRisk({
+    const result = await checkMixedChannelRisk({
       platform: targetSelectedPlatforms.value[0],
       group_ids: groupIds.value
     })
@@ -1326,11 +1329,11 @@ const submitBulkUpdate = async (baseUpdates: Record<string, unknown>) => {
 
   try {
     const res = targetMode.value === 'filtered' && props.target?.filters
-      ? await adminAPI.accounts.bulkUpdate({
+      ? await bulkUpdate({
         filters: props.target.filters,
         ...updates
       })
-      : await adminAPI.accounts.bulkUpdate(props.accountIds, updates)
+      : await bulkUpdate(props.accountIds, updates)
     const success = res.success || 0
     const failed = res.failed || 0
 

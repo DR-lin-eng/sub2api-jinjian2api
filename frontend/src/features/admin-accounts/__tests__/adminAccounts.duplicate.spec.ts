@@ -8,7 +8,7 @@ vi.mock('@/core/networks/client', () => ({
   apiClient: { post }
 }))
 
-import { duplicate } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
+import { duplicate } from '@/features/admin-accounts/data/datasources/adminAccountActions'
 
 describe('admin account duplicate API', () => {
   beforeEach(() => {
@@ -27,6 +27,7 @@ describe('admin account duplicate API', () => {
       }
     })
     expect(account).toEqual({ id: 43, name: 'primary (Copy)' })
+    expect(sessionStorage.length).toBe(0)
   })
 
   it('reuses the operation key after an ambiguous failed request', async () => {
@@ -40,6 +41,7 @@ describe('admin account duplicate API', () => {
     const firstHeaders = post.mock.calls[0][2].headers
     const secondHeaders = post.mock.calls[1][2].headers
     expect(secondHeaders).toEqual(firstHeaders)
+    expect(sessionStorage.length).toBe(0)
   })
 
   it('reuses the operation key after a page reload', async () => {
@@ -49,7 +51,7 @@ describe('admin account duplicate API', () => {
 
     vi.resetModules()
     post.mockResolvedValueOnce({ data: { id: 78, name: 'reload (Copy)' } })
-    const { duplicate: duplicateAfterReload } = await import('@/features/admin-accounts/data/datasources/adminAccountsDatasource')
+    const { duplicate: duplicateAfterReload } = await import('@/features/admin-accounts/data/datasources/adminAccountActions')
     await duplicateAfterReload(77)
 
     expect(post).toHaveBeenCalledTimes(2)

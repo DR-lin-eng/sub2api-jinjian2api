@@ -7,11 +7,7 @@ const { queryQuota } = vi.hoisted(() => ({
   queryQuota: vi.fn()
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    grok: { queryQuota }
-  }
-}))
+vi.mock('@/features/admin-accounts/data/datasources/grokDatasource', () => ({ queryQuota }))
 
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({

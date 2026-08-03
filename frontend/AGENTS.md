@@ -30,6 +30,8 @@ main / core routes
 
 `src/api/index.ts`、`src/api/admin/index.ts` 和 `src/stores/index.ts` 是旧导入的过渡兼容 barrel。新代码直接导入 owner 路径；除维持既有导入兼容外，不要把新功能继续注册到这些 barrel，也不要为旧目录再创建平行实现。旧导入全部迁移并通过回归验证前不得移除兼容导出。
 
+存量旧 barrel 和跨 feature 私有 `presentation` 导入逐条登记在 `eslint/architecture-debt-baseline.cjs`。ESLint 会拒绝新增债务，也会在旧引用迁移后要求删除对应基线项；不要为通过检查而扩大该文件。`domain`、`data` 的相对导入同样受反向依赖检查，不能用相对路径绕过 owner 边界。
+
 不要在页面中创建新的 Axios client、token 刷新队列或权限事实源。前端 guard 和菜单隐藏只负责体验，后端必须执行真实权限校验。
 
 ## 修改检查

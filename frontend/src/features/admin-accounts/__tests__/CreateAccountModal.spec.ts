@@ -37,12 +37,15 @@ vi.mock('@/api/admin', () => ({
     },
     settings: {
       getWebSearchEmulationConfig: vi.fn().mockResolvedValue({ enabled: false, providers: [] }),
-      getSettings: vi.fn().mockResolvedValue({}),
     },
     tlsFingerprintProfiles: {
       list: vi.fn().mockResolvedValue([]),
     },
   },
+}))
+
+vi.mock('@/features/admin-settings/data/datasources/adminSettingsDatasource', () => ({
+  getSettings: vi.fn().mockResolvedValue({})
 }))
 
 vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', () => ({

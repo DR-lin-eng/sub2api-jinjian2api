@@ -12,13 +12,15 @@ vi.mock('@/core/networks/client', () => ({
 
 import {
   getUpstreamBillingProbeSettings,
-  getUpstreamBillingRatesWithEtag,
-  probeUpstreamBilling,
-  probeUpstreamBillingBatch,
-  queryUpstreamQuota,
   setUpstreamBillingProbeEnabled,
   updateUpstreamBillingProbeSettings
 } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
+import { getUpstreamBillingRatesWithEtag } from '@/features/admin-accounts/data/datasources/adminAccountQueries'
+import {
+  probeUpstreamBilling,
+  probeUpstreamBillingBatch,
+  queryUpstreamQuota
+} from '@/features/admin-accounts/data/datasources/adminAccountActions'
 
 describe('admin account upstream billing probe API', () => {
   beforeEach(() => {

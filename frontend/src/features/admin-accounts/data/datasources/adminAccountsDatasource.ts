@@ -4,189 +4,120 @@
  */
 
 import { apiClient } from '@/core/networks/client'
+import {
+  getBatchSummaries,
+  getBatchTodayStats,
+  getAvailableModels,
+  getById,
+  getOllamaCloudUsage,
+  getOllamaCloudUsageSettings,
+  getStats,
+  getTempUnschedulableStatus,
+  getTodayStats,
+  getUpstreamBillingProbeSettings,
+  getUpstreamBillingRatesWithEtag,
+  getUsage,
+  list,
+  listWithEtag
+} from './adminAccountQueries'
+import {
+  batchClearError,
+  batchDelete,
+  batchRefresh,
+  bulkUpdate,
+  checkMixedChannelRisk,
+  createSparkShadow,
+  deleteOllamaCloudUsageSession,
+  deleteAccount,
+  duplicate,
+  exportData,
+  probeUpstreamBilling,
+  probeUpstreamBillingBatch,
+  queryUpstreamQuota,
+  recoverState,
+  refreshOllamaCloudUsage,
+  refreshCredentials,
+  resetAccountQuota,
+  revertProxyFallback,
+  saveOllamaCloudUsageSession,
+  setPrivacy,
+  setSchedulable,
+  setOllamaCloudUsageAutoRefresh,
+  syncCPACapacity,
+  updateOllamaCloudUsageSettings
+} from './adminAccountActions'
+import type { CPACapacityStatus } from './adminAccountActions'
 import type {
   Account,
   CreateAccountRequest,
   UpdateAccountRequest,
-  PaginatedResponse,
-  AccountUsageInfo,
-  WindowStats,
-  ClaudeModel,
-  AccountUsageStatsResponse,
-  TempUnschedulableStatus,
   AdminDataPayload,
   AdminDataImportResult,
   CodexSessionImportRequest,
   CodexSessionImportResult,
   OpenAICodexPATCreateRequest,
-  CheckMixedChannelRequest,
-  CheckMixedChannelResponse,
-  UpstreamBillingProbeResult,
-  UpstreamBillingProbeSettings,
-  UpstreamBillingRatesResponse,
-  UpstreamQuotaQueryResult,
-  OllamaCloudUsageSettings,
-  OllamaCloudUsageState
+  UpstreamBillingProbeSettings
 } from '@/types'
 
-/**
- * List all accounts with pagination
- * @param page - Page number (default: 1)
- * @param pageSize - Items per page (default: 20)
- * @param filters - Optional filters
- * @returns Paginated list of accounts
- */
-export async function list(
-  page: number = 1,
-  pageSize: number = 20,
-  filters?: {
-    platform?: string
-    type?: string
-    status?: string
-    group?: string
-    search?: string
-    privacy_mode?: string
-    lite?: string
-    include_scheduler_score?: string
-    include_hourly_usage?: string
-    sort_by?: string
-    sort_order?: 'asc' | 'desc'
-  },
-  options?: {
-    signal?: AbortSignal
-  }
-): Promise<PaginatedResponse<Account>> {
-  const { data } = await apiClient.get<PaginatedResponse<Account>>('/admin/accounts', {
-    params: {
-      page,
-      page_size: pageSize,
-      ...filters
-    },
-    signal: options?.signal
-  })
-  return data
-}
-
-export interface AccountListWithEtagResult {
-  notModified: boolean
-  etag: string | null
-  data: PaginatedResponse<Account> | null
-}
-
-export async function listWithEtag(
-  page: number = 1,
-  pageSize: number = 20,
-  filters?: {
-    platform?: string
-    type?: string
-    status?: string
-    group?: string
-    search?: string
-    privacy_mode?: string
-    lite?: string
-    include_scheduler_score?: string
-    include_hourly_usage?: string
-    sort_by?: string
-    sort_order?: 'asc' | 'desc'
-  },
-  options?: {
-    signal?: AbortSignal
-    etag?: string | null
-  }
-): Promise<AccountListWithEtagResult> {
-  const headers: Record<string, string> = {}
-  if (options?.etag) {
-    headers['If-None-Match'] = options.etag
-  }
-
-  const response = await apiClient.get<PaginatedResponse<Account>>('/admin/accounts', {
-    params: {
-      page,
-      page_size: pageSize,
-      ...filters
-    },
-    headers,
-    signal: options?.signal,
-    validateStatus: (status) => (status >= 200 && status < 300) || status === 304
-  })
-
-  const etagHeader = typeof response.headers?.etag === 'string' ? response.headers.etag : null
-  if (response.status === 304) {
-    return {
-      notModified: true,
-      etag: etagHeader,
-      data: null
-    }
-  }
-
-  return {
-    notModified: false,
-    etag: etagHeader,
-    data: response.data
-  }
-}
-
-export interface AccountUpstreamBillingRatesWithEtagResult {
-  notModified: boolean
-  etag: string | null
-  data: UpstreamBillingRatesResponse | null
-}
-
-export async function getUpstreamBillingRatesWithEtag(
-  page: number = 1,
-  pageSize: number = 20,
-  filters?: {
-    platform?: string
-    type?: string
-    status?: string
-    group?: string
-    search?: string
-    privacy_mode?: string
-    sort_by?: string
-    sort_order?: 'asc' | 'desc'
-  },
-  options?: {
-    signal?: AbortSignal
-    etag?: string | null
-  }
-): Promise<AccountUpstreamBillingRatesWithEtagResult> {
-  const headers: Record<string, string> = {}
-  if (options?.etag) headers['If-None-Match'] = options.etag
-
-  const response = await apiClient.get<UpstreamBillingRatesResponse>('/admin/accounts/upstream-billing-rates', {
-    params: { page, page_size: pageSize, ...filters },
-    headers,
-    signal: options?.signal,
-    validateStatus: (status) => (status >= 200 && status < 300) || status === 304
-  })
-  const etag = typeof response.headers?.etag === 'string' ? response.headers.etag : null
-  return response.status === 304
-    ? { notModified: true, etag, data: null }
-    : { notModified: false, etag, data: response.data }
-}
-
-/**
- * Get account by ID
- * @param id - Account ID
- * @returns Account details
- */
-export async function getById(id: number): Promise<Account> {
-  const { data } = await apiClient.get<Account>(`/admin/accounts/${id}`)
-  return data
-}
-
-export interface AccountSummary {
-  id: number
-  name: string
-}
-
-export async function getBatchSummaries(accountIds: number[]): Promise<AccountSummary[]> {
-  const { data } = await apiClient.post<{ items: AccountSummary[] }>(
-    '/admin/accounts/summaries/batch',
-    { account_ids: accountIds }
-  )
-  return data.items
-}
+export {
+  getBatchSummaries,
+  getBatchTodayStats,
+  getAvailableModels,
+  getById,
+  getOllamaCloudUsage,
+  getOllamaCloudUsageSettings,
+  getStats,
+  getTempUnschedulableStatus,
+  getTodayStats,
+  getUpstreamBillingProbeSettings,
+  getUpstreamBillingRatesWithEtag,
+  getUsage,
+  list,
+  listWithEtag
+} from './adminAccountQueries'
+export type {
+  AccountListFilters,
+  AccountListOptions,
+  AccountListWithEtagOptions,
+  AccountListWithEtagResult,
+  AccountSummary,
+  AccountUpstreamBillingRateFilters,
+  AccountUpstreamBillingRatesWithEtagResult,
+  BatchTodayStatsResponse
+} from './adminAccountQueries'
+export {
+  batchClearError,
+  batchDelete,
+  batchRefresh,
+  bulkUpdate,
+  checkMixedChannelRisk,
+  createSparkShadow,
+  deleteOllamaCloudUsageSession,
+  deleteAccount,
+  duplicate,
+  exportData,
+  probeUpstreamBilling,
+  probeUpstreamBillingBatch,
+  queryUpstreamQuota,
+  recoverState,
+  refreshOllamaCloudUsage,
+  refreshCredentials,
+  resetAccountQuota,
+  revertProxyFallback,
+  saveOllamaCloudUsageSession,
+  setOllamaCloudUsageAutoRefresh,
+  setPrivacy,
+  setSchedulable,
+  syncCPACapacity,
+  updateOllamaCloudUsageSettings
+} from './adminAccountActions'
+export type {
+  AccountExportOptions,
+  BatchOperationResult,
+  BulkUpdateResult,
+  CPACapacityStatus,
+  SparkShadowCreatePayload
+} from './adminAccountActions'
 
 /**
  * Create new account
@@ -199,50 +130,6 @@ export async function create(accountData: CreateAccountRequest): Promise<Account
 }
 
 /**
- * Duplicate an account while keeping credentials on the server.
- * @param id - Source account ID
- * @returns Newly created account
- */
-const duplicateOperationKeys = new Map<number, string>()
-
-function duplicateOperationStorageKey(id: number): string {
-  return `sub2api:admin:account-duplicate:${id}`
-}
-
-function getStoredDuplicateOperationKey(id: number): string | null {
-  try {
-    return globalThis.sessionStorage?.getItem(duplicateOperationStorageKey(id)) ?? null
-  } catch {
-    return null
-  }
-}
-
-function storeDuplicateOperationKey(id: number, key: string | null): void {
-  try {
-    if (key) globalThis.sessionStorage?.setItem(duplicateOperationStorageKey(id), key)
-    else globalThis.sessionStorage?.removeItem(duplicateOperationStorageKey(id))
-  } catch {
-    // In-memory retry protection still works when browser storage is unavailable.
-  }
-}
-
-export async function duplicate(id: number): Promise<Account> {
-  let idempotencyKey = duplicateOperationKeys.get(id) ?? getStoredDuplicateOperationKey(id)
-  if (!idempotencyKey) {
-    const requestID = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`
-    idempotencyKey = `account-duplicate-${id}-${requestID}`
-  }
-  duplicateOperationKeys.set(id, idempotencyKey)
-  storeDuplicateOperationKey(id, idempotencyKey)
-  const { data } = await apiClient.post<Account>(`/admin/accounts/${id}/duplicate`, undefined, {
-    headers: { 'Idempotency-Key': idempotencyKey }
-  })
-  duplicateOperationKeys.delete(id)
-  storeDuplicateOperationKey(id, null)
-  return data
-}
-
-/**
  * Update account
  * @param id - Account ID
  * @param updates - Fields to update
@@ -250,26 +137,6 @@ export async function duplicate(id: number): Promise<Account> {
  */
 export async function update(id: number, updates: UpdateAccountRequest): Promise<Account> {
   const { data } = await apiClient.put<Account>(`/admin/accounts/${id}`, updates)
-  return data
-}
-
-/**
- * Check mixed-channel risk for account-group binding.
- */
-export async function checkMixedChannelRisk(
-  payload: CheckMixedChannelRequest
-): Promise<CheckMixedChannelResponse> {
-  const { data } = await apiClient.post<CheckMixedChannelResponse>('/admin/accounts/check-mixed-channel', payload)
-  return data
-}
-
-/**
- * Delete account
- * @param id - Account ID
- * @returns Success confirmation
- */
-export async function deleteAccount(id: number): Promise<{ message: string }> {
-  const { data } = await apiClient.delete<{ message: string }>(`/admin/accounts/${id}`)
   return data
 }
 
@@ -309,38 +176,12 @@ export interface CPATestRequest {
   concurrency_per_credential?: number
 }
 
-export interface CPACapacityStatus {
-  total_credentials: number
-  enabled_credentials: number
-  abnormal_credentials: number
-  available_credentials: number
-  effective_concurrency: number
-  concurrency_per_credential: number
-  fetched_at?: string
-  state: 'fresh' | 'stale' | 'unavailable'
-}
-
 export interface CPATestResult extends CPACapacityStatus {
   latency_ms: number
 }
 
 export async function testCPAConnection(id: number, payload: CPATestRequest): Promise<CPATestResult> {
   const { data } = await apiClient.post<CPATestResult>(`/admin/accounts/${id}/cpa/test`, payload)
-  return data
-}
-
-export async function syncCPACapacity(id: number): Promise<CPACapacityStatus> {
-  const { data } = await apiClient.post<CPACapacityStatus>(`/admin/accounts/${id}/cpa/sync`)
-  return data
-}
-
-/**
- * Refresh account credentials
- * @param id - Account ID
- * @returns Updated account
- */
-export async function refreshCredentials(id: number): Promise<Account> {
-  const { data } = await apiClient.post<Account>(`/admin/accounts/${id}/refresh`)
   return data
 }
 
@@ -369,40 +210,12 @@ export async function applyOAuthCredentials(
 }
 
 /**
- * Get account usage statistics
- * @param id - Account ID
- * @param days - Number of days (default: 30)
- * @returns Account usage statistics with history, summary, and models
- */
-export async function getStats(id: number, days: number = 30): Promise<AccountUsageStatsResponse> {
-  const { data } = await apiClient.get<AccountUsageStatsResponse>(`/admin/accounts/${id}/stats`, {
-    params: { days }
-  })
-  return data
-}
-
-/**
  * Clear account error
  * @param id - Account ID
  * @returns Updated account
  */
 export async function clearError(id: number): Promise<Account> {
   const { data } = await apiClient.post<Account>(`/admin/accounts/${id}/clear-error`)
-  return data
-}
-
-/**
- * Get account usage information (5h/7d window)
- * @param id - Account ID
- * @returns Account usage info
- */
-export async function getUsage(id: number, source?: 'passive' | 'active', force?: boolean): Promise<AccountUsageInfo> {
-  const params: Record<string, string> = {}
-  if (source) params.source = source
-  if (force) params.force = 'true'
-  const { data } = await apiClient.get<AccountUsageInfo>(`/admin/accounts/${id}/usage`, {
-    params: Object.keys(params).length > 0 ? params : undefined
-  })
   return data
 }
 
@@ -414,40 +227,6 @@ export async function getUsage(id: number, source?: 'passive' | 'active', force?
 export async function clearRateLimit(id: number): Promise<Account> {
   const { data } = await apiClient.post<Account>(
     `/admin/accounts/${id}/clear-rate-limit`
-  )
-  return data
-}
-
-/**
- * Recover account runtime state in one call
- * @param id - Account ID
- * @returns Updated account
- */
-export async function recoverState(id: number): Promise<Account> {
-  const { data } = await apiClient.post<Account>(`/admin/accounts/${id}/recover-state`)
-  return data
-}
-
-/**
- * Reset account quota usage
- * @param id - Account ID
- * @returns Updated account
- */
-export async function resetAccountQuota(id: number): Promise<Account> {
-  const { data } = await apiClient.post<Account>(
-    `/admin/accounts/${id}/reset-quota`
-  )
-  return data
-}
-
-/**
- * Get temporary unschedulable status
- * @param id - Account ID
- * @returns Status with detail state if active
- */
-export async function getTempUnschedulableStatus(id: number): Promise<TempUnschedulableStatus> {
-  const { data } = await apiClient.get<TempUnschedulableStatus>(
-    `/admin/accounts/${id}/temp-unschedulable`
   )
   return data
 }
@@ -538,81 +317,17 @@ export async function batchUpdateCredentials(request: {
  * @param updates - Fields to update
  * @returns Success confirmation
  */
-export async function bulkUpdate(
-  accountIdsOrPayload: number[] | Record<string, unknown>,
-  updates?: Record<string, unknown>
-): Promise<{
-  success: number
-  failed: number
-  success_ids?: number[]
-  failed_ids?: number[]
-  results: Array<{ account_id: number; success: boolean; error?: string }>
-  }> {
-  const payload = Array.isArray(accountIdsOrPayload)
-    ? {
-        account_ids: accountIdsOrPayload,
-        ...(updates ?? {})
-      }
-    : accountIdsOrPayload
-  const { data } = await apiClient.post<{
-    success: number
-    failed: number
-    success_ids?: number[]
-    failed_ids?: number[]
-    results: Array<{ account_id: number; success: boolean; error?: string }>
-  }>('/admin/accounts/bulk-update', payload)
-  return data
-}
-
-/**
- * Get account today statistics
- * @param id - Account ID
- * @returns Today's stats (requests, tokens, cost)
- */
-export async function getTodayStats(id: number): Promise<WindowStats> {
-  const { data } = await apiClient.get<WindowStats>(`/admin/accounts/${id}/today-stats`)
-  return data
-}
-
-export interface BatchTodayStatsResponse {
-  stats: Record<string, WindowStats>
-}
-
-/**
- * 批量获取多个账号的今日统计
- * @param accountIds - 账号 ID 列表
- * @returns 以账号 ID（字符串）为键的统计映射
- */
-export async function getBatchTodayStats(accountIds: number[]): Promise<BatchTodayStatsResponse> {
-  const { data } = await apiClient.post<BatchTodayStatsResponse>('/admin/accounts/today-stats/batch', {
-    account_ids: accountIds
-  })
-  return data
-}
-
 /**
  * Set account schedulable status
  * @param id - Account ID
  * @param schedulable - Whether the account should participate in scheduling
  * @returns Updated account
  */
-export async function setSchedulable(id: number, schedulable: boolean): Promise<Account> {
-  const { data } = await apiClient.post<Account>(`/admin/accounts/${id}/schedulable`, {
-    schedulable
-  })
-  return data
-}
-
 /**
  * Get available models for an account
  * @param id - Account ID
  * @returns List of available models for this account
  */
-export async function getAvailableModels(id: number): Promise<ClaudeModel[]> {
-  const { data } = await apiClient.get<ClaudeModel[]>(`/admin/accounts/${id}/models`)
-  return data
-}
-
 export interface SyncUpstreamModelsResult {
   models: string[]
 }
@@ -703,41 +418,6 @@ export async function syncFromCrs(params: {
   return data
 }
 
-export async function exportData(options?: {
-  ids?: number[]
-  filters?: {
-    platform?: string
-    type?: string
-    status?: string
-    group?: string
-    privacy_mode?: string
-    search?: string
-    sort_by?: string
-    sort_order?: 'asc' | 'desc'
-  }
-  includeProxies?: boolean
-}): Promise<AdminDataPayload> {
-  const params: Record<string, string> = {}
-  if (options?.ids && options.ids.length > 0) {
-    params.ids = options.ids.join(',')
-  } else if (options?.filters) {
-    const { platform, type, status, group, privacy_mode, search, sort_by, sort_order } = options.filters
-    if (platform) params.platform = platform
-    if (type) params.type = type
-    if (status) params.status = status
-    if (group) params.group = group
-    if (privacy_mode) params.privacy_mode = privacy_mode
-    if (search) params.search = search
-    if (sort_by) params.sort_by = sort_by
-    if (sort_order) params.sort_order = sort_order
-  }
-  if (options?.includeProxies === false) {
-    params.include_proxies = 'false'
-  }
-  const { data } = await apiClient.get<AdminDataPayload>('/admin/accounts/data', { params })
-  return data
-}
-
 export async function importData(payload: {
   data: AdminDataPayload
   skip_default_group_bind?: boolean
@@ -800,69 +480,6 @@ export async function refreshOpenAIToken(
 /**
  * Batch operation result type
  */
-export interface BatchOperationResult {
-  total: number
-  success: number
-  failed: number
-  success_ids?: number[]
-  failed_ids?: number[]
-  errors?: Array<{ account_id: number; error: string }>
-  warnings?: Array<{ account_id: number; warning: string }>
-}
-
-export async function batchDelete(accountIds: number[]): Promise<BatchOperationResult> {
-  const { data } = await apiClient.post<BatchOperationResult>('/admin/accounts/batch-delete', {
-    account_ids: accountIds
-  })
-  return data
-}
-
-/**
- * Revert account proxy to original before fallback
- * @param id - Account ID
- * @returns Success confirmation
- */
-export async function revertProxyFallback(id: number): Promise<{ message: string }> {
-  const { data } = await apiClient.post<{ message: string }>(`/admin/accounts/${id}/revert-proxy-fallback`)
-  return data
-}
-
-/**
- * Batch clear account errors
- * @param accountIds - Array of account IDs
- * @returns Batch operation result
- */
-export async function batchClearError(accountIds: number[]): Promise<BatchOperationResult> {
-  const { data } = await apiClient.post<BatchOperationResult>('/admin/accounts/batch-clear-error', {
-    account_ids: accountIds
-  })
-  return data
-}
-
-/**
- * Batch refresh account credentials
- * @param accountIds - Array of account IDs
- * @returns Batch operation result
- */
-export async function batchRefresh(accountIds: number[]): Promise<BatchOperationResult> {
-  const { data } = await apiClient.post<BatchOperationResult>('/admin/accounts/batch-refresh', {
-    account_ids: accountIds,
-  }, {
-    timeout: 120000  // 120s timeout for large batch refreshes
-  })
-  return data
-}
-
-/**
- * Set privacy for an Antigravity OAuth account
- * @param id - Account ID
- * @returns Updated account
- */
-export async function setPrivacy(id: number): Promise<Account> {
-  const { data } = await apiClient.post<Account>(`/admin/accounts/${id}/set-privacy`)
-  return data
-}
-
 /**
  * OpenAI / Codex rate-limit reset feature: query and reset upstream usage.
  */
@@ -962,23 +579,6 @@ export async function resetOpenAIQuota(id: number): Promise<OpenAIQuotaResetResu
   return data
 }
 
-export interface SparkShadowCreatePayload {
-  name?: string
-  priority?: number
-  concurrency?: number
-  group_ids?: number[]
-}
-
-export async function createSparkShadow(parentId: number, payload: SparkShadowCreatePayload): Promise<Account> {
-  const { data } = await apiClient.post<Account>(`/admin/accounts/${parentId}/shadow`, payload)
-  return data
-}
-
-export async function getUpstreamBillingProbeSettings(): Promise<UpstreamBillingProbeSettings> {
-  const { data } = await apiClient.get<UpstreamBillingProbeSettings>('/admin/accounts/upstream-billing-probe/settings')
-  return data
-}
-
 export async function updateUpstreamBillingProbeSettings(
   settings: UpstreamBillingProbeSettings
 ): Promise<UpstreamBillingProbeSettings> {
@@ -991,69 +591,6 @@ export async function updateUpstreamBillingProbeSettings(
 
 export async function setUpstreamBillingProbeEnabled(id: number, enabled: boolean): Promise<void> {
   await apiClient.put(`/admin/accounts/${id}/upstream-billing-probe`, { enabled })
-}
-
-export async function probeUpstreamBilling(id: number): Promise<UpstreamBillingProbeResult> {
-  const { data } = await apiClient.post<UpstreamBillingProbeResult>(`/admin/accounts/${id}/upstream-billing-probe`)
-  return data
-}
-
-export async function probeUpstreamBillingBatch(accountIds: number[]): Promise<UpstreamBillingProbeResult[]> {
-  const { data } = await apiClient.post<{ results: UpstreamBillingProbeResult[] }>(
-    '/admin/accounts/upstream-billing-probe/batch',
-    { account_ids: accountIds },
-    { timeout: 120000 }
-  )
-  return data.results
-}
-
-export async function queryUpstreamQuota(id: number): Promise<UpstreamQuotaQueryResult> {
-  const { data } = await apiClient.post<UpstreamQuotaQueryResult>(`/admin/accounts/${id}/upstream-quota/query`)
-  return data
-}
-
-export async function getOllamaCloudUsageSettings(): Promise<OllamaCloudUsageSettings> {
-  const { data } = await apiClient.get<OllamaCloudUsageSettings>('/admin/accounts/ollama-cloud-usage/settings')
-  return data
-}
-
-export async function updateOllamaCloudUsageSettings(
-  settings: OllamaCloudUsageSettings
-): Promise<OllamaCloudUsageSettings> {
-  const { data } = await apiClient.put<OllamaCloudUsageSettings>(
-    '/admin/accounts/ollama-cloud-usage/settings',
-    settings
-  )
-  return data
-}
-
-export async function getOllamaCloudUsage(id: number): Promise<OllamaCloudUsageState> {
-  const { data } = await apiClient.get<OllamaCloudUsageState>(`/admin/accounts/${id}/ollama-cloud-usage`)
-  return data
-}
-
-export async function saveOllamaCloudUsageSession(id: number, session: string): Promise<OllamaCloudUsageState> {
-  const { data } = await apiClient.put<OllamaCloudUsageState>(`/admin/accounts/${id}/ollama-cloud-usage/session`, {
-    session
-  })
-  return data
-}
-
-export async function deleteOllamaCloudUsageSession(id: number): Promise<OllamaCloudUsageState> {
-  const { data } = await apiClient.delete<OllamaCloudUsageState>(`/admin/accounts/${id}/ollama-cloud-usage/session`)
-  return data
-}
-
-export async function setOllamaCloudUsageAutoRefresh(id: number, enabled: boolean): Promise<OllamaCloudUsageState> {
-  const { data } = await apiClient.put<OllamaCloudUsageState>(`/admin/accounts/${id}/ollama-cloud-usage/auto-refresh`, {
-    enabled
-  })
-  return data
-}
-
-export async function refreshOllamaCloudUsage(id: number): Promise<OllamaCloudUsageState> {
-  const { data } = await apiClient.post<OllamaCloudUsageState>(`/admin/accounts/${id}/ollama-cloud-usage/refresh`)
-  return data
 }
 
 export const accountsAPI = {

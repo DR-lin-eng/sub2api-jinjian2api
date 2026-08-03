@@ -2,7 +2,10 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import BulkEditAccountModal from '@/features/admin-accounts/presentation/widgets/BulkEditAccountDialog.vue'
 import ModelWhitelistSelector from '@/features/admin-accounts/presentation/widgets/ModelWhitelistSelector.vue'
-import { adminAPI } from '@/api/admin'
+import {
+  bulkUpdate,
+  checkMixedChannelRisk
+} from '@/features/admin-accounts/data/datasources/adminAccountActions'
 
 vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
@@ -12,16 +15,13 @@ vi.mock('@/core/stores/appStore', () => ({
   })
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    accounts: {
-      bulkUpdate: vi.fn(),
-      checkMixedChannelRisk: vi.fn()
-    }
-  }
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountActions', () => ({
+  bulkUpdate: vi.fn(),
+  checkMixedChannelRisk: vi.fn()
 }))
 
 vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', () => ({
+  default: {},
   getAntigravityDefaultModelMapping: vi.fn()
 }))
 
@@ -75,15 +75,15 @@ function mountModal(extraProps: Record<string, unknown> = {}) {
 
 describe('BulkEditAccountModal', () => {
   beforeEach(() => {
-    vi.mocked(adminAPI.accounts.bulkUpdate).mockReset()
-    vi.mocked(adminAPI.accounts.checkMixedChannelRisk).mockReset()
+    vi.mocked(bulkUpdate).mockReset()
+    vi.mocked(checkMixedChannelRisk).mockReset()
 
-    vi.mocked(adminAPI.accounts.bulkUpdate).mockResolvedValue({
+    vi.mocked(bulkUpdate).mockResolvedValue({
       success: 2,
       failed: 0,
       results: []
     } as any)
-    vi.mocked(adminAPI.accounts.checkMixedChannelRisk).mockResolvedValue({
+    vi.mocked(checkMixedChannelRisk).mockResolvedValue({
       has_risk: false
     } as any)
   })
@@ -122,8 +122,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       credentials: {
         model_mapping: {}
       }
@@ -141,8 +141,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       credentials: {
         base_url: 'https://api.x.ai/v1'
       }
@@ -163,8 +163,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       credentials: {
         base_url: 'https://us-east-1.api.x.ai/v1'
       }
@@ -191,8 +191,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       credentials: {
         base_url: 'https://relay.example.com/v1'
       }
@@ -210,8 +210,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       credentials: {
         base_url: 'https://api.x.ai/v1'
       }
@@ -229,8 +229,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       extra: {
         openai_passthrough: true
       }
@@ -248,7 +248,7 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       extra: { openai_responses_flatten_namespaces: true }
     })
   })
@@ -273,8 +273,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       extra: {
         openai_oauth_responses_websockets_v2_mode: 'http_bridge',
         openai_oauth_responses_websockets_v2_enabled: true
@@ -299,7 +299,7 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       credentials: {
         cpa_mode: true,
         cpa_management_url: null,
@@ -319,7 +319,7 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       credentials: {
         cpa_mode: true,
         cpa_management_url: 'https://cpa.example.com/v0/management',
@@ -336,7 +336,7 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       credentials: { cpa_mode: false }
     })
 
@@ -355,8 +355,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       extra: {
         codex_cli_only: true
       }
@@ -377,8 +377,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       extra: {
         codex_cli_only: true,
         codex_cli_only_allow_app_server: true
@@ -398,7 +398,7 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).not.toHaveBeenCalled()
+    expect(bulkUpdate).not.toHaveBeenCalled()
   })
 
   it('OpenAI API Key 批量编辑应提交 API Key 专属 WS mode 字段', async () => {
@@ -412,8 +412,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       extra: {
         openai_apikey_responses_websockets_v2_mode: 'ctx_pool',
         openai_apikey_responses_websockets_v2_enabled: true
@@ -431,8 +431,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       upstream_billing_probe_enabled: true
     })
   })
@@ -467,8 +467,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       upstream_billing_probe_enabled: false
     })
   })
@@ -500,8 +500,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith({
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith({
       filters: { platform: 'openai', type: 'apikey', status: 'active' },
       upstream_billing_probe_enabled: true
     })
@@ -531,8 +531,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith({
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith({
       filters: { platform: 'openai' },
       extra: {
         openai_compact_mode: 'force_on'
@@ -555,8 +555,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       extra: {
         openai_passthrough: false,
         openai_oauth_passthrough: false
@@ -576,8 +576,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith([1, 2], {
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
       extra: {
         openai_passthrough: true
       }
@@ -608,8 +608,8 @@ describe('BulkEditAccountModal', () => {
     await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledTimes(1)
-    expect(adminAPI.accounts.bulkUpdate).toHaveBeenCalledWith({
+    expect(bulkUpdate).toHaveBeenCalledTimes(1)
+    expect(bulkUpdate).toHaveBeenCalledWith({
       filters: {
         platform: 'openai',
         type: 'oauth',

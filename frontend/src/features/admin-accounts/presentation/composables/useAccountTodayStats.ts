@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { adminAPI } from '@/api/admin'
+import { getBatchTodayStats } from '@/features/admin-accounts/data/datasources/adminAccountQueries'
 import type { Account, WindowStats } from '@/types'
 
 interface AccountTodayStatsOptions {
@@ -41,7 +41,7 @@ export function useAccountTodayStats(options: AccountTodayStatsOptions) {
     todayStatsLoading.value = true
     todayStatsError.value = null
     try {
-      const result = await adminAPI.accounts.getBatchTodayStats(accountIDs)
+      const result = await getBatchTodayStats(accountIDs)
       if (reqSeq !== todayStatsReqSeq.value) return
       const serverStats = result.stats ?? {}
       const nextStats: Record<string, WindowStats> = {}

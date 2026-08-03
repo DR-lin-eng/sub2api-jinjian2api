@@ -572,7 +572,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { adminAPI } from '@/api/admin'
+import { getUsage } from '@/features/admin-accounts/data/datasources/adminAccountQueries'
 import type { GrokQuotaProbeResult } from '@/features/admin-accounts/data/datasources/grokDatasource'
 import type {
   Account,
@@ -1243,8 +1243,8 @@ const loadUsage = async (options?: { source?: 'passive' | 'active'; bypassCache?
 
   try {
     const fetchFn = () => options?.source
-      ? adminAPI.accounts.getUsage(props.account.id, options.source)
-      : adminAPI.accounts.getUsage(props.account.id)
+      ? getUsage(props.account.id, options.source)
+      : getUsage(props.account.id)
     const result = await enqueueUsageRequest(props.account, fetchFn)
     if (!unmounted.value) {
       usageInfo.value = result
@@ -1313,7 +1313,7 @@ const attachVisibilityObserver = () => {
 const loadActiveUsage = async () => {
   activeQueryLoading.value = true
   try {
-    usageInfo.value = await adminAPI.accounts.getUsage(props.account.id, 'active', true)
+    usageInfo.value = await getUsage(props.account.id, 'active', true)
   } catch (e: any) {
     console.error('Failed to load active usage:', e)
   } finally {

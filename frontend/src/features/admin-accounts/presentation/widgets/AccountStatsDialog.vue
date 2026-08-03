@@ -513,7 +513,7 @@ import LoadingSpinner from '@/common/widgets/feedback/LoadingSpinner.vue'
 import ModelDistributionChart from '@/common/widgets/charts/ModelDistributionChart.vue'
 import EndpointDistributionChart from '@/common/widgets/charts/EndpointDistributionChart.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import { adminAPI } from '@/api/admin'
+import { getStats } from '@/features/admin-accounts/data/datasources/adminAccountQueries'
 import type { Account, AccountUsageStatsResponse } from '@/types'
 
 ChartJS.register(
@@ -705,7 +705,7 @@ const loadStats = async () => {
 
   loading.value = true
   try {
-    stats.value = await adminAPI.accounts.getStats(props.account.id, 30)
+    stats.value = await getStats(props.account.id, 30)
   } catch (error) {
     console.error('Failed to load account stats:', error)
     stats.value = null

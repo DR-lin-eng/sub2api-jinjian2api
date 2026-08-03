@@ -1,7 +1,15 @@
 import { reactive, ref, toRaw, watch, type Ref } from 'vue'
 import { useIntervalFn } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
-import { adminAPI } from '@/api/admin'
+import {
+  getById,
+  getUpstreamBillingRatesWithEtag
+} from '@/features/admin-accounts/data/datasources/adminAccountQueries'
+import {
+  probeUpstreamBilling,
+  probeUpstreamBillingBatch,
+  queryUpstreamQuota
+} from '@/features/admin-accounts/data/datasources/adminAccountActions'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import {
   persistUpstreamQuotaCache,
@@ -203,7 +211,7 @@ export function useAccountsUpstreamBilling(options: AccountsUpstreamBillingOptio
     left.length === right.length && left.every((id, index) => id === right[index])
 
   const applyUpstreamBillingRateSnapshots = async (
-    result: NonNullable<Awaited<ReturnType<typeof adminAPI.accounts.getUpstreamBillingRatesWithEtag>>['data']>
+    result: NonNullable<Awaited<ReturnType<typeof getUpstreamBillingRatesWithEtag>>['data']>
   ) => {
     const pagination = options.getPagination()
     const currentAccounts = options.getAccounts()
@@ -258,7 +266,7 @@ export function useAccountsUpstreamBilling(options: AccountsUpstreamBillingOptio
       const requestPage = pagination.page
       const requestPageSize = pagination.page_size
       const requestContext = upstreamBillingRateContextKey(requestPage, requestPageSize)
-      const result = await adminAPI.accounts.getUpstreamBillingRatesWithEtag(
+      const result = await getUpstreamBillingRatesWithEtag(
         requestPage,
         requestPageSize,
         buildUpstreamBillingRateFilters(),
@@ -309,7 +317,7 @@ export function useAccountsUpstreamBilling(options: AccountsUpstreamBillingOptio
     probingUpstreamBilling.add(account.id)
     let feedback: UpstreamActionFeedback = 'error'
     try {
-      const result = await adminAPI.accounts.probeUpstreamBilling(account.id)
+      const result = await probeUpstreamBilling(account.id)
       if (result.snapshot) {
         patchUpstreamBillingSnapshot(account.id, result.snapshot)
         await refreshAccountsAfterUpstreamBillingProbe()
@@ -344,7 +352,7 @@ export function useAccountsUpstreamBilling(options: AccountsUpstreamBillingOptio
     )
     let feedback: UpstreamActionFeedback | null = null
     try {
-      const result = await adminAPI.accounts.queryUpstreamQuota(account.id)
+      const result = await queryUpstreamQuota(account.id)
       if (!isCurrent()) return false
       if (!result.quota) {
         upstreamQuotaErrors.set(account.id, t('admin.accounts.upstreamBilling.noQuotaData'))
@@ -400,7 +408,7 @@ export function useAccountsUpstreamBilling(options: AccountsUpstreamBillingOptio
       let resultCount = 0
       let failed = 0
       for (let batchIndex = 0; batchIndex < batches.length; batchIndex += 1) {
-        const results: UpstreamBillingProbeResult[] = await adminAPI.accounts.probeUpstreamBillingBatch(batches[batchIndex])
+        const results: UpstreamBillingProbeResult[] = await probeUpstreamBillingBatch(batches[batchIndex])
         resultCount += results.length
         failed += results.filter(result => result.error).length
         results.forEach(result => {
@@ -456,7 +464,7 @@ export function useAccountsUpstreamBilling(options: AccountsUpstreamBillingOptio
     try {
       for (let batchIndex = 0; batchIndex < batches.length; batchIndex += 1) {
         const results = await Promise.allSettled(batches[batchIndex].map(async accountID => {
-          const account = options.getAccounts().find(item => item.id === accountID) ?? await adminAPI.accounts.getById(accountID)
+          const account = options.getAccounts().find(item => item.id === accountID) ?? await getById(accountID)
           if (account.platform !== 'openai' || account.type !== 'apikey') return false
           return handleQueryUpstreamQuota(account)
         }))

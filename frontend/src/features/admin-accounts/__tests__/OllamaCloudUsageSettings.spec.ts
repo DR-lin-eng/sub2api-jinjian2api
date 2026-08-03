@@ -12,7 +12,15 @@ const api = vi.hoisted(() => ({
 }))
 const notifications = vi.hoisted(() => ({ showSuccess: vi.fn(), showError: vi.fn() }))
 
-vi.mock('@/api/admin', () => ({ adminAPI: { accounts: api } }))
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountQueries', () => ({
+  getOllamaCloudUsage: api.getOllamaCloudUsage
+}))
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountActions', () => ({
+  saveOllamaCloudUsageSession: api.saveOllamaCloudUsageSession,
+  deleteOllamaCloudUsageSession: api.deleteOllamaCloudUsageSession,
+  setOllamaCloudUsageAutoRefresh: api.setOllamaCloudUsageAutoRefresh,
+  refreshOllamaCloudUsage: api.refreshOllamaCloudUsage
+}))
 vi.mock('@/core/stores/appStore', () => ({ useAppStore: () => notifications }))
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')

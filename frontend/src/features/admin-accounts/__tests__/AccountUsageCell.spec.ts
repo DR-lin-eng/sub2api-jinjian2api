@@ -7,12 +7,9 @@ const { getUsage } = vi.hoisted(() => ({
   getUsage: vi.fn()
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    accounts: {
-      getUsage
-    }
-  }
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountQueries', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/admin-accounts/data/datasources/adminAccountQueries')>()),
+  getUsage
 }))
 
 vi.mock('vue-i18n', async () => {

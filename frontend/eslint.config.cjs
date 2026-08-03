@@ -4,6 +4,7 @@ const typescriptParser = require('@typescript-eslint/parser')
 const vuePlugin = require('eslint-plugin-vue')
 const vueParser = require('vue-eslint-parser')
 const globals = require('globals')
+const architecturePlugin = require('./eslint/architecture-boundaries.cjs')
 
 const legacyImportPatterns = [
   {
@@ -57,6 +58,7 @@ module.exports = [
     },
     plugins: {
       '@typescript-eslint': typescriptPlugin,
+      architecture: architecturePlugin,
     },
     rules: {
       ...typescriptPlugin.configs.recommended.rules,
@@ -204,8 +206,9 @@ module.exports = [
   },
   {
     files: ['src/**/*.{ts,vue}'],
-    ignores: ['**/__tests__/**'],
+    ignores: ['**/__tests__/**', '**/*.spec.ts', '**/*.test.ts'],
     rules: {
+      'architecture/no-new-debt': 'error',
       // A repository-wide ceiling prevents a large module from being moved to
       // another layer just to bypass the page/widget rule.
       'max-lines': [
