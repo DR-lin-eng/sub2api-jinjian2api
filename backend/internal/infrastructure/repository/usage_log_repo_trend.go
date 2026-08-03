@@ -206,57 +206,60 @@ func (r *usageLogRepository) getDashboardUserInsights(ctx context.Context, start
 	_, _ = query.WriteString(strings.Join(selects, "\nUNION ALL\n"))
 	_, _ = query.WriteString("\nORDER BY row_kind DESC, row_order ASC")
 
-	rows, err := r.sql.QueryContext(ctx, query.String(), args...)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if closeErr := rows.Close(); closeErr != nil && err == nil {
-			err = closeErr
-			result = nil
+	err = withReportingRead(ctx, r.sql, func(q sqlQueryer) (queryErr error) {
+		rows, queryErr := q.QueryContext(ctx, query.String(), args...)
+		if queryErr != nil {
+			return queryErr
 		}
-	}()
+		defer func() {
+			if closeErr := rows.Close(); closeErr != nil && queryErr == nil {
+				queryErr = closeErr
+				result = nil
+			}
+		}()
 
-	result = &usagestats.DashboardUserInsights{
-		Trend: make([]usagestats.UserUsageTrendPoint, 0),
-		Ranking: usagestats.UserSpendingRankingResponse{
-			Ranking: make([]usagestats.UserSpendingRankingItem, 0),
-		},
-	}
-	for rows.Next() {
-		var (
-			kind            string
-			date            string
-			userID          int64
-			email           string
-			username        string
-			requests        int64
-			tokens          int64
-			cost            float64
-			actualCost      float64
-			totalActualCost float64
-			totalRequests   int64
-			totalTokens     int64
-			rowOrder        int64
-		)
-		if err = rows.Scan(&kind, &date, &userID, &email, &username, &requests, &tokens, &cost, &actualCost, &totalActualCost, &totalRequests, &totalTokens, &rowOrder); err != nil {
-			return nil, err
+		result = &usagestats.DashboardUserInsights{
+			Trend: make([]usagestats.UserUsageTrendPoint, 0),
+			Ranking: usagestats.UserSpendingRankingResponse{
+				Ranking: make([]usagestats.UserSpendingRankingItem, 0),
+			},
 		}
-		if kind == "trend" {
-			result.Trend = append(result.Trend, usagestats.UserUsageTrendPoint{
-				Date: date, UserID: userID, Email: email, Username: username,
-				Requests: requests, Tokens: tokens, Cost: cost, ActualCost: actualCost,
+		for rows.Next() {
+			var (
+				kind            string
+				date            string
+				userID          int64
+				email           string
+				username        string
+				requests        int64
+				tokens          int64
+				cost            float64
+				actualCost      float64
+				totalActualCost float64
+				totalRequests   int64
+				totalTokens     int64
+				rowOrder        int64
+			)
+			if queryErr = rows.Scan(&kind, &date, &userID, &email, &username, &requests, &tokens, &cost, &actualCost, &totalActualCost, &totalRequests, &totalTokens, &rowOrder); queryErr != nil {
+				return queryErr
+			}
+			if kind == "trend" {
+				result.Trend = append(result.Trend, usagestats.UserUsageTrendPoint{
+					Date: date, UserID: userID, Email: email, Username: username,
+					Requests: requests, Tokens: tokens, Cost: cost, ActualCost: actualCost,
+				})
+				continue
+			}
+			result.Ranking.Ranking = append(result.Ranking.Ranking, usagestats.UserSpendingRankingItem{
+				UserID: userID, Email: email, ActualCost: actualCost, Requests: requests, Tokens: tokens,
 			})
-			continue
+			result.Ranking.TotalActualCost = totalActualCost
+			result.Ranking.TotalRequests = totalRequests
+			result.Ranking.TotalTokens = totalTokens
 		}
-		result.Ranking.Ranking = append(result.Ranking.Ranking, usagestats.UserSpendingRankingItem{
-			UserID: userID, Email: email, ActualCost: actualCost, Requests: requests, Tokens: tokens,
-		})
-		result.Ranking.TotalActualCost = totalActualCost
-		result.Ranking.TotalRequests = totalRequests
-		result.Ranking.TotalTokens = totalTokens
-	}
-	if err = rows.Err(); err != nil {
+		return rows.Err()
+	})
+	if err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -368,20 +371,21 @@ func (r *usageLogRepository) getUsageTrendWithFilters(ctx context.Context, start
 	query, args = appendUsageLogBillingModeQueryFilter(query, args, billingMode, "")
 	query += " GROUP BY date ORDER BY date ASC"
 
-	rows, err := r.sql.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		// 保持主错误优先；仅在无错误时回传 Close 失败。
-		// 同时清空返回值，避免误用不完整结果。
-		if closeErr := rows.Close(); closeErr != nil && err == nil {
-			err = closeErr
-			results = nil
+	err = withReportingRead(ctx, r.sql, func(q sqlQueryer) (queryErr error) {
+		rows, queryErr := q.QueryContext(ctx, query, args...)
+		if queryErr != nil {
+			return queryErr
 		}
-	}()
+		defer func() {
+			if closeErr := rows.Close(); closeErr != nil && queryErr == nil {
+				queryErr = closeErr
+				results = nil
+			}
+		}()
 
-	results, err = scanTrendRows(rows)
+		results, queryErr = scanTrendRows(rows)
+		return queryErr
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -532,20 +536,21 @@ func (r *usageLogRepository) getModelStatsWithFiltersBySource(ctx context.Contex
 	query, args = appendUsageLogBillingModeQueryFilter(query, args, billingMode, "")
 	query += fmt.Sprintf(" GROUP BY %s ORDER BY total_tokens DESC", modelExpr)
 
-	rows, err := r.sql.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		// 保持主错误优先；仅在无错误时回传 Close 失败。
-		// 同时清空返回值，避免误用不完整结果。
-		if closeErr := rows.Close(); closeErr != nil && err == nil {
-			err = closeErr
-			results = nil
+	err = withReportingRead(ctx, r.sql, func(q sqlQueryer) (queryErr error) {
+		rows, queryErr := q.QueryContext(ctx, query, args...)
+		if queryErr != nil {
+			return queryErr
 		}
-	}()
+		defer func() {
+			if closeErr := rows.Close(); closeErr != nil && queryErr == nil {
+				queryErr = closeErr
+				results = nil
+			}
+		}()
 
-	results, err = scanModelStatsRows(rows)
+		results, queryErr = scanModelStatsRows(rows)
+		return queryErr
+	})
 	if err != nil {
 		return nil, err
 	}

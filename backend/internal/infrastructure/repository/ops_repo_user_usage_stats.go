@@ -22,6 +22,16 @@ func (r *opsRepository) GetUserUsageStats(ctx context.Context, filter *service.O
 		return nil, fmt.Errorf("start_time must be <= end_time")
 	}
 
+	var result *service.OpsUserUsageStatsResponse
+	err := withReportingRead(ctx, r.db, func(q sqlQueryer) error {
+		var queryErr error
+		result, queryErr = queryOpsUserUsageStats(ctx, q, filter)
+		return queryErr
+	})
+	return result, err
+}
+
+func queryOpsUserUsageStats(ctx context.Context, q sqlQueryer, filter *service.OpsUserUsageStatsFilter) (*service.OpsUserUsageStatsResponse, error) {
 	dashboardFilter := &service.OpsDashboardFilter{
 		StartTime: filter.StartTime.UTC(),
 		EndTime:   filter.EndTime.UTC(),
@@ -54,7 +64,7 @@ WITH stats AS (
 	var total int64
 	if !filter.IsTopNMode() {
 		countSQL := baseCTE + `SELECT COUNT(*) FROM stats`
-		if err := r.db.QueryRowContext(ctx, countSQL, baseArgs...).Scan(&total); err != nil {
+		if err := scanSingleRow(ctx, q, countSQL, baseArgs, &total); err != nil {
 			return nil, err
 		}
 	}
@@ -89,7 +99,7 @@ ORDER BY actual_cost DESC, total_tokens DESC, user_id ASC`
 		args = append(args, filter.PageSize, offset)
 	}
 
-	rows, err := r.db.QueryContext(ctx, querySQL, args...)
+	rows, err := q.QueryContext(ctx, querySQL, args...)
 	if err != nil {
 		return nil, err
 	}

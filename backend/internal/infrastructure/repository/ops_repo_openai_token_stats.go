@@ -24,6 +24,16 @@ func (r *opsRepository) GetOpenAITokenStats(ctx context.Context, filter *service
 		return nil, fmt.Errorf("start_time must be <= end_time")
 	}
 
+	var result *service.OpsOpenAITokenStatsResponse
+	err := withReportingRead(ctx, r.db, func(q sqlQueryer) error {
+		var queryErr error
+		result, queryErr = queryOpsOpenAITokenStats(ctx, q, filter)
+		return queryErr
+	})
+	return result, err
+}
+
+func queryOpsOpenAITokenStats(ctx context.Context, q sqlQueryer, filter *service.OpsOpenAITokenStatsFilter) (*service.OpsOpenAITokenStatsResponse, error) {
 	dashboardFilter := &service.OpsDashboardFilter{
 		StartTime: filter.StartTime.UTC(),
 		EndTime:   filter.EndTime.UTC(),
@@ -62,7 +72,7 @@ WITH stats AS (
 	var total int64
 	if !filter.IsTopNMode() {
 		countSQL := baseCTE + `SELECT COUNT(*) FROM stats`
-		if err := r.db.QueryRowContext(ctx, countSQL, baseArgs...).Scan(&total); err != nil {
+		if err := scanSingleRow(ctx, q, countSQL, baseArgs, &total); err != nil {
 			return nil, err
 		}
 	}
@@ -96,7 +106,7 @@ ORDER BY request_count DESC, model ASC`
 		args = append(args, filter.PageSize, offset)
 	}
 
-	rows, err := r.db.QueryContext(ctx, querySQL, args...)
+	rows, err := q.QueryContext(ctx, querySQL, args...)
 	if err != nil {
 		return nil, err
 	}
