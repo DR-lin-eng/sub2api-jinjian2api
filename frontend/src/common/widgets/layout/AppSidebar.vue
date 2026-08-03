@@ -94,9 +94,19 @@
               "
               @click="handleMenuItemClick(item.path)"
             >
-              <span v-if="item.iconSvg" class="h-5 w-5 flex-shrink-0 sidebar-svg-icon" v-html="sanitizeSvg(item.iconSvg)"></span>
-              <component v-else :is="item.icon" class="h-5 w-5 flex-shrink-0" />
+              <span class="relative h-5 w-5 flex-shrink-0">
+                <span v-if="item.iconSvg" class="block h-5 w-5 sidebar-svg-icon" v-html="sanitizeSvg(item.iconSvg)"></span>
+                <component v-else :is="item.icon" class="h-5 w-5" />
+                <span
+                  v-if="sidebarCollapsed && shouldShowSupportInboxDot(item)"
+                  class="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-dark-900"
+                ></span>
+              </span>
               <span class="sidebar-label" :class="{ 'sidebar-label-collapsed': sidebarCollapsed }" :aria-hidden="sidebarCollapsed ? 'true' : 'false'">{{ item.label }}</span>
+              <span
+                v-if="!sidebarCollapsed && shouldShowSupportInboxDot(item)"
+                class="ml-auto h-2 w-2 flex-shrink-0 rounded-full bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
+              ></span>
             </router-link>
           </template>
         </div>
@@ -119,9 +129,19 @@
             :data-tour="item.path === '/keys' ? 'sidebar-my-keys' : undefined"
             @click="handleMenuItemClick(item.path)"
           >
-            <span v-if="item.iconSvg" class="h-5 w-5 flex-shrink-0 sidebar-svg-icon" v-html="sanitizeSvg(item.iconSvg)"></span>
-            <component v-else :is="item.icon" class="h-5 w-5 flex-shrink-0" />
+            <span class="relative h-5 w-5 flex-shrink-0">
+              <span v-if="item.iconSvg" class="block h-5 w-5 sidebar-svg-icon" v-html="sanitizeSvg(item.iconSvg)"></span>
+              <component v-else :is="item.icon" class="h-5 w-5" />
+              <span
+                v-if="sidebarCollapsed && shouldShowSupportUserDot(item)"
+                class="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-dark-900"
+              ></span>
+            </span>
             <span class="sidebar-label" :class="{ 'sidebar-label-collapsed': sidebarCollapsed }" :aria-hidden="sidebarCollapsed ? 'true' : 'false'">{{ item.label }}</span>
+            <span
+              v-if="!sidebarCollapsed && shouldShowSupportUserDot(item)"
+              class="ml-auto h-2 w-2 flex-shrink-0 rounded-full bg-red-500 shadow-[0_0_0_3px_rgba(239,68,68,0.15)]"
+            ></span>
           </router-link>
         </div>
       </template>
@@ -197,6 +217,7 @@ import { sanitizeSvg } from '@/core/utils/sanitize'
 import { sanitizeUrl } from '@/core/utils/url'
 import { FeatureFlags, makeSidebarFlag } from '@/core/services/featureFlags'
 import { useBatchImageAccess } from '@/features/batch-image/presentation/composables/useBatchImageAccess'
+import { useSupportChatAdminStore } from '@/features/support-chat/presentation/stores/supportChatAdminStore'
 
 interface NavItem {
   path: string
@@ -243,12 +264,18 @@ const authStore = useAuthStore()
 const onboardingStore = useOnboardingStore()
 const adminSettingsStore = useAdminSettingsStore()
 const { canUseBatchImage, refreshBatchImageAccess } = useBatchImageAccess()
+const supportChatAdminStore = useSupportChatAdminStore()
 
 const sidebarCollapsed = computed(() => appStore.sidebarCollapsed)
 const mobileOpen = computed(() => appStore.mobileOpen)
 const isAdmin = computed(() => authStore.isAdmin)
 const sidebarNavRef = ref<HTMLElement | null>(null)
 const isDark = ref(document.documentElement.classList.contains('dark'))
+const supportInboxHasUnread = computed(() => supportChatAdminStore.hasUnread)
+const supportUserHasUnread = computed(() => supportChatAdminStore.userHasUnread)
+let supportInboxPollTimer: ReturnType<typeof setInterval> | null = null
+let supportInboxVisibilityHandler: (() => void) | null = null
+let supportInboxFocusHandler: (() => void) | null = null
 
 const homePath = computed(() => (isAdmin.value ? '/admin/dashboard' : '/dashboard'))
 
@@ -502,6 +529,31 @@ const TicketIcon = {
     )
 }
 
+const SupportChatIcon = {
+  render: () =>
+    h(
+      'svg',
+      { fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', 'stroke-width': '1.5' },
+      [
+        h('path', {
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          d: 'M4.5 12.75a7.5 7.5 0 0115 0v1.5'
+        }),
+        h('path', {
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          d: 'M4.5 13.5A2.25 2.25 0 016.75 11.25h.75v6h-.75A2.25 2.25 0 014.5 15v-1.5zM19.5 13.5a2.25 2.25 0 00-2.25-2.25h-.75v6h.75A2.25 2.25 0 0019.5 15v-1.5z'
+        }),
+        h('path', {
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          d: 'M16.5 17.25v.375A2.625 2.625 0 0113.875 20.25H12.75M9 10.5h6M9 13.5h4.5'
+        })
+      ]
+    )
+}
+
 const CogIcon = {
   render: () =>
     h(
@@ -683,11 +735,13 @@ const ChevronDownIcon = {
 const flagChannelMonitor = makeSidebarFlag(FeatureFlags.channelMonitor)
 const flagPayment = makeSidebarFlag(FeatureFlags.payment)
 const flagAvailableChannels = makeSidebarFlag(FeatureFlags.availableChannels)
+const flagSupportChat = makeSidebarFlag(FeatureFlags.supportChat)
 const flagAffiliate = makeSidebarFlag(FeatureFlags.affiliate)
 const flagRiskControl = makeSidebarFlag(FeatureFlags.riskControl)
 const flagOpsMonitoring = () => adminSettingsStore.opsMonitoringEnabled
 const flagAdminPayment = () => adminSettingsStore.paymentEnabled
 const flagBatchImageAccess = () => canUseBatchImage.value
+const supportChatEnabled = computed(() => flagSupportChat())
 
 // buildSelfNavItems 构造用户自己的导航项（用户端主菜单和管理员的"我的账户"子菜单共享这组声明）。
 // withDashboard=true 时包含仪表盘（用户端），false 时不含（管理员的个人区已经有独立仪表盘入口）。
@@ -718,6 +772,14 @@ function buildSelfNavItems(withDashboard: boolean): NavItem[] {
       iconSvg: item.icon_svg,
     })),
   )
+  if (withDashboard) {
+    items.splice(items.findIndex((item) => item.path === '/profile'), 0, {
+      path: '/support',
+      label: t('nav.support'),
+      icon: SupportChatIcon,
+      featureFlag: flagSupportChat,
+    })
+  }
   return items
 }
 
@@ -771,6 +833,7 @@ const adminNavItems = computed((): NavItem[] => {
     { path: '/admin/subscriptions', label: t('nav.subscriptions'), icon: CreditCardIcon, hideInSimpleMode: true },
     { path: '/admin/accounts', label: t('nav.accounts'), icon: GlobeIcon },
     { path: '/admin/announcements', label: t('nav.announcements'), icon: BellIcon },
+    { path: '/admin/support', label: t('nav.supportInbox'), icon: SupportChatIcon, featureFlag: flagSupportChat },
     { path: '/admin/proxies', label: t('nav.proxies'), icon: ServerIcon },
     {
       path: '/admin/security-audit',
@@ -870,6 +933,73 @@ function handleMenuItemClick(itemPath: string) {
   }
 }
 
+function shouldShowSupportInboxDot(item: NavItem): boolean {
+  return item.path === '/admin/support' && supportInboxHasUnread.value
+}
+
+function shouldShowSupportUserDot(item: NavItem): boolean {
+  return item.path === '/support' && supportUserHasUnread.value
+}
+
+function startSupportInboxPolling() {
+  stopSupportInboxPolling()
+  if (!authStore.isAuthenticated || !supportChatEnabled.value) return
+  refreshSupportUnreadIndicators(true)
+  supportInboxPollTimer = setInterval(() => {
+    if (authStore.isAuthenticated && supportChatEnabled.value) {
+      refreshSupportUnreadIndicators()
+    }
+  }, 4000)
+}
+
+function refreshSupportUnreadIndicators(force = false) {
+  if (!supportChatEnabled.value) {
+    supportChatAdminStore.reset()
+    return
+  }
+  if (isAdmin.value) {
+    void supportChatAdminStore.refreshUnreadIndicator(force)
+    return
+  }
+  if (!appStore.backendModeEnabled) {
+    void supportChatAdminStore.refreshUserUnreadIndicator(force)
+  }
+}
+
+function stopSupportInboxPolling() {
+  if (supportInboxPollTimer) {
+    clearInterval(supportInboxPollTimer)
+    supportInboxPollTimer = null
+  }
+}
+
+function startSupportInboxVisibilityRefresh() {
+  stopSupportInboxVisibilityRefresh()
+  supportInboxVisibilityHandler = () => {
+    if (document.visibilityState === 'visible' && authStore.isAuthenticated && supportChatEnabled.value) {
+      refreshSupportUnreadIndicators(true)
+    }
+  }
+  supportInboxFocusHandler = () => {
+    if (authStore.isAuthenticated && supportChatEnabled.value) {
+      refreshSupportUnreadIndicators(true)
+    }
+  }
+  document.addEventListener('visibilitychange', supportInboxVisibilityHandler)
+  window.addEventListener('focus', supportInboxFocusHandler)
+}
+
+function stopSupportInboxVisibilityRefresh() {
+  if (supportInboxVisibilityHandler) {
+    document.removeEventListener('visibilitychange', supportInboxVisibilityHandler)
+    supportInboxVisibilityHandler = null
+  }
+  if (supportInboxFocusHandler) {
+    window.removeEventListener('focus', supportInboxFocusHandler)
+    supportInboxFocusHandler = null
+  }
+}
+
 function isActive(path: string): boolean {
   return route.path === path || route.path.startsWith(path + '/')
 }
@@ -923,19 +1053,67 @@ if (
   document.documentElement.classList.add('dark')
 }
 
+watch(
+  () => authStore.isAuthenticated,
+  (authenticated) => {
+    if (authenticated) {
+      if (isAdmin.value) {
+        adminSettingsStore.fetch()
+      }
+      startSupportInboxPolling()
+      startSupportInboxVisibilityRefresh()
+    } else {
+      stopSupportInboxPolling()
+      stopSupportInboxVisibilityRefresh()
+      supportChatAdminStore.reset()
+    }
+  },
+  { immediate: true }
+)
+
 // Fetch admin settings (for feature-gated nav items like Ops).
 watch(
   isAdmin,
   (v) => {
     if (v) {
       adminSettingsStore.fetch()
+      startSupportInboxPolling()
+      startSupportInboxVisibilityRefresh()
     }
   },
   { immediate: true }
 )
 
+watch(
+  () => route.fullPath,
+  () => {
+    if (authStore.isAuthenticated) {
+      refreshSupportUnreadIndicators(true)
+    }
+  }
+)
+
+watch(
+  supportChatEnabled,
+  (enabled) => {
+    if (!authStore.isAuthenticated) return
+    if (enabled) {
+      startSupportInboxPolling()
+      startSupportInboxVisibilityRefresh()
+    } else {
+      stopSupportInboxPolling()
+      stopSupportInboxVisibilityRefresh()
+      supportChatAdminStore.reset()
+    }
+  }
+)
+
 onMounted(() => {
   void refreshBatchImageAccess()
+  if (authStore.isAuthenticated) {
+    startSupportInboxPolling()
+    startSupportInboxVisibilityRefresh()
+  }
   if (isAdmin.value) {
     adminSettingsStore.fetch()
   }
@@ -950,6 +1128,8 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  stopSupportInboxPolling()
+  stopSupportInboxVisibilityRefresh()
   if (sidebarNavRef.value) {
     appStore.sidebarScrollTop = sidebarNavRef.value.scrollTop
   }

@@ -313,6 +313,9 @@ type SystemSettings struct {
 	// Available Channels feature switch (user-facing aggregate view)
 	AvailableChannelsEnabled bool `json:"available_channels_enabled"`
 
+	// Support Chat feature switch
+	SupportChatEnabled bool `json:"support_chat_enabled"`
+
 	// Model Plaza feature (public group/model pricing showcase)
 	ModelPlazaEnabled          bool   `json:"model_plaza_enabled"`
 	ModelPlazaRequireAuth      bool   `json:"model_plaza_require_auth"`
@@ -410,6 +413,8 @@ type PublicSettings struct {
 	ChannelMonitorDefaultIntervalSeconds int  `json:"channel_monitor_default_interval_seconds"`
 
 	AvailableChannelsEnabled bool `json:"available_channels_enabled"`
+
+	SupportChatEnabled bool `json:"support_chat_enabled"`
 
 	ModelPlazaEnabled     bool `json:"model_plaza_enabled"`
 	ModelPlazaRequireAuth bool `json:"model_plaza_require_auth"`

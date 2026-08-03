@@ -322,6 +322,7 @@ export function createSettingsForm(localText: LocalText): SettingsForm {
     channel_monitor_enabled: true,
     channel_monitor_default_interval_seconds: 60,
     available_channels_enabled: false,
+    support_chat_enabled: true,
     model_plaza_enabled: false,
     model_plaza_require_auth: false,
     model_plaza_auto_public_models: false,

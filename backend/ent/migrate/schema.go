@@ -842,6 +842,67 @@ var (
 			},
 		},
 	}
+	// ChatConversationsColumns holds the columns for the "chat_conversations" table.
+	ChatConversationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "updated_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "last_message_at", Type: field.TypeTime, Nullable: true, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "unread_by_user", Type: field.TypeInt, Default: 0},
+		{Name: "unread_by_admin", Type: field.TypeInt, Default: 0},
+		{Name: "user_id", Type: field.TypeInt64, Unique: true},
+	}
+	// ChatConversationsTable holds the schema information for the "chat_conversations" table.
+	ChatConversationsTable = &schema.Table{
+		Name:       "chat_conversations",
+		Columns:    ChatConversationsColumns,
+		PrimaryKey: []*schema.Column{ChatConversationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "chat_conversations_users_chat_conversation",
+				Columns:    []*schema.Column{ChatConversationsColumns[6]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "chatconversation_last_message_at",
+				Unique:  false,
+				Columns: []*schema.Column{ChatConversationsColumns[3]},
+			},
+		},
+	}
+	// ChatMessagesColumns holds the columns for the "chat_messages" table.
+	ChatMessagesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "sender_type", Type: field.TypeEnum, Enums: []string{"user", "admin"}},
+		{Name: "sender_id", Type: field.TypeInt64},
+		{Name: "content", Type: field.TypeString, Size: 10000, SchemaType: map[string]string{"postgres": "text"}},
+		{Name: "created_at", Type: field.TypeTime, SchemaType: map[string]string{"postgres": "timestamptz"}},
+		{Name: "conversation_id", Type: field.TypeInt64},
+	}
+	// ChatMessagesTable holds the schema information for the "chat_messages" table.
+	ChatMessagesTable = &schema.Table{
+		Name:       "chat_messages",
+		Columns:    ChatMessagesColumns,
+		PrimaryKey: []*schema.Column{ChatMessagesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "chat_messages_chat_conversations_messages",
+				Columns:    []*schema.Column{ChatMessagesColumns[5]},
+				RefColumns: []*schema.Column{ChatConversationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "chatmessage_conversation_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{ChatMessagesColumns[5], ChatMessagesColumns[4]},
+			},
+		},
+	}
 	// CompositeModelRoutesColumns holds the columns for the "composite_model_routes" table.
 	CompositeModelRoutesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -2192,6 +2253,8 @@ var (
 		ChannelMonitorDailyRollupsTable,
 		ChannelMonitorHistoriesTable,
 		ChannelMonitorRequestTemplatesTable,
+		ChatConversationsTable,
+		ChatMessagesTable,
 		CompositeModelRoutesTable,
 		ErrorPassthroughRulesTable,
 		GroupsTable,
@@ -2276,6 +2339,14 @@ func init() {
 	}
 	ChannelMonitorRequestTemplatesTable.Annotation = &entsql.Annotation{
 		Table: "channel_monitor_request_templates",
+	}
+	ChatConversationsTable.ForeignKeys[0].RefTable = UsersTable
+	ChatConversationsTable.Annotation = &entsql.Annotation{
+		Table: "chat_conversations",
+	}
+	ChatMessagesTable.ForeignKeys[0].RefTable = ChatConversationsTable
+	ChatMessagesTable.Annotation = &entsql.Annotation{
+		Table: "chat_messages",
 	}
 	CompositeModelRoutesTable.ForeignKeys[0].RefTable = GroupsTable
 	CompositeModelRoutesTable.Annotation = &entsql.Annotation{

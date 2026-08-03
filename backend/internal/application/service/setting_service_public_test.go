@@ -116,6 +116,21 @@ func TestSettingService_GetPublicSettings_ExposesRegistrationEmailSuffixWhitelis
 	settings, err := svc.GetPublicSettings(context.Background())
 	require.NoError(t, err)
 	require.Equal(t, []string{"@example.com", "@foo.bar", "*.edu.cn"}, settings.RegistrationEmailSuffixWhitelist)
+	require.True(t, settings.SupportChatEnabled)
+}
+
+func TestSettingService_GetPublicSettings_SupportChatDefaultsToEnabledUnlessExplicitlyDisabled(t *testing.T) {
+	svcEnabled := NewSettingService(&settingPublicRepoStub{values: map[string]string{}}, &config.Config{})
+	enabled, err := svcEnabled.GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.True(t, enabled.SupportChatEnabled)
+
+	svcDisabled := NewSettingService(&settingPublicRepoStub{values: map[string]string{
+		SettingKeySupportChatEnabled: "false",
+	}}, &config.Config{})
+	disabled, err := svcDisabled.GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.False(t, disabled.SupportChatEnabled)
 }
 
 func TestSettingService_GetPublicSettings_ExposesTablePreferences(t *testing.T) {

@@ -104,6 +104,11 @@ export const FeatureFlags = {
     mode: 'opt-in',
     label: 'Available Channels',
   }),
+  supportChat: defineFlag({
+    key: 'support_chat_enabled',
+    mode: 'opt-out',
+    label: 'Support Chat',
+  }),
   modelPlaza: defineFlag({
     key: 'model_plaza_enabled',
     mode: 'opt-in',

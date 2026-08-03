@@ -647,6 +647,7 @@ const baseSettingsResponse = {
   subscription_expiry_notify_enabled: true,
   account_quota_notify_enabled: false,
   account_quota_notify_emails: [],
+  support_chat_enabled: true,
   allow_user_view_usage_details: false,
   // 平台限额嵌套字段（新后端契约）
   default_platform_quotas: {

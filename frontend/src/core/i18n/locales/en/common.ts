@@ -203,6 +203,8 @@ export default {
     contentModeration: 'Content Moderation',
     promptAudit: 'Prompt Audit',
     auditLogs: 'Audit Logs',
+    support: 'Support',
+    supportInbox: 'Support Inbox',
   },
 
   // Auth

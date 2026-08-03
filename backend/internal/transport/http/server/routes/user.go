@@ -142,5 +142,15 @@ func RegisterUserRoutes(
 			monitors.POST("/status/batch", h.ChannelMonitor.GetBatchStatus)
 			monitors.GET("/:id/status", h.ChannelMonitor.GetStatus)
 		}
+
+		// 在线客服（用户与管理员之间的单一长期会话）
+		chat := authenticated.Group("/chat", middleware.SupportChatFeatureGuard(settingService))
+		{
+			chat.GET("/conversation", h.Chat.GetConversation)
+			chat.GET("/messages", h.Chat.ListMessages)
+			chat.POST("/messages", h.Chat.SendMessage)
+			chat.POST("/read", h.Chat.MarkRead)
+			chat.GET("/ws", h.Chat.WS)
+		}
 	}
 }

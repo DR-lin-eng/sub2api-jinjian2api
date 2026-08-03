@@ -203,6 +203,8 @@ export default {
     contentModeration: '内容审核',
     promptAudit: '提示词审计',
     auditLogs: '操作日志',
+    support: '在线客服',
+    supportInbox: '客服收件箱',
   },
 
   // Auth

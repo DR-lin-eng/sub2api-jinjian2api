@@ -14,6 +14,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/announcementread"
 	"github.com/Wei-Shaw/sub2api/ent/apikey"
 	"github.com/Wei-Shaw/sub2api/ent/authidentity"
+	"github.com/Wei-Shaw/sub2api/ent/chatconversation"
 	"github.com/Wei-Shaw/sub2api/ent/group"
 	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
 	"github.com/Wei-Shaw/sub2api/ent/pendingauthsession"
@@ -442,6 +443,25 @@ func (_c *UserCreate) AddAnnouncementReads(v ...*AnnouncementRead) *UserCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddAnnouncementReadIDs(ids...)
+}
+
+// SetChatConversationID sets the "chat_conversation" edge to the ChatConversation entity by ID.
+func (_c *UserCreate) SetChatConversationID(id int64) *UserCreate {
+	_c.mutation.SetChatConversationID(id)
+	return _c
+}
+
+// SetNillableChatConversationID sets the "chat_conversation" edge to the ChatConversation entity by ID if the given value is not nil.
+func (_c *UserCreate) SetNillableChatConversationID(id *int64) *UserCreate {
+	if id != nil {
+		_c = _c.SetChatConversationID(*id)
+	}
+	return _c
+}
+
+// SetChatConversation sets the "chat_conversation" edge to the ChatConversation entity.
+func (_c *UserCreate) SetChatConversation(v *ChatConversation) *UserCreate {
+	return _c.SetChatConversationID(v.ID)
 }
 
 // AddAllowedGroupIDs adds the "allowed_groups" edge to the Group entity by IDs.
@@ -982,6 +1002,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(announcementread.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ChatConversationIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.ChatConversationTable,
+			Columns: []string{user.ChatConversationColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(chatconversation.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

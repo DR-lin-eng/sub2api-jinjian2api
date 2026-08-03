@@ -85,7 +85,7 @@ rg -n '"/api/v1|"/v1|"/responses' backend/internal/transport/http/server/routes
 | 应用启动 | `frontend/src/main.ts`, `App.vue` |
 | 路由与访问元数据 | `frontend/src/core/routes/index.ts`, `meta.d.ts` |
 | 管理功能 | `frontend/src/features/admin-*/`，各 feature 下分 `data/` 与 `presentation/` |
-| 用户功能 | `frontend/src/features/keys/`, `usage/`, `profile/`, `subscriptions/`, `billing/` 等 |
+| 用户功能 | `frontend/src/features/keys/`, `usage/`, `profile/`, `subscriptions/`, `billing/`, `support-chat/` 等 |
 | 登录和回调 | `frontend/src/features/auth/presentation/` 与 `data/datasources/authDatasource.ts` |
 | 公共页与首次设置 | `frontend/src/common/pages/`, `features/setup/`, `features/channels-user/` |
 | 领域组件与交互 | `frontend/src/features/<domain>/presentation/widgets/`, `composables/` |

@@ -16,6 +16,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/announcementread"
 	"github.com/Wei-Shaw/sub2api/ent/apikey"
 	"github.com/Wei-Shaw/sub2api/ent/authidentity"
+	"github.com/Wei-Shaw/sub2api/ent/chatconversation"
 	"github.com/Wei-Shaw/sub2api/ent/group"
 	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
 	"github.com/Wei-Shaw/sub2api/ent/pendingauthsession"
@@ -43,6 +44,7 @@ type UserQuery struct {
 	withSubscriptions         *UserSubscriptionQuery
 	withAssignedSubscriptions *UserSubscriptionQuery
 	withAnnouncementReads     *AnnouncementReadQuery
+	withChatConversation      *ChatConversationQuery
 	withAllowedGroups         *GroupQuery
 	withUsageLogs             *UsageLogQuery
 	withAttributeValues       *UserAttributeValueQuery
@@ -193,6 +195,28 @@ func (_q *UserQuery) QueryAnnouncementReads() *AnnouncementReadQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(announcementread.Table, announcementread.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.AnnouncementReadsTable, user.AnnouncementReadsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryChatConversation chains the current query on the "chat_conversation" edge.
+func (_q *UserQuery) QueryChatConversation() *ChatConversationQuery {
+	query := (&ChatConversationClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(chatconversation.Table, chatconversation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.ChatConversationTable, user.ChatConversationColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -617,6 +641,7 @@ func (_q *UserQuery) Clone() *UserQuery {
 		withSubscriptions:         _q.withSubscriptions.Clone(),
 		withAssignedSubscriptions: _q.withAssignedSubscriptions.Clone(),
 		withAnnouncementReads:     _q.withAnnouncementReads.Clone(),
+		withChatConversation:      _q.withChatConversation.Clone(),
 		withAllowedGroups:         _q.withAllowedGroups.Clone(),
 		withUsageLogs:             _q.withUsageLogs.Clone(),
 		withAttributeValues:       _q.withAttributeValues.Clone(),
@@ -685,6 +710,17 @@ func (_q *UserQuery) WithAnnouncementReads(opts ...func(*AnnouncementReadQuery))
 		opt(query)
 	}
 	_q.withAnnouncementReads = query
+	return _q
+}
+
+// WithChatConversation tells the query-builder to eager-load the nodes that are connected to
+// the "chat_conversation" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithChatConversation(opts ...func(*ChatConversationQuery)) *UserQuery {
+	query := (&ChatConversationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withChatConversation = query
 	return _q
 }
 
@@ -876,12 +912,13 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [15]bool{
+		loadedTypes = [16]bool{
 			_q.withAPIKeys != nil,
 			_q.withRedeemCodes != nil,
 			_q.withSubscriptions != nil,
 			_q.withAssignedSubscriptions != nil,
 			_q.withAnnouncementReads != nil,
+			_q.withChatConversation != nil,
 			_q.withAllowedGroups != nil,
 			_q.withUsageLogs != nil,
 			_q.withAttributeValues != nil,
@@ -949,6 +986,12 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := _q.loadAnnouncementReads(ctx, query, nodes,
 			func(n *User) { n.Edges.AnnouncementReads = []*AnnouncementRead{} },
 			func(n *User, e *AnnouncementRead) { n.Edges.AnnouncementReads = append(n.Edges.AnnouncementReads, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withChatConversation; query != nil {
+		if err := _q.loadChatConversation(ctx, query, nodes, nil,
+			func(n *User, e *ChatConversation) { n.Edges.ChatConversation = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -1168,6 +1211,33 @@ func (_q *UserQuery) loadAnnouncementReads(ctx context.Context, query *Announcem
 	}
 	query.Where(predicate.AnnouncementRead(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(user.AnnouncementReadsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadChatConversation(ctx context.Context, query *ChatConversationQuery, nodes []*User, init func(*User), assign func(*User, *ChatConversation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(chatconversation.FieldUserID)
+	}
+	query.Where(predicate.ChatConversation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.ChatConversationColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
