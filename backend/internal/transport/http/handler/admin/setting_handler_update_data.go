@@ -34,17 +34,22 @@ type UpdateSettingsRequest struct {
 	SMTPFromName string `json:"smtp_from_name"`
 	SMTPUseTLS   bool   `json:"smtp_use_tls"`
 
-	// 人机验证设置。四种 enabled 字段在服务端强制互斥。
-	TurnstileEnabled    bool   `json:"turnstile_enabled"`
-	TurnstileSiteKey    string `json:"turnstile_site_key"`
-	TurnstileSecretKey  string `json:"turnstile_secret_key"`
-	RecaptchaEnabled    *bool  `json:"recaptcha_enabled"` // 省略=保持现值
-	RecaptchaSiteKey    string `json:"recaptcha_site_key"`
-	RecaptchaSecretKey  string `json:"recaptcha_secret_key"`
-	CapEnabled          *bool  `json:"cap_enabled"` // 省略=保持现值
-	CapAPIEndpoint      string `json:"cap_api_endpoint"`
-	CapSecretKey        string `json:"cap_secret_key"`
-	LocalCaptchaEnabled *bool  `json:"local_captcha_enabled"` // 省略=保持现值
+	// 人机验证设置。五种 enabled 字段在服务端强制互斥。
+	TurnstileEnabled             bool   `json:"turnstile_enabled"`
+	TurnstileSiteKey             string `json:"turnstile_site_key"`
+	TurnstileSecretKey           string `json:"turnstile_secret_key"`
+	RecaptchaEnabled             *bool  `json:"recaptcha_enabled"` // 省略=保持现值
+	RecaptchaSiteKey             string `json:"recaptcha_site_key"`
+	RecaptchaSecretKey           string `json:"recaptcha_secret_key"`
+	CapEnabled                   *bool  `json:"cap_enabled"` // 省略=保持现值
+	CapAPIEndpoint               string `json:"cap_api_endpoint"`
+	CapSecretKey                 string `json:"cap_secret_key"`
+	TencentCaptchaEnabled        *bool  `json:"tencent_captcha_enabled"`
+	TencentCaptchaAppID          string `json:"tencent_captcha_app_id"`
+	TencentCaptchaAppSecretKey   string `json:"tencent_captcha_app_secret_key"`
+	TencentCaptchaCloudSecretID  string `json:"tencent_captcha_cloud_secret_id"`
+	TencentCaptchaCloudSecretKey string `json:"tencent_captcha_cloud_secret_key"`
+	LocalCaptchaEnabled          *bool  `json:"local_captcha_enabled"` // 省略=保持现值
 
 	// API Key IP 访问控制设置
 	APIKeyACLTrustForwardedIP *bool     `json:"api_key_acl_trust_forwarded_ip"`
@@ -239,6 +244,8 @@ type UpdateSettingsRequest struct {
 	EnableClientDatelineNormalization      *bool   `json:"enable_client_dateline_normalization"`
 	AntigravityUserAgentVersion            *string `json:"antigravity_user_agent_version"`
 	OpenAICodexUserAgent                   *string `json:"openai_codex_user_agent"`
+	OpenAICodexClientVersion               *string `json:"openai_codex_client_version"`
+	OpenAICodexVersionAutoSyncEnabled      *bool   `json:"openai_codex_version_auto_sync_enabled"`
 
 	// codex_cli_only 加固（global-only）
 	MinCodexVersion                      string `json:"min_codex_version"`

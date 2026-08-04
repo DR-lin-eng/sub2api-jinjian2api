@@ -18,6 +18,7 @@ type HumanVerificationEnabledKey =
   | "turnstile_enabled"
   | "recaptcha_enabled"
   | "cap_enabled"
+  | "tencent_captcha_enabled"
   | "local_captcha_enabled";
 
 export function useSettingsIdentityAccess(
@@ -46,6 +47,11 @@ export function useSettingsIdentityAccess(
       key: "cap_enabled",
       label: "admin.settings.turnstile.enableCap",
       hint: "admin.settings.turnstile.enableCapHint",
+    },
+    {
+      key: "tencent_captcha_enabled",
+      label: "admin.settings.turnstile.enableTencentCaptcha",
+      hint: "admin.settings.turnstile.enableTencentCaptchaHint",
     },
     {
       key: "local_captcha_enabled",

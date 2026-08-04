@@ -42,23 +42,31 @@ type SystemSettings struct {
 	SMTPFromName           string
 	SMTPUseTLS             bool
 
-	TurnstileEnabled             bool
-	TurnstileSiteKey             string
-	TurnstileSecretKey           string
-	TurnstileSecretKeyConfigured bool
-	RecaptchaEnabled             bool
-	RecaptchaSiteKey             string
-	RecaptchaSecretKey           string
-	RecaptchaSecretKeyConfigured bool
-	CapEnabled                   bool
-	CapAPIEndpoint               string
-	CapSecretKey                 string
-	CapSecretKeyConfigured       bool
-	LocalCaptchaEnabled          bool
-	APIKeyACLTrustForwardedIP    bool
-	ClientIPResolutionMode       string
-	ClientIPTrustedProxies       []string
-	ClientIPResolutionStatus     ip.ResolutionStatus
+	TurnstileEnabled                       bool
+	TurnstileSiteKey                       string
+	TurnstileSecretKey                     string
+	TurnstileSecretKeyConfigured           bool
+	RecaptchaEnabled                       bool
+	RecaptchaSiteKey                       string
+	RecaptchaSecretKey                     string
+	RecaptchaSecretKeyConfigured           bool
+	CapEnabled                             bool
+	CapAPIEndpoint                         string
+	CapSecretKey                           string
+	CapSecretKeyConfigured                 bool
+	TencentCaptchaEnabled                  bool
+	TencentCaptchaAppID                    string
+	TencentCaptchaAppSecretKey             string
+	TencentCaptchaAppSecretKeyConfigured   bool
+	TencentCaptchaCloudSecretID            string
+	TencentCaptchaCloudSecretIDConfigured  bool
+	TencentCaptchaCloudSecretKey           string
+	TencentCaptchaCloudSecretKeyConfigured bool
+	LocalCaptchaEnabled                    bool
+	APIKeyACLTrustForwardedIP              bool
+	ClientIPResolutionMode                 string
+	ClientIPTrustedProxies                 []string
+	ClientIPResolutionStatus               ip.ResolutionStatus
 
 	// LinuxDo Connect OAuth 登录
 	LinuxDoConnectEnabled                bool
@@ -242,7 +250,10 @@ type SystemSettings struct {
 	EnableClientDatelineNormalization      bool   // 是否对 Anthropic OAuth/SetupToken 请求体做客户端 dateline 归一化（默认 true）
 	RewriteMessageCacheControl             bool   // 是否改写 messages[*].content[*].cache_control（默认 false）
 	AntigravityUserAgentVersion            string // Antigravity 上游 User-Agent 版本号；空值使用配置/默认值
-	OpenAICodexUserAgent                   string // OpenAI Codex 上游完整 User-Agent；空值使用内置默认
+	OpenAICodexUserAgent                   string // OpenAI Codex 上游完整 User-Agent；空值按生效版本生成标准 CLI UA
+	OpenAICodexClientVersion               string // 管理员固定的 Codex 客户端版本；空值跟随同步值
+	OpenAICodexClientVersionSynced         string // 自动同步到的官方最新稳定版，只读展示
+	OpenAICodexVersionAutoSyncEnabled      bool   // 是否自动同步 Codex 客户端版本，默认 true
 	MinCodexVersion                        string // codex_cli_only 最低 Codex 引擎版本；空=不检查
 	MaxCodexVersion                        string // codex_cli_only 最高 Codex 引擎版本；空=不检查
 	CodexCLIOnlyBlacklist                  string // codex_cli_only 全局黑名单 JSON（[]AllowedClientEntry，OR deny）
@@ -336,6 +347,8 @@ type PublicSettings struct {
 	RecaptchaSiteKey                 string
 	CapEnabled                       bool
 	CapAPIEndpoint                   string
+	TencentCaptchaEnabled            bool
+	TencentCaptchaAppID              string
 	LocalCaptchaEnabled              bool
 	SiteName                         string
 	SiteLogo                         string

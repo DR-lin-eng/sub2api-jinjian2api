@@ -21,6 +21,7 @@ type preparedSettingsUpdate struct {
 	localCaptchaEnabled     bool
 	recaptchaEnabled        bool
 	capEnabled              bool
+	tencentCaptchaEnabled   bool
 	clientIPResolutionMode  string
 	clientIPTrustedProxies  []string
 	affiliateRebateRate     float64
@@ -140,6 +141,10 @@ func (h *SettingHandler) resolveSettingsUpdateSecurity(c *gin.Context, prepared 
 	if req.CapEnabled != nil {
 		capEnabled = *req.CapEnabled
 	}
+	tencentCaptchaEnabled := previousSettings.TencentCaptchaEnabled
+	if req.TencentCaptchaEnabled != nil {
+		tencentCaptchaEnabled = *req.TencentCaptchaEnabled
+	}
 	clientIPResolutionMode := previousSettings.ClientIPResolutionMode
 	if req.ClientIPResolutionMode != nil {
 		clientIPResolutionMode = *req.ClientIPResolutionMode
@@ -149,7 +154,7 @@ func (h *SettingHandler) resolveSettingsUpdateSecurity(c *gin.Context, prepared 
 		clientIPTrustedProxies = append([]string(nil), (*req.ClientIPTrustedProxies)...)
 	}
 	providerCount := 0
-	for _, enabled := range []bool{req.TurnstileEnabled, recaptchaEnabled, capEnabled, localCaptchaEnabled} {
+	for _, enabled := range []bool{req.TurnstileEnabled, recaptchaEnabled, capEnabled, tencentCaptchaEnabled, localCaptchaEnabled} {
 		if enabled {
 			providerCount++
 		}
@@ -182,6 +187,7 @@ func (h *SettingHandler) resolveSettingsUpdateSecurity(c *gin.Context, prepared 
 	prepared.localCaptchaEnabled = localCaptchaEnabled
 	prepared.recaptchaEnabled = recaptchaEnabled
 	prepared.capEnabled = capEnabled
+	prepared.tencentCaptchaEnabled = tencentCaptchaEnabled
 	prepared.clientIPResolutionMode = clientIPResolutionMode
 	prepared.clientIPTrustedProxies = clientIPTrustedProxies
 	return true

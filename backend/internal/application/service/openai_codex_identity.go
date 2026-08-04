@@ -2,6 +2,7 @@ package service
 
 import (
 	"net/http"
+	"regexp"
 	"strings"
 	"sync/atomic"
 
@@ -9,42 +10,120 @@ import (
 	"github.com/google/uuid"
 )
 
-// codexUpstreamMinVersion 上游 /backend-api/codex 接受的最低 version 头：
-// 若请求携带 version 且低于该值，上游直接 404（issue #3901，2026-07 实测）。
-const codexUpstreamMinVersion = "0.144.0"
+const (
+	codexUpstreamMinVersion  = "0.144.0"
+	codexClientVersionMaxLen = 64
+)
 
-var codexOriginatorNormalization = func() *atomic.Bool {
-	enabled := &atomic.Bool{}
-	enabled.Store(true)
-	return enabled
-}()
+var codexClientVersionPattern = regexp.MustCompile(`^[0-9]+(\.[0-9]+){1,3}(-[0-9A-Za-z.]+)?$`)
 
-// SetCodexOriginatorNormalizationEnabled publishes the process-wide snapshot
-// used by the shared outbound identity normalization point.
-func SetCodexOriginatorNormalizationEnabled(enabled bool) {
-	codexOriginatorNormalization.Store(enabled)
+func NormalizeCodexClientVersion(version string) string {
+	version = strings.TrimSpace(version)
+	if version == "" || len(version) > codexClientVersionMaxLen || !codexClientVersionPattern.MatchString(version) {
+		return ""
+	}
+	return version
 }
 
-// ensureCodexIdentityHeaders 补齐 OAuth（ChatGPT 内部接口）出站请求所需的 Codex 身份头。
-// 已有 User-Agent 与 version 保持不变，交给紧随其后的 enforceCodexIdentityHeaders
-// 做官方身份配对与最低版本校正。
+func buildCodexCLIUserAgent(version string) string {
+	if version = NormalizeCodexClientVersion(version); version == "" {
+		return codexCLIUserAgent
+	}
+	return openai.CodexCLIOriginator + "/" + version + codexCLIUserAgentSuffix
+}
+
+var codexIdentityEnforcement = func() *atomic.Bool {
+	v := &atomic.Bool{}
+	v.Store(true)
+	return v
+}()
+
+func SetCodexIdentityEnforcementEnabled(enabled bool) {
+	codexIdentityEnforcement.Store(enabled)
+}
+
+// SetCodexOriginatorNormalizationEnabled is retained for source compatibility
+// with the previous rollback switch. Identity enforcement supersedes the
+// narrower originator-only normalization behavior.
+func SetCodexOriginatorNormalizationEnabled(enabled bool) {
+	SetCodexIdentityEnforcementEnabled(enabled)
+}
+
+type codexCanonicalUserAgentResolverHolder struct {
+	resolve func() string
+}
+
+// The gateway calls this on every OAuth request. An atomic resolver snapshot
+// avoids adding a process-wide RWMutex to the request hot path.
+var codexCanonicalUAResolver atomic.Pointer[codexCanonicalUserAgentResolverHolder]
+
+func SetCodexCanonicalUserAgentResolver(resolver func() string) {
+	if resolver == nil {
+		codexCanonicalUAResolver.Store(nil)
+		return
+	}
+	codexCanonicalUAResolver.Store(&codexCanonicalUserAgentResolverHolder{resolve: resolver})
+}
+
+func codexCanonicalUserAgent() string {
+	if holder := codexCanonicalUAResolver.Load(); holder != nil && holder.resolve != nil {
+		if ua := strings.TrimSpace(holder.resolve()); ua != "" {
+			return ua
+		}
+	}
+	return codexCLIUserAgent
+}
+
+type codexOutboundIdentity struct {
+	userAgent  string
+	originator string
+	version    string
+}
+
+func resolveCodexOutboundIdentity(candidateUA string) codexOutboundIdentity {
+	canonical := codexCanonicalUserAgent()
+	ua := strings.TrimSpace(candidateUA)
+	if ua == "" {
+		ua = canonical
+	}
+	originator, pairedUA, ok := openai.PairCodexClientIdentity(ua)
+	if !ok {
+		if originator, pairedUA, ok = openai.PairCodexClientIdentity(canonical); !ok {
+			originator, pairedUA = openai.CodexCLIOriginator, codexCLIUserAgent
+		}
+	}
+	version := codexClientVersionFromUA(canonical)
+	if rebuilt := openai.SetCodexUserAgentVersion(pairedUA, version); rebuilt != "" {
+		pairedUA = rebuilt
+	}
+	return codexOutboundIdentity{userAgent: pairedUA, originator: originator, version: version}
+}
+
+func codexClientVersionFromUA(ua string) string {
+	version := NormalizeCodexClientVersion(openai.CodexUserAgentVersion(ua))
+	if version == "" || CompareVersions(version, codexUpstreamMinVersion) < 0 {
+		return codexCLIVersion
+	}
+	return version
+}
+
 func ensureCodexIdentityHeaders(h http.Header) {
 	if h == nil {
 		return
 	}
+	identity := resolveCodexOutboundIdentity("")
 	if strings.TrimSpace(h.Get("user-agent")) == "" {
-		h.Set("user-agent", codexCLIUserAgent)
+		h.Set("user-agent", identity.userAgent)
 	}
 	if strings.TrimSpace(h.Get("originator")) == "" {
-		h.Set("originator", openai.CodexCLIOriginator)
+		h.Set("originator", identity.originator)
 	}
 	if strings.TrimSpace(h.Get("version")) == "" {
-		h.Set("version", codexCLIVersion)
+		h.Set("version", identity.version)
 	}
 	h.Set("OpenAI-Beta", "responses=experimental")
 }
 
-// applyOpenAICodexProbeHeaders 为合成探测请求补齐 Codex 身份和引擎指纹。
 func applyOpenAICodexProbeHeaders(h http.Header) {
 	if h == nil {
 		return
@@ -53,24 +132,30 @@ func applyOpenAICodexProbeHeaders(h http.Header) {
 	h.Set("X-Codex-Window-ID", uuid.NewString())
 }
 
-// enforceCodexIdentityHeaders 收口 OAuth（ChatGPT 内部接口）出站请求的客户端身份头。
-// 上游要求 originator 与 User-Agent 首段配套且为官方客户端标识，version 头（若携带）
-// 不低于 0.144.0，任一不满足即 404（issue #3901）。以最终 User-Agent 为准推导配套
-// originator；推导不出官方身份（第三方 UA / UA 缺失）时整体回退为默认 Codex CLI 身份。
-//
-// 仅对携带 originator 的请求生效；需要从缺失身份头恢复的调用方应先调用
-// ensureCodexIdentityHeaders。
-// 必须在所有 User-Agent 改写（自定义 UA / ForceCodexCLI / 浏览器 UA 兜底）之后调用。
 func enforceCodexIdentityHeaders(h http.Header) {
+	enforceCodexIdentityHeadersWithUA(h, "")
+}
+
+func enforceCodexIdentityHeadersWithUA(h http.Header, overrideUA string) {
 	if h == nil || h.Get("originator") == "" {
 		return
 	}
+	if !codexIdentityEnforcement.Load() {
+		pairCodexIdentityHeaders(h)
+		return
+	}
+	identity := resolveCodexOutboundIdentity(overrideUA)
+	h.Set("user-agent", identity.userAgent)
+	h.Set("originator", identity.originator)
+	h.Set("version", identity.version)
+}
+
+func pairCodexIdentityHeaders(h http.Header) {
 	originator, pairedUA, ok := openai.PairCodexClientIdentity(h.Get("user-agent"))
 	if !ok {
-		originator, pairedUA = openai.CodexCLIOriginator, codexCLIUserAgent
-	}
-	if codexOriginatorNormalization.Load() {
-		originator, pairedUA, _ = openai.NormalizeCodexClientIdentityToCLI(originator, pairedUA)
+		identity := resolveCodexOutboundIdentity("")
+		originator, pairedUA = identity.originator, identity.userAgent
+		h.Set("version", identity.version)
 	}
 	h.Set("user-agent", pairedUA)
 	h.Set("originator", originator)

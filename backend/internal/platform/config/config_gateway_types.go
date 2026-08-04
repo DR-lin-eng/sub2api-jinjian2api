@@ -29,8 +29,11 @@ type GatewayConfig struct {
 	// ForceCodexCLI: 强制将 OpenAI `/v1/responses` 请求按 Codex CLI 处理。
 	// 用于网关未透传/改写 User-Agent 时的兼容兜底（默认关闭，避免影响其他客户端）。
 	ForceCodexCLI bool `mapstructure:"force_codex_cli"`
-	// DisableCodexOriginatorNormalization: 关闭把上游降载桶中的 Codex originator
-	// 改写为官方 CLI 身份。反义命名保证零值配置默认启用保护。
+	// DisableCodexIdentityEnforcement disables canonical Codex outbound identity
+	// enforcement. The inverted name keeps the zero value secure.
+	DisableCodexIdentityEnforcement bool `mapstructure:"disable_codex_identity_enforcement"`
+	// DisableCodexOriginatorNormalization is the legacy alias retained for
+	// smooth upgrades. Either switch disables full identity enforcement.
 	DisableCodexOriginatorNormalization bool `mapstructure:"disable_codex_originator_normalization"`
 	// CodexImageGenerationBridgeEnabled: 是否为 Codex `/v1/responses` 自动注入 image_generation 工具和桥接指令。
 	// 默认关闭，避免纯文本 Codex 请求被意外改写；显式携带 image_generation 工具的请求仍按分组能力转发。

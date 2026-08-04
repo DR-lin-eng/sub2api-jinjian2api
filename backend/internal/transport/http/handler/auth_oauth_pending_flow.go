@@ -66,23 +66,31 @@ type bindPendingOAuthLoginRequest struct {
 }
 
 type createPendingOAuthAccountRequest struct {
-	Email            string `json:"email" binding:"required,email"`
-	VerifyCode       string `json:"verify_code,omitempty"`
-	Password         string `json:"password" binding:"required,min=6"`
-	InvitationCode   string `json:"invitation_code,omitempty"`
-	AffCode          string `json:"aff_code,omitempty"`
-	AdoptDisplayName *bool  `json:"adopt_display_name,omitempty"`
-	AdoptAvatar      *bool  `json:"adopt_avatar,omitempty"`
+	Email                 string `json:"email" binding:"required,email"`
+	VerifyCode            string `json:"verify_code,omitempty"`
+	Password              string `json:"password" binding:"required,min=6"`
+	InvitationCode        string `json:"invitation_code,omitempty"`
+	AffCode               string `json:"aff_code,omitempty"`
+	CaptchaToken          string `json:"captcha_token,omitempty"`
+	TurnstileToken        string `json:"turnstile_token,omitempty"`
+	TencentCaptchaTicket  string `json:"tencent_captcha_ticket,omitempty"`
+	TencentCaptchaRandstr string `json:"tencent_captcha_randstr,omitempty"`
+	CaptchaID             string `json:"captcha_id,omitempty"`
+	CaptchaCode           string `json:"captcha_code,omitempty"`
+	AdoptDisplayName      *bool  `json:"adopt_display_name,omitempty"`
+	AdoptAvatar           *bool  `json:"adopt_avatar,omitempty"`
 }
 
 type sendPendingOAuthVerifyCodeRequest struct {
-	Email             string `json:"email" binding:"required,email"`
-	CaptchaToken      string `json:"captcha_token,omitempty"`
-	TurnstileToken    string `json:"turnstile_token,omitempty"`
-	CaptchaID         string `json:"captcha_id,omitempty"`
-	CaptchaCode       string `json:"captcha_code,omitempty"`
-	PendingAuthToken  string `json:"pending_auth_token,omitempty"`
-	PendingOAuthToken string `json:"pending_oauth_token,omitempty"`
+	Email                 string `json:"email" binding:"required,email"`
+	CaptchaToken          string `json:"captcha_token,omitempty"`
+	TurnstileToken        string `json:"turnstile_token,omitempty"`
+	TencentCaptchaTicket  string `json:"tencent_captcha_ticket,omitempty"`
+	TencentCaptchaRandstr string `json:"tencent_captcha_randstr,omitempty"`
+	CaptchaID             string `json:"captcha_id,omitempty"`
+	CaptchaCode           string `json:"captcha_code,omitempty"`
+	PendingAuthToken      string `json:"pending_auth_token,omitempty"`
+	PendingOAuthToken     string `json:"pending_oauth_token,omitempty"`
 }
 
 func (r bindPendingOAuthLoginRequest) adoptionDecision() oauthAdoptionDecisionRequest {
@@ -567,7 +575,7 @@ func (h *AuthHandler) SendPendingOAuthVerifyCode(c *gin.Context) {
 		return
 	}
 
-	if err := h.authService.VerifyTurnstile(c.Request.Context(), firstHumanVerificationToken(req.CaptchaToken, req.TurnstileToken), ip.GetClientIP(c)); err != nil {
+	if err := h.authService.VerifyHumanVerification(c.Request.Context(), humanVerificationProof(req.CaptchaToken, req.TurnstileToken, req.TencentCaptchaTicket, req.TencentCaptchaRandstr), ip.GetClientIP(c)); err != nil {
 		response.ErrorFrom(c, err)
 		return
 	}
@@ -1722,6 +1730,15 @@ func (h *AuthHandler) createPendingOAuthAccount(c *gin.Context, provider string)
 	}
 	if strings.TrimSpace(provider) != "" && !strings.EqualFold(strings.TrimSpace(session.ProviderType), provider) {
 		response.BadRequest(c, "Pending oauth session provider mismatch")
+		return
+	}
+	if err := h.authService.VerifyHumanVerificationForRegister(
+		c.Request.Context(),
+		humanVerificationProof(req.CaptchaToken, req.TurnstileToken, req.TencentCaptchaTicket, req.TencentCaptchaRandstr),
+		ip.GetClientIP(c),
+		req.VerifyCode,
+	); err != nil {
+		response.ErrorFrom(c, err)
 		return
 	}
 

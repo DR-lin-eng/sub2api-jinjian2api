@@ -64,6 +64,8 @@ func (h *SettingHandler) GetPublicSettings(c *gin.Context) {
 		RecaptchaSiteKey:                 settings.RecaptchaSiteKey,
 		CapEnabled:                       settings.CapEnabled,
 		CapAPIEndpoint:                   settings.CapAPIEndpoint,
+		TencentCaptchaEnabled:            settings.TencentCaptchaEnabled,
+		TencentCaptchaAppID:              settings.TencentCaptchaAppID,
 		LocalCaptchaEnabled:              settings.LocalCaptchaEnabled,
 		SiteName:                         settings.SiteName,
 		SiteLogo:                         settings.SiteLogo,

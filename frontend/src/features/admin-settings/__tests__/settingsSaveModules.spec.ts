@@ -6,6 +6,7 @@ import {
 import { createSettingsForm } from "@/features/admin-settings/presentation/composables/settingsForm";
 import { buildSettingsSavePayload } from "@/features/admin-settings/presentation/composables/settingsSavePayload";
 import { prepareSettingsSave } from "@/features/admin-settings/presentation/composables/settingsSavePreparation";
+import { useSettingsIdentityAccess } from "@/features/admin-settings/presentation/composables/useSettingsIdentityAccess";
 
 function createForm() {
   return createSettingsForm((zh) => zh);
@@ -190,6 +191,7 @@ describe("settings save payload", () => {
     expect(payload.codex_cli_only_whitelist).toBe(
       '[{"originator":"allowed"}]',
     );
+    expect(payload).not.toHaveProperty("openai_codex_client_version_synced");
     expect(payload.balance_low_notify_recharge_url).toBe(
       "https://admin.example.com",
     );
@@ -248,5 +250,62 @@ describe("settings save payload", () => {
         },
       ],
     });
+  });
+
+  it("includes Tencent credentials only when the administrator entered them", () => {
+    const form = createForm();
+    form.tencent_captcha_enabled = true;
+    form.tencent_captcha_app_id = "123456789";
+    form.tencent_captcha_app_secret_key = "app-secret";
+    form.tencent_captcha_cloud_secret_id = "cloud-id";
+    form.tencent_captcha_cloud_secret_key = "";
+
+    const payload = buildSettingsSavePayload({
+      form,
+      normalizedDefaultSubscriptions: [],
+      registrationEmailSuffixWhitelistTags: [],
+      clientIPTrustedProxies: [],
+      wechatStoredMode: "open",
+      claudeOAuthSystemPromptBlocksJSON: "[]",
+      codexFingerprintSignalsJSON: "",
+      codexBlacklistJSON: "",
+      codexWhitelistJSON: "",
+      currentOrigin: "https://admin.example.com",
+      openaiFastPolicyLoaded: false,
+      openaiFastPolicyRules: [],
+      authSourceDefaults: buildAuthSourceDefaultsState({}),
+    });
+
+    expect(payload).toMatchObject({
+      tencent_captcha_enabled: true,
+      tencent_captcha_app_id: "123456789",
+      tencent_captcha_app_secret_key: "app-secret",
+      tencent_captcha_cloud_secret_id: "cloud-id",
+      tencent_captcha_cloud_secret_key: undefined,
+    });
+  });
+});
+
+describe("human verification settings", () => {
+  it("keeps Tencent mutually exclusive with every existing provider", () => {
+    const form = createForm();
+    form.turnstile_enabled = true;
+    form.recaptcha_enabled = true;
+    form.cap_enabled = true;
+    form.local_captcha_enabled = true;
+    const access = useSettingsIdentityAccess(
+      form,
+      (key) => key,
+      (_zh, en) => en,
+      vi.fn(async () => true),
+    );
+
+    access.setHumanVerificationProvider("tencent_captcha_enabled", true);
+
+    expect(form.tencent_captcha_enabled).toBe(true);
+    expect(form.turnstile_enabled).toBe(false);
+    expect(form.recaptcha_enabled).toBe(false);
+    expect(form.cap_enabled).toBe(false);
+    expect(form.local_captcha_enabled).toBe(false);
   });
 });

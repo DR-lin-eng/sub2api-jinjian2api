@@ -754,11 +754,10 @@ func TestOpenAIGatewayService_Forward_WSv2_OAuthStoreFalseByDefault(t *testing.T
 	require.Equal(t, isolateOpenAISessionID(0, "conv-oauth-1"), captureDialer.lastHeaders.Get("conversation_id"))
 }
 
-func TestOpenAIGatewayService_Forward_WSv2_OAuthOriginatorCompatibility(t *testing.T) {
+func TestOpenAIGatewayService_Forward_WSv2_OAuthCanonicalIdentity(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	// 上游要求 originator 与最终 user-agent 首段配套（issue #3901）：
-	// originator 一律由最终 UA 推导；推导不出官方身份时整体回退默认 Codex CLI 身份。
+	// WSv2 与 HTTP 使用相同的 OAuth 出站身份策略。
 	tests := []struct {
 		name           string
 		userAgent      string
@@ -766,22 +765,22 @@ func TestOpenAIGatewayService_Forward_WSv2_OAuthOriginatorCompatibility(t *testi
 		wantOriginator string
 		wantUA         string
 	}{
-		{name: "official ua pairs originator", userAgent: "Codex Desktop/1.2.3", wantOriginator: "Codex Desktop", wantUA: "Codex Desktop/1.2.3"},
+		{name: "desktop identity canonicalized", userAgent: "Codex Desktop/1.2.3", wantOriginator: "codex_cli_rs", wantUA: codexCLIUserAgent},
 		{
-			name:           "mismatched originator repaired from ua",
+			name:           "vscode identity canonicalized",
 			userAgent:      "codex_vscode/0.140.2 (Mac OS X 14.0; arm64) vscode (codex_vscode; 0.140.2)",
 			originator:     "codex_cli_rs",
-			wantOriginator: "codex_vscode",
-			wantUA:         "codex_vscode/0.140.2 (Mac OS X 14.0; arm64) vscode (codex_vscode; 0.140.2)",
+			wantOriginator: "codex_cli_rs",
+			wantUA:         codexCLIUserAgent,
 		},
 		{
-			name:           "load-shed originator normalized to cli identity",
+			name:           "tui identity canonicalized",
 			userAgent:      "codex-tui/0.140.2 (Mac OS X 14.0; arm64) iTerm (codex-tui; 0.140.2)",
 			originator:     "codex-tui",
 			wantOriginator: "codex_cli_rs",
-			wantUA:         "codex_cli_rs/0.140.2 (Mac OS X 14.0; arm64) iTerm",
+			wantUA:         codexCLIUserAgent,
 		},
-		{name: "official originator without ua falls back to default identity", originator: "codex_vscode", wantOriginator: "codex_cli_rs", wantUA: codexCLIUserAgent},
+		{name: "official originator without ua canonicalized", originator: "codex_vscode", wantOriginator: "codex_cli_rs", wantUA: codexCLIUserAgent},
 	}
 
 	for _, tt := range tests {

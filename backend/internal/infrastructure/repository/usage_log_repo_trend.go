@@ -141,7 +141,7 @@ func (r *usageLogRepository) getDashboardUserInsights(ctx context.Context, start
 				GROUP BY date, u.user_id, us.email, us.username
 			),
 			user_totals AS (
-				SELECT user_id, MAX(email) AS email, SUM(requests) AS requests, SUM(tokens) AS tokens, SUM(actual_cost) AS actual_cost
+				SELECT user_id, MAX(email) AS email, MAX(username) AS username, SUM(requests) AS requests, SUM(tokens) AS tokens, SUM(actual_cost) AS actual_cost
 				FROM user_buckets
 				GROUP BY user_id
 			)`, safeDateFormat(granularity))
@@ -151,13 +151,14 @@ func (r *usageLogRepository) getDashboardUserInsights(ctx context.Context, start
 				SELECT
 					u.user_id,
 					COALESCE(us.email, '') AS email,
+					COALESCE(us.username, '') AS username,
 					COUNT(*) AS requests,
 					COALESCE(SUM(u.input_tokens + u.output_tokens + u.cache_creation_tokens + u.cache_read_tokens), 0) AS tokens,
 					COALESCE(SUM(u.actual_cost), 0) AS actual_cost
 				FROM usage_logs u
 				LEFT JOIN users us ON u.user_id = us.id
 				WHERE u.created_at >= $1 AND u.created_at < $2
-				GROUP BY u.user_id, us.email
+				GROUP BY u.user_id, us.email, us.username
 			)`)
 	}
 
@@ -199,7 +200,7 @@ func (r *usageLogRepository) getDashboardUserInsights(ctx context.Context, start
 			)`, len(args))
 		selects = append(selects, `
 			SELECT
-				'ranking' AS row_kind, '' AS date, user_id, email, '' AS username, requests, tokens,
+				'ranking' AS row_kind, '' AS date, user_id, email, username, requests, tokens,
 				0::numeric AS cost, actual_cost, total_actual_cost, total_requests, total_tokens, row_order
 			FROM ranking_rows`)
 	}
@@ -251,7 +252,7 @@ func (r *usageLogRepository) getDashboardUserInsights(ctx context.Context, start
 				continue
 			}
 			result.Ranking.Ranking = append(result.Ranking.Ranking, usagestats.UserSpendingRankingItem{
-				UserID: userID, Email: email, ActualCost: actualCost, Requests: requests, Tokens: tokens,
+				UserID: userID, Email: email, Username: username, ActualCost: actualCost, Requests: requests, Tokens: tokens,
 			})
 			result.Ranking.TotalActualCost = totalActualCost
 			result.Ranking.TotalRequests = totalRequests

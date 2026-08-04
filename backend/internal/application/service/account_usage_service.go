@@ -123,7 +123,7 @@ const (
 	usageCacheCleanupInterval = time.Minute
 	usageCacheMaxEntries      = 10000
 	grokFreeQuotaWindow       = 24 * time.Hour
-	openAICodexProbeVersion   = "0.144.1"
+	openAICodexProbeVersion   = codexCLIVersion
 )
 
 type boundedAccountCache struct {
@@ -944,7 +944,7 @@ func (s *AccountUsageService) probeOpenAICodexSnapshot(ctx context.Context, acco
 	}
 	// 与真实转发一致：originator 与最终 User-Agent（可能来自指纹缓存）首段配套，否则探针被上游
 	// 404（issue #3901）；缓存里的降载桶身份同样在此归一化，避免探针被回 server_is_overloaded。
-	enforceCodexIdentityHeaders(req.Header)
+	enforceCodexIdentityHeadersWithUA(req.Header, account.GetOpenAIUserAgent())
 	setOpenAIChatGPTAccountHeaders(req.Header, account)
 
 	proxyURL := ""

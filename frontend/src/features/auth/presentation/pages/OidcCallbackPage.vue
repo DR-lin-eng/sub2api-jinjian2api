@@ -706,6 +706,11 @@ async function handleCreateAccount(payload: PendingOAuthCreateAccountPayload) {
       password: payload.password,
       verify_code: payload.verifyCode || undefined,
       invitation_code: payload.invitationCode || undefined,
+      captcha_token: payload.captchaToken || undefined,
+      tencent_captcha_ticket: payload.tencentCaptchaTicket || undefined,
+      tencent_captcha_randstr: payload.tencentCaptchaRandstr || undefined,
+      captcha_id: payload.captchaId || undefined,
+      captcha_code: payload.captchaCode || undefined,
       ...oauthAffiliatePayload(loadOAuthAffiliateCode()),
       ...serializeAdoptionDecision(currentAdoptionDecision())
     })

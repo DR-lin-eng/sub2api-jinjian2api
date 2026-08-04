@@ -358,6 +358,8 @@ export const useAppStore = defineStore('app', () => {
         recaptcha_site_key: '',
         cap_enabled: false,
         cap_api_endpoint: '',
+        tencent_captcha_enabled: false,
+        tencent_captcha_app_id: '',
         site_name: siteName.value,
         site_logo: siteLogo.value,
         site_subtitle: '',

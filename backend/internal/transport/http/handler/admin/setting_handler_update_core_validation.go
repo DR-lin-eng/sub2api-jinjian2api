@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
@@ -14,6 +15,7 @@ func (h *SettingHandler) validateCoreSettingsUpdate(c *gin.Context, prepared *pr
 	previousSettings := prepared.previousSettings
 	recaptchaEnabled := prepared.recaptchaEnabled
 	capEnabled := prepared.capEnabled
+	tencentCaptchaEnabled := prepared.tencentCaptchaEnabled
 
 	// 验证参数
 	if req.DefaultConcurrency < 1 {
@@ -171,6 +173,40 @@ func (h *SettingHandler) validateCoreSettingsUpdate(c *gin.Context, prepared *pr
 				response.ErrorFrom(c, err)
 				return false
 			}
+		}
+	}
+
+	if tencentCaptchaEnabled {
+		req.TencentCaptchaAppID = strings.TrimSpace(req.TencentCaptchaAppID)
+		appID, err := strconv.ParseUint(req.TencentCaptchaAppID, 10, 64)
+		if err != nil || appID == 0 {
+			response.BadRequest(c, "Tencent Captcha CaptchaAppId must be a positive integer when enabled")
+			return false
+		}
+
+		req.TencentCaptchaAppSecretKey = strings.TrimSpace(req.TencentCaptchaAppSecretKey)
+		req.TencentCaptchaCloudSecretID = strings.TrimSpace(req.TencentCaptchaCloudSecretID)
+		req.TencentCaptchaCloudSecretKey = strings.TrimSpace(req.TencentCaptchaCloudSecretKey)
+		if req.TencentCaptchaAppSecretKey == "" {
+			req.TencentCaptchaAppSecretKey = previousSettings.TencentCaptchaAppSecretKey
+		}
+		if req.TencentCaptchaCloudSecretID == "" {
+			req.TencentCaptchaCloudSecretID = previousSettings.TencentCaptchaCloudSecretID
+		}
+		if req.TencentCaptchaCloudSecretKey == "" {
+			req.TencentCaptchaCloudSecretKey = previousSettings.TencentCaptchaCloudSecretKey
+		}
+		if req.TencentCaptchaAppSecretKey == "" {
+			response.BadRequest(c, "Tencent Captcha AppSecretKey is required when enabled")
+			return false
+		}
+		if req.TencentCaptchaCloudSecretID == "" {
+			response.BadRequest(c, "Tencent Cloud SecretId is required when Tencent Captcha is enabled")
+			return false
+		}
+		if req.TencentCaptchaCloudSecretKey == "" {
+			response.BadRequest(c, "Tencent Cloud SecretKey is required when Tencent Captcha is enabled")
+			return false
 		}
 	}
 

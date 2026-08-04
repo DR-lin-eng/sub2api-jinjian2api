@@ -104,7 +104,7 @@
           type="submit"
           :disabled="
             authActionDisabled ||
-            (turnstileEnabled && !turnstileToken) ||
+            (inlineHumanVerificationRequired && !turnstileToken) ||
             (localCaptchaRequired && (!localCaptchaId || !localCaptchaCode))
           "
           class="btn btn-primary w-full"
@@ -170,28 +170,33 @@
             :github-enabled="githubOAuthEnabled"
             :google-enabled="googleOAuthEnabled"
             :show-divider="false"
+            @start="handleOAuthStart"
           />
 
           <LinuxDoOAuthSection
             v-if="linuxdoOAuthEnabled"
             :disabled="authActionDisabled"
             :show-divider="false"
+            @start="handleOAuthStart"
           />
           <DingTalkOAuthSection
             v-if="dingtalkOAuthEnabled"
             :disabled="authActionDisabled"
             :show-divider="false"
+            @start="handleOAuthStart"
           />
           <WechatOAuthSection
             v-if="wechatOAuthEnabled"
             :disabled="authActionDisabled"
             :show-divider="false"
+            @start="handleOAuthStart"
           />
           <OidcOAuthSection
             v-if="oidcOAuthEnabled"
             :disabled="authActionDisabled"
             :provider-name="oidcOAuthProviderName"
             :show-divider="false"
+            @start="handleOAuthStart"
           />
         </div>
       </form>
@@ -239,13 +244,20 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
 import { useAuthStore, useAppStore } from '@/stores'
 import {
+  buildOAuthLoginStartURL,
   clearCredentialKeyPrefetch,
   getPublicSettings,
   isTotp2FARequired,
   isWeChatWebOAuthEnabled,
-  prefetchCredentialKey
+  prefetchCredentialKey,
+  startOAuthLogin,
+  type OAuthLoginStart
 } from '@/features/auth/data/datasources/authDatasource'
-import type { LoginAgreementDocument, TotpLoginResponse } from '@/types'
+import type {
+  LoginAgreementDocument,
+  TencentCaptchaRequestProof,
+  TotpLoginResponse
+} from '@/types'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import { clearAllAffiliateReferralCodes } from '@/core/utils/oauthAffiliate'
 import {
@@ -337,6 +349,14 @@ const showPasskeyLogin = computed(
 
 const localCaptchaRequired = computed(
   () => publicSettingsLoaded.value && localCaptchaEnabled.value && !turnstileEnabled.value
+)
+
+const tencentCaptchaEnabled = computed(
+  () => turnstileEnabled.value && humanVerificationProvider.value === 'tencent'
+)
+
+const inlineHumanVerificationRequired = computed(
+  () => turnstileEnabled.value && !tencentCaptchaEnabled.value
 )
 
 const showOAuthLogin = computed(
@@ -478,6 +498,21 @@ function onTurnstileError(): void {
   errors.turnstile = t('auth.turnstileFailed')
 }
 
+function resetHumanVerification(): void {
+  turnstileRef.value?.reset()
+  turnstileToken.value = ''
+}
+
+async function acquireTencentProof(): Promise<TencentCaptchaRequestProof | null> {
+  if (!tencentCaptchaEnabled.value) return null
+  const proof = await turnstileRef.value?.verifyTencent()
+  if (!proof) return null
+  return {
+    tencent_captcha_ticket: proof.ticket,
+    tencent_captcha_randstr: proof.randstr
+  }
+}
+
 // ==================== Validation ====================
 
 function validateForm(): boolean {
@@ -516,7 +551,7 @@ function validateForm(): boolean {
   }
 
   // Turnstile validation
-  if (turnstileEnabled.value && !turnstileToken.value) {
+  if (inlineHumanVerificationRequired.value && !turnstileToken.value) {
     errors.turnstile = t('auth.completeVerification')
     isValid = false
   }
@@ -543,13 +578,17 @@ async function handleLogin(): Promise<void> {
   isLoading.value = true
 
   try {
+    const tencentProof = await acquireTencentProof()
+    if (tencentCaptchaEnabled.value && !tencentProof) return
+
     // Call auth store login
     const response = await authStore.login({
       email: formData.email,
       password: formData.password,
-      captcha_token: turnstileEnabled.value ? turnstileToken.value : undefined,
+      captcha_token: inlineHumanVerificationRequired.value ? turnstileToken.value : undefined,
       captcha_id: localCaptchaRequired.value ? localCaptchaId.value : undefined,
-      captcha_code: localCaptchaRequired.value ? localCaptchaCode.value : undefined
+      captcha_code: localCaptchaRequired.value ? localCaptchaCode.value : undefined,
+      ...(tencentProof || {})
     })
 
     // Check if 2FA is required
@@ -571,11 +610,6 @@ async function handleLogin(): Promise<void> {
     await router.push(redirectTo)
   } catch (error: unknown) {
     void prefetchCredentialKey()
-    // Reset Turnstile on error
-    if (turnstileRef.value) {
-      turnstileRef.value.reset()
-      turnstileToken.value = ''
-    }
     if (localCaptchaRequired.value) {
       await localCaptchaRef.value?.reset()
     }
@@ -585,6 +619,7 @@ async function handleLogin(): Promise<void> {
     // Also show error toast
     appStore.showError(errorMessage.value)
   } finally {
+    if (turnstileEnabled.value) resetHumanVerification()
     isLoading.value = false
   }
 }
@@ -600,7 +635,9 @@ async function handlePasskeyLogin(): Promise<void> {
 
   passkeyLoading.value = true
   try {
-    await authStore.loginWithPasskey()
+    const tencentProof = await acquireTencentProof()
+    if (tencentCaptchaEnabled.value && !tencentProof) return
+    await authStore.loginWithPasskey(tencentProof || undefined)
     clearAllAffiliateReferralCodes()
     appStore.showSuccess(t('auth.loginSuccess'))
     const redirectTo = (router.currentRoute.value.query.redirect as string) || '/dashboard'
@@ -612,7 +649,35 @@ async function handlePasskeyLogin(): Promise<void> {
     errorMessage.value = extractI18nErrorMessage(error, t, 'auth.errors', fallback)
     appStore.showError(errorMessage.value)
   } finally {
+    if (tencentCaptchaEnabled.value) resetHumanVerification()
     passkeyLoading.value = false
+  }
+}
+
+async function handleOAuthStart(request: OAuthLoginStart): Promise<void> {
+  if (authActionDisabled.value) return
+  if (!tencentCaptchaEnabled.value) {
+    window.location.href = buildOAuthLoginStartURL(request)
+    return
+  }
+
+  isLoading.value = true
+  try {
+    const proof = await acquireTencentProof()
+    if (!proof) return
+    const result = await startOAuthLogin(request, proof)
+    window.location.href = result.authorize_url
+  } catch (error: unknown) {
+    errorMessage.value = extractI18nErrorMessage(
+      error,
+      t,
+      'auth.errors',
+      t('auth.turnstileFailed')
+    )
+    appStore.showError(errorMessage.value)
+  } finally {
+    resetHumanVerification()
+    isLoading.value = false
   }
 }
 

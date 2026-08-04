@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
+	"github.com/Wei-Shaw/sub2api/internal/shared/ip"
 	"github.com/Wei-Shaw/sub2api/internal/shared/response"
 	middleware2 "github.com/Wei-Shaw/sub2api/internal/transport/http/server/middleware"
 	"github.com/gin-gonic/gin"
@@ -43,6 +44,11 @@ type passkeyFinishRequest struct {
 	Credential   json.RawMessage `json:"credential" binding:"required"`
 }
 
+type passkeyBeginLoginRequest struct {
+	TencentCaptchaTicket  string `json:"tencent_captcha_ticket"`
+	TencentCaptchaRandstr string `json:"tencent_captcha_randstr"`
+}
+
 type passkeyRenameRequest struct {
 	Name string `json:"name" binding:"required"`
 }
@@ -66,6 +72,22 @@ const passkeyFinishBodyMaxBytes = 64 * 1024
 // BeginLogin starts a usernameless, discoverable-credential login ceremony.
 func (h *PasskeyHandler) BeginLogin(c *gin.Context) {
 	if !h.requirePasskeysEnabled(c) {
+		return
+	}
+	var req passkeyBeginLoginRequest
+	_ = c.ShouldBindJSON(&req)
+	var authService *service.AuthService
+	if h.authHandler != nil {
+		authService = h.authHandler.authService
+	}
+	if err := verifyTencentCaptchaForAction(
+		c.Request.Context(),
+		authService,
+		h.settingSvc,
+		humanVerificationProof("", "", req.TencentCaptchaTicket, req.TencentCaptchaRandstr),
+		ip.GetClientIP(c),
+	); err != nil {
+		response.ErrorFrom(c, err)
 		return
 	}
 	assertion, token, err := h.passkeys.BeginLogin(c.Request.Context())

@@ -145,6 +145,13 @@ func load(allowMissingJWTSecret bool) (*Config, error) {
 		cfg.Gateway.ForcedCodexInstructionsTemplate = string(content)
 	}
 
+	// The old originator-only rollback switch now aliases the complete identity
+	// enforcement switch. Either true value preserves the operator's rollback
+	// intent across an in-place upgrade.
+	if cfg.Gateway.DisableCodexOriginatorNormalization {
+		cfg.Gateway.DisableCodexIdentityEnforcement = true
+	}
+
 	// 兼容旧键 gateway.openai_ws.sticky_previous_response_ttl_seconds。
 	// 新键未配置（<=0）时回退旧键；新键优先。
 	if cfg.Gateway.OpenAIWS.StickyResponseIDTTLSeconds <= 0 && cfg.Gateway.OpenAIWS.StickyPreviousResponseTTLSeconds > 0 {

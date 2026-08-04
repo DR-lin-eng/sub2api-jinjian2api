@@ -40,6 +40,9 @@ export interface ModelPlazaGroup {
   peak_end: string
   peak_rate_multiplier: number
   is_exclusive: boolean
+  /** 图片计费模型使用独立倍率，不取分组或用户专属倍率。 */
+  image_rate_independent: boolean
+  image_rate_multiplier: number
   models: PlazaModel[]
 }
 

@@ -259,6 +259,70 @@ func canonicalizeCodexOriginator(name string) string {
 // target identity used when an upstream load-shed bucket must be avoided.
 const CodexCLIOriginator = "codex_cli_rs"
 
+// CodexUserAgentVersion extracts the complete version token from a Codex-style
+// User-Agent. Unlike ParseCodexEngineVersion, it preserves prerelease suffixes
+// because the outbound version header must match the User-Agent exactly.
+func CodexUserAgentVersion(userAgent string) string {
+	ua := strings.TrimSpace(userAgent)
+	slash := strings.IndexByte(ua, '/')
+	if slash <= 0 {
+		return ""
+	}
+	rest := ua[slash+1:]
+	if space := strings.IndexByte(rest, ' '); space >= 0 {
+		rest = rest[:space]
+	}
+	return strings.TrimSpace(rest)
+}
+
+// SetCodexUserAgentVersion rebuilds only the version declarations in a
+// Codex-style User-Agent, preserving the client name and machine fingerprint.
+// It returns an empty string when the input cannot be rebuilt safely.
+func SetCodexUserAgentVersion(userAgent, version string) string {
+	ua := strings.TrimSpace(userAgent)
+	version = strings.TrimSpace(version)
+	if version == "" {
+		return ""
+	}
+	slash := strings.IndexByte(ua, '/')
+	if slash <= 0 {
+		return ""
+	}
+	client := strings.TrimSpace(ua[:slash])
+	if client == "" {
+		return ""
+	}
+	rest := ua[slash+1:]
+	tail := ""
+	if space := strings.IndexByte(rest, ' '); space >= 0 {
+		tail = rest[space:]
+	} else if strings.TrimSpace(rest) == "" {
+		return ""
+	}
+	return rewriteCodexUATrailerVersion(client+"/"+version+tail, version)
+}
+
+func rewriteCodexUATrailerVersion(ua, version string) string {
+	open := strings.LastIndex(ua, "(")
+	if open < 0 {
+		return ua
+	}
+	closeIdx := strings.Index(ua[open+1:], ")")
+	if closeIdx < 0 {
+		return ua
+	}
+	inner := ua[open+1 : open+1+closeIdx]
+	semi := strings.Index(inner, ";")
+	if semi < 0 {
+		return ua
+	}
+	name := strings.TrimSpace(inner[:semi])
+	if name == "" || !IsCodexOfficialClientOriginator(name) {
+		return ua
+	}
+	return ua[:open+1] + name + "; " + version + ua[open+1+closeIdx:]
+}
+
 const codexLoadShedOriginator = "codex-tui"
 
 // IsCodexLoadShedOriginator reports whether upstream currently assigns the

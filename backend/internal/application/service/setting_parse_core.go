@@ -26,41 +26,46 @@ func (s *SettingService) parseCoreSystemSettings(settings map[string]string) *Sy
 		}
 	}
 	result := &SystemSettings{
-		RegistrationEnabled:              settings[SettingKeyRegistrationEnabled] == "true",
-		EmailVerifyEnabled:               emailVerifyEnabled,
-		RegistrationEmailSuffixWhitelist: ParseRegistrationEmailSuffixWhitelist(settings[SettingKeyRegistrationEmailSuffixWhitelist]),
-		PromoCodeEnabled:                 settings[SettingKeyPromoCodeEnabled] != "false", // 默认启用
-		PasswordResetEnabled:             emailVerifyEnabled && settings[SettingKeyPasswordResetEnabled] == "true",
-		FrontendURL:                      settings[SettingKeyFrontendURL],
-		InvitationCodeEnabled:            settings[SettingKeyInvitationCodeEnabled] == "true",
-		TotpEnabled:                      settings[SettingKeyTotpEnabled] == "true",
-		PasskeyEnabled:                   s.passkeySettingEnabled(settings),
-		SessionBindingEnabled:            settings[SettingKeySessionBindingEnabled] == "true", // 默认关闭
-		StepUpEnabled:                    settings[SettingKeyStepUpEnabled] == "true",         // 默认关闭
-		AuditLogRetentionDays:            parseAuditLogRetentionDays(settings[SettingKeyAuditLogRetentionDays]),
-		LoginAgreementEnabled:            settings[SettingKeyLoginAgreementEnabled] == "true",
-		LoginAgreementMode:               normalizeLoginAgreementMode(settings[SettingKeyLoginAgreementMode]),
-		LoginAgreementUpdatedAt:          loginAgreementUpdatedAt,
-		LoginAgreementDocuments:          loginAgreementDocuments,
-		SMTPHost:                         settings[SettingKeySMTPHost],
-		SMTPUsername:                     settings[SettingKeySMTPUsername],
-		SMTPFrom:                         settings[SettingKeySMTPFrom],
-		SMTPFromName:                     settings[SettingKeySMTPFromName],
-		SMTPUseTLS:                       settings[SettingKeySMTPUseTLS] == "true",
-		SMTPPasswordConfigured:           settings[SettingKeySMTPPassword] != "",
-		TurnstileEnabled:                 settings[SettingKeyTurnstileEnabled] == "true",
-		TurnstileSiteKey:                 settings[SettingKeyTurnstileSiteKey],
-		TurnstileSecretKeyConfigured:     settings[SettingKeyTurnstileSecretKey] != "",
-		RecaptchaEnabled:                 settings[SettingKeyRecaptchaEnabled] == "true",
-		RecaptchaSiteKey:                 settings[SettingKeyRecaptchaSiteKey],
-		RecaptchaSecretKeyConfigured:     settings[SettingKeyRecaptchaSecretKey] != "",
-		CapEnabled:                       settings[SettingKeyCapEnabled] == "true",
-		CapAPIEndpoint:                   settings[SettingKeyCapAPIEndpoint],
-		CapSecretKeyConfigured:           settings[SettingKeyCapSecretKey] != "",
-		LocalCaptchaEnabled:              settings[SettingKeyLocalCaptchaEnabled] == "true", // 默认关闭
-		APIKeyACLTrustForwardedIP:        clientIPResolutionMode != ip.ResolutionModeDirect,
-		ClientIPResolutionMode:           clientIPResolutionMode,
-		ClientIPTrustedProxies:           clientIPTrustedProxies,
+		RegistrationEnabled:                    settings[SettingKeyRegistrationEnabled] == "true",
+		EmailVerifyEnabled:                     emailVerifyEnabled,
+		RegistrationEmailSuffixWhitelist:       ParseRegistrationEmailSuffixWhitelist(settings[SettingKeyRegistrationEmailSuffixWhitelist]),
+		PromoCodeEnabled:                       settings[SettingKeyPromoCodeEnabled] != "false", // 默认启用
+		PasswordResetEnabled:                   emailVerifyEnabled && settings[SettingKeyPasswordResetEnabled] == "true",
+		FrontendURL:                            settings[SettingKeyFrontendURL],
+		InvitationCodeEnabled:                  settings[SettingKeyInvitationCodeEnabled] == "true",
+		TotpEnabled:                            settings[SettingKeyTotpEnabled] == "true",
+		PasskeyEnabled:                         s.passkeySettingEnabled(settings),
+		SessionBindingEnabled:                  settings[SettingKeySessionBindingEnabled] == "true", // 默认关闭
+		StepUpEnabled:                          settings[SettingKeyStepUpEnabled] == "true",         // 默认关闭
+		AuditLogRetentionDays:                  parseAuditLogRetentionDays(settings[SettingKeyAuditLogRetentionDays]),
+		LoginAgreementEnabled:                  settings[SettingKeyLoginAgreementEnabled] == "true",
+		LoginAgreementMode:                     normalizeLoginAgreementMode(settings[SettingKeyLoginAgreementMode]),
+		LoginAgreementUpdatedAt:                loginAgreementUpdatedAt,
+		LoginAgreementDocuments:                loginAgreementDocuments,
+		SMTPHost:                               settings[SettingKeySMTPHost],
+		SMTPUsername:                           settings[SettingKeySMTPUsername],
+		SMTPFrom:                               settings[SettingKeySMTPFrom],
+		SMTPFromName:                           settings[SettingKeySMTPFromName],
+		SMTPUseTLS:                             settings[SettingKeySMTPUseTLS] == "true",
+		SMTPPasswordConfigured:                 settings[SettingKeySMTPPassword] != "",
+		TurnstileEnabled:                       settings[SettingKeyTurnstileEnabled] == "true",
+		TurnstileSiteKey:                       settings[SettingKeyTurnstileSiteKey],
+		TurnstileSecretKeyConfigured:           settings[SettingKeyTurnstileSecretKey] != "",
+		RecaptchaEnabled:                       settings[SettingKeyRecaptchaEnabled] == "true",
+		RecaptchaSiteKey:                       settings[SettingKeyRecaptchaSiteKey],
+		RecaptchaSecretKeyConfigured:           settings[SettingKeyRecaptchaSecretKey] != "",
+		CapEnabled:                             settings[SettingKeyCapEnabled] == "true",
+		CapAPIEndpoint:                         settings[SettingKeyCapAPIEndpoint],
+		CapSecretKeyConfigured:                 settings[SettingKeyCapSecretKey] != "",
+		TencentCaptchaEnabled:                  settings[SettingKeyTencentCaptchaEnabled] == "true",
+		TencentCaptchaAppID:                    settings[SettingKeyTencentCaptchaAppID],
+		TencentCaptchaAppSecretKeyConfigured:   settings[SettingKeyTencentCaptchaAppSecretKey] != "",
+		TencentCaptchaCloudSecretIDConfigured:  settings[SettingKeyTencentCaptchaCloudSecretID] != "",
+		TencentCaptchaCloudSecretKeyConfigured: settings[SettingKeyTencentCaptchaCloudSecretKey] != "",
+		LocalCaptchaEnabled:                    settings[SettingKeyLocalCaptchaEnabled] == "true", // 默认关闭
+		APIKeyACLTrustForwardedIP:              clientIPResolutionMode != ip.ResolutionModeDirect,
+		ClientIPResolutionMode:                 clientIPResolutionMode,
+		ClientIPTrustedProxies:                 clientIPTrustedProxies,
 		ClientIPResolutionStatus: ip.ResolutionStatus{
 			Mode:                   clientIPResolutionMode,
 			CloudflareRangesSource: "embedded",
@@ -137,6 +142,9 @@ func (s *SettingService) parseCoreSystemSettings(settings map[string]string) *Sy
 	result.TurnstileSecretKey = settings[SettingKeyTurnstileSecretKey]
 	result.RecaptchaSecretKey = settings[SettingKeyRecaptchaSecretKey]
 	result.CapSecretKey = settings[SettingKeyCapSecretKey]
+	result.TencentCaptchaAppSecretKey = settings[SettingKeyTencentCaptchaAppSecretKey]
+	result.TencentCaptchaCloudSecretID = settings[SettingKeyTencentCaptchaCloudSecretID]
+	result.TencentCaptchaCloudSecretKey = settings[SettingKeyTencentCaptchaCloudSecretKey]
 
 	return result
 }

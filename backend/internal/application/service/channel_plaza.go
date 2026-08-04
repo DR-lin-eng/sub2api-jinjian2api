@@ -30,18 +30,20 @@ type PlazaModel struct {
 // 与 AvailableGroupRef 相比多了 Description 与 Models；Models 来自该分组关联渠道的
 // 支持模型（按分组平台隔离，防跨平台泄漏），与「可用渠道」页口径一致。
 type PlazaGroup struct {
-	ID                 int64
-	Name               string
-	Description        string
-	Platform           string
-	SubscriptionType   string
-	RateMultiplier     float64
-	PeakRateEnabled    bool
-	PeakStart          string
-	PeakEnd            string
-	PeakRateMultiplier float64
-	IsExclusive        bool
-	Models             []PlazaModel
+	ID                   int64
+	Name                 string
+	Description          string
+	Platform             string
+	SubscriptionType     string
+	RateMultiplier       float64
+	PeakRateEnabled      bool
+	PeakStart            string
+	PeakEnd              string
+	PeakRateMultiplier   float64
+	IsExclusive          bool
+	ImageRateIndependent bool
+	ImageRateMultiplier  float64
+	Models               []PlazaModel
 }
 
 // PlazaModelSource supplies the schedulable-account model names used by the
@@ -63,6 +65,8 @@ type PlazaListOptions struct {
 // 平台隔离），仅把顶层从渠道换成分组：
 //   - 渠道按 lower(name) 排序后遍历，保证同名模型去重结果确定；
 //   - 同分组同名模型「先见者胜」，仅当已存条目无定价而新条目有定价时升级替换；
+//   - 图片计费模型按实收口径合成展示档位价（分组图片价 > 渠道档位价 >
+//     渠道默认按次价），不修改渠道定价缓存；
 //   - 每个模型附带 LiteLLM 官方参考价（查不到为 nil）；
 //   - AutoPublicModels 开启时，非专属分组会补齐平台默认模型与可调度账号模型；
 //   - 只返回 Models 非空的分组；分组按 RateMultiplier 升序（同倍率按名称），
@@ -84,22 +88,26 @@ func (s *ChannelService) ListPlazaGroups(ctx context.Context, opts PlazaListOpti
 	})
 
 	byGroup := make(map[int64]*PlazaGroup, len(groups))
+	groupByID := make(map[int64]*Group, len(groups))
 	order := make([]int64, 0, len(groups))
 	for i := range groups {
-		g := groups[i]
+		g := &groups[i]
 		byGroup[g.ID] = &PlazaGroup{
-			ID:                 g.ID,
-			Name:               g.Name,
-			Description:        g.Description,
-			Platform:           g.Platform,
-			SubscriptionType:   g.SubscriptionType,
-			RateMultiplier:     g.RateMultiplier,
-			PeakRateEnabled:    g.PeakRateEnabled,
-			PeakStart:          g.PeakStart,
-			PeakEnd:            g.PeakEnd,
-			PeakRateMultiplier: g.PeakRateMultiplier,
-			IsExclusive:        g.IsExclusive,
+			ID:                   g.ID,
+			Name:                 g.Name,
+			Description:          g.Description,
+			Platform:             g.Platform,
+			SubscriptionType:     g.SubscriptionType,
+			RateMultiplier:       g.RateMultiplier,
+			PeakRateEnabled:      g.PeakRateEnabled,
+			PeakStart:            g.PeakStart,
+			PeakEnd:              g.PeakEnd,
+			PeakRateMultiplier:   g.PeakRateMultiplier,
+			IsExclusive:          g.IsExclusive,
+			ImageRateIndependent: g.ImageRateIndependent,
+			ImageRateMultiplier:  g.ImageRateMultiplier,
 		}
+		groupByID[g.ID] = g
 		order = append(order, g.ID)
 	}
 
@@ -111,6 +119,7 @@ func (s *ChannelService) ListPlazaGroups(ctx context.Context, opts PlazaListOpti
 		if model.Name == "" || model.Platform == "" {
 			return
 		}
+		model.Pricing = plazaImageDisplayPricing(model.Pricing, groupByID[pg.ID])
 		idx := modelIdx[pg.ID]
 		if idx == nil {
 			idx = make(map[string]int)
@@ -204,6 +213,56 @@ func (s *ChannelService) ListPlazaGroups(ctx context.Context, opts PlazaListOpti
 		return out[i].Name < out[j].Name
 	})
 	return out, nil
+}
+
+// plazaImageDisplayPricing returns a display-only clone for image pricing. Each
+// standard size uses the group override first, then the matching channel tier,
+// then the channel default per-request price. Non-image pricing and groups
+// without image overrides retain the original pointer.
+func plazaImageDisplayPricing(p *ChannelModelPricing, g *Group) *ChannelModelPricing {
+	if p == nil || g == nil || p.BillingMode != BillingModeImage {
+		return p
+	}
+	if g.ImagePrice1K == nil && g.ImagePrice2K == nil && g.ImagePrice4K == nil {
+		return p
+	}
+
+	channelTierPrice := func(label string) *float64 {
+		for i := range p.Intervals {
+			interval := &p.Intervals[i]
+			if strings.EqualFold(strings.TrimSpace(interval.TierLabel), label) && interval.PerRequestPrice != nil {
+				return interval.PerRequestPrice
+			}
+		}
+		return p.PerRequestPrice
+	}
+	tiers := []struct {
+		label      string
+		groupPrice *float64
+	}{
+		{label: "1K", groupPrice: g.ImagePrice1K},
+		{label: "2K", groupPrice: g.ImagePrice2K},
+		{label: "4K", groupPrice: g.ImagePrice4K},
+	}
+
+	clone := *p
+	clone.Intervals = make([]PricingInterval, 0, len(tiers))
+	for i, tier := range tiers {
+		price := tier.groupPrice
+		if price == nil {
+			price = channelTierPrice(tier.label)
+		}
+		if price == nil {
+			continue
+		}
+		value := *price
+		clone.Intervals = append(clone.Intervals, PricingInterval{
+			TierLabel:       tier.label,
+			PerRequestPrice: &value,
+			SortOrder:       i,
+		})
+	}
+	return &clone
 }
 
 func plazaAutoPlatforms(groupPlatform string) []string {

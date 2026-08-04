@@ -156,6 +156,7 @@ var ProviderSet = wire.NewSet(
 	NewTurnstileVerifier,
 	NewRecaptchaVerifier,
 	NewCapVerifier,
+	NewTencentCaptchaVerifier,
 	ProvidePricingRemoteClient,
 	ProvideGitHubReleaseClient,
 	NewProxyExitInfoProber,

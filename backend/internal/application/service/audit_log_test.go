@@ -40,6 +40,8 @@ func TestRedactAuditBody_JSONRedactsSecrets(t *testing.T) {
 		"totp_code": "123456",
 		"captcha_id": "challenge-123",
 		"captcha_code": "A7K9P",
+		"tencent_captcha_ticket": "tencent-ticket-canary",
+		"tencent_captcha_randstr": "tencent-rand-canary",
 		"nested": [{"access_token": "tok_abc"}]
 	}`)
 	out := RedactAuditBody(raw, "application/json")
@@ -50,7 +52,7 @@ func TestRedactAuditBody_JSONRedactsSecrets(t *testing.T) {
 	}
 
 	// 敏感字段被擦除。
-	for _, secret := range []string{"sk-secret-123", "hunter2", "123456", "challenge-123", "A7K9P", "tok_abc"} {
+	for _, secret := range []string{"sk-secret-123", "hunter2", "123456", "challenge-123", "A7K9P", "tencent-ticket-canary", "tencent-rand-canary", "tok_abc"} {
 		if strings.Contains(out, secret) {
 			t.Fatalf("redacted body still contains secret %q: %s", secret, out)
 		}

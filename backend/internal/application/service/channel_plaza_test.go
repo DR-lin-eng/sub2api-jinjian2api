@@ -242,6 +242,79 @@ func TestListPlazaGroups_AutoPublicModelsDisabledPreservesConfiguredOnlyBehavior
 	require.Empty(t, out)
 }
 
+func TestListPlazaGroups_GroupImagePriceOverridesChannelPricing(t *testing.T) {
+	perRequest := 0.2
+	tier4K := 0.3
+	imagePrice1K := 0.02
+	channels := []Channel{{
+		ID: 1, Name: "img-ch", Status: StatusActive, GroupIDs: []int64{10, 20},
+		ModelPricing: []ChannelModelPricing{{
+			Platform:        PlatformOpenAI,
+			Models:          []string{"gpt-image-2"},
+			BillingMode:     BillingModeImage,
+			PerRequestPrice: &perRequest,
+			Intervals:       []PricingInterval{{TierLabel: "4K", PerRequestPrice: &tier4K}},
+		}},
+	}}
+	groups := []Group{
+		{
+			ID: 10, Name: "g-media", Platform: PlatformOpenAI, RateMultiplier: 0.1,
+			ImagePrice1K: &imagePrice1K, ImageRateIndependent: true, ImageRateMultiplier: 1,
+		},
+		{ID: 20, Name: "g-plain", Platform: PlatformOpenAI, RateMultiplier: 0.1},
+	}
+	svc := newPlazaChannelService(channels, groups, nil)
+
+	out, err := svc.ListPlazaGroups(context.Background(), PlazaListOptions{})
+	require.NoError(t, err)
+	require.Len(t, out, 2)
+	byName := make(map[string]PlazaGroup, len(out))
+	for _, group := range out {
+		byName[group.Name] = group
+	}
+
+	media := byName["g-media"]
+	require.True(t, media.ImageRateIndependent)
+	require.InDelta(t, 1.0, media.ImageRateMultiplier, 1e-9)
+	require.Len(t, media.Models, 1)
+	require.NotNil(t, media.Models[0].Pricing)
+	require.Len(t, media.Models[0].Pricing.Intervals, 3)
+	tierPrices := make(map[string]float64)
+	for _, interval := range media.Models[0].Pricing.Intervals {
+		require.NotNil(t, interval.PerRequestPrice)
+		tierPrices[interval.TierLabel] = *interval.PerRequestPrice
+	}
+	require.InDelta(t, 0.02, tierPrices["1K"], 1e-9)
+	require.InDelta(t, 0.2, tierPrices["2K"], 1e-9)
+	require.InDelta(t, 0.3, tierPrices["4K"], 1e-9)
+
+	plain := byName["g-plain"]
+	require.False(t, plain.ImageRateIndependent)
+	require.Len(t, plain.Models, 1)
+	require.Same(t, channels[0].ModelPricing[0].PerRequestPrice, plain.Models[0].Pricing.PerRequestPrice)
+	require.Len(t, plain.Models[0].Pricing.Intervals, 1)
+
+	// The display projection must not mutate cached channel pricing.
+	require.Len(t, channels[0].ModelPricing[0].Intervals, 1)
+	require.Equal(t, "4K", channels[0].ModelPricing[0].Intervals[0].TierLabel)
+}
+
+func TestListPlazaGroups_GroupImagePriceIgnoredForTokenPricing(t *testing.T) {
+	imagePrice1K := 0.02
+	channels := []Channel{plazaPricedChannel(1, "ch", []int64{10}, PlatformOpenAI, "gpt-5")}
+	groups := []Group{{
+		ID: 10, Name: "g", Platform: PlatformOpenAI, RateMultiplier: 1, ImagePrice1K: &imagePrice1K,
+	}}
+	svc := newPlazaChannelService(channels, groups, nil)
+
+	out, err := svc.ListPlazaGroups(context.Background(), PlazaListOptions{})
+	require.NoError(t, err)
+	require.Len(t, out, 1)
+	require.NotNil(t, out[0].Models[0].Pricing)
+	require.Equal(t, BillingModeToken, out[0].Models[0].Pricing.BillingMode)
+	require.Empty(t, out[0].Models[0].Pricing.Intervals)
+}
+
 func TestListPlazaGroups_RepoErrorsPropagate(t *testing.T) {
 	sentinel := errors.New("boom")
 	repo := &mockChannelRepository{

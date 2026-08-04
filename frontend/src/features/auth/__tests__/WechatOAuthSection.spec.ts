@@ -135,9 +135,9 @@ describe('WechatOAuthSection', () => {
 
     await wrapper.get('button').trigger('click')
 
-    expect(locationState.current.href).toContain(
-      '/api/v1/auth/oauth/wechat/start?mode=open&redirect=%2Fbilling%3Fplan%3Dpro'
-    )
+    expect(wrapper.emitted('start')).toEqual([
+      [{ provider: 'wechat', params: { mode: 'open', redirect: '/billing?plan=pro' } }],
+    ])
   })
 
   it('uses mp mode inside the WeChat browser when mp mode is configured', async () => {
@@ -157,9 +157,9 @@ describe('WechatOAuthSection', () => {
 
     await wrapper.get('button').trigger('click')
 
-    expect(locationState.current.href).toContain(
-      '/api/v1/auth/oauth/wechat/start?mode=mp&redirect=%2Fbilling%3Fplan%3Dpro'
-    )
+    expect(wrapper.emitted('start')).toEqual([
+      [{ provider: 'wechat', params: { mode: 'mp', redirect: '/billing?plan=pro' } }],
+    ])
   })
 
   it('disables the button outside the WeChat browser when only mp mode is configured', async () => {
@@ -216,9 +216,9 @@ describe('WechatOAuthSection', () => {
 
     await wrapper.get('button').trigger('click')
 
-    expect(locationState.current.href).toContain(
-      '/api/v1/auth/oauth/wechat/start?mode=open&redirect=%2Fbilling%3Fplan%3Dpro'
-    )
+    expect(wrapper.emitted('start')).toEqual([
+      [{ provider: 'wechat', params: { mode: 'open', redirect: '/billing?plan=pro' } }],
+    ])
   })
 
   it('shows the localized not-configured hint when WeChat OAuth is unavailable', async () => {

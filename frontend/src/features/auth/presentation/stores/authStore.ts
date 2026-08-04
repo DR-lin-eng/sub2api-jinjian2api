@@ -22,7 +22,8 @@ import type {
   LoginRequest,
   RegisterRequest,
   EncryptedRegisterRequest,
-  AuthResponse
+  AuthResponse,
+  TencentCaptchaRequestProof
 } from '@/types'
 import type { RefreshTokenResponse } from '@/features/auth/data/datasources/authDatasource'
 import { passkeyAPI } from '@/features/passkeys/data/datasources/passkeyDatasource'
@@ -304,9 +305,9 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function loginWithPasskey(): Promise<User> {
+  async function loginWithPasskey(proof?: TencentCaptchaRequestProof): Promise<User> {
     try {
-      const response = await passkeyAPI.login()
+      const response = await passkeyAPI.login(proof)
       setAuthFromResponse(response)
       return user.value!
     } catch (error) {

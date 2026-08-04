@@ -3245,11 +3245,10 @@ func TestOpenAIBuildUpstreamRequestPreservesCodexIdentityHeaders(t *testing.T) {
 	require.True(t, openai.EvaluateEngineFingerprint(req.Header, body, openai.DefaultEngineFingerprintSignals))
 }
 
-func TestOpenAIBuildUpstreamRequestOAuthOfficialClientOriginatorCompatibility(t *testing.T) {
+func TestOpenAIBuildUpstreamRequestOAuthCanonicalIdentity(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	// 上游要求 originator 与最终 User-Agent 首段配套（issue #3901）：
-	// originator 一律由最终 UA 推导；推导不出官方身份时整体回退默认 Codex CLI 身份。
+	// OAuth 请求统一使用规范 Codex CLI 身份；客户端身份不能绕过管理员设置的版本策略。
 	tests := []struct {
 		name           string
 		userAgent      string
@@ -3257,23 +3256,23 @@ func TestOpenAIBuildUpstreamRequestOAuthOfficialClientOriginatorCompatibility(t 
 		wantOriginator string
 		wantUA         string
 	}{
-		{name: "official ua pairs originator", userAgent: "Codex Desktop/1.2.3", wantOriginator: "Codex Desktop", wantUA: "Codex Desktop/1.2.3"},
+		{name: "desktop identity canonicalized", userAgent: "Codex Desktop/1.2.3", wantOriginator: openai.CodexCLIOriginator, wantUA: codexCLIUserAgent},
 		{
-			name:           "mismatched originator repaired from ua",
+			name:           "vscode identity canonicalized",
 			userAgent:      "codex_vscode/0.140.2 (Mac OS X 14.0; arm64) vscode (codex_vscode; 0.140.2)",
 			originator:     "codex_cli_rs",
-			wantOriginator: "codex_vscode",
-			wantUA:         "codex_vscode/0.140.2 (Mac OS X 14.0; arm64) vscode (codex_vscode; 0.140.2)",
+			wantOriginator: openai.CodexCLIOriginator,
+			wantUA:         codexCLIUserAgent,
 		},
 		{
-			name:           "load-shed originator normalized to cli identity",
+			name:           "tui identity canonicalized",
 			userAgent:      "codex-tui/0.140.2 (Mac OS X 14.0; arm64) iTerm (codex-tui; 0.140.2)",
 			originator:     "codex-tui",
-			wantOriginator: "codex_cli_rs",
-			wantUA:         "codex_cli_rs/0.140.2 (Mac OS X 14.0; arm64) iTerm",
+			wantOriginator: openai.CodexCLIOriginator,
+			wantUA:         codexCLIUserAgent,
 		},
-		{name: "official originator without ua falls back to default identity", originator: "codex_vscode", wantOriginator: "codex_cli_rs", wantUA: codexCLIUserAgent},
-		{name: "third-party ua masked to default identity", userAgent: "luna/1.2.0", wantOriginator: "codex_cli_rs", wantUA: codexCLIUserAgent},
+		{name: "official originator without ua canonicalized", originator: "codex_vscode", wantOriginator: openai.CodexCLIOriginator, wantUA: codexCLIUserAgent},
+		{name: "third-party ua canonicalized", userAgent: "luna/1.2.0", wantOriginator: openai.CodexCLIOriginator, wantUA: codexCLIUserAgent},
 	}
 
 	for _, tt := range tests {

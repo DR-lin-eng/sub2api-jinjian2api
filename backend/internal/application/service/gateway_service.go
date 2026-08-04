@@ -695,6 +695,9 @@ func (s *GatewayService) TempUnscheduleRetryableError(ctx context.Context, accou
 	if failoverErr == nil || !failoverErr.RetryableOnSameAccount {
 		return
 	}
+	if failoverErr.Scope == GatewayFailureScopeRequest {
+		return
+	}
 	if !globalTempUnschedulableEnabled(ctx, s.settingService) {
 		return
 	}

@@ -120,6 +120,11 @@ export interface AdminUser extends User {
 
 export type RequestSchedulingTier = 0 | 1 | 2
 
+export interface TencentCaptchaRequestProof {
+  tencent_captcha_ticket: string
+  tencent_captcha_randstr: string
+}
+
 export interface LoginRequest {
   email: string
   password: string
@@ -127,6 +132,8 @@ export interface LoginRequest {
   captcha_token?: string
   captcha_id?: string
   captcha_code?: string
+  tencent_captcha_ticket?: string
+  tencent_captcha_randstr?: string
 }
 
 export interface CredentialEnvelope {
@@ -145,6 +152,8 @@ export interface RegisterRequest {
   captcha_token?: string
   captcha_id?: string
   captcha_code?: string
+  tencent_captcha_ticket?: string
+  tencent_captcha_randstr?: string
   promo_code?: string
   invitation_code?: string
   aff_code?: string
@@ -186,6 +195,8 @@ export interface SendVerifyCodeRequest {
   captcha_token?: string
   captcha_id?: string
   captcha_code?: string
+  tencent_captcha_ticket?: string
+  tencent_captcha_randstr?: string
   pending_auth_token?: string
   pending_oauth_token?: string
 }
@@ -237,6 +248,8 @@ export interface PublicSettings {
   recaptcha_site_key: string
   cap_enabled: boolean
   cap_api_endpoint: string
+  tencent_captcha_enabled?: boolean
+  tencent_captcha_app_id?: string
   local_captcha_enabled?: boolean
   site_name: string
   site_logo: string

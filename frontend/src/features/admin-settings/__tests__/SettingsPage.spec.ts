@@ -588,6 +588,9 @@ const baseSettingsResponse = {
   enable_client_dateline_normalization: true,
   antigravity_user_agent_version: "",
   openai_codex_user_agent: "",
+  openai_codex_client_version: "",
+  openai_codex_client_version_synced: "",
+  openai_codex_version_auto_sync_enabled: true,
   payment_enabled: true,
   payment_min_amount: 1,
   payment_max_amount: 10000,
@@ -960,7 +963,7 @@ describe("admin SettingsView payment visible method controls", () => {
     expect(protectionCard).toBeDefined();
 
     let providerToggles = protectionCard!.findAll('input.toggle-stub');
-    expect(providerToggles).toHaveLength(4);
+    expect(providerToggles).toHaveLength(5);
     await providerToggles[1]!.setValue(true);
 
     providerToggles = protectionCard!.findAll('input.toggle-stub');
@@ -973,6 +976,7 @@ describe("admin SettingsView payment visible method controls", () => {
       false,
       true,
       false,
+      false,
     ]);
 
     await wrapper.find("form").trigger("submit.prevent");
@@ -981,6 +985,7 @@ describe("admin SettingsView payment visible method controls", () => {
       turnstile_enabled: false,
       recaptcha_enabled: false,
       cap_enabled: true,
+      tencent_captcha_enabled: false,
       local_captcha_enabled: false,
     });
   });
@@ -1328,6 +1333,40 @@ describe("admin SettingsView payment visible method controls", () => {
         antigravity_user_agent_version: "1.23.2",
       }),
     );
+  });
+
+  it("loads and saves Codex version settings without submitting the synchronized value", async () => {
+    getSettings.mockResolvedValueOnce({
+      ...baseSettingsResponse,
+      openai_codex_client_version: " 0.150.0 ",
+      openai_codex_client_version_synced: "0.151.0",
+      openai_codex_version_auto_sync_enabled: false,
+    });
+
+    const wrapper = mountView();
+
+    await flushPromises();
+    await openGatewayTab(wrapper);
+
+    expect(
+      (wrapper.get('[data-testid="openai-codex-client-version"]').element as HTMLInputElement)
+        .value,
+    ).toBe(" 0.150.0 ");
+    expect(wrapper.get('[data-testid="openai-codex-synced-version"]').text()).toBe(
+      "0.151.0",
+    );
+
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    const payload = updateSettings.mock.calls[0]?.[0];
+    expect(payload).toEqual(
+      expect.objectContaining({
+        openai_codex_client_version: "0.150.0",
+        openai_codex_version_auto_sync_enabled: false,
+      }),
+    );
+    expect(payload).not.toHaveProperty("openai_codex_client_version_synced");
   });
 
   it("updates provider enablement immediately and reloads providers", async () => {

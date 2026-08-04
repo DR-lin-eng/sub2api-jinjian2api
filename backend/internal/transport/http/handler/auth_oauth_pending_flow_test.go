@@ -2368,6 +2368,7 @@ type oauthPendingFlowTestHandlerOptions struct {
 	invitationEnabled  bool
 	emailVerifyEnabled bool
 	emailCache         service.EmailCache
+	tencentVerifier    service.TencentCaptchaVerifier
 	settingValues      map[string]string
 	promoRepo          service.PromoCodeRepository
 	defaultSubAssigner service.DefaultSubscriptionAssigner
@@ -2474,6 +2475,10 @@ CREATE TABLE IF NOT EXISTS user_affiliates (
 			},
 		}, options.emailCache)
 	}
+	var humanVerification *service.TurnstileService
+	if options.tencentVerifier != nil {
+		humanVerification = service.NewHumanVerificationService(settingSvc, nil, nil, nil, options.tencentVerifier)
+	}
 	authSvc := service.NewAuthService(
 		client,
 		userRepo,
@@ -2482,7 +2487,7 @@ CREATE TABLE IF NOT EXISTS user_affiliates (
 		cfg,
 		settingSvc,
 		emailService,
-		nil,
+		humanVerification,
 		nil,
 		promoService,
 		options.defaultSubAssigner,

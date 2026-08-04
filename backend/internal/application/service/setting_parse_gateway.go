@@ -38,6 +38,13 @@ func (s *SettingService) applyGatewaySettings(result *SystemSettings, settings m
 	}
 	result.AntigravityUserAgentVersion = antigravity.NormalizeUserAgentVersion(settings[SettingKeyAntigravityUserAgentVersion])
 	result.OpenAICodexUserAgent = strings.TrimSpace(settings[SettingKeyOpenAICodexUserAgent])
+	result.OpenAICodexClientVersion = NormalizeCodexClientVersion(settings[SettingKeyOpenAICodexClientVersion])
+	result.OpenAICodexClientVersionSynced = NormalizeCodexClientVersion(settings[SettingKeyOpenAICodexClientVersionSynced])
+	if value := strings.TrimSpace(settings[SettingKeyOpenAICodexVersionAutoSyncEnabled]); value != "" {
+		result.OpenAICodexVersionAutoSyncEnabled = value == "true"
+	} else {
+		result.OpenAICodexVersionAutoSyncEnabled = true
+	}
 	// codex_cli_only 加固
 	result.MinCodexVersion = settings[SettingKeyMinCodexVersion]
 	result.MaxCodexVersion = settings[SettingKeyMaxCodexVersion]

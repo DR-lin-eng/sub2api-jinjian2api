@@ -480,6 +480,11 @@ export interface SystemSettings {
   cap_enabled: boolean;
   cap_api_endpoint: string;
   cap_secret_key_configured: boolean;
+  tencent_captcha_enabled: boolean;
+  tencent_captcha_app_id: string;
+  tencent_captcha_app_secret_key_configured: boolean;
+  tencent_captcha_cloud_secret_id_configured: boolean;
+  tencent_captcha_cloud_secret_key_configured: boolean;
   local_captcha_enabled: boolean;
   api_key_acl_trust_forwarded_ip: boolean;
   client_ip_resolution_mode: ClientIPResolutionMode;
@@ -608,6 +613,9 @@ export interface SystemSettings {
   enable_client_dateline_normalization: boolean;
   antigravity_user_agent_version: string;
   openai_codex_user_agent: string;
+  openai_codex_client_version: string;
+  openai_codex_client_version_synced: string;
+  openai_codex_version_auto_sync_enabled: boolean;
   // codex_cli_only 加固
   min_codex_version: string;
   max_codex_version: string;
@@ -818,6 +826,11 @@ export interface UpdateSettingsRequest {
   cap_enabled?: boolean;
   cap_api_endpoint?: string;
   cap_secret_key?: string;
+  tencent_captcha_enabled?: boolean;
+  tencent_captcha_app_id?: string;
+  tencent_captcha_app_secret_key?: string;
+  tencent_captcha_cloud_secret_id?: string;
+  tencent_captcha_cloud_secret_key?: string;
   local_captcha_enabled?: boolean;
   api_key_acl_trust_forwarded_ip?: boolean;
   client_ip_resolution_mode?: ClientIPResolutionMode;
@@ -921,6 +934,8 @@ export interface UpdateSettingsRequest {
   enable_client_dateline_normalization?: boolean;
   antigravity_user_agent_version?: string;
   openai_codex_user_agent?: string;
+  openai_codex_client_version?: string;
+  openai_codex_version_auto_sync_enabled?: boolean;
   // codex_cli_only 加固
   min_codex_version?: string;
   max_codex_version?: string;

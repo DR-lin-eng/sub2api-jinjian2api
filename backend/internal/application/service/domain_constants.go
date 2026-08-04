@@ -159,17 +159,22 @@ const (
 	SettingKeySMTPFromName = "smtp_from_name" // 发件人名称
 	SettingKeySMTPUseTLS   = "smtp_use_tls"   // 是否使用TLS
 
-	// 人机验证设置。四种验证渠道互斥，由设置更新接口强制校验。
-	SettingKeyTurnstileEnabled    = "turnstile_enabled"     // 是否启用 Cloudflare Turnstile
-	SettingKeyTurnstileSiteKey    = "turnstile_site_key"    // Turnstile Site Key
-	SettingKeyTurnstileSecretKey  = "turnstile_secret_key"  // Turnstile Secret Key
-	SettingKeyRecaptchaEnabled    = "recaptcha_enabled"     // 是否启用 Google reCAPTCHA
-	SettingKeyRecaptchaSiteKey    = "recaptcha_site_key"    // reCAPTCHA Site Key
-	SettingKeyRecaptchaSecretKey  = "recaptcha_secret_key"  // reCAPTCHA Secret Key
-	SettingKeyCapEnabled          = "cap_enabled"           // 是否启用 Cap
-	SettingKeyCapAPIEndpoint      = "cap_api_endpoint"      // Cap 站点 API Endpoint
-	SettingKeyCapSecretKey        = "cap_secret_key"        // Cap Site Secret Key
-	SettingKeyLocalCaptchaEnabled = "local_captcha_enabled" // 是否启用本地图片验证码
+	// 人机验证设置。五种验证渠道互斥，由设置更新接口强制校验。
+	SettingKeyTurnstileEnabled             = "turnstile_enabled"    // 是否启用 Cloudflare Turnstile
+	SettingKeyTurnstileSiteKey             = "turnstile_site_key"   // Turnstile Site Key
+	SettingKeyTurnstileSecretKey           = "turnstile_secret_key" // Turnstile Secret Key
+	SettingKeyRecaptchaEnabled             = "recaptcha_enabled"    // 是否启用 Google reCAPTCHA
+	SettingKeyRecaptchaSiteKey             = "recaptcha_site_key"   // reCAPTCHA Site Key
+	SettingKeyRecaptchaSecretKey           = "recaptcha_secret_key" // reCAPTCHA Secret Key
+	SettingKeyCapEnabled                   = "cap_enabled"          // 是否启用 Cap
+	SettingKeyCapAPIEndpoint               = "cap_api_endpoint"     // Cap 站点 API Endpoint
+	SettingKeyCapSecretKey                 = "cap_secret_key"       // Cap Site Secret Key
+	SettingKeyTencentCaptchaEnabled        = "tencent_captcha_enabled"
+	SettingKeyTencentCaptchaAppID          = "tencent_captcha_app_id"
+	SettingKeyTencentCaptchaAppSecretKey   = "tencent_captcha_app_secret_key"
+	SettingKeyTencentCaptchaCloudSecretID  = "tencent_captcha_cloud_secret_id"
+	SettingKeyTencentCaptchaCloudSecretKey = "tencent_captcha_cloud_secret_key"
+	SettingKeyLocalCaptchaEnabled          = "local_captcha_enabled" // 是否启用本地图片验证码
 
 	// API Key IP 访问控制设置
 	SettingKeyAPIKeyACLTrustForwardedIP = "api_key_acl_trust_forwarded_ip" // API Key IP 白/黑名单是否信任转发 IP
@@ -557,10 +562,16 @@ const (
 	SettingKeyRewriteMessageCacheControl = "rewrite_message_cache_control"
 	// SettingKeyAntigravityUserAgentVersion Antigravity 上游 User-Agent 版本号（空值使用环境变量/默认值）
 	SettingKeyAntigravityUserAgentVersion = "antigravity_user_agent_version"
-	// SettingKeyOpenAICodexUserAgent OpenAI Codex 完整 User-Agent（空值使用内置默认）
-	// 当客户端 UA 被识别为浏览器（Chrome/Firefox/Safari/Edge 等）时，转发给 OpenAI 上游前会替换为此值，
-	// 用于避免 Cloudflare 对浏览器型 UA 的质询拦截。
+	// SettingKeyOpenAICodexUserAgent OpenAI Codex 完整 User-Agent（空值使用内置默认）。
+	// 自定义值只贡献客户端和设备指纹；版本段由生效的客户端版本重建。
 	SettingKeyOpenAICodexUserAgent = "openai_codex_user_agent"
+	// SettingKeyOpenAICodexClientVersion 是管理员固定的出站 Codex 客户端版本。
+	// 空值依次回退到自动同步值和编译期默认值。
+	SettingKeyOpenAICodexClientVersion = "openai_codex_client_version"
+	// SettingKeyOpenAICodexClientVersionSynced 由版本同步任务独占写入。
+	SettingKeyOpenAICodexClientVersionSynced = "openai_codex_client_version_synced"
+	// SettingKeyOpenAICodexVersionAutoSyncEnabled 控制官方稳定版自动同步，默认开启。
+	SettingKeyOpenAICodexVersionAutoSyncEnabled = "openai_codex_version_auto_sync_enabled"
 	// SettingKeyOpenAIAllowClaudeCodeCodexPlugin 已废弃：历史全局开关只作为升级迁移输入读取。
 	// 迁移后等价规则写入 SettingKeyCodexCLIOnlyWhitelist，不再参与运行时判定。
 	SettingKeyOpenAIAllowClaudeCodeCodexPlugin = "openai_allow_claude_code_codex_plugin"

@@ -406,7 +406,7 @@
           </p>
         </div>
 
-        <!-- OpenAI Codex UA -->
+        <!-- OpenAI Codex identity -->
         <div>
           <label
             class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -434,6 +434,93 @@
               )
             }}
           </p>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2">
+          <div>
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              {{
+                t(
+                  "admin.settings.gatewayForwarding.openaiCodexClientVersion",
+                )
+              }}
+            </label>
+            <input
+              v-model="form.openai_codex_client_version"
+              data-testid="openai-codex-client-version"
+              type="text"
+              class="input max-w-xs font-mono text-sm"
+              :placeholder="
+                t(
+                  'admin.settings.gatewayForwarding.openaiCodexClientVersionPlaceholder',
+                )
+              "
+            />
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              {{
+                t(
+                  "admin.settings.gatewayForwarding.openaiCodexClientVersionHint",
+                )
+              }}
+            </p>
+          </div>
+
+          <div>
+            <label
+              class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              {{
+                t(
+                  "admin.settings.gatewayForwarding.openaiCodexSyncedVersion",
+                )
+              }}
+            </label>
+            <div
+              data-testid="openai-codex-synced-version"
+              class="input flex max-w-xs items-center font-mono text-sm text-gray-600 dark:text-gray-300"
+            >
+              {{
+                form.openai_codex_client_version_synced ||
+                t(
+                  "admin.settings.gatewayForwarding.openaiCodexSyncedVersionEmpty",
+                )
+              }}
+            </div>
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              {{
+                t(
+                  "admin.settings.gatewayForwarding.openaiCodexSyncedVersionHint",
+                )
+              }}
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <label
+              class="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              {{
+                t(
+                  "admin.settings.gatewayForwarding.openaiCodexVersionAutoSync",
+                )
+              }}
+            </label>
+            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+              {{
+                t(
+                  "admin.settings.gatewayForwarding.openaiCodexVersionAutoSyncHint",
+                )
+              }}
+            </p>
+          </div>
+          <Toggle
+            v-model="form.openai_codex_version_auto_sync_enabled"
+            data-testid="openai-codex-version-auto-sync"
+          />
         </div>
 
       </div>

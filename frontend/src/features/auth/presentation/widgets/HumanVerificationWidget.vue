@@ -7,16 +7,23 @@
     @expire="emit('expire')"
     @error="emit('error')"
   />
-  <div v-else class="human-verification-wrapper">
+  <div v-else-if="provider !== 'tencent'" class="human-verification-wrapper">
     <div ref="containerRef" class="human-verification-container"></div>
   </div>
+  <span v-else class="hidden" aria-hidden="true"></span>
 </template>
 
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import 'cap-widget'
+import { useI18n } from 'vue-i18n'
 import TurnstileWidget from '@/features/auth/presentation/widgets/TurnstileWidget.vue'
-import type { ExternalHumanVerificationProvider } from '@/core/services/humanVerification'
+import {
+  loadTencentCaptcha,
+  type ExternalHumanVerificationProvider,
+  type TencentCaptchaInstance,
+  type TencentCaptchaProof,
+  type TencentCaptchaResult
+} from '@/core/services/humanVerification'
 
 interface RecaptchaAPI {
   render: (container: HTMLElement, options: {
@@ -49,9 +56,14 @@ const emit = defineEmits<{
   error: []
 }>()
 
+const { locale } = useI18n()
+
 const containerRef = ref<HTMLElement | null>(null)
 const turnstileRef = ref<InstanceType<typeof TurnstileWidget> | null>(null)
 const recaptchaWidgetId = ref<number | null>(null)
+let tencentInstance: TencentCaptchaInstance | null = null
+let tencentPending: Promise<TencentCaptchaProof | null> | null = null
+let cancelTencentPending: (() => void) | null = null
 
 let recaptchaLoadPromise: Promise<void> | null = null
 
@@ -92,8 +104,10 @@ async function renderRecaptcha(): Promise<void> {
   })
 }
 
-function renderCap(): void {
+async function renderCap(): Promise<void> {
   if (!props.apiEndpoint || !containerRef.value) return
+  await import('cap-widget')
+  if (!containerRef.value || props.provider !== 'cap') return
   clearContainer()
   const nonce = document.querySelector<HTMLScriptElement>('script[nonce]')?.nonce
   if (nonce) {
@@ -116,11 +130,65 @@ async function render(): Promise<void> {
   await nextTick()
   try {
     if (props.provider === 'recaptcha') await renderRecaptcha()
-    if (props.provider === 'cap') renderCap()
+    if (props.provider === 'cap') await renderCap()
   } catch (error) {
     console.error('Failed to initialize human verification:', error)
     emit('error')
   }
+}
+
+function cancelTencent(): void {
+  tencentInstance?.destroy()
+  tencentInstance = null
+  cancelTencentPending?.()
+  cancelTencentPending = null
+}
+
+function createTencentVerification(): Promise<TencentCaptchaProof | null> {
+  return new Promise((resolve, reject) => {
+    let settled = false
+
+    const finish = (callback: () => void): void => {
+      if (settled) return
+      settled = true
+      if (cancelTencentPending === cancel) cancelTencentPending = null
+      tencentInstance?.destroy()
+      tencentInstance = null
+      callback()
+    }
+    const cancel = (): void => finish(() => resolve(null))
+    cancelTencentPending = cancel
+
+    void loadTencentCaptcha()
+      .then((TencentCaptcha) => {
+        if (cancelTencentPending !== cancel || props.provider !== 'tencent') return
+        const userLanguage = locale.value.toLowerCase().startsWith('zh') ? 'zh-cn' : 'en'
+        tencentInstance = new TencentCaptcha(props.siteKey || '', (result: TencentCaptchaResult) => {
+          if (result.ret === 2) {
+            finish(() => resolve(null))
+            return
+          }
+          const ticket = result.ticket?.trim() || ''
+          const randstr = result.randstr?.trim() || ''
+          if (!ticket || !randstr || ticket.startsWith('trerror_') || result.errorCode !== undefined) {
+            finish(() => reject(new Error('Tencent Captcha verification failed')))
+            return
+          }
+          finish(() => resolve({ ticket, randstr }))
+        }, { userLanguage })
+        tencentInstance.show()
+      })
+      .catch((error: unknown) => finish(() => reject(error)))
+  })
+}
+
+function verifyTencent(): Promise<TencentCaptchaProof | null> {
+  if (props.provider !== 'tencent' || !props.siteKey) return Promise.resolve(null)
+  if (tencentPending) return tencentPending
+  tencentPending = createTencentVerification().finally(() => {
+    tencentPending = null
+  })
+  return tencentPending
 }
 
 function reset(): void {
@@ -129,15 +197,28 @@ function reset(): void {
   } else if (props.provider === 'recaptcha' && window.grecaptcha && recaptchaWidgetId.value !== null) {
     window.grecaptcha.reset(recaptchaWidgetId.value)
   } else if (props.provider === 'cap') {
-    renderCap()
+    void renderCap()
+  } else if (props.provider === 'tencent') {
+    cancelTencent()
   }
 }
 
-watch(() => [props.provider, props.siteKey, props.apiEndpoint], () => void render())
+watch(
+  () => [props.provider, props.siteKey, props.apiEndpoint] as const,
+  (current, previous) => {
+    if (previous?.[0] === 'tencent' && (current[0] !== 'tencent' || current[1] !== previous[1])) {
+      cancelTencent()
+    }
+    void render()
+  }
+)
 onMounted(() => void render())
-onUnmounted(clearContainer)
+onUnmounted(() => {
+  clearContainer()
+  cancelTencent()
+})
 
-defineExpose({ reset })
+defineExpose({ reset, verifyTencent })
 </script>
 
 <style scoped>

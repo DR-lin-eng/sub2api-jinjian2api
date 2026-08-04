@@ -681,8 +681,8 @@ func TestUsageLogRepositoryGetUserSpendingRanking(t *testing.T) {
 		"row_kind", "date", "user_id", "email", "username", "requests", "tokens", "cost", "actual_cost",
 		"total_actual_cost", "total_requests", "total_tokens", "row_order",
 	}).
-		AddRow("ranking", "", int64(2), "beta@example.com", "", int64(9), int64(900), 0, 12.5, 40.0, int64(30), int64(2600), 1).
-		AddRow("ranking", "", int64(1), "alpha@example.com", "", int64(8), int64(800), 0, 12.5, 40.0, int64(30), int64(2600), 2).
+		AddRow("ranking", "", int64(2), "beta@example.com", "beta", int64(9), int64(900), 0, 12.5, 40.0, int64(30), int64(2600), 1).
+		AddRow("ranking", "", int64(1), "alpha@example.com", "alpha", int64(8), int64(800), 0, 12.5, 40.0, int64(30), int64(2600), 2).
 		AddRow("ranking", "", int64(3), "gamma@example.com", "", int64(5), int64(300), 0, 4.25, 40.0, int64(30), int64(2600), 3)
 
 	mock.ExpectQuery("WITH user_totals AS MATERIALIZED \\(").
@@ -693,8 +693,8 @@ func TestUsageLogRepositoryGetUserSpendingRanking(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, &usagestats.UserSpendingRankingResponse{
 		Ranking: []usagestats.UserSpendingRankingItem{
-			{UserID: 2, Email: "beta@example.com", ActualCost: 12.5, Requests: 9, Tokens: 900},
-			{UserID: 1, Email: "alpha@example.com", ActualCost: 12.5, Requests: 8, Tokens: 800},
+			{UserID: 2, Email: "beta@example.com", Username: "beta", ActualCost: 12.5, Requests: 9, Tokens: 900},
+			{UserID: 1, Email: "alpha@example.com", Username: "alpha", ActualCost: 12.5, Requests: 8, Tokens: 800},
 			{UserID: 3, Email: "gamma@example.com", ActualCost: 4.25, Requests: 5, Tokens: 300},
 		},
 		TotalActualCost: 40.0,

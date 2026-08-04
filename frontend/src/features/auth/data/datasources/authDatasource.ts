@@ -23,6 +23,7 @@ import type {
   SendVerifyCodeRequest,
   SendVerifyCodeResponse,
   PublicSettings,
+  TencentCaptchaRequestProof,
   TotpLoginResponse,
   TotpLogin2FARequest,
   EncryptedRegisterRequest
@@ -38,6 +39,43 @@ export {
  * Login response type - can be either full auth or 2FA required
  */
 export type LoginResponse = AuthResponse | TotpLoginResponse
+
+export type OAuthLoginProvider =
+  | 'github'
+  | 'google'
+  | 'linuxdo'
+  | 'dingtalk'
+  | 'wechat'
+  | 'oidc'
+
+export interface OAuthLoginStart {
+  provider: OAuthLoginProvider
+  params: Record<string, string>
+}
+
+export interface OAuthLoginStartResponse {
+  authorize_url: string
+}
+
+export function buildOAuthLoginStartURL(request: OAuthLoginStart): string {
+  const apiBase = (import.meta.env.VITE_API_BASE_URL as string | undefined) || '/api/v1'
+  const normalized = apiBase.replace(/\/$/, '')
+  const query = new URLSearchParams(request.params).toString()
+  const path = `${normalized}/auth/oauth/${request.provider}/start`
+  return query ? `${path}?${query}` : path
+}
+
+export async function startOAuthLogin(
+  request: OAuthLoginStart,
+  proof: TencentCaptchaRequestProof
+): Promise<OAuthLoginStartResponse> {
+  const { data } = await apiClient.post<OAuthLoginStartResponse>(
+    `/auth/oauth/${request.provider}/start`,
+    proof,
+    { params: request.params }
+  )
+  return data
+}
 
 export interface LocalCaptchaChallenge {
   captcha_id: string
@@ -535,6 +573,8 @@ export interface ForgotPasswordRequest {
   captcha_token?: string
   captcha_id?: string
   captcha_code?: string
+  tencent_captcha_ticket?: string
+  tencent_captcha_randstr?: string
 }
 
 /**

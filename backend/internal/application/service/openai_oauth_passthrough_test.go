@@ -444,7 +444,7 @@ func TestOpenAIGatewayService_OAuthPassthrough_StreamKeepsToolNameAndBodyNormali
 
 	// 2) only auth is replaced; inbound auth/cookie are not forwarded
 	require.Equal(t, "Bearer oauth-token", upstream.lastReq.Header.Get("Authorization"))
-	require.Equal(t, "codex_cli_rs/0.1.0", upstream.lastReq.Header.Get("User-Agent"))
+	require.Equal(t, codexCLIUserAgent, upstream.lastReq.Header.Get("User-Agent"))
 	require.Empty(t, upstream.lastReq.Header.Get("Cookie"))
 	require.Empty(t, upstream.lastReq.Header.Get("X-Api-Key"))
 	require.Empty(t, upstream.lastReq.Header.Get("X-Goog-Api-Key"))
@@ -2398,9 +2398,8 @@ func TestOpenAIGatewayService_OAuthPassthrough_NonCodexUAFallbackToCodexUA(t *te
 	require.Equal(t, codexCLIUserAgent, upstream.lastReq.Header.Get("User-Agent"))
 }
 
-// 回归（issue #3901）：不在降载桶中的官方 UA 在透传模式下必须逐字保留，且
-// originator 由最终 UA 推导配套。
-func TestOpenAIGatewayService_OAuthPassthrough_OfficialIdentityPreservedAndPaired(t *testing.T) {
+// OAuth 透传也必须执行统一的 Codex CLI 身份策略。
+func TestOpenAIGatewayService_OAuthPassthrough_OfficialIdentityCanonicalized(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	const vscodeUA = "codex_vscode/0.140.2 (Mac OS X 14.0; arm64) vscode (codex_vscode; 0.140.2)"
@@ -2409,7 +2408,7 @@ func TestOpenAIGatewayService_OAuthPassthrough_OfficialIdentityPreservedAndPaire
 	c, _ := gin.CreateTestContext(rec)
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/responses", bytes.NewReader(nil))
 	c.Request.Header.Set("User-Agent", vscodeUA)
-	// 客户端携带错配的 originator，也必须按最终 UA 重配。
+	// 客户端携带的身份不能绕过统一的上游身份策略。
 	c.Request.Header.Set("originator", "codex_cli_rs")
 
 	inputBody := []byte(`{"model":"gpt-5.2","stream":false,"store":true,"input":[{"type":"text","text":"hi"}]}`)
@@ -2442,11 +2441,11 @@ func TestOpenAIGatewayService_OAuthPassthrough_OfficialIdentityPreservedAndPaire
 	_, err := svc.Forward(context.Background(), c, account, inputBody)
 	require.NoError(t, err)
 	require.NotNil(t, upstream.lastReq)
-	require.Equal(t, vscodeUA, upstream.lastReq.Header.Get("User-Agent"))
-	require.Equal(t, "codex_vscode", upstream.lastReq.Header.Get("originator"))
+	require.Equal(t, codexCLIUserAgent, upstream.lastReq.Header.Get("User-Agent"))
+	require.Equal(t, "codex_cli_rs", upstream.lastReq.Header.Get("originator"))
 }
 
-func TestOpenAIGatewayService_OAuthPassthrough_CodexTuiIdentityNormalizedToCLI(t *testing.T) {
+func TestOpenAIGatewayService_OAuthPassthrough_CodexTuiIdentityCanonicalized(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	rec := httptest.NewRecorder()
@@ -2481,7 +2480,7 @@ func TestOpenAIGatewayService_OAuthPassthrough_CodexTuiIdentityNormalizedToCLI(t
 	_, err := svc.Forward(context.Background(), c, account, inputBody)
 	require.NoError(t, err)
 	require.NotNil(t, upstream.lastReq)
-	require.Equal(t, "codex_cli_rs/0.140.2 (Mac OS X 14.0; arm64) iTerm", upstream.lastReq.Header.Get("User-Agent"))
+	require.Equal(t, codexCLIUserAgent, upstream.lastReq.Header.Get("User-Agent"))
 	require.Equal(t, "codex_cli_rs", upstream.lastReq.Header.Get("originator"))
 }
 

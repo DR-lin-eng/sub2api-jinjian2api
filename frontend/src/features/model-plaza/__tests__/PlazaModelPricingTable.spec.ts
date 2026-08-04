@@ -39,9 +39,14 @@ function tokenModel(overrides: Partial<PlazaModel> = {}): PlazaModel {
   }
 }
 
-function mountTable(models: PlazaModel[], rateMultiplier: number, userRateMultiplier?: number | null) {
+function mountTable(
+  models: PlazaModel[],
+  rateMultiplier: number,
+  userRateMultiplier?: number | null,
+  extraProps?: { imageRateIndependent?: boolean; imageRateMultiplier?: number | null }
+) {
   return mount(PlazaModelPricingTable, {
-    props: { models, rateMultiplier, userRateMultiplier: userRateMultiplier ?? null }
+    props: { models, rateMultiplier, userRateMultiplier: userRateMultiplier ?? null, ...extraProps }
   })
 }
 
@@ -286,5 +291,62 @@ describe('PlazaModelPricingTable', () => {
     expect(text).toContain('modelPlaza.table.perUnitImage')
     // 旧 bug:image_output_price × 0.1 = 0.000003 被当按次价
     expect(text).not.toContain('$0.000003')
+  })
+
+  it('生图独立倍率开启时,按图价格不乘分组或专属倍率', () => {
+    const model = tokenModel({
+      name: 'gpt-image-2',
+      pricing: {
+        billing_mode: 'image',
+        input_price: null,
+        output_price: null,
+        cache_write_price: null,
+        cache_read_price: null,
+        image_input_price: null,
+        image_output_price: null,
+        per_request_price: null,
+        intervals: [{
+          min_tokens: 0,
+          max_tokens: null,
+          tier_label: '1K',
+          input_price: null,
+          output_price: null,
+          cache_write_price: null,
+          cache_read_price: null,
+          per_request_price: 0.02
+        }]
+      },
+      official_pricing: null
+    })
+    const wrapper = mountTable([model], 0.1, 0.05, {
+      imageRateIndependent: true,
+      imageRateMultiplier: 1
+    })
+
+    expect(wrapper.text()).toContain('$0.02')
+    expect(wrapper.text()).not.toContain('$0.002')
+    expect(wrapper.findAll('tbody tr td').at(-1)?.text()).toBe('1x')
+  })
+
+  it('生图独立倍率关闭时,按图价格仍使用用户专属倍率', () => {
+    const model = tokenModel({
+      name: 'gpt-image-2',
+      pricing: {
+        billing_mode: 'image',
+        input_price: null,
+        output_price: null,
+        cache_write_price: null,
+        cache_read_price: null,
+        image_input_price: null,
+        image_output_price: null,
+        per_request_price: 0.2,
+        intervals: []
+      },
+      official_pricing: null
+    })
+    const wrapper = mountTable([model], 0.1, 0.05, { imageRateIndependent: false })
+
+    expect(wrapper.text()).toContain('$0.01')
+    expect(wrapper.findAll('tbody tr td').at(-1)?.text()).toContain('0.05x')
   })
 })

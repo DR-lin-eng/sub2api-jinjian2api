@@ -92,6 +92,19 @@ type cachedOpenAICodexUserAgent struct {
 	expiresAt int64 // unix nano
 }
 
+// cachedOpenAICodexClientVersion caches the effective outbound Codex version.
+type cachedOpenAICodexClientVersion struct {
+	version   string
+	expiresAt int64 // unix nano
+}
+
+const (
+	openAICodexClientVersionCacheTTL  = 60 * time.Second
+	openAICodexClientVersionErrorTTL  = 5 * time.Second
+	openAICodexClientVersionDBTimeout = 5 * time.Second
+	openAICodexClientVersionSFKey     = "openai_codex_client_version"
+)
+
 type cachedOpenAIQuotaAutoPauseSettings struct {
 	settings  OpsOpenAIAccountQuotaAutoPauseSettings
 	expiresAt int64
@@ -281,6 +294,93 @@ func (s *SettingService) GetOpenAICodexUserAgent(ctx context.Context) string {
 		return ua
 	}
 	return fallback
+}
+
+// GetOpenAICodexClientVersion returns the effective outbound Codex version.
+// An explicit administrator value wins over the automatically synchronized
+// stable release, which in turn wins over the compile-time fallback.
+func (s *SettingService) GetOpenAICodexClientVersion(ctx context.Context) string {
+	fallback := codexCLIVersion
+	if s == nil || s.settingRepo == nil {
+		return fallback
+	}
+	if cached, ok := s.openAICodexVersionCache.Load().(*cachedOpenAICodexClientVersion); ok && cached != nil {
+		if time.Now().UnixNano() < cached.expiresAt {
+			return cached.version
+		}
+	}
+
+	result, _, _ := s.openAICodexVersionSF.Do(openAICodexClientVersionSFKey, func() (any, error) {
+		if cached, ok := s.openAICodexVersionCache.Load().(*cachedOpenAICodexClientVersion); ok && cached != nil {
+			if time.Now().UnixNano() < cached.expiresAt {
+				return cached.version, nil
+			}
+		}
+		if ctx == nil {
+			ctx = context.Background()
+		}
+		dbCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), openAICodexClientVersionDBTimeout)
+		defer cancel()
+
+		values, err := s.settingRepo.GetMultiple(dbCtx, []string{
+			SettingKeyOpenAICodexClientVersion,
+			SettingKeyOpenAICodexClientVersionSynced,
+		})
+		if err != nil {
+			slog.Warn("failed to get openai codex client version settings", "error", err)
+			entry := &cachedOpenAICodexClientVersion{
+				version:   fallback,
+				expiresAt: time.Now().Add(openAICodexClientVersionErrorTTL).UnixNano(),
+			}
+			s.openAICodexVersionCache.Store(entry)
+			return entry.version, nil
+		}
+
+		version := NormalizeCodexClientVersion(values[SettingKeyOpenAICodexClientVersion])
+		if version == "" {
+			version = NormalizeCodexClientVersion(values[SettingKeyOpenAICodexClientVersionSynced])
+		}
+		if version == "" {
+			version = fallback
+		}
+		s.openAICodexVersionCache.Store(&cachedOpenAICodexClientVersion{
+			version:   version,
+			expiresAt: time.Now().Add(openAICodexClientVersionCacheTTL).UnixNano(),
+		})
+		return version, nil
+	})
+	if version, ok := result.(string); ok && version != "" {
+		return version
+	}
+	return fallback
+}
+
+// InvalidateOpenAICodexClientVersionCache forces the next read to reload the
+// effective version through singleflight.
+func (s *SettingService) InvalidateOpenAICodexClientVersionCache() {
+	if s == nil {
+		return
+	}
+	s.openAICodexVersionSF.Forget(openAICodexClientVersionSFKey)
+	s.openAICodexVersionCache.Store(&cachedOpenAICodexClientVersion{expiresAt: 0})
+}
+
+// GetOpenAICodexCanonicalUserAgent rebuilds the configured fingerprint with
+// the effective version, preserving OS and terminal details without allowing
+// an old configured UA to bypass version synchronization.
+func (s *SettingService) GetOpenAICodexCanonicalUserAgent(ctx context.Context) string {
+	if s == nil {
+		return codexCLIUserAgent
+	}
+	version := s.GetOpenAICodexClientVersion(ctx)
+	ua := strings.TrimSpace(s.GetOpenAICodexUserAgent(ctx))
+	if ua == "" {
+		return buildCodexCLIUserAgent(version)
+	}
+	if rebuilt := openai.SetCodexUserAgentVersion(ua, version); rebuilt != "" {
+		return rebuilt
+	}
+	return ua
 }
 
 var legacyClaudeCodeCodexWhitelistEntry = openai.AllowedClientEntry{

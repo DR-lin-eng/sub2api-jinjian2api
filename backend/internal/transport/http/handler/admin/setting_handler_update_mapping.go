@@ -16,6 +16,7 @@ func buildSystemSettingsUpdate(prepared *preparedSettingsUpdate) *service.System
 	localCaptchaEnabled := prepared.localCaptchaEnabled
 	recaptchaEnabled := prepared.recaptchaEnabled
 	capEnabled := prepared.capEnabled
+	tencentCaptchaEnabled := prepared.tencentCaptchaEnabled
 	clientIPResolutionMode := prepared.clientIPResolutionMode
 	clientIPTrustedProxies := prepared.clientIPTrustedProxies
 	affiliateRebateRate := prepared.affiliateRebateRate
@@ -70,6 +71,11 @@ func buildSystemSettingsUpdate(prepared *preparedSettingsUpdate) *service.System
 		CapEnabled:                       capEnabled,
 		CapAPIEndpoint:                   req.CapAPIEndpoint,
 		CapSecretKey:                     req.CapSecretKey,
+		TencentCaptchaEnabled:            tencentCaptchaEnabled,
+		TencentCaptchaAppID:              req.TencentCaptchaAppID,
+		TencentCaptchaAppSecretKey:       req.TencentCaptchaAppSecretKey,
+		TencentCaptchaCloudSecretID:      req.TencentCaptchaCloudSecretID,
+		TencentCaptchaCloudSecretKey:     req.TencentCaptchaCloudSecretKey,
 		LocalCaptchaEnabled:              localCaptchaEnabled,
 		// The deprecated boolean is accepted but intentionally ignored so a
 		// cached pre-upgrade admin page cannot re-enable the v0.1.161 regression.
@@ -203,6 +209,9 @@ func buildSystemSettingsUpdate(prepared *preparedSettingsUpdate) *service.System
 		EnableClientDatelineNormalization:                  boolValueOrDefault(req.EnableClientDatelineNormalization, previousSettings.EnableClientDatelineNormalization),
 		AntigravityUserAgentVersion:                        stringSetting(req.AntigravityUserAgentVersion, previousSettings.AntigravityUserAgentVersion),
 		OpenAICodexUserAgent:                               stringSetting(req.OpenAICodexUserAgent, previousSettings.OpenAICodexUserAgent),
+		OpenAICodexClientVersion:                           stringSetting(req.OpenAICodexClientVersion, previousSettings.OpenAICodexClientVersion),
+		OpenAICodexClientVersionSynced:                     previousSettings.OpenAICodexClientVersionSynced,
+		OpenAICodexVersionAutoSyncEnabled:                  boolValueOrDefault(req.OpenAICodexVersionAutoSyncEnabled, previousSettings.OpenAICodexVersionAutoSyncEnabled),
 		MinCodexVersion:                                    strings.TrimSpace(req.MinCodexVersion),
 		MaxCodexVersion:                                    strings.TrimSpace(req.MaxCodexVersion),
 		CodexCLIOnlyBlacklist:                              strings.TrimSpace(req.CodexCLIOnlyBlacklist),

@@ -331,6 +331,23 @@ func ProvideAccountExpiryService(accountRepo AccountRepository) *AccountExpirySe
 	return svc
 }
 
+// ProvideOpenAICodexVersionSyncService starts the bounded background release
+// synchronizer. It is stopped by the server cleanup lifecycle.
+func ProvideOpenAICodexVersionSyncService(
+	settingRepo SettingRepository,
+	settingService *SettingService,
+	githubClient GitHubReleaseClient,
+) *OpenAICodexVersionSyncService {
+	svc := NewOpenAICodexVersionSyncService(
+		settingRepo,
+		settingService,
+		githubClient,
+		openAICodexVersionSyncInterval,
+	)
+	svc.Start()
+	return svc
+}
+
 // ProvideProxyExpiryService creates and starts ProxyExpiryService.
 func ProvideProxyExpiryService(proxyRepo ProxyRepository) *ProxyExpiryService {
 	svc := NewProxyExpiryService(proxyRepo, time.Minute)
@@ -773,6 +790,12 @@ func ProvideSettingService(settingRepo SettingRepository, groupRepo GroupReposit
 		logger.LegacyPrintf("service.setting", "Warning: migrate codex body fingerprint to signals failed: %v", err)
 	}
 	antigravity.SetUserAgentVersionResolver(svc.GetAntigravityUserAgentVersion)
+	// The identity normalizer is on every OAuth request. Its resolver uses the
+	// SettingService atomic TTL cache, so this registration adds no DB read or
+	// mutex to the steady-state hot path.
+	SetCodexCanonicalUserAgentResolver(func() string {
+		return svc.GetOpenAICodexCanonicalUserAgent(context.Background())
+	})
 	return svc
 }
 
@@ -897,6 +920,7 @@ var ProviderSet = wire.NewSet(
 	ProvideTokenRefreshService,
 	wire.Bind(new(GrokOAuthReconciler), new(*TokenRefreshService)),
 	ProvideAccountExpiryService,
+	ProvideOpenAICodexVersionSyncService,
 	ProvideProxyExpiryService,
 	ProvideSubscriptionExpiryService,
 	ProvideTimingWheelService,

@@ -4,6 +4,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -117,6 +118,30 @@ func TestSettingService_GetPublicSettings_ExposesRegistrationEmailSuffixWhitelis
 	require.NoError(t, err)
 	require.Equal(t, []string{"@example.com", "@foo.bar", "*.edu.cn"}, settings.RegistrationEmailSuffixWhitelist)
 	require.False(t, settings.SupportChatEnabled)
+}
+
+func TestSettingService_GetPublicSettingsExposesOnlyTencentPublicFields(t *testing.T) {
+	repo := &settingPublicRepoStub{values: map[string]string{
+		SettingKeyTencentCaptchaEnabled:        "true",
+		SettingKeyTencentCaptchaAppID:          "123456789",
+		SettingKeyTencentCaptchaAppSecretKey:   "app-secret-canary",
+		SettingKeyTencentCaptchaCloudSecretID:  "cloud-id-canary",
+		SettingKeyTencentCaptchaCloudSecretKey: "cloud-secret-canary",
+	}}
+	svc := NewSettingService(repo, &config.Config{})
+
+	settings, err := svc.GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.True(t, settings.TencentCaptchaEnabled)
+	require.Equal(t, "123456789", settings.TencentCaptchaAppID)
+
+	payload, err := json.Marshal(settings)
+	require.NoError(t, err)
+	require.NotContains(t, string(payload), "app-secret-canary")
+	require.NotContains(t, string(payload), "cloud-id-canary")
+	require.NotContains(t, string(payload), "cloud-secret-canary")
+	require.NotContains(t, string(payload), "tencent_captcha_app_secret_key")
+	require.NotContains(t, string(payload), "tencent_captcha_cloud_secret")
 }
 
 func TestSettingService_GetPublicSettings_SupportChatDefaultsToDisabledUnlessExplicitlyEnabled(t *testing.T) {

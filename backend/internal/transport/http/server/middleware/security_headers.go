@@ -32,6 +32,8 @@ const (
 	GoogleRecaptchaFrameDomain  = "https://recaptcha.google.com"
 	GoogleStaticDomain          = "https://www.gstatic.com"
 	JSDelivrDomain              = "https://cdn.jsdelivr.net"
+	TencentCaptchaDomain        = "https://turing.captcha.qcloud.com"
+	TencentCaptchaStaticDomain  = "https://*.captcha.gtimg.com"
 	WASMUnsafeEval              = "'wasm-unsafe-eval'"
 )
 
@@ -44,6 +46,10 @@ var requiredCSPDirectiveValues = []struct {
 	{"script-src", GoogleStaticDomain},
 	{"script-src", JSDelivrDomain},
 	{"connect-src", JSDelivrDomain},
+	{"script-src", TencentCaptchaDomain},
+	{"connect-src", TencentCaptchaDomain},
+	{"frame-src", TencentCaptchaDomain},
+	{"style-src", TencentCaptchaStaticDomain},
 	{"script-src", WASMUnsafeEval},
 	{"frame-src", "'self'"},
 	{"frame-src", GoogleRecaptchaDomain},

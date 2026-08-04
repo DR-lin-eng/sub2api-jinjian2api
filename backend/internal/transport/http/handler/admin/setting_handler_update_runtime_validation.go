@@ -64,6 +64,14 @@ func validateRuntimeSettingsUpdate(c *gin.Context, prepared *preparedSettingsUpd
 			return false
 		}
 	}
+	if req.OpenAICodexClientVersion != nil {
+		normalized := strings.TrimSpace(*req.OpenAICodexClientVersion)
+		if normalized != "" && service.NormalizeCodexClientVersion(normalized) == "" {
+			response.Error(c, http.StatusBadRequest, "openai_codex_client_version must be empty or a valid version (e.g. 0.146.0)")
+			return false
+		}
+		req.OpenAICodexClientVersion = &normalized
+	}
 
 	// codex_cli_only 加固：最低/最高 Codex 版本（空=禁用，或合法 semver；max>=min）
 	if req.MinCodexVersion != "" && !semverPattern.MatchString(req.MinCodexVersion) {

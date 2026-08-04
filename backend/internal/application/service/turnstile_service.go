@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"strconv"
 	"strings"
 
 	infraerrors "github.com/Wei-Shaw/sub2api/internal/shared/errors"
@@ -12,16 +13,19 @@ import (
 )
 
 var (
-	ErrTurnstileVerificationFailed = infraerrors.BadRequest("TURNSTILE_VERIFICATION_FAILED", "turnstile verification failed")
-	ErrTurnstileNotConfigured      = infraerrors.ServiceUnavailable("TURNSTILE_NOT_CONFIGURED", "turnstile not configured")
-	ErrTurnstileInvalidSecretKey   = infraerrors.BadRequest("TURNSTILE_INVALID_SECRET_KEY", "invalid turnstile secret key")
-	ErrRecaptchaVerificationFailed = infraerrors.BadRequest("RECAPTCHA_VERIFICATION_FAILED", "reCAPTCHA verification failed")
-	ErrRecaptchaNotConfigured      = infraerrors.ServiceUnavailable("RECAPTCHA_NOT_CONFIGURED", "reCAPTCHA not configured")
-	ErrRecaptchaInvalidSecretKey   = infraerrors.BadRequest("RECAPTCHA_INVALID_SECRET_KEY", "invalid reCAPTCHA secret key")
-	ErrCapVerificationFailed       = infraerrors.BadRequest("CAP_VERIFICATION_FAILED", "Cap verification failed")
-	ErrCapNotConfigured            = infraerrors.ServiceUnavailable("CAP_NOT_CONFIGURED", "Cap not configured")
-	ErrCapInvalidSecretKey         = infraerrors.BadRequest("CAP_INVALID_SECRET_KEY", "invalid Cap site key or secret")
-	ErrHumanVerificationConflict   = infraerrors.ServiceUnavailable("HUMAN_VERIFICATION_CONFLICT", "multiple human verification providers are enabled")
+	ErrTurnstileVerificationFailed      = infraerrors.BadRequest("TURNSTILE_VERIFICATION_FAILED", "turnstile verification failed")
+	ErrTurnstileNotConfigured           = infraerrors.ServiceUnavailable("TURNSTILE_NOT_CONFIGURED", "turnstile not configured")
+	ErrTurnstileInvalidSecretKey        = infraerrors.BadRequest("TURNSTILE_INVALID_SECRET_KEY", "invalid turnstile secret key")
+	ErrRecaptchaVerificationFailed      = infraerrors.BadRequest("RECAPTCHA_VERIFICATION_FAILED", "reCAPTCHA verification failed")
+	ErrRecaptchaNotConfigured           = infraerrors.ServiceUnavailable("RECAPTCHA_NOT_CONFIGURED", "reCAPTCHA not configured")
+	ErrRecaptchaInvalidSecretKey        = infraerrors.BadRequest("RECAPTCHA_INVALID_SECRET_KEY", "invalid reCAPTCHA secret key")
+	ErrCapVerificationFailed            = infraerrors.BadRequest("CAP_VERIFICATION_FAILED", "Cap verification failed")
+	ErrCapNotConfigured                 = infraerrors.ServiceUnavailable("CAP_NOT_CONFIGURED", "Cap not configured")
+	ErrCapInvalidSecretKey              = infraerrors.BadRequest("CAP_INVALID_SECRET_KEY", "invalid Cap site key or secret")
+	ErrTencentCaptchaVerificationFailed = infraerrors.BadRequest("TENCENT_CAPTCHA_VERIFICATION_FAILED", "tencent captcha verification failed")
+	ErrTencentCaptchaNotConfigured      = infraerrors.ServiceUnavailable("TENCENT_CAPTCHA_NOT_CONFIGURED", "tencent captcha not configured")
+	ErrHumanVerificationConflict        = infraerrors.ServiceUnavailable("HUMAN_VERIFICATION_CONFLICT", "multiple human verification providers are enabled")
+	ErrHumanVerificationUnavailable     = infraerrors.ServiceUnavailable("HUMAN_VERIFICATION_UNAVAILABLE", "human verification is temporarily unavailable")
 )
 
 // TurnstileVerifier 验证 Turnstile token 的接口
@@ -39,12 +43,43 @@ type CapVerifier interface {
 	VerifyToken(ctx context.Context, apiEndpoint, secretKey, token string) (*CapVerifyResponse, error)
 }
 
+type TencentCaptchaCredentials struct {
+	AppID          uint64
+	AppSecretKey   string
+	CloudSecretID  string
+	CloudSecretKey string
+}
+
+type TencentCaptchaProof struct {
+	Ticket  string
+	Randstr string
+}
+
+type TencentCaptchaVerifyResponse struct {
+	CaptchaCode int64
+	CaptchaMsg  string
+	RequestID   string
+}
+
+type TencentCaptchaVerifier interface {
+	VerifyTicket(context.Context, TencentCaptchaCredentials, TencentCaptchaProof, string) (*TencentCaptchaVerifyResponse, error)
+}
+
+// HumanVerificationProof keeps the legacy one-token providers and Tencent's
+// two-field proof in one transport-independent value.
+type HumanVerificationProof struct {
+	Token          string
+	TencentTicket  string
+	TencentRandstr string
+}
+
 // TurnstileService Turnstile 验证服务
 type TurnstileService struct {
 	settingService    *SettingService
 	verifier          TurnstileVerifier
 	recaptchaVerifier RecaptchaVerifier
 	capVerifier       CapVerifier
+	tencentVerifier   TencentCaptchaVerifier
 }
 
 // TurnstileVerifyResponse Cloudflare Turnstile 验证响应
@@ -79,42 +114,88 @@ func NewTurnstileService(settingService *SettingService, verifier TurnstileVerif
 
 // NewHumanVerificationService 创建支持全部外部渠道的人机验证服务。
 // 返回旧类型名以保持现有依赖注入和内部调用兼容。
-func NewHumanVerificationService(settingService *SettingService, turnstileVerifier TurnstileVerifier, recaptchaVerifier RecaptchaVerifier, capVerifier CapVerifier) *TurnstileService {
+func NewHumanVerificationService(settingService *SettingService, turnstileVerifier TurnstileVerifier, recaptchaVerifier RecaptchaVerifier, capVerifier CapVerifier, tencentVerifier TencentCaptchaVerifier) *TurnstileService {
 	return &TurnstileService{
 		settingService:    settingService,
 		verifier:          turnstileVerifier,
 		recaptchaVerifier: recaptchaVerifier,
 		capVerifier:       capVerifier,
+		tencentVerifier:   tencentVerifier,
 	}
 }
 
 // VerifyToken 验证 Turnstile token
 func (s *TurnstileService) VerifyToken(ctx context.Context, token string, remoteIP string) error {
+	return s.VerifyProof(ctx, HumanVerificationProof{Token: token}, remoteIP, false)
+}
+
+// VerifyProof verifies the configured provider from one immutable setting
+// snapshot. requireProvider is used by release deployments where a provider is
+// mandatory; local captcha still counts because middleware validates it first.
+func (s *TurnstileService) VerifyProof(ctx context.Context, proof HumanVerificationProof, remoteIP string, requireProvider bool) error {
 	if s == nil || s.settingService == nil {
+		if requireProvider {
+			return ErrHumanVerificationUnavailable
+		}
 		return nil
 	}
 
-	switch s.settingService.GetHumanVerificationProvider(ctx) {
-	case HumanVerificationProviderNone, HumanVerificationProviderLocal:
+	config, err := s.settingService.GetHumanVerificationConfig(ctx)
+	if err != nil {
+		return ErrHumanVerificationUnavailable
+	}
+
+	switch config.Provider {
+	case HumanVerificationProviderNone:
+		if requireProvider {
+			return ErrTurnstileNotConfigured
+		}
+		return nil
+	case HumanVerificationProviderLocal:
 		return nil
 	case HumanVerificationProviderTurnstile:
-		return s.verifyTurnstile(ctx, token, remoteIP)
+		return s.verifyTurnstile(ctx, config.TurnstileSecretKey, proof.Token, remoteIP)
 	case HumanVerificationProviderRecaptcha:
-		return s.verifyRecaptcha(ctx, token, remoteIP)
+		return s.verifyRecaptcha(ctx, config.RecaptchaSecretKey, proof.Token, remoteIP)
 	case HumanVerificationProviderCap:
-		return s.verifyCap(ctx, token)
+		return s.verifyCap(ctx, config.CapAPIEndpoint, config.CapSecretKey, proof.Token)
+	case HumanVerificationProviderTencent:
+		return s.verifyTencent(ctx, config.Tencent, TencentCaptchaProof{
+			Ticket:  proof.TencentTicket,
+			Randstr: proof.TencentRandstr,
+		}, remoteIP)
 	default:
 		return ErrHumanVerificationConflict
 	}
 }
 
-func (s *TurnstileService) verifyTurnstile(ctx context.Context, token string, remoteIP string) error {
+// VerifyTencentIfEnabled protects new OAuth/passkey action entry points without
+// broadening the existing coverage of other providers.
+func (s *TurnstileService) VerifyTencentIfEnabled(ctx context.Context, proof HumanVerificationProof, remoteIP string) error {
+	if s == nil || s.settingService == nil {
+		return ErrHumanVerificationUnavailable
+	}
+	config, err := s.settingService.GetHumanVerificationConfig(ctx)
+	if err != nil {
+		return ErrHumanVerificationUnavailable
+	}
+	if config.Provider == HumanVerificationProviderInvalid {
+		return ErrHumanVerificationConflict
+	}
+	if config.Provider != HumanVerificationProviderTencent {
+		return nil
+	}
+	return s.verifyTencent(ctx, config.Tencent, TencentCaptchaProof{
+		Ticket:  proof.TencentTicket,
+		Randstr: proof.TencentRandstr,
+	}, remoteIP)
+}
+
+func (s *TurnstileService) verifyTurnstile(ctx context.Context, secretKey, token string, remoteIP string) error {
 	if s.verifier == nil {
 		return ErrTurnstileNotConfigured
 	}
 
-	// 获取 Secret Key
-	secretKey := s.settingService.GetTurnstileSecretKey(ctx)
 	if secretKey == "" {
 		logger.LegacyPrintf("service.turnstile", "%s", "[Turnstile] Secret key not configured")
 		return ErrTurnstileNotConfigured
@@ -146,8 +227,7 @@ func (s *TurnstileService) verifyTurnstile(ctx context.Context, token string, re
 	return nil
 }
 
-func (s *TurnstileService) verifyRecaptcha(ctx context.Context, token string, remoteIP string) error {
-	secretKey := s.settingService.GetRecaptchaSecretKey(ctx)
+func (s *TurnstileService) verifyRecaptcha(ctx context.Context, secretKey, token string, remoteIP string) error {
 	if secretKey == "" || s.recaptchaVerifier == nil {
 		return ErrRecaptchaNotConfigured
 	}
@@ -164,9 +244,7 @@ func (s *TurnstileService) verifyRecaptcha(ctx context.Context, token string, re
 	return nil
 }
 
-func (s *TurnstileService) verifyCap(ctx context.Context, token string) error {
-	apiEndpoint := s.settingService.GetCapAPIEndpoint(ctx)
-	secretKey := s.settingService.GetCapSecretKey(ctx)
+func (s *TurnstileService) verifyCap(ctx context.Context, apiEndpoint, secretKey, token string) error {
 	if apiEndpoint == "" || secretKey == "" || s.capVerifier == nil {
 		return ErrCapNotConfigured
 	}
@@ -181,6 +259,47 @@ func (s *TurnstileService) verifyCap(ctx context.Context, token string) error {
 		return ErrCapVerificationFailed
 	}
 	return nil
+}
+
+func (s *TurnstileService) verifyTencent(ctx context.Context, config TencentCaptchaConfig, proof TencentCaptchaProof, remoteIP string) error {
+	credentials, ok := parseTencentCaptchaCredentials(config)
+	if !ok || s.tencentVerifier == nil {
+		return ErrTencentCaptchaNotConfigured
+	}
+	proof.Ticket = strings.TrimSpace(proof.Ticket)
+	proof.Randstr = strings.TrimSpace(proof.Randstr)
+	if proof.Ticket == "" || proof.Randstr == "" || strings.HasPrefix(proof.Ticket, "trerror_") {
+		return ErrTencentCaptchaVerificationFailed
+	}
+	result, err := s.tencentVerifier.VerifyTicket(ctx, credentials, proof, remoteIP)
+	if err != nil {
+		logger.LegacyPrintf("service.tencent_captcha", "%s", "[TencentCaptcha] verification request failed")
+		return fmt.Errorf("%w: verifier request failed", ErrTencentCaptchaVerificationFailed)
+	}
+	if result == nil || result.CaptchaCode != 1 {
+		if result != nil {
+			logger.LegacyPrintf("service.tencent_captcha", "[TencentCaptcha] rejected code=%d request_id=%s", result.CaptchaCode, result.RequestID)
+		}
+		return ErrTencentCaptchaVerificationFailed
+	}
+	return nil
+}
+
+func parseTencentCaptchaCredentials(config TencentCaptchaConfig) (TencentCaptchaCredentials, bool) {
+	appID, err := strconv.ParseUint(strings.TrimSpace(config.AppID), 10, 64)
+	if err != nil || appID == 0 {
+		return TencentCaptchaCredentials{}, false
+	}
+	credentials := TencentCaptchaCredentials{
+		AppID:          appID,
+		AppSecretKey:   strings.TrimSpace(config.AppSecretKey),
+		CloudSecretID:  strings.TrimSpace(config.CloudSecretID),
+		CloudSecretKey: strings.TrimSpace(config.CloudSecretKey),
+	}
+	if credentials.AppSecretKey == "" || credentials.CloudSecretID == "" || credentials.CloudSecretKey == "" {
+		return TencentCaptchaCredentials{}, false
+	}
+	return credentials, true
 }
 
 // IsEnabled 检查 Turnstile 是否启用

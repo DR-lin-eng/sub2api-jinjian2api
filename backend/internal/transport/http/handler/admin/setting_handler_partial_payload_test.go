@@ -170,6 +170,52 @@ func TestUpdateSettingsPartialPayloadValidatesAgainstStoredCaptchaProvider(t *te
 	require.Nil(t, repo.lastUpdates)
 }
 
+func TestUpdateSettingsTencentCaptchaPreservesStoredSecretsWhenBlank(t *testing.T) {
+	stored := map[string]string{
+		service.SettingKeyTencentCaptchaAppSecretKey:   "stored-app-secret",
+		service.SettingKeyTencentCaptchaCloudSecretID:  "stored-cloud-id",
+		service.SettingKeyTencentCaptchaCloudSecretKey: "stored-cloud-secret",
+	}
+	h, repo := newStepUpSwitchTestHandler(t, maps.Clone(stored))
+
+	rec := doUpdateSettings(t, h, map[string]any{
+		"tencent_captcha_enabled":          true,
+		"tencent_captcha_app_id":           "123456789",
+		"tencent_captcha_app_secret_key":   "",
+		"tencent_captcha_cloud_secret_id":  "",
+		"tencent_captcha_cloud_secret_key": "",
+	}, nil)
+
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	require.Equal(t, "true", repo.values[service.SettingKeyTencentCaptchaEnabled])
+	require.Equal(t, "123456789", repo.values[service.SettingKeyTencentCaptchaAppID])
+	require.Equal(t, "stored-app-secret", repo.values[service.SettingKeyTencentCaptchaAppSecretKey])
+	require.Equal(t, "stored-cloud-id", repo.values[service.SettingKeyTencentCaptchaCloudSecretID])
+	require.Equal(t, "stored-cloud-secret", repo.values[service.SettingKeyTencentCaptchaCloudSecretKey])
+}
+
+func TestUpdateSettingsTencentCaptchaRejectsStoredProviderConflict(t *testing.T) {
+	stored := map[string]string{
+		service.SettingKeyTurnstileEnabled:   "true",
+		service.SettingKeyTurnstileSiteKey:   "site-key",
+		service.SettingKeyTurnstileSecretKey: "secret-key",
+	}
+	h, repo := newStepUpSwitchTestHandler(t, maps.Clone(stored))
+
+	rec := doUpdateSettings(t, h, map[string]any{
+		"tencent_captcha_enabled":          true,
+		"tencent_captcha_app_id":           "123456789",
+		"tencent_captcha_app_secret_key":   "app-secret",
+		"tencent_captcha_cloud_secret_id":  "cloud-id",
+		"tencent_captcha_cloud_secret_key": "cloud-secret",
+	}, nil)
+
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+	require.Contains(t, rec.Body.String(), "Only one human verification provider")
+	require.Equal(t, stored, repo.values)
+	require.Nil(t, repo.lastUpdates)
+}
+
 func TestUpdateSettingsPartialPayloadMergesStoredCrossFieldValues(t *testing.T) {
 	stored := map[string]string{
 		service.SettingKeyMinCodexVersion: "0.200.0",
@@ -209,4 +255,48 @@ func TestUpdateSettingsSMTPFromAliasIsWritable(t *testing.T) {
 	require.Equal(t, http.StatusOK, rec.Code)
 
 	require.Equal(t, "new@example.com", repo.values[service.SettingKeySMTPFrom])
+}
+
+func TestUpdateSettingsPartialPayloadPreservesCodexVersions(t *testing.T) {
+	stored := map[string]string{
+		service.SettingKeyOpenAICodexClientVersion:       "0.150.0",
+		service.SettingKeyOpenAICodexClientVersionSynced: "0.151.0",
+	}
+	h, repo := newStepUpSwitchTestHandler(t, maps.Clone(stored))
+
+	rec := doUpdateSettings(t, h, map[string]any{"registration_enabled": true}, nil)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Equal(t, "0.150.0", repo.values[service.SettingKeyOpenAICodexClientVersion])
+	require.Equal(t, "0.151.0", repo.values[service.SettingKeyOpenAICodexClientVersionSynced])
+}
+
+func TestUpdateSettingsRejectsInvalidCodexClientVersion(t *testing.T) {
+	stored := map[string]string{
+		service.SettingKeyOpenAICodexClientVersion: "0.150.0",
+	}
+	h, repo := newStepUpSwitchTestHandler(t, maps.Clone(stored))
+
+	rec := doUpdateSettings(t, h, map[string]any{"openai_codex_client_version": "latest"}, nil)
+
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+	require.Contains(t, rec.Body.String(), "openai_codex_client_version must be empty or a valid version")
+	require.Equal(t, stored, repo.values)
+	require.Nil(t, repo.lastUpdates)
+}
+
+func TestUpdateSettingsCannotWriteSynchronizedCodexVersion(t *testing.T) {
+	stored := map[string]string{
+		service.SettingKeyOpenAICodexClientVersionSynced: "0.151.0",
+	}
+	h, repo := newStepUpSwitchTestHandler(t, maps.Clone(stored))
+
+	rec := doUpdateSettings(t, h, map[string]any{
+		"openai_codex_client_version_synced": "9.9.9",
+		"registration_enabled":               true,
+	}, nil)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Equal(t, "0.151.0", repo.values[service.SettingKeyOpenAICodexClientVersionSynced])
+	require.NotContains(t, repo.lastUpdates, service.SettingKeyOpenAICodexClientVersionSynced)
 }

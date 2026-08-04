@@ -418,6 +418,10 @@ func TestEnhanceCSPPolicyAllowsHumanVerificationRuntimes(t *testing.T) {
 	assert.Contains(t, result, JSDelivrDomain)
 	assert.Contains(t, result, WASMUnsafeEval)
 	assert.Contains(t, result, GoogleRecaptchaFrameDomain)
+	assert.Equal(t, 1, countDirectiveValue(result, "script-src", TencentCaptchaDomain))
+	assert.Equal(t, 1, countDirectiveValue(result, "connect-src", TencentCaptchaDomain))
+	assert.Equal(t, 1, countDirectiveValue(result, "frame-src", TencentCaptchaDomain))
+	assert.Equal(t, 1, countDirectiveValue(result, "style-src", TencentCaptchaStaticDomain))
 	assert.Equal(t, 1, countDirectiveValue(result, "connect-src", JSDelivrDomain))
 	assert.Contains(t, result, "worker-src 'self' blob:")
 }

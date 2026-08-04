@@ -89,7 +89,7 @@
         <!-- Submit Button -->
         <button
           type="submit"
-          :disabled="isLoading || (turnstileEnabled && !turnstileToken) || (localCaptchaEnabled && (!localCaptchaId || !localCaptchaCode))"
+          :disabled="isLoading || (inlineHumanVerificationRequired && !turnstileToken) || (localCaptchaEnabled && (!localCaptchaId || !localCaptchaCode))"
           class="btn btn-primary w-full"
         >
           <svg
@@ -146,6 +146,7 @@ import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
 } from '@/core/services/humanVerification'
+import type { TencentCaptchaRequestProof } from '@/types'
 
 const { t } = useI18n()
 
@@ -183,6 +184,12 @@ const errors = reactive({
 })
 
 const validationToastMessage = computed(() => errors.email || errors.turnstile || '')
+const tencentCaptchaEnabled = computed(
+  () => turnstileEnabled.value && humanVerificationProvider.value === 'tencent'
+)
+const inlineHumanVerificationRequired = computed(
+  () => turnstileEnabled.value && !tencentCaptchaEnabled.value
+)
 
 watch(validationToastMessage, (value, previousValue) => {
   if (value && value !== previousValue) {
@@ -223,6 +230,21 @@ function onTurnstileError(): void {
   errors.turnstile = t('auth.turnstileFailed')
 }
 
+function resetHumanVerification(): void {
+  turnstileRef.value?.reset()
+  turnstileToken.value = ''
+}
+
+async function acquireTencentProof(): Promise<TencentCaptchaRequestProof | null> {
+  if (!tencentCaptchaEnabled.value) return null
+  const proof = await turnstileRef.value?.verifyTencent()
+  if (!proof) return null
+  return {
+    tencent_captcha_ticket: proof.ticket,
+    tencent_captcha_randstr: proof.randstr
+  }
+}
+
 // ==================== Validation ====================
 
 function validateForm(): boolean {
@@ -241,7 +263,7 @@ function validateForm(): boolean {
   }
 
   // Turnstile validation
-  if (turnstileEnabled.value && !turnstileToken.value) {
+  if (inlineHumanVerificationRequired.value && !turnstileToken.value) {
     errors.turnstile = t('auth.completeVerification')
     isValid = false
   }
@@ -266,21 +288,19 @@ async function handleSubmit(): Promise<void> {
   isLoading.value = true
 
   try {
+    const tencentProof = await acquireTencentProof()
+    if (tencentCaptchaEnabled.value && !tencentProof) return
     await forgotPassword({
       email: formData.email,
-      captcha_token: turnstileEnabled.value ? turnstileToken.value : undefined,
+      captcha_token: inlineHumanVerificationRequired.value ? turnstileToken.value : undefined,
       captcha_id: localCaptchaEnabled.value ? localCaptchaId.value : undefined,
-      captcha_code: localCaptchaEnabled.value ? localCaptchaCode.value : undefined
+      captcha_code: localCaptchaEnabled.value ? localCaptchaCode.value : undefined,
+      ...(tencentProof || {})
     })
 
     isSubmitted.value = true
     appStore.showSuccess(t('auth.resetEmailSent'))
   } catch (error: unknown) {
-    // Reset Turnstile on error
-    if (turnstileRef.value) {
-      turnstileRef.value.reset()
-      turnstileToken.value = ''
-    }
     if (localCaptchaEnabled.value) {
       await localCaptchaRef.value?.reset()
     }
@@ -297,6 +317,7 @@ async function handleSubmit(): Promise<void> {
 
     appStore.showError(errorMessage.value)
   } finally {
+    if (turnstileEnabled.value) resetHumanVerification()
     isLoading.value = false
   }
 }

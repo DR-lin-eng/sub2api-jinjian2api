@@ -1426,7 +1426,7 @@ func TestForwardAsAnthropic_ReusesOAuthCodexTurnState(t *testing.T) {
 	require.False(t, gjson.GetBytes(upstream.bodies[1], "previous_response_id").Exists())
 }
 
-func TestForwardAsAnthropic_OAuthRestoresCodexIdentityHeaders(t *testing.T) {
+func TestForwardAsAnthropic_OAuthCanonicalizesCodexIdentityHeaders(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	const tuiUA = "codex-tui/9.9.9 (Mac OS X 14.0; arm64) iTerm (codex-tui; 9.9.9)"
@@ -1439,17 +1439,17 @@ func TestForwardAsAnthropic_OAuthRestoresCodexIdentityHeaders(t *testing.T) {
 		wantOriginator string
 	}{
 		{
-			name:           "官方UA逐字保留并重新配对",
+			name:           "VSCode身份归一化为CLI身份",
 			userAgent:      vscodeUA,
 			originator:     "opencode",
-			wantUserAgent:  vscodeUA,
-			wantOriginator: "codex_vscode",
+			wantUserAgent:  codexCLIUserAgent,
+			wantOriginator: "codex_cli_rs",
 		},
 		{
-			name:           "降载身份改写为CLI身份并保留终端指纹",
+			name:           "TUI身份归一化为CLI身份",
 			userAgent:      tuiUA,
 			originator:     "opencode",
-			wantUserAgent:  "codex_cli_rs/9.9.9 (Mac OS X 14.0; arm64) iTerm",
+			wantUserAgent:  codexCLIUserAgent,
 			wantOriginator: "codex_cli_rs",
 		},
 		{

@@ -467,6 +467,12 @@ func (s *SettingService) IsCapEnabled(ctx context.Context) bool {
 	return err == nil && value == "true"
 }
 
+// IsTencentCaptchaEnabled 检查是否启用腾讯天御验证码。
+func (s *SettingService) IsTencentCaptchaEnabled(ctx context.Context) bool {
+	value, err := s.settingRepo.GetValue(ctx, SettingKeyTencentCaptchaEnabled)
+	return err == nil && value == "true"
+}
+
 // IsLocalCaptchaEnabled 检查是否启用本地验证码兜底。缺少设置时默认关闭。
 func (s *SettingService) IsLocalCaptchaEnabled(ctx context.Context) bool {
 	value, err := s.settingRepo.GetValue(ctx, SettingKeyLocalCaptchaEnabled)
@@ -512,47 +518,124 @@ func (s *SettingService) GetCapSecretKey(ctx context.Context) string {
 	return value
 }
 
+type TencentCaptchaConfig struct {
+	Enabled        bool
+	AppID          string
+	AppSecretKey   string
+	CloudSecretID  string
+	CloudSecretKey string
+}
+
+func (s *SettingService) GetTencentCaptchaConfig(ctx context.Context) TencentCaptchaConfig {
+	config, err := s.GetHumanVerificationConfig(ctx)
+	if err != nil {
+		return TencentCaptchaConfig{}
+	}
+	return config.Tencent
+}
+
 const (
 	HumanVerificationProviderNone      = "none"
 	HumanVerificationProviderTurnstile = "turnstile"
 	HumanVerificationProviderRecaptcha = "recaptcha"
 	HumanVerificationProviderCap       = "cap"
+	HumanVerificationProviderTencent   = "tencent"
 	HumanVerificationProviderLocal     = "local"
 	HumanVerificationProviderInvalid   = "invalid"
 )
 
+// HumanVerificationConfig is a single immutable settings snapshot used for one
+// verification attempt. Keeping provider selection and credentials together
+// prevents multiple database reads and avoids mixing values across updates.
+type HumanVerificationConfig struct {
+	Provider           string
+	TurnstileSecretKey string
+	RecaptchaSecretKey string
+	CapAPIEndpoint     string
+	CapSecretKey       string
+	Tencent            TencentCaptchaConfig
+}
+
+var humanVerificationSettingKeys = []string{
+	SettingKeyTurnstileEnabled,
+	SettingKeyTurnstileSecretKey,
+	SettingKeyRecaptchaEnabled,
+	SettingKeyRecaptchaSecretKey,
+	SettingKeyCapEnabled,
+	SettingKeyCapAPIEndpoint,
+	SettingKeyCapSecretKey,
+	SettingKeyTencentCaptchaEnabled,
+	SettingKeyTencentCaptchaAppID,
+	SettingKeyTencentCaptchaAppSecretKey,
+	SettingKeyTencentCaptchaCloudSecretID,
+	SettingKeyTencentCaptchaCloudSecretKey,
+	SettingKeyLocalCaptchaEnabled,
+}
+
+// GetHumanVerificationConfig reads provider selection and active credentials in
+// one repository call. Dirty multi-provider state fails closed as "invalid".
+func (s *SettingService) GetHumanVerificationConfig(ctx context.Context) (HumanVerificationConfig, error) {
+	if s == nil || s.settingRepo == nil {
+		return HumanVerificationConfig{}, fmt.Errorf("human verification settings repository is not configured")
+	}
+	values, err := s.settingRepo.GetMultiple(ctx, humanVerificationSettingKeys)
+	if err != nil {
+		return HumanVerificationConfig{}, fmt.Errorf("get human verification settings: %w", err)
+	}
+
+	providers := make([]string, 0, 5)
+	if values[SettingKeyTurnstileEnabled] == "true" {
+		providers = append(providers, HumanVerificationProviderTurnstile)
+	}
+	if values[SettingKeyRecaptchaEnabled] == "true" {
+		providers = append(providers, HumanVerificationProviderRecaptcha)
+	}
+	if values[SettingKeyCapEnabled] == "true" {
+		providers = append(providers, HumanVerificationProviderCap)
+	}
+	if values[SettingKeyTencentCaptchaEnabled] == "true" {
+		providers = append(providers, HumanVerificationProviderTencent)
+	}
+	if values[SettingKeyLocalCaptchaEnabled] == "true" {
+		providers = append(providers, HumanVerificationProviderLocal)
+	}
+
+	provider := HumanVerificationProviderNone
+	switch {
+	case len(providers) == 1:
+		provider = providers[0]
+	case len(providers) == 2 && providers[0] == HumanVerificationProviderTurnstile && providers[1] == HumanVerificationProviderLocal:
+		// Older releases allowed this combination and always preferred
+		// Turnstile. Preserve read compatibility until the next admin save.
+		provider = HumanVerificationProviderTurnstile
+	case len(providers) > 1:
+		provider = HumanVerificationProviderInvalid
+	}
+
+	return HumanVerificationConfig{
+		Provider:           provider,
+		TurnstileSecretKey: strings.TrimSpace(values[SettingKeyTurnstileSecretKey]),
+		RecaptchaSecretKey: strings.TrimSpace(values[SettingKeyRecaptchaSecretKey]),
+		CapAPIEndpoint:     strings.TrimRight(strings.TrimSpace(values[SettingKeyCapAPIEndpoint]), "/"),
+		CapSecretKey:       strings.TrimSpace(values[SettingKeyCapSecretKey]),
+		Tencent: TencentCaptchaConfig{
+			Enabled:        values[SettingKeyTencentCaptchaEnabled] == "true",
+			AppID:          strings.TrimSpace(values[SettingKeyTencentCaptchaAppID]),
+			AppSecretKey:   strings.TrimSpace(values[SettingKeyTencentCaptchaAppSecretKey]),
+			CloudSecretID:  strings.TrimSpace(values[SettingKeyTencentCaptchaCloudSecretID]),
+			CloudSecretKey: strings.TrimSpace(values[SettingKeyTencentCaptchaCloudSecretKey]),
+		},
+	}, nil
+}
+
 // GetHumanVerificationProvider 返回当前唯一启用的人机验证渠道。
 // 数据库中若出现多个启用项则返回 invalid，让认证链路 fail-close。
 func (s *SettingService) GetHumanVerificationProvider(ctx context.Context) string {
-	if s == nil || s.settingRepo == nil {
-		return HumanVerificationProviderNone
-	}
-	providers := make([]string, 0, 4)
-	if s.IsTurnstileEnabled(ctx) {
-		providers = append(providers, HumanVerificationProviderTurnstile)
-	}
-	if s.IsRecaptchaEnabled(ctx) {
-		providers = append(providers, HumanVerificationProviderRecaptcha)
-	}
-	if s.IsCapEnabled(ctx) {
-		providers = append(providers, HumanVerificationProviderCap)
-	}
-	if s.IsLocalCaptchaEnabled(ctx) {
-		providers = append(providers, HumanVerificationProviderLocal)
-	}
-	if len(providers) == 0 {
-		return HumanVerificationProviderNone
-	}
-	if len(providers) == 2 && providers[0] == HumanVerificationProviderTurnstile && providers[1] == HumanVerificationProviderLocal {
-		// 旧版本允许同时开启 Turnstile 与本地兜底，且运行时始终以
-		// Turnstile 为优先。保留这一读取兼容性，下一次后台保存会
-		// 通过互斥选择自动清理旧状态。
-		return HumanVerificationProviderTurnstile
-	}
-	if len(providers) > 1 {
+	config, err := s.GetHumanVerificationConfig(ctx)
+	if err != nil {
 		return HumanVerificationProviderInvalid
 	}
-	return providers[0]
+	return config.Provider
 }
 
 // IsIdentityPatchEnabled 检查是否启用身份补丁（Claude -> Gemini systemInstruction 注入）

@@ -67,6 +67,17 @@ func writeAccessSystemSettingUpdates(updates map[string]string, settings *System
 	if settings.CapSecretKey != "" {
 		updates[SettingKeyCapSecretKey] = settings.CapSecretKey
 	}
+	updates[SettingKeyTencentCaptchaEnabled] = strconv.FormatBool(settings.TencentCaptchaEnabled)
+	updates[SettingKeyTencentCaptchaAppID] = strings.TrimSpace(settings.TencentCaptchaAppID)
+	if settings.TencentCaptchaAppSecretKey != "" {
+		updates[SettingKeyTencentCaptchaAppSecretKey] = settings.TencentCaptchaAppSecretKey
+	}
+	if settings.TencentCaptchaCloudSecretID != "" {
+		updates[SettingKeyTencentCaptchaCloudSecretID] = settings.TencentCaptchaCloudSecretID
+	}
+	if settings.TencentCaptchaCloudSecretKey != "" {
+		updates[SettingKeyTencentCaptchaCloudSecretKey] = settings.TencentCaptchaCloudSecretKey
+	}
 	updates[SettingKeyLocalCaptchaEnabled] = strconv.FormatBool(settings.LocalCaptchaEnabled)
 	updates[SettingKeyAPIKeyACLTrustForwardedIP] = strconv.FormatBool(settings.APIKeyACLTrustForwardedIP)
 	updates[SettingKeyClientIPResolutionMode] = settings.ClientIPResolutionMode

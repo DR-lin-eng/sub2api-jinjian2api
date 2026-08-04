@@ -175,6 +175,8 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		SettingKeyRecaptchaSiteKey,
 		SettingKeyCapEnabled,
 		SettingKeyCapAPIEndpoint,
+		SettingKeyTencentCaptchaEnabled,
+		SettingKeyTencentCaptchaAppID,
 		SettingKeyLocalCaptchaEnabled,
 		SettingKeySiteName,
 		SettingKeySiteLogo,
@@ -311,6 +313,8 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		RecaptchaSiteKey:                 settings[SettingKeyRecaptchaSiteKey],
 		CapEnabled:                       settings[SettingKeyCapEnabled] == "true",
 		CapAPIEndpoint:                   settings[SettingKeyCapAPIEndpoint],
+		TencentCaptchaEnabled:            settings[SettingKeyTencentCaptchaEnabled] == "true",
+		TencentCaptchaAppID:              settings[SettingKeyTencentCaptchaAppID],
 		LocalCaptchaEnabled:              settings[SettingKeyLocalCaptchaEnabled] == "true",
 		SiteName:                         s.getStringOrDefault(settings, SettingKeySiteName, "Sub2API"),
 		SiteLogo:                         settings[SettingKeySiteLogo],
@@ -521,6 +525,8 @@ type PublicSettingsInjectionPayload struct {
 	RecaptchaSiteKey                 string                   `json:"recaptcha_site_key"`
 	CapEnabled                       bool                     `json:"cap_enabled"`
 	CapAPIEndpoint                   string                   `json:"cap_api_endpoint"`
+	TencentCaptchaEnabled            bool                     `json:"tencent_captcha_enabled"`
+	TencentCaptchaAppID              string                   `json:"tencent_captcha_app_id"`
 	LocalCaptchaEnabled              bool                     `json:"local_captcha_enabled"`
 	SiteName                         string                   `json:"site_name"`
 	SiteLogo                         string                   `json:"site_logo"`
@@ -601,6 +607,8 @@ func (s *SettingService) GetPublicSettingsForInjection(ctx context.Context) (any
 		RecaptchaSiteKey:                 settings.RecaptchaSiteKey,
 		CapEnabled:                       settings.CapEnabled,
 		CapAPIEndpoint:                   settings.CapAPIEndpoint,
+		TencentCaptchaEnabled:            settings.TencentCaptchaEnabled,
+		TencentCaptchaAppID:              settings.TencentCaptchaAppID,
 		LocalCaptchaEnabled:              settings.LocalCaptchaEnabled,
 		SiteName:                         settings.SiteName,
 		SiteLogo:                         settings.SiteLogo,

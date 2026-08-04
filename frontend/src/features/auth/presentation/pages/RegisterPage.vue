@@ -189,7 +189,7 @@
         </div>
 
         <div
-          v-if="turnstileEnabled && (turnstileSiteKey || humanVerificationAPIEndpoint)"
+          v-if="inlineHumanVerificationRequired && (turnstileSiteKey || humanVerificationAPIEndpoint)"
           data-testid="registration-human-verification"
         >
           <HumanVerificationWidget
@@ -229,7 +229,7 @@
           type="submit"
           :disabled="
             registrationActionDisabled ||
-            (turnstileEnabled && !turnstileToken) ||
+            (inlineHumanVerificationRequired && !turnstileToken) ||
             (localCaptchaRequired && (!localCaptchaId || !localCaptchaCode))
           "
           class="btn btn-primary w-full"
@@ -266,6 +266,13 @@
 
       </form>
 
+      <HumanVerificationWidget
+        v-if="tencentCaptchaEnabled && turnstileSiteKey"
+        ref="turnstileRef"
+        provider="tencent"
+        :site-key="turnstileSiteKey"
+      />
+
       <div v-if="showOAuthLogin" class="space-y-3 pt-1">
         <div class="flex items-center gap-3">
           <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
@@ -281,6 +288,7 @@
           :github-enabled="githubOAuthEnabled"
           :google-enabled="googleOAuthEnabled"
           :show-divider="false"
+          @start="handleOAuthStart"
         />
 
         <LinuxDoOAuthSection
@@ -288,12 +296,14 @@
           :disabled="registrationActionDisabled"
           :aff-code="formData.aff_code"
           :show-divider="false"
+          @start="handleOAuthStart"
         />
         <WechatOAuthSection
           v-if="wechatOAuthEnabled"
           :disabled="registrationActionDisabled"
           :aff-code="formData.aff_code"
           :show-divider="false"
+          @start="handleOAuthStart"
         />
         <OidcOAuthSection
           v-if="oidcOAuthEnabled"
@@ -301,6 +311,7 @@
           :provider-name="oidcOAuthProviderName"
           :aff-code="formData.aff_code"
           :show-divider="false"
+          @start="handleOAuthStart"
         />
       </div>
     </div>
@@ -336,12 +347,15 @@ import Icon from '@/common/widgets/icons/Icon.vue'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
 import { useAuthStore, useAppStore } from '@/stores'
 import {
+  buildOAuthLoginStartURL,
   getPublicSettings,
   isWeChatWebOAuthEnabled,
   validatePromoCode,
   validateInvitationCode,
   clearCredentialKeyPrefetch,
-  prefetchCredentialKey
+  prefetchCredentialKey,
+  startOAuthLogin,
+  type OAuthLoginStart
 } from '@/features/auth/data/datasources/authDatasource'
 import { buildAuthErrorMessage } from '@/core/utils/authError'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
@@ -363,7 +377,7 @@ import {
   clearPendingRegistrationCredentials,
   setPendingRegistrationCredentials
 } from '@/core/utils/pendingRegistrationCredentials'
-import type { LoginAgreementDocument } from '@/types'
+import type { LoginAgreementDocument, TencentCaptchaRequestProof } from '@/types'
 
 const { t, locale } = useI18n()
 const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'
@@ -481,6 +495,14 @@ const registrationActionDisabled = computed(
 
 const localCaptchaRequired = computed(
   () => settingsLoaded.value && localCaptchaEnabled.value && !turnstileEnabled.value
+)
+
+const tencentCaptchaEnabled = computed(
+  () => turnstileEnabled.value && humanVerificationProvider.value === 'tencent'
+)
+
+const inlineHumanVerificationRequired = computed(
+  () => turnstileEnabled.value && !tencentCaptchaEnabled.value
 )
 
 watch(validationToastMessage, (value, previousValue) => {
@@ -781,6 +803,21 @@ function onTurnstileError(): void {
   errors.turnstile = t('auth.turnstileFailed')
 }
 
+function resetHumanVerification(): void {
+  turnstileRef.value?.reset()
+  turnstileToken.value = ''
+}
+
+async function acquireTencentProof(): Promise<TencentCaptchaRequestProof | null> {
+  if (!tencentCaptchaEnabled.value) return null
+  const proof = await turnstileRef.value?.verifyTencent()
+  if (!proof) return null
+  return {
+    tencent_captcha_ticket: proof.ticket,
+    tencent_captcha_randstr: proof.randstr
+  }
+}
+
 // ==================== Validation ====================
 
 function validateEmail(email: string): boolean {
@@ -854,7 +891,7 @@ function validateForm(): boolean {
   }
 
   // Turnstile validation
-  if (turnstileEnabled.value && !turnstileToken.value) {
+  if (inlineHumanVerificationRequired.value && !turnstileToken.value) {
     errors.turnstile = t('auth.completeVerification')
     isValid = false
   }
@@ -919,6 +956,9 @@ async function handleRegister(): Promise<void> {
   isLoading.value = true
 
   try {
+    const tencentProof = await acquireTencentProof()
+    if (tencentCaptchaEnabled.value && !tencentProof) return
+
     const affCode = formData.aff_code.trim() || loadAffiliateReferralCode()
     if (affCode) {
       formData.aff_code = affCode
@@ -933,7 +973,8 @@ async function handleRegister(): Promise<void> {
         'register_data',
         JSON.stringify({
           email: formData.email,
-          captcha_token: turnstileToken.value,
+          captcha_token: inlineHumanVerificationRequired.value ? turnstileToken.value : undefined,
+          ...(tencentProof || {}),
           captcha_id: localCaptchaId.value || undefined,
           captcha_code: localCaptchaCode.value || undefined,
           promo_code: formData.promo_code || undefined,
@@ -951,11 +992,12 @@ async function handleRegister(): Promise<void> {
     await authStore.register({
       email: formData.email,
       password: formData.password,
-      captcha_token: turnstileEnabled.value ? turnstileToken.value : undefined,
+      captcha_token: inlineHumanVerificationRequired.value ? turnstileToken.value : undefined,
       captcha_id: localCaptchaRequired.value ? localCaptchaId.value : undefined,
       captcha_code: localCaptchaRequired.value ? localCaptchaCode.value : undefined,
       promo_code: formData.promo_code || undefined,
       invitation_code: formData.invitation_code || undefined,
+      ...(tencentProof || {}),
       ...(affCode ? { aff_code: affCode } : {})
     })
     clearAffiliateReferralCode()
@@ -969,11 +1011,6 @@ async function handleRegister(): Promise<void> {
     clearPendingRegistrationCredentials()
     sessionStorage.removeItem('register_data')
     void prefetchCredentialKey()
-    // Reset Turnstile on error
-    if (turnstileRef.value) {
-      turnstileRef.value.reset()
-      turnstileToken.value = ''
-    }
     if (localCaptchaRequired.value) {
       await localCaptchaRef.value?.reset()
     }
@@ -989,6 +1026,34 @@ async function handleRegister(): Promise<void> {
     // Also show error toast
     appStore.showError(errorMessage.value)
   } finally {
+    if (turnstileEnabled.value) resetHumanVerification()
+    isLoading.value = false
+  }
+}
+
+async function handleOAuthStart(request: OAuthLoginStart): Promise<void> {
+  if (registrationActionDisabled.value) return
+  if (!tencentCaptchaEnabled.value) {
+    window.location.href = buildOAuthLoginStartURL(request)
+    return
+  }
+
+  isLoading.value = true
+  try {
+    const proof = await acquireTencentProof()
+    if (!proof) return
+    const result = await startOAuthLogin(request, proof)
+    window.location.href = result.authorize_url
+  } catch (error: unknown) {
+    errorMessage.value = extractI18nErrorMessage(
+      error,
+      t,
+      'auth.errors',
+      t('auth.turnstileFailed')
+    )
+    appStore.showError(errorMessage.value)
+  } finally {
+    resetHumanVerification()
     isLoading.value = false
   }
 }

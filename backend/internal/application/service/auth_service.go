@@ -378,46 +378,87 @@ func (s *AuthService) SendVerifyCodeAsync(ctx context.Context, email string, loc
 	}, nil
 }
 
-// VerifyTurnstileForRegister 在注册场景下验证当前启用的人机验证渠道。
+// VerifyHumanVerificationForRegister 在注册场景下验证当前启用的人机验证渠道。
 // 当邮箱验证开启且已提交验证码时，说明验证码发送阶段已完成人机验证，
 // 此处跳过二次校验，避免一次性 token 在注册提交时重复使用导致误报失败。
-func (s *AuthService) VerifyTurnstileForRegister(ctx context.Context, token, remoteIP, verifyCode string) error {
+func (s *AuthService) VerifyHumanVerificationForRegister(ctx context.Context, proof HumanVerificationProof, remoteIP, verifyCode string) error {
 	if s.IsEmailVerifyEnabled(ctx) && strings.TrimSpace(verifyCode) != "" {
 		logger.LegacyPrintf("service.auth", "%s", "[Auth] Email verify flow detected, skip duplicate human verification on register")
 		return nil
 	}
-	return s.VerifyTurnstile(ctx, token, remoteIP)
+	return s.VerifyHumanVerification(ctx, proof, remoteIP)
 }
 
-// VerifyTurnstile 验证当前启用的外部人机验证 token。保留旧方法名以兼容内部调用。
-func (s *AuthService) VerifyTurnstile(ctx context.Context, token string, remoteIP string) error {
+// VerifyHumanVerification validates the configured provider.
+func (s *AuthService) VerifyHumanVerification(ctx context.Context, proof HumanVerificationProof, remoteIP string) error {
 	required := s.cfg != nil && s.cfg.Server.Mode == "release" && s.cfg.Turnstile.Required
-
-	if required {
-		if s.settingService == nil {
-			logger.LegacyPrintf("service.auth", "%s", "[Auth] Human verification required but settings service is not configured")
-			return ErrTurnstileNotConfigured
-		}
-		provider := s.settingService.GetHumanVerificationProvider(ctx)
-		if provider == HumanVerificationProviderNone || provider == HumanVerificationProviderInvalid {
-			logger.LegacyPrintf("service.auth", "[Auth] Human verification required but provider is %s", provider)
-			return ErrTurnstileNotConfigured
-		}
-	}
-
-	if s.turnstileService == nil {
+	if s.settingService == nil {
 		if required {
-			logger.LegacyPrintf("service.auth", "%s", "[Auth] Human verification required but service not configured")
 			return ErrTurnstileNotConfigured
 		}
-		return nil // 服务未配置则跳过验证
+		return nil
 	}
-
-	if !required && s.settingService != nil && s.settingService.IsTurnstileEnabled(ctx) && s.settingService.GetTurnstileSecretKey(ctx) == "" {
-		logger.LegacyPrintf("service.auth", "%s", "[Auth] Turnstile enabled but secret key not configured")
+	if s.turnstileService == nil {
+		config, err := s.settingService.GetHumanVerificationConfig(ctx)
+		if err != nil {
+			return ErrHumanVerificationUnavailable
+		}
+		switch config.Provider {
+		case HumanVerificationProviderNone:
+			if required {
+				return ErrTurnstileNotConfigured
+			}
+			return nil
+		case HumanVerificationProviderLocal:
+			return nil
+		case HumanVerificationProviderInvalid:
+			return ErrHumanVerificationConflict
+		case HumanVerificationProviderTencent:
+			return ErrTencentCaptchaNotConfigured
+		case HumanVerificationProviderTurnstile:
+			return ErrTurnstileNotConfigured
+		case HumanVerificationProviderRecaptcha:
+			return ErrRecaptchaNotConfigured
+		case HumanVerificationProviderCap:
+			return ErrCapNotConfigured
+		default:
+			return ErrHumanVerificationConflict
+		}
 	}
+	return s.turnstileService.VerifyProof(ctx, proof, remoteIP, required)
+}
 
-	return s.turnstileService.VerifyToken(ctx, token, remoteIP)
+// VerifyTencentCaptchaIfEnabled protects newly added action entry points only
+// when Tencent is selected, leaving existing Turnstile/reCAPTCHA/CAP coverage
+// unchanged.
+func (s *AuthService) VerifyTencentCaptchaIfEnabled(ctx context.Context, proof HumanVerificationProof, remoteIP string) error {
+	if s == nil || s.settingService == nil {
+		return ErrHumanVerificationUnavailable
+	}
+	if s.turnstileService == nil {
+		config, err := s.settingService.GetHumanVerificationConfig(ctx)
+		if err != nil {
+			return ErrHumanVerificationUnavailable
+		}
+		if config.Provider == HumanVerificationProviderTencent {
+			return ErrTencentCaptchaNotConfigured
+		}
+		if config.Provider == HumanVerificationProviderInvalid {
+			return ErrHumanVerificationConflict
+		}
+		return nil
+	}
+	return s.turnstileService.VerifyTencentIfEnabled(ctx, proof, remoteIP)
+}
+
+// VerifyTurnstileForRegister is retained for existing internal callers.
+func (s *AuthService) VerifyTurnstileForRegister(ctx context.Context, token, remoteIP, verifyCode string) error {
+	return s.VerifyHumanVerificationForRegister(ctx, HumanVerificationProof{Token: token}, remoteIP, verifyCode)
+}
+
+// VerifyTurnstile is retained for existing internal callers.
+func (s *AuthService) VerifyTurnstile(ctx context.Context, token string, remoteIP string) error {
+	return s.VerifyHumanVerification(ctx, HumanVerificationProof{Token: token}, remoteIP)
 }
 
 // IsTurnstileEnabled 检查是否启用任一人机验证渠道。保留旧方法名以兼容调用方。

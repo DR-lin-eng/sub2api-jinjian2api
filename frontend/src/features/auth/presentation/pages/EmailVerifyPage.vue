@@ -67,7 +67,7 @@
         </div>
 
         <div
-          v-if="turnstileEnabled && (turnstileSiteKey || humanVerificationAPIEndpoint) && showResendTurnstile"
+          v-if="turnstileEnabled && (turnstileSiteKey || humanVerificationAPIEndpoint) && (showResendTurnstile || tencentCaptchaEnabled)"
         >
           <HumanVerificationWidget
             ref="turnstileRef"
@@ -130,13 +130,13 @@
             type="button"
             @click="handleResendCode"
             :disabled="
-              isSendingCode || (turnstileEnabled && showResendTurnstile && !resendTurnstileToken)
+              isSendingCode || (inlineHumanVerificationRequired && showResendTurnstile && !resendTurnstileToken)
               || (localCaptchaRequired && showResendLocalCaptcha && (!resendLocalCaptchaId || !resendLocalCaptchaCode))
             "
             class="text-sm text-primary-600 transition-colors hover:text-primary-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-primary-400 dark:hover:text-primary-300"
           >
             <span v-if="isSendingCode">{{ t('auth.sendingCode') }}</span>
-            <span v-else-if="turnstileEnabled && !showResendTurnstile">
+            <span v-else-if="inlineHumanVerificationRequired && !showResendTurnstile">
               {{ t('auth.clickToResend') }}
             </span>
             <span v-else-if="localCaptchaRequired && !showResendLocalCaptcha">
@@ -198,7 +198,7 @@ import {
   clearPendingRegistrationCredentials,
   getPendingRegistrationCredentials
 } from '@/core/utils/pendingRegistrationCredentials'
-import type { EncryptedRegisterRequest } from '@/types'
+import type { EncryptedRegisterRequest, TencentCaptchaRequestProof } from '@/types'
 import {
   resolveHumanVerification,
   type ExternalHumanVerificationProvider
@@ -243,6 +243,8 @@ type PendingOAuthCreateAccountResponse = {
 const email = ref<string>('')
 const password = ref<string>('')
 const initialTurnstileToken = ref<string>('')
+const initialTencentCaptchaTicket = ref<string>('')
+const initialTencentCaptchaRandstr = ref<string>('')
 const initialLocalCaptchaId = ref<string>('')
 const initialLocalCaptchaCode = ref<string>('')
 const promoCode = ref<string>('')
@@ -289,6 +291,12 @@ const validationToastMessage = computed(
 const localCaptchaRequired = computed(
   () => localCaptchaEnabled.value && !turnstileEnabled.value
 )
+const tencentCaptchaEnabled = computed(
+  () => turnstileEnabled.value && humanVerificationProvider.value === 'tencent'
+)
+const inlineHumanVerificationRequired = computed(
+  () => turnstileEnabled.value && !tencentCaptchaEnabled.value
+)
 
 watch(validationToastMessage, (value, previousValue) => {
   if (value && value !== previousValue) {
@@ -311,6 +319,8 @@ onMounted(async () => {
       const credentials = getPendingRegistrationCredentials()
       password.value = credentials?.email === email.value ? credentials.password : ''
       initialTurnstileToken.value = registerData.captcha_token || registerData.turnstile_token || ''
+      initialTencentCaptchaTicket.value = registerData.tencent_captcha_ticket || ''
+      initialTencentCaptchaRandstr.value = registerData.tencent_captcha_randstr || ''
       initialLocalCaptchaId.value = registerData.captcha_id || ''
       initialLocalCaptchaCode.value = registerData.captcha_code || ''
       promoCode.value = registerData.promo_code || ''
@@ -414,6 +424,21 @@ function onTurnstileError(): void {
   errors.value.turnstile = t('auth.turnstileFailed')
 }
 
+function resetHumanVerification(): void {
+  turnstileRef.value?.reset()
+  resendTurnstileToken.value = ''
+}
+
+async function acquireTencentProof(): Promise<TencentCaptchaRequestProof | null> {
+  if (!tencentCaptchaEnabled.value) return null
+  const proof = await turnstileRef.value?.verifyTencent()
+  if (!proof) return null
+  return {
+    tencent_captcha_ticket: proof.ticket,
+    tencent_captcha_randstr: proof.randstr
+  }
+}
+
 function isPendingOAuthFlow(): boolean {
   return Boolean(pendingProvider.value.trim())
 }
@@ -467,13 +492,29 @@ async function sendCode(): Promise<void> {
       return
     }
 
+    let tencentProof: TencentCaptchaRequestProof | null = null
+    if (initialTencentCaptchaTicket.value && initialTencentCaptchaRandstr.value) {
+      tencentProof = {
+        tencent_captcha_ticket: initialTencentCaptchaTicket.value,
+        tencent_captcha_randstr: initialTencentCaptchaRandstr.value
+      }
+      initialTencentCaptchaTicket.value = ''
+      initialTencentCaptchaRandstr.value = ''
+    } else if (tencentCaptchaEnabled.value) {
+      tencentProof = await acquireTencentProof()
+      if (!tencentProof) return
+    }
+
     const requestPayload = {
       email: email.value,
       [pendingAuthTokenField.value]: pendingAuthToken.value || undefined,
       // 优先使用重发时新获取的 token（因为初始 token 可能已被使用）
-      captcha_token: resendTurnstileToken.value || initialTurnstileToken.value || undefined,
+      captcha_token: inlineHumanVerificationRequired.value
+        ? resendTurnstileToken.value || initialTurnstileToken.value || undefined
+        : undefined,
       captcha_id: resendLocalCaptchaId.value || initialLocalCaptchaId.value || undefined,
-      captcha_code: resendLocalCaptchaCode.value || initialLocalCaptchaCode.value || undefined
+      captcha_code: resendLocalCaptchaCode.value || initialLocalCaptchaCode.value || undefined,
+      ...(tencentProof || {})
     } as Parameters<typeof sendVerifyCode>[0]
     const response = isPendingOAuthFlow()
       ? await sendPendingOAuthVerifyCode(requestPayload)
@@ -500,6 +541,8 @@ async function sendCode(): Promise<void> {
 
     // Reset turnstile state（token 已使用，清除以避免重复使用）
     initialTurnstileToken.value = ''
+    initialTencentCaptchaTicket.value = ''
+    initialTencentCaptchaRandstr.value = ''
     initialLocalCaptchaId.value = ''
     initialLocalCaptchaCode.value = ''
     showResendTurnstile.value = false
@@ -521,6 +564,7 @@ async function sendCode(): Promise<void> {
       await localCaptchaRef.value?.reset()
     }
   } finally {
+    if (tencentCaptchaEnabled.value) resetHumanVerification()
     isSendingCode.value = false
   }
 }
@@ -529,13 +573,13 @@ async function sendCode(): Promise<void> {
 
 async function handleResendCode(): Promise<void> {
   // If turnstile is enabled and we haven't shown it yet, show it
-  if (turnstileEnabled.value && !showResendTurnstile.value) {
+  if (inlineHumanVerificationRequired.value && !showResendTurnstile.value) {
     showResendTurnstile.value = true
     return
   }
 
   // If turnstile is enabled but no token yet, wait
-  if (turnstileEnabled.value && !resendTurnstileToken.value) {
+  if (inlineHumanVerificationRequired.value && !resendTurnstileToken.value) {
     errors.value.turnstile = t('auth.completeVerification')
     return
   }

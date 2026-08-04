@@ -72,6 +72,9 @@ export function applySettingsSaveResponse({
   form.turnstile_secret_key = "";
   form.recaptcha_secret_key = "";
   form.cap_secret_key = "";
+  form.tencent_captcha_app_secret_key = "";
+  form.tencent_captcha_cloud_secret_id = "";
+  form.tencent_captcha_cloud_secret_key = "";
   form.linuxdo_connect_client_secret = "";
   form.dingtalk_connect_client_secret = "";
   form.github_oauth_client_secret = "";

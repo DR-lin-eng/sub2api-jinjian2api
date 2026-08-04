@@ -30,7 +30,7 @@ func TestEnsureCodexIdentityHeaders(t *testing.T) {
 		require.Equal(t, "responses=experimental", h.Get("OpenAI-Beta"))
 	})
 
-	t.Run("保留非降载官方UA和合法version并重新配对", func(t *testing.T) {
+	t.Run("统一非 CLI 官方客户端身份", func(t *testing.T) {
 		const vscodeUA = "codex_vscode/9.9.9 (Mac OS X 14.0; arm64) vscode (codex_vscode; 9.9.9)"
 		h := make(http.Header)
 		h.Set("user-agent", vscodeUA)
@@ -40,84 +40,50 @@ func TestEnsureCodexIdentityHeaders(t *testing.T) {
 		ensureCodexIdentityHeaders(h)
 		enforceCodexIdentityHeaders(h)
 
-		require.Equal(t, "codex_vscode", h.Get("originator"))
-		require.Equal(t, vscodeUA, h.Get("user-agent"))
-		require.Equal(t, "9.9.9", h.Get("version"))
+		require.Equal(t, "codex_cli_rs", h.Get("originator"))
+		require.Equal(t, codexCLIUserAgent, h.Get("user-agent"))
+		require.Equal(t, codexCLIVersion, h.Get("version"))
 		require.Equal(t, "responses=experimental", h.Get("OpenAI-Beta"))
 	})
 }
 
 func TestEnforceCodexIdentityHeaders(t *testing.T) {
-	const tuiUA = "codex-tui/0.140.2 (Mac OS X 14.0; arm64) iTerm (codex-tui; 0.140.2)"
-	const normalizedTUIUA = "codex_cli_rs/0.140.2 (Mac OS X 14.0; arm64) iTerm"
-
 	tests := []struct {
-		name           string
-		originator     string
-		userAgent      string
-		version        string
-		wantOriginator string
-		wantUA         string
-		wantVersion    string
+		name       string
+		originator string
+		userAgent  string
+		version    string
 	}{
 		{
-			name:           "错配 originator 按最终 UA 重配并归一化",
-			originator:     "codex_cli_rs",
-			userAgent:      tuiUA,
-			wantOriginator: "codex_cli_rs",
-			wantUA:         normalizedTUIUA,
+			name:       "错配 originator",
+			originator: "codex_cli_rs",
+			userAgent:  "codex-tui/0.140.2 (Mac OS X 14.0; arm64) iTerm (codex-tui; 0.140.2)",
 		},
 		{
-			name:           "降载身份改写为 CLI 身份",
-			originator:     "codex-tui",
-			userAgent:      tuiUA,
-			wantOriginator: "codex_cli_rs",
-			wantUA:         normalizedTUIUA,
+			name:       "官方 vscode 身份",
+			originator: "codex_vscode",
+			userAgent:  "codex_vscode/1.2.3 (Ubuntu 22.4.0; x86_64) vscode",
 		},
 		{
-			name:           "第三方 UA 整体回退默认身份",
-			originator:     "opencode",
-			userAgent:      "luna/1.0.0",
-			wantOriginator: "codex_cli_rs",
-			wantUA:         codexCLIUserAgent,
+			name:       "第三方 UA",
+			originator: "opencode",
+			userAgent:  "luna/1.0.0",
+			version:    "2.1.0",
 		},
 		{
-			name:           "UA 缺失回退默认身份",
-			originator:     "codex_vscode",
-			wantOriginator: "codex_cli_rs",
-			wantUA:         codexCLIUserAgent,
+			name:       "UA 缺失",
+			originator: "codex_vscode",
 		},
 		{
-			name:           "originator override 真实身份归一化",
-			originator:     "cccc",
-			userAgent:      "cccc/0.142.0 (Ubuntu 22.4.0; x86_64) screen (codex-tui; 0.142.0)",
-			wantOriginator: "codex_cli_rs",
-			wantUA:         "codex_cli_rs/0.142.0 (Ubuntu 22.4.0; x86_64) screen",
+			name:       "originator override",
+			originator: "cccc",
+			userAgent:  "cccc/0.142.0 (Ubuntu 22.4.0; x86_64) screen (codex-tui; 0.142.0)",
 		},
 		{
-			name:           "低于门槛的 version 提升为内置版本",
-			originator:     "codex_cli_rs",
-			userAgent:      "codex_cli_rs/0.125.0",
-			version:        "0.125.0",
-			wantOriginator: "codex_cli_rs",
-			wantUA:         "codex_cli_rs/0.125.0",
-			wantVersion:    codexCLIVersion,
-		},
-		{
-			name:           "达标 version 原样保留",
-			originator:     "codex_cli_rs",
-			userAgent:      "codex_cli_rs/0.145.0",
-			version:        "0.145.0",
-			wantOriginator: "codex_cli_rs",
-			wantUA:         "codex_cli_rs/0.145.0",
-			wantVersion:    "0.145.0",
-		},
-		{
-			name:           "未携带 version 不注入",
-			originator:     "codex_cli_rs",
-			userAgent:      "codex_cli_rs/0.98.0",
-			wantOriginator: "codex_cli_rs",
-			wantUA:         "codex_cli_rs/0.98.0",
+			name:       "陈旧客户端版本",
+			originator: "codex_cli_rs",
+			userAgent:  "codex_cli_rs/0.125.0",
+			version:    "0.125.0",
 		},
 	}
 
@@ -136,19 +102,19 @@ func TestEnforceCodexIdentityHeaders(t *testing.T) {
 
 			enforceCodexIdentityHeaders(h)
 
-			require.Equal(t, tt.wantOriginator, h.Get("originator"))
-			require.Equal(t, tt.wantUA, h.Get("user-agent"))
-			require.Equal(t, tt.wantVersion, h.Get("version"))
+			require.Equal(t, "codex_cli_rs", h.Get("originator"))
+			require.Equal(t, codexCLIUserAgent, h.Get("user-agent"))
+			require.Equal(t, codexCLIVersion, h.Get("version"))
 		})
 	}
 }
 
-func TestCodexOriginatorNormalizationZeroValueConfigKeepsItEnabled(t *testing.T) {
+func TestCodexIdentityEnforcementZeroValueConfigKeepsItEnabled(t *testing.T) {
 	var cfg config.Config
-	require.False(t, cfg.Gateway.DisableCodexOriginatorNormalization)
+	require.False(t, cfg.Gateway.DisableCodexIdentityEnforcement)
 
-	SetCodexOriginatorNormalizationEnabled(!cfg.Gateway.DisableCodexOriginatorNormalization)
-	t.Cleanup(func() { SetCodexOriginatorNormalizationEnabled(true) })
+	SetCodexIdentityEnforcementEnabled(!cfg.Gateway.DisableCodexIdentityEnforcement)
+	t.Cleanup(func() { SetCodexIdentityEnforcementEnabled(true) })
 
 	h := make(http.Header)
 	h.Set("originator", "codex-tui")
@@ -157,18 +123,44 @@ func TestCodexOriginatorNormalizationZeroValueConfigKeepsItEnabled(t *testing.T)
 	require.Equal(t, "codex_cli_rs", h.Get("originator"))
 }
 
-func TestEnforceCodexIdentityHeadersNormalizationDisabled(t *testing.T) {
-	const tuiUA = "codex-tui/0.140.2 (Mac OS X 14.0; arm64) iTerm (codex-tui; 0.140.2)"
-	SetCodexOriginatorNormalizationEnabled(false)
-	t.Cleanup(func() { SetCodexOriginatorNormalizationEnabled(true) })
+func TestEnforceCodexIdentityHeadersEnforcementDisabled(t *testing.T) {
+	const tuiUA = "codex-tui/0.145.2 (Mac OS X 14.0; arm64) iTerm (codex-tui; 0.145.2)"
+	SetCodexIdentityEnforcementEnabled(false)
+	t.Cleanup(func() { SetCodexIdentityEnforcementEnabled(true) })
 
 	h := make(http.Header)
 	h.Set("originator", "codex-tui")
 	h.Set("user-agent", tuiUA)
+	h.Set("version", "0.145.2")
 	enforceCodexIdentityHeaders(h)
 
 	require.Equal(t, "codex-tui", h.Get("originator"))
 	require.Equal(t, tuiUA, h.Get("user-agent"))
+	require.Equal(t, "0.145.2", h.Get("version"))
+}
+
+func TestEnforceCodexIdentityHeadersFollowsCanonicalResolver(t *testing.T) {
+	SetCodexCanonicalUserAgentResolver(func() string {
+		return "codex_cli_rs/0.200.1" + codexCLIUserAgentSuffix
+	})
+	t.Cleanup(func() { SetCodexCanonicalUserAgentResolver(nil) })
+
+	h := make(http.Header)
+	h.Set("originator", "codex-tui")
+	h.Set("user-agent", "codex-tui/0.140.2")
+	enforceCodexIdentityHeaders(h)
+
+	require.Equal(t, "codex_cli_rs", h.Get("originator"))
+	require.Equal(t, "codex_cli_rs/0.200.1"+codexCLIUserAgentSuffix, h.Get("user-agent"))
+	require.Equal(t, "0.200.1", h.Get("version"))
+}
+
+func TestNormalizeCodexClientVersion(t *testing.T) {
+	require.Equal(t, "0.146.0", NormalizeCodexClientVersion(" 0.146.0 "))
+	require.Equal(t, "0.147.0-alpha.4", NormalizeCodexClientVersion("0.147.0-alpha.4"))
+	require.Empty(t, NormalizeCodexClientVersion("v0.146.0"))
+	require.Empty(t, NormalizeCodexClientVersion("0.146.0\r\nX-Injected: 1"))
+	require.Empty(t, NormalizeCodexClientVersion("latest"))
 }
 
 // enforce 本身仍只负责收口：缺少 originator 时必须保持 no-op，由需要恢复身份的

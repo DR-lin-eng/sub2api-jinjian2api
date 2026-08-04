@@ -21,6 +21,9 @@ export type SettingsForm = Omit<
   turnstile_secret_key: string;
   recaptcha_secret_key: string;
   cap_secret_key: string;
+  tencent_captcha_app_secret_key: string;
+  tencent_captcha_cloud_secret_id: string;
+  tencent_captcha_cloud_secret_key: string;
   linuxdo_connect_client_secret: string;
   dingtalk_connect_client_secret: string;
   wechat_connect_app_secret: string;
@@ -158,6 +161,14 @@ export function createSettingsForm(localText: LocalText): SettingsForm {
     cap_api_endpoint: "",
     cap_secret_key: "",
     cap_secret_key_configured: false,
+    tencent_captcha_enabled: false,
+    tencent_captcha_app_id: "",
+    tencent_captcha_app_secret_key: "",
+    tencent_captcha_app_secret_key_configured: false,
+    tencent_captcha_cloud_secret_id: "",
+    tencent_captcha_cloud_secret_id_configured: false,
+    tencent_captcha_cloud_secret_key: "",
+    tencent_captcha_cloud_secret_key_configured: false,
     local_captcha_enabled: false,
     api_key_acl_trust_forwarded_ip: true,
     client_ip_resolution_mode: "auto_compat",
@@ -307,6 +318,9 @@ export function createSettingsForm(localText: LocalText): SettingsForm {
     enable_client_dateline_normalization: true,
     antigravity_user_agent_version: "",
     openai_codex_user_agent: "",
+    openai_codex_client_version: "",
+    openai_codex_client_version_synced: "",
+    openai_codex_version_auto_sync_enabled: true,
     min_codex_version: "",
     max_codex_version: "",
     codex_cli_only_blacklist: "",

@@ -32,6 +32,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/shared/servertiming"
 	"github.com/Wei-Shaw/sub2api/internal/shared/tlsfingerprint"
 	"github.com/Wei-Shaw/sub2api/internal/shared/urlvalidator"
+	"github.com/Wei-Shaw/sub2api/internal/shared/xai"
 	"golang.org/x/mod/semver"
 )
 
@@ -79,7 +80,7 @@ const (
 	grokCLIProxyHost       = "cli-chat-proxy.grok.com"
 	grokOfficialAPIHost    = "api.x.ai"
 	grokTokenAuthHeader    = "X-Xai-Token-Auth"
-	grokCLIStableVersion   = "0.2.93"
+	grokCLIStableVersion   = xai.CLIClientVersion
 	grokCLIVersionOverride = "XAI_GROK_CLI_VERSION"
 	grokFallbackBodyLimit  = 64 << 10
 )

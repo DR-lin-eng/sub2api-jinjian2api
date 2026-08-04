@@ -7,6 +7,7 @@ const sendVerifyCode = vi.fn()
 const sendPendingOAuthVerifyCode = vi.fn()
 const getPublicSettings = vi.fn()
 const showError = vi.fn()
+const verifyTencent = vi.fn()
 
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
@@ -40,6 +41,7 @@ describe('PendingOAuthCreateAccountForm', () => {
     sendPendingOAuthVerifyCode.mockReset()
     getPublicSettings.mockReset()
     showError.mockReset()
+    verifyTencent.mockReset()
     getPublicSettings.mockResolvedValue({
       turnstile_enabled: false,
       turnstile_site_key: ''
@@ -215,7 +217,8 @@ describe('PendingOAuthCreateAccountForm', () => {
       global: {
         stubs: {
           TurnstileWidget: {
-            template: '<button data-testid="turnstile-verify" @click="$emit(\'verify\', \'turnstile-token\')">verify</button>'
+            template: '<button data-testid="turnstile-verify" @click="$emit(\'verify\', \'turnstile-token\')">verify</button>',
+            methods: { reset() {} }
           }
         }
       }
@@ -234,5 +237,53 @@ describe('PendingOAuthCreateAccountForm', () => {
       email: 'user@example.com',
       captcha_token: 'turnstile-token'
     })
+  })
+
+  it('acquires Tencent proof on submit when email verification is disabled', async () => {
+    getPublicSettings.mockResolvedValue({
+      email_verify_enabled: false,
+      tencent_captcha_enabled: true,
+      tencent_captcha_app_id: '123456789'
+    })
+    verifyTencent.mockResolvedValue({ ticket: 'ticket-value', randstr: 'rand-value' })
+
+    const wrapper = mount(PendingOAuthCreateAccountForm, {
+      props: {
+        testIdPrefix: 'linuxdo',
+        initialEmail: 'user@example.com',
+        isSubmitting: false
+      },
+      global: {
+        stubs: {
+          HumanVerificationWidget: {
+            template: '<span data-testid="tencent-captcha-stub"></span>',
+            methods: {
+              verifyTencent() {
+                return verifyTencent()
+              },
+              reset() {}
+            }
+          }
+        }
+      }
+    })
+
+    await flushPromises()
+    await wrapper.get('[data-testid="linuxdo-create-account-password"]').setValue('secret-123')
+    await wrapper.get('form').trigger('submit.prevent')
+    await flushPromises()
+
+    expect(verifyTencent).toHaveBeenCalledTimes(1)
+    expect(wrapper.emitted('submit')).toEqual([
+      [
+        {
+          email: 'user@example.com',
+          password: 'secret-123',
+          verifyCode: '',
+          tencentCaptchaTicket: 'ticket-value',
+          tencentCaptchaRandstr: 'rand-value'
+        }
+      ]
+    ])
   })
 })

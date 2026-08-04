@@ -119,6 +119,14 @@ function buildIdentitySettingsPayload({
     cap_enabled: form.cap_enabled,
     cap_api_endpoint: form.cap_api_endpoint,
     cap_secret_key: form.cap_secret_key || undefined,
+    tencent_captcha_enabled: form.tencent_captcha_enabled,
+    tencent_captcha_app_id: form.tencent_captcha_app_id,
+    tencent_captcha_app_secret_key:
+      form.tencent_captcha_app_secret_key || undefined,
+    tencent_captcha_cloud_secret_id:
+      form.tencent_captcha_cloud_secret_id || undefined,
+    tencent_captcha_cloud_secret_key:
+      form.tencent_captcha_cloud_secret_key || undefined,
     local_captcha_enabled: form.local_captcha_enabled,
     client_ip_resolution_mode: form.client_ip_resolution_mode,
     client_ip_trusted_proxies: clientIPTrustedProxies,
@@ -266,6 +274,10 @@ function buildGatewaySettingsPayload({
     antigravity_user_agent_version:
       form.antigravity_user_agent_version?.trim() || "",
     openai_codex_user_agent: form.openai_codex_user_agent?.trim() || "",
+    openai_codex_client_version:
+      form.openai_codex_client_version?.trim() || "",
+    openai_codex_version_auto_sync_enabled:
+      form.openai_codex_version_auto_sync_enabled,
     min_codex_version: form.min_codex_version?.trim() || "",
     max_codex_version: form.max_codex_version?.trim() || "",
     codex_cli_only_allow_app_server_clients:

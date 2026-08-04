@@ -16,10 +16,7 @@
       :placeholder="t('auth.passwordPlaceholder')"
       :disabled="isSubmitting"
     />
-    <div
-      v-if="emailVerifyEnabled && turnstileEnabled && (turnstileSiteKey || humanVerificationAPIEndpoint)"
-      class="space-y-2"
-    >
+    <div v-if="turnstileEnabled && (turnstileSiteKey || humanVerificationAPIEndpoint)" class="space-y-2">
       <HumanVerificationWidget
         ref="turnstileRef"
         :provider="humanVerificationProvider"
@@ -31,7 +28,7 @@
       />
     </div>
     <LocalCaptchaWidget
-      v-else-if="emailVerifyEnabled && localCaptchaEnabled"
+      v-else-if="localCaptchaEnabled"
       ref="localCaptchaRef"
       v-model:captcha-id="localCaptchaId"
       v-model:captcha-code="localCaptchaCode"
@@ -53,7 +50,7 @@
         :data-testid="`${testIdPrefix}-create-account-send-code`"
         type="button"
         class="btn btn-secondary shrink-0"
-        :disabled="isSubmitting || isSendingCode || countdown > 0 || !email.trim() || (turnstileEnabled && !turnstileToken) || (localCaptchaEnabled && (!localCaptchaId || !localCaptchaCode))"
+        :disabled="isSubmitting || isSendingCode || countdown > 0 || !email.trim() || (inlineHumanVerificationRequired && !turnstileToken) || (localCaptchaEnabled && (!localCaptchaId || !localCaptchaCode))"
         @click="handleSendCode"
       >
         {{
@@ -101,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import HumanVerificationWidget from '@/features/auth/presentation/widgets/HumanVerificationWidget.vue'
 import LocalCaptchaWidget from '@/features/auth/presentation/widgets/LocalCaptchaWidget.vue'
@@ -109,7 +106,8 @@ import { getPublicSettings, sendPendingOAuthVerifyCode } from '@/features/auth/d
 import { useAppStore } from '@/stores'
 import {
   resolveHumanVerification,
-  type ExternalHumanVerificationProvider
+  type ExternalHumanVerificationProvider,
+  type TencentCaptchaProof
 } from '@/core/services/humanVerification'
 
 export type PendingOAuthCreateAccountPayload = {
@@ -117,6 +115,11 @@ export type PendingOAuthCreateAccountPayload = {
   password: string
   verifyCode: string
   invitationCode?: string
+  captchaToken?: string
+  tencentCaptchaTicket?: string
+  tencentCaptchaRandstr?: string
+  captchaId?: string
+  captchaCode?: string
 }
 
 const props = defineProps<{
@@ -154,6 +157,12 @@ const localCaptchaEnabled = ref(false)
 const localCaptchaId = ref('')
 const localCaptchaCode = ref('')
 const localCaptchaRef = ref<InstanceType<typeof LocalCaptchaWidget> | null>(null)
+const tencentCaptchaEnabled = computed(
+  () => turnstileEnabled.value && humanVerificationProvider.value === 'tencent'
+)
+const inlineHumanVerificationRequired = computed(
+  () => turnstileEnabled.value && humanVerificationProvider.value !== 'tencent'
+)
 
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
@@ -231,13 +240,22 @@ function onTurnstileError() {
   sendCodeError.value = t('auth.turnstileFailed')
 }
 
+async function verifyTencentForAction(): Promise<TencentCaptchaProof | null> {
+  try {
+    return (await turnstileRef.value?.verifyTencent()) || null
+  } catch (error: unknown) {
+    sendCodeError.value = getRequestErrorMessage(error, t('auth.turnstileFailed'))
+    return null
+  }
+}
+
 async function handleSendCode() {
   const trimmedEmail = email.value.trim()
   if (!trimmedEmail) {
     return
   }
 
-  if (turnstileEnabled.value && !turnstileToken.value) {
+  if (inlineHumanVerificationRequired.value && !turnstileToken.value) {
     sendCodeError.value = t('auth.completeVerification')
     return
   }
@@ -247,40 +265,87 @@ async function handleSendCode() {
   sendCodeSuccess.value = false
 
   try {
+    const tencentProof = tencentCaptchaEnabled.value ? await verifyTencentForAction() : null
+    if (tencentCaptchaEnabled.value && !tencentProof) {
+      return
+    }
     const response = await sendPendingOAuthVerifyCode({
       email: trimmedEmail,
-      ...(turnstileEnabled.value ? { captcha_token: turnstileToken.value } : {}),
+      ...(inlineHumanVerificationRequired.value ? { captcha_token: turnstileToken.value } : {}),
+      ...(tencentProof
+        ? {
+            tencent_captcha_ticket: tencentProof.ticket,
+            tencent_captcha_randstr: tencentProof.randstr
+          }
+        : {}),
       ...(localCaptchaEnabled.value
         ? { captcha_id: localCaptchaId.value, captcha_code: localCaptchaCode.value }
         : {})
     })
     sendCodeSuccess.value = true
     startCountdown(response.countdown)
+  } catch (error: unknown) {
+    sendCodeError.value = getRequestErrorMessage(error, t('auth.sendCodeFailed'))
+  } finally {
     if (turnstileEnabled.value) {
       resetTurnstile()
     }
     if (localCaptchaEnabled.value) {
       await localCaptchaRef.value?.reset()
     }
-  } catch (error: unknown) {
-    sendCodeError.value = getRequestErrorMessage(error, t('auth.sendCodeFailed'))
-  } finally {
     isSendingCode.value = false
   }
 }
 
-function handleSubmit() {
+async function handleSubmit() {
   const trimmedEmail = email.value.trim()
   if (!trimmedEmail || password.value.length < 6) {
     return
+  }
+
+  let tencentProof: TencentCaptchaProof | null = null
+  if (!emailVerifyEnabled.value) {
+    if (inlineHumanVerificationRequired.value && !turnstileToken.value) {
+      sendCodeError.value = t('auth.completeVerification')
+      return
+    }
+    if (localCaptchaEnabled.value && (!localCaptchaId.value || !localCaptchaCode.value)) {
+      sendCodeError.value = t('auth.completeVerification')
+      return
+    }
+    if (tencentCaptchaEnabled.value) {
+      tencentProof = await verifyTencentForAction()
+      if (!tencentProof) {
+        return
+      }
+    }
   }
 
   emit('submit', {
     email: trimmedEmail,
     password: password.value,
     verifyCode: emailVerifyEnabled.value ? verifyCode.value.trim() : '',
-    invitationCode: invitationCode.value.trim() || undefined
+    invitationCode: invitationCode.value.trim() || undefined,
+    ...(!emailVerifyEnabled.value && inlineHumanVerificationRequired.value
+      ? { captchaToken: turnstileToken.value }
+      : {}),
+    ...(tencentProof
+      ? {
+          tencentCaptchaTicket: tencentProof.ticket,
+          tencentCaptchaRandstr: tencentProof.randstr
+        }
+      : {}),
+    ...(!emailVerifyEnabled.value && localCaptchaEnabled.value
+      ? { captchaId: localCaptchaId.value, captchaCode: localCaptchaCode.value }
+      : {})
   })
+
+  if (!emailVerifyEnabled.value && turnstileEnabled.value) {
+    resetTurnstile()
+  }
+  if (!emailVerifyEnabled.value && localCaptchaEnabled.value) {
+    void localCaptchaRef.value?.reset()
+  }
 }
 
 function emitSwitchToBind() {

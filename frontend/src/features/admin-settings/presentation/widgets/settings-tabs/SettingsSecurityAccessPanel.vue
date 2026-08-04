@@ -557,6 +557,84 @@
           </div>
         </div>
       </div>
+
+      <div
+        v-if="form.tencent_captcha_enabled"
+        class="border-t border-gray-100 pt-4 dark:border-dark-700"
+        data-testid="tencent-captcha-settings"
+      >
+        <div class="grid grid-cols-1 gap-6">
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ t("admin.settings.turnstile.tencentAppId") }}
+            </label>
+            <input
+              v-model="form.tencent_captcha_app_id"
+              type="text"
+              inputmode="numeric"
+              class="input font-mono text-sm"
+              placeholder="123456789"
+            />
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              {{ t("admin.settings.turnstile.tencentAppIdHint") }}
+            </p>
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ t("admin.settings.turnstile.tencentAppSecretKey") }}
+            </label>
+            <input
+              v-model="form.tencent_captcha_app_secret_key"
+              type="password"
+              class="input font-mono text-sm"
+              autocomplete="new-password"
+            />
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              {{
+                form.tencent_captcha_app_secret_key_configured
+                  ? t("admin.settings.turnstile.secretKeyConfiguredHint")
+                  : t("admin.settings.turnstile.tencentAppSecretKeyHint")
+              }}
+            </p>
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ t("admin.settings.turnstile.tencentCloudSecretId") }}
+            </label>
+            <input
+              v-model="form.tencent_captcha_cloud_secret_id"
+              type="password"
+              class="input font-mono text-sm"
+              autocomplete="new-password"
+            />
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              {{
+                form.tencent_captcha_cloud_secret_id_configured
+                  ? t("admin.settings.turnstile.secretKeyConfiguredHint")
+                  : t("admin.settings.turnstile.tencentCloudSecretIdHint")
+              }}
+            </p>
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ t("admin.settings.turnstile.tencentCloudSecretKey") }}
+            </label>
+            <input
+              v-model="form.tencent_captcha_cloud_secret_key"
+              type="password"
+              class="input font-mono text-sm"
+              autocomplete="new-password"
+            />
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              {{
+                form.tencent_captcha_cloud_secret_key_configured
+                  ? t("admin.settings.turnstile.secretKeyConfiguredHint")
+                  : t("admin.settings.turnstile.tencentCloudSecretKeyHint")
+              }}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

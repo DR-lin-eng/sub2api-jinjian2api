@@ -82,6 +82,9 @@ func appendAccessSettingChanges(changed []string, before, after *service.SystemS
 	if before.CapEnabled != after.CapEnabled {
 		changed = append(changed, "cap_enabled")
 	}
+	if before.TencentCaptchaEnabled != after.TencentCaptchaEnabled {
+		changed = append(changed, "tencent_captcha_enabled")
+	}
 	if before.LocalCaptchaEnabled != after.LocalCaptchaEnabled {
 		changed = append(changed, "local_captcha_enabled")
 	}
@@ -102,6 +105,18 @@ func appendAccessSettingChanges(changed []string, before, after *service.SystemS
 	}
 	if req.CapSecretKey != "" {
 		changed = append(changed, "cap_secret_key")
+	}
+	if before.TencentCaptchaAppID != after.TencentCaptchaAppID {
+		changed = append(changed, "tencent_captcha_app_id")
+	}
+	if req.TencentCaptchaAppSecretKey != "" {
+		changed = append(changed, "tencent_captcha_app_secret_key")
+	}
+	if req.TencentCaptchaCloudSecretID != "" {
+		changed = append(changed, "tencent_captcha_cloud_secret_id")
+	}
+	if req.TencentCaptchaCloudSecretKey != "" {
+		changed = append(changed, "tencent_captcha_cloud_secret_key")
 	}
 	if before.ClientIPResolutionMode != after.ClientIPResolutionMode {
 		changed = append(changed, "client_ip_resolution_mode")
