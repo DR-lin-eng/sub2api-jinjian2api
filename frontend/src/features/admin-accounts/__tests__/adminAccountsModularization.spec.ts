@@ -7,6 +7,8 @@ const currentDir = dirname(fileURLToPath(import.meta.url))
 const featureDir = resolve(currentDir, '..')
 const readFeatureSource = (relativePath: string) =>
   readFileSync(resolve(featureDir, relativePath), 'utf8')
+const sharedGatewaySource = readFileSync(resolve(featureDir, '../../types/gateway.ts'), 'utf8')
+const sharedTypesFacadeSource = readFileSync(resolve(featureDir, '../../types/index.ts'), 'utf8')
 
 const collectRuntimeSources = (directory: string): Array<{ path: string; source: string }> => {
   const sources: Array<{ path: string; source: string }> = []
@@ -33,11 +35,79 @@ const bulkDialogSource = readFeatureSource('presentation/widgets/BulkEditAccount
 const usageCellSource = readFeatureSource('presentation/widgets/AccountUsageCell.vue')
 const quotaNotifySource = readFeatureSource('presentation/composables/useQuotaNotifyState.ts')
 const scheduledTestsSource = readFeatureSource('presentation/widgets/ScheduledTestsPanel.vue')
+const createOAuthActionsSource = readFeatureSource(
+  'presentation/composables/useCreateAccountOAuthActions.ts'
+)
+const createDialogSource = readFeatureSource('presentation/widgets/CreateAccountDialog.vue')
+const editDialogSource = readFeatureSource('presentation/widgets/EditAccountDialog.vue')
+const editSubmissionSource = readFeatureSource(
+  'presentation/composables/useEditAccountSubmission.ts'
+)
+const modelWhitelistSource = readFeatureSource('presentation/widgets/ModelWhitelistSelector.vue')
+const importDataDialogSource = readFeatureSource('presentation/widgets/ImportDataDialog.vue')
+const syncFromCrsDialogSource = readFeatureSource('presentation/widgets/SyncFromCrsDialog.vue')
+const accountDtoSource = readFeatureSource('data/dtos/adminAccountDtos.ts')
+const accountDtoNames = [
+  'ClaudeModel',
+  'TempUnschedulableRule',
+  'TempUnschedulableState',
+  'TempUnschedulableStatus',
+  'CreateAccountRequest',
+  'UpdateAccountRequest',
+  'CheckMixedChannelRequest',
+  'MixedChannelWarningDetails',
+  'CheckMixedChannelResponse',
+  'CodexSessionImportRequest',
+  'OpenAICodexPATCreateRequest',
+  'CodexSessionImportMessage',
+  'CodexSessionImportItem',
+  'CodexSessionImportResult'
+]
+const accountDtoConsumerPaths = [
+  'data/datasources/adminAccountActions.ts',
+  'data/datasources/adminAccountQueries.ts',
+  'data/datasources/adminAccountsDatasource.ts',
+  'presentation/pages/AccountsPage.vue',
+  'presentation/widgets/CreateAccountDialog.vue',
+  'presentation/widgets/AccountTestDialog.vue',
+  'presentation/widgets/AdminAccountTestDialog.vue',
+  'presentation/widgets/TempUnschedStatusDialog.vue',
+  'presentation/composables/useCreateAccountOAuthActions.ts',
+  'presentation/composables/useEditAccountSubmission.ts'
+]
+const oauthComposableSources = [
+  'useAccountOAuth.ts',
+  'useAntigravityOAuth.ts',
+  'useGeminiOAuth.ts',
+  'useGrokOAuth.ts',
+  'useOpenAIOAuth.ts'
+].map((file) => readFeatureSource(`presentation/composables/${file}`))
+const reauthorizationSources = [
+  'presentation/widgets/ReAuthAccountDialog.vue',
+  'presentation/widgets/AdminReAuthAccountDialog.vue'
+].map((file) => readFeatureSource(file))
 const maintenanceTargets = new Map([
   ['presentation/pages/AccountsPage.vue', 1550]
 ])
 
 describe('admin accounts modularization', () => {
+  it('owns account-only DTOs in feature data while preserving compatibility exports', () => {
+    for (const dtoName of accountDtoNames) {
+      const declaration = new RegExp(`export interface ${dtoName}\\b`)
+      expect(accountDtoSource, dtoName).toMatch(declaration)
+      expect(sharedGatewaySource, dtoName).not.toMatch(declaration)
+    }
+
+    expect(sharedTypesFacadeSource).toContain(
+      "from '@/features/admin-accounts/data/dtos/adminAccountDtos'"
+    )
+    for (const path of accountDtoConsumerPaths) {
+      expect(readFeatureSource(path), path).toMatch(
+        /from ['"][^'"]*data\/dtos\/adminAccountDtos['"]|from ['"]\.\.\/dtos\/adminAccountDtos['"]/
+      )
+    }
+  })
+
   it('keeps every feature runtime module within the maintenance target', () => {
     for (const runtime of collectRuntimeSources(featureDir)) {
       const target = maintenanceTargets.get(runtime.path) ?? 1500
@@ -91,6 +161,85 @@ describe('admin accounts modularization', () => {
     expect(scheduledTestsSource).not.toContain("from '@/api/admin'")
     expect(scheduledTestsSource).toContain(
       "from '@/features/admin-accounts/data/datasources/scheduledTestsDatasource'"
+    )
+  })
+
+  it('routes OAuth composables through feature-owned action datasources', () => {
+    for (const source of oauthComposableSources) {
+      expect(source).not.toContain("from '@/api/admin'")
+    }
+    expect(oauthComposableSources[0]).toContain(
+      "from '@/features/admin-accounts/data/datasources/adminAccountOAuthActions'"
+    )
+    expect(oauthComposableSources[1]).toContain(
+      "from '@/features/admin-accounts/data/datasources/antigravityDatasource'"
+    )
+    expect(oauthComposableSources[2]).toContain(
+      "from '@/features/admin-accounts/data/datasources/geminiDatasource'"
+    )
+    expect(oauthComposableSources[3]).toContain(
+      "from '@/features/admin-accounts/data/datasources/grokDatasource'"
+    )
+    expect(oauthComposableSources[4]).toContain(
+      "from '@/features/admin-accounts/data/datasources/adminAccountOAuthActions'"
+    )
+    expect(createOAuthActionsSource).toContain(
+      "from '../../data/datasources/adminAccountOAuthActions'"
+    )
+    expect(createOAuthActionsSource).not.toContain('accountsAPI.exchangeCode')
+  })
+
+  it('routes reauthorization widgets through account action owners', () => {
+    for (const source of reauthorizationSources) {
+      expect(source).not.toContain("from '@/api/admin'")
+      expect(source).toContain(
+        "from '@/features/admin-accounts/data/datasources/adminAccountActions'"
+      )
+      expect(source).toContain(
+        "from '@/features/admin-accounts/data/datasources/adminAccountOAuthActions'"
+      )
+    }
+  })
+
+  it('routes create and edit workflows through explicit account and settings owners', () => {
+    for (const source of [createDialogSource, editDialogSource]) {
+      expect(source).not.toContain("from '@/api/admin'")
+      expect(source).toContain(
+        "from '@/features/admin-accounts/data/datasources/adminAccountActions'"
+      )
+      expect(source).toContain(
+        "from '@/features/admin-settings/data/datasources/adminSettingsDatasource'"
+      )
+      expect(source).toContain(
+        "from '@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource'"
+      )
+    }
+    expect(createOAuthActionsSource).toContain(
+      "from '../../data/datasources/adminAccountActions'"
+    )
+    expect(createOAuthActionsSource).not.toContain('accountsAPI.')
+    expect(editSubmissionSource).toContain(
+      "from '../../data/datasources/adminAccountActions'"
+    )
+    expect(editSubmissionSource).not.toContain('accountsAPI.')
+    expect(modelWhitelistSource).toContain(
+      "from '@/features/admin-accounts/data/datasources/adminAccountActions'"
+    )
+    expect(modelWhitelistSource).not.toContain('accountsAPI.')
+  })
+
+  it('routes account import and CRS sync through query/action owners', () => {
+    for (const runtime of collectRuntimeSources(featureDir)) {
+      expect(runtime.source, runtime.path).not.toContain("from '@/api/admin'")
+    }
+    expect(importDataDialogSource).toContain(
+      "from '@/features/admin-accounts/data/datasources/adminAccountActions'"
+    )
+    expect(syncFromCrsDialogSource).toContain(
+      "from '@/features/admin-accounts/data/datasources/adminAccountActions'"
+    )
+    expect(syncFromCrsDialogSource).toContain(
+      "from '@/features/admin-accounts/data/datasources/adminAccountQueries'"
     )
   })
 

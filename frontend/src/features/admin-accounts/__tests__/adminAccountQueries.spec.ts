@@ -12,18 +12,22 @@ vi.mock('@/core/networks/client', () => ({
 import {
   getBatchTodayStats,
   getAvailableModels,
+  getAntigravityDefaultModelMapping,
   getStats,
   getTempUnschedulableStatus,
   getUsage,
   list,
-  listWithEtag
+  listWithEtag,
+  previewFromCrs
 } from '@/features/admin-accounts/data/datasources/adminAccountQueries'
 import {
   accountsAPI,
   getAvailableModels as getAvailableModelsFromFacade,
+  getAntigravityDefaultModelMapping as getAntigravityDefaultModelMappingFromFacade,
   getStats as getStatsFromFacade,
   getTempUnschedulableStatus as getTempUnschedulableStatusFromFacade,
-  getUsage as getUsageFromFacade
+  getUsage as getUsageFromFacade,
+  previewFromCrs as previewFromCrsFromFacade
 } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
 
 describe('admin account queries', () => {
@@ -132,6 +136,40 @@ describe('admin account queries', () => {
 
     await expect(getTempUnschedulableStatus(19)).resolves.toEqual(response)
     expect(get).toHaveBeenCalledWith('/admin/accounts/19/temp-unschedulable')
+  })
+
+  it('keeps the Antigravity default mapping query on its read-only owner', async () => {
+    const mapping = { 'gemini-3.1-pro': 'gemini-3.1-pro-preview' }
+    get.mockResolvedValueOnce({ data: mapping })
+
+    await expect(getAntigravityDefaultModelMapping()).resolves.toEqual(mapping)
+    expect(get).toHaveBeenCalledWith('/admin/accounts/antigravity/default-model-mapping')
+    expect(getAntigravityDefaultModelMappingFromFacade).toBe(getAntigravityDefaultModelMapping)
+    expect(accountsAPI.getAntigravityDefaultModelMapping).toBe(getAntigravityDefaultModelMapping)
+  })
+
+  it('keeps CRS preview on the query owner without changing credentials', async () => {
+    const params = {
+      base_url: 'https://crs.example.com',
+      username: 'admin',
+      password: 'secret'
+    }
+    const preview = {
+      new_accounts: [{
+        crs_account_id: 'crs-1',
+        kind: 'openai',
+        name: 'OpenAI account',
+        platform: 'openai',
+        type: 'oauth'
+      }],
+      existing_accounts: []
+    }
+    post.mockResolvedValueOnce({ data: preview })
+
+    await expect(previewFromCrs(params)).resolves.toEqual(preview)
+    expect(post).toHaveBeenCalledWith('/admin/accounts/sync/crs/preview', params)
+    expect(previewFromCrsFromFacade).toBe(previewFromCrs)
+    expect(accountsAPI.previewFromCrs).toBe(previewFromCrs)
   })
 
   it('keeps compatibility facade query exports on the same function identities', () => {

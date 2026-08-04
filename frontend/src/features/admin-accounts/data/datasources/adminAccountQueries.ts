@@ -3,15 +3,14 @@ import type {
   Account,
   AccountUsageInfo,
   AccountUsageStatsResponse,
-  ClaudeModel,
   OllamaCloudUsageSettings,
   OllamaCloudUsageState,
   PaginatedResponse,
-  TempUnschedulableStatus,
   UpstreamBillingProbeSettings,
   UpstreamBillingRatesResponse,
   WindowStats
 } from '@/types'
+import type { ClaudeModel, TempUnschedulableStatus } from '../dtos/adminAccountDtos'
 
 export interface AccountListFilters {
   platform?: string
@@ -195,5 +194,41 @@ export async function getAvailableModels(id: number): Promise<ClaudeModel[]> {
 
 export async function getUpstreamBillingProbeSettings(): Promise<UpstreamBillingProbeSettings> {
   const { data } = await apiClient.get<UpstreamBillingProbeSettings>('/admin/accounts/upstream-billing-probe/settings')
+  return data
+}
+
+export async function getAntigravityDefaultModelMapping(): Promise<Record<string, string>> {
+  const { data } = await apiClient.get<Record<string, string>>(
+    '/admin/accounts/antigravity/default-model-mapping'
+  )
+  return data
+}
+
+export interface CRSConnectionParams {
+  base_url: string
+  username: string
+  password: string
+}
+
+export interface CRSPreviewAccount {
+  crs_account_id: string
+  kind: string
+  name: string
+  platform: string
+  type: string
+}
+
+export interface PreviewFromCRSResult {
+  new_accounts: CRSPreviewAccount[]
+  existing_accounts: CRSPreviewAccount[]
+}
+
+export async function previewFromCrs(
+  params: CRSConnectionParams
+): Promise<PreviewFromCRSResult> {
+  const { data } = await apiClient.post<PreviewFromCRSResult>(
+    '/admin/accounts/sync/crs/preview',
+    params
+  )
   return data
 }

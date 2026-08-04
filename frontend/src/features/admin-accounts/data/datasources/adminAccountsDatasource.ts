@@ -5,12 +5,19 @@
 
 import { apiClient } from '@/core/networks/client'
 import {
+  exchangeCode,
+  generateAuthUrl,
+  refreshOpenAIToken
+} from './adminAccountOAuthActions'
+import {
   getBatchSummaries,
   getBatchTodayStats,
   getAvailableModels,
+  getAntigravityDefaultModelMapping,
   getById,
   getOllamaCloudUsage,
   getOllamaCloudUsageSettings,
+  previewFromCrs,
   getStats,
   getTempUnschedulableStatus,
   getTodayStats,
@@ -21,16 +28,22 @@ import {
   listWithEtag
 } from './adminAccountQueries'
 import {
+  applyOAuthCredentials,
   batchClearError,
   batchDelete,
   batchRefresh,
   bulkUpdate,
   checkMixedChannelRisk,
+  clearAccountError,
+  createAccount,
+  createOpenAICodexPAT,
   createSparkShadow,
   deleteOllamaCloudUsageSession,
   deleteAccount,
   duplicate,
   exportData,
+  importCodexSession,
+  importData,
   probeUpstreamBilling,
   probeUpstreamBillingBatch,
   queryUpstreamQuota,
@@ -44,28 +57,28 @@ import {
   setSchedulable,
   setOllamaCloudUsageAutoRefresh,
   syncCPACapacity,
+  syncFromCrs,
+  syncUpstreamModels,
+  syncUpstreamModelsPreview,
+  testCPAConnection,
+  updateAccount,
   updateOllamaCloudUsageSettings
 } from './adminAccountActions'
-import type { CPACapacityStatus } from './adminAccountActions'
 import type {
   Account,
-  CreateAccountRequest,
-  UpdateAccountRequest,
-  AdminDataPayload,
-  AdminDataImportResult,
-  CodexSessionImportRequest,
-  CodexSessionImportResult,
-  OpenAICodexPATCreateRequest,
   UpstreamBillingProbeSettings
 } from '@/types'
+import type { CreateAccountRequest } from '../dtos/adminAccountDtos'
 
 export {
   getBatchSummaries,
   getBatchTodayStats,
   getAvailableModels,
+  getAntigravityDefaultModelMapping,
   getById,
   getOllamaCloudUsage,
   getOllamaCloudUsageSettings,
+  previewFromCrs,
   getStats,
   getTempUnschedulableStatus,
   getTodayStats,
@@ -91,11 +104,15 @@ export {
   batchRefresh,
   bulkUpdate,
   checkMixedChannelRisk,
+  createAccount as create,
+  createOpenAICodexPAT,
   createSparkShadow,
   deleteOllamaCloudUsageSession,
   deleteAccount,
   duplicate,
   exportData,
+  importCodexSession,
+  importData,
   probeUpstreamBilling,
   probeUpstreamBillingBatch,
   queryUpstreamQuota,
@@ -109,36 +126,51 @@ export {
   setPrivacy,
   setSchedulable,
   syncCPACapacity,
+  syncFromCrs,
+  syncUpstreamModels,
+  syncUpstreamModelsPreview,
+  testCPAConnection,
   updateOllamaCloudUsageSettings
 } from './adminAccountActions'
+export {
+  applyOAuthCredentials,
+  clearAccountError as clearError,
+  updateAccount as update
+} from './adminAccountActions'
+export {
+  exchangeCode,
+  generateAuthUrl,
+  refreshOpenAIToken
+} from './adminAccountOAuthActions'
+export type {
+  AccountAuthUrlResponse,
+  AccountOAuthExchangeRequest,
+  AccountOAuthMethod,
+  AccountOAuthTokenInfo,
+  OpenAIAuthUrlRequest,
+  OpenAIExchangeCodeRequest,
+  OpenAITokenInfo
+} from './adminAccountOAuthActions'
 export type {
   AccountExportOptions,
+  AccountDataImportPayload,
   BatchOperationResult,
   BulkUpdateResult,
+  CPATestRequest,
+  CPATestResult,
   CPACapacityStatus,
-  SparkShadowCreatePayload
+  CRSSyncItem,
+  CRSSyncParams,
+  CRSSyncResult,
+  SparkShadowCreatePayload,
+  SyncUpstreamModelsResult,
+  SyncUpstreamPreviewParams
 } from './adminAccountActions'
-
-/**
- * Create new account
- * @param accountData - Account data
- * @returns Created account
- */
-export async function create(accountData: CreateAccountRequest): Promise<Account> {
-  const { data } = await apiClient.post<Account>('/admin/accounts', accountData)
-  return data
-}
-
-/**
- * Update account
- * @param id - Account ID
- * @param updates - Fields to update
- * @returns Updated account
- */
-export async function update(id: number, updates: UpdateAccountRequest): Promise<Account> {
-  const { data } = await apiClient.put<Account>(`/admin/accounts/${id}`, updates)
-  return data
-}
+export type {
+  CRSConnectionParams,
+  CRSPreviewAccount,
+  PreviewFromCRSResult
+} from './adminAccountQueries'
 
 /**
  * Toggle account status
@@ -147,7 +179,7 @@ export async function update(id: number, updates: UpdateAccountRequest): Promise
  * @returns Updated account
  */
 export async function toggleStatus(id: number, status: 'active' | 'inactive'): Promise<Account> {
-  return update(id, { status })
+  return updateAccount(id, { status })
 }
 
 /**
@@ -165,57 +197,6 @@ export async function testAccount(id: number): Promise<{
     message: string
     latency_ms?: number
   }>(`/admin/accounts/${id}/test`)
-  return data
-}
-
-export interface CPATestRequest {
-  use_account_base_url?: boolean
-  base_url?: string
-  management_url?: string
-  management_password?: string
-  concurrency_per_credential?: number
-}
-
-export interface CPATestResult extends CPACapacityStatus {
-  latency_ms: number
-}
-
-export async function testCPAConnection(id: number, payload: CPATestRequest): Promise<CPATestResult> {
-  const { data } = await apiClient.post<CPATestResult>(`/admin/accounts/${id}/cpa/test`, payload)
-  return data
-}
-
-/**
- * Apply OAuth credentials after re-authorization.
- *
- * Unlike `update()`, this endpoint:
- * - never overwrites the whole `extra` JSONB (merges incrementally instead),
- *   so persistent settings like `base_rpm`, `window_cost_limit`, `max_sessions`,
- *   `quota_*` and `privacy_mode` are preserved
- * - clears the account error and invalidates the token cache server-side
- */
-export async function applyOAuthCredentials(
-  id: number,
-  payload: {
-    type: 'oauth' | 'setup-token'
-    credentials: Record<string, unknown>
-    extra?: Record<string, unknown>
-  }
-): Promise<Account> {
-  const { data } = await apiClient.post<Account>(
-    `/admin/accounts/${id}/apply-oauth-credentials`,
-    payload
-  )
-  return data
-}
-
-/**
- * Clear account error
- * @param id - Account ID
- * @returns Updated account
- */
-export async function clearError(id: number): Promise<Account> {
-  const { data } = await apiClient.post<Account>(`/admin/accounts/${id}/clear-error`)
   return data
 }
 
@@ -240,34 +221,6 @@ export async function resetTempUnschedulable(id: number): Promise<{ message: str
   const { data } = await apiClient.delete<{ message: string }>(
     `/admin/accounts/${id}/temp-unschedulable`
   )
-  return data
-}
-
-/**
- * Generate OAuth authorization URL
- * @param endpoint - API endpoint path
- * @param config - Proxy configuration
- * @returns Auth URL and session ID
- */
-export async function generateAuthUrl(
-  endpoint: string,
-  config: { proxy_id?: number }
-): Promise<{ auth_url: string; session_id: string }> {
-  const { data } = await apiClient.post<{ auth_url: string; session_id: string }>(endpoint, config)
-  return data
-}
-
-/**
- * Exchange authorization code for tokens
- * @param endpoint - API endpoint path
- * @param exchangeData - Session ID, code, and optional proxy config
- * @returns Token information
- */
-export async function exchangeCode(
-  endpoint: string,
-  exchangeData: { session_id: string; code: string; state?: string; proxy_id?: number }
-): Promise<Record<string, unknown>> {
-  const { data } = await apiClient.post<Record<string, unknown>>(endpoint, exchangeData)
   return data
 }
 
@@ -328,155 +281,6 @@ export async function batchUpdateCredentials(request: {
  * @param id - Account ID
  * @returns List of available models for this account
  */
-export interface SyncUpstreamModelsResult {
-  models: string[]
-}
-
-/**
- * Sync live supported models from the account's upstream model-list endpoint
- * @param id - Account ID
- * @returns List of model IDs returned by the upstream
- */
-export async function syncUpstreamModels(id: number): Promise<SyncUpstreamModelsResult> {
-  const { data } = await apiClient.post<SyncUpstreamModelsResult>(`/admin/accounts/${id}/models/sync-upstream`)
-  return data
-}
-
-export interface SyncUpstreamPreviewParams {
-  platform: string
-  type: string
-  base_url?: string
-  api_key: string
-}
-
-/**
- * Preview upstream models without a saved account (create-flow)
- * @param params - Connection credentials
- * @returns List of model IDs returned by the upstream
- */
-export async function syncUpstreamModelsPreview(params: SyncUpstreamPreviewParams): Promise<SyncUpstreamModelsResult> {
-  const { data } = await apiClient.post<SyncUpstreamModelsResult>('/admin/accounts/models/sync-upstream-preview', params)
-  return data
-}
-
-export interface CRSPreviewAccount {
-  crs_account_id: string
-  kind: string
-  name: string
-  platform: string
-  type: string
-}
-
-export interface PreviewFromCRSResult {
-  new_accounts: CRSPreviewAccount[]
-  existing_accounts: CRSPreviewAccount[]
-}
-
-export async function previewFromCrs(params: {
-  base_url: string
-  username: string
-  password: string
-}): Promise<PreviewFromCRSResult> {
-  const { data } = await apiClient.post<PreviewFromCRSResult>('/admin/accounts/sync/crs/preview', params)
-  return data
-}
-
-export async function syncFromCrs(params: {
-  base_url: string
-  username: string
-  password: string
-  sync_proxies?: boolean
-  selected_account_ids?: string[]
-}): Promise<{
-  created: number
-  updated: number
-  skipped: number
-  failed: number
-  items: Array<{
-    crs_account_id: string
-    kind: string
-    name: string
-    action: string
-    error?: string
-  }>
-}> {
-  const { data } = await apiClient.post<{
-    created: number
-    updated: number
-    skipped: number
-    failed: number
-    items: Array<{
-      crs_account_id: string
-      kind: string
-      name: string
-      action: string
-      error?: string
-    }>
-  }>('/admin/accounts/sync/crs', params, {
-    timeout: 180000 // 180s timeout: sync refreshes each existing account's OAuth token serially
-  })
-  return data
-}
-
-export async function importData(payload: {
-  data: AdminDataPayload
-  skip_default_group_bind?: boolean
-}): Promise<AdminDataImportResult> {
-  const { data } = await apiClient.post<AdminDataImportResult>('/admin/accounts/data', {
-    data: payload.data,
-    skip_default_group_bind: payload.skip_default_group_bind
-  })
-  return data
-}
-
-export async function importCodexSession(payload: CodexSessionImportRequest): Promise<CodexSessionImportResult> {
-  const { data } = await apiClient.post<CodexSessionImportResult>('/admin/accounts/import/codex-session', payload, {
-    timeout: 120000 // 120s timeout for large session imports
-  })
-  return data
-}
-
-export async function createOpenAICodexPAT(payload: OpenAICodexPATCreateRequest): Promise<Account> {
-  const { data } = await apiClient.post<Account>('/admin/openai/create-from-codex-pat', payload)
-  return data
-}
-
-/**
- * Get Antigravity default model mapping from backend
- * @returns Default model mapping (from -> to)
- */
-export async function getAntigravityDefaultModelMapping(): Promise<Record<string, string>> {
-  const { data } = await apiClient.get<Record<string, string>>(
-    '/admin/accounts/antigravity/default-model-mapping'
-  )
-  return data
-}
-
-/**
- * Refresh OpenAI token using refresh token
- * @param refreshToken - The refresh token
- * @param proxyId - Optional proxy ID
- * @returns Token information including access_token, email, etc.
- */
-export async function refreshOpenAIToken(
-  refreshToken: string,
-  proxyId?: number | null,
-  endpoint: string = '/admin/openai/refresh-token',
-  clientId?: string
-): Promise<Record<string, unknown>> {
-  const payload: { refresh_token: string; proxy_id?: number; client_id?: string } = {
-    refresh_token: refreshToken
-  }
-  if (proxyId) {
-    payload.proxy_id = proxyId
-  }
-  if (clientId) {
-    payload.client_id = clientId
-  }
-  const { data } = await apiClient.post<Record<string, unknown>>(endpoint, payload)
-  return data
-}
-
 /**
  * Batch operation result type
  */
@@ -599,9 +403,9 @@ export const accountsAPI = {
   getUpstreamBillingRatesWithEtag,
   getById,
   getBatchSummaries,
-  create,
+  create: createAccount,
   duplicate,
-  update,
+  update: updateAccount,
   checkMixedChannelRisk,
   delete: deleteAccount,
   toggleStatus,
@@ -611,7 +415,7 @@ export const accountsAPI = {
   refreshCredentials,
   applyOAuthCredentials,
   getStats,
-  clearError,
+  clearError: clearAccountError,
   getUsage,
   getTodayStats,
   getBatchTodayStats,

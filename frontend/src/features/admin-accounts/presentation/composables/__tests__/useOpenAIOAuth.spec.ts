@@ -19,18 +19,14 @@ vi.mock('vue-i18n', () => ({
   })
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    accounts: {
-      generateAuthUrl: vi.fn(),
-      exchangeCode: vi.fn(),
-      refreshOpenAIToken: vi.fn()
-    }
-  }
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountOAuthActions', () => ({
+  generateOpenAIAuthUrl: vi.fn(),
+  exchangeOpenAICode: vi.fn(),
+  refreshOpenAIToken: vi.fn()
 }))
 
 import { useOpenAIOAuth } from '@/features/admin-accounts/presentation/composables/useOpenAIOAuth'
-import { adminAPI } from '@/api/admin'
+import { exchangeOpenAICode } from '@/features/admin-accounts/data/datasources/adminAccountOAuthActions'
 
 describe('useOpenAIOAuth.buildCredentials', () => {
   it('should keep client_id when token response contains it', () => {
@@ -77,7 +73,7 @@ describe('useOpenAIOAuth.buildCredentials', () => {
 
 describe('useOpenAIOAuth.exchangeAuthCode', () => {
   it('shows a clear proxy hint when code exchange fails without a proxy', async () => {
-    vi.mocked(adminAPI.accounts.exchangeCode).mockRejectedValueOnce({
+    vi.mocked(exchangeOpenAICode).mockRejectedValueOnce({
       status: 502,
       reason: 'OPENAI_OAUTH_PROXY_REQUIRED',
       message: 'OpenAI OAuth token exchange failed: no proxy is configured.'

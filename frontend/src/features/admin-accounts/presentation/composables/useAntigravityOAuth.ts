@@ -1,8 +1,16 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { AntigravityTokenInfo } from '@/features/admin-accounts/data/datasources/antigravityDatasource'
+import {
+  exchangeCode as exchangeAntigravityCode,
+  generateAuthUrl as generateAntigravityAuthUrl,
+  refreshAntigravityToken
+} from '@/features/admin-accounts/data/datasources/antigravityDatasource'
+import type {
+  AntigravityAuthUrlRequest,
+  AntigravityExchangeCodeRequest,
+  AntigravityTokenInfo
+} from '@/features/admin-accounts/data/datasources/antigravityDatasource'
 
 export function useAntigravityOAuth() {
   const appStore = useAppStore()
@@ -30,10 +38,10 @@ export function useAntigravityOAuth() {
     error.value = ''
 
     try {
-      const payload: Record<string, unknown> = {}
+      const payload: AntigravityAuthUrlRequest = {}
       if (proxyId) payload.proxy_id = proxyId
 
-      const response = await adminAPI.antigravity.generateAuthUrl(payload as any)
+      const response = await generateAntigravityAuthUrl(payload)
       authUrl.value = response.auth_url
       sessionId.value = response.session_id
       state.value = response.state
@@ -64,14 +72,14 @@ export function useAntigravityOAuth() {
     error.value = ''
 
     try {
-      const payload: Record<string, unknown> = {
+      const payload: AntigravityExchangeCodeRequest = {
         session_id: params.sessionId,
         state: params.state,
         code
       }
       if (params.proxyId) payload.proxy_id = params.proxyId
 
-      const tokenInfo = await adminAPI.antigravity.exchangeCode(payload as any)
+      const tokenInfo = await exchangeAntigravityCode(payload)
       return tokenInfo as AntigravityTokenInfo
     } catch (err: any) {
       error.value =
@@ -96,10 +104,7 @@ export function useAntigravityOAuth() {
     error.value = ''
 
     try {
-      const tokenInfo = await adminAPI.antigravity.refreshAntigravityToken(
-        refreshToken.trim(),
-        proxyId
-      )
+      const tokenInfo = await refreshAntigravityToken(refreshToken.trim(), proxyId)
       return tokenInfo as AntigravityTokenInfo
     } catch (err: any) {
       error.value =

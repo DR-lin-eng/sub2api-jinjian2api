@@ -1,6 +1,10 @@
 import type { Ref } from 'vue'
-import type { Account, CheckMixedChannelResponse } from '@/types'
-import { accountsAPI } from '../../data/datasources/adminAccountsDatasource'
+import type { Account } from '@/types'
+import type { CheckMixedChannelResponse } from '../../data/dtos/adminAccountDtos'
+import {
+  checkMixedChannelRisk,
+  updateAccount
+} from '../../data/datasources/adminAccountActions'
 import type {
   EditAccountUpdatePayloadContext,
 } from '../accountEditUpdatePayload'
@@ -94,7 +98,7 @@ export function useEditAccountSubmission(context: EditAccountSubmissionContext) 
     if (!currentAccount) return false
 
     try {
-      const result = await accountsAPI.checkMixedChannelRisk({
+      const result = await checkMixedChannelRisk({
         platform: currentAccount.platform,
         group_ids: form.group_ids,
         account_id: currentAccount.id,
@@ -128,7 +132,7 @@ export function useEditAccountSubmission(context: EditAccountSubmissionContext) 
   ) => {
     submitting.value = true
     try {
-      const updatedAccount = await accountsAPI.update(
+      const updatedAccount = await updateAccount(
         accountID,
         withAntigravityConfirmFlag(updatePayload),
       )

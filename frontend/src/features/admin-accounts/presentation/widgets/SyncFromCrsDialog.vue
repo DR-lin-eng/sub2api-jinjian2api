@@ -245,8 +245,10 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { PreviewFromCRSResult } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
+import { syncFromCrs } from '@/features/admin-accounts/data/datasources/adminAccountActions'
+import { previewFromCrs } from '@/features/admin-accounts/data/datasources/adminAccountQueries'
+import type { PreviewFromCRSResult } from '@/features/admin-accounts/data/datasources/adminAccountQueries'
+import type { CRSSyncResult } from '@/features/admin-accounts/data/datasources/adminAccountActions'
 
 interface Props {
   show: boolean
@@ -269,7 +271,7 @@ const previewing = ref(false)
 const syncing = ref(false)
 const previewResult = ref<PreviewFromCRSResult | null>(null)
 const selectedIds = ref(new Set<string>())
-const result = ref<Awaited<ReturnType<typeof adminAPI.accounts.syncFromCrs>> | null>(null)
+const result = ref<CRSSyncResult | null>(null)
 
 const form = reactive({
   base_url: '',
@@ -346,7 +348,7 @@ const handlePreview = async () => {
 
   previewing.value = true
   try {
-    const res = await adminAPI.accounts.previewFromCrs({
+    const res = await previewFromCrs({
       base_url: form.base_url.trim(),
       username: form.username.trim(),
       password: form.password
@@ -370,7 +372,7 @@ const handleSync = async () => {
 
   syncing.value = true
   try {
-    const res = await adminAPI.accounts.syncFromCrs({
+    const res = await syncFromCrs({
       base_url: form.base_url.trim(),
       username: form.username.trim(),
       password: form.password,

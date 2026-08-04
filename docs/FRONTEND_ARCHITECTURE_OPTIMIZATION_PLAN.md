@@ -1,6 +1,6 @@
 # 前端架构优化计划
 
-> 状态：实施中。阶段 1 的渐进式架构门禁已于 2026-08-03 落地；后续 feature 迁移仍按本路线逐批实施。
+> 状态：阶段性完成。阶段 1 的渐进式架构门禁已于 2026-08-03 落地，阶段 2 的 `admin-accounts` 试点已于 2026-08-04 收口；阶段 3 待后续任务启动。
 >
 > 基线日期：2026-08-03。后续迁移批次开始前必须重新统计代码和依赖，源码与测试始终是最终事实来源。
 
@@ -175,13 +175,13 @@ features/<domain>/
 开始前必须先确认当前账号管理功能修改已经稳定，不能覆盖或回退已有改动。
 
 - [x] 盘点账号列表、详情、统计、用量、授权、导入导出和批量接口。
-- [ ] 将账号专属 DTO 从 `src/types/gateway.ts` 迁回 feature data。
-- [ ] 拆分账号 Query：列表、ETag、详情、统计、用量和只读探测。
-- [ ] 拆分账号 Action：创建、更新、删除、授权、批量和导入导出。
-- [ ] 保留重复操作幂等键、AbortController、ETag 和额度刷新行为。
-- [ ] 将复杂表单校验、payload 构造和账号类型策略保留为纯函数。
-- [ ] 替换该 feature 对 `adminAPI.accounts` 的兼容调用。
-- [ ] 补充 DTO 兼容、Query 参数、Action payload 和页面请求生命周期测试。
+- [x] 将账号专属 DTO 从 `src/types/gateway.ts` 迁回 feature data。
+- [x] 拆分账号 Query：列表、ETag、详情、统计、用量和只读探测。
+- [x] 拆分账号 Action：创建、更新、删除、授权、批量和导入导出。
+- [x] 保留重复操作幂等键、AbortController、ETag 和额度刷新行为。
+- [x] 将复杂表单校验、payload 构造和账号类型策略保留为纯函数。
+- [x] 替换该 feature 对 `adminAPI.accounts` 的兼容调用。
+- [x] 补充 DTO 兼容、Query 参数、Action payload 和页面请求生命周期测试。
 
 已完成第一切片：列表/ETag、详情摘要、今日统计和上游费率快照迁入 Query owner；重复账号、上游计费探测和额度主动查询迁入 Action owner。旧 datasource 继续提供同名导出与 `accountsAPI`，今日统计和上游计费 composable 已移除统一 admin barrel 依赖，并同步缩小精确债务基线。
 
@@ -198,6 +198,16 @@ features/<domain>/
 已完成第七切片：账号额度通知 composable 直接依赖 `admin-settings` 的设置查询 owner；全局开关异步加载、失败关闭和账号 extra 阈值写入语义保持不变，不再通过统一 admin barrel 访问其他 feature。
 
 已完成第八切片：定时测试面板直接依赖 `scheduledTestsDatasource` 的计划与结果接口；打开时加载、创建后刷新、局部启停/编辑、删除和结果展开时序保持不变，不再通过统一 admin barrel 访问同域 owner。
+
+已完成第九切片：通用账号和 OpenAI OAuth 请求进入 `adminAccountOAuthActions`，Gemini、Antigravity 和 Grok OAuth composable 直接依赖各自平台 datasource，创建账号的 OAuth 兑换编排也直接调用新 owner；授权 URL、state/session、代理参数、code exchange、cookie 授权、refresh token 和旧服务器 capabilities fallback 保持原语义。旧 `accountsAPI` 继续导出相同函数身份，5 个 OAuth composable 不再经过统一 admin barrel。
+
+已完成第十切片：`ReAuthAccountDialog.vue` 与 `AdminReAuthAccountDialog.vue` 直接依赖账号 Action/OAuth Action owner；普通重新授权继续按 `update -> clear-error` 顺序写入，管理员流程继续使用 `apply-oauth-credentials` 增量合并 extra、清理错误并失效服务端 token cache。各平台 code exchange、cookie 授权、代理参数、凭据转换、成功事件与关闭时机保持不变，兼容 `accountsAPI` 继续导出相同函数身份。
+
+已完成第十一切片：创建、更新、混合渠道预检、Codex session/PAT 导入、上游模型同步和 CPA 测试进入账号 Action owner，Antigravity 默认映射进入 Query owner；`CreateAccountDialog.vue`、`EditAccountDialog.vue` 及其创建 OAuth/编辑提交编排直接依赖明确 owner。Web Search 全局开关与 TLS 指纹 profile 继续由 `admin-settings` datasource 所有，表单 watcher、风险确认、敏感字段 payload、创建后主动计费探测、事件和关闭时机保持不变，兼容 `accountsAPI` 保持相同函数身份。
+
+已完成第十二切片：CRS 预览进入账号 Query owner，数据导入和 CRS 同步进入账号 Action owner；`ImportDataDialog.vue` 与 `SyncFromCrsDialog.vue` 不再经过统一 admin barrel。多文件合并、逐文件头校验、导入结果统计、默认分组绑定字段、部分成功后的关闭刷新、CRS 自动选择/手动取消、代理同步选项、成功事件和 `180000ms` timeout 保持不变，`admin-accounts` 运行时 `@/api/admin` 引用归零。
+
+已完成第十三切片：`ClaudeModel`、临时不可调度状态、账号创建/更新、混合渠道预检和 Codex session/PAT 导入 DTO 迁入 `admin-accounts/data/dtos/adminAccountDtos.ts`；Query、Action、账号页、创建/编辑编排和连接测试组件直接依赖 feature owner。`src/types/gateway.ts` 不再声明这些账号专属类型，`@/types` 保留兼容转发，未改变 API 字段或请求 payload。
 
 停止条件：如果拆分产生大量一对一包装、测试替身显著膨胀或调用链更难追踪，退回 `presentation -> queries/actions -> network` 三层，不继续增加 Application/Repository 抽象。
 
@@ -302,7 +312,7 @@ make test-frontend
 
 ## 10. 当前进度与接手位置
 
-截至第八切片，`admin-accounts` 的页面列表、统计、用量、模型、上游计费、批量编辑、额度通知和定时测试链路已经进入明确 owner。架构测试确认精确 legacy barrel 基线为 112 条，其中该 feature 的 `@/api/admin` 运行时入口剩 11 条。
+截至第十三切片，`admin-accounts` 的页面列表、统计、用量、模型、上游计费、批量编辑、额度通知、定时测试、OAuth、重新授权、创建/编辑、数据导入、CRS 预览/同步和账号专属 DTO 已经进入明确 owner。架构测试确认精确 legacy barrel 基线为 100 条，其中该 feature 的 `@/api/admin` 运行时入口已归零。
 
 2026-08-03 收口验证记录：
 
@@ -311,10 +321,38 @@ make test-frontend
 - 文档检查通过；生产镜像 `sub2api-frontend-arch-runtime:20260803` 构建成功，并在隔离 PostgreSQL、Redis 环境中完成迁移和自动初始化，`/health` 返回正常状态。
 - 实际浏览器完成首页、登录页、管理员登录、仪表盘和账号管理页冒烟验证；账号管理页正常显示筛选、操作栏与空数据表格，新的已认证页面没有控制台错误。
 
-剩余账号 feature 入口按职责分为三组：
+2026-08-04 OAuth Action 切片验证记录：
 
-1. OAuth composable：`useAccountOAuth.ts`、`useOpenAIOAuth.ts`、`useAntigravityOAuth.ts`、`useGeminiOAuth.ts`、`useGrokOAuth.ts`。
-2. 创建、编辑和重新授权：`CreateAccountDialog.vue`、`EditAccountDialog.vue`、`ReAuthAccountDialog.vue`、`AdminReAuthAccountDialog.vue`。
-3. 导入同步：`ImportDataDialog.vue`、`SyncFromCrsDialog.vue`。
+- OAuth owner 定向验证通过，共 5 个测试文件、20 个测试；`admin-accounts` 回归通过，共 44 个测试文件、365 个测试。
+- 宿主机全局 lint 和 typecheck 通过；Docker 全量前端 lint、typecheck、测试和生产 build 通过，共 261 个测试文件、1672 个测试。
+- 正式多阶段镜像 `sub2api-frontend-arch-runtime:20260804-oauth` 构建成功，确认生产前端可嵌入 Go 后端二进制。
 
-下一次应先处理 OAuth Action owner，再迁移重新授权流程；这些链路共享授权 URL、code exchange、token refresh 和 credentials 更新语义，必须同时保留代理参数、错误结构、敏感字段处理和写后刷新。之后再迁移导入同步，最后评估 `src/types/gateway.ts` 中账号专属 DTO。每移除一条入口仍需同步缩小精确基线并执行 Docker 全量验证。
+2026-08-04 重新授权切片验证记录：
+
+- 定向验证通过，共 6 个测试文件、26 个测试；`admin-accounts` 回归通过，共 44 个测试文件、367 个测试。
+- 宿主机 lint 和 typecheck 通过；Docker 全量前端 lint、typecheck、测试和生产 build 通过，共 261 个测试文件、1674 个测试。
+- Docker 隔离验证镜像为 `sub2api-frontend-reauth-test:20260804-final`；正式多阶段运行时镜像 `sub2api-frontend-arch-runtime:20260804-reauth` 构建成功（`linux/arm64`，manifest `sha256:00981ff088f191239a358f87ee359af7bf2aa62c5b885fc8b7de5377f31aa20e`）。
+
+2026-08-04 创建/编辑切片验证记录：
+
+- 定向验证通过，共 9 个测试文件、115 个测试；`admin-accounts` 回归通过，共 44 个测试文件、371 个测试。
+- 宿主机全局 lint 和 typecheck 通过；Docker 全量验证和正式多阶段运行时镜像已在本切片最终收口后补充。
+- Docker 全量验证镜像为 `sub2api-frontend-create-edit-test:20260804`（261 个文件、1678 项测试、lint/typecheck/build 通过）；正式多阶段运行时镜像为 `sub2api-frontend-arch-runtime:20260804-create-edit`（`linux/arm64`，约 41.2 MB，manifest `sha256:1f8d8107b16864d15722d5814441186f30433c169f084784a905c71c23910dec`）。
+
+2026-08-04 导入/CRS 同步切片验证记录：
+
+- `adminAccountQueries.ts` 新增 CRS 预览 owner；`adminAccountActions.ts` 收口数据导入与 CRS 同步，保留默认分组绑定字段、结果统计、预览选择和 `180000ms` 同步 timeout。
+- `ImportDataDialog.vue` 和 `SyncFromCrsDialog.vue` 不再依赖 `@/api/admin`；兼容 `accountsAPI` 继续保持原函数身份。
+- 定向验证通过，共 5 个测试文件、38 个测试；`admin-accounts` 回归通过，共 45 个测试文件、377 个测试；宿主机全局 lint 和 typecheck 通过。
+- 当前精确 legacy barrel 基线为 100 条，`admin-accounts` 的 `@/api/admin` 运行时入口为 0 条。
+- Docker 隔离验证镜像 `sub2api-frontend-import-sync-test-suite:20260804` 内的全局 lint、typecheck、262 个测试文件/1684 项测试和 production build 全部通过（`linux/arm64`，manifest `sha256:11ae3358c91f117bbbeb2a29b17b5de3fd34cfaeea057c20ece66a5c76a4835a`）。
+- 正式多阶段运行时镜像 `sub2api-frontend-arch-runtime:20260804-import-sync` 构建成功（`linux/arm64`，约 41.2 MB，manifest `sha256:404d3ec65cfa9d848827e90541bdfea7f7a6ab81e7f9244d3e4f9867850e8f32`）。
+
+2026-08-04 账号 DTO 切片验证记录：
+
+- `adminAccountDtos.ts` 收口 14 个账号专属协议类型；`gateway.ts` 删除对应声明，`@/types` 保留兼容转发，架构测试锁定 owner 和声明边界。
+- 定向验证通过，共 3 个测试文件、30 个测试；`admin-accounts` 回归通过，共 45 个测试文件、378 个测试；宿主机全局 lint、typecheck、全量测试（262 个测试文件/1685 项）和 production build 全部通过。
+- Docker 隔离验证镜像 `sub2api-frontend-dto-test-suite:20260804` 内的全局 lint、typecheck、262 个测试文件/1685 项测试和 production build 全部通过（`linux/arm64`，manifest `sha256:7291373296e2eb92aa7a5cc67348a98ce30462b0763f472749dbc9523def2c4f`）。
+- 正式多阶段运行时镜像 `sub2api-frontend-arch-runtime:20260804-dto` 构建成功（`linux/arm64`，40,262,958 bytes，manifest `sha256:c08b9edf650e65616a51f7e8eb7d60b021911ec1c1875a195ace04541bdbd9e2`）；容器内 `sub2api --version` 正常返回 `Sub2API 0.1.173`。
+
+下一步进入阶段 3 的复杂管理域迁移；继续保持每个 owner 切片的兼容出口、全量前端验证和 Docker 镜像证据。

@@ -1,8 +1,16 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
-import type { GrokTokenInfo } from '@/features/admin-accounts/data/datasources/grokDatasource'
+import {
+  exchangeCode as exchangeGrokCode,
+  generateAuthUrl as generateGrokAuthUrl,
+  refreshGrokToken
+} from '@/features/admin-accounts/data/datasources/grokDatasource'
+import type {
+  GrokAuthUrlRequest,
+  GrokExchangeCodeRequest,
+  GrokTokenInfo
+} from '@/features/admin-accounts/data/datasources/grokDatasource'
 import { extractApiErrorMessage, extractI18nErrorMessage } from '@/core/utils/apiError'
 
 export function useGrokOAuth() {
@@ -31,10 +39,10 @@ export function useGrokOAuth() {
     error.value = ''
 
     try {
-      const payload: Record<string, unknown> = {}
+      const payload: GrokAuthUrlRequest = {}
       if (proxyId) payload.proxy_id = proxyId
 
-      const response = await adminAPI.grok.generateAuthUrl(payload)
+      const response = await generateGrokAuthUrl(payload)
       authUrl.value = response.auth_url
       sessionId.value = response.session_id
       state.value = response.state
@@ -64,14 +72,14 @@ export function useGrokOAuth() {
     error.value = ''
 
     try {
-      const payload: Record<string, unknown> = {
+      const payload: GrokExchangeCodeRequest = {
         session_id: params.sessionId,
         state: params.state,
         code
       }
       if (params.proxyId) payload.proxy_id = params.proxyId
 
-      return await adminAPI.grok.exchangeCode(payload as any)
+      return await exchangeGrokCode(payload)
     } catch (err: any) {
       error.value = extractI18nErrorMessage(
         err,
@@ -99,7 +107,7 @@ export function useGrokOAuth() {
     error.value = ''
 
     try {
-      return await adminAPI.grok.refreshGrokToken(refreshToken.trim(), proxyId)
+      return await refreshGrokToken(refreshToken.trim(), proxyId)
     } catch (err: any) {
       error.value = extractI18nErrorMessage(
         err,

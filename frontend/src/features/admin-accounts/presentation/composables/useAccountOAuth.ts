@@ -1,8 +1,16 @@
 import { ref } from 'vue'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
+import {
+  authenticateAccountWithCookie,
+  exchangeAccountAuthCode,
+  generateAccountAuthUrl
+} from '@/features/admin-accounts/data/datasources/adminAccountOAuthActions'
+import type {
+  AccountOAuthMethod,
+  AccountOAuthTokenInfo
+} from '@/features/admin-accounts/data/datasources/adminAccountOAuthActions'
 
-export type AddMethod = 'oauth' | 'setup-token'
+export type AddMethod = AccountOAuthMethod
 export type AuthInputMethod = 'manual' | 'cookie' | 'refresh_token' | 'mobile_refresh_token' | 'session_token' | 'access_token' | 'codex_session' | 'agent_identity' | 'codex_pat' | 'sso_cookie'
 
 export interface OAuthState {
@@ -14,12 +22,7 @@ export interface OAuthState {
   error: string
 }
 
-export interface TokenInfo {
-  org_uuid?: string
-  account_uuid?: string
-  email_address?: string
-  [key: string]: unknown
-}
+export type TokenInfo = AccountOAuthTokenInfo
 
 export function useAccountOAuth() {
   const appStore = useAppStore()
@@ -53,13 +56,7 @@ export function useAccountOAuth() {
     error.value = ''
 
     try {
-      const proxyConfig = proxyId ? { proxy_id: proxyId } : {}
-      const endpoint =
-        addMethod === 'oauth'
-          ? '/admin/accounts/generate-auth-url'
-          : '/admin/accounts/generate-setup-token-url'
-
-      const response = await adminAPI.accounts.generateAuthUrl(endpoint, proxyConfig)
+      const response = await generateAccountAuthUrl(addMethod, proxyId)
       authUrl.value = response.auth_url
       sessionId.value = response.session_id
       return true
@@ -86,16 +83,10 @@ export function useAccountOAuth() {
     error.value = ''
 
     try {
-      const proxyConfig = proxyId ? { proxy_id: proxyId } : {}
-      const endpoint =
-        addMethod === 'oauth'
-          ? '/admin/accounts/exchange-code'
-          : '/admin/accounts/exchange-setup-token-code'
-
-      const tokenInfo = await adminAPI.accounts.exchangeCode(endpoint, {
+      const tokenInfo = await exchangeAccountAuthCode(addMethod, {
         session_id: sessionId.value,
         code: authCode.value.trim(),
-        ...proxyConfig
+        ...(proxyId ? { proxy_id: proxyId } : {})
       })
 
       return tokenInfo as TokenInfo
@@ -123,17 +114,7 @@ export function useAccountOAuth() {
     error.value = ''
 
     try {
-      const proxyConfig = proxyId ? { proxy_id: proxyId } : {}
-      const endpoint =
-        addMethod === 'oauth'
-          ? '/admin/accounts/cookie-auth'
-          : '/admin/accounts/setup-token-cookie-auth'
-
-      const tokenInfo = await adminAPI.accounts.exchangeCode(endpoint, {
-        session_id: '',
-        code: sessionKeyValue.trim(),
-        ...proxyConfig
-      })
+      const tokenInfo = await authenticateAccountWithCookie(addMethod, sessionKeyValue.trim(), proxyId)
 
       return tokenInfo as TokenInfo
     } catch (err: any) {

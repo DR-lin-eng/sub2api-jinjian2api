@@ -3,9 +3,11 @@ import type { useI18n } from 'vue-i18n'
 import type {
   AccountPlatform,
   AccountType,
+} from '@/types'
+import type {
   CodexSessionImportMessage,
   CreateAccountRequest,
-} from '@/types'
+} from '../../data/dtos/adminAccountDtos'
 import type { useQuotaNotifyState } from './useQuotaNotifyState'
 import type { useAccountOAuth, AuthInputMethod } from './useAccountOAuth'
 import type { useOpenAIOAuth } from './useOpenAIOAuth'
@@ -17,7 +19,15 @@ import type {
   CreateAccountCredentialContext,
   CreateAccountPlatformContext,
 } from '../accountEditorContext'
-import { accountsAPI } from '../../data/datasources/adminAccountsDatasource'
+import {
+  authenticateAccountWithCookie,
+  exchangeAccountAuthCode
+} from '../../data/datasources/adminAccountOAuthActions'
+import {
+  createAccount,
+  createOpenAICodexPAT,
+  importCodexSession
+} from '../../data/datasources/adminAccountActions'
 import { createFromSSO } from '../../data/datasources/grokDatasource'
 import {
   applyAntigravityProjectID,
@@ -311,7 +321,7 @@ export function useCreateAccountOAuthActions(context: CreateAccountOAuthActionsC
             return
           }
 
-          await accountsAPI.create({
+          await createAccount({
             name: accountName,
             notes: form.notes,
             platform: 'grok',
@@ -477,7 +487,7 @@ export function useCreateAccountOAuthActions(context: CreateAccountOAuthActionsC
       }
 
       if (shouldCreateOpenAI) {
-        await accountsAPI.create({
+        await createAccount({
           name: form.name,
           notes: form.notes,
           platform: 'openai',
@@ -585,7 +595,7 @@ export function useCreateAccountOAuthActions(context: CreateAccountOAuthActionsC
 
     try {
       const extra = buildOpenAICodexImportExtra()
-      const result = await accountsAPI.importCodexSession({
+      const result = await importCodexSession({
         content: trimmed,
         name: form.name,
         notes: form.notes || null,
@@ -663,7 +673,7 @@ export function useCreateAccountOAuthActions(context: CreateAccountOAuthActionsC
 
     try {
       const extra = buildOpenAICodexImportExtra()
-      await accountsAPI.createOpenAICodexPAT({
+      await createOpenAICodexPAT({
         access_token: trimmed,
         name: form.name,
         notes: form.notes || null,
@@ -758,7 +768,7 @@ export function useCreateAccountOAuthActions(context: CreateAccountOAuthActionsC
           const accountName = refreshTokens.length > 1 ? `${baseName} #${i + 1}` : baseName
 
           if (shouldCreateOpenAI) {
-            await accountsAPI.create({
+            await createAccount({
               name: accountName,
               notes: form.notes,
               platform: 'openai',
@@ -873,7 +883,7 @@ export function useCreateAccountOAuthActions(context: CreateAccountOAuthActionsC
             expires_at: form.expires_at,
             auto_pause_on_expired: autoPauseOnExpired.value
           })
-          await accountsAPI.create(createPayload)
+          await createAccount(createPayload)
           successCount++
         } catch (error: any) {
           failedCount++
@@ -1034,16 +1044,10 @@ export function useCreateAccountOAuthActions(context: CreateAccountOAuthActionsC
     oauth.error.value = ''
 
     try {
-      const proxyConfig = form.proxy_id ? { proxy_id: form.proxy_id } : {}
-      const endpoint =
-        addMethod.value === 'oauth'
-          ? '/admin/accounts/exchange-code'
-          : '/admin/accounts/exchange-setup-token-code'
-
-      const tokenInfo = await accountsAPI.exchangeCode(endpoint, {
+      const tokenInfo = await exchangeAccountAuthCode(addMethod.value, {
         session_id: oauth.sessionId.value,
         code: authCode.trim(),
-        ...proxyConfig
+        ...(form.proxy_id ? { proxy_id: form.proxy_id } : {})
       })
 
       // Build extra with quota control settings
@@ -1138,7 +1142,6 @@ export function useCreateAccountOAuthActions(context: CreateAccountOAuthActionsC
     oauth.error.value = ''
 
     try {
-      const proxyConfig = form.proxy_id ? { proxy_id: form.proxy_id } : {}
       const keys = oauth.parseSessionKeys(sessionKey)
 
       if (keys.length === 0) {
@@ -1154,22 +1157,17 @@ export function useCreateAccountOAuthActions(context: CreateAccountOAuthActionsC
         return
       }
 
-      const endpoint =
-        addMethod.value === 'oauth'
-          ? '/admin/accounts/cookie-auth'
-          : '/admin/accounts/setup-token-cookie-auth'
-
       let successCount = 0
       let failedCount = 0
       const errors: string[] = []
 
       for (let i = 0; i < keys.length; i++) {
         try {
-          const tokenInfo = await accountsAPI.exchangeCode(endpoint, {
-            session_id: '',
-            code: keys[i],
-            ...proxyConfig
-          })
+          const tokenInfo = await authenticateAccountWithCookie(
+            addMethod.value,
+            keys[i],
+            form.proxy_id
+          )
 
           // Build extra with quota control settings
           const baseExtra = oauth.buildExtraInfo(tokenInfo) || {}
@@ -1238,7 +1236,7 @@ export function useCreateAccountOAuthActions(context: CreateAccountOAuthActionsC
             credentials.temp_unschedulable_rules = tempUnschedPayload
           }
 
-          await accountsAPI.create({
+          await createAccount({
             name: accountName,
             notes: form.notes,
             platform: form.platform,

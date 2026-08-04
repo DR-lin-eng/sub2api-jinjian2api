@@ -2,9 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import ImportDataModal from '@/features/admin-accounts/presentation/widgets/ImportDataDialog.vue'
 
-const showError = vi.fn()
-const showSuccess = vi.fn()
-const showWarning = vi.fn()
+const { importData, showError, showSuccess, showWarning } = vi.hoisted(() => ({
+  importData: vi.fn(),
+  showError: vi.fn(),
+  showSuccess: vi.fn(),
+  showWarning: vi.fn()
+}))
 
 vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
@@ -14,12 +17,8 @@ vi.mock('@/core/stores/appStore', () => ({
   })
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    accounts: {
-      importData: vi.fn()
-    }
-  }
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountActions', () => ({
+  importData
 }))
 
 vi.mock('vue-i18n', () => ({
@@ -54,12 +53,11 @@ const setInputFiles = (element: Element, files: File[]) => {
 }
 
 describe('ImportDataModal', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     showError.mockReset()
     showSuccess.mockReset()
     showWarning.mockReset()
-    const { adminAPI } = await import('@/api/admin')
-    vi.mocked(adminAPI.accounts.importData).mockReset()
+    importData.mockReset()
   })
 
   it('未选择文件时提示错误', async () => {
@@ -70,7 +68,6 @@ describe('ImportDataModal', () => {
   })
 
   it('无效 JSON 时按文件名提示解析失败', async () => {
-    const { adminAPI } = await import('@/api/admin')
     const wrapper = mountModal()
 
     const input = wrapper.find('input[type="file"]')
@@ -81,11 +78,10 @@ describe('ImportDataModal', () => {
     await flushPromises()
 
     expect(showError).toHaveBeenCalledWith('admin.accounts.dataImportParseFailedFile')
-    expect(adminAPI.accounts.importData).not.toHaveBeenCalled()
+    expect(importData).not.toHaveBeenCalled()
   })
 
   it('不是导出数据的 JSON 按文件名拒绝', async () => {
-    const { adminAPI } = await import('@/api/admin')
     const wrapper = mountModal()
 
     const input = wrapper.find('input[type="file"]')
@@ -96,12 +92,11 @@ describe('ImportDataModal', () => {
     await flushPromises()
 
     expect(showError).toHaveBeenCalledWith('admin.accounts.dataImportInvalidFile')
-    expect(adminAPI.accounts.importData).not.toHaveBeenCalled()
+    expect(importData).not.toHaveBeenCalled()
   })
 
   it('无有效 JSON 的选择不清空已有选择', async () => {
-    const { adminAPI } = await import('@/api/admin')
-    vi.mocked(adminAPI.accounts.importData).mockResolvedValue({
+    importData.mockResolvedValue({
       proxy_created: 0,
       proxy_reused: 0,
       proxy_failed: 0,
@@ -126,7 +121,7 @@ describe('ImportDataModal', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(adminAPI.accounts.importData).toHaveBeenCalledWith({
+    expect(importData).toHaveBeenCalledWith({
       data: expect.objectContaining({
         accounts: [{ name: 'a' }]
       }),
@@ -135,8 +130,7 @@ describe('ImportDataModal', () => {
   })
 
   it('merges multiple selected JSON files before importing', async () => {
-    const { adminAPI } = await import('@/api/admin')
-    vi.mocked(adminAPI.accounts.importData).mockResolvedValue({
+    importData.mockResolvedValue({
       proxy_created: 0,
       proxy_reused: 0,
       proxy_failed: 0,
@@ -165,7 +159,7 @@ describe('ImportDataModal', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(adminAPI.accounts.importData).toHaveBeenCalledWith({
+    expect(importData).toHaveBeenCalledWith({
       data: expect.objectContaining({
         proxies: [{ proxy_key: 'p' }],
         accounts: [{ name: 'a' }, { name: 'b' }]
@@ -176,8 +170,7 @@ describe('ImportDataModal', () => {
   })
 
   it('部分成功时关闭弹窗仍通知父组件刷新', async () => {
-    const { adminAPI } = await import('@/api/admin')
-    vi.mocked(adminAPI.accounts.importData).mockResolvedValue({
+    importData.mockResolvedValue({
       proxy_created: 0,
       proxy_reused: 0,
       proxy_failed: 0,

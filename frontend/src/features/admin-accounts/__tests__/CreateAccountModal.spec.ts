@@ -14,6 +14,14 @@ const {
   createOpenAICodexPATMock: vi.fn(),
 }))
 
+vi.mock('@/api/admin', () => ({
+  adminAPI: {
+    accounts: {},
+    settings: {},
+    tlsFingerprintProfiles: {},
+  },
+}))
+
 vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError: vi.fn(),
@@ -26,36 +34,25 @@ vi.mock('@/features/auth/presentation/stores/authStore', () => ({
   useAuthStore: () => ({ isSimpleMode: true }),
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    accounts: {
-      create: createAccountMock,
-      probeUpstreamBilling: probeUpstreamBillingMock,
-      checkMixedChannelRisk: vi.fn().mockResolvedValue({ has_risk: false }),
-      importCodexSession: importCodexSessionMock,
-      createOpenAICodexPAT: createOpenAICodexPATMock,
-    },
-    settings: {
-      getWebSearchEmulationConfig: vi.fn().mockResolvedValue({ enabled: false, providers: [] }),
-    },
-    tlsFingerprintProfiles: {
-      list: vi.fn().mockResolvedValue([]),
-    },
-  },
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountActions', () => ({
+  checkMixedChannelRisk: vi.fn().mockResolvedValue({ has_risk: false }),
+  createAccount: createAccountMock,
+  createOpenAICodexPAT: createOpenAICodexPATMock,
+  importCodexSession: importCodexSessionMock,
+  probeUpstreamBilling: probeUpstreamBillingMock,
 }))
 
 vi.mock('@/features/admin-settings/data/datasources/adminSettingsDatasource', () => ({
-  getSettings: vi.fn().mockResolvedValue({})
+  getSettings: vi.fn().mockResolvedValue({}),
+  getWebSearchEmulationConfig: vi.fn().mockResolvedValue({ enabled: false, providers: [] }),
 }))
 
-vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', () => ({
+vi.mock('@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource', () => ({
+  list: vi.fn().mockResolvedValue([]),
+}))
+
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountQueries', () => ({
   getAntigravityDefaultModelMapping: vi.fn().mockResolvedValue([]),
-  accountsAPI: {
-    create: createAccountMock,
-    importCodexSession: importCodexSessionMock,
-    createOpenAICodexPAT: createOpenAICodexPATMock,
-    exchangeCode: vi.fn(),
-  },
 }))
 
 vi.mock('vue-i18n', async () => {

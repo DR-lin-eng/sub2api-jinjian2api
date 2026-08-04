@@ -1,37 +1,24 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
+import {
+  exchangeOpenAICode,
+  generateOpenAIAuthUrl,
+  refreshOpenAIToken
+} from '@/features/admin-accounts/data/datasources/adminAccountOAuthActions'
+import type {
+  OpenAIAuthUrlRequest,
+  OpenAITokenInfo
+} from '@/features/admin-accounts/data/datasources/adminAccountOAuthActions'
 import { extractApiErrorMessage, extractI18nErrorMessage } from '@/core/utils/apiError'
 
-export interface OpenAITokenInfo {
-  access_token?: string
-  refresh_token?: string
-  client_id?: string
-  id_token?: string
-  token_type?: string
-  expires_in?: number
-  expires_at?: number
-  scope?: string
-  email?: string
-  name?: string
-  plan_type?: string
-  subscription_expires_at?: string
-  privacy_mode?: string
-  // OpenAI specific IDs (extracted from ID Token)
-  chatgpt_account_id?: string
-  chatgpt_user_id?: string
-  organization_id?: string
-  [key: string]: unknown
-}
+export type { OpenAITokenInfo } from '@/features/admin-accounts/data/datasources/adminAccountOAuthActions'
 
 export type OpenAIOAuthPlatform = 'openai'
 
 export function useOpenAIOAuth() {
   const appStore = useAppStore()
   const { t } = useI18n()
-  const endpointPrefix = '/admin/openai'
-
   // State
   const authUrl = ref('')
   const sessionId = ref('')
@@ -60,7 +47,7 @@ export function useOpenAIOAuth() {
     error.value = ''
 
     try {
-      const payload: Record<string, unknown> = {}
+      const payload: OpenAIAuthUrlRequest = {}
       if (proxyId) {
         payload.proxy_id = proxyId
       }
@@ -68,10 +55,7 @@ export function useOpenAIOAuth() {
         payload.redirect_uri = redirectUri
       }
 
-      const response = await adminAPI.accounts.generateAuthUrl(
-        `${endpointPrefix}/generate-auth-url`,
-        payload
-      )
+      const response = await generateOpenAIAuthUrl(payload)
       authUrl.value = response.auth_url
       sessionId.value = response.session_id
       try {
@@ -115,7 +99,7 @@ export function useOpenAIOAuth() {
         payload.proxy_id = proxyId
       }
 
-      const tokenInfo = await adminAPI.accounts.exchangeCode(`${endpointPrefix}/exchange-code`, payload)
+      const tokenInfo = await exchangeOpenAICode(payload)
       return tokenInfo as OpenAITokenInfo
     } catch (err: any) {
       error.value = extractI18nErrorMessage(
@@ -148,10 +132,10 @@ export function useOpenAIOAuth() {
 
     try {
       // Use dedicated refresh-token endpoint
-      const tokenInfo = await adminAPI.accounts.refreshOpenAIToken(
+      const tokenInfo = await refreshOpenAIToken(
         refreshToken.trim(),
         proxyId,
-        `${endpointPrefix}/refresh-token`,
+        '/admin/openai/refresh-token',
         clientId
       )
       return tokenInfo as OpenAITokenInfo

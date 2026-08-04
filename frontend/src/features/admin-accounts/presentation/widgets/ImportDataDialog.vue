@@ -99,8 +99,8 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import { adminAPI } from '@/api/admin'
 import { useAppStore } from '@/core/stores/appStore'
+import { importData } from '@/features/admin-accounts/data/datasources/adminAccountActions'
 import type { AdminDataImportResult, AdminDataPayload } from '@/types'
 
 interface Props {
@@ -293,7 +293,7 @@ const handleImport = async () => {
     }
     const dataPayload = mergeDataPayloads(dataPayloads)
 
-    const res = await adminAPI.accounts.importData({
+    const res = await importData({
       data: dataPayload,
       skip_default_group_bind: true
     })

@@ -75,7 +75,16 @@ import { ref, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
-import { adminAPI } from '@/api/admin'
+import {
+  syncUpstreamModels,
+  testCPAConnection as testCPAConnectionRequest
+} from '@/features/admin-accounts/data/datasources/adminAccountActions'
+import {
+  getWebSearchEmulationConfig
+} from '@/features/admin-settings/data/datasources/adminSettingsDatasource'
+import {
+  list as listTLSFingerprintProfiles
+} from '@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource'
 import { useQuotaNotifyState } from '@/features/admin-accounts/presentation/composables/useQuotaNotifyState'
 import type {
   Account,
@@ -337,7 +346,7 @@ const {
 } = useQuotaNotifyState()
 
 // Load global feature states once
-adminAPI.settings.getWebSearchEmulationConfig().then(cfg => {
+getWebSearchEmulationConfig().then(cfg => {
   webSearchGlobalEnabled.value = cfg?.enabled === true && (cfg?.providers?.length ?? 0) > 0
 }).catch(() => { webSearchGlobalEnabled.value = false })
 
@@ -1072,7 +1081,7 @@ const syncFormFromAccount = (newAccount: Account | null) => {
 
 async function loadTLSProfiles() {
   try {
-    const profiles = await adminAPI.tlsFingerprintProfiles.list()
+    const profiles = await listTLSFingerprintProfiles()
     tlsFingerprintProfiles.value = profiles.map(p => ({ id: p.id, name: p.name }))
   } catch {
     tlsFingerprintProfiles.value = []
@@ -1135,7 +1144,7 @@ const syncAntigravityUpstreamModels = async () => {
 
   isSyncingAntigravityUpstream.value = true
   try {
-    const result = await adminAPI.accounts.syncUpstreamModels(props.account.id)
+    const result = await syncUpstreamModels(props.account.id)
     const upstreamModels = result.models.map((model) => model.trim()).filter(Boolean)
     if (upstreamModels.length === 0) {
       appStore.showInfo(t('admin.accounts.syncUpstreamModelsEmpty'))
@@ -1416,7 +1425,7 @@ const testCPAConnection = async () => {
   if (!props.account || isTestingCPA.value) return
   isTestingCPA.value = true
   try {
-    const result = await adminAPI.accounts.testCPAConnection(props.account.id, {
+    const result = await testCPAConnectionRequest(props.account.id, {
       use_account_base_url: cpaUseBaseUrl.value,
       base_url: editBaseUrl.value.trim(),
       management_url: cpaUseBaseUrl.value ? undefined : cpaManagementUrl.value.trim(),

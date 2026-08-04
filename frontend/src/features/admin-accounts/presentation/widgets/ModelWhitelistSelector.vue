@@ -148,8 +148,11 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { accountsAPI } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
-import type { SyncUpstreamPreviewParams } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
+import {
+  syncUpstreamModels as syncSavedAccountUpstreamModels,
+  syncUpstreamModelsPreview,
+  type SyncUpstreamPreviewParams
+} from '@/features/admin-accounts/data/datasources/adminAccountActions'
 import { useClipboard } from '@/common/composables/useClipboard'
 import ModelIcon from '@/common/widgets/icons/ModelIcon.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
@@ -290,9 +293,9 @@ const syncUpstreamModels = async () => {
   try {
     let result
     if (props.accountId) {
-      result = await accountsAPI.syncUpstreamModels(props.accountId)
+      result = await syncSavedAccountUpstreamModels(props.accountId)
     } else if (props.syncCredentials) {
-      result = await accountsAPI.syncUpstreamModelsPreview(props.syncCredentials as SyncUpstreamPreviewParams)
+      result = await syncUpstreamModelsPreview(props.syncCredentials as SyncUpstreamPreviewParams)
     } else {
       return
     }

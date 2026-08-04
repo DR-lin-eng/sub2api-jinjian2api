@@ -253,7 +253,8 @@ import { buildApiUrl } from '@/core/networks/client'
 import { ADMIN_UI_REQUEST_HEADER } from '@/core/networks/adminUIRequest'
 import { getAccessToken } from '@/core/networks/tokenStore'
 import { getAvailableModels } from '@/features/admin-accounts/data/datasources/adminAccountQueries'
-import type { Account, ClaudeModel } from '@/types'
+import type { Account } from '@/types'
+import type { ClaudeModel } from '@/features/admin-accounts/data/dtos/adminAccountDtos'
 
 const { t } = useI18n()
 const { copyToClipboard } = useClipboard()

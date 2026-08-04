@@ -92,7 +92,17 @@ import {
   isValidWildcardPattern
 } from '@/features/admin-accounts/presentation/composables/useModelWhitelist'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
-import { adminAPI } from '@/api/admin'
+import {
+  checkMixedChannelRisk,
+  createAccount,
+  probeUpstreamBilling
+} from '@/features/admin-accounts/data/datasources/adminAccountActions'
+import {
+  getWebSearchEmulationConfig
+} from '@/features/admin-settings/data/datasources/adminSettingsDatasource'
+import {
+  list as listTLSFingerprintProfiles
+} from '@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource'
 import { useQuotaNotifyState } from '@/features/admin-accounts/presentation/composables/useQuotaNotifyState'
 import {
   useAccountOAuth,
@@ -112,12 +122,14 @@ import type {
   AdminGroup,
   AccountPlatform,
   AccountType,
-  CheckMixedChannelResponse,
-  CreateAccountRequest,
   OpenAICompactMode,
   OpenAIResponsesMode,
   OpenAIEndpointCapability
 } from '@/types'
+import type {
+  CheckMixedChannelResponse,
+  CreateAccountRequest
+} from '@/features/admin-accounts/data/dtos/adminAccountDtos'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import {
@@ -367,7 +379,7 @@ const {
 } = useQuotaNotifyState()
 
 // Load global feature states once
-adminAPI.settings.getWebSearchEmulationConfig().then(cfg => {
+getWebSearchEmulationConfig().then(cfg => {
   webSearchGlobalEnabled.value = cfg?.enabled === true && (cfg?.providers?.length ?? 0) > 0
 }).catch(() => { webSearchGlobalEnabled.value = false })
 
@@ -703,7 +715,7 @@ const {
   customErrorCodeInput, form, geminiAIStudioOAuthEnabled, geminiOAuth, geminiOAuthType,
   grokOAuth, grokOAuthBaseUrl, grokOAuthCustomBaseUrlEnabled, headerOverrideEnabled,
   headerOverrideRows, interceptWarmupRequests,
-  loadTLSFingerprintProfiles: () => adminAPI.tlsFingerprintProfiles.list(),
+  loadTLSFingerprintProfiles: listTLSFingerprintProfiles,
   modelMappings, modelRestrictionMode, notifications, oauth,
   openAICompactModelMappings, openAIEndpointCapabilities, openAIForceImageAPIEnabled,
   openaiAPIKeyResponsesWebSocketV2Mode, openaiOAuth, openaiOAuthResponsesWebSocketV2Mode,
@@ -767,7 +779,7 @@ const ensureAntigravityMixedChannelConfirmed = async (onConfirm: () => Promise<v
   }
 
   try {
-    const result = await adminAPI.accounts.checkMixedChannelRisk({
+    const result = await checkMixedChannelRisk({
       platform: form.platform,
       group_ids: form.group_ids
     })
@@ -791,13 +803,13 @@ const ensureAntigravityMixedChannelConfirmed = async (onConfirm: () => Promise<v
 const submitCreateAccount = async (payload: CreateAccountRequest) => {
   submitting.value = true
   try {
-    const account = await adminAPI.accounts.create(withAntigravityConfirmFlag(payload))
+    const account = await createAccount(withAntigravityConfirmFlag(payload))
     if (
       isUpstreamBillingProbeEligible(payload.platform, payload.type) &&
       payload.upstream_billing_probe_enabled === true
     ) {
       try {
-        await adminAPI.accounts.probeUpstreamBilling(account.id)
+        await probeUpstreamBilling(account.id)
       } catch {
         appStore.showWarning(t('admin.accounts.upstreamBilling.probeFailed'))
       }

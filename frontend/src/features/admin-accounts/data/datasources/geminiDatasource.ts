@@ -16,10 +16,12 @@ export interface GeminiOAuthCapabilities {
   required_redirect_uris: string[]
 }
 
+export type GeminiOAuthType = 'code_assist' | 'google_one' | 'ai_studio'
+
 export interface GeminiAuthUrlRequest {
   proxy_id?: number
   project_id?: string
-  oauth_type?: 'code_assist' | 'google_one' | 'ai_studio'
+  oauth_type?: GeminiOAuthType
   tier_id?: string
 }
 
@@ -28,7 +30,7 @@ export interface GeminiExchangeCodeRequest {
   state: string
   code: string
   proxy_id?: number
-  oauth_type?: 'code_assist' | 'google_one' | 'ai_studio'
+  oauth_type?: GeminiOAuthType
   tier_id?: string
 }
 
@@ -38,7 +40,7 @@ export type GeminiTokenInfo = {
   token_type?: string
   scope?: string
   expires_in?: number
-  expires_at?: number
+  expires_at?: number | string
   project_id?: string
   oauth_type?: string
   tier_id?: string

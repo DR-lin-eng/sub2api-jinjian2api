@@ -17,12 +17,17 @@ vi.mock('@/core/stores/appStore', () => ({
 
 vi.mock('@/features/admin-accounts/data/datasources/adminAccountActions', () => ({
   bulkUpdate: vi.fn(),
-  checkMixedChannelRisk: vi.fn()
+  checkMixedChannelRisk: vi.fn(),
+  syncUpstreamModels: vi.fn(),
+  syncUpstreamModelsPreview: vi.fn()
+}))
+
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountQueries', () => ({
+  getAntigravityDefaultModelMapping: vi.fn()
 }))
 
 vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', () => ({
-  default: {},
-  getAntigravityDefaultModelMapping: vi.fn()
+  default: {}
 }))
 
 vi.mock('vue-i18n', async () => {

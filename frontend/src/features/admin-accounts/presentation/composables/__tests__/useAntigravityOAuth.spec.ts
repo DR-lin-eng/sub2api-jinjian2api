@@ -12,14 +12,10 @@ vi.mock('vue-i18n', () => ({
   })
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    antigravity: {
-      generateAuthUrl: vi.fn(),
-      exchangeCode: vi.fn(),
-      refreshAntigravityToken: vi.fn()
-    }
-  }
+vi.mock('@/features/admin-accounts/data/datasources/antigravityDatasource', () => ({
+  generateAuthUrl: vi.fn(),
+  exchangeCode: vi.fn(),
+  refreshAntigravityToken: vi.fn()
 }))
 
 import { useAntigravityOAuth } from '@/features/admin-accounts/presentation/composables/useAntigravityOAuth'

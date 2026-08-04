@@ -187,7 +187,15 @@
 import { ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { adminAPI } from '@/api/admin'
+import {
+  applyOAuthCredentials,
+  clearAccountError,
+  updateAccount
+} from '@/features/admin-accounts/data/datasources/adminAccountActions'
+import {
+  authenticateAccountWithCookie,
+  exchangeAccountAuthCode
+} from '@/features/admin-accounts/data/datasources/adminAccountOAuthActions'
 import {
   useAccountOAuth,
   type AddMethod,
@@ -385,7 +393,7 @@ const handleExchangeCode = async () => {
     const extra = oauthClient.buildExtraInfo(tokenInfo)
 
     try {
-      const updatedAccount = await adminAPI.accounts.applyOAuthCredentials(props.account.id, {
+      const updatedAccount = await applyOAuthCredentials(props.account.id, {
         type: 'oauth',
         credentials,
         extra
@@ -419,11 +427,11 @@ const handleExchangeCode = async () => {
     const credentials = geminiOAuth.buildCredentials(tokenInfo)
 
     try {
-      await adminAPI.accounts.update(props.account.id, {
+      await updateAccount(props.account.id, {
         type: 'oauth',
         credentials
       })
-      const updatedAccount = await adminAPI.accounts.clearError(props.account.id)
+      const updatedAccount = await clearAccountError(props.account.id)
       appStore.showSuccess(t('admin.accounts.reAuthorizedSuccess'))
       emit('reauthorized', updatedAccount)
       handleClose()
@@ -451,11 +459,11 @@ const handleExchangeCode = async () => {
     const credentials = antigravityOAuth.buildCredentials(tokenInfo)
 
     try {
-      await adminAPI.accounts.update(props.account.id, {
+      await updateAccount(props.account.id, {
         type: 'oauth',
         credentials
       })
-      const updatedAccount = await adminAPI.accounts.clearError(props.account.id)
+      const updatedAccount = await clearAccountError(props.account.id)
       appStore.showSuccess(t('admin.accounts.reAuthorizedSuccess'))
       emit('reauthorized', updatedAccount)
       handleClose()
@@ -483,7 +491,7 @@ const handleExchangeCode = async () => {
     const extra = grokOAuth.buildExtraInfo(tokenInfo)
 
     try {
-      const updatedAccount = await adminAPI.accounts.applyOAuthCredentials(props.account.id, {
+      const updatedAccount = await applyOAuthCredentials(props.account.id, {
         type: 'oauth',
         credentials,
         extra
@@ -505,21 +513,15 @@ const handleExchangeCode = async () => {
     claudeOAuth.error.value = ''
 
     try {
-      const proxyConfig = props.account.proxy_id ? { proxy_id: props.account.proxy_id } : {}
-      const endpoint =
-        addMethod.value === 'oauth'
-          ? '/admin/accounts/exchange-code'
-          : '/admin/accounts/exchange-setup-token-code'
-
-      const tokenInfo = await adminAPI.accounts.exchangeCode(endpoint, {
+      const tokenInfo = await exchangeAccountAuthCode(addMethod.value, {
         session_id: sessionId,
         code: authCode.trim(),
-        ...proxyConfig
+        ...(props.account.proxy_id ? { proxy_id: props.account.proxy_id } : {})
       })
 
       const extra = claudeOAuth.buildExtraInfo(tokenInfo)
 
-      const updatedAccount = await adminAPI.accounts.applyOAuthCredentials(props.account.id, {
+      const updatedAccount = await applyOAuthCredentials(props.account.id, {
         type: addMethod.value as 'oauth' | 'setup-token',
         credentials: tokenInfo as unknown as Record<string, unknown>,
         extra
@@ -544,21 +546,15 @@ const handleCookieAuth = async (sessionKey: string) => {
   claudeOAuth.error.value = ''
 
   try {
-    const proxyConfig = props.account.proxy_id ? { proxy_id: props.account.proxy_id } : {}
-    const endpoint =
-      addMethod.value === 'oauth'
-        ? '/admin/accounts/cookie-auth'
-        : '/admin/accounts/setup-token-cookie-auth'
-
-    const tokenInfo = await adminAPI.accounts.exchangeCode(endpoint, {
-      session_id: '',
-      code: sessionKey.trim(),
-      ...proxyConfig
-    })
+    const tokenInfo = await authenticateAccountWithCookie(
+      addMethod.value,
+      sessionKey.trim(),
+      props.account.proxy_id
+    )
 
     const extra = claudeOAuth.buildExtraInfo(tokenInfo)
 
-    const updatedAccount = await adminAPI.accounts.applyOAuthCredentials(props.account.id, {
+    const updatedAccount = await applyOAuthCredentials(props.account.id, {
       type: addMethod.value as 'oauth' | 'setup-token',
       credentials: tokenInfo as unknown as Record<string, unknown>,
       extra

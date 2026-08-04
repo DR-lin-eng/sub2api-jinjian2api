@@ -79,7 +79,8 @@ import { useAccountTablePresentation } from '@/features/admin-accounts/presentat
 import { useAccountColumnPreferences } from '@/features/admin-accounts/presentation/composables/useAccountColumnPreferences'
 import { useAccountTodayStats } from '@/features/admin-accounts/presentation/composables/useAccountTodayStats'
 import type { AccountTableViewContext } from '@/features/admin-accounts/presentation/accountTableViewContext'
-import type { Account, AccountPlatform, AccountType, Proxy as AccountProxy, AdminGroup, ClaudeModel } from '@/types'
+import type { Account, AccountPlatform, AccountType, Proxy as AccountProxy, AdminGroup } from '@/types'
+import type { ClaudeModel } from '@/features/admin-accounts/data/dtos/adminAccountDtos'
 
 const { t } = useI18n()
 const appStore = useAppStore()

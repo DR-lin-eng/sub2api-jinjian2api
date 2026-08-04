@@ -8,6 +8,14 @@ const { updateAccountMock, checkMixedChannelRiskMock, authIsSimpleMode } = vi.ho
   authIsSimpleMode: { value: true }
 }))
 
+vi.mock('@/api/admin', () => ({
+  adminAPI: {
+    accounts: {},
+    settings: {},
+    tlsFingerprintProfiles: {},
+  },
+}))
+
 vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError: vi.fn(),
@@ -24,31 +32,24 @@ vi.mock('@/features/auth/presentation/stores/authStore', () => ({
   })
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    accounts: {
-      update: updateAccountMock,
-      checkMixedChannelRisk: checkMixedChannelRiskMock
-    },
-    settings: {
-      getWebSearchEmulationConfig: vi.fn().mockResolvedValue({ enabled: false, providers: [] })
-    },
-    tlsFingerprintProfiles: {
-      list: vi.fn().mockResolvedValue([])
-    }
-  }
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountActions', () => ({
+  checkMixedChannelRisk: checkMixedChannelRiskMock,
+  syncUpstreamModels: vi.fn().mockResolvedValue({ models: [] }),
+  testCPAConnection: vi.fn(),
+  updateAccount: updateAccountMock
 }))
 
 vi.mock('@/features/admin-settings/data/datasources/adminSettingsDatasource', () => ({
-  getSettings: vi.fn().mockResolvedValue({})
+  getSettings: vi.fn().mockResolvedValue({}),
+  getWebSearchEmulationConfig: vi.fn().mockResolvedValue({ enabled: false, providers: [] })
 }))
 
-vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', () => ({
-  getAntigravityDefaultModelMapping: vi.fn(),
-  accountsAPI: {
-    update: updateAccountMock,
-    checkMixedChannelRisk: checkMixedChannelRiskMock
-  }
+vi.mock('@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource', () => ({
+  list: vi.fn().mockResolvedValue([])
+}))
+
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountQueries', () => ({
+  getAntigravityDefaultModelMapping: vi.fn()
 }))
 
 vi.mock('vue-i18n', async () => {

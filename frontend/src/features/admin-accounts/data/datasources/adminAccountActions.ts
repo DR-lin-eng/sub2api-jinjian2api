@@ -1,14 +1,23 @@
 import { apiClient } from '@/core/networks/client'
 import type {
   Account,
+  AdminDataImportResult,
   AdminDataPayload,
-  CheckMixedChannelRequest,
-  CheckMixedChannelResponse,
   OllamaCloudUsageSettings,
   OllamaCloudUsageState,
   UpstreamBillingProbeResult,
   UpstreamQuotaQueryResult
 } from '@/types'
+import type {
+  CheckMixedChannelRequest,
+  CheckMixedChannelResponse,
+  CodexSessionImportRequest,
+  CodexSessionImportResult,
+  CreateAccountRequest,
+  OpenAICodexPATCreateRequest,
+  UpdateAccountRequest
+} from '../dtos/adminAccountDtos'
+import type { CRSConnectionParams } from './adminAccountQueries'
 
 export interface CPACapacityStatus {
   total_credentials: number
@@ -59,6 +68,149 @@ export interface SparkShadowCreatePayload {
   priority?: number
   concurrency?: number
   group_ids?: number[]
+}
+
+export interface CPATestRequest {
+  use_account_base_url?: boolean
+  base_url?: string
+  management_url?: string
+  management_password?: string
+  concurrency_per_credential?: number
+}
+
+export interface CPATestResult extends CPACapacityStatus {
+  latency_ms: number
+}
+
+export interface SyncUpstreamModelsResult {
+  models: string[]
+}
+
+export interface SyncUpstreamPreviewParams {
+  platform: string
+  type: string
+  base_url?: string
+  api_key: string
+}
+
+export interface CRSSyncParams extends CRSConnectionParams {
+  sync_proxies?: boolean
+  selected_account_ids?: string[]
+}
+
+export interface CRSSyncItem {
+  crs_account_id: string
+  kind: string
+  name: string
+  action: string
+  error?: string
+}
+
+export type CRSSyncResult = {
+  created: number
+  updated: number
+  skipped: number
+  failed: number
+  items: CRSSyncItem[]
+}
+
+export interface AccountDataImportPayload {
+  data: AdminDataPayload
+  skip_default_group_bind?: boolean
+}
+
+export async function createAccount(accountData: CreateAccountRequest): Promise<Account> {
+  const { data } = await apiClient.post<Account>('/admin/accounts', accountData)
+  return data
+}
+
+/** Update account fields while keeping the request owned by this feature. */
+export async function updateAccount(id: number, updates: UpdateAccountRequest): Promise<Account> {
+  const { data } = await apiClient.put<Account>(`/admin/accounts/${id}`, updates)
+  return data
+}
+
+export async function testCPAConnection(
+  id: number,
+  payload: CPATestRequest
+): Promise<CPATestResult> {
+  const { data } = await apiClient.post<CPATestResult>(`/admin/accounts/${id}/cpa/test`, payload)
+  return data
+}
+
+export async function syncUpstreamModels(id: number): Promise<SyncUpstreamModelsResult> {
+  const { data } = await apiClient.post<SyncUpstreamModelsResult>(
+    `/admin/accounts/${id}/models/sync-upstream`
+  )
+  return data
+}
+
+export async function syncUpstreamModelsPreview(
+  params: SyncUpstreamPreviewParams
+): Promise<SyncUpstreamModelsResult> {
+  const { data } = await apiClient.post<SyncUpstreamModelsResult>(
+    '/admin/accounts/models/sync-upstream-preview',
+    params
+  )
+  return data
+}
+
+export async function importCodexSession(
+  payload: CodexSessionImportRequest
+): Promise<CodexSessionImportResult> {
+  const { data } = await apiClient.post<CodexSessionImportResult>(
+    '/admin/accounts/import/codex-session',
+    payload,
+    { timeout: 120000 }
+  )
+  return data
+}
+
+export async function createOpenAICodexPAT(
+  payload: OpenAICodexPATCreateRequest
+): Promise<Account> {
+  const { data } = await apiClient.post<Account>('/admin/openai/create-from-codex-pat', payload)
+  return data
+}
+
+export async function syncFromCrs(params: CRSSyncParams): Promise<CRSSyncResult> {
+  const { data } = await apiClient.post<CRSSyncResult>(
+    '/admin/accounts/sync/crs',
+    params,
+    { timeout: 180000 }
+  )
+  return data
+}
+
+export async function importData(
+  payload: AccountDataImportPayload
+): Promise<AdminDataImportResult> {
+  const { data } = await apiClient.post<AdminDataImportResult>('/admin/accounts/data', {
+    data: payload.data,
+    skip_default_group_bind: payload.skip_default_group_bind
+  })
+  return data
+}
+
+/** Apply refreshed OAuth credentials without replacing persistent account settings. */
+export async function applyOAuthCredentials(
+  id: number,
+  payload: {
+    type: 'oauth' | 'setup-token'
+    credentials: Record<string, unknown>
+    extra?: Record<string, unknown>
+  }
+): Promise<Account> {
+  const { data } = await apiClient.post<Account>(
+    `/admin/accounts/${id}/apply-oauth-credentials`,
+    payload
+  )
+  return data
+}
+
+export async function clearAccountError(id: number): Promise<Account> {
+  const { data } = await apiClient.post<Account>(`/admin/accounts/${id}/clear-error`)
+  return data
 }
 
 const duplicateOperationKeys = new Map<number, string>()

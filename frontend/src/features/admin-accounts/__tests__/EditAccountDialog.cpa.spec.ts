@@ -10,6 +10,14 @@ const { updateAccountMock, testCPAConnectionMock, checkMixedChannelRiskMock, sho
   showSuccessMock: vi.fn()
 }))
 
+vi.mock('@/api/admin', () => ({
+  adminAPI: {
+    accounts: {},
+    settings: {},
+    tlsFingerprintProfiles: {},
+  },
+}))
+
 vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError: showErrorMock,
@@ -22,33 +30,24 @@ vi.mock('@/features/auth/presentation/stores/authStore', () => ({
   useAuthStore: () => ({ isSimpleMode: true })
 }))
 
-vi.mock('@/api/admin', () => ({
-  adminAPI: {
-    accounts: {
-      update: updateAccountMock,
-      testCPAConnection: testCPAConnectionMock,
-      checkMixedChannelRisk: checkMixedChannelRiskMock
-    },
-    settings: {
-      getWebSearchEmulationConfig: vi.fn().mockResolvedValue({ enabled: false, providers: [] })
-    },
-    tlsFingerprintProfiles: {
-      list: vi.fn().mockResolvedValue([])
-    }
-  }
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountActions', () => ({
+  checkMixedChannelRisk: checkMixedChannelRiskMock,
+  syncUpstreamModels: vi.fn().mockResolvedValue({ models: [] }),
+  testCPAConnection: testCPAConnectionMock,
+  updateAccount: updateAccountMock
 }))
 
 vi.mock('@/features/admin-settings/data/datasources/adminSettingsDatasource', () => ({
-  getSettings: vi.fn().mockResolvedValue({})
+  getSettings: vi.fn().mockResolvedValue({}),
+  getWebSearchEmulationConfig: vi.fn().mockResolvedValue({ enabled: false, providers: [] })
 }))
 
-vi.mock('@/features/admin-accounts/data/datasources/adminAccountsDatasource', () => ({
-  getAntigravityDefaultModelMapping: vi.fn(),
-  accountsAPI: {
-    update: updateAccountMock,
-    testCPAConnection: testCPAConnectionMock,
-    checkMixedChannelRisk: checkMixedChannelRiskMock
-  }
+vi.mock('@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource', () => ({
+  list: vi.fn().mockResolvedValue([])
+}))
+
+vi.mock('@/features/admin-accounts/data/datasources/adminAccountQueries', () => ({
+  getAntigravityDefaultModelMapping: vi.fn()
 }))
 
 vi.mock('vue-i18n', async () => {
