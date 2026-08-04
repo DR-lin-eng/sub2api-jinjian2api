@@ -77,7 +77,6 @@ module.exports = {
     ],
     '@/stores': [
       'src/App.vue',
-      'src/common/pages/HomePage.vue',
       'src/common/widgets/data/SubscriptionProgressMini.vue',
       'src/common/widgets/data/VersionBadge.vue',
       'src/common/widgets/layout/AppHeader.vue',

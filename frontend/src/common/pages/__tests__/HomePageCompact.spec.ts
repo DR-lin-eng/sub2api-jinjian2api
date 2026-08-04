@@ -19,8 +19,11 @@ const { appStore, authStore } = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('@/stores', () => ({
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => appStore,
+}))
+
+vi.mock('@/features/auth/presentation/stores/authStore', () => ({
   useAuthStore: () => authStore,
 }))
 
@@ -99,5 +102,29 @@ describe('HomePage compact mode', () => {
 
     authStore.isAdmin = true
     expect(compactDestination(mountHome({ compact_home_enabled: true }))).toBe('/admin/dashboard')
+  })
+
+  it('shows the model plaza entry in both built-in home layouts when enabled', () => {
+    const compact = mountHome({
+      compact_home_enabled: true,
+      model_plaza_enabled: true,
+    })
+    expect(
+      compact.get('[data-testid="compact-model-plaza-link"]').findComponent(RouterLinkStub).props('to'),
+    ).toBe('/model-plaza')
+
+    const defaultHome = mountHome({ model_plaza_enabled: true })
+    expect(
+      defaultHome.get('[data-testid="default-model-plaza-link"]').findComponent(RouterLinkStub).props('to'),
+    ).toBe('/model-plaza')
+  })
+
+  it.each([undefined, false])('hides the model plaza entry when the feature flag is %s', (enabled) => {
+    const settings = enabled === undefined ? {} : { model_plaza_enabled: enabled }
+    const compact = mountHome({ compact_home_enabled: true, ...settings })
+    const defaultHome = mountHome(settings)
+
+    expect(compact.find('[data-testid="compact-model-plaza-link"]').exists()).toBe(false)
+    expect(defaultHome.find('[data-testid="default-model-plaza-link"]').exists()).toBe(false)
   })
 })

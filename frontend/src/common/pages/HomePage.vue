@@ -59,12 +59,23 @@
         <img :src="siteLogo || '/logo.svg'" alt="Logo" class="mx-auto mb-6 h-20 w-20 rounded-2xl object-contain" />
         <h1 class="[overflow-wrap:anywhere] text-3xl font-bold md:text-4xl">{{ siteName }}</h1>
         <p class="mt-4 whitespace-pre-wrap [overflow-wrap:anywhere] text-base text-gray-600 dark:text-dark-300">{{ siteSubtitle }}</p>
-        <router-link
-          :to="isAuthenticated ? dashboardPath : '/login'"
-          class="mt-8 inline-flex min-h-10 items-center justify-center rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
-        >
-          {{ isAuthenticated ? t('home.goToDashboard') : t('home.login') }}
-        </router-link>
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <router-link
+            :to="isAuthenticated ? dashboardPath : '/login'"
+            class="inline-flex min-h-10 items-center justify-center rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700"
+          >
+            {{ isAuthenticated ? t('home.goToDashboard') : t('home.login') }}
+          </router-link>
+          <router-link
+            v-if="modelPlazaEnabled"
+            data-testid="compact-model-plaza-link"
+            to="/model-plaza"
+            class="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-dark-700 dark:bg-dark-900 dark:text-dark-200 dark:hover:bg-dark-800"
+          >
+            <Icon name="grid" size="sm" />
+            {{ t('nav.modelPlaza') }}
+          </router-link>
+        </div>
       </div>
     </main>
 
@@ -188,13 +199,22 @@
             </p>
 
             <!-- CTA Button -->
-            <div>
+            <div class="flex flex-wrap items-center justify-center gap-3 lg:justify-start">
               <router-link
                 :to="isAuthenticated ? dashboardPath : '/login'"
                 class="btn btn-primary px-8 py-3 text-base shadow-lg shadow-primary-500/30"
               >
                 {{ isAuthenticated ? t('home.goToDashboard') : t('home.getStarted') }}
                 <Icon name="arrowRight" size="md" class="ml-2" :stroke-width="2" />
+              </router-link>
+              <router-link
+                v-if="modelPlazaEnabled"
+                data-testid="default-model-plaza-link"
+                to="/model-plaza"
+                class="btn border border-gray-300 bg-white/80 px-8 py-3 text-base text-gray-700 shadow-sm backdrop-blur-sm hover:bg-white dark:border-dark-700 dark:bg-dark-800/80 dark:text-dark-200 dark:hover:bg-dark-800"
+              >
+                <Icon name="grid" size="md" class="mr-2" />
+                {{ t('nav.modelPlaza') }}
               </router-link>
             </div>
           </div>
@@ -468,9 +488,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore, useAppStore } from '@/stores'
+import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
+import { useAppStore } from '@/core/stores/appStore'
 import LocaleSwitcher from '@/common/widgets/data/LocaleSwitcher.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
+import { FeatureFlags, isFeatureFlagEnabled } from '@/core/services/featureFlags'
 import { sanitizeUrl } from '@/core/utils/url'
 
 const { t } = useI18n()
@@ -486,6 +508,7 @@ const docUrl = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.doc_url
 const homeContent = computed(() => appStore.cachedPublicSettings?.home_content || '')
 const hasHomeContent = computed(() => homeContent.value.trim().length > 0)
 const compactHomeEnabled = computed(() => appStore.cachedPublicSettings?.compact_home_enabled === true)
+const modelPlazaEnabled = computed(() => isFeatureFlagEnabled(FeatureFlags.modelPlaza))
 
 // Check if homeContent is a URL (for iframe display)
 const isHomeContentUrl = computed(() => {
