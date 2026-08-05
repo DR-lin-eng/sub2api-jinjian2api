@@ -635,6 +635,95 @@
           </div>
         </div>
       </div>
+
+      <div
+        v-if="form.aliyun_captcha_enabled"
+        class="border-t border-gray-100 pt-4 dark:border-dark-700"
+        data-testid="aliyun-captcha-settings"
+      >
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ t("admin.settings.aliyunCaptcha.region") }}
+            </label>
+            <Select
+              :model-value="form.aliyun_captcha_region"
+              :options="aliyunCaptchaRegionOptions"
+              :searchable="false"
+              data-testid="aliyun-captcha-region"
+              @update:model-value="form.aliyun_captcha_region = $event as string"
+            />
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              {{ t("admin.settings.aliyunCaptcha.regionHint") }}
+            </p>
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ t("admin.settings.aliyunCaptcha.prefix") }}
+            </label>
+            <input
+              v-model="form.aliyun_captcha_prefix"
+              type="text"
+              class="input font-mono text-sm"
+              placeholder="14xxxxx"
+              data-testid="aliyun-captcha-prefix"
+            />
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              {{ t("admin.settings.aliyunCaptcha.prefixHint") }}
+            </p>
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ t("admin.settings.aliyunCaptcha.sceneId") }}
+            </label>
+            <input
+              v-model="form.aliyun_captcha_scene_id"
+              type="text"
+              class="input font-mono text-sm"
+              placeholder="1cxxxxxx"
+              data-testid="aliyun-captcha-scene-id"
+            />
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              {{ t("admin.settings.aliyunCaptcha.sceneIdHint") }}
+            </p>
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ t("admin.settings.aliyunCaptcha.accessKeyId") }}
+            </label>
+            <input
+              v-model="form.aliyun_captcha_access_key_id"
+              type="text"
+              class="input font-mono text-sm"
+              placeholder="LTAI..."
+              autocomplete="off"
+              data-testid="aliyun-captcha-access-key-id"
+            />
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              {{ t("admin.settings.aliyunCaptcha.accessKeyIdHint") }}
+            </p>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ t("admin.settings.aliyunCaptcha.accessKeySecret") }}
+            </label>
+            <input
+              v-model="form.aliyun_captcha_access_key_secret"
+              type="password"
+              class="input font-mono text-sm"
+              autocomplete="new-password"
+              data-testid="aliyun-captcha-access-key-secret"
+            />
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              {{
+                form.aliyun_captcha_access_key_secret_configured
+                  ? t("admin.settings.aliyunCaptcha.accessKeySecretConfiguredHint")
+                  : t("admin.settings.aliyunCaptcha.accessKeySecretHint")
+              }}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -648,5 +737,5 @@ import Toggle from '@/common/widgets/forms/Toggle.vue'
 import { useSettingsPageContext } from '@/features/admin-settings/presentation/composables/settingsPageContext'
 import type { ClientIPResolutionMode } from '@/features/admin-settings/data/datasources/adminSettingsDatasource'
 
-const { clientIPLastRefreshText, clientIPResolutionModeOptions, clientIPTrustedProxiesText, commitRegistrationEmailSuffixWhitelistDraft, form, handleRegistrationEmailSuffixWhitelistDraftInput, handleRegistrationEmailSuffixWhitelistDraftKeydown, handleRegistrationEmailSuffixWhitelistPaste, humanVerificationProviders, panelRateLimitSettingsMounted, registrationEmailSuffixWhitelistDraft, registrationEmailSuffixWhitelistTags, removeRegistrationEmailSuffixWhitelistTag, setHumanVerificationProvider, t } = useSettingsPageContext()
+const { aliyunCaptchaRegionOptions, clientIPLastRefreshText, clientIPResolutionModeOptions, clientIPTrustedProxiesText, commitRegistrationEmailSuffixWhitelistDraft, form, handleRegistrationEmailSuffixWhitelistDraftInput, handleRegistrationEmailSuffixWhitelistDraftKeydown, handleRegistrationEmailSuffixWhitelistPaste, humanVerificationProviders, panelRateLimitSettingsMounted, registrationEmailSuffixWhitelistDraft, registrationEmailSuffixWhitelistTags, removeRegistrationEmailSuffixWhitelistTag, setHumanVerificationProvider, t } = useSettingsPageContext()
 </script>

@@ -66,12 +66,15 @@
           </div>
         </div>
 
-        <div v-if="turnstileEnabled && (turnstileSiteKey || humanVerificationAPIEndpoint)">
+        <div v-if="externalHumanVerificationReady">
           <HumanVerificationWidget
             ref="turnstileRef"
             :provider="humanVerificationProvider"
             :site-key="turnstileSiteKey"
             :api-endpoint="humanVerificationAPIEndpoint"
+            :aliyun-scene-id="aliyunCaptchaSceneId"
+            :aliyun-prefix="aliyunCaptchaPrefix"
+            :aliyun-region="aliyunCaptchaRegion"
             @verify="onTurnstileVerify"
             @expire="onTurnstileExpire"
             @error="onTurnstileError"
@@ -144,9 +147,10 @@ import { useAppStore } from '@/stores'
 import { getPublicSettings, forgotPassword } from '@/features/auth/data/datasources/authDatasource'
 import {
   resolveHumanVerification,
+  type AliyunCaptchaRegion,
   type ExternalHumanVerificationProvider
 } from '@/core/services/humanVerification'
-import type { TencentCaptchaRequestProof } from '@/types'
+import type { ActionCaptchaRequestProof } from '@/types'
 
 const { t } = useI18n()
 
@@ -165,6 +169,9 @@ const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
 const humanVerificationProvider = ref<ExternalHumanVerificationProvider>('turnstile')
 const humanVerificationAPIEndpoint = ref<string>('')
+const aliyunCaptchaSceneId = ref<string>('')
+const aliyunCaptchaPrefix = ref<string>('')
+const aliyunCaptchaRegion = ref<AliyunCaptchaRegion>('cn')
 const localCaptchaEnabled = ref<boolean>(false)
 
 // Turnstile
@@ -187,6 +194,20 @@ const validationToastMessage = computed(() => errors.email || errors.turnstile |
 const tencentCaptchaEnabled = computed(
   () => turnstileEnabled.value && humanVerificationProvider.value === 'tencent'
 )
+const aliyunCaptchaEnabled = computed(
+  () => turnstileEnabled.value && humanVerificationProvider.value === 'aliyun'
+)
+const actionCaptchaEnabled = computed(
+  () => tencentCaptchaEnabled.value || aliyunCaptchaEnabled.value
+)
+const externalHumanVerificationReady = computed(() => {
+  if (!turnstileEnabled.value) return false
+  if (humanVerificationProvider.value === 'cap') return Boolean(humanVerificationAPIEndpoint.value)
+  if (humanVerificationProvider.value === 'aliyun') {
+    return Boolean(aliyunCaptchaSceneId.value && aliyunCaptchaPrefix.value)
+  }
+  return Boolean(turnstileSiteKey.value)
+})
 const inlineHumanVerificationRequired = computed(
   () => turnstileEnabled.value && !tencentCaptchaEnabled.value
 )
@@ -207,6 +228,9 @@ onMounted(async () => {
     turnstileSiteKey.value = verification.siteKey
     humanVerificationAPIEndpoint.value = verification.apiEndpoint
     humanVerificationProvider.value = verification.externalProvider
+    aliyunCaptchaSceneId.value = verification.aliyunSceneId
+    aliyunCaptchaPrefix.value = verification.aliyunPrefix
+    aliyunCaptchaRegion.value = verification.aliyunRegion
     localCaptchaEnabled.value = verification.provider === 'local'
   } catch (error) {
     console.error('Failed to load public settings:', error)
@@ -235,14 +259,9 @@ function resetHumanVerification(): void {
   turnstileToken.value = ''
 }
 
-async function acquireTencentProof(): Promise<TencentCaptchaRequestProof | null> {
-  if (!tencentCaptchaEnabled.value) return null
-  const proof = await turnstileRef.value?.verifyTencent()
-  if (!proof) return null
-  return {
-    tencent_captcha_ticket: proof.ticket,
-    tencent_captcha_randstr: proof.randstr
-  }
+async function acquireActionCaptchaProof(): Promise<ActionCaptchaRequestProof | null> {
+  if (!actionCaptchaEnabled.value) return null
+  return (await turnstileRef.value?.verifyAction()) || null
 }
 
 // ==================== Validation ====================
@@ -288,14 +307,14 @@ async function handleSubmit(): Promise<void> {
   isLoading.value = true
 
   try {
-    const tencentProof = await acquireTencentProof()
-    if (tencentCaptchaEnabled.value && !tencentProof) return
+    const actionProof = await acquireActionCaptchaProof()
+    if (actionCaptchaEnabled.value && !actionProof) return
     await forgotPassword({
       email: formData.email,
       captcha_token: inlineHumanVerificationRequired.value ? turnstileToken.value : undefined,
       captcha_id: localCaptchaEnabled.value ? localCaptchaId.value : undefined,
       captcha_code: localCaptchaEnabled.value ? localCaptchaCode.value : undefined,
-      ...(tencentProof || {})
+      ...(actionProof || {})
     })
 
     isSubmitted.value = true

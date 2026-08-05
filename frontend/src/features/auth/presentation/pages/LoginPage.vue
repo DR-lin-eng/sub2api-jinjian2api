@@ -78,12 +78,15 @@
           </div>
         </div>
 
-        <div v-if="turnstileEnabled && (turnstileSiteKey || humanVerificationAPIEndpoint)">
+        <div v-if="externalHumanVerificationReady">
           <HumanVerificationWidget
             ref="turnstileRef"
             :provider="humanVerificationProvider"
             :site-key="turnstileSiteKey"
             :api-endpoint="humanVerificationAPIEndpoint"
+            :aliyun-scene-id="aliyunCaptchaSceneId"
+            :aliyun-prefix="aliyunCaptchaPrefix"
+            :aliyun-region="aliyunCaptchaRegion"
             @verify="onTurnstileVerify"
             @expire="onTurnstileExpire"
             @error="onTurnstileError"
@@ -254,14 +257,15 @@ import {
   type OAuthLoginStart
 } from '@/features/auth/data/datasources/authDatasource'
 import type {
+  ActionCaptchaRequestProof,
   LoginAgreementDocument,
-  TencentCaptchaRequestProof,
   TotpLoginResponse
 } from '@/types'
 import { extractI18nErrorMessage } from '@/core/utils/apiError'
 import { clearAllAffiliateReferralCodes } from '@/core/utils/oauthAffiliate'
 import {
   resolveHumanVerification,
+  type AliyunCaptchaRegion,
   type ExternalHumanVerificationProvider
 } from '@/core/services/humanVerification'
 
@@ -287,6 +291,9 @@ const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
 const humanVerificationProvider = ref<ExternalHumanVerificationProvider>('turnstile')
 const humanVerificationAPIEndpoint = ref<string>('')
+const aliyunCaptchaSceneId = ref<string>('')
+const aliyunCaptchaPrefix = ref<string>('')
+const aliyunCaptchaRegion = ref<AliyunCaptchaRegion>('cn')
 const localCaptchaEnabled = ref<boolean>(false)
 const linuxdoOAuthEnabled = ref<boolean>(false)
 const dingtalkOAuthEnabled = ref<boolean>(false)
@@ -355,6 +362,23 @@ const tencentCaptchaEnabled = computed(
   () => turnstileEnabled.value && humanVerificationProvider.value === 'tencent'
 )
 
+const aliyunCaptchaEnabled = computed(
+  () => turnstileEnabled.value && humanVerificationProvider.value === 'aliyun'
+)
+
+const actionCaptchaEnabled = computed(
+  () => tencentCaptchaEnabled.value || aliyunCaptchaEnabled.value
+)
+
+const externalHumanVerificationReady = computed(() => {
+  if (!turnstileEnabled.value) return false
+  if (humanVerificationProvider.value === 'cap') return Boolean(humanVerificationAPIEndpoint.value)
+  if (humanVerificationProvider.value === 'aliyun') {
+    return Boolean(aliyunCaptchaSceneId.value && aliyunCaptchaPrefix.value)
+  }
+  return Boolean(turnstileSiteKey.value)
+})
+
 const inlineHumanVerificationRequired = computed(
   () => turnstileEnabled.value && !tencentCaptchaEnabled.value
 )
@@ -397,6 +421,9 @@ onMounted(async () => {
     turnstileSiteKey.value = verification.siteKey
     humanVerificationAPIEndpoint.value = verification.apiEndpoint
     humanVerificationProvider.value = verification.externalProvider
+    aliyunCaptchaSceneId.value = verification.aliyunSceneId
+    aliyunCaptchaPrefix.value = verification.aliyunPrefix
+    aliyunCaptchaRegion.value = verification.aliyunRegion
     localCaptchaEnabled.value = verification.provider === 'local'
     linuxdoOAuthEnabled.value = settings.linuxdo_oauth_enabled
     dingtalkOAuthEnabled.value = settings.dingtalk_oauth_enabled ?? false
@@ -503,14 +530,9 @@ function resetHumanVerification(): void {
   turnstileToken.value = ''
 }
 
-async function acquireTencentProof(): Promise<TencentCaptchaRequestProof | null> {
-  if (!tencentCaptchaEnabled.value) return null
-  const proof = await turnstileRef.value?.verifyTencent()
-  if (!proof) return null
-  return {
-    tencent_captcha_ticket: proof.ticket,
-    tencent_captcha_randstr: proof.randstr
-  }
+async function acquireActionCaptchaProof(): Promise<ActionCaptchaRequestProof | null> {
+  if (!actionCaptchaEnabled.value) return null
+  return (await turnstileRef.value?.verifyAction()) || null
 }
 
 // ==================== Validation ====================
@@ -578,8 +600,8 @@ async function handleLogin(): Promise<void> {
   isLoading.value = true
 
   try {
-    const tencentProof = await acquireTencentProof()
-    if (tencentCaptchaEnabled.value && !tencentProof) return
+    const actionProof = await acquireActionCaptchaProof()
+    if (actionCaptchaEnabled.value && !actionProof) return
 
     // Call auth store login
     const response = await authStore.login({
@@ -588,7 +610,7 @@ async function handleLogin(): Promise<void> {
       captcha_token: inlineHumanVerificationRequired.value ? turnstileToken.value : undefined,
       captcha_id: localCaptchaRequired.value ? localCaptchaId.value : undefined,
       captcha_code: localCaptchaRequired.value ? localCaptchaCode.value : undefined,
-      ...(tencentProof || {})
+      ...(actionProof || {})
     })
 
     // Check if 2FA is required
@@ -635,9 +657,9 @@ async function handlePasskeyLogin(): Promise<void> {
 
   passkeyLoading.value = true
   try {
-    const tencentProof = await acquireTencentProof()
-    if (tencentCaptchaEnabled.value && !tencentProof) return
-    await authStore.loginWithPasskey(tencentProof || undefined)
+    const actionProof = await acquireActionCaptchaProof()
+    if (actionCaptchaEnabled.value && !actionProof) return
+    await authStore.loginWithPasskey(actionProof || undefined)
     clearAllAffiliateReferralCodes()
     appStore.showSuccess(t('auth.loginSuccess'))
     const redirectTo = (router.currentRoute.value.query.redirect as string) || '/dashboard'
@@ -649,21 +671,21 @@ async function handlePasskeyLogin(): Promise<void> {
     errorMessage.value = extractI18nErrorMessage(error, t, 'auth.errors', fallback)
     appStore.showError(errorMessage.value)
   } finally {
-    if (tencentCaptchaEnabled.value) resetHumanVerification()
+    if (actionCaptchaEnabled.value) resetHumanVerification()
     passkeyLoading.value = false
   }
 }
 
 async function handleOAuthStart(request: OAuthLoginStart): Promise<void> {
   if (authActionDisabled.value) return
-  if (!tencentCaptchaEnabled.value) {
+  if (!actionCaptchaEnabled.value) {
     window.location.href = buildOAuthLoginStartURL(request)
     return
   }
 
   isLoading.value = true
   try {
-    const proof = await acquireTencentProof()
+    const proof = await acquireActionCaptchaProof()
     if (!proof) return
     const result = await startOAuthLogin(request, proof)
     window.location.href = result.authorize_url

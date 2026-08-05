@@ -23,7 +23,7 @@ import type {
   SendVerifyCodeRequest,
   SendVerifyCodeResponse,
   PublicSettings,
-  TencentCaptchaRequestProof,
+  ActionCaptchaRequestProof,
   TotpLoginResponse,
   TotpLogin2FARequest,
   EncryptedRegisterRequest
@@ -67,7 +67,7 @@ export function buildOAuthLoginStartURL(request: OAuthLoginStart): string {
 
 export async function startOAuthLogin(
   request: OAuthLoginStart,
-  proof: TencentCaptchaRequestProof
+  proof: ActionCaptchaRequestProof
 ): Promise<OAuthLoginStartResponse> {
   const { data } = await apiClient.post<OAuthLoginStartResponse>(
     `/auth/oauth/${request.provider}/start`,

@@ -16,6 +16,7 @@ func (h *SettingHandler) validateCoreSettingsUpdate(c *gin.Context, prepared *pr
 	recaptchaEnabled := prepared.recaptchaEnabled
 	capEnabled := prepared.capEnabled
 	tencentCaptchaEnabled := prepared.tencentCaptchaEnabled
+	aliyunCaptchaEnabled := prepared.aliyunCaptchaEnabled
 
 	// 验证参数
 	if req.DefaultConcurrency < 1 {
@@ -207,6 +208,68 @@ func (h *SettingHandler) validateCoreSettingsUpdate(c *gin.Context, prepared *pr
 		if req.TencentCaptchaCloudSecretKey == "" {
 			response.BadRequest(c, "Tencent Cloud SecretKey is required when Tencent Captcha is enabled")
 			return false
+		}
+	}
+
+	req.AliyunCaptchaAccessKeyID = strings.TrimSpace(req.AliyunCaptchaAccessKeyID)
+	req.AliyunCaptchaAccessKeySecret = strings.TrimSpace(req.AliyunCaptchaAccessKeySecret)
+	req.AliyunCaptchaSceneID = strings.TrimSpace(req.AliyunCaptchaSceneID)
+	req.AliyunCaptchaPrefix = strings.TrimSpace(req.AliyunCaptchaPrefix)
+	if strings.EqualFold(strings.TrimSpace(req.AliyunCaptchaRegion), service.AliyunCaptchaRegionSGP) {
+		req.AliyunCaptchaRegion = service.AliyunCaptchaRegionSGP
+	} else {
+		req.AliyunCaptchaRegion = service.AliyunCaptchaRegionCN
+	}
+	if aliyunCaptchaEnabled {
+		if req.AliyunCaptchaAccessKeyID == "" {
+			req.AliyunCaptchaAccessKeyID = previousSettings.AliyunCaptchaAccessKeyID
+		}
+		if req.AliyunCaptchaAccessKeySecret == "" {
+			req.AliyunCaptchaAccessKeySecret = previousSettings.AliyunCaptchaAccessKeySecret
+		}
+		if req.AliyunCaptchaAccessKeyID == "" {
+			response.BadRequest(c, "Aliyun Captcha AccessKey ID is required when enabled")
+			return false
+		}
+		if req.AliyunCaptchaAccessKeySecret == "" {
+			response.BadRequest(c, "Aliyun Captcha AccessKey Secret is required when enabled")
+			return false
+		}
+		if req.AliyunCaptchaSceneID == "" {
+			response.BadRequest(c, "Aliyun Captcha Scene ID is required when enabled")
+			return false
+		}
+		if req.AliyunCaptchaPrefix == "" {
+			response.BadRequest(c, "Aliyun Captcha Prefix is required when enabled")
+			return false
+		}
+		if err := service.ValidateAliyunCaptchaPrefix(req.AliyunCaptchaPrefix); err != nil {
+			response.BadRequest(c, err.Error())
+			return false
+		}
+
+		credentialsChanged := !previousSettings.AliyunCaptchaEnabled ||
+			previousSettings.AliyunCaptchaAccessKeyID != req.AliyunCaptchaAccessKeyID ||
+			previousSettings.AliyunCaptchaAccessKeySecret != req.AliyunCaptchaAccessKeySecret ||
+			previousSettings.AliyunCaptchaSceneID != req.AliyunCaptchaSceneID ||
+			previousSettings.AliyunCaptchaRegion != req.AliyunCaptchaRegion
+		if credentialsChanged {
+			if h.turnstileService == nil {
+				response.ErrorFrom(c, service.ErrAliyunCaptchaNotConfigured)
+				return false
+			}
+			err := h.turnstileService.ValidateAliyunCaptchaConfiguration(c.Request.Context(), service.AliyunCaptchaConfig{
+				Enabled:         true,
+				AccessKeyID:     req.AliyunCaptchaAccessKeyID,
+				AccessKeySecret: req.AliyunCaptchaAccessKeySecret,
+				SceneID:         req.AliyunCaptchaSceneID,
+				Prefix:          req.AliyunCaptchaPrefix,
+				Region:          req.AliyunCaptchaRegion,
+			})
+			if err != nil {
+				response.ErrorFrom(c, err)
+				return false
+			}
 		}
 	}
 

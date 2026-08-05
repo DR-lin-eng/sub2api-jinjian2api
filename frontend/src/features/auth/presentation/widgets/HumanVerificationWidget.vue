@@ -7,6 +7,16 @@
     @expire="emit('expire')"
     @error="emit('error')"
   />
+  <AliyunCaptchaWidget
+    v-else-if="provider === 'aliyun'"
+    ref="aliyunRef"
+    :scene-id="aliyunSceneId || ''"
+    :prefix="aliyunPrefix || ''"
+    :region="aliyunRegion"
+    @verify="emit('verify', $event)"
+    @expire="emit('expire')"
+    @error="emit('error')"
+  />
   <div v-else-if="provider !== 'tencent'" class="human-verification-wrapper">
     <div ref="containerRef" class="human-verification-container"></div>
   </div>
@@ -17,8 +27,11 @@
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import TurnstileWidget from '@/features/auth/presentation/widgets/TurnstileWidget.vue'
+import AliyunCaptchaWidget from '@/features/auth/presentation/widgets/AliyunCaptchaWidget.vue'
+import type { ActionCaptchaRequestProof } from '@/types'
 import {
   loadTencentCaptcha,
+  type AliyunCaptchaRegion,
   type ExternalHumanVerificationProvider,
   type TencentCaptchaInstance,
   type TencentCaptchaProof,
@@ -48,6 +61,9 @@ const props = defineProps<{
   provider: ExternalHumanVerificationProvider
   siteKey?: string
   apiEndpoint?: string
+  aliyunSceneId?: string
+  aliyunPrefix?: string
+  aliyunRegion?: AliyunCaptchaRegion
 }>()
 
 const emit = defineEmits<{
@@ -60,6 +76,7 @@ const { locale } = useI18n()
 
 const containerRef = ref<HTMLElement | null>(null)
 const turnstileRef = ref<InstanceType<typeof TurnstileWidget> | null>(null)
+const aliyunRef = ref<InstanceType<typeof AliyunCaptchaWidget> | null>(null)
 const recaptchaWidgetId = ref<number | null>(null)
 let tencentInstance: TencentCaptchaInstance | null = null
 let tencentPending: Promise<TencentCaptchaProof | null> | null = null
@@ -191,6 +208,30 @@ function verifyTencent(): Promise<TencentCaptchaProof | null> {
   return tencentPending
 }
 
+function verifyAliyun(): Promise<string | null> {
+  if (props.provider !== 'aliyun' || !props.aliyunSceneId || !props.aliyunPrefix) {
+    return Promise.resolve(null)
+  }
+  return aliyunRef.value?.verifyAliyun() || Promise.resolve(null)
+}
+
+async function verifyAction(): Promise<ActionCaptchaRequestProof | null> {
+  if (props.provider === 'tencent') {
+    const proof = await verifyTencent()
+    return proof
+      ? {
+          tencent_captcha_ticket: proof.ticket,
+          tencent_captcha_randstr: proof.randstr
+        }
+      : null
+  }
+  if (props.provider === 'aliyun') {
+    const token = await verifyAliyun()
+    return token ? { captcha_token: token } : null
+  }
+  return null
+}
+
 function reset(): void {
   if (props.provider === 'turnstile') {
     turnstileRef.value?.reset()
@@ -200,11 +241,20 @@ function reset(): void {
     void renderCap()
   } else if (props.provider === 'tencent') {
     cancelTencent()
+  } else if (props.provider === 'aliyun') {
+    aliyunRef.value?.reset()
   }
 }
 
 watch(
-  () => [props.provider, props.siteKey, props.apiEndpoint] as const,
+  () => [
+    props.provider,
+    props.siteKey,
+    props.apiEndpoint,
+    props.aliyunSceneId,
+    props.aliyunPrefix,
+    props.aliyunRegion
+  ] as const,
   (current, previous) => {
     if (previous?.[0] === 'tencent' && (current[0] !== 'tencent' || current[1] !== previous[1])) {
       cancelTencent()
@@ -218,7 +268,7 @@ onUnmounted(() => {
   cancelTencent()
 })
 
-defineExpose({ reset, verifyTencent })
+defineExpose({ reset, verifyTencent, verifyAliyun, verifyAction })
 </script>
 
 <style scoped>

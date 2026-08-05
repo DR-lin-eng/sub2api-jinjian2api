@@ -423,6 +423,13 @@ func TestEnhanceCSPPolicyAllowsHumanVerificationRuntimes(t *testing.T) {
 	assert.Equal(t, 1, countDirectiveValue(result, "frame-src", TencentCaptchaDomain))
 	assert.Equal(t, 1, countDirectiveValue(result, "style-src", TencentCaptchaStaticDomain))
 	assert.Equal(t, 1, countDirectiveValue(result, "connect-src", JSDelivrDomain))
+	assert.Equal(t, 1, countDirectiveValue(result, "script-src", AliyunCaptchaLoaderDomain))
+	assert.Equal(t, 1, countDirectiveValue(result, "script-src", AliyunCaptchaCDNDomain))
+	assert.Equal(t, 1, countDirectiveValue(result, "script-src", AliyunCaptchaFallbackDomain))
+	assert.Equal(t, 1, countDirectiveValue(result, "style-src", AliyunCaptchaCDNDomain))
+	assert.Equal(t, 1, countDirectiveValue(result, "style-src", AliyunCaptchaFallbackDomain))
+	assert.Equal(t, 1, countDirectiveValue(result, "img-src", AliyunCaptchaImageCNDomain))
+	assert.Equal(t, 1, countDirectiveValue(result, "img-src", AliyunCaptchaImageSGPDomain))
 	assert.Contains(t, result, "worker-src 'self' blob:")
 }
 
@@ -430,7 +437,13 @@ func TestSecurityHeadersInjectsDynamicConnectSrcOrigins(t *testing.T) {
 	middleware := SecurityHeaders(
 		config.CSPConfig{Enabled: true, Policy: "default-src 'self'; connect-src 'self'"},
 		nil,
-		func() []string { return []string{"https://cap.example.com"} },
+		func() []string {
+			return []string{
+				"https://cap.example.com",
+				"https://tenant.captcha-open.aliyuncs.com",
+				"https://cap.example.com",
+			}
+		},
 	)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -442,6 +455,11 @@ func TestSecurityHeadersInjectsDynamicConnectSrcOrigins(t *testing.T) {
 		w.Header().Get("Content-Security-Policy"),
 		"connect-src",
 		"https://cap.example.com",
+	))
+	assert.Equal(t, 1, countDirectiveValue(
+		w.Header().Get("Content-Security-Policy"),
+		"connect-src",
+		"https://tenant.captcha-open.aliyuncs.com",
 	))
 }
 

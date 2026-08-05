@@ -177,6 +177,10 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		SettingKeyCapAPIEndpoint,
 		SettingKeyTencentCaptchaEnabled,
 		SettingKeyTencentCaptchaAppID,
+		SettingKeyAliyunCaptchaEnabled,
+		SettingKeyAliyunCaptchaSceneID,
+		SettingKeyAliyunCaptchaPrefix,
+		SettingKeyAliyunCaptchaRegion,
 		SettingKeyLocalCaptchaEnabled,
 		SettingKeySiteName,
 		SettingKeySiteLogo,
@@ -315,6 +319,10 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		CapAPIEndpoint:                   settings[SettingKeyCapAPIEndpoint],
 		TencentCaptchaEnabled:            settings[SettingKeyTencentCaptchaEnabled] == "true",
 		TencentCaptchaAppID:              settings[SettingKeyTencentCaptchaAppID],
+		AliyunCaptchaEnabled:             settings[SettingKeyAliyunCaptchaEnabled] == "true",
+		AliyunCaptchaSceneID:             strings.TrimSpace(settings[SettingKeyAliyunCaptchaSceneID]),
+		AliyunCaptchaPrefix:              strings.TrimSpace(settings[SettingKeyAliyunCaptchaPrefix]),
+		AliyunCaptchaRegion:              normalizeAliyunCaptchaRegion(settings[SettingKeyAliyunCaptchaRegion]),
 		LocalCaptchaEnabled:              settings[SettingKeyLocalCaptchaEnabled] == "true",
 		SiteName:                         s.getStringOrDefault(settings, SettingKeySiteName, "Sub2API"),
 		SiteLogo:                         settings[SettingKeySiteLogo],
@@ -527,6 +535,10 @@ type PublicSettingsInjectionPayload struct {
 	CapAPIEndpoint                   string                   `json:"cap_api_endpoint"`
 	TencentCaptchaEnabled            bool                     `json:"tencent_captcha_enabled"`
 	TencentCaptchaAppID              string                   `json:"tencent_captcha_app_id"`
+	AliyunCaptchaEnabled             bool                     `json:"aliyun_captcha_enabled"`
+	AliyunCaptchaSceneID             string                   `json:"aliyun_captcha_scene_id"`
+	AliyunCaptchaPrefix              string                   `json:"aliyun_captcha_prefix"`
+	AliyunCaptchaRegion              string                   `json:"aliyun_captcha_region"`
 	LocalCaptchaEnabled              bool                     `json:"local_captcha_enabled"`
 	SiteName                         string                   `json:"site_name"`
 	SiteLogo                         string                   `json:"site_logo"`
@@ -609,6 +621,10 @@ func (s *SettingService) GetPublicSettingsForInjection(ctx context.Context) (any
 		CapAPIEndpoint:                   settings.CapAPIEndpoint,
 		TencentCaptchaEnabled:            settings.TencentCaptchaEnabled,
 		TencentCaptchaAppID:              settings.TencentCaptchaAppID,
+		AliyunCaptchaEnabled:             settings.AliyunCaptchaEnabled,
+		AliyunCaptchaSceneID:             settings.AliyunCaptchaSceneID,
+		AliyunCaptchaPrefix:              settings.AliyunCaptchaPrefix,
+		AliyunCaptchaRegion:              settings.AliyunCaptchaRegion,
 		LocalCaptchaEnabled:              settings.LocalCaptchaEnabled,
 		SiteName:                         settings.SiteName,
 		SiteLogo:                         settings.SiteLogo,
@@ -743,19 +759,69 @@ func (s *SettingService) GetFrameSrcOrigins(ctx context.Context) ([]string, erro
 }
 
 // GetConnectSrcOrigins returns origins needed by browser-side API clients.
-// CAP fetches challenge and redeem endpoints directly from the configured origin.
+// CAP uses its configured origin. Alibaba Cloud Captcha derives API hosts from
+// the configured prefix and region; fixed device/upload endpoints are included
+// alongside those exact hosts so custom CSP policies survive upgrades.
 func (s *SettingService) GetConnectSrcOrigins(ctx context.Context) ([]string, error) {
 	settings, err := s.GetPublicSettings(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if !settings.CapEnabled {
+	if !settings.CapEnabled && !settings.AliyunCaptchaEnabled {
 		return nil, nil
 	}
-	if origin := extractOriginFromURL(settings.CapAPIEndpoint); origin != "" {
-		return []string{origin}, nil
+
+	seen := make(map[string]struct{})
+	origins := make([]string, 0, 7)
+	addOrigin := func(rawURL string) {
+		origin := extractOriginFromURL(rawURL)
+		if origin == "" {
+			return
+		}
+		if _, exists := seen[origin]; exists {
+			return
+		}
+		seen[origin] = struct{}{}
+		origins = append(origins, origin)
 	}
-	return nil, nil
+
+	if settings.CapEnabled {
+		addOrigin(settings.CapAPIEndpoint)
+	}
+	if settings.AliyunCaptchaEnabled {
+		for _, origin := range aliyunCaptchaBrowserConnectOrigins(
+			settings.AliyunCaptchaPrefix,
+			settings.AliyunCaptchaRegion,
+		) {
+			addOrigin(origin)
+		}
+	}
+	return origins, nil
+}
+
+func aliyunCaptchaBrowserConnectOrigins(prefix, region string) []string {
+	prefix = strings.TrimSpace(prefix)
+	if ValidateAliyunCaptchaPrefix(prefix) != nil {
+		return nil
+	}
+	if normalizeAliyunCaptchaRegion(region) == AliyunCaptchaRegionSGP {
+		return []string{
+			fmt.Sprintf("https://%s.captcha-open-southeast.aliyuncs.com", prefix),
+			fmt.Sprintf("https://%s.captcha-open-southeast-b.aliyuncs.com", prefix),
+			"https://upload.captcha-open-southeast.aliyuncs.com",
+			"https://cloudauth-device.ap-southeast-1.aliyuncs.com",
+			"https://cloudauth-device-dualstack.ap-southeast-1.aliyuncs.com",
+			"https://ap-southeast-1.device.saf.aliyuncs.com",
+		}
+	}
+	return []string{
+		fmt.Sprintf("https://%s.captcha-open.aliyuncs.com", prefix),
+		fmt.Sprintf("https://%s.captcha-open-b.aliyuncs.com", prefix),
+		"https://upload.captcha-open.aliyuncs.com",
+		"https://cloudauth-device.aliyuncs.com",
+		"https://cloudauth-device-dualstack.cn-shanghai.aliyuncs.com",
+		"https://cn-shanghai.device.saf.aliyuncs.com",
+	}
 }
 
 // extractOriginFromURL returns the scheme+host origin from rawURL.

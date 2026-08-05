@@ -510,6 +510,12 @@ const baseSettingsResponse = {
   cap_enabled: false,
   cap_api_endpoint: "",
   cap_secret_key_configured: false,
+  aliyun_captcha_enabled: false,
+  aliyun_captcha_access_key_id: "",
+  aliyun_captcha_access_key_secret_configured: false,
+  aliyun_captcha_scene_id: "",
+  aliyun_captcha_prefix: "",
+  aliyun_captcha_region: "cn",
   local_captcha_enabled: false,
   api_key_acl_trust_forwarded_ip: true,
   client_ip_resolution_mode: "auto_compat",
@@ -963,7 +969,7 @@ describe("admin SettingsView payment visible method controls", () => {
     expect(protectionCard).toBeDefined();
 
     let providerToggles = protectionCard!.findAll('input.toggle-stub');
-    expect(providerToggles).toHaveLength(5);
+    expect(providerToggles).toHaveLength(6);
     await providerToggles[1]!.setValue(true);
 
     providerToggles = protectionCard!.findAll('input.toggle-stub');
@@ -977,6 +983,7 @@ describe("admin SettingsView payment visible method controls", () => {
       true,
       false,
       false,
+      false,
     ]);
 
     await wrapper.find("form").trigger("submit.prevent");
@@ -985,6 +992,45 @@ describe("admin SettingsView payment visible method controls", () => {
       turnstile_enabled: false,
       recaptcha_enabled: false,
       cap_enabled: true,
+      tencent_captcha_enabled: false,
+      aliyun_captcha_enabled: false,
+      local_captcha_enabled: false,
+    });
+  });
+
+  it("renders and saves Alibaba Cloud Captcha settings without widening the provider contract", async () => {
+    const wrapper = mountView();
+    await flushPromises();
+    await openSecurityTab(wrapper);
+
+    const protectionCard = wrapper
+      .findAll(".card")
+      .find(node => node.text().includes("admin.settings.turnstile.title"));
+    expect(protectionCard).toBeDefined();
+
+    const providerToggles = protectionCard!.findAll('input.toggle-stub');
+    expect(providerToggles).toHaveLength(6);
+    await providerToggles[4]!.setValue(true);
+
+    expect(wrapper.get('[data-testid="aliyun-captcha-settings"]').exists()).toBe(true);
+    await wrapper.get('[data-testid="aliyun-captcha-region"]').setValue("sgp");
+    await wrapper.get('[data-testid="aliyun-captcha-prefix"]').setValue("tenant-1");
+    await wrapper.get('[data-testid="aliyun-captcha-scene-id"]').setValue("scene-1");
+    await wrapper.get('[data-testid="aliyun-captcha-access-key-id"]').setValue("LTAI-test");
+    await wrapper.get('[data-testid="aliyun-captcha-access-key-secret"]').setValue("secret-value");
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(updateSettings.mock.calls.at(-1)?.[0]).toMatchObject({
+      aliyun_captcha_enabled: true,
+      aliyun_captcha_region: "sgp",
+      aliyun_captcha_prefix: "tenant-1",
+      aliyun_captcha_scene_id: "scene-1",
+      aliyun_captcha_access_key_id: "LTAI-test",
+      aliyun_captcha_access_key_secret: "secret-value",
+      turnstile_enabled: false,
+      recaptcha_enabled: false,
+      cap_enabled: false,
       tencent_captcha_enabled: false,
       local_captcha_enabled: false,
     });

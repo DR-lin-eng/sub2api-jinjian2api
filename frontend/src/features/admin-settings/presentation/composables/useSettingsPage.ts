@@ -176,6 +176,7 @@ export function useSettingsPage() {
   } = useSettingsClaudePromptBlocks(form, t);
 
   const {
+    aliyunCaptchaRegionOptions,
     clientIPLastRefreshText,
     clientIPResolutionModeOptions,
     clientIPTrustedProxiesText,
@@ -448,6 +449,7 @@ export function useSettingsPage() {
       form.turnstile_secret_key = "";
       form.recaptcha_secret_key = "";
       form.cap_secret_key = "";
+      form.aliyun_captcha_access_key_secret = "";
       form.linuxdo_connect_client_secret = "";
       form.dingtalk_connect_client_secret = "";
       form.github_oauth_client_secret = "";
@@ -783,6 +785,7 @@ export function useSettingsPage() {
 
   return {
     activeTab,
+    aliyunCaptchaRegionOptions,
     addAuthSourceDefaultSubscription,
     addClaudeOAuthSystemPromptBlock,
     addCodexBlacklistRow,

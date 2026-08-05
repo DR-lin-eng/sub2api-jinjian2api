@@ -144,6 +144,30 @@ func TestSettingService_GetPublicSettingsExposesOnlyTencentPublicFields(t *testi
 	require.NotContains(t, string(payload), "tencent_captcha_cloud_secret")
 }
 
+func TestSettingServiceGetPublicSettingsExposesOnlyAliyunBrowserConfiguration(t *testing.T) {
+	repo := &settingPublicRepoStub{values: map[string]string{
+		SettingKeyAliyunCaptchaEnabled:         "true",
+		SettingKeyAliyunCaptchaAccessKeyID:     "ak-id-canary",
+		SettingKeyAliyunCaptchaAccessKeySecret: "ak-secret-canary",
+		SettingKeyAliyunCaptchaSceneID:         "scene-1",
+		SettingKeyAliyunCaptchaPrefix:          "prefix-1",
+		SettingKeyAliyunCaptchaRegion:          AliyunCaptchaRegionSGP,
+	}}
+
+	settings, err := NewSettingService(repo, &config.Config{}).GetPublicSettings(context.Background())
+
+	require.NoError(t, err)
+	require.True(t, settings.AliyunCaptchaEnabled)
+	require.Equal(t, "scene-1", settings.AliyunCaptchaSceneID)
+	require.Equal(t, "prefix-1", settings.AliyunCaptchaPrefix)
+	require.Equal(t, AliyunCaptchaRegionSGP, settings.AliyunCaptchaRegion)
+	payload, err := json.Marshal(settings)
+	require.NoError(t, err)
+	require.NotContains(t, string(payload), "ak-id-canary")
+	require.NotContains(t, string(payload), "ak-secret-canary")
+	require.NotContains(t, string(payload), "aliyun_captcha_access_key")
+}
+
 func TestSettingService_GetPublicSettings_SupportChatDefaultsToDisabledUnlessExplicitlyEnabled(t *testing.T) {
 	svcEnabled := NewSettingService(&settingPublicRepoStub{values: map[string]string{}}, &config.Config{})
 	enabled, err := svcEnabled.GetPublicSettings(context.Background())
@@ -228,6 +252,66 @@ func TestSettingService_GetConnectSrcOrigins_IncludesEnabledCapEndpoint(t *testi
 	origins, err := svc.GetConnectSrcOrigins(context.Background())
 	require.NoError(t, err)
 	require.Contains(t, origins, "https://cap.example.com")
+}
+
+func TestSettingService_GetConnectSrcOrigins_IncludesExactAliyunCaptchaEndpoints(t *testing.T) {
+	tests := []struct {
+		name     string
+		region   string
+		expected []string
+	}{
+		{
+			name:   "mainland china",
+			region: AliyunCaptchaRegionCN,
+			expected: []string{
+				"https://tenant-1.captcha-open.aliyuncs.com",
+				"https://tenant-1.captcha-open-b.aliyuncs.com",
+				"https://upload.captcha-open.aliyuncs.com",
+				"https://cloudauth-device.aliyuncs.com",
+				"https://cloudauth-device-dualstack.cn-shanghai.aliyuncs.com",
+				"https://cn-shanghai.device.saf.aliyuncs.com",
+			},
+		},
+		{
+			name:   "singapore",
+			region: AliyunCaptchaRegionSGP,
+			expected: []string{
+				"https://tenant-1.captcha-open-southeast.aliyuncs.com",
+				"https://tenant-1.captcha-open-southeast-b.aliyuncs.com",
+				"https://upload.captcha-open-southeast.aliyuncs.com",
+				"https://cloudauth-device.ap-southeast-1.aliyuncs.com",
+				"https://cloudauth-device-dualstack.ap-southeast-1.aliyuncs.com",
+				"https://ap-southeast-1.device.saf.aliyuncs.com",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc := NewSettingService(&settingPublicRepoStub{values: map[string]string{
+				SettingKeyAliyunCaptchaEnabled: "true",
+				SettingKeyAliyunCaptchaPrefix:  "tenant-1",
+				SettingKeyAliyunCaptchaRegion:  tt.region,
+			}}, &config.Config{})
+
+			origins, err := svc.GetConnectSrcOrigins(context.Background())
+
+			require.NoError(t, err)
+			require.ElementsMatch(t, tt.expected, origins)
+		})
+	}
+}
+
+func TestSettingService_GetConnectSrcOrigins_RejectsUnsafeAliyunPrefix(t *testing.T) {
+	svc := NewSettingService(&settingPublicRepoStub{values: map[string]string{
+		SettingKeyAliyunCaptchaEnabled: "true",
+		SettingKeyAliyunCaptchaPrefix:  "tenant; script-src *",
+	}}, &config.Config{})
+
+	origins, err := svc.GetConnectSrcOrigins(context.Background())
+
+	require.NoError(t, err)
+	require.Empty(t, origins)
 }
 
 func TestSettingService_GetPublicSettings_ExposesAllowUserViewErrorRequests(t *testing.T) {

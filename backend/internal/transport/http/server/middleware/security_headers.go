@@ -34,6 +34,11 @@ const (
 	JSDelivrDomain              = "https://cdn.jsdelivr.net"
 	TencentCaptchaDomain        = "https://turing.captcha.qcloud.com"
 	TencentCaptchaStaticDomain  = "https://*.captcha.gtimg.com"
+	AliyunCaptchaLoaderDomain   = "https://o.alicdn.com"
+	AliyunCaptchaCDNDomain      = "https://g.alicdn.com"
+	AliyunCaptchaFallbackDomain = "https://x.alicdn.com"
+	AliyunCaptchaImageCNDomain  = "https://static-captcha.aliyuncs.com"
+	AliyunCaptchaImageSGPDomain = "https://static-captcha-sgp.aliyuncs.com"
 	WASMUnsafeEval              = "'wasm-unsafe-eval'"
 )
 
@@ -50,6 +55,13 @@ var requiredCSPDirectiveValues = []struct {
 	{"connect-src", TencentCaptchaDomain},
 	{"frame-src", TencentCaptchaDomain},
 	{"style-src", TencentCaptchaStaticDomain},
+	{"script-src", AliyunCaptchaLoaderDomain},
+	{"script-src", AliyunCaptchaCDNDomain},
+	{"script-src", AliyunCaptchaFallbackDomain},
+	{"style-src", AliyunCaptchaCDNDomain},
+	{"style-src", AliyunCaptchaFallbackDomain},
+	{"img-src", AliyunCaptchaImageCNDomain},
+	{"img-src", AliyunCaptchaImageSGPDomain},
 	{"script-src", WASMUnsafeEval},
 	{"frame-src", "'self'"},
 	{"frame-src", GoogleRecaptchaDomain},
@@ -106,18 +118,10 @@ func SecurityHeaders(cfg config.CSPConfig, getFrameSrcOrigins func() []string, g
 	return func(c *gin.Context) {
 		finalPolicy := policy
 		if getFrameSrcOrigins != nil {
-			for _, origin := range getFrameSrcOrigins() {
-				if origin != "" {
-					finalPolicy = addToDirective(finalPolicy, "frame-src", origin)
-				}
-			}
+			finalPolicy = addOriginsToDirective(finalPolicy, "frame-src", getFrameSrcOrigins())
 		}
 		if len(getConnectSrcOrigins) > 0 && getConnectSrcOrigins[0] != nil {
-			for _, origin := range getConnectSrcOrigins[0]() {
-				if origin != "" {
-					finalPolicy = addToDirective(finalPolicy, "connect-src", origin)
-				}
-			}
+			finalPolicy = addOriginsToDirective(finalPolicy, "connect-src", getConnectSrcOrigins[0]())
 		}
 
 		c.Header("X-Content-Type-Options", "nosniff")
@@ -142,6 +146,32 @@ func SecurityHeaders(cfg config.CSPConfig, getFrameSrcOrigins func() []string, g
 		}
 		c.Next()
 	}
+}
+
+func addOriginsToDirective(policy, directive string, origins []string) string {
+	if len(origins) == 0 {
+		return policy
+	}
+	missing := make([]string, 0, len(origins))
+	seen := make(map[string]struct{}, len(origins))
+	for _, origin := range origins {
+		origin = strings.TrimSpace(origin)
+		if origin == "" {
+			continue
+		}
+		if _, exists := seen[origin]; exists {
+			continue
+		}
+		seen[origin] = struct{}{}
+		if directiveHasValue(policy, directive, origin) {
+			continue
+		}
+		missing = append(missing, origin)
+	}
+	if len(missing) == 0 {
+		return policy
+	}
+	return addToDirective(policy, directive, strings.Join(missing, " "))
 }
 
 func isAPIRoutePath(c *gin.Context) bool {

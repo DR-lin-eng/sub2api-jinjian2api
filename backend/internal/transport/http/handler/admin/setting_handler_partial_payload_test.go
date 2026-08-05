@@ -216,6 +216,51 @@ func TestUpdateSettingsTencentCaptchaRejectsStoredProviderConflict(t *testing.T)
 	require.Nil(t, repo.lastUpdates)
 }
 
+func TestUpdateSettingsPartialPayloadPreservesAliyunCaptchaConfiguration(t *testing.T) {
+	stored := map[string]string{
+		service.SettingKeyAliyunCaptchaEnabled:         "true",
+		service.SettingKeyAliyunCaptchaAccessKeyID:     "stored-ak-id",
+		service.SettingKeyAliyunCaptchaAccessKeySecret: "stored-ak-secret",
+		service.SettingKeyAliyunCaptchaSceneID:         "scene-1",
+		service.SettingKeyAliyunCaptchaPrefix:          "prefix-1",
+		service.SettingKeyAliyunCaptchaRegion:          service.AliyunCaptchaRegionSGP,
+	}
+	h, repo := newStepUpSwitchTestHandler(t, maps.Clone(stored))
+
+	rec := doUpdateSettings(t, h, map[string]any{"risk_control_enabled": true}, nil)
+
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	require.Equal(t, "true", repo.values[service.SettingKeyAliyunCaptchaEnabled])
+	require.Equal(t, "stored-ak-id", repo.values[service.SettingKeyAliyunCaptchaAccessKeyID])
+	require.Equal(t, "stored-ak-secret", repo.values[service.SettingKeyAliyunCaptchaAccessKeySecret])
+	require.Equal(t, "scene-1", repo.values[service.SettingKeyAliyunCaptchaSceneID])
+	require.Equal(t, "prefix-1", repo.values[service.SettingKeyAliyunCaptchaPrefix])
+	require.Equal(t, service.AliyunCaptchaRegionSGP, repo.values[service.SettingKeyAliyunCaptchaRegion])
+}
+
+func TestUpdateSettingsRejectsAliyunCaptchaProviderConflictBeforeValidation(t *testing.T) {
+	stored := map[string]string{
+		service.SettingKeyTurnstileEnabled:   "true",
+		service.SettingKeyTurnstileSiteKey:   "site-key",
+		service.SettingKeyTurnstileSecretKey: "secret-key",
+	}
+	h, repo := newStepUpSwitchTestHandler(t, maps.Clone(stored))
+
+	enabled := true
+	rec := doUpdateSettings(t, h, map[string]any{
+		"aliyun_captcha_enabled":           enabled,
+		"aliyun_captcha_access_key_id":     "ak-id",
+		"aliyun_captcha_access_key_secret": "ak-secret",
+		"aliyun_captcha_scene_id":          "scene-1",
+		"aliyun_captcha_prefix":            "prefix-1",
+		"aliyun_captcha_region":            "cn",
+	}, nil)
+
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+	require.Contains(t, rec.Body.String(), "Only one human verification provider")
+	require.Equal(t, stored, repo.values)
+}
+
 func TestUpdateSettingsPartialPayloadMergesStoredCrossFieldValues(t *testing.T) {
 	stored := map[string]string{
 		service.SettingKeyMinCodexVersion: "0.200.0",

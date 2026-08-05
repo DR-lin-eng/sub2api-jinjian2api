@@ -201,6 +201,8 @@ export default {
         enableCapHint: 'Use a self-hosted tiagozip/cap proof-of-work challenge',
         enableTencentCaptcha: 'Enable Tencent Captcha',
         enableTencentCaptchaHint: 'Use Tencent Captcha for authentication and third-party sign-in entry points',
+        enableAliyunCaptcha: 'Enable Alibaba Cloud Captcha',
+        enableAliyunCaptchaHint: 'Use Alibaba Cloud Captcha 2.0 for authentication and third-party sign-in entry points',
         enableLocalCaptcha: 'Enable local CAPTCHA',
         enableLocalCaptchaHint: 'Use the Redis-backed single-use image CAPTCHA',
         siteKey: 'Site Key',
@@ -219,6 +221,21 @@ export default {
         tencentCloudSecretKeyHint: 'Tencent Cloud API credential secret used for server-side verification',
         secretKeyHint: 'Server-side verification key (keep this secret)',
         secretKeyConfiguredHint: 'Secret key configured. Leave empty to keep the current value.'
+      },
+      aliyunCaptcha: {
+        accessKeyId: 'AccessKey ID',
+        accessKeyIdHint: 'Alibaba Cloud AccessKey ID used for server-side verification; a captcha-only RAM user is recommended',
+        accessKeySecret: 'AccessKey Secret',
+        accessKeySecretHint: 'Server-side verification secret (keep this secret)',
+        accessKeySecretConfiguredHint: 'Secret configured. Leave empty to keep the current value.',
+        sceneId: 'Scene ID',
+        sceneIdHint: 'Create a verification scene in the Alibaba Cloud Captcha console; the challenge type is configured per scene',
+        prefix: 'Prefix',
+        prefixHint: 'Found in the instance information on the captcha console overview page',
+        region: 'Region',
+        regionCn: 'Mainland China',
+        regionSgp: 'Singapore',
+        regionHint: 'Must match the Alibaba Cloud Captcha instance region'
       },
       apiKeyAcl: {
         title: 'Client IP Resolution',

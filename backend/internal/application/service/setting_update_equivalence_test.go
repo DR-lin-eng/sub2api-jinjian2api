@@ -30,6 +30,12 @@ func newSystemSettingsUpdateFixture(svc *SettingService) *SystemSettings {
 	settings.TurnstileSecretKey = "turnstile-secret"
 	settings.RecaptchaSecretKey = "recaptcha-secret"
 	settings.CapSecretKey = "cap-secret"
+	settings.AliyunCaptchaEnabled = true
+	settings.AliyunCaptchaAccessKeyID = " aliyun-id "
+	settings.AliyunCaptchaAccessKeySecret = " aliyun-secret "
+	settings.AliyunCaptchaSceneID = " scene-1 "
+	settings.AliyunCaptchaPrefix = " prefix-1 "
+	settings.AliyunCaptchaRegion = AliyunCaptchaRegionSGP
 	settings.LinuxDoConnectClientSecret = "linuxdo-secret"
 	settings.DingTalkConnectClientSecret = "dingtalk-secret"
 	settings.OIDCConnectClientSecret = "oidc-secret"
@@ -87,8 +93,8 @@ func TestBuildSystemSettingsUpdatesGolden(t *testing.T) {
 	updates, err := svc.buildSystemSettingsUpdates(context.Background(), settings)
 	require.NoError(t, err)
 
-	require.Equal(t, 213, len(updates), "legacy implementation key count")
-	require.Equal(t, "bb9d6a31a3b40bc2ab77894f9cea63e2e141ea19cf381bd6c12bdd44fdef70c4", digestSystemSettingUpdates(t, updates), "legacy implementation digest")
+	require.Equal(t, 219, len(updates), "system setting key count")
+	require.Equal(t, "75d8702a999b5e26347ff26a808c31a399361086b5f8f66a0f02f2fd483de09d", digestSystemSettingUpdates(t, updates), "system setting digest")
 	require.Equal(t, []string{"@example.com", "*.edu.cn"}, settings.RegistrationEmailSuffixWhitelist)
 	require.Equal(t, clientip.ResolutionModeTrustedProxy, settings.ClientIPResolutionMode)
 	require.Equal(t, []string{"192.0.2.7/32", "2001:db8::/32"}, settings.ClientIPTrustedProxies)
@@ -104,6 +110,7 @@ func TestBuildSystemSettingsUpdatesPreservesSecretOverwriteSemantics(t *testing.
 		SettingKeyTurnstileSecretKey,
 		SettingKeyRecaptchaSecretKey,
 		SettingKeyCapSecretKey,
+		SettingKeyAliyunCaptchaAccessKeySecret,
 		SettingKeyLinuxDoConnectClientSecret,
 		SettingKeyDingTalkConnectClientSecret,
 		SettingKeyOIDCConnectClientSecret,
@@ -129,6 +136,7 @@ func TestBuildSystemSettingsUpdatesPreservesSecretOverwriteSemantics(t *testing.
 		SettingKeyTurnstileSecretKey:           "turnstile-secret",
 		SettingKeyRecaptchaSecretKey:           "recaptcha-secret",
 		SettingKeyCapSecretKey:                 "cap-secret",
+		SettingKeyAliyunCaptchaAccessKeySecret: "aliyun-secret",
 		SettingKeyLinuxDoConnectClientSecret:   "linuxdo-secret",
 		SettingKeyDingTalkConnectClientSecret:  "dingtalk-secret",
 		SettingKeyOIDCConnectClientSecret:      "oidc-secret",

@@ -526,6 +526,27 @@ type TencentCaptchaConfig struct {
 	CloudSecretKey string
 }
 
+const (
+	AliyunCaptchaRegionCN  = "cn"
+	AliyunCaptchaRegionSGP = "sgp"
+)
+
+type AliyunCaptchaConfig struct {
+	Enabled         bool
+	AccessKeyID     string
+	AccessKeySecret string
+	SceneID         string
+	Prefix          string
+	Region          string
+}
+
+func normalizeAliyunCaptchaRegion(value string) string {
+	if strings.EqualFold(strings.TrimSpace(value), AliyunCaptchaRegionSGP) {
+		return AliyunCaptchaRegionSGP
+	}
+	return AliyunCaptchaRegionCN
+}
+
 func (s *SettingService) GetTencentCaptchaConfig(ctx context.Context) TencentCaptchaConfig {
 	config, err := s.GetHumanVerificationConfig(ctx)
 	if err != nil {
@@ -540,6 +561,7 @@ const (
 	HumanVerificationProviderRecaptcha = "recaptcha"
 	HumanVerificationProviderCap       = "cap"
 	HumanVerificationProviderTencent   = "tencent"
+	HumanVerificationProviderAliyun    = "aliyun"
 	HumanVerificationProviderLocal     = "local"
 	HumanVerificationProviderInvalid   = "invalid"
 )
@@ -554,6 +576,7 @@ type HumanVerificationConfig struct {
 	CapAPIEndpoint     string
 	CapSecretKey       string
 	Tencent            TencentCaptchaConfig
+	Aliyun             AliyunCaptchaConfig
 }
 
 var humanVerificationSettingKeys = []string{
@@ -569,6 +592,12 @@ var humanVerificationSettingKeys = []string{
 	SettingKeyTencentCaptchaAppSecretKey,
 	SettingKeyTencentCaptchaCloudSecretID,
 	SettingKeyTencentCaptchaCloudSecretKey,
+	SettingKeyAliyunCaptchaEnabled,
+	SettingKeyAliyunCaptchaAccessKeyID,
+	SettingKeyAliyunCaptchaAccessKeySecret,
+	SettingKeyAliyunCaptchaSceneID,
+	SettingKeyAliyunCaptchaPrefix,
+	SettingKeyAliyunCaptchaRegion,
 	SettingKeyLocalCaptchaEnabled,
 }
 
@@ -583,7 +612,7 @@ func (s *SettingService) GetHumanVerificationConfig(ctx context.Context) (HumanV
 		return HumanVerificationConfig{}, fmt.Errorf("get human verification settings: %w", err)
 	}
 
-	providers := make([]string, 0, 5)
+	providers := make([]string, 0, 6)
 	if values[SettingKeyTurnstileEnabled] == "true" {
 		providers = append(providers, HumanVerificationProviderTurnstile)
 	}
@@ -595,6 +624,9 @@ func (s *SettingService) GetHumanVerificationConfig(ctx context.Context) (HumanV
 	}
 	if values[SettingKeyTencentCaptchaEnabled] == "true" {
 		providers = append(providers, HumanVerificationProviderTencent)
+	}
+	if values[SettingKeyAliyunCaptchaEnabled] == "true" {
+		providers = append(providers, HumanVerificationProviderAliyun)
 	}
 	if values[SettingKeyLocalCaptchaEnabled] == "true" {
 		providers = append(providers, HumanVerificationProviderLocal)
@@ -624,6 +656,14 @@ func (s *SettingService) GetHumanVerificationConfig(ctx context.Context) (HumanV
 			AppSecretKey:   strings.TrimSpace(values[SettingKeyTencentCaptchaAppSecretKey]),
 			CloudSecretID:  strings.TrimSpace(values[SettingKeyTencentCaptchaCloudSecretID]),
 			CloudSecretKey: strings.TrimSpace(values[SettingKeyTencentCaptchaCloudSecretKey]),
+		},
+		Aliyun: AliyunCaptchaConfig{
+			Enabled:         values[SettingKeyAliyunCaptchaEnabled] == "true",
+			AccessKeyID:     strings.TrimSpace(values[SettingKeyAliyunCaptchaAccessKeyID]),
+			AccessKeySecret: strings.TrimSpace(values[SettingKeyAliyunCaptchaAccessKeySecret]),
+			SceneID:         strings.TrimSpace(values[SettingKeyAliyunCaptchaSceneID]),
+			Prefix:          strings.TrimSpace(values[SettingKeyAliyunCaptchaPrefix]),
+			Region:          normalizeAliyunCaptchaRegion(values[SettingKeyAliyunCaptchaRegion]),
 		},
 	}, nil
 }

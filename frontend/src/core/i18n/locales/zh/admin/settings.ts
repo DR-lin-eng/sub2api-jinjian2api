@@ -201,6 +201,8 @@ export default {
         enableCapHint: '使用自托管 tiagozip/cap 工作量证明验证',
         enableTencentCaptcha: '启用腾讯天御验证码',
         enableTencentCaptchaHint: '使用腾讯天御保护认证及第三方登录入口',
+        enableAliyunCaptcha: '启用阿里云验证码',
+        enableAliyunCaptchaHint: '使用阿里云验证码 2.0 保护认证及第三方登录入口',
         enableLocalCaptcha: '启用本地验证码',
         enableLocalCaptchaHint: '使用 Redis 保存的一次性本地图片验证码',
         siteKey: '站点密钥',
@@ -219,6 +221,21 @@ export default {
         tencentCloudSecretKeyHint: '服务端验证所用的腾讯云 API 凭据密钥',
         secretKeyHint: '服务端验证密钥（请保密）',
         secretKeyConfiguredHint: '密钥已配置，留空以保留当前值。'
+      },
+      aliyunCaptcha: {
+        accessKeyId: 'AccessKey ID',
+        accessKeyIdHint: '用于服务端验证的阿里云 AccessKey ID，建议使用仅含验证码权限的 RAM 子账号',
+        accessKeySecret: 'AccessKey Secret',
+        accessKeySecretHint: '服务端验证密钥（请保密）',
+        accessKeySecretConfiguredHint: '密钥已配置，留空以保留当前值。',
+        sceneId: '场景 ID',
+        sceneIdHint: '在阿里云验证码控制台创建验证场景；验证方式按场景配置',
+        prefix: '身份标（Prefix）',
+        prefixHint: '在验证码控制台概览页的实例基本信息中获取',
+        region: '服务地域',
+        regionCn: '中国内地',
+        regionSgp: '新加坡',
+        regionHint: '必须与阿里云验证码实例所属地域一致'
       },
       apiKeyAcl: {
         title: '客户端 IP 解析',

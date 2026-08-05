@@ -17,6 +17,7 @@ func buildSystemSettingsUpdate(prepared *preparedSettingsUpdate) *service.System
 	recaptchaEnabled := prepared.recaptchaEnabled
 	capEnabled := prepared.capEnabled
 	tencentCaptchaEnabled := prepared.tencentCaptchaEnabled
+	aliyunCaptchaEnabled := prepared.aliyunCaptchaEnabled
 	clientIPResolutionMode := prepared.clientIPResolutionMode
 	clientIPTrustedProxies := prepared.clientIPTrustedProxies
 	affiliateRebateRate := prepared.affiliateRebateRate
@@ -76,6 +77,12 @@ func buildSystemSettingsUpdate(prepared *preparedSettingsUpdate) *service.System
 		TencentCaptchaAppSecretKey:       req.TencentCaptchaAppSecretKey,
 		TencentCaptchaCloudSecretID:      req.TencentCaptchaCloudSecretID,
 		TencentCaptchaCloudSecretKey:     req.TencentCaptchaCloudSecretKey,
+		AliyunCaptchaEnabled:             aliyunCaptchaEnabled,
+		AliyunCaptchaAccessKeyID:         req.AliyunCaptchaAccessKeyID,
+		AliyunCaptchaAccessKeySecret:     req.AliyunCaptchaAccessKeySecret,
+		AliyunCaptchaSceneID:             req.AliyunCaptchaSceneID,
+		AliyunCaptchaPrefix:              req.AliyunCaptchaPrefix,
+		AliyunCaptchaRegion:              req.AliyunCaptchaRegion,
 		LocalCaptchaEnabled:              localCaptchaEnabled,
 		// The deprecated boolean is accepted but intentionally ignored so a
 		// cached pre-upgrade admin page cannot re-enable the v0.1.161 regression.

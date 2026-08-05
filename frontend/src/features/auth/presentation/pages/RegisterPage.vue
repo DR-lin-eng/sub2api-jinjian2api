@@ -189,7 +189,7 @@
         </div>
 
         <div
-          v-if="inlineHumanVerificationRequired && (turnstileSiteKey || humanVerificationAPIEndpoint)"
+          v-if="inlineHumanVerificationRequired && externalHumanVerificationReady"
           data-testid="registration-human-verification"
         >
           <HumanVerificationWidget
@@ -197,6 +197,9 @@
             :provider="humanVerificationProvider"
             :site-key="turnstileSiteKey"
             :api-endpoint="humanVerificationAPIEndpoint"
+            :aliyun-scene-id="aliyunCaptchaSceneId"
+            :aliyun-prefix="aliyunCaptchaPrefix"
+            :aliyun-region="aliyunCaptchaRegion"
             @verify="onTurnstileVerify"
             @expire="onTurnstileExpire"
             @error="onTurnstileError"
@@ -371,13 +374,14 @@ import {
 } from '@/core/utils/oauthAffiliate'
 import {
   resolveHumanVerification,
+  type AliyunCaptchaRegion,
   type ExternalHumanVerificationProvider
 } from '@/core/services/humanVerification'
 import {
   clearPendingRegistrationCredentials,
   setPendingRegistrationCredentials
 } from '@/core/utils/pendingRegistrationCredentials'
-import type { LoginAgreementDocument, TencentCaptchaRequestProof } from '@/types'
+import type { ActionCaptchaRequestProof, LoginAgreementDocument } from '@/types'
 
 const { t, locale } = useI18n()
 const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'
@@ -406,6 +410,9 @@ const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
 const humanVerificationProvider = ref<ExternalHumanVerificationProvider>('turnstile')
 const humanVerificationAPIEndpoint = ref<string>('')
+const aliyunCaptchaSceneId = ref<string>('')
+const aliyunCaptchaPrefix = ref<string>('')
+const aliyunCaptchaRegion = ref<AliyunCaptchaRegion>('cn')
 const localCaptchaEnabled = ref<boolean>(false)
 const siteName = ref<string>('Sub2API')
 const linuxdoOAuthEnabled = ref<boolean>(false)
@@ -501,6 +508,23 @@ const tencentCaptchaEnabled = computed(
   () => turnstileEnabled.value && humanVerificationProvider.value === 'tencent'
 )
 
+const aliyunCaptchaEnabled = computed(
+  () => turnstileEnabled.value && humanVerificationProvider.value === 'aliyun'
+)
+
+const actionCaptchaEnabled = computed(
+  () => tencentCaptchaEnabled.value || aliyunCaptchaEnabled.value
+)
+
+const externalHumanVerificationReady = computed(() => {
+  if (!turnstileEnabled.value) return false
+  if (humanVerificationProvider.value === 'cap') return Boolean(humanVerificationAPIEndpoint.value)
+  if (humanVerificationProvider.value === 'aliyun') {
+    return Boolean(aliyunCaptchaSceneId.value && aliyunCaptchaPrefix.value)
+  }
+  return Boolean(turnstileSiteKey.value)
+})
+
 const inlineHumanVerificationRequired = computed(
   () => turnstileEnabled.value && !tencentCaptchaEnabled.value
 )
@@ -539,6 +563,9 @@ onMounted(async () => {
     turnstileSiteKey.value = verification.siteKey
     humanVerificationAPIEndpoint.value = verification.apiEndpoint
     humanVerificationProvider.value = verification.externalProvider
+    aliyunCaptchaSceneId.value = verification.aliyunSceneId
+    aliyunCaptchaPrefix.value = verification.aliyunPrefix
+    aliyunCaptchaRegion.value = verification.aliyunRegion
     localCaptchaEnabled.value = verification.provider === 'local'
     siteName.value = settings.site_name || 'Sub2API'
     linuxdoOAuthEnabled.value = settings.linuxdo_oauth_enabled
@@ -808,14 +835,9 @@ function resetHumanVerification(): void {
   turnstileToken.value = ''
 }
 
-async function acquireTencentProof(): Promise<TencentCaptchaRequestProof | null> {
-  if (!tencentCaptchaEnabled.value) return null
-  const proof = await turnstileRef.value?.verifyTencent()
-  if (!proof) return null
-  return {
-    tencent_captcha_ticket: proof.ticket,
-    tencent_captcha_randstr: proof.randstr
-  }
+async function acquireActionCaptchaProof(): Promise<ActionCaptchaRequestProof | null> {
+  if (!actionCaptchaEnabled.value) return null
+  return (await turnstileRef.value?.verifyAction()) || null
 }
 
 // ==================== Validation ====================
@@ -956,8 +978,8 @@ async function handleRegister(): Promise<void> {
   isLoading.value = true
 
   try {
-    const tencentProof = await acquireTencentProof()
-    if (tencentCaptchaEnabled.value && !tencentProof) return
+    const actionProof = await acquireActionCaptchaProof()
+    if (actionCaptchaEnabled.value && !actionProof) return
 
     const affCode = formData.aff_code.trim() || loadAffiliateReferralCode()
     if (affCode) {
@@ -974,7 +996,7 @@ async function handleRegister(): Promise<void> {
         JSON.stringify({
           email: formData.email,
           captcha_token: inlineHumanVerificationRequired.value ? turnstileToken.value : undefined,
-          ...(tencentProof || {}),
+          ...(actionProof || {}),
           captcha_id: localCaptchaId.value || undefined,
           captcha_code: localCaptchaCode.value || undefined,
           promo_code: formData.promo_code || undefined,
@@ -997,7 +1019,7 @@ async function handleRegister(): Promise<void> {
       captcha_code: localCaptchaRequired.value ? localCaptchaCode.value : undefined,
       promo_code: formData.promo_code || undefined,
       invitation_code: formData.invitation_code || undefined,
-      ...(tencentProof || {}),
+      ...(actionProof || {}),
       ...(affCode ? { aff_code: affCode } : {})
     })
     clearAffiliateReferralCode()
@@ -1033,14 +1055,14 @@ async function handleRegister(): Promise<void> {
 
 async function handleOAuthStart(request: OAuthLoginStart): Promise<void> {
   if (registrationActionDisabled.value) return
-  if (!tencentCaptchaEnabled.value) {
+  if (!actionCaptchaEnabled.value) {
     window.location.href = buildOAuthLoginStartURL(request)
     return
   }
 
   isLoading.value = true
   try {
-    const proof = await acquireTencentProof()
+    const proof = await acquireActionCaptchaProof()
     if (!proof) return
     const result = await startOAuthLogin(request, proof)
     window.location.href = result.authorize_url

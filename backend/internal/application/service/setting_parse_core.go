@@ -62,6 +62,12 @@ func (s *SettingService) parseCoreSystemSettings(settings map[string]string) *Sy
 		TencentCaptchaAppSecretKeyConfigured:   settings[SettingKeyTencentCaptchaAppSecretKey] != "",
 		TencentCaptchaCloudSecretIDConfigured:  settings[SettingKeyTencentCaptchaCloudSecretID] != "",
 		TencentCaptchaCloudSecretKeyConfigured: settings[SettingKeyTencentCaptchaCloudSecretKey] != "",
+		AliyunCaptchaEnabled:                   settings[SettingKeyAliyunCaptchaEnabled] == "true",
+		AliyunCaptchaAccessKeyIDConfigured:     settings[SettingKeyAliyunCaptchaAccessKeyID] != "",
+		AliyunCaptchaAccessKeySecretConfigured: settings[SettingKeyAliyunCaptchaAccessKeySecret] != "",
+		AliyunCaptchaSceneID:                   strings.TrimSpace(settings[SettingKeyAliyunCaptchaSceneID]),
+		AliyunCaptchaPrefix:                    strings.TrimSpace(settings[SettingKeyAliyunCaptchaPrefix]),
+		AliyunCaptchaRegion:                    normalizeAliyunCaptchaRegion(settings[SettingKeyAliyunCaptchaRegion]),
 		LocalCaptchaEnabled:                    settings[SettingKeyLocalCaptchaEnabled] == "true", // 默认关闭
 		APIKeyACLTrustForwardedIP:              clientIPResolutionMode != ip.ResolutionModeDirect,
 		ClientIPResolutionMode:                 clientIPResolutionMode,
@@ -145,6 +151,8 @@ func (s *SettingService) parseCoreSystemSettings(settings map[string]string) *Sy
 	result.TencentCaptchaAppSecretKey = settings[SettingKeyTencentCaptchaAppSecretKey]
 	result.TencentCaptchaCloudSecretID = settings[SettingKeyTencentCaptchaCloudSecretID]
 	result.TencentCaptchaCloudSecretKey = settings[SettingKeyTencentCaptchaCloudSecretKey]
+	result.AliyunCaptchaAccessKeyID = settings[SettingKeyAliyunCaptchaAccessKeyID]
+	result.AliyunCaptchaAccessKeySecret = settings[SettingKeyAliyunCaptchaAccessKeySecret]
 
 	return result
 }

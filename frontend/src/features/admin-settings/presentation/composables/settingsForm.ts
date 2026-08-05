@@ -24,6 +24,7 @@ export type SettingsForm = Omit<
   tencent_captcha_app_secret_key: string;
   tencent_captcha_cloud_secret_id: string;
   tencent_captcha_cloud_secret_key: string;
+  aliyun_captcha_access_key_secret: string;
   linuxdo_connect_client_secret: string;
   dingtalk_connect_client_secret: string;
   wechat_connect_app_secret: string;
@@ -169,6 +170,13 @@ export function createSettingsForm(localText: LocalText): SettingsForm {
     tencent_captcha_cloud_secret_id_configured: false,
     tencent_captcha_cloud_secret_key: "",
     tencent_captcha_cloud_secret_key_configured: false,
+    aliyun_captcha_enabled: false,
+    aliyun_captcha_access_key_id: "",
+    aliyun_captcha_access_key_secret: "",
+    aliyun_captcha_access_key_secret_configured: false,
+    aliyun_captcha_scene_id: "",
+    aliyun_captcha_prefix: "",
+    aliyun_captcha_region: "cn",
     local_captcha_enabled: false,
     api_key_acl_trust_forwarded_ip: true,
     client_ip_resolution_mode: "auto_compat",

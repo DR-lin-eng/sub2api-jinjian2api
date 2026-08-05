@@ -153,6 +153,36 @@ describe('passkey api', () => {
     })
   })
 
+  it('sends Alibaba Cloud proof when beginning passkey login', async () => {
+    post
+      .mockResolvedValueOnce({
+        data: {
+          session_token: 'one-time-session',
+          options: {
+            publicKey: {
+              challenge: 'AQID',
+              rpId: 'sub2api.example.com',
+              userVerification: 'required'
+            }
+          }
+        }
+      })
+      .mockResolvedValueOnce({
+        data: {
+          access_token: 'access',
+          token_type: 'Bearer',
+          user: { id: 1 }
+        }
+      })
+    credentialGet.mockResolvedValue(new FakePublicKeyCredential())
+
+    await passkeyAPI.login({ captcha_token: 'aliyun-captcha-param' })
+
+    expect(post).toHaveBeenNthCalledWith(1, '/auth/passkey/login/begin', {
+      captcha_token: 'aliyun-captcha-param'
+    })
+  })
+
   it('sends the account password when beginning registration', async () => {
     post
       .mockResolvedValueOnce({

@@ -125,6 +125,11 @@ export interface TencentCaptchaRequestProof {
   tencent_captcha_randstr: string
 }
 
+export interface ActionCaptchaRequestProof extends Partial<TencentCaptchaRequestProof> {
+  captcha_token?: string
+  turnstile_token?: string
+}
+
 export interface LoginRequest {
   email: string
   password: string
@@ -250,6 +255,10 @@ export interface PublicSettings {
   cap_api_endpoint: string
   tencent_captcha_enabled?: boolean
   tencent_captcha_app_id?: string
+  aliyun_captcha_enabled?: boolean
+  aliyun_captcha_scene_id?: string
+  aliyun_captcha_prefix?: string
+  aliyun_captcha_region?: 'cn' | 'sgp' | string
   local_captcha_enabled?: boolean
   site_name: string
   site_logo: string

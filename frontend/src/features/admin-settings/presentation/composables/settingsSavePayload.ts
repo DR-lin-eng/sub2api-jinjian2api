@@ -127,6 +127,13 @@ function buildIdentitySettingsPayload({
       form.tencent_captcha_cloud_secret_id || undefined,
     tencent_captcha_cloud_secret_key:
       form.tencent_captcha_cloud_secret_key || undefined,
+    aliyun_captcha_enabled: form.aliyun_captcha_enabled,
+    aliyun_captcha_access_key_id: form.aliyun_captcha_access_key_id,
+    aliyun_captcha_access_key_secret:
+      form.aliyun_captcha_access_key_secret || undefined,
+    aliyun_captcha_scene_id: form.aliyun_captcha_scene_id,
+    aliyun_captcha_prefix: form.aliyun_captcha_prefix,
+    aliyun_captcha_region: form.aliyun_captcha_region,
     local_captcha_enabled: form.local_captcha_enabled,
     client_ip_resolution_mode: form.client_ip_resolution_mode,
     client_ip_trusted_proxies: clientIPTrustedProxies,

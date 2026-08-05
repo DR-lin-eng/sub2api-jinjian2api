@@ -11,6 +11,8 @@ import (
 )
 
 type oauthStartCaptchaRequest struct {
+	CaptchaToken          string `json:"captcha_token"`
+	TurnstileToken        string `json:"turnstile_token"`
 	TencentCaptchaTicket  string `json:"tencent_captcha_ticket"`
 	TencentCaptchaRandstr string `json:"tencent_captcha_randstr"`
 }
@@ -19,7 +21,7 @@ type oauthStartResponse struct {
 	AuthorizeURL string `json:"authorize_url"`
 }
 
-func (h *AuthHandler) requireTencentCaptchaForOAuthLoginStart(c *gin.Context) bool {
+func (h *AuthHandler) requireActionCaptchaForOAuthLoginStart(c *gin.Context) bool {
 	if strings.HasSuffix(strings.TrimRight(c.Request.URL.Path, "/"), "/bind/start") {
 		return true
 	}
@@ -33,11 +35,11 @@ func (h *AuthHandler) requireTencentCaptchaForOAuthLoginStart(c *gin.Context) bo
 		authService = h.authService
 		settingService = h.settingSvc
 	}
-	if err := verifyTencentCaptchaForAction(
+	if err := verifyActionCaptcha(
 		c.Request.Context(),
 		authService,
 		settingService,
-		humanVerificationProof("", "", req.TencentCaptchaTicket, req.TencentCaptchaRandstr),
+		humanVerificationProof(req.CaptchaToken, req.TurnstileToken, req.TencentCaptchaTicket, req.TencentCaptchaRandstr),
 		ip.GetClientIP(c),
 	); err != nil {
 		response.ErrorFrom(c, err)

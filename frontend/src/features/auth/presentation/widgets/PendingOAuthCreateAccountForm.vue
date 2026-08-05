@@ -16,12 +16,15 @@
       :placeholder="t('auth.passwordPlaceholder')"
       :disabled="isSubmitting"
     />
-    <div v-if="turnstileEnabled && (turnstileSiteKey || humanVerificationAPIEndpoint)" class="space-y-2">
+    <div v-if="externalHumanVerificationReady" class="space-y-2">
       <HumanVerificationWidget
         ref="turnstileRef"
         :provider="humanVerificationProvider"
         :site-key="turnstileSiteKey"
         :api-endpoint="humanVerificationAPIEndpoint"
+        :aliyun-scene-id="aliyunCaptchaSceneId"
+        :aliyun-prefix="aliyunCaptchaPrefix"
+        :aliyun-region="aliyunCaptchaRegion"
         @verify="onTurnstileVerify"
         @expire="onTurnstileExpire"
         @error="onTurnstileError"
@@ -106,6 +109,7 @@ import { getPublicSettings, sendPendingOAuthVerifyCode } from '@/features/auth/d
 import { useAppStore } from '@/stores'
 import {
   resolveHumanVerification,
+  type AliyunCaptchaRegion,
   type ExternalHumanVerificationProvider,
   type TencentCaptchaProof
 } from '@/core/services/humanVerification'
@@ -151,6 +155,9 @@ const turnstileEnabled = ref(false)
 const turnstileSiteKey = ref('')
 const humanVerificationProvider = ref<ExternalHumanVerificationProvider>('turnstile')
 const humanVerificationAPIEndpoint = ref('')
+const aliyunCaptchaSceneId = ref('')
+const aliyunCaptchaPrefix = ref('')
+const aliyunCaptchaRegion = ref<AliyunCaptchaRegion>('cn')
 const turnstileToken = ref('')
 const turnstileRef = ref<InstanceType<typeof HumanVerificationWidget> | null>(null)
 const localCaptchaEnabled = ref(false)
@@ -163,6 +170,14 @@ const tencentCaptchaEnabled = computed(
 const inlineHumanVerificationRequired = computed(
   () => turnstileEnabled.value && humanVerificationProvider.value !== 'tencent'
 )
+const externalHumanVerificationReady = computed(() => {
+  if (!turnstileEnabled.value) return false
+  if (humanVerificationProvider.value === 'cap') return Boolean(humanVerificationAPIEndpoint.value)
+  if (humanVerificationProvider.value === 'aliyun') {
+    return Boolean(aliyunCaptchaSceneId.value && aliyunCaptchaPrefix.value)
+  }
+  return Boolean(turnstileSiteKey.value)
+})
 
 let countdownTimer: ReturnType<typeof setInterval> | null = null
 
@@ -362,6 +377,9 @@ onMounted(async () => {
     turnstileSiteKey.value = verification.siteKey
     humanVerificationAPIEndpoint.value = verification.apiEndpoint
     humanVerificationProvider.value = verification.externalProvider
+    aliyunCaptchaSceneId.value = verification.aliyunSceneId
+    aliyunCaptchaPrefix.value = verification.aliyunPrefix
+    aliyunCaptchaRegion.value = verification.aliyunRegion
     localCaptchaEnabled.value = verification.provider === 'local'
   } catch {
     invitationCodeEnabled.value = false
@@ -369,6 +387,9 @@ onMounted(async () => {
     turnstileEnabled.value = false
     turnstileSiteKey.value = ''
     humanVerificationAPIEndpoint.value = ''
+    aliyunCaptchaSceneId.value = ''
+    aliyunCaptchaPrefix.value = ''
+    aliyunCaptchaRegion.value = 'cn'
     localCaptchaEnabled.value = false
   }
 })

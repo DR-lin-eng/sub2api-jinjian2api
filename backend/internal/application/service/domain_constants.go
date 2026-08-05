@@ -159,7 +159,7 @@ const (
 	SettingKeySMTPFromName = "smtp_from_name" // 发件人名称
 	SettingKeySMTPUseTLS   = "smtp_use_tls"   // 是否使用TLS
 
-	// 人机验证设置。五种验证渠道互斥，由设置更新接口强制校验。
+	// 人机验证设置。各验证渠道互斥，由设置更新接口强制校验。
 	SettingKeyTurnstileEnabled             = "turnstile_enabled"    // 是否启用 Cloudflare Turnstile
 	SettingKeyTurnstileSiteKey             = "turnstile_site_key"   // Turnstile Site Key
 	SettingKeyTurnstileSecretKey           = "turnstile_secret_key" // Turnstile Secret Key
@@ -174,6 +174,12 @@ const (
 	SettingKeyTencentCaptchaAppSecretKey   = "tencent_captcha_app_secret_key"
 	SettingKeyTencentCaptchaCloudSecretID  = "tencent_captcha_cloud_secret_id"
 	SettingKeyTencentCaptchaCloudSecretKey = "tencent_captcha_cloud_secret_key"
+	SettingKeyAliyunCaptchaEnabled         = "aliyun_captcha_enabled"
+	SettingKeyAliyunCaptchaAccessKeyID     = "aliyun_captcha_access_key_id"
+	SettingKeyAliyunCaptchaAccessKeySecret = "aliyun_captcha_access_key_secret"
+	SettingKeyAliyunCaptchaSceneID         = "aliyun_captcha_scene_id"
+	SettingKeyAliyunCaptchaPrefix          = "aliyun_captcha_prefix"
+	SettingKeyAliyunCaptchaRegion          = "aliyun_captcha_region"
 	SettingKeyLocalCaptchaEnabled          = "local_captcha_enabled" // 是否启用本地图片验证码
 
 	// API Key IP 访问控制设置

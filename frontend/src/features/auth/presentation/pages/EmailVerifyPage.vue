@@ -67,13 +67,16 @@
         </div>
 
         <div
-          v-if="turnstileEnabled && (turnstileSiteKey || humanVerificationAPIEndpoint) && (showResendTurnstile || tencentCaptchaEnabled)"
+          v-if="externalHumanVerificationReady && (showResendTurnstile || tencentCaptchaEnabled)"
         >
           <HumanVerificationWidget
             ref="turnstileRef"
             :provider="humanVerificationProvider"
             :site-key="turnstileSiteKey"
             :api-endpoint="humanVerificationAPIEndpoint"
+            :aliyun-scene-id="aliyunCaptchaSceneId"
+            :aliyun-prefix="aliyunCaptchaPrefix"
+            :aliyun-region="aliyunCaptchaRegion"
             @verify="onTurnstileVerify"
             @expire="onTurnstileExpire"
             @error="onTurnstileError"
@@ -201,6 +204,7 @@ import {
 import type { EncryptedRegisterRequest, TencentCaptchaRequestProof } from '@/types'
 import {
   resolveHumanVerification,
+  type AliyunCaptchaRegion,
   type ExternalHumanVerificationProvider
 } from '@/core/services/humanVerification'
 
@@ -265,6 +269,9 @@ const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
 const humanVerificationProvider = ref<ExternalHumanVerificationProvider>('turnstile')
 const humanVerificationAPIEndpoint = ref<string>('')
+const aliyunCaptchaSceneId = ref<string>('')
+const aliyunCaptchaPrefix = ref<string>('')
+const aliyunCaptchaRegion = ref<AliyunCaptchaRegion>('cn')
 const localCaptchaEnabled = ref<boolean>(false)
 const siteName = ref<string>('Sub2API')
 const registrationEmailSuffixWhitelist = ref<string[]>([])
@@ -294,6 +301,20 @@ const localCaptchaRequired = computed(
 const tencentCaptchaEnabled = computed(
   () => turnstileEnabled.value && humanVerificationProvider.value === 'tencent'
 )
+const aliyunCaptchaEnabled = computed(
+  () => turnstileEnabled.value && humanVerificationProvider.value === 'aliyun'
+)
+const actionCaptchaEnabled = computed(
+  () => tencentCaptchaEnabled.value || aliyunCaptchaEnabled.value
+)
+const externalHumanVerificationReady = computed(() => {
+  if (!turnstileEnabled.value) return false
+  if (humanVerificationProvider.value === 'cap') return Boolean(humanVerificationAPIEndpoint.value)
+  if (humanVerificationProvider.value === 'aliyun') {
+    return Boolean(aliyunCaptchaSceneId.value && aliyunCaptchaPrefix.value)
+  }
+  return Boolean(turnstileSiteKey.value)
+})
 const inlineHumanVerificationRequired = computed(
   () => turnstileEnabled.value && !tencentCaptchaEnabled.value
 )
@@ -364,6 +385,9 @@ onMounted(async () => {
     turnstileSiteKey.value = verification.siteKey
     humanVerificationAPIEndpoint.value = verification.apiEndpoint
     humanVerificationProvider.value = verification.externalProvider
+    aliyunCaptchaSceneId.value = verification.aliyunSceneId
+    aliyunCaptchaPrefix.value = verification.aliyunPrefix
+    aliyunCaptchaRegion.value = verification.aliyunRegion
     localCaptchaEnabled.value = verification.provider === 'local'
     siteName.value = settings.site_name || 'Sub2API'
     registrationEmailSuffixWhitelist.value = normalizeRegistrationEmailSuffixWhitelist(
@@ -484,6 +508,8 @@ function persistPendingOAuthSession(provider: string, redirect?: string): void {
 async function sendCode(): Promise<void> {
   isSendingCode.value = true
   errorMessage.value = ''
+  let requestSucceeded = false
+  let humanVerificationProofUsed = false
 
   try {
     if (!shouldBypassRegistrationEmailPolicy() && !isRegistrationEmailSuffixAllowed(email.value, registrationEmailSuffixWhitelist.value)) {
@@ -516,9 +542,17 @@ async function sendCode(): Promise<void> {
       captcha_code: resendLocalCaptchaCode.value || initialLocalCaptchaCode.value || undefined,
       ...(tencentProof || {})
     } as Parameters<typeof sendVerifyCode>[0]
+    humanVerificationProofUsed = Boolean(
+      requestPayload.captcha_token ||
+      requestPayload.tencent_captcha_ticket ||
+      requestPayload.tencent_captcha_randstr ||
+      requestPayload.captcha_id ||
+      requestPayload.captcha_code
+    )
     const response = isPendingOAuthFlow()
       ? await sendPendingOAuthVerifyCode(requestPayload)
       : await sendVerifyCode(requestPayload)
+    requestSucceeded = true
 
     const pendingSendCodeSession = isPendingOAuthFlow()
       ? getPendingOAuthSendCodeSessionResponse(response as PendingOAuthSendVerifyCodeResponse)
@@ -539,17 +573,8 @@ async function sendCode(): Promise<void> {
     codeSent.value = true
     startCountdown(response.countdown)
 
-    // Reset turnstile state（token 已使用，清除以避免重复使用）
-    initialTurnstileToken.value = ''
-    initialTencentCaptchaTicket.value = ''
-    initialTencentCaptchaRandstr.value = ''
-    initialLocalCaptchaId.value = ''
-    initialLocalCaptchaCode.value = ''
     showResendTurnstile.value = false
-    resendTurnstileToken.value = ''
     showResendLocalCaptcha.value = false
-    resendLocalCaptchaId.value = ''
-    resendLocalCaptchaCode.value = ''
   } catch (error: unknown) {
     errorMessage.value = extractI18nErrorMessage(
       error,
@@ -564,8 +589,42 @@ async function sendCode(): Promise<void> {
       await localCaptchaRef.value?.reset()
     }
   } finally {
-    if (tencentCaptchaEnabled.value) resetHumanVerification()
+    if (humanVerificationProofUsed) {
+      clearStoredHumanVerificationProof()
+      initialTurnstileToken.value = ''
+      initialTencentCaptchaTicket.value = ''
+      initialTencentCaptchaRandstr.value = ''
+      initialLocalCaptchaId.value = ''
+      initialLocalCaptchaCode.value = ''
+      resendTurnstileToken.value = ''
+      resendLocalCaptchaId.value = ''
+      resendLocalCaptchaCode.value = ''
+      if (!requestSucceeded && turnstileEnabled.value) {
+        showResendTurnstile.value = true
+      }
+    }
+    if (turnstileEnabled.value && (humanVerificationProofUsed || actionCaptchaEnabled.value)) {
+      resetHumanVerification()
+    }
     isSendingCode.value = false
+  }
+}
+
+function clearStoredHumanVerificationProof(): void {
+  const registerDataStr = sessionStorage.getItem('register_data')
+  if (!registerDataStr) return
+
+  try {
+    const registerData = JSON.parse(registerDataStr) as Record<string, unknown>
+    delete registerData.captcha_token
+    delete registerData.turnstile_token
+    delete registerData.tencent_captcha_ticket
+    delete registerData.tencent_captcha_randstr
+    delete registerData.captcha_id
+    delete registerData.captcha_code
+    sessionStorage.setItem('register_data', JSON.stringify(registerData))
+  } catch {
+    // Invalid registration state is handled by the existing onMounted parser.
   }
 }
 

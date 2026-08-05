@@ -185,6 +185,64 @@ describe('EmailVerifyView', () => {
     expect(sendVerifyCodeMock).not.toHaveBeenCalled()
   })
 
+  it('does not replay an Aliyun proof after a failed verify-code request', async () => {
+    const resetHumanVerification = vi.fn()
+    getPublicSettingsMock.mockResolvedValue({
+      aliyun_captcha_enabled: true,
+      aliyun_captcha_scene_id: 'scene-1',
+      aliyun_captcha_prefix: 'tenant-1',
+      aliyun_captcha_region: 'cn',
+      site_name: 'Sub2API',
+      registration_email_suffix_whitelist: [],
+    })
+    sendVerifyCodeMock
+      .mockRejectedValueOnce(new Error('send failed'))
+      .mockResolvedValueOnce({ countdown: 60 })
+    seedRegisterData({
+      email: 'fresh@example.com',
+      captcha_token: 'initial-aliyun-proof',
+    })
+
+    const wrapper = mount(EmailVerifyView, {
+      global: {
+        stubs: {
+          AuthLayout: { template: '<div><slot /><slot name="footer" /></div>' },
+          Icon: true,
+          HumanVerificationWidget: {
+            template: '<button data-testid="aliyun-verify" @click="$emit(\'verify\', \'fresh-aliyun-proof\')">verify</button>',
+            methods: { reset: resetHumanVerification },
+          },
+          transition: false,
+        },
+      },
+    })
+
+    await flushPromises()
+
+    expect(sendVerifyCodeMock).toHaveBeenNthCalledWith(1, {
+      email: 'fresh@example.com',
+      captcha_token: 'initial-aliyun-proof',
+    })
+    expect(JSON.parse(sessionStorage.getItem('register_data') || '{}')).not.toHaveProperty(
+      'captcha_token',
+    )
+
+    await wrapper.get('[data-testid="aliyun-verify"]').trigger('click')
+    const resendButton = wrapper
+      .findAll('button')
+      .find(button => button.text().includes('auth.resendCode'))
+    expect(resendButton).toBeDefined()
+    await resendButton?.trigger('click')
+    await flushPromises()
+
+    expect(sendVerifyCodeMock).toHaveBeenNthCalledWith(2, {
+      email: 'fresh@example.com',
+      captcha_token: 'fresh-aliyun-proof',
+    })
+    expect(sendVerifyCodeMock).toHaveBeenCalledTimes(2)
+    expect(resetHumanVerification).toHaveBeenCalledTimes(1)
+  })
+
   it('skips the registration email suffix whitelist for pending oauth verification', async () => {
     authStoreState.pendingAuthSession = {
       token: 'pending-token-2',

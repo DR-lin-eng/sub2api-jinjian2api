@@ -22,11 +22,9 @@ func humanVerificationProof(captchaToken, turnstileToken, tencentTicket, tencent
 	}
 }
 
-// verifyTencentCaptchaForAction keeps old handler test fixtures and partial
-// dependency graphs compatible while still failing closed when settings
-// explicitly select Tencent Captcha. Production handlers use authService and
-// therefore read the provider snapshot exactly once per action.
-func verifyTencentCaptchaForAction(
+// verifyActionCaptcha keeps partial dependency graphs compatible while failing
+// closed when a popup captcha provider is selected without its verifier.
+func verifyActionCaptcha(
 	ctx context.Context,
 	authService *service.AuthService,
 	settingService *service.SettingService,
@@ -34,7 +32,7 @@ func verifyTencentCaptchaForAction(
 	remoteIP string,
 ) error {
 	if authService != nil {
-		return authService.VerifyTencentCaptchaIfEnabled(ctx, proof, remoteIP)
+		return authService.VerifyActionCaptchaIfEnabled(ctx, proof, remoteIP)
 	}
 	if settingService == nil {
 		return nil
@@ -47,6 +45,8 @@ func verifyTencentCaptchaForAction(
 	switch config.Provider {
 	case service.HumanVerificationProviderTencent:
 		return service.ErrTencentCaptchaNotConfigured
+	case service.HumanVerificationProviderAliyun:
+		return service.ErrAliyunCaptchaNotConfigured
 	case service.HumanVerificationProviderInvalid:
 		return service.ErrHumanVerificationConflict
 	default:

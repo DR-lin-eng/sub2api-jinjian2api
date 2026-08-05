@@ -485,6 +485,12 @@ export interface SystemSettings {
   tencent_captcha_app_secret_key_configured: boolean;
   tencent_captcha_cloud_secret_id_configured: boolean;
   tencent_captcha_cloud_secret_key_configured: boolean;
+  aliyun_captcha_enabled: boolean;
+  aliyun_captcha_access_key_id: string;
+  aliyun_captcha_access_key_secret_configured: boolean;
+  aliyun_captcha_scene_id: string;
+  aliyun_captcha_prefix: string;
+  aliyun_captcha_region: "cn" | "sgp" | string;
   local_captcha_enabled: boolean;
   api_key_acl_trust_forwarded_ip: boolean;
   client_ip_resolution_mode: ClientIPResolutionMode;
@@ -831,6 +837,12 @@ export interface UpdateSettingsRequest {
   tencent_captcha_app_secret_key?: string;
   tencent_captcha_cloud_secret_id?: string;
   tencent_captcha_cloud_secret_key?: string;
+  aliyun_captcha_enabled?: boolean;
+  aliyun_captcha_access_key_id?: string;
+  aliyun_captcha_access_key_secret?: string;
+  aliyun_captcha_scene_id?: string;
+  aliyun_captcha_prefix?: string;
+  aliyun_captcha_region?: "cn" | "sgp" | string;
   local_captcha_enabled?: boolean;
   api_key_acl_trust_forwarded_ip?: boolean;
   client_ip_resolution_mode?: ClientIPResolutionMode;

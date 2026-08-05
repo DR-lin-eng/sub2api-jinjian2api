@@ -80,6 +80,7 @@ type TurnstileService struct {
 	recaptchaVerifier RecaptchaVerifier
 	capVerifier       CapVerifier
 	tencentVerifier   TencentCaptchaVerifier
+	aliyunVerifier    AliyunCaptchaVerifier
 }
 
 // TurnstileVerifyResponse Cloudflare Turnstile 验证响应
@@ -124,6 +125,14 @@ func NewHumanVerificationService(settingService *SettingService, turnstileVerifi
 	}
 }
 
+// NewHumanVerificationServiceWithAliyun is the production DI entrypoint. The
+// legacy constructor remains available to focused tests and partial graphs.
+func NewHumanVerificationServiceWithAliyun(settingService *SettingService, turnstileVerifier TurnstileVerifier, recaptchaVerifier RecaptchaVerifier, capVerifier CapVerifier, tencentVerifier TencentCaptchaVerifier, aliyunVerifier AliyunCaptchaVerifier) *TurnstileService {
+	service := NewHumanVerificationService(settingService, turnstileVerifier, recaptchaVerifier, capVerifier, tencentVerifier)
+	service.aliyunVerifier = aliyunVerifier
+	return service
+}
+
 // VerifyToken 验证 Turnstile token
 func (s *TurnstileService) VerifyToken(ctx context.Context, token string, remoteIP string) error {
 	return s.VerifyProof(ctx, HumanVerificationProof{Token: token}, remoteIP, false)
@@ -164,6 +173,8 @@ func (s *TurnstileService) VerifyProof(ctx context.Context, proof HumanVerificat
 			Ticket:  proof.TencentTicket,
 			Randstr: proof.TencentRandstr,
 		}, remoteIP)
+	case HumanVerificationProviderAliyun:
+		return s.verifyAliyun(ctx, config.Aliyun, proof.Token)
 	default:
 		return ErrHumanVerificationConflict
 	}
@@ -172,6 +183,12 @@ func (s *TurnstileService) VerifyProof(ctx context.Context, proof HumanVerificat
 // VerifyTencentIfEnabled protects new OAuth/passkey action entry points without
 // broadening the existing coverage of other providers.
 func (s *TurnstileService) VerifyTencentIfEnabled(ctx context.Context, proof HumanVerificationProof, remoteIP string) error {
+	return s.VerifyActionCaptchaIfEnabled(ctx, proof, remoteIP)
+}
+
+// VerifyActionCaptchaIfEnabled protects OAuth/passkey action entry points for
+// popup providers without broadening legacy Turnstile/reCAPTCHA/CAP coverage.
+func (s *TurnstileService) VerifyActionCaptchaIfEnabled(ctx context.Context, proof HumanVerificationProof, remoteIP string) error {
 	if s == nil || s.settingService == nil {
 		return ErrHumanVerificationUnavailable
 	}
@@ -182,13 +199,17 @@ func (s *TurnstileService) VerifyTencentIfEnabled(ctx context.Context, proof Hum
 	if config.Provider == HumanVerificationProviderInvalid {
 		return ErrHumanVerificationConflict
 	}
-	if config.Provider != HumanVerificationProviderTencent {
+	switch config.Provider {
+	case HumanVerificationProviderTencent:
+		return s.verifyTencent(ctx, config.Tencent, TencentCaptchaProof{
+			Ticket:  proof.TencentTicket,
+			Randstr: proof.TencentRandstr,
+		}, remoteIP)
+	case HumanVerificationProviderAliyun:
+		return s.verifyAliyun(ctx, config.Aliyun, proof.Token)
+	default:
 		return nil
 	}
-	return s.verifyTencent(ctx, config.Tencent, TencentCaptchaProof{
-		Ticket:  proof.TencentTicket,
-		Randstr: proof.TencentRandstr,
-	}, remoteIP)
 }
 
 func (s *TurnstileService) verifyTurnstile(ctx context.Context, secretKey, token string, remoteIP string) error {

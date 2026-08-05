@@ -284,14 +284,50 @@ describe("settings save payload", () => {
       tencent_captcha_cloud_secret_key: undefined,
     });
   });
+
+  it("preserves the Alibaba Cloud secret when the administrator leaves it empty", () => {
+    const form = createForm();
+    form.aliyun_captcha_enabled = true;
+    form.aliyun_captcha_access_key_id = "LTAI-test";
+    form.aliyun_captcha_access_key_secret = "";
+    form.aliyun_captcha_scene_id = "scene-1";
+    form.aliyun_captcha_prefix = "tenant-1";
+    form.aliyun_captcha_region = "sgp";
+
+    const payload = buildSettingsSavePayload({
+      form,
+      normalizedDefaultSubscriptions: [],
+      registrationEmailSuffixWhitelistTags: [],
+      clientIPTrustedProxies: [],
+      wechatStoredMode: "open",
+      claudeOAuthSystemPromptBlocksJSON: "[]",
+      codexFingerprintSignalsJSON: "",
+      codexBlacklistJSON: "",
+      codexWhitelistJSON: "",
+      currentOrigin: "https://admin.example.com",
+      openaiFastPolicyLoaded: false,
+      openaiFastPolicyRules: [],
+      authSourceDefaults: buildAuthSourceDefaultsState({}),
+    });
+
+    expect(payload).toMatchObject({
+      aliyun_captcha_enabled: true,
+      aliyun_captcha_access_key_id: "LTAI-test",
+      aliyun_captcha_access_key_secret: undefined,
+      aliyun_captcha_scene_id: "scene-1",
+      aliyun_captcha_prefix: "tenant-1",
+      aliyun_captcha_region: "sgp",
+    });
+  });
 });
 
 describe("human verification settings", () => {
-  it("keeps Tencent mutually exclusive with every existing provider", () => {
+  it("keeps Tencent and Alibaba Cloud mutually exclusive with every provider", () => {
     const form = createForm();
     form.turnstile_enabled = true;
     form.recaptcha_enabled = true;
     form.cap_enabled = true;
+    form.aliyun_captcha_enabled = true;
     form.local_captcha_enabled = true;
     const access = useSettingsIdentityAccess(
       form,
@@ -303,6 +339,16 @@ describe("human verification settings", () => {
     access.setHumanVerificationProvider("tencent_captcha_enabled", true);
 
     expect(form.tencent_captcha_enabled).toBe(true);
+    expect(form.turnstile_enabled).toBe(false);
+    expect(form.recaptcha_enabled).toBe(false);
+    expect(form.cap_enabled).toBe(false);
+    expect(form.aliyun_captcha_enabled).toBe(false);
+    expect(form.local_captcha_enabled).toBe(false);
+
+    access.setHumanVerificationProvider("aliyun_captcha_enabled", true);
+
+    expect(form.aliyun_captcha_enabled).toBe(true);
+    expect(form.tencent_captcha_enabled).toBe(false);
     expect(form.turnstile_enabled).toBe(false);
     expect(form.recaptcha_enabled).toBe(false);
     expect(form.cap_enabled).toBe(false);

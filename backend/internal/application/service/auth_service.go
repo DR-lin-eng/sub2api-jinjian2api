@@ -415,6 +415,8 @@ func (s *AuthService) VerifyHumanVerification(ctx context.Context, proof HumanVe
 			return ErrHumanVerificationConflict
 		case HumanVerificationProviderTencent:
 			return ErrTencentCaptchaNotConfigured
+		case HumanVerificationProviderAliyun:
+			return ErrAliyunCaptchaNotConfigured
 		case HumanVerificationProviderTurnstile:
 			return ErrTurnstileNotConfigured
 		case HumanVerificationProviderRecaptcha:
@@ -428,10 +430,9 @@ func (s *AuthService) VerifyHumanVerification(ctx context.Context, proof HumanVe
 	return s.turnstileService.VerifyProof(ctx, proof, remoteIP, required)
 }
 
-// VerifyTencentCaptchaIfEnabled protects newly added action entry points only
-// when Tencent is selected, leaving existing Turnstile/reCAPTCHA/CAP coverage
-// unchanged.
-func (s *AuthService) VerifyTencentCaptchaIfEnabled(ctx context.Context, proof HumanVerificationProof, remoteIP string) error {
+// VerifyActionCaptchaIfEnabled protects action entry points for popup captcha
+// providers without broadening Turnstile/reCAPTCHA/CAP coverage.
+func (s *AuthService) VerifyActionCaptchaIfEnabled(ctx context.Context, proof HumanVerificationProof, remoteIP string) error {
 	if s == nil || s.settingService == nil {
 		return ErrHumanVerificationUnavailable
 	}
@@ -443,12 +444,20 @@ func (s *AuthService) VerifyTencentCaptchaIfEnabled(ctx context.Context, proof H
 		if config.Provider == HumanVerificationProviderTencent {
 			return ErrTencentCaptchaNotConfigured
 		}
+		if config.Provider == HumanVerificationProviderAliyun {
+			return ErrAliyunCaptchaNotConfigured
+		}
 		if config.Provider == HumanVerificationProviderInvalid {
 			return ErrHumanVerificationConflict
 		}
 		return nil
 	}
-	return s.turnstileService.VerifyTencentIfEnabled(ctx, proof, remoteIP)
+	return s.turnstileService.VerifyActionCaptchaIfEnabled(ctx, proof, remoteIP)
+}
+
+// VerifyTencentCaptchaIfEnabled retains the pre-Aliyun internal API.
+func (s *AuthService) VerifyTencentCaptchaIfEnabled(ctx context.Context, proof HumanVerificationProof, remoteIP string) error {
+	return s.VerifyActionCaptchaIfEnabled(ctx, proof, remoteIP)
 }
 
 // VerifyTurnstileForRegister is retained for existing internal callers.

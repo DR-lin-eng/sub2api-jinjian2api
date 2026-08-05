@@ -51,4 +51,24 @@ describe('oauth login start datasource', () => {
     )
     expect(result).toEqual({ authorize_url: 'https://provider.example/authorize' })
   })
+
+  it('posts Alibaba Cloud proof in the captcha_token field', async () => {
+    post.mockResolvedValue({
+      data: { authorize_url: 'https://provider.example/authorize' }
+    })
+
+    await startOAuthLogin(
+      {
+        provider: 'oidc',
+        params: { redirect: '/dashboard' }
+      },
+      { captcha_token: 'aliyun-captcha-param' }
+    )
+
+    expect(post).toHaveBeenCalledWith(
+      '/auth/oauth/oidc/start',
+      { captcha_token: 'aliyun-captcha-param' },
+      { params: { redirect: '/dashboard' } }
+    )
+  })
 })

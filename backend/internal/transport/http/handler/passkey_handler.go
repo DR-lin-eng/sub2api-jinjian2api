@@ -45,6 +45,8 @@ type passkeyFinishRequest struct {
 }
 
 type passkeyBeginLoginRequest struct {
+	CaptchaToken          string `json:"captcha_token"`
+	TurnstileToken        string `json:"turnstile_token"`
 	TencentCaptchaTicket  string `json:"tencent_captcha_ticket"`
 	TencentCaptchaRandstr string `json:"tencent_captcha_randstr"`
 }
@@ -80,11 +82,11 @@ func (h *PasskeyHandler) BeginLogin(c *gin.Context) {
 	if h.authHandler != nil {
 		authService = h.authHandler.authService
 	}
-	if err := verifyTencentCaptchaForAction(
+	if err := verifyActionCaptcha(
 		c.Request.Context(),
 		authService,
 		h.settingSvc,
-		humanVerificationProof("", "", req.TencentCaptchaTicket, req.TencentCaptchaRandstr),
+		humanVerificationProof(req.CaptchaToken, req.TurnstileToken, req.TencentCaptchaTicket, req.TencentCaptchaRandstr),
 		ip.GetClientIP(c),
 	); err != nil {
 		response.ErrorFrom(c, err)

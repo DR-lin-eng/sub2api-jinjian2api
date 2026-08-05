@@ -19,6 +19,7 @@ type HumanVerificationEnabledKey =
   | "recaptcha_enabled"
   | "cap_enabled"
   | "tencent_captcha_enabled"
+  | "aliyun_captcha_enabled"
   | "local_captcha_enabled";
 
 export function useSettingsIdentityAccess(
@@ -54,6 +55,11 @@ export function useSettingsIdentityAccess(
       hint: "admin.settings.turnstile.enableTencentCaptchaHint",
     },
     {
+      key: "aliyun_captcha_enabled",
+      label: "admin.settings.turnstile.enableAliyunCaptcha",
+      hint: "admin.settings.turnstile.enableAliyunCaptchaHint",
+    },
+    {
       key: "local_captcha_enabled",
       label: "admin.settings.turnstile.enableLocalCaptcha",
       hint: "admin.settings.turnstile.enableLocalCaptchaHint",
@@ -72,6 +78,17 @@ export function useSettingsIdentityAccess(
     {
       value: "direct",
       label: t("admin.settings.apiKeyAcl.modes.direct"),
+    },
+  ]);
+
+  const aliyunCaptchaRegionOptions = computed(() => [
+    {
+      value: "cn",
+      label: t("admin.settings.aliyunCaptcha.regionCn"),
+    },
+    {
+      value: "sgp",
+      label: t("admin.settings.aliyunCaptcha.regionSgp"),
     },
   ]);
 
@@ -251,6 +268,7 @@ export function useSettingsIdentityAccess(
   );
 
   return {
+    aliyunCaptchaRegionOptions,
     clientIPLastRefreshText,
     clientIPResolutionModeOptions,
     clientIPTrustedProxiesText,

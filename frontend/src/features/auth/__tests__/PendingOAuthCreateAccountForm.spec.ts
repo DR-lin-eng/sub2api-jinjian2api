@@ -239,6 +239,53 @@ describe('PendingOAuthCreateAccountForm', () => {
     })
   })
 
+  it('allows email-verified submit after sending code consumes the turnstile proof', async () => {
+    getPublicSettings.mockResolvedValue({
+      email_verify_enabled: true,
+      turnstile_enabled: true,
+      turnstile_site_key: 'site-key'
+    })
+    sendPendingOAuthVerifyCode.mockResolvedValue({
+      message: 'sent',
+      countdown: 60
+    })
+
+    const wrapper = mount(PendingOAuthCreateAccountForm, {
+      props: {
+        testIdPrefix: 'linuxdo',
+        initialEmail: 'user@example.com',
+        isSubmitting: false
+      },
+      global: {
+        stubs: {
+          TurnstileWidget: {
+            template: '<button data-testid="turnstile-verify" @click="$emit(\'verify\', \'turnstile-token\')">verify</button>',
+            methods: { reset() {} }
+          }
+        }
+      }
+    })
+
+    await flushPromises()
+    await wrapper.get('[data-testid="linuxdo-create-account-password"]').setValue('secret-123')
+    await wrapper.get('[data-testid="linuxdo-create-account-verify-code"]').setValue('246810')
+    await wrapper.get('[data-testid="turnstile-verify"]').trigger('click')
+    await wrapper.get('[data-testid="linuxdo-create-account-send-code"]').trigger('click')
+    await flushPromises()
+
+    await wrapper.get('form').trigger('submit.prevent')
+
+    expect(wrapper.emitted('submit')).toEqual([
+      [
+        {
+          email: 'user@example.com',
+          password: 'secret-123',
+          verifyCode: '246810'
+        }
+      ]
+    ])
+  })
+
   it('acquires Tencent proof on submit when email verification is disabled', async () => {
     getPublicSettings.mockResolvedValue({
       email_verify_enabled: false,
