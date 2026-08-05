@@ -648,8 +648,7 @@ export default {
         wsModeDedicated: '独享（dedicated）',
         wsModeConcurrencyHint: '启用 WS mode 后，该账号并发数将作为该账号 WS 连接池上限。',
         wsModePassthroughHint: 'passthrough 模式不使用 WS 连接池。',
-        codexPrewarmContinuation: 'Codex 空预热续发',
-        codexPrewarmContinuationDesc: '仅对 OpenAI OAuth 生效。这一个开关统一启用 HTTP→上游 WSv2、空 input 的 generate=false 预热、previous_response_id 续发和原生历史 user→developer；结构化调用、大输出及原生 web/tool search 保持不变。客户端发送 X-CPA-Reasoning: none 时，该请求使用 reasoning.effort=none。同时忽略本软件的 Codex 5h/7d 用量窗口暂停和该账号的自动透传模式。上游 429 仍会降低调度权重，但不会把账号硬屏蔽出后续调度；全局 OpenAI WS 与 WSv2 能力仍需启用。',
+        codexPrewarmContinuation: 'Codex 账号预热',
         oauthResponsesWebsocketsV2: 'OAuth WebSocket Mode',
         oauthResponsesWebsocketsV2Desc:
           '仅对 OpenAI OAuth 生效。开启后该账号才允许使用 OpenAI WebSocket Mode 协议。',

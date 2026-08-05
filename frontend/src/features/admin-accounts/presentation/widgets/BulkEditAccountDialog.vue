@@ -272,9 +272,6 @@
             class="flex items-center justify-between gap-4"
             :class="!enableCodexPrewarmContinuation && 'pointer-events-none opacity-50'"
           >
-            <p class="text-xs text-gray-500 dark:text-gray-400">
-              {{ t('admin.accounts.openai.codexPrewarmContinuationDesc') }}
-            </p>
             <Toggle v-model="codexPrewarmContinuationEnabled" data-testid="bulk-edit-codex-prewarm-continuation-toggle" :aria-label="t('admin.accounts.openai.codexPrewarmContinuation')" />
           </div>
         </div>

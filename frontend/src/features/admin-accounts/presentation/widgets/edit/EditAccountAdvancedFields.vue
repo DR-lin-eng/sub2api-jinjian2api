@@ -424,9 +424,6 @@
         >
           <div>
             <label class="input-label mb-0">{{ t('admin.accounts.openai.codexPrewarmContinuation') }}</label>
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {{ t('admin.accounts.openai.codexPrewarmContinuationDesc') }}
-            </p>
           </div>
           <Toggle
             v-model="codexPrewarmContinuationEnabled"
