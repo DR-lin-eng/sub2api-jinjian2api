@@ -67,6 +67,15 @@ func (r *defaultOpenAIWSProtocolResolver) Resolve(account *Account) OpenAIWSProt
 	} else {
 		return openAIWSHTTPDecision("unknown_auth_type")
 	}
+	if account.IsCodexPrewarmContinuationEnabled() {
+		if !wsCfg.ResponsesWebsocketsV2 {
+			return openAIWSHTTPDecision("codex_prewarm_ws_v2_disabled")
+		}
+		return OpenAIWSProtocolDecision{
+			Transport: OpenAIUpstreamTransportResponsesWebsocketV2,
+			Reason:    "codex_prewarm_continuation",
+		}
+	}
 	if wsCfg.ModeRouterV2Enabled {
 		mode := account.ResolveOpenAIResponsesWebSocketV2Mode(wsCfg.IngressModeDefault)
 		switch mode {

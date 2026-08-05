@@ -85,6 +85,12 @@ type OpenAIEndpointCapability string
 
 const openAILongContextBillingEnabledKey = "openai_long_context_billing_enabled"
 
+// CodexPrewarmContinuationExtraKey enables the account-level Codex WSv2
+// empty-prewarm + developer-role continuation flow. It also opts the account
+// out of this service's local Codex 5h/7d usage-window auto-pause gate so the
+// continuation request is still forwarded upstream.
+const CodexPrewarmContinuationExtraKey = "codex_prewarm_continuation_enabled"
+
 // AutoDisableOnUpstreamInsufficientBalanceExtraKey controls whether an account
 // is made unschedulable after the upstream reports a durable balance shortage.
 // Missing and non-boolean values intentionally default to false.
@@ -1399,6 +1405,17 @@ func (a *Account) IsAnthropic() bool {
 
 func (a *Account) IsOpenAIOAuth() bool {
 	return a.IsOpenAI() && a.Type == AccountTypeOAuth
+}
+
+// IsCodexPrewarmContinuationEnabled reports whether this OpenAI OAuth account
+// should use an empty generate=false prewarm followed by a developer-role
+// continuation request. Missing or non-boolean values remain opt-out.
+func (a *Account) IsCodexPrewarmContinuationEnabled() bool {
+	if a == nil || !a.IsOpenAIOAuth() || a.Extra == nil {
+		return false
+	}
+	enabled, ok := a.Extra[CodexPrewarmContinuationExtraKey].(bool)
+	return ok && enabled
 }
 
 func (a *Account) IsOpenAIChatGPTSubscription() bool {

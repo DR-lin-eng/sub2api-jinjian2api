@@ -648,6 +648,8 @@ export default {
         wsModeDedicated: '独享（dedicated）',
         wsModeConcurrencyHint: '启用 WS mode 后，该账号并发数将作为该账号 WS 连接池上限。',
         wsModePassthroughHint: 'passthrough 模式不使用 WS 连接池。',
+        codexPrewarmContinuation: 'Codex 空预热续发',
+        codexPrewarmContinuationDesc: '仅对 OpenAI OAuth 生效。每个新请求先发送空 input 的 generate=false 预热，再通过 previous_response_id 和 developer 消息续发；忽略本软件的 Codex 5h/7d 用量窗口暂停，并自动选择 WSv2。全局 OpenAI WSv2 仍需启用。',
         oauthResponsesWebsocketsV2: 'OAuth WebSocket Mode',
         oauthResponsesWebsocketsV2Desc:
           '仅对 OpenAI OAuth 生效。开启后该账号才允许使用 OpenAI WebSocket Mode 协议。',

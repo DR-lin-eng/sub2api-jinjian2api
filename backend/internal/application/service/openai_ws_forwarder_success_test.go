@@ -1228,6 +1228,83 @@ func TestOpenAIGatewayService_Forward_WSv2_GeneratePrewarm(t *testing.T) {
 	require.False(t, gjson.Get(secondWrite, "generate").Exists())
 }
 
+func TestOpenAIGatewayService_Forward_WSv2_CodexPrewarmContinuation(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodPost, "/openai/v1/responses", nil)
+	c.Request.Header.Set("User-Agent", "codex_cli_rs/0.98.0")
+	c.Request.Header.Set("session_id", "session-codex-prewarm")
+
+	cfg := &config.Config{}
+	cfg.Security.URLAllowlist.Enabled = false
+	cfg.Security.URLAllowlist.AllowInsecureHTTP = true
+	cfg.Gateway.OpenAIWS.Enabled = true
+	cfg.Gateway.OpenAIWS.OAuthEnabled = true
+	cfg.Gateway.OpenAIWS.APIKeyEnabled = true
+	cfg.Gateway.OpenAIWS.ResponsesWebsocketsV2 = true
+	cfg.Gateway.OpenAIWS.PrewarmGenerateEnabled = false
+	cfg.Gateway.OpenAIWS.MaxConnsPerAccount = 1
+	cfg.Gateway.OpenAIWS.MinIdlePerAccount = 0
+	cfg.Gateway.OpenAIWS.MaxIdlePerAccount = 1
+
+	captureConn := &openAIWSCaptureConn{
+		events: [][]byte{
+			[]byte(`{"type":"response.completed","response":{"id":"resp_codex_prewarm","model":"gpt-5.1","usage":{"input_tokens":0,"output_tokens":0}}}`),
+			[]byte(`{"type":"response.completed","response":{"id":"resp_codex_business","model":"gpt-5.1","usage":{"input_tokens":4,"output_tokens":2}}}`),
+		},
+	}
+	captureDialer := &openAIWSCaptureDialer{conn: captureConn}
+	pool := newOpenAIWSConnPool(cfg)
+	pool.setClientDialerForTest(captureDialer)
+
+	svc := &OpenAIGatewayService{
+		cfg:              cfg,
+		httpUpstream:     &httpUpstreamRecorder{},
+		cache:            &stubGatewayCache{},
+		openaiWSResolver: NewOpenAIWSProtocolResolver(cfg),
+		toolCorrector:    NewCodexToolCorrector(),
+		openaiWSPool:     pool,
+	}
+
+	account := &Account{
+		ID:          590,
+		Name:        "openai-codex-prewarm",
+		Platform:    PlatformOpenAI,
+		Type:        AccountTypeOAuth,
+		Status:      StatusActive,
+		Schedulable: true,
+		Concurrency: 1,
+		Credentials: map[string]any{"access_token": "oauth-token-1"},
+		Extra: map[string]any{
+			CodexPrewarmContinuationExtraKey: true,
+		},
+	}
+
+	body := []byte(`{"model":"gpt-5.1","stream":false,"instructions":"Follow the developer policy.","tools":[{"type":"function","name":"lookup"}],"input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"hello"}]}]}`)
+	result, err := svc.Forward(context.Background(), c, account, body)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Equal(t, "resp_codex_business", result.RequestID)
+
+	require.Len(t, captureConn.writes, 2)
+	prewarm := requestToJSONString(captureConn.writes[0])
+	business := requestToJSONString(captureConn.writes[1])
+	require.False(t, gjson.Get(prewarm, "generate").Bool())
+	require.True(t, gjson.Get(prewarm, "generate").Exists())
+	require.Equal(t, 0, len(gjson.Get(prewarm, "input").Array()))
+	require.Equal(t, "Follow the developer policy.", gjson.Get(prewarm, "instructions").String())
+
+	require.Equal(t, "resp_codex_prewarm", gjson.Get(business, "previous_response_id").String())
+	require.False(t, gjson.Get(business, "generate").Exists())
+	require.False(t, gjson.Get(business, "instructions").Exists())
+	require.Equal(t, "developer", gjson.Get(business, "input.0.role").String())
+	require.Equal(t, "Follow the developer policy.", gjson.Get(business, "input.0.content.0.text").String())
+	require.Equal(t, "user", gjson.Get(business, "input.1.role").String())
+	require.Equal(t, "hello", gjson.Get(business, "input.1.content.0.text").String())
+}
+
 func TestOpenAIGatewayService_PrewarmReadHonorsParentContext(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.Gateway.OpenAIWS.PrewarmGenerateEnabled = true

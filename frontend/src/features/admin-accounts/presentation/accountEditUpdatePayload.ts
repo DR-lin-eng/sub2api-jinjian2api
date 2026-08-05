@@ -62,9 +62,10 @@ type EditorFields =
   > &
   Pick<
     EditAccountAdvancedContext,
-    | 'anthropicAPIKeyAuthScheme'
-    | 'anthropicPassthroughEnabled'
-    | 'codexCLIOnlyAppServerEnabled'
+      | 'anthropicAPIKeyAuthScheme'
+      | 'anthropicPassthroughEnabled'
+      | 'codexPrewarmContinuationEnabled'
+      | 'codexCLIOnlyAppServerEnabled'
     | 'codexCLIOnlyEnabled'
     | 'codexImageToolMode'
     | 'editDailyResetHour'
@@ -838,6 +839,13 @@ function applyOpenAIExtra(
     extra.openai_responses_flatten_namespaces = true
   } else {
     delete extra.openai_responses_flatten_namespaces
+  }
+  if (account.type === 'oauth') {
+    if (context.codexPrewarmContinuationEnabled.value) {
+      extra.codex_prewarm_continuation_enabled = true
+    } else {
+      delete extra.codex_prewarm_continuation_enabled
+    }
   }
   if (context.isSparkShadow.value) {
     delete extra.openai_long_context_billing_enabled

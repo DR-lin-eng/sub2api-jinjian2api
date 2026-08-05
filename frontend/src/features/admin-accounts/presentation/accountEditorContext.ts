@@ -66,7 +66,8 @@ interface SharedTempUnschedContext {
 }
 
 interface SharedOpenAIOptionsContext {
-  openAICompactMode: Ref<OpenAICompactMode>
+   codexPrewarmContinuationEnabled: Ref<boolean>
+   openAICompactMode: Ref<OpenAICompactMode>
   openAICompactModeOptions: ComputedRef<Array<SelectOption<OpenAICompactMode>>>
   openAICompactModelMappings: Ref<ModelMapping[]>
   addOpenAICompactModelMapping: () => void

@@ -314,6 +314,10 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 	); err != nil {
 		return nil, err
 	}
+	// Account-level prewarm continuation mutates the business payload after the
+	// warmup response ID is known. Refresh derived log/size fields before write.
+	previousResponseID = openAIWSPayloadString(payload, "previous_response_id")
+	payloadBytes = -1
 
 	if err := lease.WriteJSONWithContextTimeout(ctx, payload, s.openAIWSWriteTimeout()); err != nil {
 		lease.MarkBroken()

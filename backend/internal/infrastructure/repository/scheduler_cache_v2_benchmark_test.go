@@ -14,6 +14,42 @@ import (
 // The read-only production fixture's largest group contains 3,131 accounts.
 const schedulerBenchmarkLargeGroupSize = 3131
 
+var schedulerBenchmarkExtraSink map[string]any
+
+func BenchmarkFilterSchedulerExtra(b *testing.B) {
+	cases := []struct {
+		name  string
+		extra map[string]any
+	}{
+		{
+			name: "disabled",
+			extra: map[string]any{
+				"codex_5h_used_percent":                     95.0,
+				"auto_pause_5h_threshold":                   0.95,
+				"openai_oauth_responses_websockets_v2_mode": "ctx_pool",
+			},
+		},
+		{
+			name: "enabled",
+			extra: map[string]any{
+				"codex_5h_used_percent":                     95.0,
+				"auto_pause_5h_threshold":                   0.95,
+				"openai_oauth_responses_websockets_v2_mode": "ctx_pool",
+				service.CodexPrewarmContinuationExtraKey:    true,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		b.Run(tc.name, func(b *testing.B) {
+			b.ReportAllocs()
+			for range b.N {
+				schedulerBenchmarkExtraSink = filterSchedulerExtra(tc.extra)
+			}
+		})
+	}
+}
+
 func BenchmarkSchedulerCacheLargeGroupRead(b *testing.B) {
 	ctx := context.Background()
 	cache, cleanup := newSchedulerBenchmarkCache(b)

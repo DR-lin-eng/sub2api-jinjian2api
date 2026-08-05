@@ -18,8 +18,13 @@ func (s *OpenAIGatewayService) isOpenAIWSGeneratePrewarmEnabled() bool {
 	return s != nil && s.cfg != nil && s.cfg.Gateway.OpenAIWS.PrewarmGenerateEnabled
 }
 
+func (s *OpenAIGatewayService) shouldPerformOpenAIWSGeneratePrewarm(account *Account) bool {
+	return s.isOpenAIWSGeneratePrewarmEnabled() || account.IsCodexPrewarmContinuationEnabled()
+}
+
 // performOpenAIWSGeneratePrewarm 在 WSv2 下执行可选的 generate=false 预热。
-// 预热默认关闭，仅在配置开启后生效；失败时按可恢复错误回退到 HTTP。
+// 全局预热默认关闭；账号级 Codex 续发开关可独立启用空业务预热。
+// 失败时按可恢复错误回退到 HTTP。
 func (s *OpenAIGatewayService) performOpenAIWSGeneratePrewarm(
 	ctx context.Context,
 	lease *openAIWSConnLease,
@@ -39,7 +44,8 @@ func (s *OpenAIGatewayService) performOpenAIWSGeneratePrewarm(
 		return nil
 	}
 	connID := strings.TrimSpace(lease.ConnID())
-	if !s.isOpenAIWSGeneratePrewarmEnabled() {
+	codexContinuationEnabled := account.IsCodexPrewarmContinuationEnabled()
+	if !s.shouldPerformOpenAIWSGeneratePrewarm(account) {
 		return nil
 	}
 	if decision.Transport != OpenAIUpstreamTransportResponsesWebsocketV2 {
@@ -60,11 +66,18 @@ func (s *OpenAIGatewayService) performOpenAIWSGeneratePrewarm(
 		)
 		return nil
 	}
-	if lease.IsPrewarmed() {
+	if lease.IsPrewarmed() && !codexContinuationEnabled {
 		logOpenAIWSModeInfo("prewarm_skip account_id=%d conn_id=%s reason=already_prewarmed", account.ID, connID)
 		return nil
 	}
-	if NeedsToolContinuation(reqBody) {
+	toolContinuation := NeedsToolContinuation(reqBody)
+	if codexContinuationEnabled {
+		// Tool definitions and tool_choice are stable prewarm properties. Only
+		// existing tool-call/output context makes this an in-progress chain that
+		// must not be replaced with a fresh empty prewarm.
+		toolContinuation = hasCodexPrewarmBusinessContinuation(reqBody)
+	}
+	if toolContinuation {
 		logOpenAIWSModeInfo("prewarm_skip account_id=%d conn_id=%s reason=tool_continuation", account.ID, connID)
 		return nil
 	}
@@ -74,6 +87,11 @@ func (s *OpenAIGatewayService) performOpenAIWSGeneratePrewarm(
 	prewarmPayload := make(map[string]any, len(payload)+1)
 	for k, v := range payload {
 		prewarmPayload[k] = v
+	}
+	if codexContinuationEnabled {
+		// Keep the stable request properties (model, instructions, tools, etc.)
+		// while omitting all business input from the warmup request.
+		prewarmPayload["input"] = []any{}
 	}
 	prewarmPayload["generate"] = false
 	prewarmPayloadJSON := payloadAsJSONBytes(prewarmPayload)
@@ -162,6 +180,14 @@ func (s *OpenAIGatewayService) performOpenAIWSGeneratePrewarm(
 		}
 	}
 
+	if codexContinuationEnabled {
+		if prewarmResponseID == "" {
+			lease.MarkBroken()
+			return wrapOpenAIWSFallback("prewarm_missing_response_id", errors.New("OpenAI websocket prewarm completed without response id"))
+		}
+		applyCodexPrewarmContinuationPayload(payload, prewarmResponseID)
+	}
+
 	lease.MarkPrewarmed()
 	if prewarmResponseID != "" && stateStore != nil {
 		ttl := s.openAIWSResponseStickyTTL()
@@ -178,6 +204,86 @@ func (s *OpenAIGatewayService) performOpenAIWSGeneratePrewarm(
 		time.Since(prewarmStart).Milliseconds(),
 	)
 	return nil
+}
+
+func hasCodexPrewarmBusinessContinuation(reqBody map[string]any) bool {
+	if len(reqBody) == 0 || hasNonEmptyString(reqBody["previous_response_id"]) {
+		return hasNonEmptyString(reqBody["previous_response_id"])
+	}
+	input, ok := reqBody["input"].([]any)
+	if !ok {
+		return false
+	}
+	for _, item := range input {
+		itemMap, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		itemType, _ := itemMap["type"].(string)
+		if isCodexToolCallItemType(strings.TrimSpace(itemType)) || strings.TrimSpace(itemType) == "item_reference" {
+			return true
+		}
+	}
+	return false
+}
+
+// applyCodexPrewarmContinuationPayload turns the business request into a
+// continuation from the empty prewarm response. Top-level instructions are
+// moved into a developer message because previous_response_id does not carry
+// the previous response's top-level instructions into the current response.
+func applyCodexPrewarmContinuationPayload(payload map[string]any, previousResponseID string) {
+	if len(payload) == 0 || strings.TrimSpace(previousResponseID) == "" {
+		return
+	}
+
+	if instructions, ok := payload["instructions"].(string); ok && strings.TrimSpace(instructions) != "" {
+		developerMessage := map[string]any{
+			"type": "message",
+			"role": "developer",
+			"content": []any{
+				map[string]any{
+					"type": "input_text",
+					"text": instructions,
+				},
+			},
+		}
+		payload["input"] = prependCodexDeveloperMessage(developerMessage, payload["input"])
+		delete(payload, "instructions")
+	}
+
+	payload["previous_response_id"] = strings.TrimSpace(previousResponseID)
+	delete(payload, "generate")
+}
+
+func prependCodexDeveloperMessage(developerMessage map[string]any, input any) []any {
+	items := []any{developerMessage}
+	switch typed := input.(type) {
+	case nil:
+		return items
+	case []any:
+		return append(items, typed...)
+	case []map[string]any:
+		for _, item := range typed {
+			items = append(items, item)
+		}
+		return items
+	case string:
+		if typed == "" {
+			return items
+		}
+		return append(items, map[string]any{
+			"type": "message",
+			"role": "user",
+			"content": []any{
+				map[string]any{
+					"type": "input_text",
+					"text": typed,
+				},
+			},
+		})
+	default:
+		return append(items, typed)
+	}
 }
 
 func payloadAsJSON(payload map[string]any) string {

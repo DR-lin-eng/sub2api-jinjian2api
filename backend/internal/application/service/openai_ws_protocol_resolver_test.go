@@ -55,6 +55,7 @@ func TestOpenAIWSProtocolResolver_Resolve(t *testing.T) {
 		account.Extra = map[string]any{
 			"openai_oauth_responses_websockets_v2_enabled": true,
 			"openai_ws_force_http":                         true,
+			CodexPrewarmContinuationExtraKey:               true,
 		}
 		decision := NewOpenAIWSProtocolResolver(baseCfg).Resolve(&account)
 		require.Equal(t, OpenAIUpstreamTransportHTTPSSE, decision.Transport)
@@ -77,6 +78,41 @@ func TestOpenAIWSProtocolResolver_Resolve(t *testing.T) {
 		decision := NewOpenAIWSProtocolResolver(baseCfg).Resolve(&account)
 		require.Equal(t, OpenAIUpstreamTransportHTTPSSE, decision.Transport)
 		require.Equal(t, "account_disabled", decision.Reason)
+	})
+
+	t.Run("Codex预热续发开关可独立启用WSv2", func(t *testing.T) {
+		account := *openAIOAuthEnabled
+		account.Extra = map[string]any{
+			CodexPrewarmContinuationExtraKey: true,
+		}
+		decision := NewOpenAIWSProtocolResolver(baseCfg).Resolve(&account)
+		require.Equal(t, OpenAIUpstreamTransportResponsesWebsocketV2, decision.Transport)
+		require.Equal(t, "codex_prewarm_continuation", decision.Reason)
+	})
+
+	t.Run("Codex预热续发仍要求全局WSv2能力", func(t *testing.T) {
+		cfg := *baseCfg
+		cfg.Gateway.OpenAIWS.ResponsesWebsocketsV2 = false
+		cfg.Gateway.OpenAIWS.ResponsesWebsockets = true
+		account := *openAIOAuthEnabled
+		account.Extra = map[string]any{
+			CodexPrewarmContinuationExtraKey: true,
+		}
+		decision := NewOpenAIWSProtocolResolver(&cfg).Resolve(&account)
+		require.Equal(t, OpenAIUpstreamTransportHTTPSSE, decision.Transport)
+		require.Equal(t, "codex_prewarm_ws_v2_disabled", decision.Reason)
+	})
+
+	t.Run("Codex预热续发仍服从全局WS关闭", func(t *testing.T) {
+		cfg := *baseCfg
+		cfg.Gateway.OpenAIWS.Enabled = false
+		account := *openAIOAuthEnabled
+		account.Extra = map[string]any{
+			CodexPrewarmContinuationExtraKey: true,
+		}
+		decision := NewOpenAIWSProtocolResolver(&cfg).Resolve(&account)
+		require.Equal(t, OpenAIUpstreamTransportHTTPSSE, decision.Transport)
+		require.Equal(t, "global_disabled", decision.Reason)
 	})
 
 	t.Run("OAuth账号不会读取API Key专用开关", func(t *testing.T) {
@@ -172,6 +208,21 @@ func TestOpenAIWSProtocolResolver_Resolve_ModeRouterV2(t *testing.T) {
 		decision := NewOpenAIWSProtocolResolver(cfg).Resolve(offAccount)
 		require.Equal(t, OpenAIUpstreamTransportHTTPSSE, decision.Transport)
 		require.Equal(t, "account_mode_off", decision.Reason)
+	})
+
+	t.Run("Codex预热续发覆盖账号off mode", func(t *testing.T) {
+		offAccount := &Account{
+			Platform:    PlatformOpenAI,
+			Type:        AccountTypeOAuth,
+			Concurrency: 1,
+			Extra: map[string]any{
+				"openai_oauth_responses_websockets_v2_mode": OpenAIWSIngressModeOff,
+				CodexPrewarmContinuationExtraKey:            true,
+			},
+		}
+		decision := NewOpenAIWSProtocolResolver(cfg).Resolve(offAccount)
+		require.Equal(t, OpenAIUpstreamTransportResponsesWebsocketV2, decision.Transport)
+		require.Equal(t, "codex_prewarm_continuation", decision.Reason)
 	})
 
 	t.Run("legacy boolean maps to ctx_pool in v2 router", func(t *testing.T) {

@@ -479,6 +479,7 @@ func TestBuildSchedulerMetadataAccount_KeepsQuotaAutoPauseFields(t *testing.T) {
 			"auto_pause_7d_threshold":                                0.96,
 			"auto_pause_5h_disabled":                                 true,
 			"auto_pause_7d_disabled":                                 false,
+			service.CodexPrewarmContinuationExtraKey:                 true,
 			service.AutoDisableOnUpstreamInsufficientBalanceExtraKey: true,
 		},
 	}
@@ -496,6 +497,7 @@ func TestBuildSchedulerMetadataAccount_KeepsQuotaAutoPauseFields(t *testing.T) {
 	require.Equal(t, 0.96, got.Extra["auto_pause_7d_threshold"])
 	require.Equal(t, true, got.Extra["auto_pause_5h_disabled"])
 	require.Equal(t, false, got.Extra["auto_pause_7d_disabled"])
+	require.Equal(t, true, got.Extra[service.CodexPrewarmContinuationExtraKey])
 	require.Equal(t, true, got.Extra[service.AutoDisableOnUpstreamInsufficientBalanceExtraKey])
 }
 

@@ -855,10 +855,6 @@ func openAIStreamClientOutputStarted(c *gin.Context, localStarted bool) bool {
 	return OpenAICompactKeepaliveAdjustedWrittenSize(c) >= 0
 }
 
-func openAIStreamEventIsPreamble(eventType string) bool {
-	return openAIStreamEventIsPreambleTrimmed(strings.TrimSpace(eventType))
-}
-
 func openAIStreamEventIsPreambleTrimmed(eventType string) bool {
 	switch eventType {
 	case "response.created", "response.in_progress":
@@ -866,10 +862,6 @@ func openAIStreamEventIsPreambleTrimmed(eventType string) bool {
 	default:
 		return false
 	}
-}
-
-func openAIStreamEventIsReplaySafeStructure(eventType string) bool {
-	return openAIStreamEventIsReplaySafeStructureTrimmed(strings.TrimSpace(eventType))
 }
 
 func openAIStreamEventIsReplaySafeStructureTrimmed(eventType string) bool {
@@ -1055,15 +1047,11 @@ func openAIStreamDataStartsClientOutputTrimmed(trimmed, eventType string) bool {
 	return true
 }
 
-// openAIStreamDataSignalsOutputProgress preserves the historical distinction
+// openAIStreamDataSignalsOutputProgressTrimmed preserves the historical distinction
 // between a pure response.created/in_progress preamble and a stream that has
 // entered an output phase. Progress alone is still replay-safe for an explicit
 // response.failed capacity signal, but an ambiguous transport EOF must retain
 // the existing incomplete-stream behavior.
-func openAIStreamDataSignalsOutputProgress(data, eventType string) bool {
-	return openAIStreamDataSignalsOutputProgressTrimmed(strings.TrimSpace(data), strings.TrimSpace(eventType))
-}
-
 func openAIStreamDataSignalsOutputProgressTrimmed(trimmed, eventType string) bool {
 	if trimmed == "" || trimmed == "[DONE]" {
 		return false
@@ -1072,23 +1060,6 @@ func openAIStreamDataSignalsOutputProgressTrimmed(trimmed, eventType string) boo
 		return false
 	}
 	return !openAIStreamEventIsPreambleTrimmed(eventType)
-}
-
-func openAIStreamEventNeedsFlush(data, eventType string, semanticOutput, forceFailureBoundary bool) bool {
-	return openAIStreamEventNeedsFlushTrimmed(strings.TrimSpace(data), strings.TrimSpace(eventType), semanticOutput, forceFailureBoundary)
-}
-
-func openAIStreamEventNeedsFlushTrimmed(trimmed, eventType string, semanticOutput, forceFailureBoundary bool) bool {
-	if semanticOutput || forceFailureBoundary {
-		return true
-	}
-	return openAIStreamEventNeedsFlushKnownValidity(
-		trimmed,
-		eventType,
-		semanticOutput,
-		forceFailureBoundary,
-		gjson.Valid(trimmed),
-	)
 }
 
 func openAIStreamEventNeedsFlushKnownValidity(trimmed, eventType string, semanticOutput, forceFailureBoundary, payloadValid bool) bool {
@@ -1904,14 +1875,6 @@ func (s *OpenAIGatewayService) handleNonStreamingResponsePassthrough(
 		imageCount:       countOpenAIResponseImageOutputsFromJSONBytes(body),
 		imageOutputSizes: collectOpenAIResponseImageOutputSizesFromJSONBytes(body),
 	}, nil
-}
-
-// handlePassthroughSSEToJSON converts an SSE response body into a JSON
-// response for the passthrough path. It mirrors handleSSEToJSON while
-// preserving passthrough payloads, except compact-only model remapping may
-// rewrite model fields back to the original requested model.
-func (s *OpenAIGatewayService) handlePassthroughSSEToJSON(resp *http.Response, c *gin.Context, body []byte, originalModel string, mappedModel string) (*openaiNonStreamingResultPassthrough, error) {
-	return s.handlePassthroughSSEToJSONWithAccount(resp, c, body, originalModel, mappedModel, nil)
 }
 
 func (s *OpenAIGatewayService) handlePassthroughSSEToJSONWithAccount(

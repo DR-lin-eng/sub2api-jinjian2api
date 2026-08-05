@@ -359,6 +359,7 @@ const openAIEndpointCapabilities = ref<OpenAIEndpointCapability[]>(['chat_comple
 const openAIForceImageAPIEnabled = ref(false)
 const openaiOAuthResponsesWebSocketV2Mode = ref<OpenAIWSMode>(OPENAI_WS_MODE_OFF)
 const openaiAPIKeyResponsesWebSocketV2Mode = ref<OpenAIWSMode>(OPENAI_WS_MODE_OFF)
+const codexPrewarmContinuationEnabled = ref(false)
 const codexCLIOnlyEnabled = ref(false)
 const codexCLIOnlyAppServerEnabled = ref(false)
 type AnthropicAPIKeyAuthScheme = 'x_api_key' | 'authorization_bearer'
@@ -711,7 +712,7 @@ const {
   antigravityModelRestrictionMode, antigravityOAuth, antigravityProjectId,
   antigravityWhitelistModels, apiKeyBaseUrl, bedrockAccessKeyId, bedrockApiKeyValue,
   bedrockAuthMode, bedrockForceGlobal, bedrockRegion, bedrockSecretAccessKey,
-  bedrockSessionToken, codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled,
+    bedrockSessionToken, codexPrewarmContinuationEnabled, codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled,
   customErrorCodeInput, form, geminiAIStudioOAuthEnabled, geminiOAuth, geminiOAuthType,
   grokOAuth, grokOAuthBaseUrl, grokOAuthCustomBaseUrlEnabled, headerOverrideEnabled,
   headerOverrideRows, interceptWarmupRequests,
@@ -896,6 +897,7 @@ const resetForm = () => {
   openAIForceImageAPIEnabled.value = false
   openaiOAuthResponsesWebSocketV2Mode.value = OPENAI_WS_MODE_OFF
   openaiAPIKeyResponsesWebSocketV2Mode.value = OPENAI_WS_MODE_OFF
+  codexPrewarmContinuationEnabled.value = false
   codexCLIOnlyEnabled.value = false
   codexCLIOnlyAppServerEnabled.value = false
   anthropicPassthroughEnabled.value = false
@@ -977,6 +979,11 @@ const buildOpenAIExtra = (base?: Record<string, unknown>): Record<string, unknow
     extra.openai_responses_flatten_namespaces = true
   } else {
     delete extra.openai_responses_flatten_namespaces
+  }
+  if (form.type === 'oauth' && codexPrewarmContinuationEnabled.value) {
+    extra.codex_prewarm_continuation_enabled = true
+  } else {
+    delete extra.codex_prewarm_continuation_enabled
   }
   extra.openai_long_context_billing_enabled = openAILongContextBillingEnabled.value
 
@@ -1435,7 +1442,8 @@ const createAccountCredentialContext = {
 const createAccountAdvancedContext = {
   accountCategory, addOpenAICompactModelMapping, addTempUnschedRule, allowOverages,
   anthropicAPIKeyAuthScheme, anthropicPassthroughEnabled, isSimpleMode, autoPauseOnExpired, baseRpm,
-  cacheTTLOverrideEnabled, cacheTTLOverrideTarget, codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled,
+    cacheTTLOverrideEnabled, cacheTTLOverrideTarget, codexPrewarmContinuationEnabled,
+    codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled,
   customBaseUrl, customBaseUrlEnabled, expiresAtInput, form, getOpenAICompactModelMappingKey,
   getTempUnschedRuleKey, groups: availableGroups, interceptWarmupRequests, maxSessions,
   mixedScheduling, moveTempUnschedRule, openAICompactMode, openAICompactModeOptions,

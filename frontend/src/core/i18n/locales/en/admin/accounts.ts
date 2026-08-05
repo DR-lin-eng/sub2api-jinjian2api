@@ -611,6 +611,8 @@ export default {
         wsModeConcurrencyHint:
           'When WS mode is enabled, account concurrency becomes the WS connection pool limit for this account.',
         wsModePassthroughHint: 'Passthrough mode does not use the WS connection pool.',
+        codexPrewarmContinuation: 'Codex prewarm continuation',
+        codexPrewarmContinuationDesc: 'OpenAI OAuth only. Each fresh request uses an empty generate=false prewarm, then continues with previous_response_id and a developer message. It ignores this service\'s local Codex 5h/7d usage-window pause and selects WSv2 automatically; global OpenAI WSv2 must remain enabled.',
         oauthResponsesWebsocketsV2: 'OAuth WebSocket Mode',
         oauthResponsesWebsocketsV2Desc:
           'Only applies to OpenAI OAuth. This account can use OpenAI WebSocket Mode only when enabled.',

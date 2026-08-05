@@ -267,7 +267,7 @@ describe('BulkEditAccountModal', () => {
     expect(wrapper.find('#bulk-edit-openai-flatten-namespaces-enabled').exists()).toBe(false)
   })
 
-  it('OpenAI OAuth 批量编辑应提交 OAuth 专属 WS mode 字段（含 http_bridge）', async () => {
+    it('OpenAI OAuth 批量编辑应提交 OAuth 专属 WS mode 字段（含 http_bridge）', async () => {
     const wrapper = mountModal({
       selectedPlatforms: ['openai'],
       selectedTypes: ['oauth']
@@ -284,8 +284,27 @@ describe('BulkEditAccountModal', () => {
         openai_oauth_responses_websockets_v2_mode: 'http_bridge',
         openai_oauth_responses_websockets_v2_enabled: true
       }
+      })
     })
-  })
+
+    it('OpenAI OAuth 批量编辑应提交 Codex 空预热续发开关', async () => {
+      const wrapper = mountModal({
+        selectedPlatforms: ['openai'],
+        selectedTypes: ['oauth']
+      })
+
+      await wrapper.get('#bulk-edit-codex-prewarm-continuation-enabled').setValue(true)
+      await wrapper.get('[data-testid="bulk-edit-codex-prewarm-continuation-toggle"]').trigger('click')
+      await wrapper.get('#bulk-edit-account-form').trigger('submit.prevent')
+      await flushPromises()
+
+      expect(bulkUpdate).toHaveBeenCalledTimes(1)
+      expect(bulkUpdate).toHaveBeenCalledWith([1, 2], {
+        extra: {
+          codex_prewarm_continuation_enabled: true
+        }
+      })
+    })
 
   it('OpenAI API Key 批量编辑不显示 WS mode 入口', () => {
     const wrapper = mountModal({

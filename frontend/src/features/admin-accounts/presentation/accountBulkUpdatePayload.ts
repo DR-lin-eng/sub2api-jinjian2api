@@ -40,9 +40,11 @@ export interface BulkAccountUpdatePayloadState {
   headerOverrideRows: Array<{ name: string; value: string }>
   enableOpenAIWSMode: boolean
   openaiOAuthResponsesWebSocketV2Mode: OpenAIWSMode
-  enableOpenAIAPIKeyWSMode: boolean
-  openaiAPIKeyResponsesWebSocketV2Mode: OpenAIWSMode
-  enableUpstreamBillingAutoProbe: boolean
+    enableOpenAIAPIKeyWSMode: boolean
+    openaiAPIKeyResponsesWebSocketV2Mode: OpenAIWSMode
+    enableCodexPrewarmContinuation: boolean
+    codexPrewarmContinuationEnabled: boolean
+    enableUpstreamBillingAutoProbe: boolean
   upstreamBillingAutoProbeMode: 'enabled' | 'disabled'
   enableCodexCLIOnly: boolean
   codexCLIOnlyEnabled: boolean
@@ -157,6 +159,10 @@ export function buildBulkAccountUpdatePayload(
     extra.openai_apikey_responses_websockets_v2_enabled = isOpenAIWSModeEnabled(
       state.openaiAPIKeyResponsesWebSocketV2Mode,
     )
+  }
+  if (state.enableCodexPrewarmContinuation) {
+    ensureExtra().codex_prewarm_continuation_enabled =
+      state.codexPrewarmContinuationEnabled
   }
   if (state.enableUpstreamBillingAutoProbe) {
     updates.upstream_billing_probe_enabled = state.upstreamBillingAutoProbeMode === 'enabled'

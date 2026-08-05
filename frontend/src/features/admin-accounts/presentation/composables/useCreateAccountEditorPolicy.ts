@@ -54,9 +54,10 @@ type EditorFields =
   Pick<
     CreateAccountAdvancedContext,
     | 'allowOverages'
-    | 'anthropicAPIKeyAuthScheme'
-    | 'anthropicPassthroughEnabled'
-    | 'codexCLIOnlyAppServerEnabled'
+      | 'anthropicAPIKeyAuthScheme'
+      | 'anthropicPassthroughEnabled'
+      | 'codexPrewarmContinuationEnabled'
+      | 'codexCLIOnlyAppServerEnabled'
     | 'codexCLIOnlyEnabled'
     | 'interceptWarmupRequests'
     | 'openAICompactModelMappings'
@@ -109,7 +110,7 @@ export function useCreateAccountEditorPolicy(context: CreateAccountEditorPolicyC
     antigravityModelRestrictionMode, antigravityOAuth, antigravityProjectId,
     antigravityWhitelistModels, apiKeyBaseUrl, bedrockAccessKeyId, bedrockApiKeyValue,
     bedrockAuthMode, bedrockForceGlobal, bedrockRegion, bedrockSecretAccessKey,
-    bedrockSessionToken, codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled,
+      bedrockSessionToken, codexPrewarmContinuationEnabled, codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled,
     customErrorCodeInput, form, geminiAIStudioOAuthEnabled, geminiOAuth, geminiOAuthType,
     grokOAuth, grokOAuthBaseUrl, grokOAuthCustomBaseUrlEnabled, headerOverrideEnabled,
     headerOverrideRows, interceptWarmupRequests, loadTLSFingerprintProfiles, modelMappings,
@@ -244,8 +245,9 @@ export function useCreateAccountEditorPolicy(context: CreateAccountEditorPolicyC
         openAIEndpointCapabilities.value = ['chat_completions', 'embeddings']
         openAIForceImageAPIEnabled.value = false
         openaiOAuthResponsesWebSocketV2Mode.value = OPENAI_WS_MODE_OFF
-        openaiAPIKeyResponsesWebSocketV2Mode.value = OPENAI_WS_MODE_OFF
-        codexCLIOnlyEnabled.value = false
+          openaiAPIKeyResponsesWebSocketV2Mode.value = OPENAI_WS_MODE_OFF
+          codexPrewarmContinuationEnabled.value = false
+          codexCLIOnlyEnabled.value = false
         codexCLIOnlyAppServerEnabled.value = false
       }
       if (newPlatform !== 'anthropic') {
@@ -273,8 +275,9 @@ export function useCreateAccountEditorPolicy(context: CreateAccountEditorPolicyC
   watch(
     [accountCategory, () => form.platform],
     ([category, platform]) => {
-      if (platform === 'openai' && category !== 'oauth-based') {
-        codexCLIOnlyEnabled.value = false
+        if (platform === 'openai' && category !== 'oauth-based') {
+          codexPrewarmContinuationEnabled.value = false
+          codexCLIOnlyEnabled.value = false
         codexCLIOnlyAppServerEnabled.value = false
       }
       if (platform !== 'anthropic' || category !== 'apikey') {

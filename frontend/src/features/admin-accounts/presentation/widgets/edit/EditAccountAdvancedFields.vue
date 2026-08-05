@@ -416,9 +416,26 @@
             <Select v-model="openaiResponsesWebSocketV2Mode" data-testid="edit-openai-ws-mode-select" :options="openAIWSModeOptions" />
           </div>
         </div>
-      </div>
+        </div>
 
-      <!-- OpenAI APIKey Responses API support mode -->
+        <div
+          v-if="account?.platform === 'openai' && account?.type === 'oauth'"
+          class="flex items-center justify-between gap-4 border-t border-gray-200 pt-4 dark:border-dark-600"
+        >
+          <div>
+            <label class="input-label mb-0">{{ t('admin.accounts.openai.codexPrewarmContinuation') }}</label>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {{ t('admin.accounts.openai.codexPrewarmContinuationDesc') }}
+            </p>
+          </div>
+          <Toggle
+            v-model="codexPrewarmContinuationEnabled"
+            data-testid="edit-codex-prewarm-continuation"
+            :aria-label="t('admin.accounts.openai.codexPrewarmContinuation')"
+          />
+        </div>
+
+        <!-- OpenAI APIKey Responses API support mode -->
       <div
         v-if="isUpstreamBillingProbeEligible(account.platform, account.type)"
         class="space-y-4 border-t border-gray-200 pt-4 dark:border-dark-600"
@@ -787,5 +804,5 @@ import type { EditAccountAdvancedContext } from '../../accountEditorContext'
 import { isUpstreamBillingProbeEligible } from '../../upstreamBillingProbeEligibility'
 
 const props = defineProps<{ context: EditAccountAdvancedContext }>()
-const { account, addTempUnschedRule, anthropicAPIKeyAuthScheme, anthropicPassthroughEnabled, codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled, codexImageToolBadgeClass, codexImageToolBadgeLabel, codexImageToolMode, codexImageToolOptions, codexWebSearchEnabled, editDailyResetHour, editDailyResetMode, editQuotaDailyLimit, editQuotaLimit, editQuotaWeeklyLimit, editResetTimezone, editWeeklyResetDay, editWeeklyResetHour, editWeeklyResetMode, expiresAtInput, form, getTempUnschedRuleKey, handleOllamaCloudUsageUpdated, interceptWarmupRequests, isOpenAIPersonalAccessTokenAccount, isSparkShadow, moveTempUnschedRule, openAIEndpointCapabilities, openAIEndpointCapabilityOptions, openAIForceImageAPIEnabled, openAILongContextBillingEnabled, openAIResponsesMode, openAIResponsesModeOptions, openAIResponsesStatusKey, openAITextGenerationCapabilityEnabled, openAIWSModeConcurrencyHintKey, openAIWSModeOptions, openaiPassthroughEnabled, openaiFlattenNamespacesEnabled, openaiResponsesWebSocketV2Mode, proxies, quotaNotifyGlobalEnabled, quotaNotifyState, removeTempUnschedRule, t, tempUnschedEnabled, tempUnschedPresets, tempUnschedRules, toggleOpenAIEndpointCapability, upstreamBillingAutoProbeEnabled, upstreamBillingRateSyncEnabled, webSearchEmulationMode, webSearchGlobalEnabled } = props.context
+const { account, addTempUnschedRule, anthropicAPIKeyAuthScheme, anthropicPassthroughEnabled, codexPrewarmContinuationEnabled, codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled, codexImageToolBadgeClass, codexImageToolBadgeLabel, codexImageToolMode, codexImageToolOptions, codexWebSearchEnabled, editDailyResetHour, editDailyResetMode, editQuotaDailyLimit, editQuotaLimit, editQuotaWeeklyLimit, editResetTimezone, editWeeklyResetDay, editWeeklyResetHour, editWeeklyResetMode, expiresAtInput, form, getTempUnschedRuleKey, handleOllamaCloudUsageUpdated, interceptWarmupRequests, isOpenAIPersonalAccessTokenAccount, isSparkShadow, moveTempUnschedRule, openAIEndpointCapabilities, openAIEndpointCapabilityOptions, openAIForceImageAPIEnabled, openAILongContextBillingEnabled, openAIResponsesMode, openAIResponsesModeOptions, openAIResponsesStatusKey, openAITextGenerationCapabilityEnabled, openAIWSModeConcurrencyHintKey, openAIWSModeOptions, openaiPassthroughEnabled, openaiFlattenNamespacesEnabled, openaiResponsesWebSocketV2Mode, proxies, quotaNotifyGlobalEnabled, quotaNotifyState, removeTempUnschedRule, t, tempUnschedEnabled, tempUnschedPresets, tempUnschedRules, toggleOpenAIEndpointCapability, upstreamBillingAutoProbeEnabled, upstreamBillingRateSyncEnabled, webSearchEmulationMode, webSearchGlobalEnabled } = props.context
 </script>

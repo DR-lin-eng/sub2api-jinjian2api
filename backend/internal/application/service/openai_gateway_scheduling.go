@@ -425,6 +425,12 @@ func shouldAutoPauseOpenAIAccountByQuota(ctx context.Context, account *Account) 
 	if account == nil || !account.IsOpenAI() {
 		return false, openAIQuotaAutoPauseDecision{}
 	}
+	// The opt-in Codex prewarm-continuation flow must reach upstream even when
+	// the locally cached 5h/7d utilization crosses an auto-pause threshold.
+	// Other schedulability checks remain owned by their existing gates.
+	if account.IsCodexPrewarmContinuationEnabled() {
+		return false, openAIQuotaAutoPauseDecision{}
+	}
 	// Per-account explicit-disable flags must take precedence over the global default.
 	// Without these, leaving the account threshold blank means "use global default",
 	// so an admin has no way to exempt a single account from auto-pause once a global
