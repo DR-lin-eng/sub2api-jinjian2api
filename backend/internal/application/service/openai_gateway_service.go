@@ -899,6 +899,26 @@ func shouldFallbackOpenAIWSToHTTP(err error) bool {
 	return true
 }
 
+// A Codex prewarm account explicitly bridges HTTP ingress to upstream WSv2.
+// Some otherwise valid OAuth accounts or their proxies reject that upgrade
+// with 403 while the HTTP Responses endpoint remains available. Only degrade
+// this opt-in bridge; ordinary WS authentication failures stay visible.
+func shouldFallbackCodexPrewarmWSForbiddenToHTTP(account *Account, err error) bool {
+	if account == nil || !account.IsCodexPrewarmContinuationEnabled() || err == nil {
+		return false
+	}
+	var fallbackErr *openAIWSFallbackError
+	if !errors.As(err, &fallbackErr) || fallbackErr == nil {
+		return false
+	}
+	reason := strings.TrimPrefix(strings.TrimSpace(fallbackErr.Reason), "prewarm_")
+	if reason != "auth_failed" {
+		return false
+	}
+	var dialErr *openAIWSDialError
+	return errors.As(fallbackErr.Err, &dialErr) && dialErr != nil && dialErr.StatusCode == http.StatusForbidden
+}
+
 func isOpenAIWSUpgradeRequiredDialError(err error) bool {
 	if err == nil {
 		return false

@@ -70,9 +70,8 @@ func (s *OpenAIGatewayService) Forward(ctx context.Context, c *gin.Context, acco
 	if !account.IsCodexPrewarmContinuationEnabled() {
 		wsDecision = resolveOpenAIWSDecisionByClientTransport(wsDecision, GetOpenAIClientTransport(c))
 	}
-	// A proxy/CDN can reject the upstream Responses WebSocket with HTTP 426.
-	// Keep that account on HTTP SSE for a short period so every request does not
-	// pay another failed handshake before the fallback path below takes effect.
+	// Keep an account on HTTP SSE briefly after a compatible WS handshake
+	// fallback so every request does not pay another rejected upgrade.
 	if wsDecision.Transport == OpenAIUpstreamTransportResponsesWebsocketV2 && s.isOpenAIWSFallbackCooling(account.ID) {
 		wsDecision = openAIWSHTTPDecision("ws_fallback_cooling")
 	}
@@ -800,11 +799,12 @@ func (s *OpenAIGatewayService) Forward(ctx context.Context, c *gin.Context, acco
 			return wsResult, nil
 		}
 		canReplayThroughHTTP := c == nil || c.Writer == nil || !c.Writer.Written()
-		if canReplayThroughHTTP && shouldFallbackOpenAIWSToHTTP(wsErr) {
+		if canReplayThroughHTTP && (shouldFallbackOpenAIWSToHTTP(wsErr) ||
+			shouldFallbackCodexPrewarmWSForbiddenToHTTP(account, wsErr)) {
 			// The WS handshake/error event happened before any semantic output was
 			// written. Reuse the original request body through the normal HTTP
 			// Responses/SSE pipeline so callers receive one consistent response.
-			s.markOpenAIWSFallbackCooling(account.ID, "upgrade_required")
+			s.markOpenAIWSFallbackCooling(account.ID, "websocket_unavailable")
 			wsDecision = openAIWSHTTPDecision("ws_fallback_http_sse")
 			if c != nil {
 				c.Set("openai_ws_transport_decision", string(wsDecision.Transport))

@@ -32,6 +32,42 @@ type httpUpstreamSequenceRecorder struct {
 	callCount int
 }
 
+type openAIWSRejectDialer struct {
+	mu              sync.Mutex
+	statusCode      int
+	responseHeaders http.Header
+	responseBody    []byte
+	err             error
+	requestHeaders  http.Header
+	dialCount       atomic.Int32
+}
+
+func (d *openAIWSRejectDialer) Dial(
+	_ context.Context,
+	_ string,
+	headers http.Header,
+	_ string,
+) (openAIWSClientConn, int, http.Header, error) {
+	d.dialCount.Add(1)
+	d.mu.Lock()
+	d.requestHeaders = cloneHeader(headers)
+	d.mu.Unlock()
+	err := d.err
+	if err == nil {
+		err = errors.New("websocket handshake rejected")
+	}
+	return nil, d.statusCode, cloneHeader(d.responseHeaders), &openAIWSHandshakeError{
+		Body: append([]byte(nil), d.responseBody...),
+		Err:  err,
+	}
+}
+
+func (d *openAIWSRejectDialer) RequestHeaders() http.Header {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return cloneHeader(d.requestHeaders)
+}
+
 func (u *httpUpstreamSequenceRecorder) Do(req *http.Request, proxyURL string, accountID int64, accountConcurrency int) (*http.Response, error) {
 	u.mu.Lock()
 	defer u.mu.Unlock()
@@ -479,6 +515,77 @@ func TestOpenAIGatewayService_Forward_WSv2Dial426FallbackHTTP(t *testing.T) {
 	require.Equal(t, "ws_fallback_http_sse", reason)
 }
 
+func TestOpenAIGatewayService_Forward_CodexPrewarmWSDial403FallbackHTTP(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/responses", nil)
+	c.Request.Header.Set("User-Agent", "codex_cli_rs/0.144.1")
+	c.Request.Header.Set("X-Client-Request-ID", "request-prewarm-403")
+	SetOpenAIClientTransport(c, OpenAIClientTransportHTTP)
+
+	upstream := &httpUpstreamRecorder{resp: &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{"Content-Type": []string{"application/json"}},
+		Body: io.NopCloser(strings.NewReader(
+			`{"id":"resp_http_after_ws_403","model":"gpt-5.5","output":[],"usage":{"input_tokens":8,"output_tokens":2,"input_tokens_details":{"cached_tokens":7}}}`,
+		)),
+	}}
+
+	cfg := &config.Config{}
+	cfg.Security.URLAllowlist.Enabled = false
+	cfg.Security.URLAllowlist.AllowInsecureHTTP = true
+	cfg.Gateway.OpenAIWS.Enabled = true
+	cfg.Gateway.OpenAIWS.OAuthEnabled = true
+	cfg.Gateway.OpenAIWS.ResponsesWebsocketsV2 = true
+	cfg.Gateway.OpenAIWS.FallbackCooldownSeconds = 30
+
+	rejectDialer := &openAIWSRejectDialer{
+		statusCode:      http.StatusForbidden,
+		responseHeaders: http.Header{"Server": []string{"cloudflare"}},
+		responseBody:    []byte(`{"error":{"message":"forbidden"}}`),
+		err:             errors.New("failed to WebSocket dial: expected handshake response status code 101 but got 403"),
+	}
+	pool := newOpenAIWSConnPool(cfg)
+	pool.setClientDialerForTest(rejectDialer)
+	svc := &OpenAIGatewayService{
+		cfg:              cfg,
+		httpUpstream:     upstream,
+		openaiWSResolver: NewOpenAIWSProtocolResolver(cfg),
+		openaiWSPool:     pool,
+	}
+	account := &Account{
+		ID:          212,
+		Name:        "codex-prewarm",
+		Platform:    PlatformOpenAI,
+		Type:        AccountTypeOAuth,
+		Status:      StatusActive,
+		Schedulable: true,
+		Concurrency: 1,
+		Credentials: map[string]any{
+			"access_token":       "oauth-token",
+			"chatgpt_account_id": "chatgpt-account",
+		},
+		Extra: map[string]any{CodexPrewarmContinuationExtraKey: true},
+	}
+
+	result, err := svc.Forward(context.Background(), c, account, []byte(
+		`{"model":"gpt-5.5","stream":false,"input":[{"type":"message","role":"user","content":"continue"}]}`,
+	))
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.False(t, result.OpenAIWSMode)
+	require.Equal(t, int32(1), rejectDialer.dialCount.Load())
+	require.Equal(t, "request-prewarm-403", rejectDialer.RequestHeaders().Get("X-Client-Request-ID"))
+	require.NotNil(t, upstream.lastReq)
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Equal(t, "resp_http_after_ws_403", gjson.GetBytes(rec.Body.Bytes(), "id").String())
+	require.True(t, svc.isOpenAIWSFallbackCooling(account.ID))
+	reason, ok := c.Get("openai_ws_transport_reason")
+	require.True(t, ok)
+	require.Equal(t, "ws_fallback_http_sse", reason)
+}
+
 func TestOpenAIGatewayService_Forward_WSv2FallbackCoolingSkipWS(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	wsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -551,6 +658,30 @@ func TestShouldFallbackOpenAIWSToHTTP(t *testing.T) {
 	})))
 	require.True(t, shouldFallbackOpenAIWSToHTTP(wrapOpenAIWSFallback("ws_unsupported", errors.New("unsupported"))))
 	require.False(t, shouldFallbackOpenAIWSToHTTP(wrapOpenAIWSFallback("auth_failed", errors.New("unauthorized"))))
+}
+
+func TestShouldFallbackCodexPrewarmWSForbiddenToHTTP(t *testing.T) {
+	prewarmAccount := &Account{
+		Platform: PlatformOpenAI,
+		Type:     AccountTypeOAuth,
+		Extra:    map[string]any{CodexPrewarmContinuationExtraKey: true},
+	}
+	forbidden := wrapOpenAIWSFallback("auth_failed", &openAIWSDialError{
+		StatusCode: http.StatusForbidden,
+		Err:        errors.New("websocket handshake returned 403"),
+	})
+
+	require.True(t, shouldFallbackCodexPrewarmWSForbiddenToHTTP(prewarmAccount, forbidden))
+	require.False(t, shouldFallbackCodexPrewarmWSForbiddenToHTTP(&Account{
+		Platform: PlatformOpenAI,
+		Type:     AccountTypeOAuth,
+	}, forbidden))
+	require.False(t, shouldFallbackCodexPrewarmWSForbiddenToHTTP(prewarmAccount,
+		wrapOpenAIWSFallback("auth_failed", &openAIWSDialError{StatusCode: http.StatusUnauthorized}),
+	))
+	require.False(t, shouldFallbackCodexPrewarmWSForbiddenToHTTP(prewarmAccount,
+		wrapOpenAIWSFallback("upstream_rate_limited", &openAIWSDialError{StatusCode: http.StatusTooManyRequests}),
+	))
 }
 
 func TestOpenAIGatewayService_Forward_ReturnErrorWhenOnlyWSv1Enabled(t *testing.T) {
