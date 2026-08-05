@@ -533,7 +533,7 @@ func NewOpenAIGatewayService(
 		openAITokenProvider:     openAITokenProvider,
 		grokTokenProvider:       grokTokenProvider,
 		toolCorrector:           NewCodexToolCorrector(),
-		openaiWSResolver:        NewOpenAIWSProtocolResolver(cfg),
+		openaiWSResolver:        nil,
 		resolver:                resolver,
 		channelService:          channelService,
 		balanceNotifyService:    balanceNotifyService,
@@ -546,6 +546,9 @@ func NewOpenAIGatewayService(
 		openaiModelTransient:    newOpenAIAccountModelTransientState(openAIModelTransientDefaultMax),
 		openaiStreamDegradation: newOpenAIStreamDegradationState(),
 	}
+	svc.openaiWSResolver = newOpenAIWSProtocolResolver(cfg, func() bool {
+		return svc.isOpenAIWSModeRouterV2Enabled(context.Background())
+	})
 	if rateLimitService != nil {
 		rateLimitService.SetAccountRuntimeBlocker(svc)
 	}
@@ -716,7 +719,19 @@ func (s *OpenAIGatewayService) getOpenAIWSProtocolResolver() OpenAIWSProtocolRes
 	if s != nil {
 		cfg = s.cfg
 	}
-	return NewOpenAIWSProtocolResolver(cfg)
+	return newOpenAIWSProtocolResolver(cfg, func() bool {
+		return s != nil && s.isOpenAIWSModeRouterV2Enabled(context.Background())
+	})
+}
+
+func (s *OpenAIGatewayService) isOpenAIWSModeRouterV2Enabled(ctx context.Context) bool {
+	if s == nil {
+		return false
+	}
+	if s.settingService != nil {
+		return s.settingService.IsOpenAIWSModeRouterV2Enabled(ctx)
+	}
+	return s.cfg != nil && s.cfg.Gateway.OpenAIWS.ModeRouterV2Enabled
 }
 
 func classifyOpenAIWSReconnectReason(err error) (string, bool) {

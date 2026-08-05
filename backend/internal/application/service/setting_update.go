@@ -268,6 +268,8 @@ func (s *SettingService) refreshCachedSettings(settings *SystemSettings) {
 	s.supportChatCacheMu.Unlock()
 	s.streamModePerformanceEnabled.Store(settings.StreamModePerformanceEnabled)
 	s.streamModePerformanceLoaded.Store(time.Now().UnixNano())
+	s.openAIWSModeRouterV2Enabled.Store(settings.OpenAIWSModeRouterV2Enabled)
+	s.openAIWSModeRouterV2Loaded.Store(time.Now().UnixNano())
 	s.storeRequestPriorityAdmissionSettings(RequestPriorityAdmissionSettings{
 		Enabled:                 settings.RequestPriorityAdmissionEnabled,
 		PendingLimitPerInstance: settings.RequestPriorityPendingLimitPerInstance,

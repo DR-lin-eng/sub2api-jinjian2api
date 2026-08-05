@@ -491,6 +491,7 @@ const baseSettingsResponse = {
   table_page_size_options: [10, 20, 50, 100],
   backend_mode_enabled: false,
   stream_mode_performance_enabled: false,
+  openai_ws_mode_router_v2_enabled: false,
   custom_menu_items: [],
   custom_endpoints: [],
   frontend_url: "",
@@ -887,6 +888,21 @@ describe("admin SettingsView payment visible method controls", () => {
 
     const payload = updateSettings.mock.calls.at(-1)?.[0] as Record<string, unknown>;
     expect(payload.stream_mode_performance_enabled).toBe(true);
+  });
+
+  it("controls the OpenAI WS account mode router from gateway settings", async () => {
+    const wrapper = mountView();
+    await flushPromises();
+    await openGatewayTab(wrapper);
+
+    const toggle = wrapper.get('[data-testid="openai-ws-mode-router-v2-toggle"]');
+    expect((toggle.element as HTMLInputElement).checked).toBe(false);
+    await toggle.setValue(true);
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    const payload = updateSettings.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+    expect(payload.openai_ws_mode_router_v2_enabled).toBe(true);
   });
 
   it("shows and saves automatic public models under the enabled model plaza", async () => {

@@ -13,8 +13,23 @@
         </p>
       </div>
       <div class="space-y-5 p-6">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ t("admin.settings.gatewayForwarding.openAIWSModeRouterV2") }}
+            </label>
+            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+              {{ t("admin.settings.gatewayForwarding.openAIWSModeRouterV2Hint") }}
+            </p>
+          </div>
+          <Toggle
+            v-model="form.openai_ws_mode_router_v2_enabled"
+            data-testid="openai-ws-mode-router-v2-toggle"
+          />
+        </div>
+
         <!-- Fingerprint Unification -->
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between border-t border-gray-100 pt-5 dark:border-dark-700">
           <div>
             <label
               class="text-sm font-medium text-gray-700 dark:text-gray-300"

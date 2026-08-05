@@ -246,6 +246,8 @@ type SystemSettings struct {
 
 	// 流模式性能优化：按完整 SSE 事件合并下游 flush，默认关闭
 	StreamModePerformanceEnabled bool
+	// OpenAI WS mode 路由：数据库未配置时沿用 gateway.openai_ws.mode_router_v2_enabled。
+	OpenAIWSModeRouterV2Enabled bool
 
 	// Gateway forwarding behavior
 	EnableFingerprintUnification           bool   // 是否统一 OAuth 账号的指纹头（默认 true）

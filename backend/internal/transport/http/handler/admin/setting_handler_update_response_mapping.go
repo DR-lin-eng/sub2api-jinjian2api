@@ -190,6 +190,7 @@ func buildSettingsUpdateResponsePayload(
 		RequestPriorityPendingMiBPerInstance:                   updatedSettings.RequestPriorityPendingMiBPerInstance,
 		BackendModeEnabled:                                     updatedSettings.BackendModeEnabled,
 		StreamModePerformanceEnabled:                           updatedSettings.StreamModePerformanceEnabled,
+		OpenAIWSModeRouterV2Enabled:                            updatedSettings.OpenAIWSModeRouterV2Enabled,
 		EnableFingerprintUnification:                           updatedSettings.EnableFingerprintUnification,
 		EnableMetadataPassthrough:                              updatedSettings.EnableMetadataPassthrough,
 		EnableCCHSigning:                                       updatedSettings.EnableCCHSigning,

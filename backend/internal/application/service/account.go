@@ -1408,8 +1408,9 @@ func (a *Account) IsOpenAIOAuth() bool {
 }
 
 // IsCodexPrewarmContinuationEnabled reports whether this OpenAI OAuth account
-// should use an empty generate=false prewarm followed by a developer-role
-// continuation request. Missing or non-boolean values remain opt-out.
+// should use the opt-in Codex continuation bundle: empty generate=false
+// prewarm, native-history developer roles, and request header overrides.
+// Missing or non-boolean values remain opt-out.
 func (a *Account) IsCodexPrewarmContinuationEnabled() bool {
 	if a == nil || !a.IsOpenAIOAuth() || a.Extra == nil {
 		return false

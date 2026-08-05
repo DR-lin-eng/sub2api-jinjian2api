@@ -233,7 +233,9 @@ func (s *OpenAIGatewayService) getOpenAIWSConnPool() *openAIWSConnPool {
 	}
 	s.openaiWSPoolOnce.Do(func() {
 		if s.openaiWSPool == nil {
-			s.openaiWSPool = newOpenAIWSConnPool(s.cfg)
+			s.openaiWSPool = newOpenAIWSConnPoolWithModeRouterProvider(s.cfg, func() bool {
+				return s.isOpenAIWSModeRouterV2Enabled(context.Background())
+			})
 		}
 	})
 	return s.openaiWSPool

@@ -539,6 +539,9 @@ const (
 
 	// SettingKeyStreamModePerformanceEnabled coalesces downstream SSE flushes at event boundaries.
 	SettingKeyStreamModePerformanceEnabled = "stream_mode_performance_enabled"
+	// SettingKeyOpenAIWSModeRouterV2Enabled controls the OpenAI WS account-mode router.
+	// When absent, runtime behavior falls back to gateway.openai_ws.mode_router_v2_enabled.
+	SettingKeyOpenAIWSModeRouterV2Enabled = "openai_ws_mode_router_v2_enabled"
 
 	// Gateway Forwarding Behavior
 	// SettingKeyEnableFingerprintUnification 是否统一 OAuth 账号的 X-Stainless-* 指纹头（默认 true）

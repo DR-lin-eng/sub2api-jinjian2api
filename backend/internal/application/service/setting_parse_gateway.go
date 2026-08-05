@@ -9,6 +9,11 @@ import (
 )
 
 func (s *SettingService) applyGatewaySettings(result *SystemSettings, settings map[string]string) {
+	if value, ok := settings[SettingKeyOpenAIWSModeRouterV2Enabled]; ok && strings.TrimSpace(value) != "" {
+		result.OpenAIWSModeRouterV2Enabled = strings.EqualFold(strings.TrimSpace(value), "true")
+	} else {
+		result.OpenAIWSModeRouterV2Enabled = s.defaultOpenAIWSModeRouterV2Enabled()
+	}
 	// Gateway forwarding behavior (defaults: fingerprint=true, metadata_passthrough=false,
 	// cch_signing=false, claude_oauth_system_prompt_injection=true)
 	if v, ok := settings[SettingKeyEnableFingerprintUnification]; ok && v != "" {

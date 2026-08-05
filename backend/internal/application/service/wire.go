@@ -779,6 +779,9 @@ func ProvideSettingService(settingRepo SettingRepository, groupRepo GroupReposit
 	if err := svc.LoadStreamModePerformanceSetting(context.Background()); err != nil {
 		logger.LegacyPrintf("service.setting", "Warning: load stream mode performance setting failed: %v", err)
 	}
+	if err := svc.LoadOpenAIWSModeRouterV2Setting(context.Background()); err != nil {
+		logger.LegacyPrintf("service.setting", "Warning: load OpenAI WS mode router v2 setting failed: %v", err)
+	}
 	if err := svc.LoadRequestPriorityAdmissionSettings(context.Background()); err != nil {
 		logger.LegacyPrintf("service.setting", "Warning: load request priority admission settings failed: %v", err)
 	}

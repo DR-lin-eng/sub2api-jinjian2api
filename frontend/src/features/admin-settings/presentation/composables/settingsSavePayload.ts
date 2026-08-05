@@ -253,6 +253,8 @@ function buildGatewaySettingsPayload({
     max_claude_code_version: form.max_claude_code_version,
     allow_ungrouped_key_scheduling: form.allow_ungrouped_key_scheduling,
     stream_mode_performance_enabled: form.stream_mode_performance_enabled,
+    openai_ws_mode_router_v2_enabled:
+      form.openai_ws_mode_router_v2_enabled,
     scheduler_v2_enabled: form.scheduler_v2_enabled,
     scheduler_v2_candidate_limit: Number(form.scheduler_v2_candidate_limit),
     scheduler_v2_scan_limit: Number(form.scheduler_v2_scan_limit),

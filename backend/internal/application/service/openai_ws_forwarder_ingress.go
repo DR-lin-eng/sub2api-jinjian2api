@@ -136,7 +136,7 @@ func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
 	forceHTTPBridge := account.Platform == PlatformGrok ||
 		forcedHTTPBridgeFallback ||
 		s.isOpenAIWSFallbackCooling(account.ID)
-	modeRouterV2Enabled := s != nil && s.cfg != nil && s.cfg.Gateway.OpenAIWS.ModeRouterV2Enabled
+	modeRouterV2Enabled := s != nil && s.cfg != nil && s.isOpenAIWSModeRouterV2Enabled(ctx)
 	ingressMode := OpenAIWSIngressModeCtxPool
 	if modeRouterV2Enabled && !forceHTTPBridge {
 		ingressMode = account.ResolveOpenAIResponsesWebSocketV2Mode(s.cfg.Gateway.OpenAIWS.IngressModeDefault)

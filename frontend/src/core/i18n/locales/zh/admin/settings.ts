@@ -448,6 +448,8 @@ export default {
       gatewayForwarding: {
         title: '请求转发行为',
         description: '控制请求转发到上游 OAuth 账号时的行为',
+        openAIWSModeRouterV2: 'OpenAI WS 账号模式路由',
+        openAIWSModeRouterV2Hint: '对应 gateway.openai_ws.mode_router_v2_enabled。开启后按每个 OpenAI 账号的 WS mode 选择 ctx_pool、passthrough、http_bridge 或 off，保存后运行时生效。',
         fingerprintUnification: '指纹统一化',
         fingerprintUnificationHint: '统一共享同一 OAuth 账号的用户的 X-Stainless-* 请求头。关闭后透传客户端原始请求头。',
         metadataPassthrough: 'Metadata 透传',

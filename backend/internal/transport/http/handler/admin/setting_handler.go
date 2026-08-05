@@ -302,6 +302,7 @@ func (h *SettingHandler) GetSettings(c *gin.Context) {
 		RequestPriorityPendingMiBPerInstance:                   settings.RequestPriorityPendingMiBPerInstance,
 		BackendModeEnabled:                                     settings.BackendModeEnabled,
 		StreamModePerformanceEnabled:                           settings.StreamModePerformanceEnabled,
+		OpenAIWSModeRouterV2Enabled:                            settings.OpenAIWSModeRouterV2Enabled,
 		EnableFingerprintUnification:                           settings.EnableFingerprintUnification,
 		EnableMetadataPassthrough:                              settings.EnableMetadataPassthrough,
 		EnableCCHSigning:                                       settings.EnableCCHSigning,

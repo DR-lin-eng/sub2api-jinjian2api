@@ -1236,6 +1236,8 @@ func TestOpenAIGatewayService_Forward_WSv2_CodexPrewarmContinuation(t *testing.T
 	c.Request = httptest.NewRequest(http.MethodPost, "/openai/v1/responses", nil)
 	c.Request.Header.Set("User-Agent", "codex_cli_rs/0.98.0")
 	c.Request.Header.Set("session_id", "session-codex-prewarm")
+	c.Request.Header.Set(codexPrewarmContinuationReasoningHeader, "none")
+	SetOpenAIClientTransport(c, OpenAIClientTransportHTTP)
 
 	cfg := &config.Config{}
 	cfg.Security.URLAllowlist.Enabled = false
@@ -1279,14 +1281,16 @@ func TestOpenAIGatewayService_Forward_WSv2_CodexPrewarmContinuation(t *testing.T
 		Credentials: map[string]any{"access_token": "oauth-token-1"},
 		Extra: map[string]any{
 			CodexPrewarmContinuationExtraKey: true,
+			"openai_passthrough":             true,
 		},
 	}
 
-	body := []byte(`{"model":"gpt-5.1","stream":false,"instructions":"Follow the developer policy.","tools":[{"type":"function","name":"lookup"}],"input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"hello"}]}]}`)
+	body := []byte(`{"model":"gpt-5.1","stream":false,"instructions":"Follow the developer policy.","reasoning":{"effort":"high","summary":"auto"},"tools":[{"type":"function","name":"update_plan"},{"type":"tool_search"},{"type":"web_search_preview"}],"input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"hello"}]},{"type":"message","role":"assistant","content":[{"type":"output_text","text":"checking"}]},{"type":"function_call","call_id":"call_plan","name":"update_plan","arguments":"{\"step\":\"inspect\"}"},{"type":"function_call_output","call_id":"call_plan","output":"ok"},{"type":"web_search_call","id":"ws_1","status":"completed","action":{"type":"search","query":"release status"}},{"type":"tool_search_call","call_id":"call_search","execution":"client","arguments":{"query":"github"}},{"type":"tool_search_output","call_id":"call_search","output":{"groups":["github"]}},{"type":"message","role":"user","content":[{"type":"input_text","text":"continue"}]},{"type":"message","role":"developer","content":[{"type":"input_text","text":"existing developer context"}]}]}`)
 	result, err := svc.Forward(context.Background(), c, account, body)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	require.Equal(t, "resp_codex_business", result.RequestID)
+	require.True(t, result.OpenAIWSMode)
 
 	require.Len(t, captureConn.writes, 2)
 	prewarm := requestToJSONString(captureConn.writes[0])
@@ -1295,14 +1299,27 @@ func TestOpenAIGatewayService_Forward_WSv2_CodexPrewarmContinuation(t *testing.T
 	require.True(t, gjson.Get(prewarm, "generate").Exists())
 	require.Equal(t, 0, len(gjson.Get(prewarm, "input").Array()))
 	require.Equal(t, "Follow the developer policy.", gjson.Get(prewarm, "instructions").String())
+	require.Equal(t, "none", gjson.Get(prewarm, "reasoning.effort").String())
+	require.Equal(t, "auto", gjson.Get(prewarm, "reasoning.summary").String())
 
 	require.Equal(t, "resp_codex_prewarm", gjson.Get(business, "previous_response_id").String())
 	require.False(t, gjson.Get(business, "generate").Exists())
-	require.False(t, gjson.Get(business, "instructions").Exists())
+	require.Equal(t, "Follow the developer policy.", gjson.Get(business, "instructions").String())
+	require.Equal(t, "none", gjson.Get(business, "reasoning.effort").String())
+	require.Equal(t, "auto", gjson.Get(business, "reasoning.summary").String())
+	require.Equal(t, 9, len(gjson.Get(business, "input").Array()))
 	require.Equal(t, "developer", gjson.Get(business, "input.0.role").String())
-	require.Equal(t, "Follow the developer policy.", gjson.Get(business, "input.0.content.0.text").String())
-	require.Equal(t, "user", gjson.Get(business, "input.1.role").String())
-	require.Equal(t, "hello", gjson.Get(business, "input.1.content.0.text").String())
+	require.Equal(t, "hello", gjson.Get(business, "input.0.content.0.text").String())
+	require.Equal(t, "assistant", gjson.Get(business, "input.1.role").String())
+	require.Equal(t, "function_call", gjson.Get(business, "input.2.type").String())
+	require.Equal(t, "function_call_output", gjson.Get(business, "input.3.type").String())
+	require.Equal(t, gjson.Get(business, "input.2.call_id").String(), gjson.Get(business, "input.3.call_id").String())
+	require.Equal(t, "web_search_call", gjson.Get(business, "input.4.type").String())
+	require.Equal(t, "tool_search_call", gjson.Get(business, "input.5.type").String())
+	require.Equal(t, "tool_search_output", gjson.Get(business, "input.6.type").String())
+	require.Equal(t, gjson.Get(business, "input.5.call_id").String(), gjson.Get(business, "input.6.call_id").String())
+	require.Equal(t, "developer", gjson.Get(business, "input.7.role").String())
+	require.Equal(t, "developer", gjson.Get(business, "input.8.role").String())
 }
 
 func TestOpenAIGatewayService_PrewarmReadHonorsParentContext(t *testing.T) {

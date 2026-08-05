@@ -237,6 +237,7 @@ type UpdateSettingsRequest struct {
 
 	// Performance settings
 	StreamModePerformanceEnabled *bool `json:"stream_mode_performance_enabled"`
+	OpenAIWSModeRouterV2Enabled  *bool `json:"openai_ws_mode_router_v2_enabled"`
 
 	// Gateway forwarding behavior
 	EnableFingerprintUnification           *bool   `json:"enable_fingerprint_unification"`

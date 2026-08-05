@@ -600,7 +600,8 @@ type openAIWSPoolMetrics struct {
 }
 
 type openAIWSConnPool struct {
-	cfg *config.Config
+	cfg                   *config.Config
+	modeRouterV2EnabledFn func() bool
 	// 通过接口解耦底层 WS 客户端实现，默认使用 coder/websocket。
 	clientDialer openAIWSClientDialer
 
@@ -615,10 +616,15 @@ type openAIWSConnPool struct {
 }
 
 func newOpenAIWSConnPool(cfg *config.Config) *openAIWSConnPool {
+	return newOpenAIWSConnPoolWithModeRouterProvider(cfg, nil)
+}
+
+func newOpenAIWSConnPoolWithModeRouterProvider(cfg *config.Config, modeRouterV2Enabled func() bool) *openAIWSConnPool {
 	pool := &openAIWSConnPool{
-		cfg:          cfg,
-		clientDialer: newDefaultOpenAIWSClientDialer(),
-		workerStopCh: make(chan struct{}),
+		cfg:                   cfg,
+		modeRouterV2EnabledFn: modeRouterV2Enabled,
+		clientDialer:          newDefaultOpenAIWSClientDialer(),
+		workerStopCh:          make(chan struct{}),
 	}
 	pool.startBackgroundWorkers()
 	return pool
@@ -1740,6 +1746,9 @@ func (p *openAIWSConnPool) dynamicMaxConnsEnabled() bool {
 }
 
 func (p *openAIWSConnPool) modeRouterV2Enabled() bool {
+	if p != nil && p.modeRouterV2EnabledFn != nil {
+		return p.modeRouterV2EnabledFn()
+	}
 	if p != nil && p.cfg != nil {
 		return p.cfg.Gateway.OpenAIWS.ModeRouterV2Enabled
 	}

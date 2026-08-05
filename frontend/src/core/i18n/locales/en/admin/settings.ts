@@ -455,6 +455,8 @@ export default {
       gatewayForwarding: {
         title: 'Request Forwarding',
         description: 'Control how requests are forwarded to upstream OAuth accounts',
+        openAIWSModeRouterV2: 'OpenAI WS account mode router',
+        openAIWSModeRouterV2Hint: 'Web control for gateway.openai_ws.mode_router_v2_enabled. When enabled, each OpenAI account\'s WS mode selects ctx_pool, passthrough, http_bridge, or off. Changes apply at runtime.',
         fingerprintUnification: 'Fingerprint Unification',
         fingerprintUnificationHint: 'Unify X-Stainless-* headers across users sharing the same OAuth account. Disabling passes through each client\'s original headers.',
         metadataPassthrough: 'Metadata Passthrough',

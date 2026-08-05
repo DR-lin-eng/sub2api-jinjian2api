@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -20,6 +21,32 @@ func (s *OpenAIGatewayService) isOpenAIWSGeneratePrewarmEnabled() bool {
 
 func (s *OpenAIGatewayService) shouldPerformOpenAIWSGeneratePrewarm(account *Account) bool {
 	return s.isOpenAIWSGeneratePrewarmEnabled() || account.IsCodexPrewarmContinuationEnabled()
+}
+
+const codexPrewarmContinuationReasoningHeader = "X-CPA-Reasoning"
+
+func applyCodexPrewarmContinuationReasoningOverride(c *gin.Context, account *Account, reqBody map[string]any) (bool, error) {
+	if c == nil || account == nil || !account.IsCodexPrewarmContinuationEnabled() ||
+		!strings.EqualFold(strings.TrimSpace(c.GetHeader(codexPrewarmContinuationReasoningHeader)), "none") {
+		return false, nil
+	}
+	if reqBody == nil {
+		return false, errors.New("apply Codex prewarm continuation reasoning override: request body is nil")
+	}
+
+	reasoning, exists := reqBody["reasoning"].(map[string]any)
+	if !exists {
+		if raw, present := reqBody["reasoning"]; present && raw != nil {
+			return false, fmt.Errorf("apply Codex prewarm continuation reasoning override: reasoning must be an object")
+		}
+		reasoning = make(map[string]any, 1)
+		reqBody["reasoning"] = reasoning
+	}
+	if effort, ok := reasoning["effort"].(string); ok && effort == "none" {
+		return false, nil
+	}
+	reasoning["effort"] = "none"
+	return true, nil
 }
 
 // performOpenAIWSGeneratePrewarm 在 WSv2 下执行可选的 generate=false 预热。
@@ -185,7 +212,15 @@ func (s *OpenAIGatewayService) performOpenAIWSGeneratePrewarm(
 			lease.MarkBroken()
 			return wrapOpenAIWSFallback("prewarm_missing_response_id", errors.New("OpenAI websocket prewarm completed without response id"))
 		}
-		applyCodexPrewarmContinuationPayload(payload, prewarmResponseID)
+		rewrittenUserMessages := applyCodexPrewarmContinuationPayload(payload, prewarmResponseID)
+		logOpenAIWSModeInfo(
+			"prewarm_business_prepared account_id=%d conn_id=%s previous_response_id=%s user_roles_rewritten=%d instructions_preserved=%v",
+			account.ID,
+			connID,
+			truncateOpenAIWSLogValue(prewarmResponseID, openAIWSIDValueMaxLen),
+			rewrittenUserMessages,
+			hasNonEmptyString(payload["instructions"]),
+		)
 	}
 
 	lease.MarkPrewarmed()
@@ -214,13 +249,45 @@ func hasCodexPrewarmBusinessContinuation(reqBody map[string]any) bool {
 	if !ok {
 		return false
 	}
+	var callIDs map[string]struct{}
+	var outputCallIDs map[string]struct{}
 	for _, item := range input {
 		itemMap, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
-		itemType, _ := itemMap["type"].(string)
-		if isCodexToolCallItemType(strings.TrimSpace(itemType)) || strings.TrimSpace(itemType) == "item_reference" {
+		itemType := strings.TrimSpace(firstNonEmptyString(itemMap["type"]))
+		if itemType == "item_reference" {
+			return true
+		}
+		if isCodexToolCallContextItemType(itemType) {
+			callID := strings.TrimSpace(firstNonEmptyString(itemMap["call_id"]))
+			if callID != "" {
+				if callIDs == nil {
+					callIDs = make(map[string]struct{})
+				}
+				callIDs[callID] = struct{}{}
+			}
+			continue
+		}
+		if isCodexToolCallOutputItemType(itemType) {
+			callID := strings.TrimSpace(firstNonEmptyString(itemMap["call_id"]))
+			if callID == "" {
+				return true
+			}
+			if outputCallIDs == nil {
+				outputCallIDs = make(map[string]struct{})
+			}
+			outputCallIDs[callID] = struct{}{}
+		}
+	}
+	for callID := range outputCallIDs {
+		if _, ok := callIDs[callID]; !ok {
+			return true
+		}
+	}
+	for callID := range callIDs {
+		if _, ok := outputCallIDs[callID]; !ok {
 			return true
 		}
 	}
@@ -228,62 +295,85 @@ func hasCodexPrewarmBusinessContinuation(reqBody map[string]any) bool {
 }
 
 // applyCodexPrewarmContinuationPayload turns the business request into a
-// continuation from the empty prewarm response. Top-level instructions are
-// moved into a developer message because previous_response_id does not carry
-// the previous response's top-level instructions into the current response.
-func applyCodexPrewarmContinuationPayload(payload map[string]any, previousResponseID string) {
+// continuation from the empty prewarm response. Native agent history keeps its
+// structure; only user message roles become developer roles. Top-level
+// instructions stay in place so both WS writes retain the same stable fields.
+func applyCodexPrewarmContinuationPayload(payload map[string]any, previousResponseID string) int {
 	if len(payload) == 0 || strings.TrimSpace(previousResponseID) == "" {
-		return
+		return 0
 	}
 
-	if instructions, ok := payload["instructions"].(string); ok && strings.TrimSpace(instructions) != "" {
-		developerMessage := map[string]any{
-			"type": "message",
-			"role": "developer",
-			"content": []any{
-				map[string]any{
-					"type": "input_text",
-					"text": instructions,
-				},
-			},
-		}
-		payload["input"] = prependCodexDeveloperMessage(developerMessage, payload["input"])
-		delete(payload, "instructions")
-	}
+	rewrittenUserMessages := rewriteCodexPrewarmContinuationUserRoles(payload)
 
 	payload["previous_response_id"] = strings.TrimSpace(previousResponseID)
 	delete(payload, "generate")
+	return rewrittenUserMessages
 }
 
-func prependCodexDeveloperMessage(developerMessage map[string]any, input any) []any {
-	items := []any{developerMessage}
-	switch typed := input.(type) {
+func rewriteCodexPrewarmContinuationUserRoles(payload map[string]any) int {
+	if len(payload) == 0 {
+		return 0
+	}
+	switch typed := payload["input"].(type) {
 	case nil:
-		return items
+		return 0
 	case []any:
-		return append(items, typed...)
-	case []map[string]any:
+		rewritten := 0
 		for _, item := range typed {
-			items = append(items, item)
+			if itemMap, ok := item.(map[string]any); ok && rewriteCodexPrewarmContinuationMessageRole(itemMap) {
+				rewritten++
+			}
 		}
-		return items
+		return rewritten
+	case []map[string]any:
+		rewritten := 0
+		for _, item := range typed {
+			if rewriteCodexPrewarmContinuationMessageRole(item) {
+				rewritten++
+			}
+		}
+		return rewritten
+	case map[string]any:
+		if rewriteCodexPrewarmContinuationMessageRole(typed) {
+			return 1
+		}
+		return 0
 	case string:
 		if typed == "" {
-			return items
+			payload["input"] = []any{}
+			return 0
 		}
-		return append(items, map[string]any{
+		payload["input"] = []any{map[string]any{
 			"type": "message",
-			"role": "user",
+			"role": "developer",
 			"content": []any{
 				map[string]any{
 					"type": "input_text",
 					"text": typed,
 				},
 			},
-		})
+		}}
+		return 1
 	default:
-		return append(items, typed)
+		return 0
 	}
+}
+
+func rewriteCodexPrewarmContinuationMessageRole(item map[string]any) bool {
+	if item == nil {
+		return false
+	}
+	role, _ := item["role"].(string)
+	if !strings.EqualFold(strings.TrimSpace(role), "user") {
+		return false
+	}
+	itemType, _ := item["type"].(string)
+	itemType = strings.TrimSpace(itemType)
+	if itemType != "" && itemType != "message" {
+		return false
+	}
+	item["role"] = "developer"
+	return true
 }
 
 func payloadAsJSON(payload map[string]any) string {

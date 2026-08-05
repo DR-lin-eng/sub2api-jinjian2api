@@ -66,6 +66,9 @@ func appendRuntimeSettingChanges(changed []string, before, after *service.System
 	if before.StreamModePerformanceEnabled != after.StreamModePerformanceEnabled {
 		changed = append(changed, "stream_mode_performance_enabled")
 	}
+	if before.OpenAIWSModeRouterV2Enabled != after.OpenAIWSModeRouterV2Enabled {
+		changed = append(changed, "openai_ws_mode_router_v2_enabled")
+	}
 	if before.PurchaseSubscriptionEnabled != after.PurchaseSubscriptionEnabled {
 		changed = append(changed, "purchase_subscription_enabled")
 	}

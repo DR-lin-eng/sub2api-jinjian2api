@@ -199,6 +199,7 @@ func buildSystemSettingsUpdate(prepared *preparedSettingsUpdate) *service.System
 		RequestPriorityPendingMiBPerInstance:               intValueOrDefault(req.RequestPriorityPendingMiBPerInstance, previousSettings.RequestPriorityPendingMiBPerInstance),
 		BackendModeEnabled:                                 req.BackendModeEnabled,
 		StreamModePerformanceEnabled:                       boolValueOrDefault(req.StreamModePerformanceEnabled, previousSettings.StreamModePerformanceEnabled),
+		OpenAIWSModeRouterV2Enabled:                        boolValueOrDefault(req.OpenAIWSModeRouterV2Enabled, previousSettings.OpenAIWSModeRouterV2Enabled),
 		AllowUserViewErrorRequests:                         boolValueOrDefault(req.AllowUserViewErrorRequests, previousSettings.AllowUserViewErrorRequests),
 		AllowUserViewUsageDetails:                          boolValueOrDefault(req.AllowUserViewUsageDetails, previousSettings.AllowUserViewUsageDetails),
 		OpsMonitoringEnabled:                               boolValueOrDefault(req.OpsMonitoringEnabled, previousSettings.OpsMonitoringEnabled),

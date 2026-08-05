@@ -27,12 +27,27 @@ type OpenAIWSProtocolResolver interface {
 }
 
 type defaultOpenAIWSProtocolResolver struct {
-	cfg *config.Config
+	cfg                 *config.Config
+	modeRouterV2Enabled func() bool
 }
 
 // NewOpenAIWSProtocolResolver 创建默认协议决策器。
 func NewOpenAIWSProtocolResolver(cfg *config.Config) OpenAIWSProtocolResolver {
-	return &defaultOpenAIWSProtocolResolver{cfg: cfg}
+	return newOpenAIWSProtocolResolver(cfg, nil)
+}
+
+func newOpenAIWSProtocolResolver(cfg *config.Config, modeRouterV2Enabled func() bool) OpenAIWSProtocolResolver {
+	return &defaultOpenAIWSProtocolResolver{
+		cfg:                 cfg,
+		modeRouterV2Enabled: modeRouterV2Enabled,
+	}
+}
+
+func (r *defaultOpenAIWSProtocolResolver) isModeRouterV2Enabled() bool {
+	if r != nil && r.modeRouterV2Enabled != nil {
+		return r.modeRouterV2Enabled()
+	}
+	return r != nil && r.cfg != nil && r.cfg.Gateway.OpenAIWS.ModeRouterV2Enabled
 }
 
 func (r *defaultOpenAIWSProtocolResolver) Resolve(account *Account) OpenAIWSProtocolDecision {
@@ -76,7 +91,7 @@ func (r *defaultOpenAIWSProtocolResolver) Resolve(account *Account) OpenAIWSProt
 			Reason:    "codex_prewarm_continuation",
 		}
 	}
-	if wsCfg.ModeRouterV2Enabled {
+	if r.isModeRouterV2Enabled() {
 		mode := account.ResolveOpenAIResponsesWebSocketV2Mode(wsCfg.IngressModeDefault)
 		switch mode {
 		case OpenAIWSIngressModeOff:

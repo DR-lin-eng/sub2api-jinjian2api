@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/platform/config"
 	infraerrors "github.com/Wei-Shaw/sub2api/internal/shared/errors"
@@ -106,6 +107,10 @@ type SettingService struct {
 	streamModePerformanceEnabled atomic.Bool
 	streamModePerformanceLoaded  atomic.Int64
 	streamModePerformanceSF      singleflight.Group
+
+	openAIWSModeRouterV2Enabled atomic.Bool
+	openAIWSModeRouterV2Loaded  atomic.Int64
+	openAIWSModeRouterV2SF      singleflight.Group
 
 	streamResponseHeaderTimeoutDegradationEnabled atomic.Bool
 	streamResponseHeaderTimeoutSeconds            atomic.Int64
@@ -262,6 +267,10 @@ func NewSettingService(settingRepo SettingRepository, cfg *config.Config) *Setti
 	svc.streamResponseHeaderTimeoutSeconds.Store(DefaultStreamResponseHeaderTimeoutSeconds)
 	svc.thinkingDisplayModeCache.Store(ThinkingDisplayModeDisplayOnly)
 	svc.requestPriorityAdmissionSettings.Store(defaultRequestPriorityAdmissionSettings())
+	if cfg != nil {
+		svc.openAIWSModeRouterV2Enabled.Store(cfg.Gateway.OpenAIWS.ModeRouterV2Enabled)
+	}
+	svc.openAIWSModeRouterV2Loaded.Store(time.Now().UnixNano())
 	return svc
 }
 

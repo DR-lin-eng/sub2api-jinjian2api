@@ -63,15 +63,22 @@ func (s *OpenAIGatewayService) Forward(ctx context.Context, c *gin.Context, acco
 		}
 	}
 	wsDecision := s.getOpenAIWSProtocolResolver().Resolve(account)
-	// 仅允许 WS 入站请求走 WS 上游，避免出现 HTTP -> WS 协议混用。
-	wsDecision = resolveOpenAIWSDecisionByClientTransport(wsDecision, GetOpenAIClientTransport(c))
+	// Normal accounts keep the client/upstream protocol boundary. The explicit
+	// Codex continuation bundle is the sole opt-in HTTP -> upstream WSv2 bridge:
+	// Codex clients normally enter through POST /v1/responses, while the empty
+	// prewarm and its business continuation must share one upstream connection.
+	if !account.IsCodexPrewarmContinuationEnabled() {
+		wsDecision = resolveOpenAIWSDecisionByClientTransport(wsDecision, GetOpenAIClientTransport(c))
+	}
 	// A proxy/CDN can reject the upstream Responses WebSocket with HTTP 426.
 	// Keep that account on HTTP SSE for a short period so every request does not
 	// pay another failed handshake before the fallback path below takes effect.
 	if wsDecision.Transport == OpenAIUpstreamTransportResponsesWebsocketV2 && s.isOpenAIWSFallbackCooling(account.ID) {
 		wsDecision = openAIWSHTTPDecision("ws_fallback_cooling")
 	}
-	passthroughEnabled := account.IsOpenAIPassthroughEnabled()
+	// The explicit continuation bundle owns the upstream transport. Keep the
+	// stored passthrough setting intact so disabling the bundle restores it.
+	passthroughEnabled := account.IsOpenAIPassthroughEnabled() && !account.IsCodexPrewarmContinuationEnabled()
 	compactPath := isOpenAIResponsesCompactPath(c)
 	if shouldFlattenOpenAIResponsesNamespaces(account, wsDecision.Transport, passthroughEnabled, compactPath) {
 		body, err = flattenOpenAIResponsesNamespaces(c, body)
@@ -403,6 +410,15 @@ func (s *OpenAIGatewayService) Forward(ctx context.Context, c *gin.Context, acco
 		decoded, decodeErr := ensureReqBody()
 		if decodeErr != nil {
 			return nil, decodeErr
+		}
+		// The handler has already applied the group's reasoning policy before an
+		// account is selected. Honor the explicit CPA opt-in on the decoded map,
+		// avoiding another full copy of large native agent histories.
+		if reasoningOverridden, overrideErr := applyCodexPrewarmContinuationReasoningOverride(c, account, decoded); overrideErr != nil {
+			return nil, overrideErr
+		} else if reasoningOverridden {
+			markDecodedModified()
+			logOpenAIWSModeInfo("prewarm_reasoning_override account_id=%d effort=none", account.ID)
 		}
 		codexResult := codexTransformResult{}
 		if compatMessagesBridge {
