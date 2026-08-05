@@ -17,6 +17,7 @@
 | 文档 | 内容 |
 | --- | --- |
 | [Admin API](ADMIN_API.md) | Admin API Key、权限范围和管理接口调用方式 |
+| [Cloudflare 接口分类与边缘规则建议](CLOUDFLARE_EDGE_RULES.md) | 按浏览器页、自动化 API、纯 API 和强人机验证入口分类，方便编写 CF/WAF 规则 |
 | [管理端支付集成 API](ADMIN_PAYMENT_INTEGRATION_API.md) | 外部支付页面与余额/兑换集成 |
 | [异步图片任务](ASYNC_IMAGE_TASKS.md) | 异步 Images API 的启用、提交和轮询 |
 | [批量图片 MVP](BATCH_IMAGE_MVP.md) | 批量图片任务的接口与状态模型 |
