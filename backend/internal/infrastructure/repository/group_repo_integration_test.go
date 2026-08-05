@@ -8,6 +8,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	dbent "github.com/Wei-Shaw/sub2api/ent"
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
@@ -893,6 +894,75 @@ func (s *GroupRepoSuite) TestListWithFilters_RateLimitedAccountCount() {
 	s.Assert().Equal(found.AccountCount, detail.AccountCount, "GetByID AccountCount must match ListWithFilters")
 	s.Assert().Equal(found.ActiveAccountCount, detail.ActiveAccountCount, "GetByID ActiveAccountCount must match ListWithFilters")
 	s.Assert().Equal(found.RateLimitedAccountCount, detail.RateLimitedAccountCount, "GetByID RateLimitedAccountCount must match ListWithFilters")
+}
+
+func (s *GroupRepoSuite) TestCodexPrewarm429SoftBlocksMatchGroupCapacityCounts() {
+	g := &service.Group{
+		Name:             "g-codex-429-soft-counts",
+		Platform:         service.PlatformOpenAI,
+		RateMultiplier:   1,
+		Status:           service.StatusActive,
+		SubscriptionType: service.SubscriptionTypeStandard,
+	}
+	s.Require().NoError(s.repo.Create(s.ctx, g))
+	future := time.Now().Add(time.Hour)
+	enabledExtra := map[string]any{service.CodexPrewarmContinuationExtraKey: true}
+	client := s.tx.Client()
+
+	create := func(name string) *service.Account {
+		account := mustCreateAccount(s.T(), client, &service.Account{
+			Name: name, Platform: service.PlatformOpenAI, Type: service.AccountTypeOAuth,
+			Schedulable: true, Extra: enabledExtra,
+		})
+		mustBindAccountToGroup(s.T(), client, account.ID, g.ID, 1)
+		return account
+	}
+	softRate := create("group-codex-soft-rate")
+	_, err := client.Account.UpdateOneID(softRate.ID).SetRateLimitResetAt(future).Save(s.ctx)
+	s.Require().NoError(err)
+	softTemp429 := create("group-codex-soft-temp-429")
+	_, err = client.Account.UpdateOneID(softTemp429.ID).
+		SetTempUnschedulableUntil(future).
+		SetTempUnschedulableReason(`{"status_code":429,"error_message":"limited"}`).
+		Save(s.ctx)
+	s.Require().NoError(err)
+	hardTemp401 := create("group-codex-hard-temp-401")
+	_, err = client.Account.UpdateOneID(hardTemp401.ID).
+		SetTempUnschedulableUntil(future).
+		SetTempUnschedulableReason(`{"status_code":401,"error_message":"unauthorized"}`).
+		Save(s.ctx)
+	s.Require().NoError(err)
+	hardOverload := create("group-codex-hard-overload")
+	_, err = client.Account.UpdateOneID(hardOverload.ID).SetOverloadUntil(future).Save(s.ctx)
+	s.Require().NoError(err)
+
+	total, active, err := s.repo.GetAccountCount(s.ctx, g.ID)
+	s.Require().NoError(err)
+	s.Equal(int64(4), total)
+	s.Equal(int64(2), active)
+
+	groups, _, err := s.repo.ListWithFilters(
+		s.ctx,
+		pagination.PaginationParams{Page: 1, PageSize: 20},
+		service.PlatformOpenAI,
+		service.StatusActive,
+		"g-codex-429-soft-counts",
+		nil,
+	)
+	s.Require().NoError(err)
+	s.Require().Len(groups, 1)
+	s.Equal(int64(4), groups[0].AccountCount)
+	s.Equal(int64(2), groups[0].ActiveAccountCount)
+	s.Equal(int64(2), groups[0].RateLimitedAccountCount)
+
+	accountRepo := newAccountRepositoryWithSQL(client, s.tx, nil)
+	capacity, err := accountRepo.ListSchedulableCapacityByGroupIDs(s.ctx, []int64{g.ID})
+	s.Require().NoError(err)
+	capacityIDs := make([]int64, 0, len(capacity))
+	for _, row := range capacity {
+		capacityIDs = append(capacityIDs, row.AccountID)
+	}
+	s.ElementsMatch([]int64{softRate.ID, softTemp429.ID}, capacityIDs)
 }
 
 // --- DeleteAccountGroupsByGroupID ---

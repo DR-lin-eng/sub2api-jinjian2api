@@ -172,6 +172,9 @@ const (
 // 自定义错误码开启时覆盖后续所有逻辑（包括临时不可调度）。
 func (s *RateLimitService) CheckErrorPolicy(ctx context.Context, account *Account, statusCode int, responseBody []byte, requestedModel ...string) ErrorPolicyResult {
 	ctx = withTempUnschedulableModel(ctx, requestedModel)
+	if statusCode == http.StatusTooManyRequests && account.BypassesLocalOpenAI429SchedulingBlocks() {
+		return ErrorPolicySkipped
+	}
 	if account.IsCustomErrorCodesEnabled() {
 		if account.ShouldHandleErrorCode(statusCode) {
 			return ErrorPolicyMatched
@@ -199,6 +202,9 @@ func (s *RateLimitService) HandleUpstreamError(ctx context.Context, account *Acc
 	ctx = withTempUnschedulableModel(ctx, requestedModel)
 	if s.handleUpstreamInsufficientBalance(ctx, account, statusCode, responseBody) {
 		return true
+	}
+	if statusCode == http.StatusTooManyRequests && account.BypassesLocalOpenAI429SchedulingBlocks() {
+		return false
 	}
 	customErrorCodesEnabled := account.IsCustomErrorCodesEnabled()
 
@@ -1040,6 +1046,9 @@ func firstRequestedModel(models []string) string {
 // handle429 处理429限流错误
 // 解析响应头获取重置时间，标记账号为限流状态
 func (s *RateLimitService) handle429(ctx context.Context, account *Account, headers http.Header, responseBody []byte, requestedModel string) {
+	if account == nil || account.BypassesLocalOpenAI429SchedulingBlocks() {
+		return
+	}
 	// Spark 影子：限流/熔断状态 100% 由 QueryUsage(/wham/usage body 的 codex_bengalfox)驱动。
 	// /responses 的 429 携带的 x-codex-*/usage_limit_reached 是 global codex 道(plan/spec §8),
 	// 套到影子会把 spark 误耦合到 global 窗口——即便 spark 仍有配额也会被冷却到 global reset,
@@ -1188,6 +1197,9 @@ func (s *RateLimitService) setOpenAIModelRateLimit(ctx context.Context, account 
 }
 
 func (s *RateLimitService) apply429FallbackRateLimit(ctx context.Context, account *Account, reason string, requestedModel ...string) {
+	if account == nil || account.BypassesLocalOpenAI429SchedulingBlocks() {
+		return
+	}
 	cooldown, enabled := s.get429FallbackCooldown(ctx, account)
 	if !enabled {
 		slog.Info("rate_limit_429_fallback_ignored", "account_id", account.ID, "platform", account.Platform, "reason", reason)
@@ -2053,6 +2065,9 @@ func (s *RateLimitService) HandleTempUnschedulable(ctx context.Context, account 
 	if account == nil {
 		return false
 	}
+	if statusCode == http.StatusTooManyRequests && account.BypassesLocalOpenAI429SchedulingBlocks() {
+		return false
+	}
 	if account.IsPoolMode() && !account.IsCustomErrorCodesEnabled() {
 		return false
 	}
@@ -2068,6 +2083,9 @@ func (s *RateLimitService) HandleOpenAIImageRateLimit(ctx context.Context, accou
 		return false
 	}
 	if account.Platform != PlatformOpenAI {
+		return false
+	}
+	if statusCode == http.StatusTooManyRequests && account.BypassesLocalOpenAI429SchedulingBlocks() {
 		return false
 	}
 	if !account.ShouldHandleErrorCode(statusCode) {
@@ -2287,6 +2305,9 @@ func matchTempUnschedulableRules(account *Account, statusCode int, responseBody 
 
 func (s *RateLimitService) tryTempUnschedulable(ctx context.Context, account *Account, statusCode int, responseBody []byte, requestedModel ...string) bool {
 	if account == nil {
+		return false
+	}
+	if statusCode == http.StatusTooManyRequests && account.BypassesLocalOpenAI429SchedulingBlocks() {
 		return false
 	}
 	if !globalTempUnschedulableEnabled(ctx, s.settingService) {

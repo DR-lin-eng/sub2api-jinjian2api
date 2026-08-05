@@ -21,6 +21,7 @@ func (r *accountRepository) GetAccountSchedulingState(ctx context.Context, accou
 			dbaccount.FieldOverloadUntil,
 			dbaccount.FieldRateLimitResetAt,
 			dbaccount.FieldTempUnschedulableUntil,
+			dbaccount.FieldTempUnschedulableReason,
 			dbaccount.FieldExtra,
 		).
 		Only(ctx)
@@ -29,17 +30,18 @@ func (r *accountRepository) GetAccountSchedulingState(ctx context.Context, accou
 	}
 
 	projection := service.Account{
-		ID:                     account.ID,
-		Platform:               account.Platform,
-		Type:                   account.Type,
-		Status:                 account.Status,
-		Schedulable:            account.Schedulable,
-		ExpiresAt:              account.ExpiresAt,
-		AutoPauseOnExpired:     account.AutoPauseOnExpired,
-		OverloadUntil:          account.OverloadUntil,
-		RateLimitResetAt:       account.RateLimitResetAt,
-		TempUnschedulableUntil: account.TempUnschedulableUntil,
-		Extra:                  account.Extra,
+		ID:                      account.ID,
+		Platform:                account.Platform,
+		Type:                    account.Type,
+		Status:                  account.Status,
+		Schedulable:             account.Schedulable,
+		ExpiresAt:               account.ExpiresAt,
+		AutoPauseOnExpired:      account.AutoPauseOnExpired,
+		OverloadUntil:           account.OverloadUntil,
+		RateLimitResetAt:        account.RateLimitResetAt,
+		TempUnschedulableUntil:  account.TempUnschedulableUntil,
+		TempUnschedulableReason: derefString(account.TempUnschedulableReason),
+		Extra:                   account.Extra,
 	}
 	return service.AccountSchedulingState{
 		Exists:      true,

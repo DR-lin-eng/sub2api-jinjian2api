@@ -204,6 +204,47 @@ func newSchedulerTestSubscriptionPriorityConfig() *config.Config {
 	return cfg
 }
 
+func TestCodexPrewarm429FailureLowersWeightWithoutRemovingCandidate(t *testing.T) {
+	cfg := &config.Config{}
+	cfg.Gateway.OpenAIWS.SchedulerScoreWeights.ErrorRate = 1
+	gateway := &OpenAIGatewayService{cfg: cfg}
+	scheduler := &defaultOpenAIAccountScheduler{
+		service: gateway,
+		stats:   newOpenAIAccountRuntimeStats(),
+	}
+
+	limited := &Account{
+		ID: 1, Platform: PlatformOpenAI, Type: AccountTypeOAuth,
+		Status: StatusActive, Schedulable: true,
+		Extra: map[string]any{CodexPrewarmContinuationExtraKey: true},
+	}
+	healthy := &Account{
+		ID: 2, Platform: PlatformOpenAI, Type: AccountTypeOAuth,
+		Status: StatusActive, Schedulable: true,
+	}
+	scheduler.ReportResult(limited.ID, false, nil)
+
+	plan := scheduler.buildOpenAIAccountLoadPlan(
+		context.Background(),
+		OpenAIAccountScheduleRequest{},
+		[]*Account{limited, healthy},
+		map[int64]*AccountLoadInfo{
+			limited.ID: {AccountID: limited.ID},
+			healthy.ID: {AccountID: healthy.ID},
+		},
+	)
+
+	require.Len(t, plan.candidates, 2)
+	scores := make(map[int64]float64, len(plan.candidates))
+	for _, candidate := range plan.candidates {
+		scores[candidate.account.ID] = candidate.score
+	}
+	require.Less(t, scores[limited.ID], scores[healthy.ID])
+	require.True(t, limited.IsSchedulable(), "429 failure must not remove the opted account from later scheduling")
+	errorRate, _, _ := scheduler.stats.snapshot(limited.ID)
+	require.Positive(t, errorRate)
+}
+
 type openAIAdvancedSchedulerSettingRepoStub struct {
 	values map[string]string
 }

@@ -78,6 +78,13 @@ func (s *OpenAIGatewayService) handleOpenAIAccountUpstreamError(ctx context.Cont
 	if s.autoDisableOnUpstreamInsufficientBalance(stateCtx, account, statusCode, responseBody) {
 		return true
 	}
+	if statusCode == http.StatusTooManyRequests && account.BypassesLocalOpenAI429SchedulingBlocks() {
+		if s != nil && s.rateLimitService != nil {
+			persistOpenAI429PlanType(stateCtx, s.rateLimitService.accountRepo, account, responseBody)
+			s.rateLimitService.persistOpenAICodexSnapshot(stateCtx, account, headers)
+		}
+		return false
+	}
 
 	if account != nil && account.Platform == PlatformOpenAI && isOpenAIContextWindowError("", responseBody) {
 		return false
@@ -171,7 +178,7 @@ func shouldCooldownOpenAITransientUpstreamError(statusCode int, responseBody []b
 }
 
 func (s *OpenAIGatewayService) markOpenAIOAuth429RateLimited(ctx context.Context, account *Account, headers http.Header, responseBody []byte) {
-	if s == nil || !isOpenAIOAuthAccount(account) {
+	if s == nil || !isOpenAIOAuthAccount(account) || account.BypassesLocalOpenAI429SchedulingBlocks() {
 		return
 	}
 	// Spark 影子：不按 /responses 429 的 global x-codex-* 信号做内存运行时熔断(同 handle429,外审第8轮 P1)。
@@ -198,6 +205,9 @@ func (s *OpenAIGatewayService) markOpenAIOAuth429RateLimited(ctx context.Context
 
 func (s *OpenAIGatewayService) BlockAccountScheduling(account *Account, until time.Time, reason string) {
 	if s == nil || !isOpenAIAccount(account) {
+		return
+	}
+	if account.BypassesLocalOpenAI429SchedulingBlocks() && isOpenAI429RuntimeBlockReason(reason) {
 		return
 	}
 	mu := s.openAIAccountRuntimeBlockLock(account.ID)
@@ -230,6 +240,7 @@ func (s *OpenAIGatewayService) blockAccountSchedulingLocked(account *Account, un
 		if !loaded {
 			actual, stored := s.openaiAccountRuntimeBlockUntil.LoadOrStore(account.ID, blockUntil)
 			if !stored {
+				s.openaiAccountRuntimeBlockReason.Store(account.ID, strings.TrimSpace(reason))
 				s.setOpenAIAccountRuntimeBlockReasonLocked(account.ID, reason)
 				return generation, true
 			}
@@ -239,6 +250,7 @@ func (s *OpenAIGatewayService) blockAccountSchedulingLocked(account *Account, un
 		currentUntil, ok := current.(time.Time)
 		if !ok || currentUntil.IsZero() {
 			if s.openaiAccountRuntimeBlockUntil.CompareAndSwap(account.ID, current, blockUntil) {
+				s.openaiAccountRuntimeBlockReason.Store(account.ID, strings.TrimSpace(reason))
 				s.setOpenAIAccountRuntimeBlockReasonLocked(account.ID, reason)
 				return generation, true
 			}
@@ -248,6 +260,7 @@ func (s *OpenAIGatewayService) blockAccountSchedulingLocked(account *Account, un
 			return generation, false
 		}
 		if s.openaiAccountRuntimeBlockUntil.CompareAndSwap(account.ID, current, blockUntil) {
+			s.openaiAccountRuntimeBlockReason.Store(account.ID, strings.TrimSpace(reason))
 			s.setOpenAIAccountRuntimeBlockReasonLocked(account.ID, reason)
 			return generation, true
 		}
@@ -270,6 +283,7 @@ func (s *OpenAIGatewayService) ClearAccountSchedulingBlock(accountID int64) {
 	mu.Lock()
 	defer mu.Unlock()
 	s.openaiAccountRuntimeBlockUntil.Delete(accountID)
+	s.openaiAccountRuntimeBlockReason.Delete(accountID)
 	s.openaiAccountRuntimeTempUnsched.Delete(accountID)
 	s.openaiAccountRuntimeBlockGeneration.Store(accountID, s.openaiAccountRuntimeBlockSequence.Add(1))
 }
@@ -281,6 +295,7 @@ func (s *OpenAIGatewayService) DeleteAccountRuntimeState(accountID int64) {
 	mu := s.openAIAccountRuntimeBlockLock(accountID)
 	mu.Lock()
 	s.openaiAccountRuntimeBlockUntil.Delete(accountID)
+	s.openaiAccountRuntimeBlockReason.Delete(accountID)
 	s.openaiAccountRuntimeTempUnsched.Delete(accountID)
 	s.openaiAccountRuntimeBlockGeneration.Store(accountID, s.openaiAccountRuntimeBlockSequence.Add(1))
 	mu.Unlock()
@@ -305,32 +320,52 @@ func (s *OpenAIGatewayService) isOpenAIAccountRuntimeBlocked(account *Account) b
 	mu := s.openAIAccountRuntimeBlockLock(account.ID)
 	mu.Lock()
 	defer mu.Unlock()
+	if account.BypassesLocalOpenAI429SchedulingBlocks() {
+		reasonValue, _ := s.openaiAccountRuntimeBlockReason.Load(account.ID)
+		reason, _ := reasonValue.(string)
+		if isOpenAI429RuntimeBlockReason(reason) ||
+			(isTempUnschedulableRuntimeBlockReason(reason) && account.bypassesLocalOpenAI429TempUnschedulable()) {
+			s.clearOpenAIAccountRuntimeBlockLocked(account.ID)
+			return false
+		}
+	}
 	if _, isTempUnsched := s.openaiAccountRuntimeTempUnsched.Load(account.ID); isTempUnsched &&
 		!globalTempUnschedulableEnabled(context.Background(), s.settingService) {
-		s.openaiAccountRuntimeBlockUntil.Delete(account.ID)
-		s.openaiAccountRuntimeTempUnsched.Delete(account.ID)
-		s.openaiAccountRuntimeBlockGeneration.Store(account.ID, s.openaiAccountRuntimeBlockSequence.Add(1))
+		s.clearOpenAIAccountRuntimeBlockLocked(account.ID)
 		return false
 	}
 	value, ok := s.openaiAccountRuntimeBlockUntil.Load(account.ID)
 	if !ok {
+		s.openaiAccountRuntimeBlockReason.Delete(account.ID)
 		s.openaiAccountRuntimeTempUnsched.Delete(account.ID)
 		return false
 	}
 	cooldownUntil, ok := value.(time.Time)
 	if !ok || cooldownUntil.IsZero() {
-		s.openaiAccountRuntimeBlockUntil.Delete(account.ID)
-		s.openaiAccountRuntimeTempUnsched.Delete(account.ID)
-		s.openaiAccountRuntimeBlockGeneration.Store(account.ID, s.openaiAccountRuntimeBlockSequence.Add(1))
+		s.clearOpenAIAccountRuntimeBlockLocked(account.ID)
 		return false
 	}
 	if time.Now().Before(cooldownUntil) {
 		return true
 	}
-	s.openaiAccountRuntimeBlockUntil.Delete(account.ID)
-	s.openaiAccountRuntimeTempUnsched.Delete(account.ID)
-	s.openaiAccountRuntimeBlockGeneration.Store(account.ID, s.openaiAccountRuntimeBlockSequence.Add(1))
+	s.clearOpenAIAccountRuntimeBlockLocked(account.ID)
 	return false
+}
+
+func (s *OpenAIGatewayService) clearOpenAIAccountRuntimeBlockLocked(accountID int64) {
+	s.openaiAccountRuntimeBlockUntil.Delete(accountID)
+	s.openaiAccountRuntimeBlockReason.Delete(accountID)
+	s.openaiAccountRuntimeTempUnsched.Delete(accountID)
+	s.openaiAccountRuntimeBlockGeneration.Store(accountID, s.openaiAccountRuntimeBlockSequence.Add(1))
+}
+
+func isOpenAI429RuntimeBlockReason(reason string) bool {
+	switch strings.TrimSpace(reason) {
+	case "429", "429_fallback":
+		return true
+	default:
+		return false
+	}
 }
 
 func (s *OpenAIGatewayService) getOpenAIAccountModelTransientState() *openAIAccountModelTransientState {
@@ -469,6 +504,9 @@ func (s *OpenAIGatewayService) ShouldStopOpenAIOAuth429Failover(account *Account
 		return false
 	}
 	if statusCode != http.StatusTooManyRequests || !isOpenAIOAuthAccount(account) {
+		return false
+	}
+	if account.BypassesLocalOpenAI429SchedulingBlocks() {
 		return false
 	}
 	return s.isOpenAIOAuth429Storm()

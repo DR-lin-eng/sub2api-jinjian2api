@@ -15,12 +15,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/gjson"
 )
 
 type openAIWSRateLimitSignalRepo struct {
 	stubOpenAIAccountRepo
-	rateLimitCalls []time.Time
-	updateExtra    []map[string]any
+	rateLimitCalls      []time.Time
+	modelRateLimitCalls []string
+	updateExtra         []map[string]any
 }
 
 type openAICodexSnapshotAsyncRepo struct {
@@ -36,6 +38,11 @@ type openAICodexExtraListRepo struct {
 
 func (r *openAIWSRateLimitSignalRepo) SetRateLimited(_ context.Context, _ int64, resetAt time.Time) error {
 	r.rateLimitCalls = append(r.rateLimitCalls, resetAt)
+	return nil
+}
+
+func (r *openAIWSRateLimitSignalRepo) SetModelRateLimit(_ context.Context, _ int64, scope string, _ time.Time, _ ...string) error {
+	r.modelRateLimitCalls = append(r.modelRateLimitCalls, scope)
 	return nil
 }
 
@@ -285,6 +292,71 @@ func TestOpenAIGatewayService_Forward_WSv2Handshake502RecordsModelTransient(t *t
 	require.True(t, svc.isOpenAIAccountModelRuntimeBlocked(&account, "gpt-5.5"))
 }
 
+func TestOpenAIGatewayService_Forward_CodexPrewarmRateLimits429ReturnsFailoverWithoutLocalBlock(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodPost, "/openai/v1/responses", nil)
+	c.Request.Header.Set("User-Agent", "codex_cli_rs/0.98.0")
+	SetOpenAIClientTransport(c, OpenAIClientTransportHTTP)
+
+	cfg := newOpenAIWSV2TestConfig()
+	cfg.Gateway.OpenAIWS.MaxConnsPerAccount = 1
+	cfg.Gateway.OpenAIWS.MinIdlePerAccount = 0
+	cfg.Gateway.OpenAIWS.MaxIdlePerAccount = 1
+	oversizedPreamble := []byte(`{"type":"rate_limits","padding":"` +
+		strings.Repeat("x", openAIStreamPreOutputBufferLimit) + `"}`)
+	captureConn := &openAIWSCaptureConn{events: [][]byte{
+		[]byte(`{"type":"response.completed","response":{"id":"resp_prewarm_429","model":"gpt-5.5","usage":{"input_tokens":0,"output_tokens":0}}}`),
+		[]byte(`{"type":"rate_limits","rate_limits":[{"name":"codex","remaining":0}]}`),
+		oversizedPreamble,
+		[]byte(`{"type":"error","error":{"type":"rate_limit_error","code":"rate_limit_exceeded","message":"rate limit exceeded"}}`),
+	}}
+	pool := newOpenAIWSConnPool(cfg)
+	pool.setClientDialerForTest(&openAIWSCaptureDialer{conn: captureConn})
+
+	account := Account{
+		ID:          505,
+		Name:        "codex-prewarm-rate-limit",
+		Platform:    PlatformOpenAI,
+		Type:        AccountTypeOAuth,
+		Status:      StatusActive,
+		Schedulable: true,
+		Concurrency: 1,
+		Credentials: map[string]any{"access_token": "oauth-token"},
+		Extra:       map[string]any{CodexPrewarmContinuationExtraKey: true},
+	}
+	repo := &openAIWSRateLimitSignalRepo{stubOpenAIAccountRepo: stubOpenAIAccountRepo{accounts: []Account{account}}}
+	svc := &OpenAIGatewayService{
+		accountRepo:      repo,
+		rateLimitService: &RateLimitService{accountRepo: repo},
+		httpUpstream:     &httpUpstreamRecorder{},
+		cache:            &stubGatewayCache{},
+		cfg:              cfg,
+		openaiWSResolver: NewOpenAIWSProtocolResolver(cfg),
+		toolCorrector:    NewCodexToolCorrector(),
+		openaiWSPool:     pool,
+	}
+
+	result, err := svc.Forward(
+		context.Background(),
+		c,
+		&account,
+		[]byte(`{"model":"gpt-5.5","stream":true,"input":[{"type":"message","role":"user","content":"hello"}]}`),
+	)
+
+	require.Nil(t, result)
+	var failoverErr *UpstreamFailoverError
+	require.ErrorAs(t, err, &failoverErr)
+	require.Equal(t, http.StatusTooManyRequests, failoverErr.StatusCode)
+	require.Empty(t, rec.Body.Bytes(), "rate_limits preamble and account 429 must not reach the client before failover")
+	require.Len(t, captureConn.writes, 2, "empty prewarm and business request must both be sent")
+	require.Empty(t, repo.rateLimitCalls)
+	require.Empty(t, repo.modelRateLimitCalls)
+	require.True(t, account.IsSchedulable())
+}
+
 func TestOpenAIGatewayService_ProxyResponsesWebSocketFromClient_ErrorEventUsageLimitPersistsRateLimit(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -391,6 +463,174 @@ func TestOpenAIGatewayService_ProxyResponsesWebSocketFromClient_ErrorEventUsageL
 		require.WithinDuration(t, time.Unix(resetAt, 0), repo.rateLimitCalls[0], 2*time.Second)
 	case <-time.After(5 * time.Second):
 		t.Fatal("等待 ingress websocket 结束超时")
+	}
+}
+
+type codex429IngressHarness struct {
+	client    *coderws.Conn
+	serverErr <-chan error
+	repo      *openAIWSRateLimitSignalRepo
+	account   *Account
+}
+
+func startCodex429IngressHarness(t *testing.T, events ...[]byte) *codex429IngressHarness {
+	t.Helper()
+	gin.SetMode(gin.TestMode)
+
+	cfg := newOpenAIWSV2TestConfig()
+	cfg.Security.URLAllowlist.Enabled = false
+	cfg.Security.URLAllowlist.AllowInsecureHTTP = true
+	cfg.Gateway.OpenAIWS.MaxConnsPerAccount = 1
+	cfg.Gateway.OpenAIWS.MinIdlePerAccount = 0
+	cfg.Gateway.OpenAIWS.MaxIdlePerAccount = 1
+	cfg.Gateway.OpenAIWS.QueueLimitPerConn = 8
+	cfg.Gateway.OpenAIWS.DialTimeoutSeconds = 3
+	cfg.Gateway.OpenAIWS.ReadTimeoutSeconds = 3
+	cfg.Gateway.OpenAIWS.WriteTimeoutSeconds = 3
+
+	captureConn := &openAIWSCaptureConn{events: events}
+	pool := newOpenAIWSConnPool(cfg)
+	pool.setClientDialerForTest(&openAIWSCaptureDialer{conn: captureConn})
+	account := &Account{
+		ID:          506,
+		Name:        "codex-ingress-rate-limit",
+		Platform:    PlatformOpenAI,
+		Type:        AccountTypeOAuth,
+		Status:      StatusActive,
+		Schedulable: true,
+		Concurrency: 1,
+		Credentials: map[string]any{"access_token": "oauth-token"},
+		Extra:       map[string]any{CodexPrewarmContinuationExtraKey: true},
+	}
+	repo := &openAIWSRateLimitSignalRepo{stubOpenAIAccountRepo: stubOpenAIAccountRepo{accounts: []Account{*account}}}
+	svc := &OpenAIGatewayService{
+		accountRepo:      repo,
+		rateLimitService: &RateLimitService{accountRepo: repo},
+		httpUpstream:     &httpUpstreamRecorder{},
+		cache:            &stubGatewayCache{},
+		cfg:              cfg,
+		openaiWSResolver: NewOpenAIWSProtocolResolver(cfg),
+		toolCorrector:    NewCodexToolCorrector(),
+		openaiWSPool:     pool,
+	}
+
+	serverErrCh := make(chan error, 1)
+	wsServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := coderws.Accept(w, r, &coderws.AcceptOptions{CompressionMode: coderws.CompressionContextTakeover})
+		if err != nil {
+			serverErrCh <- err
+			return
+		}
+		defer func() { _ = conn.CloseNow() }()
+
+		recorder := httptest.NewRecorder()
+		ginCtx, _ := gin.CreateTestContext(recorder)
+		req := r.Clone(r.Context())
+		req.Header = req.Header.Clone()
+		req.Header.Set("User-Agent", "codex_cli_rs/0.98.0")
+		ginCtx.Request = req
+
+		readCtx, cancelRead := context.WithTimeout(r.Context(), 3*time.Second)
+		msgType, firstMessage, readErr := conn.Read(readCtx)
+		cancelRead()
+		if readErr != nil {
+			serverErrCh <- readErr
+			return
+		}
+		if msgType != coderws.MessageText && msgType != coderws.MessageBinary {
+			serverErrCh <- io.ErrUnexpectedEOF
+			return
+		}
+		serverErrCh <- svc.ProxyResponsesWebSocketFromClient(r.Context(), ginCtx, conn, account, "oauth-token", firstMessage, nil)
+	}))
+	t.Cleanup(wsServer.Close)
+
+	dialCtx, cancelDial := context.WithTimeout(context.Background(), 3*time.Second)
+	clientConn, _, err := coderws.Dial(dialCtx, "ws"+strings.TrimPrefix(wsServer.URL, "http"), nil)
+	cancelDial()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = clientConn.CloseNow() })
+
+	writeCtx, cancelWrite := context.WithTimeout(context.Background(), 3*time.Second)
+	err = clientConn.Write(writeCtx, coderws.MessageText, []byte(`{"type":"response.create","model":"gpt-5.5","stream":true}`))
+	cancelWrite()
+	require.NoError(t, err)
+
+	return &codex429IngressHarness{client: clientConn, serverErr: serverErrCh, repo: repo, account: account}
+}
+
+func TestOpenAIGatewayService_IngressCodexRateLimitsPreamble429IsHiddenForFailover(t *testing.T) {
+	harness := startCodex429IngressHarness(t,
+		[]byte(`{"type":"rate_limits","rate_limits":[{"name":"codex","remaining":0}]}`),
+		[]byte(`{"type":"response.failed","response":{"id":"resp_ingress_429","error":{"status_code":429,"code":"rate_limit_exceeded","message":"limited"}}}`),
+	)
+
+	select {
+	case serverErr := <-harness.serverErr:
+		var failoverErr *UpstreamFailoverError
+		require.ErrorAs(t, serverErr, &failoverErr)
+		require.Equal(t, http.StatusTooManyRequests, failoverErr.StatusCode)
+	case <-time.After(5 * time.Second):
+		t.Fatal("waiting for ingress 429 failover timed out")
+	}
+
+	readCtx, cancelRead := context.WithTimeout(context.Background(), time.Second)
+	_, payload, readErr := harness.client.Read(readCtx)
+	cancelRead()
+	require.Error(t, readErr)
+	require.Empty(t, payload, "buffered rate_limits and response.failed 429 must not reach the client")
+	require.Empty(t, harness.repo.rateLimitCalls)
+	require.Empty(t, harness.repo.modelRateLimitCalls)
+	require.True(t, harness.account.IsSchedulable())
+}
+
+func TestOpenAIGatewayService_IngressOversizedRateLimitsPreamble429IsHiddenForFailover(t *testing.T) {
+	oversizedPreamble := []byte(`{"type":"rate_limits","padding":"` +
+		strings.Repeat("x", openAIStreamPreOutputBufferLimit) + `"}`)
+	harness := startCodex429IngressHarness(t,
+		oversizedPreamble,
+		[]byte(`{"type":"response.failed","response":{"id":"resp_ingress_oversized_429","error":{"status_code":429,"code":"rate_limit_exceeded","message":"limited"}}}`),
+	)
+
+	select {
+	case serverErr := <-harness.serverErr:
+		var failoverErr *UpstreamFailoverError
+		require.ErrorAs(t, serverErr, &failoverErr)
+		require.Equal(t, http.StatusTooManyRequests, failoverErr.StatusCode)
+	case <-time.After(5 * time.Second):
+		t.Fatal("waiting for oversized ingress 429 failover timed out")
+	}
+
+	readCtx, cancelRead := context.WithTimeout(context.Background(), time.Second)
+	_, payload, readErr := harness.client.Read(readCtx)
+	cancelRead()
+	require.Error(t, readErr)
+	require.Empty(t, payload, "oversized rate_limits preamble and 429 must not reach the client")
+	require.Empty(t, harness.repo.rateLimitCalls)
+	require.Empty(t, harness.repo.modelRateLimitCalls)
+	require.True(t, harness.account.IsSchedulable())
+}
+
+func TestOpenAIGatewayService_IngressCodexRateLimitsPreambleFlushesBeforeBusinessFrames(t *testing.T) {
+	harness := startCodex429IngressHarness(t,
+		[]byte(`{"type":"rate_limits","rate_limits":[{"name":"codex","remaining":9}]}`),
+		[]byte(`{"type":"response.created","response":{"id":"resp_ingress_ok","model":"gpt-5.5"}}`),
+		[]byte(`{"type":"response.completed","response":{"id":"resp_ingress_ok","model":"gpt-5.5","usage":{"input_tokens":1,"output_tokens":1}}}`),
+	)
+
+	for _, wantType := range []string{"rate_limits", "response.created", "response.completed"} {
+		readCtx, cancelRead := context.WithTimeout(context.Background(), 3*time.Second)
+		_, payload, err := harness.client.Read(readCtx)
+		cancelRead()
+		require.NoError(t, err)
+		require.Equal(t, wantType, strings.TrimSpace(gjson.GetBytes(payload, "type").String()))
+	}
+	require.NoError(t, harness.client.Close(coderws.StatusNormalClosure, "done"))
+	select {
+	case serverErr := <-harness.serverErr:
+		require.NoError(t, serverErr)
+	case <-time.After(5 * time.Second):
+		t.Fatal("waiting for ingress success shutdown timed out")
 	}
 }
 

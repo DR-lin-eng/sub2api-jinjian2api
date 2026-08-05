@@ -19,13 +19,19 @@ const (
 
 // isRateLimitActiveForKey 检查指定 key 的限流是否生效
 func (a *Account) isRateLimitActiveForKey(key string) bool {
-	resetAt := a.modelRateLimitResetAt(key)
+	resetAt, reason := a.modelRateLimitState(key)
+	if a.bypassesLocalOpenAI429ModelRateLimit(reason) {
+		return false
+	}
 	return resetAt != nil && time.Now().Before(*resetAt)
 }
 
 // getRateLimitRemainingForKey 获取指定 key 的限流剩余时间，0 表示未限流或已过期
 func (a *Account) getRateLimitRemainingForKey(key string) time.Duration {
-	resetAt := a.modelRateLimitResetAt(key)
+	resetAt, reason := a.modelRateLimitState(key)
+	if a.bypassesLocalOpenAI429ModelRateLimit(reason) {
+		return 0
+	}
 	if resetAt == nil {
 		return 0
 	}
@@ -148,25 +154,36 @@ func antigravityModelRateLimitKeys(model string) []string {
 	return keys
 }
 
-func (a *Account) modelRateLimitResetAt(scope string) *time.Time {
+func (a *Account) modelRateLimitState(scope string) (*time.Time, string) {
 	if a == nil || a.Extra == nil || scope == "" {
-		return nil
+		return nil, ""
 	}
 	rawLimits, ok := a.Extra[modelRateLimitsKey].(map[string]any)
 	if !ok {
-		return nil
+		return nil, ""
 	}
 	rawLimit, ok := rawLimits[scope].(map[string]any)
 	if !ok {
-		return nil
+		return nil, ""
 	}
+	reason, _ := rawLimit["reason"].(string)
 	resetAtRaw, ok := rawLimit["rate_limit_reset_at"].(string)
 	if !ok || strings.TrimSpace(resetAtRaw) == "" {
-		return nil
+		return nil, reason
 	}
 	resetAt, err := time.Parse(time.RFC3339, resetAtRaw)
 	if err != nil {
-		return nil
+		return nil, reason
 	}
-	return &resetAt
+	return &resetAt, reason
+}
+
+func (a *Account) bypassesLocalOpenAI429ModelRateLimit(reason string) bool {
+	if !a.BypassesLocalOpenAI429SchedulingBlocks() {
+		return false
+	}
+	reason = strings.TrimSpace(reason)
+	return isOpenAIQuotaModelRateLimitReason(reason) ||
+		reason == openAIImageRateLimitReason ||
+		tempUnschedulableReasonHasStatusCode(reason, 429)
 }

@@ -280,6 +280,73 @@ func TestHandle429_OpenAIRequestedModelUsesModelRateLimit(t *testing.T) {
 	require.True(t, repo.lastModelRateResetAt.After(time.Now()))
 }
 
+func TestCodexPrewarmContinuation429KeepsObservationWithoutSchedulingBlocks(t *testing.T) {
+	repo := &rateLimitAccountRepoStub{}
+	rateSvc := NewRateLimitService(repo, nil, nil, nil, nil)
+	gateway := &OpenAIGatewayService{rateLimitService: rateSvc}
+	account := &Account{
+		ID:          126,
+		Platform:    PlatformOpenAI,
+		Type:        AccountTypeOAuth,
+		Status:      StatusActive,
+		Schedulable: true,
+		Credentials: map[string]any{
+			"plan_type":                  "plus",
+			"temp_unschedulable_enabled": true,
+			"temp_unschedulable_rules": []any{
+				map[string]any{
+					"error_code":       float64(http.StatusTooManyRequests),
+					"keywords":         []any{"limit reached"},
+					"duration_minutes": float64(30),
+				},
+			},
+		},
+		Extra: map[string]any{CodexPrewarmContinuationExtraKey: true},
+	}
+	headers := http.Header{}
+	headers.Set("x-codex-primary-used-percent", "100")
+	headers.Set("x-codex-primary-reset-after-seconds", "7200")
+	headers.Set("x-codex-primary-window-minutes", "10080")
+	body := []byte(`{"error":{"type":"usage_limit_reached","message":"limit reached","plan_type":"free"}}`)
+
+	shouldDisable := gateway.handleOpenAIAccountUpstreamError(
+		context.Background(), account, http.StatusTooManyRequests, headers, body, "gpt-5.5",
+	)
+
+	require.False(t, shouldDisable)
+	require.Zero(t, repo.rateLimitedCalls)
+	require.Zero(t, repo.modelRateLimitCalls)
+	require.Zero(t, repo.tempCalls)
+	require.Zero(t, repo.setErrorCalls)
+	require.False(t, gateway.isOpenAIAccountRuntimeBlocked(account))
+	require.Equal(t, 1, repo.updateExtraCalls, "Codex usage headers remain observational")
+	require.Equal(t, "free", account.Credentials["plan_type"])
+}
+
+func TestRateLimitService_CodexPrewarmContinuationDefensivelySkips429Writers(t *testing.T) {
+	repo := &rateLimitAccountRepoStub{}
+	svc := NewRateLimitService(repo, nil, nil, nil, nil)
+	account := &Account{
+		ID:          127,
+		Platform:    PlatformOpenAI,
+		Type:        AccountTypeOAuth,
+		Status:      StatusActive,
+		Schedulable: true,
+		Extra:       map[string]any{CodexPrewarmContinuationExtraKey: true},
+	}
+	body := []byte(`{"error":{"type":"rate_limit_exceeded","message":"Rate limit reached for gpt-image-2-codex (for limit gpt-image)"}}`)
+
+	svc.handle429(context.Background(), account, http.Header{}, body, "gpt-image-2-codex")
+	require.False(t, svc.HandleOpenAIImageRateLimit(context.Background(), account, http.StatusTooManyRequests, http.Header{}, body))
+	require.False(t, svc.HandleTempUnschedulable(context.Background(), account, http.StatusTooManyRequests, body, "gpt-image-2-codex"))
+	require.False(t, svc.HandleUpstreamError(context.Background(), account, http.StatusTooManyRequests, http.Header{}, body, "gpt-image-2-codex"))
+
+	require.Zero(t, repo.rateLimitedCalls)
+	require.Zero(t, repo.modelRateLimitCalls)
+	require.Zero(t, repo.tempCalls)
+	require.Zero(t, repo.setErrorCalls)
+}
+
 func TestNormalizedCodexLimits(t *testing.T) {
 	// Test the Normalize() method directly
 	pUsed := 100.0

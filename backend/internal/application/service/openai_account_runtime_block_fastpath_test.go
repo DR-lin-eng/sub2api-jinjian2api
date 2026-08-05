@@ -28,6 +28,37 @@ func TestOpenAI429FastPath_MarksOAuthAccountCoolingDown(t *testing.T) {
 	require.False(t, svc.isOpenAIAccountRuntimeBlocked(apiKeyAccount))
 }
 
+func TestOpenAI429FastPath_CodexPrewarmContinuationKeepsAccountEligible(t *testing.T) {
+	svc := &OpenAIGatewayService{}
+	account := &Account{
+		ID:       420,
+		Platform: PlatformOpenAI,
+		Type:     AccountTypeOAuth,
+		Extra:    map[string]any{CodexPrewarmContinuationExtraKey: true},
+	}
+
+	shouldDisable := svc.handleOpenAIAccountUpstreamError(
+		context.Background(), account, http.StatusTooManyRequests, http.Header{}, nil,
+	)
+
+	require.False(t, shouldDisable)
+	require.False(t, svc.isOpenAIAccountRuntimeBlocked(account))
+	require.Zero(t, svc.openaiOAuth429WindowCount.Load(), "opted 429s must not arm the global storm breaker")
+}
+
+func TestOpenAIRuntimeBlock_CodexPrewarmContinuationClearsOnly429Reason(t *testing.T) {
+	svc := &OpenAIGatewayService{}
+	account := &Account{ID: 421, Platform: PlatformOpenAI, Type: AccountTypeOAuth}
+
+	svc.BlockAccountScheduling(account, time.Now().Add(time.Hour), "429")
+	require.True(t, svc.isOpenAIAccountRuntimeBlocked(account))
+	account.Extra = map[string]any{CodexPrewarmContinuationExtraKey: true}
+	require.False(t, svc.isOpenAIAccountRuntimeBlocked(account), "enabling the switch should clear a stale local 429 block")
+
+	svc.BlockAccountScheduling(account, time.Now().Add(time.Hour), "oauth_401")
+	require.True(t, svc.isOpenAIAccountRuntimeBlocked(account), "authentication blocks must remain effective")
+}
+
 // TestOpenAI429FastPath_SkipsSparkShadow 外审第8轮 P1:spark 影子被选中后若 /responses 返回 429,
 // 不得按 global x-codex-* 信号写内存运行时熔断(否则 spark 被冷却到 global reset、单影子场景无可用账号)。
 func TestOpenAI429FastPath_SkipsSparkShadow(t *testing.T) {
@@ -483,6 +514,24 @@ func TestShouldStopOpenAIOAuth429Failover_OnlyDuringStorm(t *testing.T) {
 	require.False(t, svc.ShouldStopOpenAIOAuth429Failover(apiKeyAccount, http.StatusTooManyRequests, 1, &state))
 	require.False(t, svc.ShouldStopOpenAIOAuth429Failover(account, http.StatusInternalServerError, 1, &state))
 	require.False(t, svc.ShouldStopOpenAIOAuth429Failover(account, http.StatusTooManyRequests, 0, &state))
+}
+
+func TestShouldStopOpenAIOAuth429Failover_CodexPrewarmIgnoresStormButKeepsCallerBudget(t *testing.T) {
+	svc := &OpenAIGatewayService{}
+	account := &Account{
+		ID:       420,
+		Platform: PlatformOpenAI,
+		Type:     AccountTypeOAuth,
+		Extra:    map[string]any{CodexPrewarmContinuationExtraKey: true},
+	}
+	for range openAIOAuth429StormThreshold {
+		svc.recordOpenAIOAuth429()
+	}
+
+	var state OpenAIOAuth429FailoverState
+	require.False(t, svc.ShouldStopOpenAIOAuth429Failover(account, http.StatusTooManyRequests, 1, &state))
+	require.False(t, svc.ShouldStopOpenAIOAuth429Failover(account, http.StatusTooManyRequests, 50, &state),
+		"the handler maxAccountSwitches remains the independent hard retry bound")
 }
 
 func TestShouldStopOpenAIOAuth429Failover_TracksOneGrokFollowupAttempt(t *testing.T) {

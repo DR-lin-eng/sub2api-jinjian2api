@@ -354,6 +354,7 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 	}
 	bufferedStreamEvents := make([][]byte, 0, 4)
 	bufferedStreamEventBytes := 0
+	bufferedRateLimitsEventBytes := 0
 	eventCount := 0
 	tokenEventCount := 0
 	terminalEventCount := 0
@@ -426,6 +427,7 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 		}
 		bufferedStreamEvents = bufferedStreamEvents[:0]
 		bufferedStreamEventBytes = 0
+		bufferedRateLimitsEventBytes = 0
 		flushStreamWriter(true)
 		flushedBufferedEventCount += flushed
 		if debugEnabled {
@@ -634,6 +636,14 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 			}
 			// error 事件后连接不再可复用，避免回池后污染下一请求。
 			lease.MarkBroken()
+			if account.BypassesLocalOpenAI429SchedulingBlocks() && !wroteDownstream &&
+				isOpenAIWSRateLimitError(errCodeRaw, errTypeRaw, errMsgRaw) {
+				return nil, &UpstreamFailoverError{
+					StatusCode:      http.StatusTooManyRequests,
+					ResponseBody:    append([]byte(nil), message...),
+					ResponseHeaders: cloneHeader(lease.HandshakeHeaders()),
+				}
+			}
 			if !wroteDownstream && canFallback {
 				return nil, wrapOpenAIWSFallback(fallbackReason, errors.New(errMsg))
 			}
@@ -654,15 +664,44 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 			return nil, fmt.Errorf("openai ws error event: %s", errMsg)
 		}
 
+		if eventType == "response.failed" && account.BypassesLocalOpenAI429SchedulingBlocks() &&
+			!wroteDownstream && openAIWSPayloadStatusCode(message) == http.StatusTooManyRequests {
+			s.handleOpenAIWSTerminalTransientFailure(ctx, account, mappedModel, lease.HandshakeHeaders(), message)
+			lease.MarkBroken()
+			return nil, &UpstreamFailoverError{
+				StatusCode:      http.StatusTooManyRequests,
+				ResponseBody:    append([]byte(nil), message...),
+				ResponseHeaders: cloneHeader(lease.HandshakeHeaders()),
+			}
+		}
+
 		if reqStream {
 			// 在首个 token 前先缓冲事件（如 response.created），
 			// 以便上游早期断连时仍可安全回退到 HTTP，不给下游发送半截流。
 			shouldBuffer := firstTokenMs == nil && !isTokenEvent && !isTerminalEvent
 			if shouldBuffer {
+				isRateLimitsPreamble := account.BypassesLocalOpenAI429SchedulingBlocks() &&
+					isOpenAIWSRateLimitsPreamble(eventType)
+				if isRateLimitsPreamble && bufferedRateLimitsEventBytes+len(message) > openAIStreamPreOutputBufferLimit {
+					if debugEnabled {
+						logOpenAIWSModeDebug(
+							"buffer_rate_limits_drop account_id=%d conn_id=%s idx=%d bytes=%d buffered_rate_limits_bytes=%d",
+							account.ID,
+							connID,
+							eventCount,
+							len(message),
+							bufferedRateLimitsEventBytes,
+						)
+					}
+					continue
+				}
 				buffered := make([]byte, len(message))
 				copy(buffered, message)
 				bufferedStreamEvents = append(bufferedStreamEvents, buffered)
 				bufferedStreamEventBytes += len(buffered)
+				if isRateLimitsPreamble {
+					bufferedRateLimitsEventBytes += len(buffered)
+				}
 				bufferedEventCount++
 				if debugEnabled && shouldLogOpenAIWSBufferedEvent(bufferedEventCount) {
 					logOpenAIWSModeDebug(
@@ -675,7 +714,7 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 						len(bufferedStreamEvents),
 					)
 				}
-				if bufferedStreamEventBytes >= openAIStreamPreOutputBufferLimit {
+				if bufferedStreamEventBytes-bufferedRateLimitsEventBytes >= openAIStreamPreOutputBufferLimit {
 					flushBufferedStreamEvents("buffer_limit")
 				}
 			} else {

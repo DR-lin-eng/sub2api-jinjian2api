@@ -781,6 +781,102 @@ func (s *AccountRepoSuite) TestListSchedulableByPlatform() {
 	s.Require().Equal(service.PlatformAnthropic, accounts[0].Platform)
 }
 
+func (s *AccountRepoSuite) TestCodexPrewarm429SoftBlocksRemainInAllSchedulingQueries() {
+	future := time.Now().Add(time.Hour)
+	enabledExtra := map[string]any{service.CodexPrewarmContinuationExtraKey: true}
+	group := mustCreateGroup(s.T(), s.client, &service.Group{Name: "g-codex-429-soft", Platform: service.PlatformOpenAI})
+
+	createOpenAI := func(name, accountType string, extra map[string]any) *service.Account {
+		account := mustCreateAccount(s.T(), s.client, &service.Account{
+			Name: name, Platform: service.PlatformOpenAI, Type: accountType, Schedulable: true, Extra: extra,
+		})
+		mustBindAccountToGroup(s.T(), s.client, account.ID, group.ID, 1)
+		return account
+	}
+	optedRate := createOpenAI("codex-429-opted-rate", service.AccountTypeOAuth, enabledExtra)
+	s.Require().NoError(s.client.Account.UpdateOneID(optedRate.ID).SetRateLimitResetAt(future).Exec(s.ctx))
+	optedTemp429 := createOpenAI("codex-429-opted-temp", service.AccountTypeOAuth, enabledExtra)
+	s.Require().NoError(s.client.Account.UpdateOneID(optedTemp429.ID).
+		SetTempUnschedulableUntil(future).
+		SetTempUnschedulableReason(`{"status_code":429,"error_message":"limited"}`).
+		Exec(s.ctx))
+	optedTemp401 := createOpenAI("codex-429-opted-auth", service.AccountTypeOAuth, enabledExtra)
+	s.Require().NoError(s.client.Account.UpdateOneID(optedTemp401.ID).
+		SetTempUnschedulableUntil(future).
+		SetTempUnschedulableReason(`{"status_code":401,"error_message":"unauthorized"}`).
+		Exec(s.ctx))
+	disabledRate := createOpenAI("codex-429-disabled-rate", service.AccountTypeOAuth, map[string]any{})
+	s.Require().NoError(s.client.Account.UpdateOneID(disabledRate.ID).SetRateLimitResetAt(future).Exec(s.ctx))
+	apiKeyWithFlag := createOpenAI("codex-429-apikey-rate", service.AccountTypeAPIKey, enabledExtra)
+	s.Require().NoError(s.client.Account.UpdateOneID(apiKeyWithFlag.ID).SetRateLimitResetAt(future).Exec(s.ctx))
+
+	assertSchedulingSet := func(accounts []service.Account) {
+		ids := idsOfAccounts(accounts)
+		s.Contains(ids, optedRate.ID)
+		s.Contains(ids, optedTemp429.ID)
+		s.NotContains(ids, optedTemp401.ID)
+		s.NotContains(ids, disabledRate.ID)
+		s.NotContains(ids, apiKeyWithFlag.ID)
+	}
+	all, err := s.repo.ListSchedulable(s.ctx)
+	s.Require().NoError(err)
+	assertSchedulingSet(all)
+	byGroup, err := s.repo.ListSchedulableByGroupID(s.ctx, group.ID)
+	s.Require().NoError(err)
+	assertSchedulingSet(byGroup)
+	byPlatform, err := s.repo.ListSchedulableByPlatform(s.ctx, service.PlatformOpenAI)
+	s.Require().NoError(err)
+	assertSchedulingSet(byPlatform)
+	byPlatforms, err := s.repo.ListSchedulableByPlatforms(s.ctx, []string{service.PlatformOpenAI})
+	s.Require().NoError(err)
+	assertSchedulingSet(byPlatforms)
+
+	capacity, err := s.repo.ListSchedulableCapacityByGroupIDs(s.ctx, []int64{group.ID})
+	s.Require().NoError(err)
+	capacityIDs := make([]int64, 0, len(capacity))
+	for _, row := range capacity {
+		capacityIDs = append(capacityIDs, row.AccountID)
+	}
+	s.ElementsMatch([]int64{optedRate.ID, optedTemp429.ID}, capacityIDs)
+
+	active, _, err := s.repo.ListWithFilters(
+		s.ctx,
+		pagination.PaginationParams{Page: 1, PageSize: 20},
+		service.PlatformOpenAI,
+		"",
+		service.StatusActive,
+		"codex-429-",
+		group.ID,
+		"",
+	)
+	s.Require().NoError(err)
+	assertSchedulingSet(active)
+	rateLimited, _, err := s.repo.ListWithFilters(
+		s.ctx,
+		pagination.PaginationParams{Page: 1, PageSize: 20},
+		service.PlatformOpenAI,
+		"",
+		"rate_limited",
+		"codex-429-",
+		group.ID,
+		"",
+	)
+	s.Require().NoError(err)
+	s.ElementsMatch([]int64{disabledRate.ID, apiKeyWithFlag.ID}, idsOfAccounts(rateLimited))
+	tempBlocked, _, err := s.repo.ListWithFilters(
+		s.ctx,
+		pagination.PaginationParams{Page: 1, PageSize: 20},
+		service.PlatformOpenAI,
+		"",
+		"temp_unschedulable",
+		"codex-429-",
+		group.ID,
+		"",
+	)
+	s.Require().NoError(err)
+	s.ElementsMatch([]int64{optedTemp401.ID}, idsOfAccounts(tempBlocked))
+}
+
 func (s *AccountRepoSuite) TestListSchedulableByGroupIDAndPlatform() {
 	group := mustCreateGroup(s.T(), s.client, &service.Group{Name: "g-sp"})
 	a1 := mustCreateAccount(s.T(), s.client, &service.Account{Name: "a1", Platform: service.PlatformAnthropic, Schedulable: true})

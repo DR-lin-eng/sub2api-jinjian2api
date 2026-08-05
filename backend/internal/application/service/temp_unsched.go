@@ -2,7 +2,10 @@ package service
 
 import (
 	"context"
+	"strings"
 	"time"
+
+	"github.com/tidwall/gjson"
 )
 
 func globalTempUnschedulableEnabled(ctx context.Context, settingService *SettingService) bool {
@@ -17,6 +20,15 @@ type TempUnschedState struct {
 	MatchedKeyword  string `json:"matched_keyword"`   // 匹配的关键词
 	RuleIndex       int    `json:"rule_index"`        // 触发的规则索引
 	ErrorMessage    string `json:"error_message"`     // 错误消息
+}
+
+func tempUnschedulableReasonHasStatusCode(reason string, statusCode int) bool {
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		return false
+	}
+	value := gjson.Get(reason, "status_code")
+	return value.Exists() && value.Type == gjson.Number && int(value.Int()) == statusCode
 }
 
 // TempUnschedCache 临时不可调度缓存接口

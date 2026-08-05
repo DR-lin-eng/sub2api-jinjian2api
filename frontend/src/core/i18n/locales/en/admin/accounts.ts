@@ -612,7 +612,7 @@ export default {
           'When WS mode is enabled, account concurrency becomes the WS connection pool limit for this account.',
         wsModePassthroughHint: 'Passthrough mode does not use the WS connection pool.',
         codexPrewarmContinuation: 'Codex prewarm continuation',
-        codexPrewarmContinuationDesc: 'OpenAI OAuth only. This single switch enables the HTTP-to-upstream-WSv2 bridge, empty generate=false prewarm, previous_response_id continuation, and native-history user-to-developer roles. Structured calls, large outputs, and native web/tool search stay intact. X-CPA-Reasoning: none opts that request into reasoning.effort=none. It also ignores this service\'s local Codex 5h/7d usage-window pause and the account\'s automatic passthrough mode; global OpenAI WS and WSv2 capabilities must remain enabled.',
+        codexPrewarmContinuationDesc: 'OpenAI OAuth only. This single switch enables the HTTP-to-upstream-WSv2 bridge, empty generate=false prewarm, previous_response_id continuation, and native-history user-to-developer roles. Structured calls, large outputs, and native web/tool search stay intact. X-CPA-Reasoning: none opts that request into reasoning.effort=none. It also ignores this service\'s local Codex 5h/7d usage-window pause and the account\'s automatic passthrough mode. Upstream 429s still reduce scheduling weight, but never hard-block the account from later scheduling. Global OpenAI WS and WSv2 capabilities must remain enabled.',
         oauthResponsesWebsocketsV2: 'OAuth WebSocket Mode',
         oauthResponsesWebsocketsV2Desc:
           'Only applies to OpenAI OAuth. This account can use OpenAI WebSocket Mode only when enabled.',

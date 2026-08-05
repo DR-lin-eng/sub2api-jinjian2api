@@ -29,10 +29,10 @@ func TestGetAccountSchedulingStateUsesSingleProjectionQuery(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "platform", "type", "status", "schedulable", "expires_at",
 			"auto_pause_on_expired", "overload_until", "rate_limit_reset_at",
-			"temp_unschedulable_until", "extra",
+			"temp_unschedulable_until", "temp_unschedulable_reason", "extra",
 		}).AddRow(
 			int64(91), service.PlatformOpenAI, service.AccountTypeAPIKey,
-			service.StatusActive, true, nil, true, nil, nil, nil, []byte(`{}`),
+			service.StatusActive, true, nil, true, nil, nil, nil, nil, []byte(`{}`),
 		))
 
 	state, err := repo.GetAccountSchedulingState(context.Background(), 91)
@@ -43,11 +43,11 @@ func TestGetAccountSchedulingStateUsesSingleProjectionQuery(t *testing.T) {
 	normalized := normalizeSQLWhitespace(capturedSQL)
 	selectClause, _, found := strings.Cut(normalized, " FROM ")
 	require.True(t, found, "unexpected projection SQL: %s", normalized)
-	require.Equal(t, 10, strings.Count(selectClause, ","), "projection must select exactly eleven columns: %s", selectClause)
+	require.Equal(t, 11, strings.Count(selectClause, ","), "projection must select exactly twelve columns: %s", selectClause)
 	for _, field := range []string{
 		"id", "platform", "type", "status", "schedulable", "expires_at",
 		"auto_pause_on_expired", "overload_until", "rate_limit_reset_at",
-		"temp_unschedulable_until", "extra",
+		"temp_unschedulable_until", "temp_unschedulable_reason", "extra",
 	} {
 		require.Contains(t, selectClause, `"`+field+`"`)
 	}

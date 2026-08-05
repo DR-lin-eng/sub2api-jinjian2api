@@ -200,6 +200,9 @@ func (a *Account) EffectiveLoadFactor() int {
 }
 
 func (a *Account) IsSchedulable() bool {
+	if a == nil {
+		return false
+	}
 	if !a.IsActive() || !a.Schedulable {
 		return false
 	}
@@ -210,10 +213,10 @@ func (a *Account) IsSchedulable() bool {
 	if a.OverloadUntil != nil && now.Before(*a.OverloadUntil) {
 		return false
 	}
-	if a.RateLimitResetAt != nil && now.Before(*a.RateLimitResetAt) {
+	if a.RateLimitResetAt != nil && now.Before(*a.RateLimitResetAt) && !a.BypassesLocalOpenAI429SchedulingBlocks() {
 		return false
 	}
-	if a.TempUnschedulableUntil != nil && now.Before(*a.TempUnschedulableUntil) {
+	if a.TempUnschedulableUntil != nil && now.Before(*a.TempUnschedulableUntil) && !a.bypassesLocalOpenAI429TempUnschedulable() {
 		return false
 	}
 	if a.IsAPIKeyOrBedrock() && a.IsQuotaExceeded() {
@@ -242,7 +245,7 @@ func (a *Account) IsCredentialUsableForShadow() bool {
 	if a.AutoPauseOnExpired && a.ExpiresAt != nil && !now.Before(*a.ExpiresAt) {
 		return false
 	}
-	if a.TempUnschedulableUntil != nil && now.Before(*a.TempUnschedulableUntil) {
+	if a.TempUnschedulableUntil != nil && now.Before(*a.TempUnschedulableUntil) && !a.bypassesLocalOpenAI429TempUnschedulable() {
 		return false
 	}
 	return true
@@ -1417,6 +1420,18 @@ func (a *Account) IsCodexPrewarmContinuationEnabled() bool {
 	}
 	enabled, ok := a.Extra[CodexPrewarmContinuationExtraKey].(bool)
 	return ok && enabled
+}
+
+// BypassesLocalOpenAI429SchedulingBlocks reports whether this account keeps
+// participating in local scheduling after an upstream 429. The failure still
+// feeds scheduler health statistics; this only prevents hard local exclusion.
+func (a *Account) BypassesLocalOpenAI429SchedulingBlocks() bool {
+	return a.IsCodexPrewarmContinuationEnabled()
+}
+
+func (a *Account) bypassesLocalOpenAI429TempUnschedulable() bool {
+	return a.BypassesLocalOpenAI429SchedulingBlocks() &&
+		tempUnschedulableReasonHasStatusCode(a.TempUnschedulableReason, 429)
 }
 
 func (a *Account) IsOpenAIChatGPTSubscription() bool {

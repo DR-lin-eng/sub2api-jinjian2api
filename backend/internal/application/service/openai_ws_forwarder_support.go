@@ -417,7 +417,7 @@ func normalizeOpenAIWSTerminalEvent(eventType string) string {
 	}
 }
 
-func openAIWSPayloadTransientStatus(payload []byte) int {
+func openAIWSPayloadStatusCode(payload []byte) int {
 	if len(payload) == 0 {
 		return 0
 	}
@@ -431,12 +431,23 @@ func openAIWSPayloadTransientStatus(payload []byte) int {
 	if status == 0 {
 		status = int(gjson.GetBytes(payload, "error.status").Int())
 	}
+	return status
+}
+
+func openAIWSPayloadTransientStatus(payload []byte) int {
+	status := openAIWSPayloadStatusCode(payload)
+	if status == 0 {
+		// Some upstreams only expose a semantic error code/type. Keep the
+		// existing classification for those payloads below.
+		return openAIWSPayloadSemanticTransientStatus(payload)
+	}
 	if shouldCooldownOpenAITransientUpstreamError(status, payload) {
 		return status
 	}
-	if status != 0 {
-		return 0
-	}
+	return 0
+}
+
+func openAIWSPayloadSemanticTransientStatus(payload []byte) int {
 	code := strings.ToLower(strings.TrimSpace(gjson.GetBytes(payload, "response.error.code").String()))
 	errType := strings.ToLower(strings.TrimSpace(gjson.GetBytes(payload, "response.error.type").String()))
 	if code == "" {
@@ -793,6 +804,14 @@ func isOpenAIWSRateLimitError(codeRaw, errTypeRaw, msgRaw string) bool {
 		return true
 	}
 	return false
+}
+
+func isOpenAIWSRateLimitsPreamble(eventType string) bool {
+	eventType = strings.ToLower(strings.TrimSpace(eventType))
+	return eventType == "rate_limits" ||
+		strings.HasPrefix(eventType, "rate_limits.") ||
+		eventType == "response.rate_limits" ||
+		strings.HasPrefix(eventType, "response.rate_limits.")
 }
 
 func (s *OpenAIGatewayService) persistOpenAIWSRateLimitSignal(ctx context.Context, account *Account, headers http.Header, responseBody []byte, codeRaw, errTypeRaw, msgRaw string) {

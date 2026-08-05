@@ -31,16 +31,17 @@ func (c *schedulerCache) GetCachedAccountSchedulingState(ctx context.Context, ac
 }
 
 type cachedAccountSchedulingProjection struct {
-	Platform               string
-	Type                   string
-	Status                 string
-	Schedulable            bool
-	ExpiresAt              *time.Time
-	AutoPauseOnExpired     bool
-	OverloadUntil          *time.Time
-	RateLimitResetAt       *time.Time
-	TempUnschedulableUntil *time.Time
-	Extra                  map[string]any
+	Platform                string
+	Type                    string
+	Status                  string
+	Schedulable             bool
+	ExpiresAt               *time.Time
+	AutoPauseOnExpired      bool
+	OverloadUntil           *time.Time
+	RateLimitResetAt        *time.Time
+	TempUnschedulableUntil  *time.Time
+	TempUnschedulableReason string
+	Extra                   map[string]any
 }
 
 func decodeCachedAccountSchedulingState(value any) (service.AccountSchedulingState, error) {
@@ -59,16 +60,17 @@ func decodeCachedAccountSchedulingState(value any) (service.AccountSchedulingSta
 		return service.AccountSchedulingState{}, err
 	}
 	account := service.Account{
-		Platform:               projection.Platform,
-		Type:                   projection.Type,
-		Status:                 projection.Status,
-		Schedulable:            projection.Schedulable,
-		ExpiresAt:              projection.ExpiresAt,
-		AutoPauseOnExpired:     projection.AutoPauseOnExpired,
-		OverloadUntil:          projection.OverloadUntil,
-		RateLimitResetAt:       projection.RateLimitResetAt,
-		TempUnschedulableUntil: projection.TempUnschedulableUntil,
-		Extra:                  projection.Extra,
+		Platform:                projection.Platform,
+		Type:                    projection.Type,
+		Status:                  projection.Status,
+		Schedulable:             projection.Schedulable,
+		ExpiresAt:               projection.ExpiresAt,
+		AutoPauseOnExpired:      projection.AutoPauseOnExpired,
+		OverloadUntil:           projection.OverloadUntil,
+		RateLimitResetAt:        projection.RateLimitResetAt,
+		TempUnschedulableUntil:  projection.TempUnschedulableUntil,
+		TempUnschedulableReason: projection.TempUnschedulableReason,
+		Extra:                   projection.Extra,
 	}
 	return service.AccountSchedulingState{Exists: true, Schedulable: account.IsSchedulable()}, nil
 }

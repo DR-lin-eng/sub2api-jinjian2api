@@ -184,6 +184,38 @@ func TestRateLimitServiceInsufficientBalanceAutoDisable(t *testing.T) {
 		require.True(t, account.Schedulable)
 		require.Empty(t, blocker.accounts)
 	})
+
+	t.Run("balance shortage still disables Codex prewarm account on 429", func(t *testing.T) {
+		repo := &insufficientBalanceAccountRepoStub{}
+		blocker := &runtimeBlockRecorder{}
+		svc := NewRateLimitService(repo, nil, &config.Config{}, nil, nil)
+		svc.SetAccountRuntimeBlocker(blocker)
+		account := &Account{
+			ID:          604,
+			Platform:    PlatformOpenAI,
+			Type:        AccountTypeOAuth,
+			Schedulable: true,
+			Extra: map[string]any{
+				AutoDisableOnUpstreamInsufficientBalanceExtraKey: true,
+				CodexPrewarmContinuationExtraKey:                 true,
+			},
+		}
+
+		shouldDisable := svc.HandleUpstreamError(
+			context.Background(),
+			account,
+			http.StatusTooManyRequests,
+			http.Header{},
+			[]byte("upstream rejected the request: insufficient credits"),
+		)
+
+		require.True(t, shouldDisable)
+		require.Equal(t, 1, repo.setSchedulableCalls)
+		require.False(t, repo.lastSchedulable)
+		require.True(t, account.Schedulable, "request snapshots remain immutable after persistence")
+		require.Len(t, blocker.accounts, 1)
+		require.Equal(t, "upstream_insufficient_balance", blocker.reasons[0])
+	})
 }
 
 func TestAccountAutoDisableOnUpstreamInsufficientBalanceEnabled(t *testing.T) {

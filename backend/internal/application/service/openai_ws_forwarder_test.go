@@ -164,7 +164,15 @@ func TestOpenAIWSErrorEvent_ServerErrorRecordsModelTransient(t *testing.T) {
 func TestOpenAIWSPayloadTransientStatus_Explicit529IsNotModelTransient(t *testing.T) {
 	payload := []byte(`{"type":"response.failed","response":{"error":{"status_code":529,"code":"server_error","message":"overloaded"}}}`)
 
+	require.Equal(t, 529, openAIWSPayloadStatusCode(payload))
 	require.Zero(t, openAIWSPayloadTransientStatus(payload))
+}
+
+func TestOpenAIWSPayloadStatusCode_Explicit429IsAvailableForFailover(t *testing.T) {
+	payload := []byte(`{"type":"response.failed","response":{"error":{"status_code":429,"code":"rate_limit_exceeded","message":"limited"}}}`)
+
+	require.Equal(t, http.StatusTooManyRequests, openAIWSPayloadStatusCode(payload))
+	require.Zero(t, openAIWSPayloadTransientStatus(payload), "429 is not a model 5xx transient cooldown")
 }
 
 func TestOpenAIWSDial5xxRecordsModelTransient(t *testing.T) {
