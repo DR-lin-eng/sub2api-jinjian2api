@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/domain/model"
 	"github.com/gin-gonic/gin"
@@ -221,4 +222,138 @@ func TestForwardAsAnthropic_ResponseFailed_ErrorCodeRuleMatchesViaSemanticStatus
 	require.Equal(t, http.StatusBadRequest, rec.Code, "error-code-conditioned rule should match via semantic status inference")
 	respBody := rec.Body.String()
 	require.NotEmpty(t, gjson.Get(respBody, "error.message").String())
+}
+
+func buildCapacityFailedResponsesSSE(includeReplaySafePreamble bool, includeOutput bool) string {
+	lines := make([]string, 0, 18)
+	if includeReplaySafePreamble {
+		lines = append(lines,
+			"event: response.created",
+			`data: {"type":"response.created","response":{"id":"resp_capacity"}}`,
+			"",
+			"event: response.in_progress",
+			`data: {"type":"response.in_progress","response":{"id":"resp_capacity"}}`,
+			"",
+			"event: response.output_item.added",
+			`data: {"type":"response.output_item.added","item":{"type":"message","content":[]}}`,
+			"",
+			`data: {"type":"response.output_text.delta","delta":""}`,
+			"",
+			`data: {"type":"response.metadata","metadata":{"trace_id":"safe"}}`,
+			"",
+		)
+	}
+	if includeOutput {
+		lines = append(lines,
+			`data: {"type":"response.output_text.delta","delta":"partial"}`,
+			"",
+		)
+	}
+	lines = append(lines,
+		"event: response.failed",
+		`data: {"type":"response.failed","response":{"id":"resp_capacity","status":"failed","error":{"type":"invalid_request_error","message":"Selected model is at capacity. Please try a different model."},"output":[]}}`,
+		"",
+	)
+	return strings.Join(lines, "\n")
+}
+
+func TestOpenAIResponsesCapacityFailureWinsOverPassthroughRule(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	for _, passthrough := range []bool{false, true} {
+		t.Run(map[bool]string{false: "native", true: "passthrough"}[passthrough], func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Request = httptest.NewRequest(http.MethodPost, "/v1/responses", nil)
+			bindPassthroughRule(c, "openai", []string{"Selected model is at capacity"}, http.StatusBadRequest)
+
+			resp := &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"Content-Type": []string{"text/event-stream"}, "X-Request-Id": []string{"rid-capacity-rule"}},
+				Body:       io.NopCloser(strings.NewReader(buildCapacityFailedResponsesSSE(true, false))),
+			}
+			svc := &OpenAIGatewayService{cfg: rawChatCompletionsTestConfig()}
+			account := rawChatCompletionsTestAccount()
+
+			var err error
+			if passthrough {
+				_, err = svc.handleStreamingResponsePassthrough(context.Background(), resp, c, account, time.Now(), "model", "model")
+			} else {
+				_, err = svc.handleStreamingResponse(context.Background(), resp, c, account, time.Now(), "model", "model")
+			}
+			var failoverErr *UpstreamFailoverError
+			require.ErrorAs(t, err, &failoverErr)
+			require.False(t, c.Writer.Written(), "capacity failover must happen before the passthrough rule commits a response")
+			require.Empty(t, rec.Body.String())
+			require.NotContains(t, rec.Body.String(), "Selected model is at capacity")
+		})
+	}
+}
+
+func TestOpenAIResponsesCapacityFailureSSEToJSONReturnsFailover(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/responses", nil)
+	resp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{"Content-Type": []string{"text/event-stream"}, "X-Request-Id": []string{"rid-capacity-json"}},
+	}
+	svc := &OpenAIGatewayService{cfg: rawChatCompletionsTestConfig()}
+	account := rawChatCompletionsTestAccount()
+
+	result, err := svc.handleSSEToJSONWithAccount(
+		resp,
+		c,
+		[]byte(buildCapacityFailedResponsesSSE(true, false)),
+		"model",
+		"model",
+		account,
+		false,
+	)
+	var failoverErr *UpstreamFailoverError
+	require.ErrorAs(t, err, &failoverErr)
+	require.Nil(t, result)
+	require.False(t, c.Writer.Written())
+	require.Empty(t, rec.Body.String())
+}
+
+func TestOpenAIResponsesCapacityFailureJSONEnvelopeReturnsFailover(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/responses", nil)
+	resp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{"Content-Type": []string{"application/json"}, "X-Request-Id": []string{"rid-capacity-envelope"}},
+		Body: io.NopCloser(strings.NewReader(
+			`{"error":{"type":"invalid_request_error","message":"Selected model is at capacity. Please try a different model."}}`,
+		)),
+	}
+	svc := &OpenAIGatewayService{cfg: rawChatCompletionsTestConfig()}
+	result, err := svc.handleNonStreamingResponse(context.Background(), resp, c, rawChatCompletionsTestAccount(), "model", "model")
+	var failoverErr *UpstreamFailoverError
+	require.ErrorAs(t, err, &failoverErr)
+	require.Nil(t, result)
+	require.False(t, c.Writer.Written())
+	require.Empty(t, rec.Body.String())
+}
+
+func TestOpenAIResponsesCapacityFailureAfterOutputDoesNotFailOver(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/responses", nil)
+	resp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{"Content-Type": []string{"text/event-stream"}, "X-Request-Id": []string{"rid-capacity-after-output"}},
+		Body:       io.NopCloser(strings.NewReader(buildCapacityFailedResponsesSSE(false, true))),
+	}
+	svc := &OpenAIGatewayService{cfg: rawChatCompletionsTestConfig()}
+	_, err := svc.handleStreamingResponse(context.Background(), resp, c, rawChatCompletionsTestAccount(), time.Now(), "model", "model")
+	var failoverErr *UpstreamFailoverError
+	require.Error(t, err)
+	require.NotErrorAs(t, err, &failoverErr)
+	require.Contains(t, rec.Body.String(), "response.failed")
+	require.Contains(t, rec.Body.String(), "Upstream service temporarily unavailable")
+	require.NotContains(t, rec.Body.String(), "Selected model is at capacity")
 }
