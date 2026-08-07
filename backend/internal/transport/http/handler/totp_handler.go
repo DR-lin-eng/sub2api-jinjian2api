@@ -57,8 +57,7 @@ func (h *TotpHandler) GetStatus(c *gin.Context) {
 
 // TotpSetupRequest represents the request to initiate TOTP setup
 type TotpSetupRequest struct {
-	EmailCode string `json:"email_code"`
-	Password  string `json:"password"`
+	Password string `json:"password" binding:"required"`
 }
 
 // TotpSetupResponse represents the TOTP setup response
@@ -84,7 +83,7 @@ func (h *TotpHandler) InitiateSetup(c *gin.Context) {
 		req = TotpSetupRequest{}
 	}
 
-	result, err := h.totpService.InitiateSetup(c.Request.Context(), subject.UserID, req.EmailCode, req.Password)
+	result, err := h.totpService.InitiateSetup(c.Request.Context(), subject.UserID, req.Password)
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return
@@ -129,8 +128,7 @@ func (h *TotpHandler) Enable(c *gin.Context) {
 
 // TotpDisableRequest represents the request to disable TOTP
 type TotpDisableRequest struct {
-	EmailCode string `json:"email_code"`
-	Password  string `json:"password"`
+	Password string `json:"password" binding:"required"`
 }
 
 // Disable disables TOTP for the current user
@@ -148,41 +146,7 @@ func (h *TotpHandler) Disable(c *gin.Context) {
 		return
 	}
 
-	if err := h.totpService.Disable(c.Request.Context(), subject.UserID, req.EmailCode, req.Password); err != nil {
-		response.ErrorFrom(c, err)
-		return
-	}
-
-	response.Success(c, gin.H{"success": true})
-}
-
-// GetVerificationMethod returns the verification method for TOTP operations
-// GET /api/v1/user/totp/verification-method
-func (h *TotpHandler) GetVerificationMethod(c *gin.Context) {
-	subject, ok := middleware2.GetAuthSubjectFromContext(c)
-	if !ok {
-		response.Unauthorized(c, "User not authenticated")
-		return
-	}
-
-	method, err := h.totpService.GetVerificationMethod(c.Request.Context(), subject.UserID)
-	if err != nil {
-		response.ErrorFrom(c, err)
-		return
-	}
-	response.Success(c, method)
-}
-
-// SendVerifyCode sends an email verification code for TOTP operations
-// POST /api/v1/user/totp/send-code
-func (h *TotpHandler) SendVerifyCode(c *gin.Context) {
-	subject, ok := middleware2.GetAuthSubjectFromContext(c)
-	if !ok {
-		response.Unauthorized(c, "User not authenticated")
-		return
-	}
-
-	if err := h.totpService.SendVerifyCode(c.Request.Context(), subject.UserID, c.GetHeader("Accept-Language")); err != nil {
+	if err := h.totpService.Disable(c.Request.Context(), subject.UserID, req.Password); err != nil {
 		response.ErrorFrom(c, err)
 		return
 	}

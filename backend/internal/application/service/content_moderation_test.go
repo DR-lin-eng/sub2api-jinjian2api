@@ -218,10 +218,6 @@ func (r *contentModerationTestUserRepo) List(ctx context.Context, params paginat
 	panic("unexpected List call")
 }
 
-func (r *contentModerationTestUserRepo) ListWithFilters(ctx context.Context, params pagination.PaginationParams, filters UserListFilters) ([]User, *pagination.PaginationResult, error) {
-	panic("unexpected ListWithFilters call")
-}
-
 func (r *contentModerationTestUserRepo) GetLatestUsedAtByUserIDs(ctx context.Context, userIDs []int64) (map[int64]*time.Time, error) {
 	panic("unexpected GetLatestUsedAtByUserIDs call")
 }
@@ -240,14 +236,6 @@ func (r *contentModerationTestUserRepo) UpdateBalance(ctx context.Context, id in
 
 func (r *contentModerationTestUserRepo) DeductBalance(ctx context.Context, id int64, amount float64) error {
 	panic("unexpected DeductBalance call")
-}
-
-func (r *contentModerationTestUserRepo) AdjustBalance(ctx context.Context, id int64, delta float64) (BalanceChange, error) {
-	panic("unexpected AdjustBalance call")
-}
-
-func (r *contentModerationTestUserRepo) SetBalance(ctx context.Context, id int64, value float64) (BalanceChange, error) {
-	panic("unexpected SetBalance call")
 }
 
 func (r *contentModerationTestUserRepo) UpdateConcurrency(ctx context.Context, id int64, amount int) error {
@@ -283,14 +271,6 @@ func (r *contentModerationTestUserRepo) AddGroupToAllowedGroups(ctx context.Cont
 
 func (r *contentModerationTestUserRepo) RemoveGroupFromUserAllowedGroups(ctx context.Context, userID int64, groupID int64) error {
 	panic("unexpected RemoveGroupFromUserAllowedGroups call")
-}
-
-func (r *contentModerationTestUserRepo) ListUserAuthIdentities(ctx context.Context, userID int64) ([]UserAuthIdentityRecord, error) {
-	panic("unexpected ListUserAuthIdentities call")
-}
-
-func (r *contentModerationTestUserRepo) UnbindUserAuthProvider(ctx context.Context, userID int64, provider string) error {
-	panic("unexpected UnbindUserAuthProvider call")
 }
 
 func (r *contentModerationTestUserRepo) UpdateTotpSecret(ctx context.Context, userID int64, encryptedSecret *string) error {

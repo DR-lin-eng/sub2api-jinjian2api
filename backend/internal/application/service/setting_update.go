@@ -2,16 +2,13 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
-	"math"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/shared/antigravity"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/shared/errors"
 )
 
 // OmittedSettingKeys marks setting keys the caller's payload never carried.
@@ -39,35 +36,6 @@ func (s *SettingService) UpdateSettingsOmitting(ctx context.Context, settings *S
 	updates, err := s.buildSystemSettingsUpdates(ctx, settings)
 	if err != nil {
 		return err
-	}
-	omitted.dropFrom(updates)
-
-	if err := s.settingRepo.SetMultiple(ctx, updates); err != nil {
-		return err
-	}
-	return s.applySettingsRuntimeAfterWrite(ctx, settings, omitted)
-}
-
-// UpdateSettingsWithAuthSourceDefaults persists system settings and auth-source defaults in a single write.
-func (s *SettingService) UpdateSettingsWithAuthSourceDefaults(ctx context.Context, settings *SystemSettings, authDefaults *AuthSourceDefaultSettings) error {
-	return s.UpdateSettingsWithAuthSourceDefaultsOmitting(ctx, settings, authDefaults, nil)
-}
-
-// UpdateSettingsWithAuthSourceDefaultsOmitting persists system settings and
-// auth-source defaults in a single write, leaving the keys in omitted at their
-// stored value.
-func (s *SettingService) UpdateSettingsWithAuthSourceDefaultsOmitting(ctx context.Context, settings *SystemSettings, authDefaults *AuthSourceDefaultSettings, omitted OmittedSettingKeys) error {
-	updates, err := s.buildSystemSettingsUpdates(ctx, settings)
-	if err != nil {
-		return err
-	}
-
-	authSourceUpdates, err := s.buildAuthSourceDefaultUpdates(ctx, authDefaults)
-	if err != nil {
-		return err
-	}
-	for key, value := range authSourceUpdates {
-		updates[key] = value
 	}
 	omitted.dropFrom(updates)
 
@@ -147,12 +115,8 @@ func (s *SettingService) buildSystemSettingsUpdates(ctx context.Context, setting
 	}
 
 	updates := make(map[string]string)
-	if err := writeRegistrationSystemSettingUpdates(updates, settings); err != nil {
-		return nil, err
-	}
+	writeLocalAuthSystemSettingUpdates(updates, settings)
 	writeAccessSystemSettingUpdates(updates, settings, clientIPTrustedProxiesJSON)
-
-	writeIdentitySystemSettingUpdates(updates, settings)
 
 	if err := writeProductSystemSettingUpdates(updates, settings); err != nil {
 		return nil, err
@@ -171,77 +135,6 @@ func (s *SettingService) buildSystemSettingsUpdates(ctx context.Context, setting
 	return updates, nil
 }
 
-// validateDefaultPlatformQuotaMap 校验 platform quota map 的合法性：
-// 平台名须在 AllowedQuotaPlatforms 白名单内，每个非 nil 上限须 finite 且 >= 0。
-// 系统层和 auth-source 层共用此 helper。
-func validateDefaultPlatformQuotaMap(m map[string]*DefaultPlatformQuotaSetting) error {
-	for platform, pq := range m {
-		if !IsAllowedQuotaPlatform(platform) {
-			return infraerrors.BadRequest("INVALID_DEFAULT_PLATFORM_QUOTA", fmt.Sprintf("unknown platform %q", platform))
-		}
-		if pq == nil {
-			continue
-		}
-		for _, v := range []*float64{pq.DailyLimitUSD, pq.WeeklyLimitUSD, pq.MonthlyLimitUSD} {
-			if v != nil && (*v < 0 || math.IsNaN(*v) || math.IsInf(*v, 0)) {
-				return infraerrors.BadRequest("INVALID_DEFAULT_PLATFORM_QUOTA", "platform quota limit must be a finite non-negative number")
-			}
-		}
-	}
-	return nil
-}
-
-func (s *SettingService) buildAuthSourceDefaultUpdates(ctx context.Context, settings *AuthSourceDefaultSettings) (map[string]string, error) {
-	if settings == nil {
-		return nil, nil
-	}
-
-	for _, subscriptions := range [][]DefaultSubscriptionSetting{
-		settings.Email.Subscriptions,
-		settings.LinuxDo.Subscriptions,
-		settings.OIDC.Subscriptions,
-		settings.WeChat.Subscriptions,
-		settings.GitHub.Subscriptions,
-		settings.Google.Subscriptions,
-		settings.DingTalk.Subscriptions,
-	} {
-		if err := s.validateDefaultSubscriptionGroups(ctx, subscriptions); err != nil {
-			return nil, err
-		}
-	}
-
-	// 校验各 auth source 的 platform quota map（改动 C：对等系统层校验）
-	for _, pgs := range []struct {
-		name string
-		pq   map[string]*DefaultPlatformQuotaSetting
-	}{
-		{"email", settings.Email.PlatformQuotas},
-		{"linuxdo", settings.LinuxDo.PlatformQuotas},
-		{"oidc", settings.OIDC.PlatformQuotas},
-		{"wechat", settings.WeChat.PlatformQuotas},
-		{"github", settings.GitHub.PlatformQuotas},
-		{"google", settings.Google.PlatformQuotas},
-		{"dingtalk", settings.DingTalk.PlatformQuotas},
-	} {
-		if pgs.pq != nil {
-			if err := validateDefaultPlatformQuotaMap(pgs.pq); err != nil {
-				return nil, err
-			}
-		}
-	}
-
-	updates := make(map[string]string, 36)
-	writeProviderDefaultGrantUpdates(updates, emailAuthSourceDefaultKeys, settings.Email)
-	writeProviderDefaultGrantUpdates(updates, linuxDoAuthSourceDefaultKeys, settings.LinuxDo)
-	writeProviderDefaultGrantUpdates(updates, oidcAuthSourceDefaultKeys, settings.OIDC)
-	writeProviderDefaultGrantUpdates(updates, weChatAuthSourceDefaultKeys, settings.WeChat)
-	writeProviderDefaultGrantUpdates(updates, gitHubAuthSourceDefaultKeys, settings.GitHub)
-	writeProviderDefaultGrantUpdates(updates, googleAuthSourceDefaultKeys, settings.Google)
-	writeProviderDefaultGrantUpdates(updates, dingTalkAuthSourceDefaultKeys, settings.DingTalk)
-	updates[SettingKeyForceEmailOnThirdPartySignup] = strconv.FormatBool(settings.ForceEmailOnThirdPartySignup)
-	return updates, nil
-}
-
 func (s *SettingService) refreshCachedSettings(settings *SystemSettings) {
 	if settings == nil {
 		return
@@ -254,18 +147,6 @@ func (s *SettingService) refreshCachedSettings(settings *SystemSettings) {
 		max:       settings.MaxClaudeCodeVersion,
 		expiresAt: time.Now().Add(versionBoundsCacheTTL).UnixNano(),
 	})
-	backendModeSF.Forget("backend_mode")
-	backendModeCache.Store(&cachedBackendMode{
-		value:     settings.BackendModeEnabled,
-		expiresAt: time.Now().Add(backendModeCacheTTL).UnixNano(),
-	})
-	s.supportChatCacheMu.Lock()
-	s.supportChatSF.Forget(supportChatRefreshKey)
-	s.supportChatCache.Store(&cachedSupportChatEnabled{
-		value:     settings.SupportChatEnabled,
-		expiresAt: time.Now().Add(supportChatCacheTTL).UnixNano(),
-	})
-	s.supportChatCacheMu.Unlock()
 	s.streamModePerformanceEnabled.Store(settings.StreamModePerformanceEnabled)
 	s.streamModePerformanceLoaded.Store(time.Now().UnixNano())
 	s.openAIWSModeRouterV2Enabled.Store(settings.OpenAIWSModeRouterV2Enabled)
@@ -356,43 +237,4 @@ func (s *SettingService) refreshCachedSettings(settings *SystemSettings) {
 
 func (s *SettingService) defaultRewriteMessageCacheControl() bool {
 	return false
-}
-
-func (s *SettingService) validateDefaultSubscriptionGroups(ctx context.Context, items []DefaultSubscriptionSetting) error {
-	if len(items) == 0 {
-		return nil
-	}
-
-	checked := make(map[int64]struct{}, len(items))
-	for _, item := range items {
-		if item.GroupID <= 0 {
-			continue
-		}
-		if _, ok := checked[item.GroupID]; ok {
-			return ErrDefaultSubGroupDuplicate.WithMetadata(map[string]string{
-				"group_id": strconv.FormatInt(item.GroupID, 10),
-			})
-		}
-		checked[item.GroupID] = struct{}{}
-		if s.defaultSubGroupReader == nil {
-			continue
-		}
-
-		group, err := s.defaultSubGroupReader.GetByID(ctx, item.GroupID)
-		if err != nil {
-			if errors.Is(err, ErrGroupNotFound) {
-				return ErrDefaultSubGroupInvalid.WithMetadata(map[string]string{
-					"group_id": strconv.FormatInt(item.GroupID, 10),
-				})
-			}
-			return fmt.Errorf("get default subscription group %d: %w", item.GroupID, err)
-		}
-		if !group.IsSubscriptionType() {
-			return ErrDefaultSubGroupInvalid.WithMetadata(map[string]string{
-				"group_id": strconv.FormatInt(item.GroupID, 10),
-			})
-		}
-	}
-
-	return nil
 }

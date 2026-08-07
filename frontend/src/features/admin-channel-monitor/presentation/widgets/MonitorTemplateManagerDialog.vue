@@ -243,7 +243,7 @@ import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
 import MonitorAdvancedRequestConfig from '@/features/admin-channel-monitor/presentation/widgets/MonitorAdvancedRequestConfig.vue'
 import MonitorTemplateApplyPickerDialog from '@/features/admin-channel-monitor/presentation/widgets/MonitorTemplateApplyPickerDialog.vue'
-import { useChannelMonitorFormat } from '@/features/channel-monitor-user/presentation/composables/useChannelMonitorFormat'
+import { useChannelMonitorFormat } from '@/features/admin-channel-monitor/presentation/composables/useChannelMonitorFormat'
 import {
   PROVIDER_ANTHROPIC,
   PROVIDER_OPENAI,

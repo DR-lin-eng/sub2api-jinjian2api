@@ -51,9 +51,7 @@
                   v-if="k.group"
                   :name="k.group.name"
                   :platform="k.group.platform"
-                  :subscription-type="k.group.subscription_type"
                   :rate-multiplier="k.group.rate_multiplier"
-                  :user-rate-multiplier="userGroupRates[k.group.id]"
                 />
                 <span v-else class="text-xs text-gray-400">—</span>
               </td>
@@ -81,15 +79,12 @@ import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import GroupBadge from '@/common/widgets/data/GroupBadge.vue'
 import { maskApiKey } from '@/core/utils/maskApiKey'
 
-const props = withDefaults(defineProps<{
+const props = defineProps<{
   show: boolean
   loading: boolean
   keys: ApiKey[]
   provider: Provider
-  userGroupRates?: Record<number, number>
-}>(), {
-  userGroupRates: () => ({}),
-})
+}>()
 
 defineEmits<{
   (e: 'close'): void

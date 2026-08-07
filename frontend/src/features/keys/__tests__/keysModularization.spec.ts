@@ -62,9 +62,10 @@ describe('keys page modularization', () => {
   it('preserves editor and table interaction entry points', () => {
     expect(runtimeSources.editor).toContain('id="key-form"')
     expect(runtimeSources.editor).toContain('@submit.prevent="handleSubmit"')
-    expect(runtimeSources.editor).toContain('data-tour="key-form-submit"')
     expect(runtimeSources.table).toContain('@sort="handleSort"')
     expect(runtimeSources.table).toContain('@click="importToCcswitch(row)"')
-    expect(runtimeSources.table).toContain('@click.stop="confirmResetRateLimitFromTable(row)"')
+    expect(runtimeSources.editor).toContain('formData.concurrency_limit')
+    expect(runtimeSources.editor).not.toContain('formData.quota')
+    expect(runtimeSources.editor).not.toContain('formData.rate_limit_')
   })
 })

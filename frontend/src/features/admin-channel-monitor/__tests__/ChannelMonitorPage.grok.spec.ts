@@ -39,10 +39,6 @@ vi.mock('@/features/keys/data/datasources/keysDatasource', () => ({
   keysAPI: { list: vi.fn() },
 }))
 
-vi.mock('@/features/groups-user/data/datasources/groupsUserDatasource', () => ({
-  userGroupsAPI: { getUserGroupRates: vi.fn() },
-}))
-
 vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     cachedPublicSettings: null,

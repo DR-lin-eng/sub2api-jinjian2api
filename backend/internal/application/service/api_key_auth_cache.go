@@ -19,20 +19,11 @@ type APIKeyAuthSnapshot struct {
 	User        APIKeyAuthUserSnapshot   `json:"user"`
 	Group       *APIKeyAuthGroupSnapshot `json:"group,omitempty"`
 
-	// Quota fields for API Key independent quota feature
-	Quota     float64 `json:"quota"`      // Quota limit in USD (0 = unlimited)
-	QuotaUsed float64 `json:"quota_used"` // Used quota amount
-
 	// Expiration field for API Key expiration feature
 	ExpiresAt *time.Time `json:"expires_at,omitempty"` // Expiration time (nil = never expires)
 
 	// Maximum concurrent requests for this API key (0 = unlimited).
 	ConcurrencyLimit int `json:"concurrency_limit"`
-
-	// Rate limit configuration (only limits, not usage - usage read from Redis at check time)
-	RateLimit5h float64 `json:"rate_limit_5h"`
-	RateLimit1d float64 `json:"rate_limit_1d"`
-	RateLimit7d float64 `json:"rate_limit_7d"`
 }
 
 // APIKeyAuthUserSnapshot 用户快照
@@ -40,26 +31,10 @@ type APIKeyAuthUserSnapshot struct {
 	ID             int64                 `json:"id"`
 	Status         string                `json:"status"`
 	Role           string                `json:"role"`
-	Balance        float64               `json:"balance"`
 	Concurrency    int                   `json:"concurrency"`
 	SchedulingTier RequestSchedulingTier `json:"scheduling_tier"`
-	AllowedGroups  []int64               `json:"allowed_groups,omitempty"`
-
-	// Balance notification fields (required for CheckBalanceAfterDeduction)
-	Email                      string             `json:"email"`
-	Username                   string             `json:"username"`
-	BalanceNotifyEnabled       bool               `json:"balance_notify_enabled"`
-	BalanceNotifyThresholdType string             `json:"balance_notify_threshold_type"`
-	BalanceNotifyThreshold     *float64           `json:"balance_notify_threshold,omitempty"`
-	BalanceNotifyExtraEmails   []NotifyEmailEntry `json:"balance_notify_extra_emails,omitempty"`
-	TotalRecharged             float64            `json:"total_recharged"`
-
-	// RPMLimit 用户级每分钟请求数上限（0 = 不限制）；用于 billing_cache_service.checkRPM 兜底判断。
-	RPMLimit int `json:"rpm_limit"`
-
-	// UserGroupRPMOverride 该 API Key 对应的 (user, group) 专属 RPM 覆盖值。
-	// nil = 无 override（回退到 group/user 级）；0 = 不限流；>0 = 专属上限。
-	UserGroupRPMOverride *int `json:"user_group_rpm_override,omitempty"`
+	Email          string                `json:"email"`
+	Username       string                `json:"username"`
 }
 
 // APIKeyAuthGroupSnapshot 分组快照
@@ -67,16 +42,10 @@ type APIKeyAuthGroupSnapshot struct {
 	ID                              int64    `json:"id"`
 	Name                            string   `json:"name"`
 	Platform                        string   `json:"platform"`
-	IsExclusive                     bool     `json:"is_exclusive"`
 	Status                          string   `json:"status"`
-	SubscriptionType                string   `json:"subscription_type"`
 	RateMultiplier                  float64  `json:"rate_multiplier"`
-	DailyLimitUSD                   *float64 `json:"daily_limit_usd,omitempty"`
-	WeeklyLimitUSD                  *float64 `json:"weekly_limit_usd,omitempty"`
-	MonthlyLimitUSD                 *float64 `json:"monthly_limit_usd,omitempty"`
 	AllowImageGeneration            bool     `json:"allow_image_generation"`
 	OpenAIForceImageTool            bool     `json:"openai_force_image_tool"`
-	AllowBatchImageGeneration       bool     `json:"allow_batch_image_generation"`
 	ImageRateIndependent            bool     `json:"image_rate_independent"`
 	ImageRateMultiplier             float64  `json:"image_rate_multiplier"`
 	ImagePrice1K                    *float64 `json:"image_price_1k,omitempty"`
@@ -108,21 +77,10 @@ type APIKeyAuthGroupSnapshot struct {
 	MessagesDispatchModelConfig OpenAIMessagesDispatchModelConfig `json:"messages_dispatch_model_config,omitempty"`
 	ModelsListConfig            GroupModelsListConfig             `json:"models_list_config,omitempty"`
 
-	// RPMLimit 分组级每分钟请求数上限（0 = 不限制）；用于 billing_cache_service.checkRPM 级联判断。
-	RPMLimit int `json:"rpm_limit"`
-
 	// MaxReasoningEffort OpenAI/Codex 请求的推理强度上限，空字符串表示不限制。
 	MaxReasoningEffort string `json:"max_reasoning_effort,omitempty"`
 	// ReasoningEffortMappings rewrites explicit effort values before the ceiling.
 	ReasoningEffortMappings []ReasoningEffortMapping `json:"reasoning_effort_mappings"`
-
-	// 高峰时段倍率：PeakRateEnabled 为 true 且请求时刻处于 [PeakStart, PeakEnd) 时，
-	// token 计费倍率额外乘以 PeakRateMultiplier（详见 Group.PeakMultiplierAt）。
-	// 必须随快照缓存，否则扣费路径拿到的 apiKey.Group 缺字段、高峰倍率失效。
-	PeakRateEnabled    bool    `json:"peak_rate_enabled"`
-	PeakStart          string  `json:"peak_start"`
-	PeakEnd            string  `json:"peak_end"`
-	PeakRateMultiplier float64 `json:"peak_rate_multiplier"`
 
 	ProfitControlEnabled bool    `json:"profit_control_enabled"`
 	ProfitMinMargin      float64 `json:"profit_min_margin"`

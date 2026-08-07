@@ -204,7 +204,6 @@ const requestDetails = computed(() => {
     { key: 'endpoint', label: t('usage.inboundEndpoint'), value: displayValue(usage.inbound_endpoint), mono: true },
     ...(usage.upstream_endpoint ? [{ key: 'upstream_endpoint', label: t('usage.upstreamEndpoint'), value: usage.upstream_endpoint, mono: true }] : []),
     { key: 'group', label: t('admin.usage.group'), value: usage.group?.name || (usage.group_id ? `#${usage.group_id}` : '-') },
-    { key: 'billing_type', label: t('usage.detail.billingType'), value: usage.billing_type === 1 ? t('usage.detail.subscriptionBilling') : t('usage.detail.balanceBilling') },
     { key: 'service_tier', label: t('usage.serviceTier'), value: displayValue(usage.service_tier) },
     { key: 'reasoning_effort', label: t('usage.reasoningEffort'), value: formatReasoningEffort(usage.reasoning_effort) },
     { key: 'ip_address', label: 'IP', value: displayValue(usage.ip_address), mono: true },

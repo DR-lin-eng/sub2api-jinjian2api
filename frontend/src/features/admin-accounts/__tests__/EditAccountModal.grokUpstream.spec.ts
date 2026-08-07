@@ -2,10 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent } from 'vue'
 import { mount } from '@vue/test-utils'
 
-const { updateAccountMock, checkMixedChannelRiskMock, authIsSimpleMode } = vi.hoisted(() => ({
+const { updateAccountMock, checkMixedChannelRiskMock } = vi.hoisted(() => ({
   updateAccountMock: vi.fn(),
-  checkMixedChannelRiskMock: vi.fn(),
-  authIsSimpleMode: { value: true }
+  checkMixedChannelRiskMock: vi.fn()
 }))
 
 vi.mock('@/api/admin', () => ({
@@ -24,14 +23,6 @@ vi.mock('@/core/stores/appStore', () => ({
   })
 }))
 
-vi.mock('@/features/auth/presentation/stores/authStore', () => ({
-  useAuthStore: () => ({
-    get isSimpleMode() {
-      return authIsSimpleMode.value
-    }
-  })
-}))
-
 vi.mock('@/features/admin-accounts/data/datasources/adminAccountActions', () => ({
   checkMixedChannelRisk: checkMixedChannelRiskMock,
   syncUpstreamModels: vi.fn().mockResolvedValue({ models: [] }),
@@ -39,9 +30,12 @@ vi.mock('@/features/admin-accounts/data/datasources/adminAccountActions', () => 
   updateAccount: updateAccountMock
 }))
 
-vi.mock('@/features/admin-settings/data/datasources/adminSettingsDatasource', () => ({
-  getSettings: vi.fn().mockResolvedValue({}),
+vi.mock('@/features/admin-settings/data/datasources/adminWebSearchQueries', () => ({
   getWebSearchEmulationConfig: vi.fn().mockResolvedValue({ enabled: false, providers: [] })
+}))
+
+vi.mock('@/features/admin-settings/data/datasources/adminSystemSettingsQueries', () => ({
+  getSettings: vi.fn().mockResolvedValue({})
 }))
 
 vi.mock('@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource', () => ({
@@ -126,7 +120,6 @@ function mountModal(account: any) {
 
 describe('EditAccountModal Grok OAuth upstream config', () => {
   beforeEach(() => {
-    authIsSimpleMode.value = true
     updateAccountMock.mockReset()
     checkMixedChannelRiskMock.mockReset()
     checkMixedChannelRiskMock.mockResolvedValue({ has_risk: false })

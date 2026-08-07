@@ -34,10 +34,7 @@ export const i18n = createI18n({
   legacy: false,
   locale: getDefaultLocale(),
   fallbackLocale: DEFAULT_LOCALE,
-  messages: {},
-  // 禁用 HTML 消息警告 - 引导步骤使用富文本内容（driver.js 支持 HTML）
-  // 这些内容是内部定义的，不存在 XSS 风险
-  warnHtmlMessage: false
+  messages: {}
 })
 
 const loadedLocales = new Set<LocaleCode>()
@@ -73,17 +70,9 @@ export async function setLocale(locale: string): Promise<void> {
   const { resolveRouteDocumentTitle } = await import('@/core/routes/title')
   const { default: router } = await import('@/core/routes')
   const { useAppStore } = await import('@/core/stores/appStore')
-  const { useAuthStore } = await import('@/features/auth/presentation/stores/authStore')
-  const { useAdminSettingsStore } = await import('@/features/admin-settings/presentation/stores/adminSettingsStore')
   const route = router.currentRoute.value
   const appStore = useAppStore()
-  const authStore = useAuthStore()
-  const adminSettingsStore = useAdminSettingsStore()
-  const customMenuItems = [
-    ...(appStore.cachedPublicSettings?.custom_menu_items ?? []),
-    ...(authStore.isAdmin ? adminSettingsStore.customMenuItems : []),
-  ]
-  document.title = resolveRouteDocumentTitle(route, appStore.siteName, customMenuItems)
+  document.title = resolveRouteDocumentTitle(route, appStore.siteName)
 }
 
 export function getLocale(): LocaleCode {

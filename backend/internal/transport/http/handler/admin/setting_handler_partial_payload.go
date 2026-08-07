@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
-	"github.com/Wei-Shaw/sub2api/internal/transport/http/handler/dto"
 )
 
 // settingKeyJSONAliases contains request fields whose JSON name differs from
@@ -26,16 +25,7 @@ var settingKeyByJSONName = buildSettingKeyByJSONName()
 // These value-typed fields are owned by dedicated settings services. Their
 // nil value carries presence semantics, so they must not be filled from
 // SystemSettings when a partial system-settings payload omits them.
-var omittedUpdateSettingsMergeExclusions = map[string]struct{}{
-	"PaymentEnabledTypes":              {},
-	"AuthSourceEmailPlatformQuotas":    {},
-	"AuthSourceLinuxDoPlatformQuotas":  {},
-	"AuthSourceOIDCPlatformQuotas":     {},
-	"AuthSourceWeChatPlatformQuotas":   {},
-	"AuthSourceGitHubPlatformQuotas":   {},
-	"AuthSourceGooglePlatformQuotas":   {},
-	"AuthSourceDingTalkPlatformQuotas": {},
-}
+var omittedUpdateSettingsMergeExclusions = map[string]struct{}{}
 
 type omittedUpdateSettingsFieldConverter func(*service.SystemSettings) any
 
@@ -43,20 +33,8 @@ type omittedUpdateSettingsFieldConverter func(*service.SystemSettings) any
 // boundaries explicit and clone reference-typed fields so later normalization
 // cannot mutate the previous-settings snapshot through shared storage.
 var omittedUpdateSettingsFieldConverters = map[string]omittedUpdateSettingsFieldConverter{
-	"RegistrationEmailSuffixWhitelist": func(settings *service.SystemSettings) any {
-		return slices.Clone(settings.RegistrationEmailSuffixWhitelist)
-	},
-	"LoginAgreementDocuments": func(settings *service.SystemSettings) any {
-		return loginAgreementDocumentsToDTO(settings.LoginAgreementDocuments)
-	},
 	"TablePageSizeOptions": func(settings *service.SystemSettings) any {
 		return slices.Clone(settings.TablePageSizeOptions)
-	},
-	"DefaultSubscriptions": func(settings *service.SystemSettings) any {
-		return defaultSubscriptionsToDTO(settings.DefaultSubscriptions)
-	},
-	"DefaultPlatformQuotas": func(settings *service.SystemSettings) any {
-		return cloneDefaultPlatformQuotas(settings.DefaultPlatformQuotas)
 	},
 }
 
@@ -127,46 +105,6 @@ func mergeOmittedUpdateSettingsRequest(
 			destination.Set(source)
 		}
 	}
-}
-
-func cloneDefaultPlatformQuotas(
-	items map[string]*service.DefaultPlatformQuotaSetting,
-) map[string]*service.DefaultPlatformQuotaSetting {
-	if items == nil {
-		return nil
-	}
-	result := make(map[string]*service.DefaultPlatformQuotaSetting, len(items))
-	for platform, item := range items {
-		if item == nil {
-			result[platform] = nil
-			continue
-		}
-		cloned := *item
-		cloned.DailyLimitUSD = cloneFloat64Pointer(item.DailyLimitUSD)
-		cloned.WeeklyLimitUSD = cloneFloat64Pointer(item.WeeklyLimitUSD)
-		cloned.MonthlyLimitUSD = cloneFloat64Pointer(item.MonthlyLimitUSD)
-		result[platform] = &cloned
-	}
-	return result
-}
-
-func cloneFloat64Pointer(value *float64) *float64 {
-	if value == nil {
-		return nil
-	}
-	cloned := *value
-	return &cloned
-}
-
-func defaultSubscriptionsToDTO(items []service.DefaultSubscriptionSetting) []dto.DefaultSubscriptionSetting {
-	result := make([]dto.DefaultSubscriptionSetting, 0, len(items))
-	for _, item := range items {
-		result = append(result, dto.DefaultSubscriptionSetting{
-			GroupID:      item.GroupID,
-			ValidityDays: item.ValidityDays,
-		})
-	}
-	return result
 }
 
 // omittedSettingKeys reports setting keys that the JSON payload did not carry.

@@ -10,8 +10,7 @@ import type {
   TotpSetupResponse,
   TotpEnableRequest,
   TotpEnableResponse,
-  TotpDisableRequest,
-  TotpVerificationMethod
+  TotpDisableRequest
 } from '@/types'
 
 /**
@@ -24,30 +23,12 @@ export async function getStatus(): Promise<TotpStatus> {
 }
 
 /**
- * Get verification method for TOTP operations
- * @returns Method ('email' or 'password') required for setup/disable
- */
-export async function getVerificationMethod(): Promise<TotpVerificationMethod> {
-  const { data } = await apiClient.get<TotpVerificationMethod>('/user/totp/verification-method')
-  return data
-}
-
-/**
- * Send email verification code for TOTP operations
- * @returns Success response
- */
-export async function sendVerifyCode(): Promise<{ success: boolean }> {
-  const { data } = await apiClient.post<{ success: boolean }>('/user/totp/send-code')
-  return data
-}
-
-/**
  * Initiate TOTP setup - generates secret and QR code
- * @param request - Email code or password depending on verification method
+ * @param request - Current administrator password
  * @returns Setup response with secret, QR code URL, and setup token
  */
-export async function initiateSetup(request?: TotpSetupRequest): Promise<TotpSetupResponse> {
-  const { data } = await apiClient.post<TotpSetupResponse>('/user/totp/setup', request || {})
+export async function initiateSetup(request: TotpSetupRequest): Promise<TotpSetupResponse> {
+	const { data } = await apiClient.post<TotpSetupResponse>('/user/totp/setup', request)
   return data
 }
 
@@ -63,7 +44,7 @@ export async function enable(request: TotpEnableRequest): Promise<TotpEnableResp
 
 /**
  * Disable TOTP for current user
- * @param request - Email code or password depending on verification method
+ * @param request - Current administrator password
  * @returns Success response
  */
 export async function disable(request: TotpDisableRequest): Promise<{ success: boolean }> {
@@ -91,8 +72,6 @@ export async function stepUp(code: string): Promise<TotpStepUpResponse> {
 
 export const totpAPI = {
   getStatus,
-  getVerificationMethod,
-  sendVerifyCode,
   initiateSetup,
   enable,
   disable,

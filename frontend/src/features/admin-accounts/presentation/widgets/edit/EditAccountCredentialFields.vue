@@ -1,7 +1,7 @@
 <template>
       <div>
         <label class="input-label">{{ t('common.name') }}</label>
-        <input v-model="form.name" type="text" required class="input" data-tour="edit-account-form-name" />
+        <input v-model="form.name" type="text" required class="input" />
       </div>
       <div>
         <label class="input-label">{{ t('admin.accounts.notes') }}</label>

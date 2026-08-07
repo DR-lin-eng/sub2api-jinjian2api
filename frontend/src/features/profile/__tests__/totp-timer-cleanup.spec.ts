@@ -1,4 +1,4 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import TotpSetupModal from '@/features/profile/presentation/widgets/TotpSetupDialog.vue'
 import TotpDisableDialog from '@/features/profile/presentation/widgets/TotpDisableDialog.vue'
@@ -6,8 +6,6 @@ import TotpDisableDialog from '@/features/profile/presentation/widgets/TotpDisab
 const mocks = vi.hoisted(() => ({
   showSuccess: vi.fn(),
   showError: vi.fn(),
-  getVerificationMethod: vi.fn(),
-  sendVerifyCode: vi.fn(),
   initiateSetup: vi.fn(),
   enable: vi.fn(),
   disable: vi.fn()
@@ -28,8 +26,6 @@ vi.mock('@/core/stores/appStore', () => ({
 
 vi.mock('@/api', () => ({
   totpAPI: {
-    getVerificationMethod: mocks.getVerificationMethod,
-    sendVerifyCode: mocks.sendVerifyCode,
     initiateSetup: mocks.initiateSetup,
     enable: mocks.enable,
     disable: mocks.disable
@@ -41,23 +37,14 @@ const flushPromises = async () => {
   await Promise.resolve()
 }
 
-describe('TOTP 弹窗定时器清理', () => {
-  let intervalSeed = 1000
-  let setIntervalSpy: ReturnType<typeof vi.spyOn>
-  let clearIntervalSpy: ReturnType<typeof vi.spyOn>
-
+describe('TOTP password verification dialogs', () => {
   beforeEach(() => {
-    intervalSeed = 1000
     mocks.showSuccess.mockReset()
     mocks.showError.mockReset()
-    mocks.getVerificationMethod.mockReset()
-    mocks.sendVerifyCode.mockReset()
     mocks.initiateSetup.mockReset()
     mocks.enable.mockReset()
     mocks.disable.mockReset()
 
-    mocks.getVerificationMethod.mockResolvedValue({ method: 'email' })
-    mocks.sendVerifyCode.mockResolvedValue({ success: true })
     mocks.initiateSetup.mockResolvedValue({
       qr_code_url: 'otpauth://totp/Sub2API:test?secret=ABC123',
       secret: 'ABC123',
@@ -65,62 +52,20 @@ describe('TOTP 弹窗定时器清理', () => {
     })
     mocks.enable.mockResolvedValue({ success: true })
     mocks.disable.mockResolvedValue({ success: true })
-
-    setIntervalSpy = vi.spyOn(window, 'setInterval').mockImplementation(((handler: TimerHandler) => {
-      void handler
-      intervalSeed += 1
-      return intervalSeed as unknown as number
-    }) as typeof window.setInterval)
-    clearIntervalSpy = vi.spyOn(window, 'clearInterval')
   })
 
-  afterEach(() => {
-    setIntervalSpy.mockRestore()
-    clearIntervalSpy.mockRestore()
-  })
-
-  it('TotpSetupModal 卸载时清理倒计时定时器', async () => {
+  it('submits the administrator password when starting setup', async () => {
     const wrapper = mount(TotpSetupModal)
+    await wrapper.get('input[type="password"]').setValue('correct horse battery staple')
+    await wrapper.get('button[type="button"].btn-primary').trigger('click')
     await flushPromises()
 
-    const sendButton = wrapper
-      .findAll('button')
-      .find((button) => button.text().includes('profile.totp.sendCode'))
-
-    expect(sendButton).toBeTruthy()
-    await sendButton!.trigger('click')
-    await flushPromises()
-
-    expect(setIntervalSpy).toHaveBeenCalledTimes(1)
-    const timerId = setIntervalSpy.mock.results[0]?.value
-
-    wrapper.unmount()
-
-    expect(clearIntervalSpy).toHaveBeenCalledWith(timerId)
-  })
-
-  it('TotpDisableDialog 卸载时清理倒计时定时器', async () => {
-    const wrapper = mount(TotpDisableDialog)
-    await flushPromises()
-
-    const sendButton = wrapper
-      .findAll('button')
-      .find((button) => button.text().includes('profile.totp.sendCode'))
-
-    expect(sendButton).toBeTruthy()
-    await sendButton!.trigger('click')
-    await flushPromises()
-
-    expect(setIntervalSpy).toHaveBeenCalledTimes(1)
-    const timerId = setIntervalSpy.mock.results[0]?.value
-
-    wrapper.unmount()
-
-    expect(clearIntervalSpy).toHaveBeenCalledWith(timerId)
+		expect(mocks.initiateSetup).toHaveBeenCalledWith({
+			password: 'correct horse battery staple'
+		})
   })
 
   it('TotpSetupModal 失败时改用 toast 并不渲染内联错误', async () => {
-    mocks.getVerificationMethod.mockResolvedValue({ method: 'password' })
     mocks.initiateSetup.mockRejectedValue({
       response: { data: { message: 'setup failed' } }
     })
@@ -138,7 +83,6 @@ describe('TOTP 弹窗定时器清理', () => {
   })
 
   it('TotpDisableDialog 失败时改用 toast 并不渲染内联错误', async () => {
-    mocks.getVerificationMethod.mockResolvedValue({ method: 'password' })
     mocks.disable.mockRejectedValue({
       response: { data: { message: 'disable failed' } }
     })
@@ -150,6 +94,9 @@ describe('TOTP 弹窗定时器清理', () => {
     await wrapper.get('form').trigger('submit.prevent')
     await flushPromises()
 
+		expect(mocks.disable).toHaveBeenCalledWith({
+			password: 'correct horse battery staple'
+		})
     expect(mocks.showError).toHaveBeenCalledWith('disable failed')
     expect(wrapper.text()).not.toContain('disable failed')
     expect(wrapper.find('.bg-red-50').exists()).toBe(false)

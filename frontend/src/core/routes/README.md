@@ -8,7 +8,6 @@
 | --- | --- |
 | `index.ts` | 路由记录、全局 guard、滚动恢复、预加载和 chunk 错误恢复 |
 | `meta.d.ts` | `RouteMeta` 类型扩展 |
-| `setupRedirect.ts` | setup 已完成时的目标路径选择 |
 | `title.ts` | 站点名、i18n 和自定义菜单标题解析 |
 | `__tests__/` | guard 辅助、标题和 setup 重定向测试 |
 
@@ -35,7 +34,6 @@ rg -n 'path:|name:|component:' frontend/src/core/routes/index.ts
 | `requiresAuth` | 是否登录；未设置时默认为 `true` |
 | `requiresAdmin` | 是否要求管理员 |
 | `requiresPayment` | 是否要求内部支付功能启用 |
-| `requiresRiskControl` | 是否要求风控功能启用 |
 | `requiresSupportChat` | 是否要求在线客服功能显式启用 |
 | `title`, `titleKey`, `descriptionKey` | 页面标题和 i18n 元数据 |
 | `breadcrumbs`, `icon`, `hideInMenu` | 导航展示元数据 |

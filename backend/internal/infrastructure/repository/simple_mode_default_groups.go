@@ -74,9 +74,7 @@ func createGroupIfNotExists(ctx context.Context, client *dbent.Client, name, pla
 		SetDescription(simpleModeDefaultGroupDescription).
 		SetPlatform(platform).
 		SetStatus(service.StatusActive).
-		SetSubscriptionType(service.SubscriptionTypeStandard).
 		SetRateMultiplier(1.0).
-		SetIsExclusive(false).
 		SetAllowImageGeneration(platform == service.PlatformGrok).
 		Save(ctx)
 	if err != nil {

@@ -18,10 +18,10 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func TestAPIKeyAuthForwardsUserScopedOpenAIFastPolicyToUpstream(t *testing.T) {
+func TestAPIKeyAuthAppliesGlobalOpenAIFastPolicyUpstream(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	upstreamBodies := make(chan []byte, 2)
+	upstreamBodies := make(chan []byte, 1)
 	upstreamServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -35,19 +35,11 @@ func TestAPIKeyAuthForwardsUserScopedOpenAIFastPolicyToUpstream(t *testing.T) {
 	defer upstreamServer.Close()
 
 	settings := &service.OpenAIFastPolicySettings{
-		Rules: []service.OpenAIFastPolicyRule{
-			{
-				ServiceTier: service.OpenAIFastTierPriority,
-				Action:      service.BetaPolicyActionFilter,
-				Scope:       service.BetaPolicyScopeAll,
-			},
-			{
-				ServiceTier: service.OpenAIFastTierPriority,
-				Action:      service.BetaPolicyActionPass,
-				Scope:       service.BetaPolicyScopeAll,
-				UserIDs:     []int64{42},
-			},
-		},
+		Rules: []service.OpenAIFastPolicyRule{{
+			ServiceTier: service.OpenAIFastTierPriority,
+			Action:      service.BetaPolicyActionFilter,
+			Scope:       service.BetaPolicyScopeAll,
+		}},
 	}
 	settingsJSON, err := json.Marshal(settings)
 	require.NoError(t, err)
@@ -60,9 +52,9 @@ func TestAPIKeyAuthForwardsUserScopedOpenAIFastPolicyToUpstream(t *testing.T) {
 		value: string(settingsJSON),
 	}, cfg)
 	gatewayService := service.NewOpenAIGatewayService(
-		nil, nil, nil, nil, nil, nil, nil, cfg,
-		nil, nil, nil, nil, nil, &openAIFastPolicyForwardingHTTPUpstream{client: upstreamServer.Client()},
-		nil, nil, nil, nil, nil, nil, settingService, nil,
+		nil, nil, nil, cfg,
+		nil, nil, nil, nil, &openAIFastPolicyForwardingHTTPUpstream{client: upstreamServer.Client()},
+		nil, nil, nil, nil, nil, settingService,
 	)
 
 	groupID := int64(101)
@@ -74,10 +66,9 @@ func TestAPIKeyAuthForwardsUserScopedOpenAIFastPolicyToUpstream(t *testing.T) {
 		Hydrated: true,
 	}
 	apiKeys := map[string]*service.APIKey{
-		"key-user-42": newOpenAIFastPolicyForwardingAPIKey(1, "key-user-42", 42, groupID, group),
-		"key-user-43": newOpenAIFastPolicyForwardingAPIKey(2, "key-user-43", 43, groupID, group),
+		"gateway-key": newOpenAIFastPolicyForwardingAPIKey(1, "gateway-key", 1, groupID, group),
 	}
-	apiKeyService := service.NewAPIKeyService(&openAIFastPolicyForwardingAPIKeyRepo{apiKeys: apiKeys}, nil, nil, nil, nil, nil, cfg)
+	apiKeyService := service.NewAPIKeyService(&openAIFastPolicyForwardingAPIKeyRepo{apiKeys: apiKeys}, nil, nil, nil, cfg)
 	account := &service.Account{
 		ID:          900,
 		Name:        "openai-upstream",
@@ -94,7 +85,7 @@ func TestAPIKeyAuthForwardsUserScopedOpenAIFastPolicyToUpstream(t *testing.T) {
 	}
 
 	router := gin.New()
-	router.Use(gin.HandlerFunc(NewAPIKeyAuthMiddleware(apiKeyService, nil, cfg)))
+	router.Use(gin.HandlerFunc(NewAPIKeyAuthMiddleware(apiKeyService, cfg)))
 	router.POST("/v1/responses", func(c *gin.Context) {
 		body, readErr := io.ReadAll(c.Request.Body)
 		if readErr != nil {
@@ -122,13 +113,10 @@ func TestAPIKeyAuthForwardsUserScopedOpenAIFastPolicyToUpstream(t *testing.T) {
 		require.Equal(t, http.StatusOK, response.Code)
 	}
 
-	send("key-user-42")
-	send("key-user-43")
+	send("gateway-key")
 
-	allowedUserBody := <-upstreamBodies
-	otherUserBody := <-upstreamBodies
-	require.Equal(t, service.OpenAIFastTierPriority, gjson.GetBytes(allowedUserBody, "service_tier").String())
-	require.False(t, gjson.GetBytes(otherUserBody, "service_tier").Exists())
+	upstreamBody := <-upstreamBodies
+	require.False(t, gjson.GetBytes(upstreamBody, "service_tier").Exists())
 }
 
 func newOpenAIFastPolicyForwardingAPIKey(id int64, key string, userID, groupID int64, group *service.Group) *service.APIKey {
@@ -142,7 +130,6 @@ func newOpenAIFastPolicyForwardingAPIKey(id int64, key string, userID, groupID i
 			ID:          userID,
 			Role:        service.RoleUser,
 			Status:      service.StatusActive,
-			Balance:     10,
 			Concurrency: 1,
 		},
 		Group: group,

@@ -27,6 +27,8 @@ describe('admin channels modularization', () => {
   it('keeps requests and lifecycle ownership in the route page', () => {
     expect(pageSource).toContain('await adminAPI.channels.update')
     expect(pageSource).toContain('await adminAPI.channels.create')
+    expect(pageSource).toContain('adminWebSearchQueries')
+    expect(pageSource).not.toContain('adminAPI.settings.getWebSearchEmulationConfig')
     expect(pageSource).toContain('onMounted(() => {')
     expect(pageSource).toContain("document.addEventListener('click', handleRuleAccountClickOutside)")
     expect(codecSource).not.toContain('adminAPI')

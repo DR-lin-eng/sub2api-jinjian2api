@@ -27,13 +27,6 @@ type DatabaseConfig struct {
 	ConnMaxLifetimeMinutes int `mapstructure:"conn_max_lifetime_minutes"`
 	// ConnMaxIdleTimeMinutes: 空闲连接最大存活时间，及时释放不活跃连接
 	ConnMaxIdleTimeMinutes int `mapstructure:"conn_max_idle_time_minutes"`
-	// UserPlatformQuotaFlusherEnabled: 是否启用 user×platform 配额写聚合 flusher
-	UserPlatformQuotaFlusherEnabled bool `mapstructure:"user_platform_quota_flusher_enabled"`
-	// UserPlatformQuotaFlushIntervalMs: flusher 刷写间隔（毫秒）
-	UserPlatformQuotaFlushIntervalMs int `mapstructure:"user_platform_quota_flush_interval_ms"`
-	// UserPlatformQuotaFlushBatchSize: flusher 单批最大条数
-	// 建议 ≤ 6000（单条 UPSERT 原子上限）
-	UserPlatformQuotaFlushBatchSize int `mapstructure:"user_platform_quota_flush_batch_size"`
 }
 
 func (d *DatabaseConfig) DSN() string {
@@ -161,17 +154,10 @@ type TotpConfig struct {
 	EncryptionKeyConfigured bool `mapstructure:"-"`
 }
 
-type TurnstileConfig struct {
-	Required bool `mapstructure:"required"`
-}
-
+// DefaultConfig contains gateway-wide defaults that are not tied to a user.
 type DefaultConfig struct {
-	AdminEmail      string  `mapstructure:"admin_email"`
-	AdminPassword   string  `mapstructure:"admin_password"`
-	UserConcurrency int     `mapstructure:"user_concurrency"`
-	UserBalance     float64 `mapstructure:"user_balance"`
-	APIKeyPrefix    string  `mapstructure:"api_key_prefix"`
-	RateMultiplier  float64 `mapstructure:"rate_multiplier"`
+	APIKeyPrefix   string  `mapstructure:"api_key_prefix"`
+	RateMultiplier float64 `mapstructure:"rate_multiplier"`
 }
 
 type RateLimitConfig struct {
@@ -199,34 +185,6 @@ type InvalidAuthAbuseConfig struct {
 	Capacity      int  `mapstructure:"capacity"`
 }
 
-// SubscriptionCacheConfig 订阅认证 L1 缓存配置
-type SubscriptionCacheConfig struct {
-	L1Size        int `mapstructure:"l1_size"`
-	L1TTLSeconds  int `mapstructure:"l1_ttl_seconds"`
-	JitterPercent int `mapstructure:"jitter_percent"`
-}
-
-// SubscriptionMaintenanceConfig 订阅窗口维护后台任务配置。
-// 用于将“请求路径触发的维护动作”有界化，避免高并发下 goroutine 膨胀。
-type SubscriptionMaintenanceConfig struct {
-	WorkerCount int `mapstructure:"worker_count"`
-	QueueSize   int `mapstructure:"queue_size"`
-}
-
-// DashboardCacheConfig 仪表盘统计缓存配置
-type DashboardCacheConfig struct {
-	// Enabled: 是否启用仪表盘缓存
-	Enabled bool `mapstructure:"enabled"`
-	// KeyPrefix: Redis key 前缀，用于多环境隔离
-	KeyPrefix string `mapstructure:"key_prefix"`
-	// StatsFreshTTLSeconds: 缓存命中认为“新鲜”的时间窗口（秒）
-	StatsFreshTTLSeconds int `mapstructure:"stats_fresh_ttl_seconds"`
-	// StatsTTLSeconds: Redis 缓存总 TTL（秒）
-	StatsTTLSeconds int `mapstructure:"stats_ttl_seconds"`
-	// StatsRefreshTimeoutSeconds: 异步刷新超时（秒）
-	StatsRefreshTimeoutSeconds int `mapstructure:"stats_refresh_timeout_seconds"`
-}
-
 // DashboardAggregationConfig 仪表盘预聚合配置
 type DashboardAggregationConfig struct {
 	// Enabled: 是否启用预聚合作业
@@ -247,22 +205,7 @@ type DashboardAggregationConfig struct {
 
 // DashboardAggregationRetentionConfig 预聚合保留窗口
 type DashboardAggregationRetentionConfig struct {
-	UsageLogsDays         int `mapstructure:"usage_logs_days"`
-	UsageBillingDedupDays int `mapstructure:"usage_billing_dedup_days"`
-	HourlyDays            int `mapstructure:"hourly_days"`
-	DailyDays             int `mapstructure:"daily_days"`
-}
-
-// UsageCleanupConfig 使用记录清理任务配置
-type UsageCleanupConfig struct {
-	// Enabled: 是否启用清理任务执行器
-	Enabled bool `mapstructure:"enabled"`
-	// MaxRangeDays: 单次任务允许的最大时间跨度（天）
-	MaxRangeDays int `mapstructure:"max_range_days"`
-	// BatchSize: 单批删除数量
-	BatchSize int `mapstructure:"batch_size"`
-	// WorkerIntervalSeconds: 后台任务轮询间隔（秒）
-	WorkerIntervalSeconds int `mapstructure:"worker_interval_seconds"`
-	// TaskTimeoutSeconds: 单次任务最大执行时长（秒）
-	TaskTimeoutSeconds int `mapstructure:"task_timeout_seconds"`
+	UsageLogsDays int `mapstructure:"usage_logs_days"`
+	HourlyDays    int `mapstructure:"hourly_days"`
+	DailyDays     int `mapstructure:"daily_days"`
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCountTokensAdmissionPrecedesBillingSelectionAndForward(t *testing.T) {
+func TestCountTokensAdmissionPrecedesSelectionAndForwardWithoutDownstreamBilling(t *testing.T) {
 	tests := []struct {
 		name string
 		file string
@@ -21,20 +21,20 @@ func TestCountTokensAdmissionPrecedesBillingSelectionAndForward(t *testing.T) {
 			source := stripGoComments(goFunctionSource(t, tt.file, "CountTokens"))
 			pendingIndex := strings.Index(source, "SetPriorityAdmissionPendingBytes")
 			userIndex := strings.Index(source, "AcquireUserSlotWithWait")
-			billingIndex := strings.Index(source, "CheckBillingEligibility")
 			selectionIndex := strings.Index(source, "SelectAccountWith")
 			accountIndex := strings.Index(source, "acquireAccountSelectionSlot")
 			forwardIndex := strings.Index(source, ".Forward")
 
 			require.NotEqual(t, -1, pendingIndex, "request body bytes must be registered")
 			require.NotEqual(t, -1, userIndex, "user admission must be enforced")
-			require.NotEqual(t, -1, billingIndex, "billing check must remain present")
 			require.NotEqual(t, -1, selectionIndex, "load-aware account selection must remain present")
 			require.NotEqual(t, -1, accountIndex, "account admission must consume the selection result")
 			require.NotEqual(t, -1, forwardIndex, "upstream forwarding must remain present")
+			require.NotContains(t, source, "CheckBillingEligibility", "count_tokens must not enforce downstream balance or subscription billing")
+			require.NotContains(t, source, "billingCacheService", "count_tokens must not depend on downstream billing services")
+			require.NotContains(t, source, "GetSubscriptionFromContext", "count_tokens must not read downstream subscriptions")
 			require.Less(t, pendingIndex, userIndex)
-			require.Less(t, userIndex, billingIndex)
-			require.Less(t, billingIndex, selectionIndex)
+			require.Less(t, userIndex, selectionIndex)
 			require.Less(t, selectionIndex, accountIndex)
 			require.Less(t, accountIndex, forwardIndex)
 		})

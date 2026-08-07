@@ -630,6 +630,7 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { adminAPI } from '@/api/admin'
+import { getWebSearchEmulationConfig } from '@/features/admin-settings/data/datasources/adminWebSearchQueries'
 import type { Channel, CreateChannelRequest, UpdateChannelRequest, AccountStatsPricingRule } from '@/features/admin-channels/data/datasources/adminChannelsDatasource'
 import type { PricingFormEntry } from '@/features/admin-channels/presentation/adminChannelSignals'
 import { findModelConflict, validateIntervals } from '@/features/admin-channels/presentation/adminChannelSignals'
@@ -666,7 +667,7 @@ const appStore = useAppStore()
 const webSearchGlobalEnabled = ref(false)
 async function loadWebSearchGlobalState() {
   try {
-    const cfg = await adminAPI.settings.getWebSearchEmulationConfig()
+    const cfg = await getWebSearchEmulationConfig()
     webSearchGlobalEnabled.value = cfg?.enabled === true && (cfg?.providers?.length ?? 0) > 0
   } catch (err: unknown) {
     console.warn('Failed to load web search global state:', err)

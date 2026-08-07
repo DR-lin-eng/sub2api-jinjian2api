@@ -27,25 +27,6 @@ func (s *SettingService) prepareSystemSettingsUpdate(ctx context.Context, settin
 	})
 	settings.RequestPriorityPendingLimitPerInstance = requestPrioritySettings.PendingLimitPerInstance
 	settings.RequestPriorityPendingMiBPerInstance = requestPrioritySettings.PendingMiBPerInstance
-	if err := s.validateDefaultSubscriptionGroups(ctx, settings.DefaultSubscriptions); err != nil {
-		return "", err
-	}
-	normalizedWhitelist, err := NormalizeRegistrationEmailSuffixWhitelist(settings.RegistrationEmailSuffixWhitelist)
-	if err != nil {
-		return "", infraerrors.BadRequest("INVALID_REGISTRATION_EMAIL_SUFFIX_WHITELIST", err.Error())
-	}
-	if normalizedWhitelist == nil {
-		normalizedWhitelist = []string{}
-	}
-	settings.RegistrationEmailSuffixWhitelist = normalizedWhitelist
-	alipaySource, err := normalizeVisibleMethodSettingSource("alipay", settings.PaymentVisibleMethodAlipaySource, settings.PaymentVisibleMethodAlipayEnabled)
-	if err != nil {
-		return "", err
-	}
-	wxpaySource, err := normalizeVisibleMethodSettingSource("wxpay", settings.PaymentVisibleMethodWxpaySource, settings.PaymentVisibleMethodWxpayEnabled)
-	if err != nil {
-		return "", err
-	}
 	if err := s.normalizeOpenAIAdvancedSchedulerOverrides(settings); err != nil {
 		return "", err
 	}
@@ -73,37 +54,5 @@ func (s *SettingService) prepareSystemSettingsUpdate(ctx context.Context, settin
 		return "", fmt.Errorf("marshal client IP trusted proxies: %w", err)
 	}
 	settings.APIKeyACLTrustForwardedIP = settings.ClientIPResolutionMode != ip.ResolutionModeDirect
-	settings.PaymentVisibleMethodAlipaySource = alipaySource
-	settings.PaymentVisibleMethodWxpaySource = wxpaySource
-	settings.WeChatConnectAppID = strings.TrimSpace(settings.WeChatConnectAppID)
-	settings.WeChatConnectAppSecret = strings.TrimSpace(settings.WeChatConnectAppSecret)
-	settings.WeChatConnectOpenAppID = strings.TrimSpace(firstNonEmpty(settings.WeChatConnectOpenAppID, settings.WeChatConnectAppID))
-	settings.WeChatConnectOpenAppSecret = strings.TrimSpace(firstNonEmpty(settings.WeChatConnectOpenAppSecret, settings.WeChatConnectAppSecret))
-	settings.WeChatConnectMPAppID = strings.TrimSpace(firstNonEmpty(settings.WeChatConnectMPAppID, settings.WeChatConnectAppID))
-	settings.WeChatConnectMPAppSecret = strings.TrimSpace(firstNonEmpty(settings.WeChatConnectMPAppSecret, settings.WeChatConnectAppSecret))
-	settings.WeChatConnectMobileAppID = strings.TrimSpace(firstNonEmpty(settings.WeChatConnectMobileAppID, settings.WeChatConnectAppID))
-	settings.WeChatConnectMobileAppSecret = strings.TrimSpace(firstNonEmpty(settings.WeChatConnectMobileAppSecret, settings.WeChatConnectAppSecret))
-	settings.WeChatConnectMode = normalizeWeChatConnectStoredMode(
-		settings.WeChatConnectOpenEnabled,
-		settings.WeChatConnectMPEnabled,
-		settings.WeChatConnectMobileEnabled,
-		settings.WeChatConnectMode,
-	)
-	settings.WeChatConnectScopes = normalizeWeChatConnectScopeSetting(settings.WeChatConnectScopes, settings.WeChatConnectMode)
-	settings.WeChatConnectRedirectURL = strings.TrimSpace(settings.WeChatConnectRedirectURL)
-	settings.WeChatConnectFrontendRedirectURL = strings.TrimSpace(settings.WeChatConnectFrontendRedirectURL)
-	if settings.WeChatConnectFrontendRedirectURL == "" {
-		settings.WeChatConnectFrontendRedirectURL = defaultWeChatConnectFrontend
-	}
-	settings.GitHubOAuthRedirectURL = strings.TrimSpace(settings.GitHubOAuthRedirectURL)
-	settings.GitHubOAuthFrontendRedirectURL = strings.TrimSpace(settings.GitHubOAuthFrontendRedirectURL)
-	if settings.GitHubOAuthFrontendRedirectURL == "" {
-		settings.GitHubOAuthFrontendRedirectURL = defaultGitHubOAuthFrontend
-	}
-	settings.GoogleOAuthRedirectURL = strings.TrimSpace(settings.GoogleOAuthRedirectURL)
-	settings.GoogleOAuthFrontendRedirectURL = strings.TrimSpace(settings.GoogleOAuthFrontendRedirectURL)
-	if settings.GoogleOAuthFrontendRedirectURL == "" {
-		settings.GoogleOAuthFrontendRedirectURL = defaultGoogleOAuthFrontend
-	}
 	return string(clientIPTrustedProxiesJSON), nil
 }

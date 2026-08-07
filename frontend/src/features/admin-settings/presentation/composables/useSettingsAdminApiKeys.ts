@@ -1,10 +1,21 @@
 import { reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-  settingsAPI,
-  type AdminApiKey,
-  type AdminApiKeyScope,
-} from '@/features/admin-settings/data/datasources/adminSettingsDatasource'
+  createAdminApiKey as createScopedAdminApiKeyRequest,
+  deleteAdminApiKey as deleteLegacyAdminApiKey,
+  regenerateAdminApiKey as regenerateLegacyAdminApiKey,
+  revokeAdminApiKey,
+  rotateAdminApiKey,
+  updateAdminApiKey,
+} from '@/features/admin-settings/data/datasources/adminApiKeyActions'
+import {
+  getAdminApiKey,
+  listAdminApiKeys,
+} from '@/features/admin-settings/data/datasources/adminApiKeyQueries'
+import type {
+  AdminApiKey,
+  AdminApiKeyScope,
+} from '@/features/admin-settings/data/dtos/adminApiKeyDtos'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { useAppStore } from '@/core/stores/appStore'
 
@@ -34,8 +45,6 @@ export function useSettingsAdminApiKeys(
   const adminApiKeyScopeOptions: Array<{ value: AdminApiKeyScope; label: string }> = [
     { value: "admin.read", label: "全部只读" },
     { value: "admin.write", label: "全部写入" },
-    { value: "admin.users.read", label: "用户读取" },
-    { value: "admin.users.write", label: "用户修改" },
     { value: "admin.accounts.read", label: "账号读取" },
     { value: "admin.accounts.write", label: "账号修改" },
     { value: "admin.settings.read", label: "设置读取" },
@@ -54,7 +63,7 @@ export function useSettingsAdminApiKeys(
   async function loadScopedAdminApiKeys() {
     adminApiKeyPanelLoading.value = true;
     try {
-      scopedAdminApiKeys.value = (await settingsAPI.listAdminApiKeys()).items;
+      scopedAdminApiKeys.value = (await listAdminApiKeys()).items;
     } catch {
       // Keep the legacy card usable when the scoped-key endpoint is unavailable.
     } finally {
@@ -82,10 +91,10 @@ export function useSettingsAdminApiKeys(
         expires_at: adminApiKeyExpiryPayload(),
       };
       if (editingAdminApiKeyId.value) {
-        await settingsAPI.updateAdminApiKey(editingAdminApiKeyId.value, request);
+        await updateAdminApiKey(editingAdminApiKeyId.value, request);
         editingAdminApiKeyId.value = null;
       } else {
-        const result = await settingsAPI.createAdminApiKey(request);
+        const result = await createScopedAdminApiKeyRequest(request);
         adminApiKeyPanelSecret.value = result.key;
       }
       adminApiKeyForm.name = "";
@@ -119,7 +128,7 @@ export function useSettingsAdminApiKeys(
     if (!confirm(t("admin.settings.adminApiKey.regenerateConfirm"))) return;
     adminApiKeyPanelOperating.value = true;
     try {
-      const result = await settingsAPI.rotateAdminApiKey(id);
+      const result = await rotateAdminApiKey(id);
       adminApiKeyPanelSecret.value = result.key;
       await loadScopedAdminApiKeys();
     } catch (error: unknown) {
@@ -133,7 +142,7 @@ export function useSettingsAdminApiKeys(
     if (!confirm(t("admin.settings.adminApiKey.deleteConfirm"))) return;
     adminApiKeyPanelOperating.value = true;
     try {
-      await settingsAPI.revokeAdminApiKey(id);
+      await revokeAdminApiKey(id);
       await loadScopedAdminApiKeys();
       appStore.showSuccess(t("admin.settings.adminApiKey.keyDeleted"));
     } catch (error: unknown) {
@@ -152,7 +161,7 @@ export function useSettingsAdminApiKeys(
   async function loadAdminApiKey() {
     adminApiKeyLoading.value = true;
     try {
-      const status = await settingsAPI.getAdminApiKey();
+      const status = await getAdminApiKey();
       adminApiKeyExists.value = status.exists;
       adminApiKeyMasked.value = status.masked_key;
     } catch {
@@ -165,7 +174,7 @@ export function useSettingsAdminApiKeys(
   async function createAdminApiKey() {
     adminApiKeyOperating.value = true;
     try {
-      const result = await settingsAPI.regenerateAdminApiKey();
+      const result = await regenerateLegacyAdminApiKey();
       newAdminApiKey.value = result.key;
       adminApiKeyExists.value = true;
       adminApiKeyMasked.value =
@@ -187,7 +196,7 @@ export function useSettingsAdminApiKeys(
     if (!confirm(t("admin.settings.adminApiKey.deleteConfirm"))) return;
     adminApiKeyOperating.value = true;
     try {
-      await settingsAPI.deleteAdminApiKey();
+      await deleteLegacyAdminApiKey();
       adminApiKeyExists.value = false;
       adminApiKeyMasked.value = "";
       newAdminApiKey.value = "";

@@ -143,16 +143,6 @@ func validateLogging(c *Config) error {
 	return nil
 }
 
-func validateSubscriptionMaintenance(c *Config) error {
-	if c.SubscriptionMaintenance.WorkerCount < 0 {
-		return fmt.Errorf("subscription_maintenance.worker_count must be non-negative")
-	}
-	if c.SubscriptionMaintenance.QueueSize < 0 {
-		return fmt.Errorf("subscription_maintenance.queue_size must be non-negative")
-	}
-	return nil
-}
-
 func validateGeminiOAuth(c *Config) error {
 	// Gemini OAuth 配置校验：client_id 与 client_secret 必须同时设置或同时留空。
 	// 留空时表示使用内置的 Gemini CLI OAuth 客户端（其 client_secret 通过环境变量注入）。

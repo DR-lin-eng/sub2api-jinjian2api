@@ -1,6 +1,6 @@
 # 前端架构优化计划
 
-> 状态：阶段性完成。阶段 1 的渐进式架构门禁已于 2026-08-03 落地，阶段 2 的 `admin-accounts` 试点已于 2026-08-04 收口；阶段 3 待后续任务启动。
+> 状态：实施中。阶段 1 的渐进式架构门禁已于 2026-08-03 落地，阶段 2 的 `admin-accounts` 试点已于 2026-08-04 收口；阶段 3 已于 2026-08-06 从 `admin-settings` 启动。
 >
 > 基线日期：2026-08-03。后续迁移批次开始前必须重新统计代码和依赖，源码与测试始终是最终事实来源。
 
@@ -220,6 +220,46 @@ features/<domain>/
 - [ ] `admin-usage` 消除对 `admin-users`、`admin-ops` 私有 presentation 的直接依赖。
 - [ ] `admin-orders` 与 `billing` 提取稳定的 payment 共享契约和格式化能力。
 
+已完成阶段 3 的第一个切片：邮件模板列表与详情进入 `adminEmailTemplateQueries.ts`，更新、恢复官方版本和预览进入 `adminEmailTemplateActions.ts`，8 个邮件模板协议类型进入 `data/dtos/adminEmailTemplateDtos.ts`。`EmailTemplateEditor.vue` 直接依赖 Query、Action、DTO 与核心 App Store，不再经过 `@/api` 或 `@/stores`；`adminSettingsDatasource.ts` 继续保留同名导出与 `settingsAPI` 函数身份，兼容旧消费者。
+
+该切片未改变 URL、路径参数编码、请求 payload、首次选择、模板加载、预览刷新、保存/恢复反馈或路由 chunk；精确 legacy barrel 基线从 100 条降至 98 条（`@/api` 20、`@/api/admin` 37、`@/stores` 41）。
+
+已完成阶段 3 的第二个切片：面板限流协议、默认值和旧响应归一化进入 `data/dtos/adminPanelRateLimitDtos.ts`，读取与保存分别进入 `adminPanelRateLimitQueries.ts` 和 `adminPanelRateLimitActions.ts`。`PanelRateLimitSettingsCard.vue` 直接依赖这些 owner 与核心 App Store，不再经过 `@/api` 或 `@/stores`；中央 datasource 继续提供同名导出并保持 `settingsAPI` 函数身份。
+
+该切片保留安全页首次打开时按需挂载、旧后端 404 静默隐藏、null/部分响应默认值、每分钟 0 到 100000 的边界、Enter 局部保存和反馈时序；精确 legacy barrel 基线从 98 条降至 96 条（`@/api` 19、`@/api/admin` 37、`@/stores` 40）。`admin-settings` 其余设置子域仍待迁移，因此本阶段清单保持未完成。
+
+已完成阶段 3 的第三个切片：`adminSettingsStore.ts` 直接组合设置 datasource 与 `admin-orders` 管理支付 datasource；错误透传规则、TLS 指纹 profile 和 OpenAI Fast Policy 用户选择器直接调用既有明确 owner；`AdminComplianceDialog.vue` 直接依赖同域合规 Store 与核心 App Store，认证状态和登出跳转由 `App.vue` 组合。至此 `admin-settings` 运行时代码不再引用 `@/api`、`@/api/admin` 或 `@/stores` 兼容 barrel。
+
+该切片保留 Store 的并发加载去重、`force` 刷新、`Promise.all` 请求顺序、localStorage 键与失败缓存回退；保留规则/TLS CRUD 与写后刷新、用户搜索 300ms 防抖和过期结果屏蔽、已删除用户回填，以及合规阻断、确认和登出跳转。精确 legacy barrel 基线从 96 条降至 91 条（`@/api` 18、`@/api/admin` 34、`@/stores` 39）。主设置 DTO、Query、Action 及其他设置子域仍待收口，因此阶段 3 清单保持未完成。
+
+已完成阶段 3 的第四个切片：`SystemSettings`、`UpdateSettingsRequest` 及其 17 个基础协议类型进入 `data/dtos/adminSystemSettingsDtos.ts`，主设置读取与统一保存分别进入 `adminSystemSettingsQueries.ts` 和 `adminSystemSettingsActions.ts`。页面、同域 Store 与账号额度通知 composable 直接调用明确 Query/Action owner，表单与保存模块直接依赖 DTO owner；中央 datasource 从 1625 行降至 861 行，并继续兼容导出同名函数、类型与 `settingsAPI` 函数身份。
+
+该切片保留 `/admin/settings` URL、部分更新 payload、应用后的完整响应、单次主设置加载、敏感保存 step-up、写响应回填、Web Search 保存、公开设置强制刷新、管理设置强制刷新和成功通知顺序；全部使用静态 import，未改变 Settings 路由 chunk。迁移未涉及 legacy barrel，精确基线保持 91 条；管理 API Key、网关策略和 Web Search 等独立设置子域仍待收口，因此阶段 3 清单保持未完成。
+
+已完成阶段 3 的第五个切片：管理 API Key 的状态、权限、元数据和创建/更新请求等 5 个协议声明进入 `data/dtos/adminApiKeyDtos.ts`，scoped 列表与 legacy 状态读取进入 `adminApiKeyQueries.ts`，scoped 创建、更新、轮换、撤销与 legacy 重新生成、删除进入 `adminApiKeyActions.ts`。`useSettingsAdminApiKeys.ts` 直接依赖 Query、Action、DTO owner；中央 datasource 从 861 行降至 761 行，并继续兼容导出 8 个同名函数、5 个类型与原 `settingsAPI` 函数身份。
+
+该切片保留全部 URL、路径参数编码、请求 payload 和响应；保留 scoped 列表失败时继续展示 legacy 卡片、创建与更新分支、空权限默认 `admin.read`、到期时间 ISO 转换、轮换/撤销确认、写后列表刷新、legacy 掩码、反馈与复制时序。全部使用静态 import，未改变 Settings 路由 chunk；迁移未涉及 legacy barrel，精确基线保持 91 条，网关策略和 Web Search 等独立设置子域仍待收口。
+
+已完成阶段 3 的第六个切片：Web Search provider、模拟配置、搜索/测试结果与用量重置请求等 5 个协议声明进入 `data/dtos/adminWebSearchDtos.ts`，模拟配置读取进入 `adminWebSearchQueries.ts`，配置保存、连通性测试和用量重置进入 `adminWebSearchActions.ts`。`useSettingsWebSearch.ts`、账号创建/编辑对话框和渠道页直接依赖明确 owner；中央 datasource 从 761 行降至 720 行，并继续兼容导出同名函数、类型与原 `settingsAPI` 函数身份。
+
+该切片保留全部 URL、GET/PUT/POST payload、响应与 reset 的 `void` 语义；保留设置和代理并行加载、代理失败回退、旧后端 404 静默隐藏、配额校验/归一化、UTC 订阅日期转换、默认测试查询、重置确认与本地配额回填，以及复制和反馈时序。主设置保存顺序与 Settings 静态路由 chunk 不变；迁移未涉及 legacy barrel，精确基线保持 91 条，网关策略等独立设置子域仍待收口。
+
+已完成阶段 3 的第七个切片：529 过载冷却、429 限流冷却和全局临时不可调度等 3 个协议声明进入 `data/dtos/adminSchedulerResilienceDtos.ts`，对应读取进入 `adminSchedulerResilienceQueries.ts`，保存进入 `adminSchedulerResilienceActions.ts`。`useSettingsGatewayPolicies.ts` 对这 6 个请求直接依赖明确 owner；中央 datasource 从 720 行降至 671 行，并继续兼容导出同名函数、类型与原 `settingsAPI` 函数身份。
+
+该切片保留 3 组 URL、完整 PUT payload 与响应、表单默认值、加载失败静默回退、保存 loading 状态、响应回填和成功/失败反馈时序；全局临时不可调度开关的页面加载/保存行为及 Settings 静态路由 chunk 不变。迁移未涉及 legacy barrel，精确基线保持 91 条；Stream Timeout、Rectifier 和 Beta Policy 仍按独立协议后续收口。
+
+已完成阶段 3 的第八个切片：Stream Timeout 的响应头超时降级、检测阈值和处置动作等 7 个协议字段进入 `data/dtos/adminStreamTimeoutDtos.ts`，读取与保存分别进入 `adminStreamTimeoutQueries.ts` 和 `adminStreamTimeoutActions.ts`。`useSettingsGatewayPolicies.ts` 直接依赖明确 Query/Action owner；中央 datasource 从 671 行降至 635 行，并继续兼容导出同名函数、类型与原 `settingsAPI` 函数身份。
+
+该切片保留 `/admin/settings/stream-timeout` GET/PUT、完整七字段 payload 与响应、响应头超时降级独立开关、加载失败静默回退、加载/保存状态、响应回填和成功/失败反馈时序。全部使用静态 import，未改变 Settings 路由 chunk；迁移未涉及 legacy barrel，精确基线保持 91 条，Rectifier 和 Beta Policy 仍按独立协议后续收口。
+
+已完成阶段 3 的第九个切片：Rectifier 的总开关、思考签名、思考预算、显示模式、API Key 签名与自定义模式等 6 个协议字段进入 `data/dtos/adminRectifierDtos.ts`，读取与保存分别进入 `adminRectifierQueries.ts` 和 `adminRectifierActions.ts`。`useSettingsGatewayPolicies.ts` 直接依赖明确 Query/Action owner，中央 datasource 在上一轮可复现隔离基线上从 635 行降至 594 行；当前并行后端模式精简组合态中的同一拆分从 327 行降至 286 行，并继续兼容导出同名函数、类型与原 `settingsAPI` 函数身份。
+
+该切片保留 `/admin/settings/rectifier` GET/PUT、完整六字段 payload 与响应、`display_only` 安全默认值、旧数据 `apikey_signature_patterns: null` 的空数组回退、保存时仅过滤空白模式、加载失败静默回退、加载/保存状态、响应回填和成功/失败反馈时序。全部使用静态 import，未改变 Settings 路由 chunk；迁移本身未涉及 legacy barrel，当前精确基线的下降来自并行后端模式精简，Beta Policy 仍按独立协议后续收口。
+
+已完成阶段 3 的第十个切片：Beta Policy 的规则动作、作用域、模型白名单和回退行为进入 `data/dtos/adminBetaPolicyDtos.ts`，读取与保存分别进入 `adminBetaPolicyQueries.ts` 和 `adminBetaPolicyActions.ts`。`useSettingsGatewayPolicies.ts` 直接依赖明确 Query/Action owner，中央 datasource 从 286 行降至 248 行，并继续兼容导出同名函数、类型与原 `settingsAPI` 函数身份。
+
+该切片保留 `/admin/settings/beta-policy` GET/PUT、完整规则响应、加载失败静默回退、加载/保存状态、响应回填和成功/失败反馈时序；保存时过滤空白模型规则，无有效白名单时省略白名单及回退字段，有白名单时默认回退为 `pass`，仅在回退动作为 `block` 时保留回退错误。全部使用静态 import，未改变 Settings 路由 chunk；迁移未涉及 legacy barrel，当前精确基线保持 35 条，中央 datasource 仅剩 SMTP 测试和测试邮件发送 helper 待收口。
+
 完成条件：管理端复杂域不再依赖统一 `adminAPI` 对象，跨域依赖具有明确公开 owner。
 
 ### 阶段 4：迁移用户域
@@ -312,7 +352,7 @@ make test-frontend
 
 ## 10. 当前进度与接手位置
 
-截至第十三切片，`admin-accounts` 的页面列表、统计、用量、模型、上游计费、批量编辑、额度通知、定时测试、OAuth、重新授权、创建/编辑、数据导入、CRS 预览/同步和账号专属 DTO 已经进入明确 owner。架构测试确认精确 legacy barrel 基线为 100 条，其中该 feature 的 `@/api/admin` 运行时入口已归零。
+`admin-accounts` 的页面列表、统计、用量、模型、上游计费、批量编辑、额度通知、定时测试、OAuth、重新授权、创建/编辑、数据导入、CRS 预览/同步和账号专属 DTO 已经进入明确 owner。阶段 3 已开始迁移 `admin-settings`；邮件模板、面板限流、主设置文档、管理 API Key、Web Search、调度韧性、Stream Timeout、Rectifier 和 Beta Policy 设置已完成 DTO、Query、Action 收口，该 feature 的剩余运行时 legacy barrel 引用也已清零。并行后端模式精简同步移除了其他 feature 的旧入口，当前精确 legacy barrel 基线为 35 条。
 
 2026-08-03 收口验证记录：
 
@@ -355,4 +395,71 @@ make test-frontend
 - Docker 隔离验证镜像 `sub2api-frontend-dto-test-suite:20260804` 内的全局 lint、typecheck、262 个测试文件/1685 项测试和 production build 全部通过（`linux/arm64`，manifest `sha256:7291373296e2eb92aa7a5cc67348a98ce30462b0763f472749dbc9523def2c4f`）。
 - 正式多阶段运行时镜像 `sub2api-frontend-arch-runtime:20260804-dto` 构建成功（`linux/arm64`，40,262,958 bytes，manifest `sha256:c08b9edf650e65616a51f7e8eb7d60b021911ec1c1875a195ace04541bdbd9e2`）；容器内 `sub2api --version` 正常返回 `Sub2API 0.1.173`。
 
-下一步进入阶段 3 的复杂管理域迁移；继续保持每个 owner 切片的兼容出口、全量前端验证和 Docker 镜像证据。
+2026-08-06 `admin-settings` 邮件模板切片验证记录：
+
+- 邮件模板请求契约与架构边界定向测试通过，共 1 个测试文件、5 个测试；`admin-settings` 回归通过，共 12 个测试文件、91 个测试。
+- 在与当前 `package.json`、`pnpm-lock.yaml` 哈希一致的 Node 24 / pnpm 11.17 Docker 环境中，全局 lint、typecheck、266 个测试文件/1732 项测试和 production build 全部通过。
+- production build 继续报告既有的动态/静态导入和大 chunk 警告，但路由构建成功；本切片使用静态 import，未新增运行时依赖或改变 Settings 路由 chunk 边界。
+- 文档检查和 `git diff --check` 通过，工作区未生成或修改嵌入式前端产物。
+
+2026-08-06 `admin-settings` 面板限流切片验证记录：
+
+- Query/Action 契约、归一化边界、组件行为和 Settings 页面挂载定向验证通过，共 3 个测试文件、52 个测试；`admin-settings` 回归通过，共 13 个测试文件、96 个测试。
+- 在与当前锁文件一致的 Node 24 / pnpm 11.17 Docker 环境中，全局 lint、typecheck、267 个测试文件/1737 项测试和 production build 全部通过。
+- production build 仅报告既有的动态/静态导入和大 chunk 警告；本切片使用静态 import，未新增运行时依赖或改变 Settings 路由 chunk 边界。
+- 文档检查和 `git diff --check` 通过，工作区未生成或修改嵌入式前端产物。
+
+2026-08-06 `admin-settings` legacy owner 切片验证记录：
+
+- Store 缓存/并发/失败回退、用户选择器、合规对话框和 owner 边界定向验证通过，共 4 个测试文件、11 个测试；`SettingsPage.spec.ts` 增加底层请求哨兵后 41 个测试无真实网络请求。
+- `admin-settings` 回归通过，共 16 个测试文件、104 个测试；定向 ESLint 和全量 typecheck 在 Node 24 / pnpm 11.17 Docker 环境中通过。
+- Vitest 文件系统白名单覆盖仓库内 `docs/legal`，使合规对话框读取的生产法律文档可以被真实挂载测试，不再只依赖源码断言。
+- 以 `HEAD + admin-settings` 三个切片文件组成的隔离快照完成 Docker 全量验证：全局 lint、typecheck、270 个测试文件/1745 项测试和 production build 全部通过；build 转换 1218 个模块，耗时 1 分 37 秒，仅保留既有动态/静态导入重叠和大 chunk 警告。
+- 实时工作区同时存在未纳入本切片的侧栏与登录页重构；组合态全局 lint/typecheck 当前由 `AppSidebar.vue` 未使用图标和 `LoginPage.vue` 陈旧债务基线阻断，待并行改动收口后重新执行，不能用隔离快照结果替代组合态验收。
+
+2026-08-06 `admin-settings` 主设置 DTO/Query/Action 切片验证记录：
+
+- 主设置 URL、payload、响应、兼容函数身份和 owner 边界，以及默认值 helper、保存模块和跨 feature 额度开关的 Docker 定向验证通过，共 4 个测试文件、29 个测试；Settings 页面单独验证一次主设置加载及 `主设置保存 -> Web Search 保存 -> 公开设置刷新 -> 管理设置刷新 -> 成功通知` 顺序。
+- 以 `HEAD + admin-settings` 四个 owner 切片组成的隔离快照完成 Docker 全量验证：全局 lint、typecheck、271 个测试文件/1751 项测试和 production build 全部通过；build 转换 1220 个模块，耗时 1 分 23 秒，仅保留既有动态/静态 import 重叠和大 chunk 警告。
+- 实时组合工作区还包含未纳入本切片的后端模式精简：`SettingsPage.vue` 已移除 agreement、features、users、payment 四个 tab，`adminSettingsStore.ts` 已移除支付配置状态，但相邻测试和架构基线尚未同步；当前 Docker `admin-settings` 回归为 17 个文件中 14 个通过、110 项中 87 项通过，23 项失败。
+- 实时组合工作区全局 lint 当前为 2 个错误和 11 个未使用告警，typecheck 为 12 个错误，集中在 `AppSidebar.vue`、`LoginPage.vue`、精简后的 `SettingsPage.vue` 和 `useSettingsPage.ts`；这些并行变更收口前不能把隔离快照结果表述为组合态全局通过。
+
+2026-08-06 `admin-settings` 管理 API Key DTO/Query/Action 切片验证记录：
+
+- scoped 与 legacy 请求契约、路径编码、响应、兼容函数身份和 owner 边界的 Docker 定向验证通过，共 2 个测试文件、12 个测试；隔离 `admin-settings` 回归通过，共 18 个测试文件、116 个测试，Settings 页面底层请求哨兵未发现真实网络漏出。
+- 以 `HEAD + admin-settings` 五个 owner 切片组成的隔离快照完成 Docker 全量验证：全局 lint、typecheck、272 个测试文件/1757 项测试和 production build 全部通过；build 转换 1222 个模块，耗时 1 分 37 秒，仅保留既有动态/静态 import 重叠和大 chunk 警告。
+- 实时组合工作区 Docker `admin-settings` 回归为 18 个文件中 14 个通过、114 项中 91 项通过，23 项失败；全局 lint 仍为 2 个错误和 11 个未使用告警，typecheck 仍为 12 个错误。阻断仍来自后端模式精简后的 tab、支付 Store、侧栏和登录页，不涉及本切片的新 owner。
+
+2026-08-06 `admin-settings` Web Search DTO/Query/Action 切片验证记录：
+
+- 请求契约、兼容函数身份、直接消费者和保存顺序的 Docker 定向验证通过，共 7 个测试文件、90 个测试，并单独通过 Settings 保存顺序哨兵；隔离 `admin-settings` 回归通过，共 19 个测试文件、123 个测试。
+- 以 `HEAD + admin-settings` 六个 owner 切片组成的隔离快照完成 Docker 全量验证：全局 lint、`vue-tsc --noEmit`、`vue-tsc -b`、273 个测试文件/1764 项测试和 Vite production build 全部通过；build 转换 1224 个模块，耗时 48 秒，仅保留既有动态/静态 import 重叠和大 chunk 警告。
+- 实时组合工作区 Docker `admin-settings` 回归仍为 19 个文件中 100 项通过、23 项失败；全局 lint 为 2 个错误和 11 个未使用告警，typecheck 为 12 个错误。阻断仍来自后端模式精简后的 tab、支付 Store、侧栏、登录页和订阅加载变量，不涉及本切片的新 owner。
+
+2026-08-06 `admin-settings` 调度韧性 DTO/Query/Action 切片验证记录：
+
+- 3 组 GET/PUT 契约、兼容函数身份和直接消费者的 Docker 定向验证通过；新增 datasource 与 Settings 页面共 2 个测试文件、49 个测试，隔离 `admin-settings` 回归通过，共 20 个测试文件、131 个测试。
+- 以 `HEAD + admin-settings` 七个 owner 切片组成的隔离快照完成 Docker 全量验证：全局 lint、`vue-tsc --noEmit`、`vue-tsc -b`、274 个测试文件/1772 项测试和 Vite production build 全部通过；build 转换 1226 个模块，耗时 49.32 秒，仅保留既有动态/静态 import 重叠和大 chunk 警告。
+- 实时组合工作区 Docker `admin-settings` 回归为 20 个文件中 17 个通过、131 项中 108 项通过，23 项失败；全局 lint 仍为 2 个错误和 11 个未使用告警，typecheck 仍为 12 个错误。阻断仍来自后端模式精简后的 tab、支付 Store、侧栏、登录页和订阅加载变量，不涉及本切片的新 owner。
+
+2026-08-07 `admin-settings` Stream Timeout DTO/Query/Action 切片验证记录：
+
+- GET/PUT 契约、完整七字段 payload、兼容函数身份和直接消费者的 Docker 定向验证通过；新增 datasource 与 Settings 页面共 2 个测试文件、45 个测试，隔离 `admin-settings` 回归通过，共 21 个测试文件、135 个测试。
+- 以 `HEAD + admin-settings` 八个 owner 切片组成的隔离快照完成 Docker 全量验证：全局 lint、`vue-tsc --noEmit`、`vue-tsc -b`、275 个测试文件/1776 项测试和 Vite production build 全部通过；build 转换 1228 个模块，耗时 1 分 16 秒，仅保留既有动态/静态 import 重叠和大 chunk 警告。
+- 实时组合工作区 Docker `admin-settings` 回归为 21 个文件中 18 个通过、135 项中 112 项通过，23 项失败；全局 lint 仍为 2 个错误和 11 个未使用告警，typecheck 仍为 12 个错误。阻断仍来自后端模式精简后的 tab、支付 Store、侧栏、登录页和订阅加载变量，不涉及本切片的新 owner。
+- 文档检查、`git diff --check` 和新增文件尾随空白扫描通过；精确 legacy barrel 基线仍为 91 条，`admin-settings` 运行时引用为 0，工作区未生成或修改嵌入式前端产物。
+
+2026-08-07 `admin-settings` Rectifier DTO/Query/Action 切片验证记录：
+
+- GET/PUT 契约、完整六字段 payload、兼容函数身份、空模式过滤、旧 null 模式归一化、静默加载回退和反馈时序的 Docker 定向验证通过；新增 datasource 测试 1 个文件/7 项，与 Settings 页面合并为 2 个文件/48 项，隔离 `admin-settings` 回归通过，共 22 个测试文件/142 项测试。
+- 以上一轮八个 owner 切片的全绿快照为基线，只叠加 Rectifier owner 和相邻测试后完成 Docker 全量验证：全局 lint、`vue-tsc --noEmit`、`vue-tsc -b`、276 个测试文件/1783 项测试和 Vite production build 全部通过；build 转换 1230 个模块，耗时 18.73 秒，仅保留既有动态/静态 import 重叠和大 chunk 警告。
+- 当前并行精简组合态的 Docker `admin-settings` 回归为 17 个文件/79 项测试全部通过，全局 lint、`vue-tsc --noEmit`、`vue-tsc -b` 和 production build 通过；build 转换 831 个模块，耗时 12.02 秒。组合态全量测试为 196 个文件中 187 个通过、1189 项中 1177 项通过，剩余 9 个文件/12 项失败来自已删除页面的陈旧源码断言、支付请求标记、分组字段、Prompt Audit 路由和用户用量可见性测试，不涉及本切片。
+- 文档检查、`git diff --check` 和新增文件尾随空白扫描通过；当前精确 legacy barrel 基线为 35 条，`admin-settings` 运行时引用为 0，宿主机工作区未生成或修改嵌入式前端产物。
+
+2026-08-07 `admin-settings` Beta Policy DTO/Query/Action 切片验证记录：
+
+- GET/PUT 契约、全部规则字段、兼容函数身份、加载/保存状态、静默加载回退、响应回填、空模型规则过滤、空白名单省略、默认 `pass` 回退、仅 `block` 保留回退错误和反馈时序的 Docker 定向验证通过，共 1 个测试文件/8 项；组合态 `admin-settings` 回归通过，共 18 个测试文件/87 项。
+- 使用与当前锁文件一致的 Node 24 / pnpm 11.17 Docker 环境完成组合态全量验证：全局 ESLint、`vue-tsc --noEmit`、`vue-tsc -b`、189 个测试文件/1173 项测试和 Vite production build 全部通过；build 转换 817 个模块，耗时 19.80 秒，仅报告既有动态/静态 import 重叠和大 chunk 警告。
+- Docker 提供生产 bundle 和固定本地 API fixture 后完成实际浏览器验证：桌面 1280x720 下六个设置页签均可切换、页面无水平溢出，Beta 规则新增/填写与两次 PUT 保存成功，服务端响应正常回填且成功反馈出现；移动端 390x844 下无文档溢出或卡片越界，可横向滚动页签，侧栏可正常打开和关闭。目标设置页在两种视口下均无控制台 warning/error，测试未接触数据库或真实应用数据。
+
+下一步收口中央 datasource 中剩余的 SMTP 连接测试和测试邮件发送 helper。

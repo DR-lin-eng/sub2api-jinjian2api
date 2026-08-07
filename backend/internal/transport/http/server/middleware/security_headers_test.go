@@ -84,7 +84,7 @@ func TestGetNonceFromContext(t *testing.T) {
 func TestSecurityHeaders(t *testing.T) {
 	t.Run("sets_basic_security_headers", func(t *testing.T) {
 		cfg := config.CSPConfig{Enabled: false}
-		middleware := SecurityHeaders(cfg, nil)
+		middleware := SecurityHeaders(cfg)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -99,7 +99,7 @@ func TestSecurityHeaders(t *testing.T) {
 
 	t.Run("csp_disabled_no_csp_header", func(t *testing.T) {
 		cfg := config.CSPConfig{Enabled: false}
-		middleware := SecurityHeaders(cfg, nil)
+		middleware := SecurityHeaders(cfg)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -115,7 +115,7 @@ func TestSecurityHeaders(t *testing.T) {
 			Enabled: true,
 			Policy:  "default-src 'self'",
 		}
-		middleware := SecurityHeaders(cfg, nil)
+		middleware := SecurityHeaders(cfg)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -136,7 +136,7 @@ func TestSecurityHeaders(t *testing.T) {
 			Enabled: true,
 			Policy:  "default-src 'self'; script-src 'self' __CSP_NONCE__",
 		}
-		middleware := SecurityHeaders(cfg, nil)
+		middleware := SecurityHeaders(cfg)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -156,7 +156,7 @@ func TestSecurityHeaders(t *testing.T) {
 			Enabled: true,
 			Policy:  "script-src 'self' __CSP_NONCE__",
 		}
-		middleware := SecurityHeaders(cfg, nil)
+		middleware := SecurityHeaders(cfg)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -180,7 +180,7 @@ func TestSecurityHeaders(t *testing.T) {
 			Enabled: true,
 			Policy:  "",
 		}
-		middleware := SecurityHeaders(cfg, nil)
+		middleware := SecurityHeaders(cfg)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -199,7 +199,7 @@ func TestSecurityHeaders(t *testing.T) {
 			Enabled: true,
 			Policy:  "   \t\n  ",
 		}
-		middleware := SecurityHeaders(cfg, nil)
+		middleware := SecurityHeaders(cfg)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -217,7 +217,7 @@ func TestSecurityHeaders(t *testing.T) {
 			Enabled: true,
 			Policy:  "script-src __CSP_NONCE__; style-src __CSP_NONCE__",
 		}
-		middleware := SecurityHeaders(cfg, nil)
+		middleware := SecurityHeaders(cfg)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -235,7 +235,7 @@ func TestSecurityHeaders(t *testing.T) {
 
 	t.Run("calls_next_handler", func(t *testing.T) {
 		cfg := config.CSPConfig{Enabled: true, Policy: "default-src 'self'"}
-		middleware := SecurityHeaders(cfg, nil)
+		middleware := SecurityHeaders(cfg)
 
 		nextCalled := false
 		router := gin.New()
@@ -258,7 +258,7 @@ func TestSecurityHeaders(t *testing.T) {
 			Enabled: true,
 			Policy:  "script-src __CSP_NONCE__",
 		}
-		middleware := SecurityHeaders(cfg, nil)
+		middleware := SecurityHeaders(cfg)
 
 		nonces := make(map[string]bool)
 		for i := 0; i < 10; i++ {
@@ -331,51 +331,6 @@ func TestEnhanceCSPPolicy(t *testing.T) {
 		assert.Contains(t, enhanced, "'nonce-existing'")
 	})
 
-	t.Run("adds_airwallex_domains_for_payment_sdk", func(t *testing.T) {
-		policy := "default-src 'self'; script-src 'self' __CSP_NONCE__; style-src 'self'; frame-src 'self'"
-		enhanced := enhanceCSPPolicy(policy)
-
-		assert.Contains(t, enhanced, "script-src 'self' __CSP_NONCE__")
-		assert.Contains(t, enhanced, AirwallexStaticDomain)
-		assert.Contains(t, enhanced, AirwallexCheckoutDomain)
-		assert.Contains(t, enhanced, AirwallexDemoStaticDomain)
-		assert.Contains(t, enhanced, AirwallexDemoCheckoutDomain)
-		assert.Contains(t, enhanced, "style-src 'self'")
-		assert.Contains(t, enhanced, "frame-src 'self'")
-	})
-
-	t.Run("does_not_duplicate_airwallex_domains", func(t *testing.T) {
-		policy := "default-src 'self'; script-src 'self' https://static.airwallex.com https://static-demo.airwallex.com; frame-src https://checkout.airwallex.com https://checkout-demo.airwallex.com"
-		enhanced := enhanceCSPPolicy(policy)
-
-		assert.Equal(t, 1, countDirectiveValue(enhanced, "script-src", AirwallexStaticDomain))
-		assert.Equal(t, 1, countDirectiveValue(enhanced, "script-src", AirwallexCheckoutDomain))
-		assert.Equal(t, 1, countDirectiveValue(enhanced, "style-src", AirwallexStaticDomain))
-		assert.Equal(t, 1, countDirectiveValue(enhanced, "style-src", AirwallexCheckoutDomain))
-		assert.Equal(t, 1, countDirectiveValue(enhanced, "frame-src", AirwallexCheckoutDomain))
-		assert.Equal(t, 1, countDirectiveValue(enhanced, "script-src", AirwallexDemoStaticDomain))
-		assert.Equal(t, 1, countDirectiveValue(enhanced, "script-src", AirwallexDemoCheckoutDomain))
-		assert.Equal(t, 1, countDirectiveValue(enhanced, "style-src", AirwallexDemoStaticDomain))
-		assert.Equal(t, 1, countDirectiveValue(enhanced, "style-src", AirwallexDemoCheckoutDomain))
-		assert.Equal(t, 1, countDirectiveValue(enhanced, "frame-src", AirwallexDemoCheckoutDomain))
-	})
-}
-
-func countDirectiveValue(policy, directive, value string) int {
-	for _, rawDirective := range strings.Split(policy, ";") {
-		fields := strings.Fields(strings.TrimSpace(rawDirective))
-		if len(fields) == 0 || fields[0] != directive {
-			continue
-		}
-		count := 0
-		for _, field := range fields[1:] {
-			if field == value {
-				count++
-			}
-		}
-		return count
-	}
-	return 0
 }
 
 func TestAddToDirective(t *testing.T) {
@@ -410,59 +365,6 @@ func TestAddToDirective(t *testing.T) {
 	})
 }
 
-func TestEnhanceCSPPolicyAllowsHumanVerificationRuntimes(t *testing.T) {
-	result := enhanceCSPPolicy("default-src 'self'; script-src 'self'; frame-src 'self'")
-
-	assert.Contains(t, result, GoogleRecaptchaDomain)
-	assert.Contains(t, result, GoogleStaticDomain)
-	assert.Contains(t, result, JSDelivrDomain)
-	assert.Contains(t, result, WASMUnsafeEval)
-	assert.Contains(t, result, GoogleRecaptchaFrameDomain)
-	assert.Equal(t, 1, countDirectiveValue(result, "script-src", TencentCaptchaDomain))
-	assert.Equal(t, 1, countDirectiveValue(result, "connect-src", TencentCaptchaDomain))
-	assert.Equal(t, 1, countDirectiveValue(result, "frame-src", TencentCaptchaDomain))
-	assert.Equal(t, 1, countDirectiveValue(result, "style-src", TencentCaptchaStaticDomain))
-	assert.Equal(t, 1, countDirectiveValue(result, "connect-src", JSDelivrDomain))
-	assert.Equal(t, 1, countDirectiveValue(result, "script-src", AliyunCaptchaLoaderDomain))
-	assert.Equal(t, 1, countDirectiveValue(result, "script-src", AliyunCaptchaCDNDomain))
-	assert.Equal(t, 1, countDirectiveValue(result, "script-src", AliyunCaptchaFallbackDomain))
-	assert.Equal(t, 1, countDirectiveValue(result, "style-src", AliyunCaptchaCDNDomain))
-	assert.Equal(t, 1, countDirectiveValue(result, "style-src", AliyunCaptchaFallbackDomain))
-	assert.Equal(t, 1, countDirectiveValue(result, "img-src", AliyunCaptchaImageCNDomain))
-	assert.Equal(t, 1, countDirectiveValue(result, "img-src", AliyunCaptchaImageSGPDomain))
-	assert.Contains(t, result, "worker-src 'self' blob:")
-}
-
-func TestSecurityHeadersInjectsDynamicConnectSrcOrigins(t *testing.T) {
-	middleware := SecurityHeaders(
-		config.CSPConfig{Enabled: true, Policy: "default-src 'self'; connect-src 'self'"},
-		nil,
-		func() []string {
-			return []string{
-				"https://cap.example.com",
-				"https://tenant.captcha-open.aliyuncs.com",
-				"https://cap.example.com",
-			}
-		},
-	)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
-
-	middleware(c)
-
-	assert.Equal(t, 1, countDirectiveValue(
-		w.Header().Get("Content-Security-Policy"),
-		"connect-src",
-		"https://cap.example.com",
-	))
-	assert.Equal(t, 1, countDirectiveValue(
-		w.Header().Get("Content-Security-Policy"),
-		"connect-src",
-		"https://tenant.captcha-open.aliyuncs.com",
-	))
-}
-
 // Benchmark tests
 func BenchmarkGenerateNonce(b *testing.B) {
 	for i := 0; i < b.N; i++ {
@@ -475,7 +377,7 @@ func BenchmarkSecurityHeadersMiddleware(b *testing.B) {
 		Enabled: true,
 		Policy:  "script-src 'self' __CSP_NONCE__",
 	}
-	middleware := SecurityHeaders(cfg, nil)
+	middleware := SecurityHeaders(cfg)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

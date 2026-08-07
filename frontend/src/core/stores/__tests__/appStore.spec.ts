@@ -17,49 +17,19 @@ function createDeferred<T>() {
 
 function createPublicSettings(overrides: Partial<PublicSettings> = {}): PublicSettings {
   return {
-    registration_enabled: false,
-    email_verify_enabled: false,
-    force_email_on_third_party_signup: false,
-    registration_email_suffix_whitelist: [],
-    promo_code_enabled: true,
-    password_reset_enabled: false,
-    invitation_code_enabled: false,
-    turnstile_enabled: false,
-    turnstile_site_key: '',
+    totp_enabled: false,
+    passkey_enabled: false,
     site_name: 'Test Site',
     site_logo: '',
-    site_subtitle: '',
     api_base_url: '',
-    contact_info: '',
     doc_url: '',
-    home_content: '',
-    compact_home_enabled: false,
     hide_ccs_import_button: false,
-    payment_enabled: false,
-    risk_control_enabled: false,
     table_default_page_size: 20,
     table_page_size_options: [10, 20, 50, 100],
-    custom_menu_items: [],
     custom_endpoints: [],
-    linuxdo_oauth_enabled: false,
-    wechat_oauth_enabled: false,
-    oidc_oauth_enabled: false,
-    oidc_oauth_provider_name: 'OIDC',
-    github_oauth_enabled: false,
-    google_oauth_enabled: false,
-    backend_mode_enabled: false,
     version: '1.0.0',
-    balance_low_notify_enabled: false,
-    account_quota_notify_enabled: false,
-    balance_low_notify_threshold: 0,
     channel_monitor_enabled: true,
     channel_monitor_default_interval_seconds: 60,
-    available_channels_enabled: false,
-    support_chat_enabled: false,
-    model_plaza_enabled: false,
-    model_plaza_require_auth: false,
-    service_quota_enabled: false,
-    affiliate_enabled: false,
     ...overrides,
   }
 }
@@ -400,7 +370,6 @@ describe('useAppStore', () => {
         site_name: 'TestSite',
         site_logo: '/logo.png',
         version: '1.0.0',
-        contact_info: 'test@test.com',
         api_base_url: 'https://api.test.com',
         doc_url: 'https://docs.test.com',
       }
@@ -438,35 +407,11 @@ describe('useAppStore', () => {
     })
 
     it('fetchPublicSettings(force) 会同步更新运行时注入配置', async () => {
-      vi.mocked(getPublicSettings).mockResolvedValue({
-        registration_enabled: false,
-        email_verify_enabled: false,
-        registration_email_suffix_whitelist: [],
-        promo_code_enabled: true,
-        password_reset_enabled: false,
-        invitation_code_enabled: false,
-        turnstile_enabled: false,
-        turnstile_site_key: '',
+      vi.mocked(getPublicSettings).mockResolvedValue(createPublicSettings({
         site_name: 'Updated Site',
-        site_logo: '',
-        site_subtitle: '',
-        api_base_url: '',
-        contact_info: '',
-        doc_url: '',
-        home_content: '',
-        compact_home_enabled: false,
-        hide_ccs_import_button: false,
-        purchase_subscription_enabled: false,
-        purchase_subscription_url: '',
         table_default_page_size: 1000,
-        table_page_size_options: [20, 100, 1000],
-        custom_menu_items: [],
-        custom_endpoints: [],
-        linuxdo_oauth_enabled: false,
-        backend_mode_enabled: false,
-        support_chat_enabled: true,
-        version: '1.0.0'
-      })
+        table_page_size_options: [20, 100, 1000]
+      }))
 
       const store = useAppStore()
       await store.fetchPublicSettings(true)

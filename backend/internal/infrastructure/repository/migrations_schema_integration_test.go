@@ -66,6 +66,23 @@ func TestMigrationsRunner_IsIdempotent_AndSchemaIsUpToDate(t *testing.T) {
 	// users: columns required by repository queries
 	requireColumn(t, tx, "users", "username", "character varying", 100, false)
 	requireColumn(t, tx, "users", "notes", "text", 0, false)
+	requireColumnDefaultContains(t, tx, "users", "role", "admin")
+	requireUniqueIndexDefinition(t, tx, "users", "idx_users_singleton", "(1)")
+	requireConstraintDefinitionContains(t, tx, "users", "users_single_admin_role_check", "role", "admin")
+	for _, column := range []string{
+		"balance",
+		"frozen_balance",
+		"signup_source",
+		"wechat",
+		"balance_notify_enabled",
+		"balance_notify_threshold_type",
+		"balance_notify_threshold",
+		"balance_notify_extra_emails",
+		"total_recharged",
+		"rpm_limit",
+	} {
+		requireColumnAbsent(t, tx, "users", column)
+	}
 
 	// accounts: schedulable and rate-limit fields
 	requireColumn(t, tx, "accounts", "notes", "text", 0, true)
@@ -81,17 +98,46 @@ func TestMigrationsRunner_IsIdempotent_AndSchemaIsUpToDate(t *testing.T) {
 
 	// api_keys: key length should be 128
 	requireColumn(t, tx, "api_keys", "key", "character varying", 128, false)
+	for _, column := range []string{
+		"quota",
+		"quota_used",
+		"rate_limit_5h",
+		"rate_limit_1d",
+		"rate_limit_7d",
+		"usage_5h",
+		"usage_1d",
+		"usage_7d",
+		"window_5h_start",
+		"window_1d_start",
+		"window_7d_start",
+	} {
+		requireColumnAbsent(t, tx, "api_keys", column)
+	}
 
-	// redeem_codes: subscription fields
-	requireColumn(t, tx, "redeem_codes", "group_id", "bigint", 0, true)
-	requireColumn(t, tx, "redeem_codes", "validity_days", "integer", 0, false)
-	requireColumn(t, tx, "redeem_codes", "max_uses", "integer", 0, false)
-	requireColumn(t, tx, "redeem_codes", "used_count", "integer", 0, false)
-	requireColumn(t, tx, "redeem_codes", "max_uses_per_user", "integer", 0, false)
-	requireColumn(t, tx, "redeem_code_usages", "redeem_code_id", "bigint", 0, false)
+	for _, column := range []string{
+		"peak_rate_enabled",
+		"peak_start",
+		"peak_end",
+		"peak_rate_multiplier",
+		"is_exclusive",
+		"subscription_type",
+		"daily_limit_usd",
+		"weekly_limit_usd",
+		"monthly_limit_usd",
+		"default_validity_days",
+		"allow_batch_image_generation",
+		"batch_image_discount_multiplier",
+		"batch_image_hold_multiplier",
+	} {
+		requireColumnAbsent(t, tx, "groups", column)
+	}
 
-	// usage_logs: billing_type used by filters/stats
-	requireColumn(t, tx, "usage_logs", "billing_type", "smallint", 0, false)
+	// usage_logs keep gateway cost metadata, but no longer carry downstream
+	// subscription or charging attribution.
+	requireColumnAbsent(t, tx, "usage_logs", "subscription_id")
+	requireColumnAbsent(t, tx, "usage_logs", "billing_type")
+	requireColumnAbsent(t, tx, "usage_dashboard_hourly", "active_users")
+	requireColumnAbsent(t, tx, "usage_dashboard_daily", "active_users")
 	requireColumn(t, tx, "usage_logs", "request_type", "smallint", 0, false)
 	requireColumn(t, tx, "usage_logs", "openai_ws_mode", "boolean", 0, false)
 	requireColumn(t, tx, "usage_logs", "image_input_size", "character varying", 32, true)
@@ -128,34 +174,6 @@ func TestMigrationsRunner_IsIdempotent_AndSchemaIsUpToDate(t *testing.T) {
 		"'mixed'",
 	)
 
-	// usage_billing_dedup: billing idempotency narrow table
-	var usageBillingDedupRegclass sql.NullString
-	require.NoError(t, tx.QueryRowContext(context.Background(), "SELECT to_regclass('public.usage_billing_dedup')").Scan(&usageBillingDedupRegclass))
-	require.True(t, usageBillingDedupRegclass.Valid, "expected usage_billing_dedup table to exist")
-	requireColumn(t, tx, "usage_billing_dedup", "request_fingerprint", "character varying", 64, false)
-	requireIndex(t, tx, "usage_billing_dedup", "idx_usage_billing_dedup_request_api_key")
-	requireIndex(t, tx, "usage_billing_dedup", "idx_usage_billing_dedup_created_at_brin")
-
-	var usageBillingDedupArchiveRegclass sql.NullString
-	require.NoError(t, tx.QueryRowContext(context.Background(), "SELECT to_regclass('public.usage_billing_dedup_archive')").Scan(&usageBillingDedupArchiveRegclass))
-	require.True(t, usageBillingDedupArchiveRegclass.Valid, "expected usage_billing_dedup_archive table to exist")
-	requireColumn(t, tx, "usage_billing_dedup_archive", "request_fingerprint", "character varying", 64, false)
-	requireIndex(t, tx, "usage_billing_dedup_archive", "usage_billing_dedup_archive_pkey")
-
-	var usageBillingJobsRegclass sql.NullString
-	require.NoError(t, tx.QueryRowContext(context.Background(), "SELECT to_regclass('public.usage_billing_jobs')").Scan(&usageBillingJobsRegclass))
-	require.True(t, usageBillingJobsRegclass.Valid, "expected usage_billing_jobs table to exist")
-	requireColumn(t, tx, "usage_billing_jobs", "payload", "jsonb", 0, false)
-	requireColumn(t, tx, "usage_billing_jobs", "available_at", "timestamp with time zone", 0, false)
-	requireColumn(t, tx, "usage_billing_jobs", "settled_at", "timestamp with time zone", 0, true)
-	requireIndex(t, tx, "usage_billing_jobs", "idx_usage_billing_jobs_ready")
-
-	var usageBillingDeadLettersRegclass sql.NullString
-	require.NoError(t, tx.QueryRowContext(context.Background(), "SELECT to_regclass('public.usage_billing_dead_letters')").Scan(&usageBillingDeadLettersRegclass))
-	require.True(t, usageBillingDeadLettersRegclass.Valid, "expected usage_billing_dead_letters table to exist")
-	requireColumn(t, tx, "usage_billing_dead_letters", "payload", "jsonb", 0, false)
-	requireIndex(t, tx, "usage_billing_dead_letters", "idx_usage_billing_dead_letters_failed_at")
-
 	// settings table should exist
 	var settingsRegclass sql.NullString
 	require.NoError(t, tx.QueryRowContext(context.Background(), "SELECT to_regclass('public.settings')").Scan(&settingsRegclass))
@@ -181,53 +199,54 @@ func TestMigrationsRunner_IsIdempotent_AndSchemaIsUpToDate(t *testing.T) {
 	requireIndex(t, tx, "ops_ingress_reject_aggregates", "idx_ops_ingress_reject_aggregates_bucket")
 	requireIndex(t, tx, "ops_ingress_reject_aggregates", "idx_ops_ingress_reject_aggregates_ip_bucket")
 
-	// user_allowed_groups table should exist
-	var uagRegclass sql.NullString
-	require.NoError(t, tx.QueryRowContext(context.Background(), "SELECT to_regclass('public.user_allowed_groups')").Scan(&uagRegclass))
-	require.True(t, uagRegclass.Valid, "expected user_allowed_groups table to exist")
-
-	// user_subscriptions: deleted_at for soft delete support (migration 012)
-	requireColumn(t, tx, "user_subscriptions", "deleted_at", "timestamp with time zone", 0, true)
-
-	// orphan_allowed_groups_audit table should exist (migration 013)
-	var orphanAuditRegclass sql.NullString
-	require.NoError(t, tx.QueryRowContext(context.Background(), "SELECT to_regclass('public.orphan_allowed_groups_audit')").Scan(&orphanAuditRegclass))
-	require.True(t, orphanAuditRegclass.Valid, "expected orphan_allowed_groups_audit table to exist")
-
 	// account_groups: created_at should be timestamptz
 	requireColumn(t, tx, "account_groups", "created_at", "timestamp with time zone", 0, false)
-
-	// user_allowed_groups: created_at should be timestamptz
-	requireColumn(t, tx, "user_allowed_groups", "created_at", "timestamp with time zone", 0, false)
 }
 
-func TestMigrationsRunner_AuthIdentityAndPaymentSchemaStayAligned(t *testing.T) {
+func TestMigrationsRunner_RemovedProductSchemaIsAbsent(t *testing.T) {
 	tx := testTx(t)
 
-	requireColumn(t, tx, "auth_identity_migration_reports", "report_type", "character varying", 80, false)
-	requireColumn(t, tx, "users", "signup_source", "character varying", 20, false)
-	requireColumnDefaultContains(t, tx, "users", "signup_source", "email")
-	requireConstraintDefinitionContains(
-		t,
-		tx,
-		"users",
-		"users_signup_source_check",
-		"signup_source",
-		"'email'",
-		"'linuxdo'",
-		"'wechat'",
-		"'oidc'",
-	)
-
-	requireForeignKeyOnDelete(t, tx, "auth_identities", "user_id", "users", "CASCADE")
-	requireForeignKeyOnDelete(t, tx, "auth_identity_channels", "identity_id", "auth_identities", "CASCADE")
-	requireForeignKeyOnDelete(t, tx, "pending_auth_sessions", "target_user_id", "users", "SET NULL")
-	requireForeignKeyOnDelete(t, tx, "identity_adoption_decisions", "pending_auth_session_id", "pending_auth_sessions", "CASCADE")
-	requireForeignKeyOnDelete(t, tx, "identity_adoption_decisions", "identity_id", "auth_identities", "SET NULL")
-
-	requireIndex(t, tx, "payment_orders", "paymentorder_out_trade_no")
-	requirePartialUniqueIndexDefinition(t, tx, "payment_orders", "paymentorder_out_trade_no", "out_trade_no", "WHERE")
-	requireIndexAbsent(t, tx, "payment_orders", "paymentorder_out_trade_no_unique")
+	for _, table := range []string{
+		"announcement_reads",
+		"announcements",
+		"auth_identity_channels",
+		"identity_adoption_decisions",
+		"pending_auth_sessions",
+		"auth_identities",
+		"auth_identity_migration_reports",
+		"batch_image_events",
+		"batch_image_items",
+		"batch_image_jobs",
+		"chat_messages",
+		"chat_conversations",
+		"payment_audit_logs",
+		"payment_orders",
+		"payment_provider_instances",
+		"promo_code_usages",
+		"promo_codes",
+		"redeem_code_usages",
+		"redeem_codes",
+		"billing_usage_entries",
+		"usage_billing_jobs",
+		"usage_billing_dead_letters",
+		"usage_billing_dedup_archive",
+		"usage_billing_dedup",
+		"user_subscriptions",
+		"subscription_plans",
+		"user_allowed_groups",
+		"orphan_allowed_groups_audit",
+		"user_attribute_values",
+		"user_attribute_definitions",
+		"user_platform_quotas",
+		"user_group_rate_multipliers",
+		"user_provider_default_grants",
+		"user_affiliate_ledger",
+		"user_affiliates",
+		"usage_dashboard_hourly_users",
+		"usage_dashboard_daily_users",
+	} {
+		requireTableAbsent(t, tx, table)
+	}
 }
 
 func requireIndex(t *testing.T, tx *sql.Tx, table, index string) {
@@ -264,7 +283,7 @@ SELECT EXISTS (
 	require.False(t, exists, "expected index %s on %s to be absent", index, table)
 }
 
-func requirePartialUniqueIndexDefinition(t *testing.T, tx *sql.Tx, table, index string, fragments ...string) {
+func requireUniqueIndexDefinition(t *testing.T, tx *sql.Tx, table, index string, fragments ...string) {
 	t.Helper()
 
 	var (
@@ -290,6 +309,39 @@ WHERE ns.nspname = 'public'
 	for _, fragment := range fragments {
 		require.Contains(t, def, fragment, "expected index definition for %s.%s to contain %q", table, index, fragment)
 	}
+}
+
+func requireTableAbsent(t *testing.T, tx *sql.Tx, table string) {
+	t.Helper()
+
+	var exists bool
+	err := tx.QueryRowContext(context.Background(), `
+SELECT EXISTS (
+	SELECT 1
+	FROM information_schema.tables
+	WHERE table_schema = 'public'
+	  AND table_name = $1
+)
+`, table).Scan(&exists)
+	require.NoError(t, err, "query information_schema.tables for %s", table)
+	require.False(t, exists, "expected table %s to be absent", table)
+}
+
+func requireColumnAbsent(t *testing.T, tx *sql.Tx, table, column string) {
+	t.Helper()
+
+	var exists bool
+	err := tx.QueryRowContext(context.Background(), `
+SELECT EXISTS (
+	SELECT 1
+	FROM information_schema.columns
+	WHERE table_schema = 'public'
+	  AND table_name = $1
+	  AND column_name = $2
+)
+`, table, column).Scan(&exists)
+	require.NoError(t, err, "query information_schema.columns for %s.%s", table, column)
+	require.False(t, exists, "expected column %s.%s to be absent", table, column)
 }
 
 func requireForeignKeyOnDelete(t *testing.T, tx *sql.Tx, table, column, refTable, expected string) {

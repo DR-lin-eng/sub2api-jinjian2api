@@ -125,59 +125,6 @@ const { form, imageFinalPricePreview, videoFinalPricePreview } = props.context;
         </div>
       </div>
     </div>
-    <div
-      v-if="form.platform === 'gemini' && form.allow_image_generation"
-      class="mt-4 border-t border-dashed border-gray-200 pt-4 dark:border-dark-700"
-    >
-      <label class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-        <input
-          v-model="form.allow_batch_image_generation"
-          type="checkbox"
-          class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-        />
-        {{ t("admin.groups.imagePricing.allowBatchImageGeneration") }}
-      </label>
-      <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-        {{ t("admin.groups.imagePricing.batchSectionHint") }}
-      </p>
-      <div
-        v-if="form.allow_batch_image_generation"
-        class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2"
-      >
-        <div>
-          <label class="input-label">{{
-            t("admin.groups.imagePricing.batchDiscountMultiplier")
-          }}</label>
-          <input
-            v-model.number="form.batch_image_discount_multiplier"
-            type="number"
-            step="0.0001"
-            min="0"
-            class="input"
-            placeholder="0.5"
-          />
-        </div>
-        <div>
-          <label class="input-label">{{
-            t("admin.groups.imagePricing.batchHoldMultiplier")
-          }}</label>
-          <input
-            v-model.number="form.batch_image_hold_multiplier"
-            type="number"
-            step="0.0001"
-            min="0"
-            class="input"
-            placeholder="0.6"
-          />
-        </div>
-      </div>
-    </div>
-    <p
-      v-else-if="form.platform !== 'gemini'"
-      class="mt-4 border-t border-dashed border-gray-200 pt-4 text-xs text-gray-500 dark:border-dark-700 dark:text-gray-400"
-    >
-      {{ t("admin.groups.imagePricing.batchGeminiOnlyHint") }}
-    </p>
   </div>
 
   <div

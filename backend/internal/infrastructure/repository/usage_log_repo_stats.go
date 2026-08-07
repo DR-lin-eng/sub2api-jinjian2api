@@ -4,9 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
@@ -15,45 +13,6 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/shared/usagestats"
 	"github.com/lib/pq"
 )
-
-// GetUserStatsAggregated returns aggregated usage statistics for a user using database-level aggregation
-func (r *usageLogRepository) GetUserStatsAggregated(ctx context.Context, userID int64, startTime, endTime time.Time) (*usagestats.UsageStats, error) {
-	query := `
-		SELECT
-			COUNT(*) as total_requests,
-			COALESCE(SUM(input_tokens), 0) as total_input_tokens,
-			COALESCE(SUM(output_tokens), 0) as total_output_tokens,
-			COALESCE(SUM(cache_creation_tokens + cache_read_tokens), 0) as total_cache_tokens,
-			COALESCE(SUM(cache_creation_tokens), 0) as total_cache_creation_tokens,
-			COALESCE(SUM(cache_read_tokens), 0) as total_cache_read_tokens,
-			COALESCE(SUM(total_cost), 0) as total_cost,
-			COALESCE(SUM(actual_cost), 0) as total_actual_cost,
-			COALESCE(AVG(COALESCE(duration_ms, 0)), 0) as avg_duration_ms
-		FROM usage_logs
-		WHERE user_id = $1 AND created_at >= $2 AND created_at < $3
-	`
-
-	var stats usagestats.UsageStats
-	if err := scanSingleRow(
-		ctx,
-		r.sql,
-		query,
-		[]any{userID, startTime, endTime},
-		&stats.TotalRequests,
-		&stats.TotalInputTokens,
-		&stats.TotalOutputTokens,
-		&stats.TotalCacheTokens,
-		&stats.TotalCacheCreationTokens,
-		&stats.TotalCacheReadTokens,
-		&stats.TotalCost,
-		&stats.TotalActualCost,
-		&stats.AverageDurationMs,
-	); err != nil {
-		return nil, err
-	}
-	stats.TotalTokens = stats.TotalInputTokens + stats.TotalOutputTokens + stats.TotalCacheTokens
-	return &stats, nil
-}
 
 // GetAPIKeyStatsAggregated returns aggregated usage statistics for an API key using database-level aggregation
 func (r *usageLogRepository) GetAPIKeyStatsAggregated(ctx context.Context, apiKeyID int64, startTime, endTime time.Time) (*usagestats.UsageStats, error) {
@@ -181,95 +140,6 @@ func (r *usageLogRepository) GetModelStatsAggregated(ctx context.Context, modelN
 	}
 	stats.TotalTokens = stats.TotalInputTokens + stats.TotalOutputTokens + stats.TotalCacheTokens
 	return &stats, nil
-}
-
-// GetDailyStatsAggregated 使用 SQL 聚合统计用户的每日使用数据
-// 性能优化：使用 GROUP BY 在数据库层按日期分组聚合，避免应用层循环分组统计
-func (r *usageLogRepository) GetDailyStatsAggregated(ctx context.Context, userID int64, startTime, endTime time.Time) (result []map[string]any, err error) {
-	tzName := resolveUsageStatsTimezone()
-	query := `
-		SELECT
-			-- 使用应用时区分组，避免数据库会话时区导致日边界偏移。
-			TO_CHAR(created_at AT TIME ZONE $4, 'YYYY-MM-DD') as date,
-			COUNT(*) as total_requests,
-			COALESCE(SUM(input_tokens), 0) as total_input_tokens,
-			COALESCE(SUM(output_tokens), 0) as total_output_tokens,
-			COALESCE(SUM(cache_creation_tokens + cache_read_tokens), 0) as total_cache_tokens,
-			COALESCE(SUM(total_cost), 0) as total_cost,
-			COALESCE(SUM(actual_cost), 0) as total_actual_cost,
-			COALESCE(AVG(COALESCE(duration_ms, 0)), 0) as avg_duration_ms
-		FROM usage_logs
-		WHERE user_id = $1 AND created_at >= $2 AND created_at < $3
-		GROUP BY 1
-		ORDER BY 1
-	`
-
-	rows, err := r.sql.QueryContext(ctx, query, userID, startTime, endTime, tzName)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if closeErr := rows.Close(); closeErr != nil && err == nil {
-			err = closeErr
-			result = nil
-		}
-	}()
-
-	result = make([]map[string]any, 0)
-	for rows.Next() {
-		var (
-			date              string
-			totalRequests     int64
-			totalInputTokens  int64
-			totalOutputTokens int64
-			totalCacheTokens  int64
-			totalCost         float64
-			totalActualCost   float64
-			avgDurationMs     float64
-		)
-		if err = rows.Scan(
-			&date,
-			&totalRequests,
-			&totalInputTokens,
-			&totalOutputTokens,
-			&totalCacheTokens,
-			&totalCost,
-			&totalActualCost,
-			&avgDurationMs,
-		); err != nil {
-			return nil, err
-		}
-		result = append(result, map[string]any{
-			"date":                date,
-			"total_requests":      totalRequests,
-			"total_input_tokens":  totalInputTokens,
-			"total_output_tokens": totalOutputTokens,
-			"total_cache_tokens":  totalCacheTokens,
-			"total_tokens":        totalInputTokens + totalOutputTokens + totalCacheTokens,
-			"total_cost":          totalCost,
-			"total_actual_cost":   totalActualCost,
-			"average_duration_ms": avgDurationMs,
-		})
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-// resolveUsageStatsTimezone 获取用于 SQL 分组的时区名称。
-// 优先使用应用初始化的时区，其次尝试读取 TZ 环境变量，最后回落为 UTC。
-func resolveUsageStatsTimezone() string {
-	tzName := timezone.Name()
-	if tzName != "" && tzName != "Local" {
-		return tzName
-	}
-	if envTZ := strings.TrimSpace(os.Getenv("TZ")); envTZ != "" {
-		return envTZ
-	}
-	return "UTC"
 }
 
 // GetAccountTodayStats 获取账号今日统计
@@ -620,12 +490,6 @@ func (r *usageLogRepository) GetGeminiUsageTotalsBatch(ctx context.Context, acco
 // UsageStats represents usage statistics
 type UsageStats = usagestats.UsageStats
 
-// BatchUserUsageStats represents usage stats for a single user
-type BatchUserUsageStats = usagestats.BatchUserUsageStats
-
-// PlatformUsage represents per-platform usage breakdown
-type PlatformUsage = usagestats.PlatformUsage
-
 func normalizePositiveInt64IDs(ids []int64) []int64 {
 	if len(ids) == 0 {
 		return nil
@@ -643,81 +507,6 @@ func normalizePositiveInt64IDs(ids []int64) []int64 {
 		out = append(out, id)
 	}
 	return out
-}
-
-// GetBatchUserUsageStats gets today and total actual_cost for multiple users within a time range.
-// If startTime is zero, defaults to 30 days ago.
-func (r *usageLogRepository) GetBatchUserUsageStats(ctx context.Context, userIDs []int64, startTime, endTime time.Time) (map[int64]*BatchUserUsageStats, error) {
-	result := make(map[int64]*BatchUserUsageStats)
-	normalizedUserIDs := normalizePositiveInt64IDs(userIDs)
-	if len(normalizedUserIDs) == 0 {
-		return result, nil
-	}
-
-	// 默认最近 30 天
-	if startTime.IsZero() {
-		startTime = time.Now().AddDate(0, 0, -30)
-	}
-	if endTime.IsZero() {
-		endTime = time.Now()
-	}
-
-	for _, id := range normalizedUserIDs {
-		result[id] = &BatchUserUsageStats{UserID: id}
-	}
-
-	// GROUP BY (user_id, effective_platform) 一次查询同时得到总值与按平台拆分。
-	// 应用层把同一 user_id 的多行累加为总值，并把非空 platform 行收集到 ByPlatform。
-	query := `
-		SELECT
-			ul.user_id,
-			` + usageLogEffectivePlatformExpr + ` as platform,
-			COALESCE(SUM(ul.actual_cost) FILTER (WHERE ul.created_at >= $2 AND ul.created_at < $3), 0) as total_cost,
-			COALESCE(SUM(ul.actual_cost) FILTER (WHERE ul.created_at >= $4), 0) as today_cost
-		FROM usage_logs ul
-		LEFT JOIN groups g ON g.id = ul.group_id
-		LEFT JOIN accounts a ON a.id = ul.account_id
-		WHERE ul.user_id = ANY($1)
-		  AND ul.created_at >= LEAST($2, $4)
-		  AND ` + usageLogSuccessFilterUL + `
-		GROUP BY ul.user_id, ` + usageLogEffectivePlatformExpr + `
-	`
-	today := timezone.Today()
-	rows, err := r.sql.QueryContext(ctx, query, pq.Array(normalizedUserIDs), startTime, endTime, today)
-	if err != nil {
-		return nil, err
-	}
-	for rows.Next() {
-		var userID int64
-		var platform sql.NullString
-		var total float64
-		var todayTotal float64
-		if err := rows.Scan(&userID, &platform, &total, &todayTotal); err != nil {
-			_ = rows.Close()
-			return nil, err
-		}
-		stats, ok := result[userID]
-		if !ok {
-			continue
-		}
-		stats.TotalActualCost += total
-		stats.TodayActualCost += todayTotal
-		if platform.Valid && platform.String != "" {
-			stats.ByPlatform = append(stats.ByPlatform, PlatformUsage{
-				Platform:        platform.String,
-				TotalActualCost: total,
-				TodayActualCost: todayTotal,
-			})
-		}
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
 
 // BatchAPIKeyUsageStats represents usage stats for a single API key
@@ -798,41 +587,6 @@ func resolveEndpointColumn(endpointType string) string {
 	}
 }
 
-// GetGlobalStats gets usage statistics for all users within a time range
-func (r *usageLogRepository) GetGlobalStats(ctx context.Context, startTime, endTime time.Time) (*UsageStats, error) {
-	query := `
-		SELECT
-			COUNT(*) as total_requests,
-			COALESCE(SUM(input_tokens), 0) as total_input_tokens,
-			COALESCE(SUM(output_tokens), 0) as total_output_tokens,
-			COALESCE(SUM(cache_creation_tokens + cache_read_tokens), 0) as total_cache_tokens,
-			COALESCE(SUM(total_cost), 0) as total_cost,
-			COALESCE(SUM(actual_cost), 0) as total_actual_cost,
-			COALESCE(AVG(duration_ms), 0) as avg_duration_ms
-		FROM usage_logs
-		WHERE created_at >= $1 AND created_at < $2
-	`
-
-	stats := &UsageStats{}
-	if err := scanSingleRow(
-		ctx,
-		r.sql,
-		query,
-		[]any{startTime, endTime},
-		&stats.TotalRequests,
-		&stats.TotalInputTokens,
-		&stats.TotalOutputTokens,
-		&stats.TotalCacheTokens,
-		&stats.TotalCost,
-		&stats.TotalActualCost,
-		&stats.AverageDurationMs,
-	); err != nil {
-		return nil, err
-	}
-	stats.TotalTokens = stats.TotalInputTokens + stats.TotalOutputTokens + stats.TotalCacheTokens
-	return stats, nil
-}
-
 // GetStatsWithFilters gets usage statistics with optional filters
 func (r *usageLogRepository) GetStatsWithFilters(ctx context.Context, filters UsageLogFilters) (*UsageStats, error) {
 	conditions := make([]string, 0, 9)
@@ -856,10 +610,6 @@ func (r *usageLogRepository) GetStatsWithFilters(ctx context.Context, filters Us
 	}
 	conditions, args = appendUsageLogModelWhereCondition(conditions, args, filters.Model, filters.ModelFilterSource)
 	conditions, args = appendRequestTypeOrStreamWhereCondition(conditions, args, filters.RequestType, filters.Stream)
-	if filters.BillingType != nil {
-		conditions = append(conditions, fmt.Sprintf("billing_type = $%d", len(args)+1))
-		args = append(args, int16(*filters.BillingType))
-	}
 	conditions, args = appendUsageLogBillingModeWhereCondition(conditions, args, filters.BillingMode)
 	if filters.StartTime != nil {
 		conditions = append(conditions, fmt.Sprintf("created_at >= $%d", len(args)+1))
@@ -1028,7 +778,7 @@ type AccountUsageStatsResponse = usagestats.AccountUsageStatsResponse
 // EndpointStat represents endpoint usage statistics row.
 type EndpointStat = usagestats.EndpointStat
 
-func (r *usageLogRepository) getEndpointStatsByColumnWithFilters(ctx context.Context, endpointColumn string, startTime, endTime time.Time, userID, apiKeyID, accountID, groupID int64, model string, modelSource string, requestType *int16, stream *bool, billingType *int8, billingMode string) (results []EndpointStat, err error) {
+func (r *usageLogRepository) getEndpointStatsByColumnWithFilters(ctx context.Context, endpointColumn string, startTime, endTime time.Time, userID, apiKeyID, accountID, groupID int64, model string, modelSource string, requestType *int16, stream *bool, billingMode string) (results []EndpointStat, err error) {
 	actualCostExpr := "COALESCE(SUM(actual_cost), 0) as actual_cost"
 	if accountID > 0 && userID == 0 && apiKeyID == 0 {
 		actualCostExpr = "COALESCE(SUM(COALESCE(account_stats_cost, total_cost) * COALESCE(account_rate_multiplier, 1)), 0) as actual_cost"
@@ -1064,10 +814,6 @@ func (r *usageLogRepository) getEndpointStatsByColumnWithFilters(ctx context.Con
 	}
 	query, args = appendUsageLogModelQueryFilter(query, args, model, modelSource)
 	query, args = appendRequestTypeOrStreamQueryFilter(query, args, requestType, stream)
-	if billingType != nil {
-		query += fmt.Sprintf(" AND billing_type = $%d", len(args)+1)
-		args = append(args, int16(*billingType))
-	}
 	query, args = appendUsageLogBillingModeQueryFilter(query, args, billingMode, "")
 	query += " GROUP BY endpoint ORDER BY requests DESC"
 
@@ -1097,13 +843,13 @@ func (r *usageLogRepository) getEndpointStatsByColumnWithFilters(ctx context.Con
 }
 
 // GetEndpointStatsWithFilters returns inbound endpoint statistics with optional filters.
-func (r *usageLogRepository) GetEndpointStatsWithFilters(ctx context.Context, startTime, endTime time.Time, userID, apiKeyID, accountID, groupID int64, model string, requestType *int16, stream *bool, billingType *int8) ([]EndpointStat, error) {
-	return r.getEndpointStatsByColumnWithFilters(ctx, "inbound_endpoint", startTime, endTime, userID, apiKeyID, accountID, groupID, model, "", requestType, stream, billingType, "")
+func (r *usageLogRepository) GetEndpointStatsWithFilters(ctx context.Context, startTime, endTime time.Time, userID, apiKeyID, accountID, groupID int64, model string, requestType *int16, stream *bool) ([]EndpointStat, error) {
+	return r.getEndpointStatsByColumnWithFilters(ctx, "inbound_endpoint", startTime, endTime, userID, apiKeyID, accountID, groupID, model, "", requestType, stream, "")
 }
 
 // GetUpstreamEndpointStatsWithFilters returns upstream endpoint statistics with optional filters.
-func (r *usageLogRepository) GetUpstreamEndpointStatsWithFilters(ctx context.Context, startTime, endTime time.Time, userID, apiKeyID, accountID, groupID int64, model string, requestType *int16, stream *bool, billingType *int8) ([]EndpointStat, error) {
-	return r.getEndpointStatsByColumnWithFilters(ctx, "upstream_endpoint", startTime, endTime, userID, apiKeyID, accountID, groupID, model, "", requestType, stream, billingType, "")
+func (r *usageLogRepository) GetUpstreamEndpointStatsWithFilters(ctx context.Context, startTime, endTime time.Time, userID, apiKeyID, accountID, groupID int64, model string, requestType *int16, stream *bool) ([]EndpointStat, error) {
+	return r.getEndpointStatsByColumnWithFilters(ctx, "upstream_endpoint", startTime, endTime, userID, apiKeyID, accountID, groupID, model, "", requestType, stream, "")
 }
 
 // GetAccountUsageStats returns comprehensive usage statistics for an account over a time range
@@ -1276,16 +1022,16 @@ func (r *usageLogRepository) GetAccountUsageStats(ctx context.Context, accountID
 		}
 	}
 
-	models, err := r.GetModelStatsWithFilters(ctx, startTime, endTime, 0, 0, accountID, 0, nil, nil, nil)
+	models, err := r.GetModelStatsWithFilters(ctx, startTime, endTime, 0, 0, accountID, 0, nil, nil)
 	if err != nil {
 		models = []ModelStat{}
 	}
-	endpoints, endpointErr := r.GetEndpointStatsWithFilters(ctx, startTime, endTime, 0, 0, accountID, 0, "", nil, nil, nil)
+	endpoints, endpointErr := r.GetEndpointStatsWithFilters(ctx, startTime, endTime, 0, 0, accountID, 0, "", nil, nil)
 	if endpointErr != nil {
 		logger.LegacyPrintf("repository.usage_log", "GetEndpointStatsWithFilters failed in GetAccountUsageStats: %v", endpointErr)
 		endpoints = []EndpointStat{}
 	}
-	upstreamEndpoints, upstreamEndpointErr := r.GetUpstreamEndpointStatsWithFilters(ctx, startTime, endTime, 0, 0, accountID, 0, "", nil, nil, nil)
+	upstreamEndpoints, upstreamEndpointErr := r.GetUpstreamEndpointStatsWithFilters(ctx, startTime, endTime, 0, 0, accountID, 0, "", nil, nil)
 	if upstreamEndpointErr != nil {
 		logger.LegacyPrintf("repository.usage_log", "GetUpstreamEndpointStatsWithFilters failed in GetAccountUsageStats: %v", upstreamEndpointErr)
 		upstreamEndpoints = []EndpointStat{}

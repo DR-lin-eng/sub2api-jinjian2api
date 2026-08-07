@@ -86,8 +86,6 @@ func (s *GatewayService) DiagnoseModelAvailabilityForPlatform(
 	queryGroupID := groupID
 	includeGrouped := false
 	if useMixed {
-		// Preserve the generic scheduler's scope rules: an explicit group wins
-		// for mixed scheduling, while group-less simple mode scans all accounts.
 		if groupID == nil && s.cfg != nil && s.cfg.RunMode == config.RunModeSimple {
 			includeGrouped = true
 		}

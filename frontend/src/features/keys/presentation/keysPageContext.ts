@@ -3,8 +3,7 @@ import type { Column } from '@/common/types/uiTypes'
 import type { PublicSettings } from '@/types/common'
 import type {
   ApiKey,
-  GroupPlatform,
-  SubscriptionType
+  GroupPlatform
 } from '@/types/gateway'
 
 export interface GroupOption {
@@ -12,12 +11,6 @@ export interface GroupOption {
   label: string
   description: string | null
   rate: number
-  userRate: number | null
-  peakRateEnabled: boolean
-  peakStart: string
-  peakEnd: string
-  peakRateMultiplier: number
-  subscriptionType: SubscriptionType
   platform: GroupPlatform
   [key: string]: unknown
 }
@@ -37,13 +30,7 @@ export interface KeyFormState {
   enable_ip_restriction: boolean
   ip_whitelist: string
   ip_blacklist: string
-  enable_quota: boolean
-  quota: number | null
   concurrency_limit: number
-  enable_rate_limit: boolean
-  rate_limit_5h: number | null
-  rate_limit_1d: number | null
-  rate_limit_7d: number | null
   enable_expiration: boolean
   expiration_preset: '7' | '30' | '90' | 'custom'
   expiration_date: string
@@ -60,7 +47,6 @@ export interface KeysTableContext {
     element: Element | ComponentPublicInstance | null
   ) => void
   openGroupSelector: (key: ApiKey) => void
-  userGroupRates: Ref<Record<number, number>>
   usageStatsLoading: Ref<boolean>
   usageStatsError: Ref<boolean>
   pendingUsageAvailable: Ref<boolean>
@@ -69,9 +55,6 @@ export interface KeysTableContext {
     field: 'today_actual_cost' | 'total_actual_cost'
   ) => number
   pendingUsage: (apiKeyId: number) => number
-  quotaUsedWithPending: (apiKey: ApiKey) => number
-  confirmResetRateLimitFromTable: (key: ApiKey) => void
-  formatResetTime: (resetAt: string | null) => string
   publicSettings: Ref<PublicSettings | null>
   openUseKeyModal: (key: ApiKey) => void
   importToCcswitch: (key: ApiKey) => void
@@ -93,7 +76,5 @@ export interface KeyEditorDialogContext {
   submitting: Ref<boolean>
   closeModals: () => void
   handleSubmit: () => void | Promise<void>
-  confirmResetQuota: () => void
-  confirmResetRateLimit: () => void
   setExpirationDays: (days: number) => void
 }

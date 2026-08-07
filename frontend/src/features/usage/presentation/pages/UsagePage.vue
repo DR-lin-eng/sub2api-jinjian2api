@@ -30,20 +30,14 @@
             :loading="modelStatsLoading"
             :show-source-toggle="false"
             :show-metric-toggle="true"
-            :enable-breakdown="false"
             :show-account-cost="false"
-            :start-date="startDate"
-            :end-date="endDate"
           />
           <GroupDistributionChart
             v-model:metric="groupDistributionMetric"
             :group-stats="groupStats"
             :loading="chartsLoading"
             :show-metric-toggle="true"
-            :enable-breakdown="false"
             :show-account-cost="false"
-            :start-date="startDate"
-            :end-date="endDate"
           />
         </div>
 
@@ -57,10 +51,7 @@
             :loading="endpointStatsLoading"
             :show-source-toggle="false"
             :show-metric-toggle="true"
-            :enable-breakdown="false"
             :title="t('usage.endpointDistribution')"
-            :start-date="startDate"
-            :end-date="endDate"
           />
           <TokenUsageTrend :trend-data="trendData" :loading="chartsLoading" />
         </div>
@@ -112,10 +103,6 @@
               <Select v-model="filters.request_type" :options="requestTypeOptions" @change="applyFilters" />
             </div>
             <div class="w-full sm:w-auto sm:min-w-[200px]">
-              <label class="input-label">{{ t('admin.usage.billingType') }}</label>
-              <Select v-model="filters.billing_type" :options="billingTypeOptions" @change="applyFilters" />
-            </div>
-            <div class="w-full sm:w-auto sm:min-w-[200px]">
               <label class="input-label">{{ t('admin.usage.billingMode') }}</label>
               <Select v-model="filters.billing_mode" :options="billingModeOptions" @change="applyFilters" />
             </div>
@@ -133,10 +120,10 @@
                 type="button"
                 @click="showColumnDropdown = !showColumnDropdown"
                 class="btn btn-secondary px-2 md:px-3"
-                :title="t('admin.users.columnSettings')"
+                :title="t('common.columnSettings')"
               >
                 <Icon name="grid" size="sm" />
-                <span class="hidden md:inline">{{ t('admin.users.columnSettings') }}</span>
+                <span class="hidden md:inline">{{ t('common.columnSettings') }}</span>
               </button>
               <div
                 v-if="showColumnDropdown"
@@ -216,7 +203,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { keysAPI, usageAPI, userGroupsAPI } from '@/api'
+import { keysAPI, usageAPI } from '@/api'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Pagination from '@/common/widgets/data/Pagination.vue'
 import Select, { type SelectOption } from '@/common/widgets/forms/Select.vue'
@@ -309,7 +296,7 @@ const errorCategoryOptions = computed<SelectOption[]>(() => [
   ...errorCategoryCodes.map((c) => ({ value: c, label: t('usage.errors.categories.' + c) })),
 ])
 
-// 状态码候选用固定常用列表(与管理端 UsageFilters 共用常量),不受当前页数据限制:
+// 状态码候选使用固定常用列表，不受当前页数据限制：
 // 后端 status_code 过滤对全量生效,若只列当前页出现过的码,用户就选不到仅在后续页的码。
 const errorStatusOptions = computed<SelectOption[]>(() => [
   { value: null, label: t('usage.errors.allStatuses') },
@@ -342,14 +329,13 @@ const groupDistributionMetric = ref<DistributionMetric>('tokens')
 const endpointDistributionMetric = ref<DistributionMetric>('tokens')
 const endpointDistributionSource = ref<EndpointSource>('inbound')
 const activeTab = ref<'usage' | 'errors'>('usage')
-const errorViewEnabled = computed(() => appStore.cachedPublicSettings?.allow_user_view_error_requests ?? false)
-const usageDetailEnabled = computed(() => appStore.cachedPublicSettings?.allow_user_view_usage_details ?? false)
+const errorViewEnabled = computed(() => true)
+const usageDetailEnabled = computed(() => true)
 
 const filters = ref<UsageQueryParams>({
   start_date: startDate.value,
   end_date: endDate.value,
   request_type: undefined,
-  billing_type: null,
   billing_mode: null,
 })
 
@@ -373,11 +359,6 @@ const requestTypeOptions = computed<SelectOption[]>(() => [
   { value: 'live', label: t('usage.live') },
   { value: 'stream', label: t('usage.stream') },
   { value: 'sync', label: t('usage.sync') },
-])
-const billingTypeOptions = computed<SelectOption[]>(() => [
-  { value: null, label: t('admin.usage.allBillingTypes') },
-  { value: 0, label: t('admin.usage.billingTypeBalance') },
-  { value: 1, label: t('admin.usage.billingTypeSubscription') },
 ])
 const billingModeOptions = computed<SelectOption[]>(() => [
   { value: null, label: t('admin.usage.allBillingModes') },
@@ -545,7 +526,6 @@ const resetFilters = () => {
     start_date: range.start,
     end_date: range.end,
     request_type: undefined,
-    billing_type: null,
     billing_mode: null,
   }
   granularity.value = getGranularityForRange(range.start, range.end)
@@ -806,7 +786,7 @@ const loadFilterOptions = async () => {
   try {
     const [keys, availableGroups] = await Promise.all([
       keysAPI.list(1, 100),
-      userGroupsAPI.getAvailable(),
+      keysAPI.getAvailableGroups(),
     ])
     apiKeys.value = keys.items
     groups.value = availableGroups

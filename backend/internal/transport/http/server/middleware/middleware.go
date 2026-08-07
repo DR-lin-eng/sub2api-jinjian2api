@@ -21,8 +21,6 @@ const (
 	ContextKeyUserRole ContextKey = "user_role"
 	// ContextKeyAPIKey API密钥上下文键
 	ContextKeyAPIKey ContextKey = "api_key"
-	// ContextKeySubscription 订阅上下文键
-	ContextKeySubscription ContextKey = "subscription"
 	// ContextKeyForcePlatform 强制平台（用于 /antigravity 路由）
 	ContextKeyForcePlatform ContextKey = "force_platform"
 	// ContextKeyOpsFallbackAPIKey 运维错误日志专用回退键。
@@ -98,22 +96,6 @@ func AbortWithError(c *gin.Context, statusCode int, code, message string) {
 		service.MarkOpsClientBusinessLimited(c, service.OpsClientBusinessLimitedReasonLocalRateLimit)
 	}
 	c.JSON(statusCode, NewErrorResponse(code, message))
-	c.Abort()
-}
-
-// abortWithOpenAIQuotaError writes the OpenAI-compatible insufficient quota response.
-func abortWithOpenAIQuotaError(c *gin.Context, statusCode int, message string) {
-	if statusCode == http.StatusTooManyRequests {
-		service.MarkOpsClientBusinessLimited(c, service.OpsClientBusinessLimitedReasonLocalRateLimit)
-	}
-	c.JSON(statusCode, gin.H{
-		"error": gin.H{
-			"message": message,
-			"type":    "insufficient_quota",
-			"param":   nil,
-			"code":    "insufficient_quota",
-		},
-	})
 	c.Abort()
 }
 

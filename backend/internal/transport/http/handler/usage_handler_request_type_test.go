@@ -47,7 +47,7 @@ func (s *userUsageRepoCapture) GetStatsWithFilters(ctx context.Context, filters 
 	return &usagestats.UsageStats{}, nil
 }
 
-func (s *userUsageRepoCapture) GetUsageTrendWithFilters(ctx context.Context, startTime, endTime time.Time, granularity string, userID, apiKeyID, accountID, groupID int64, model string, requestType *int16, stream *bool, billingType *int8) ([]usagestats.TrendDataPoint, error) {
+func (s *userUsageRepoCapture) GetUsageTrendWithFilters(ctx context.Context, startTime, endTime time.Time, granularity string, userID, apiKeyID, accountID, groupID int64, model string, requestType *int16, stream *bool) ([]usagestats.TrendDataPoint, error) {
 	s.trendFilters = usagestats.UsageLogFilters{
 		UserID:      userID,
 		APIKeyID:    apiKeyID,
@@ -56,16 +56,15 @@ func (s *userUsageRepoCapture) GetUsageTrendWithFilters(ctx context.Context, sta
 		Model:       model,
 		RequestType: requestType,
 		Stream:      stream,
-		BillingType: billingType,
 	}
 	return []usagestats.TrendDataPoint{}, nil
 }
 
-func (s *userUsageRepoCapture) GetModelStatsWithFilters(ctx context.Context, startTime, endTime time.Time, userID, apiKeyID, accountID, groupID int64, requestType *int16, stream *bool, billingType *int8) ([]usagestats.ModelStat, error) {
+func (s *userUsageRepoCapture) GetModelStatsWithFilters(ctx context.Context, startTime, endTime time.Time, userID, apiKeyID, accountID, groupID int64, requestType *int16, stream *bool) ([]usagestats.ModelStat, error) {
 	return s.modelStats, nil
 }
 
-func (s *userUsageRepoCapture) GetGroupStatsWithFilters(ctx context.Context, startTime, endTime time.Time, userID, apiKeyID, accountID, groupID int64, requestType *int16, stream *bool, billingType *int8) ([]usagestats.GroupStat, error) {
+func (s *userUsageRepoCapture) GetGroupStatsWithFilters(ctx context.Context, startTime, endTime time.Time, userID, apiKeyID, accountID, groupID int64, requestType *int16, stream *bool) ([]usagestats.GroupStat, error) {
 	s.groupFilters = usagestats.UsageLogFilters{
 		UserID:      userID,
 		APIKeyID:    apiKeyID,
@@ -73,15 +72,14 @@ func (s *userUsageRepoCapture) GetGroupStatsWithFilters(ctx context.Context, sta
 		GroupID:     groupID,
 		RequestType: requestType,
 		Stream:      stream,
-		BillingType: billingType,
 	}
 	return s.groupStats, nil
 }
 
 func newUserUsageRequestTypeTestRouter(repo *userUsageRepoCapture) *gin.Engine {
 	gin.SetMode(gin.TestMode)
-	usageSvc := service.NewUsageService(repo, nil, nil, nil)
-	handler := NewUsageHandler(usageSvc, nil, nil, nil)
+	usageSvc := service.NewUsageService(repo)
+	handler := NewUsageHandler(usageSvc, nil, nil)
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		c.Set(string(middleware2.ContextKeyUser), middleware2.AuthSubject{UserID: 42})
@@ -135,7 +133,7 @@ func TestUserUsageListAdvancedFilters(t *testing.T) {
 	repo := &userUsageRepoCapture{}
 	router := newUserUsageRequestTypeTestRouter(repo)
 
-	req := httptest.NewRequest(http.MethodGet, "/usage?group_id=7&model=gpt-5&billing_type=1&billing_mode=image&start_date=2026-03-01&end_date=2026-03-02", nil)
+	req := httptest.NewRequest(http.MethodGet, "/usage?group_id=7&model=gpt-5&billing_mode=image&start_date=2026-03-01&end_date=2026-03-02", nil)
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
 
@@ -144,8 +142,6 @@ func TestUserUsageListAdvancedFilters(t *testing.T) {
 	require.Equal(t, int64(7), repo.listFilters.GroupID)
 	require.Equal(t, "gpt-5", repo.listFilters.Model)
 	require.Equal(t, usagestats.ModelSourceRequested, repo.listFilters.ModelFilterSource)
-	require.NotNil(t, repo.listFilters.BillingType)
-	require.Equal(t, int8(1), *repo.listFilters.BillingType)
 	require.Equal(t, "image", repo.listFilters.BillingMode)
 	require.NotNil(t, repo.listFilters.StartTime)
 	require.NotNil(t, repo.listFilters.EndTime)

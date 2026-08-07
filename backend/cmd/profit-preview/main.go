@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -24,14 +23,9 @@ type inputGroup struct {
 	Name                 string  `json:"name"`
 	Platform             string  `json:"platform"`
 	RateMultiplier       float64 `json:"rate_multiplier"`
-	SubscriptionType     string  `json:"subscription_type"`
 	ProfitControlEnabled bool    `json:"profit_control_enabled"`
 	ProfitMinMargin      float64 `json:"profit_min_margin"`
 	ProfitSafetyBuffer   float64 `json:"profit_safety_buffer"`
-	PeakRateEnabled      bool    `json:"peak_rate_enabled"`
-	PeakStart            string  `json:"peak_start"`
-	PeakEnd              string  `json:"peak_end"`
-	PeakRateMultiplier   float64 `json:"peak_rate_multiplier"`
 }
 
 type inputAccount struct {
@@ -45,10 +39,9 @@ type inputAccount struct {
 }
 
 type inputEntry struct {
-	Group         inputGroup          `json:"group"`
-	Accounts      []inputAccount      `json:"accounts"`
-	UserOverrides map[string]*float64 `json:"user_overrides"`
-	Models        []string            `json:"models"`
+	Group    inputGroup     `json:"group"`
+	Accounts []inputAccount `json:"accounts"`
+	Models   []string       `json:"models"`
 }
 
 type inputDoc struct {
@@ -162,14 +155,9 @@ func parsePreviewInputs(raw []byte, assumeEnabled bool) ([]service.ProfitPreview
 			Status:               service.StatusActive,
 			Hydrated:             true,
 			RateMultiplier:       entry.Group.RateMultiplier,
-			SubscriptionType:     entry.Group.SubscriptionType,
 			ProfitControlEnabled: entry.Group.ProfitControlEnabled,
 			ProfitMinMargin:      entry.Group.ProfitMinMargin,
 			ProfitSafetyBuffer:   entry.Group.ProfitSafetyBuffer,
-			PeakRateEnabled:      entry.Group.PeakRateEnabled,
-			PeakStart:            entry.Group.PeakStart,
-			PeakEnd:              entry.Group.PeakEnd,
-			PeakRateMultiplier:   entry.Group.PeakRateMultiplier,
 		}
 		accounts := make([]*service.Account, 0, len(entry.Accounts))
 		for _, accountInput := range entry.Accounts {
@@ -190,20 +178,9 @@ func parsePreviewInputs(raw []byte, assumeEnabled bool) ([]service.ProfitPreview
 			}
 			accounts = append(accounts, account)
 		}
-		overrides := make(map[int64]float64, len(entry.UserOverrides))
-		for userID, rate := range entry.UserOverrides {
-			if rate == nil {
-				continue
-			}
-			id, err := strconv.ParseInt(userID, 10, 64)
-			if err == nil && id > 0 {
-				overrides[id] = *rate
-			}
-		}
 		inputs = append(inputs, service.ProfitPreviewGroupInput{
 			Group:         group,
 			Accounts:      accounts,
-			UserOverrides: overrides,
 			Models:        entry.Models,
 			AssumeEnabled: assumeEnabled,
 		})

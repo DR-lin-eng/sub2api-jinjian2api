@@ -177,28 +177,6 @@ export default {
           requestsWithFirstToken: 'Requests With First Token'
         }
       },
-      userUsageStats: {
-        title: 'User Usage Stats',
-        description: 'Usage, tokens, and billed cost grouped by user. Select a user to inspect individual requests.',
-        viewModeTopN: 'TopN',
-        viewModePagination: 'Pagination',
-        prevPage: 'Previous',
-        nextPage: 'Next',
-        pageInfo: 'Page {page}/{total}',
-        totalUsers: 'Users with usage: {total}',
-        failedToLoad: 'Failed to load user usage stats',
-        empty: 'No user usage data for the current filters',
-        table: {
-          user: 'User',
-          requestCount: 'Requests',
-          inputTokens: 'Input tokens',
-          outputTokens: 'Output tokens',
-          cacheTokens: 'Cache tokens',
-          totalTokens: 'Total tokens',
-          actualCost: 'Billed cost',
-          lastRequestAt: 'Last request'
-        }
-      },
       fullscreen: {
         enter: 'Enter Fullscreen'
       },
@@ -773,8 +751,6 @@ export default {
         displayAlertEventsHint: 'When disabled, alert event data is not loaded. Enabled by default.',
         displayOpenAITokenStats: 'Display OpenAI token request stats',
         displayOpenAITokenStatsHint: 'When disabled, OpenAI token request stats are not loaded. Hidden by default.',
-        displayUserUsageStats: 'Display user usage stats',
-        displayUserUsageStatsHint: 'When disabled, user usage stats are not loaded. The card defaults to the top 20 users from the last 24 hours and is hidden by default.',
         displaySystemLogs: 'Display system logs',
         displaySystemLogsHint: 'Show or hide the system log query panel. Enabled by default. No system log queries run while hidden.',
         autoRefreshCountdown: 'Auto refresh: {seconds}s',
@@ -794,10 +770,6 @@ export default {
         byPlatform: 'By Platform',
         byGroup: 'By Group',
         byAccount: 'By Account',
-        byUser: 'By User',
-        showByUserTooltip: 'Switch to user view to see concurrency usage per user',
-        switchToUser: 'Switch to user view',
-        switchToPlatform: 'Switch to platform view',
         totalRows: '{count} rows',
         disabledHint: 'Realtime monitoring is disabled in settings.',
         empty: 'No data',

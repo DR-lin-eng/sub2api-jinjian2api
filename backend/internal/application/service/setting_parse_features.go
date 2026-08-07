@@ -44,21 +44,6 @@ func (s *SettingService) applyFeatureSettings(result *SystemSettings, settings m
 		settings[SettingKeyChannelMonitorDefaultIntervalSeconds],
 	)
 
-	// Available channels feature (default: disabled; strict true)
-	result.AvailableChannelsEnabled = settings[SettingKeyAvailableChannelsEnabled] == "true"
-
-	// Support chat feature (default: disabled; explicit true enables)
-	result.SupportChatEnabled = settings[SettingKeySupportChatEnabled] == "true"
-
-	// Model plaza feature (default: disabled and anonymously visible when enabled)
-	result.ModelPlazaEnabled = settings[SettingKeyModelPlazaEnabled] == "true"
-	result.ModelPlazaRequireAuth = settings[SettingKeyModelPlazaRequireAuth] == "true"
-	result.ModelPlazaAutoPublicModels = settings[SettingKeyModelPlazaAutoPublicModels] == "true"
-	result.ModelPlazaDescription = settings[SettingKeyModelPlazaDescription]
-
-	// Affiliate (邀请返利) feature (default: disabled; strict true)
-	result.AffiliateEnabled = settings[SettingKeyAffiliateEnabled] == "true"
-
 	// 风控中心功能（默认关闭，严格 true 才启用）
 	result.RiskControlEnabled = settings[SettingKeyRiskControlEnabled] == "true"
 

@@ -20,9 +20,6 @@ func TestGetOpsAdvancedSettings_DefaultSnapshotHidesOpenAITokenStats(t *testing.
 	if cfg.DisplayOpenAITokenStats {
 		t.Fatalf("DisplayOpenAITokenStats = true, want false by default")
 	}
-	if cfg.DisplayUserUsageStats {
-		t.Fatalf("DisplayUserUsageStats = true, want false by default")
-	}
 	if !cfg.DisplayConcurrency || !cfg.DisplaySwitchRateTrend || !cfg.DisplayThroughputTrend {
 		t.Fatalf("primary dashboard panels should be visible by default: %+v", cfg)
 	}
@@ -55,7 +52,6 @@ func TestUpdateOpsAdvancedSettings_PersistsOpenAITokenStatsVisibility(t *testing
 
 	cfg := defaultOpsAdvancedSettings()
 	cfg.DisplayOpenAITokenStats = true
-	cfg.DisplayUserUsageStats = true
 	cfg.DisplayConcurrency = false
 	cfg.DisplaySwitchRateTrend = false
 	cfg.DisplayThroughputTrend = false
@@ -72,9 +68,6 @@ func TestUpdateOpsAdvancedSettings_PersistsOpenAITokenStatsVisibility(t *testing
 	}
 	if !updated.DisplayOpenAITokenStats {
 		t.Fatalf("DisplayOpenAITokenStats = false, want true")
-	}
-	if !updated.DisplayUserUsageStats {
-		t.Fatalf("DisplayUserUsageStats = false, want true")
 	}
 	if updated.DisplayConcurrency || updated.DisplaySwitchRateTrend || updated.DisplayThroughputTrend {
 		t.Fatalf("primary dashboard panel settings were not persisted: %+v", updated)
@@ -99,9 +92,6 @@ func TestUpdateOpsAdvancedSettings_PersistsOpenAITokenStatsVisibility(t *testing
 	}
 	if !reloaded.DisplayOpenAITokenStats {
 		t.Fatalf("reloaded DisplayOpenAITokenStats = false, want true")
-	}
-	if !reloaded.DisplayUserUsageStats {
-		t.Fatalf("reloaded DisplayUserUsageStats = false, want true")
 	}
 	if reloaded.DisplayConcurrency || reloaded.DisplaySwitchRateTrend || reloaded.DisplayThroughputTrend {
 		t.Fatalf("reloaded primary dashboard panel settings were not persisted: %+v", reloaded)
@@ -158,9 +148,6 @@ func TestGetOpsAdvancedSettings_BackfillsNewDisplayFlagsFromDefaults(t *testing.
 	}
 	if cfg.DisplayOpenAITokenStats {
 		t.Fatalf("DisplayOpenAITokenStats = true, want false default backfill")
-	}
-	if cfg.DisplayUserUsageStats {
-		t.Fatalf("DisplayUserUsageStats = true, want false default backfill")
 	}
 	if !cfg.DisplayConcurrency || !cfg.DisplaySwitchRateTrend || !cfg.DisplayThroughputTrend {
 		t.Fatalf("primary dashboard panels should be backfilled as visible: %+v", cfg)

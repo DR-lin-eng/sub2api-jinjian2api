@@ -92,12 +92,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { AdminUsageStatsResponse } from '@/features/admin-usage/data/datasources/adminUsageDatasource'
 import type { UsageStatsResponse } from '@/types'
 import Icon from '@/common/widgets/icons/Icon.vue'
 
 const props = withDefaults(defineProps<{
-  stats: (AdminUsageStatsResponse | UsageStatsResponse) | null
+  stats: (UsageStatsResponse & { total_account_cost?: number }) | null
   showAccountCost?: boolean
   strikeStandardCost?: boolean
 }>(), {
@@ -108,8 +107,7 @@ const props = withDefaults(defineProps<{
 const { t } = useI18n()
 
 const totalAccountCost = computed(() => {
-  const stats = props.stats as (AdminUsageStatsResponse & { total_account_cost?: number }) | null
-  return stats?.total_account_cost ?? null
+  return props.stats?.total_account_cost ?? null
 })
 const showAccountCost = computed(() => props.showAccountCost)
 const strikeStandardCost = computed(() => props.strikeStandardCost)

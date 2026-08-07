@@ -3,8 +3,6 @@ import { useI18n } from "vue-i18n";
 import ConfirmDialog from "@/common/widgets/feedback/ConfirmDialog.vue";
 import type { AdminGroup } from "@/types";
 import CompositeRoutesDialog from "./CompositeRoutesDialog.vue";
-import GroupRateMultipliersDialog from "./GroupRateMultipliersDialog.vue";
-import GroupRPMOverridesDialog from "./GroupRPMOverridesDialog.vue";
 import GroupSortOrderDialog from "./GroupSortOrderDialog.vue";
 
 defineProps<{
@@ -16,10 +14,6 @@ defineProps<{
   sortSubmitting: boolean;
   showCompositeRoutes: boolean;
   compositeRoutesGroup: AdminGroup | null;
-  showRateMultipliers: boolean;
-  rateMultipliersGroup: AdminGroup | null;
-  showRpmOverrides: boolean;
-  rpmOverridesGroup: AdminGroup | null;
 }>();
 
 const emit = defineEmits<{
@@ -31,9 +25,6 @@ const emit = defineEmits<{
   (event: "closeSort"): void;
   (event: "saveSort"): void;
   (event: "closeCompositeRoutes"): void;
-  (event: "closeRateMultipliers"): void;
-  (event: "closeRpmOverrides"): void;
-  (event: "reload"): void;
 }>();
 
 const { t } = useI18n();
@@ -75,17 +66,5 @@ const { t } = useI18n();
     :show="showCompositeRoutes"
     :group="compositeRoutesGroup"
     @close="emit('closeCompositeRoutes')"
-  />
-  <GroupRateMultipliersDialog
-    :show="showRateMultipliers"
-    :group="rateMultipliersGroup"
-    @close="emit('closeRateMultipliers')"
-    @success="emit('reload')"
-  />
-  <GroupRPMOverridesDialog
-    :show="showRpmOverrides"
-    :group="rpmOverridesGroup"
-    @close="emit('closeRpmOverrides')"
-    @success="emit('reload')"
   />
 </template>

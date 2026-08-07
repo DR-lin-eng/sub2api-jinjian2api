@@ -26,10 +26,6 @@ vi.mock('@/core/stores/appStore', () => ({
   })
 }))
 
-vi.mock('@/features/auth/presentation/stores/authStore', () => ({
-  useAuthStore: () => ({ isSimpleMode: true })
-}))
-
 vi.mock('@/features/admin-accounts/data/datasources/adminAccountActions', () => ({
   checkMixedChannelRisk: checkMixedChannelRiskMock,
   syncUpstreamModels: vi.fn().mockResolvedValue({ models: [] }),
@@ -37,9 +33,12 @@ vi.mock('@/features/admin-accounts/data/datasources/adminAccountActions', () => 
   updateAccount: updateAccountMock
 }))
 
-vi.mock('@/features/admin-settings/data/datasources/adminSettingsDatasource', () => ({
-  getSettings: vi.fn().mockResolvedValue({}),
+vi.mock('@/features/admin-settings/data/datasources/adminWebSearchQueries', () => ({
   getWebSearchEmulationConfig: vi.fn().mockResolvedValue({ enabled: false, providers: [] })
+}))
+
+vi.mock('@/features/admin-settings/data/datasources/adminSystemSettingsQueries', () => ({
+  getSettings: vi.fn().mockResolvedValue({})
 }))
 
 vi.mock('@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource', () => ({

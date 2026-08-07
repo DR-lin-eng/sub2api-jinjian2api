@@ -1,6 +1,5 @@
 import { computed, type Reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import { formatDateTime } from '@/core/utils/format'
 import { proxyExpiryBadgeClass, proxyExpiryLabelKey } from '@/core/utils/proxyExpiry'
 import { sanitizeUrl } from '@/core/utils/url'
@@ -10,7 +9,6 @@ type OpenAICompactBadgeState = 'active' | 'blocked' | 'auto'
 
 export function useAccountTablePresentation(hiddenColumns: Reactive<Set<string>>) {
   const { t } = useI18n()
-  const authStore = useAuthStore()
 
   // Fresh billing/quota snapshots are authoritative. Imported credential tiers
   // remain fallbacks together with legacy plan_type fields.
@@ -200,11 +198,9 @@ export function useAccountTablePresentation(hiddenColumns: Reactive<Set<string>>
         class: 'w-px whitespace-nowrap text-center'
       },
       { key: 'today_stats', label: t('admin.accounts.columns.todayStats'), sortable: false },
-      { key: 'hourly_usage', label: t('admin.accounts.columns.hourlyUsage'), sortable: false }
+      { key: 'hourly_usage', label: t('admin.accounts.columns.hourlyUsage'), sortable: false },
+      { key: 'groups', label: t('admin.accounts.columns.groups'), sortable: false }
     ]
-    if (!authStore.isSimpleMode) {
-      columns.push({ key: 'groups', label: t('admin.accounts.columns.groups'), sortable: false })
-    }
     columns.push(
       { key: 'usage', label: t('admin.accounts.columns.usageWindows'), sortable: false },
       { key: 'proxy', label: t('admin.accounts.columns.proxy'), sortable: false },

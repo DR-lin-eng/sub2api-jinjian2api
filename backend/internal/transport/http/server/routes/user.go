@@ -24,36 +24,18 @@ func RegisterUserRoutes(
 	// 用户管理面变更类操作入审计（含 TOTP 启用/禁用、step-up 验证、密码修改等安全事件）
 	authenticated.Use(gin.HandlerFunc(auditLog))
 	{
-		// 用户接口
+		// Single administrator profile and local security controls.
 		user := authenticated.Group("/user")
 		{
 			user.GET("/profile", h.User.GetProfile)
 			user.PUT("/password", h.User.ChangePassword)
 			user.PUT("", h.User.UpdateProfile)
-			user.GET("/aff", h.User.GetAffiliate)
-			user.POST("/aff/transfer", h.User.TransferAffiliateQuota)
-			user.POST("/account-bindings/email/send-code", h.User.SendEmailBindingCode)
-			user.POST("/account-bindings/email", h.User.BindEmailIdentity)
-			user.DELETE("/account-bindings/:provider", h.User.UnbindIdentity)
-			user.POST("/auth-identities/bind/start", h.User.StartIdentityBinding)
 			user.GET("/api-keys/:id/usage/daily", h.Usage.GetMyAPIKeyDailyUsage)
-			user.GET("/platform-quotas", h.User.GetMyPlatformQuotas)
-
-			// 通知邮箱管理
-			notifyEmail := user.Group("/notify-email")
-			{
-				notifyEmail.POST("/send-code", h.User.SendNotifyEmailCode)
-				notifyEmail.POST("/verify", h.User.VerifyNotifyEmail)
-				notifyEmail.PUT("/toggle", h.User.ToggleNotifyEmail)
-				notifyEmail.DELETE("", h.User.RemoveNotifyEmail)
-			}
 
 			// TOTP 双因素认证
 			totp := user.Group("/totp")
 			{
 				totp.GET("/status", h.Totp.GetStatus)
-				totp.GET("/verification-method", h.Totp.GetVerificationMethod)
-				totp.POST("/send-code", h.Totp.SendVerifyCode)
 				totp.POST("/setup", h.Totp.InitiateSetup)
 				totp.POST("/enable", h.Totp.Enable)
 				totp.POST("/disable", h.Totp.Disable)
@@ -71,7 +53,7 @@ func RegisterUserRoutes(
 			}
 		}
 
-		// API Key管理
+		// Downstream API keys are owned by the single administrator.
 		keys := authenticated.Group("/keys")
 		{
 			keys.GET("", h.APIKey.List)
@@ -81,17 +63,10 @@ func RegisterUserRoutes(
 			keys.DELETE("/:id", h.APIKey.Delete)
 		}
 
-		// 用户可用分组（非管理员接口）
+		// Key creation still needs the available routing groups.
 		groups := authenticated.Group("/groups")
 		{
 			groups.GET("/available", h.APIKey.GetAvailableGroups)
-			groups.GET("/rates", h.APIKey.GetUserGroupRates)
-		}
-
-		// 用户可用渠道（非管理员接口）
-		channels := authenticated.Group("/channels")
-		{
-			channels.GET("/available", h.AvailableChannel.List)
 		}
 
 		// 使用记录。Authenticated 中间件根据完整路由模板叠加 heavy 桶。
@@ -103,55 +78,11 @@ func RegisterUserRoutes(
 			usage.GET("/:id", h.Usage.GetByID)
 			usage.GET("/stats", h.Usage.Stats)
 			// User dashboard endpoints
-			usage.GET("/dashboard/stats", h.Usage.DashboardStats)
 			usage.GET("/dashboard/trend", h.Usage.DashboardTrend)
 			usage.GET("/dashboard/models", h.Usage.DashboardModels)
 			usage.GET("/dashboard/snapshot-v2", h.Usage.DashboardSnapshotV2)
 			usage.POST("/dashboard/api-keys-usage", h.Usage.DashboardAPIKeysUsage)
-			usage.POST("/dashboard/api-keys-pending-usage", h.Usage.DashboardAPIKeysPendingUsage)
 		}
 
-		// 公告（用户可见）
-		announcements := authenticated.Group("/announcements")
-		{
-			announcements.GET("", h.Announcement.List)
-			announcements.POST("/:id/read", h.Announcement.MarkRead)
-		}
-
-		// 卡密兑换
-		redeem := authenticated.Group("/redeem")
-		{
-			redeem.POST("", h.Redeem.Redeem)
-			redeem.GET("/history", h.Redeem.GetHistory)
-		}
-
-		// 用户订阅
-		subscriptions := authenticated.Group("/subscriptions")
-		{
-			subscriptions.GET("", h.Subscription.List)
-			subscriptions.GET("/active", h.Subscription.GetActive)
-			subscriptions.GET("/progress", h.Subscription.GetProgress)
-			subscriptions.GET("/summary", h.Subscription.GetSummary)
-			subscriptions.GET("/:id/progress", h.Subscription.GetProgressByID)
-		}
-
-		// 渠道监控（用户只读）
-		monitors := authenticated.Group("/channel-monitors")
-		{
-			monitors.GET("", h.ChannelMonitor.List)
-			monitors.POST("/status/batch", h.ChannelMonitor.GetBatchStatus)
-			monitors.GET("/:id/status", h.ChannelMonitor.GetStatus)
-		}
-
-		// 在线客服（用户与管理员之间的单一长期会话）
-		chat := authenticated.Group("/chat", middleware.SupportChatFeatureGuard(settingService))
-		{
-			chat.GET("/conversation", h.Chat.GetConversation)
-			chat.GET("/unread-count", h.Chat.GetUnreadCount)
-			chat.GET("/messages", h.Chat.ListMessages)
-			chat.POST("/messages", h.Chat.SendMessage)
-			chat.POST("/read", h.Chat.MarkRead)
-			chat.GET("/ws", h.Chat.WS)
-		}
 	}
 }

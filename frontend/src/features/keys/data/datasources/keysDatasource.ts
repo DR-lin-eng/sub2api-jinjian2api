@@ -1,10 +1,10 @@
 /**
  * API Keys management endpoints
- * Handles CRUD operations for user API keys
+ * Handles CRUD operations for the local administrator's API keys
  */
 
 import { apiClient } from '@/core/networks/client'
-import type { ApiKey, CreateApiKeyRequest, UpdateApiKeyRequest, PaginatedResponse } from '@/types'
+import type { ApiKey, CreateApiKeyRequest, Group, UpdateApiKeyRequest, PaginatedResponse } from '@/types'
 
 /**
  * List all API keys for current user
@@ -52,9 +52,7 @@ export async function getById(id: number): Promise<ApiKey> {
  * @param customKey - Optional custom key value
  * @param ipWhitelist - Optional IP whitelist
  * @param ipBlacklist - Optional IP blacklist
- * @param quota - Optional quota limit in USD (0 = unlimited)
  * @param expiresInDays - Optional days until expiry (undefined = never expires)
- * @param rateLimitData - Optional rate limit fields
  * @returns Created API key
  */
 export async function create(
@@ -63,9 +61,7 @@ export async function create(
   customKey?: string,
   ipWhitelist?: string[],
   ipBlacklist?: string[],
-  quota?: number,
-  expiresInDays?: number,
-  rateLimitData?: { rate_limit_5h?: number; rate_limit_1d?: number; rate_limit_7d?: number }
+  expiresInDays?: number
 ): Promise<ApiKey> {
   const payload: CreateApiKeyRequest = { name }
   if (groupId !== undefined) {
@@ -80,20 +76,8 @@ export async function create(
   if (ipBlacklist && ipBlacklist.length > 0) {
     payload.ip_blacklist = ipBlacklist
   }
-  if (quota !== undefined && quota > 0) {
-    payload.quota = quota
-  }
   if (expiresInDays !== undefined && expiresInDays > 0) {
     payload.expires_in_days = expiresInDays
-  }
-  if (rateLimitData?.rate_limit_5h && rateLimitData.rate_limit_5h > 0) {
-    payload.rate_limit_5h = rateLimitData.rate_limit_5h
-  }
-  if (rateLimitData?.rate_limit_1d && rateLimitData.rate_limit_1d > 0) {
-    payload.rate_limit_1d = rateLimitData.rate_limit_1d
-  }
-  if (rateLimitData?.rate_limit_7d && rateLimitData.rate_limit_7d > 0) {
-    payload.rate_limit_7d = rateLimitData.rate_limit_7d
   }
 
   const { data } = await apiClient.post<ApiKey>('/keys', payload)
@@ -131,13 +115,20 @@ export async function toggleStatus(id: number, status: 'active' | 'inactive'): P
   return update(id, { status })
 }
 
+/** Get active routing groups that can be assigned to API keys. */
+export async function getAvailableGroups(): Promise<Group[]> {
+  const { data } = await apiClient.get<Group[]>('/groups/available')
+  return data
+}
+
 export const keysAPI = {
   list,
   getById,
   create,
   update,
   delete: deleteKey,
-  toggleStatus
+  toggleStatus,
+  getAvailableGroups
 }
 
 export default keysAPI

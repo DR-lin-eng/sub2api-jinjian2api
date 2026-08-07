@@ -395,7 +395,6 @@ func defaultOpsAdvancedSettingsForConfig(cfg *config.Config) *OpsAdvancedSetting
 		DisplayErrorTrend:               true,
 		DisplayImageGenerationStats:     true,
 		DisplayOpenAITokenStats:         false,
-		DisplayUserUsageStats:           false,
 		DisplayAlertEvents:              true,
 		DisplaySystemLogs:               true,
 		AutoRefreshEnabled:              false,

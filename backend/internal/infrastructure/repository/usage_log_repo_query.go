@@ -13,13 +13,12 @@ import (
 	dbgroup "github.com/Wei-Shaw/sub2api/ent/group"
 	"github.com/Wei-Shaw/sub2api/ent/schema/mixins"
 	dbuser "github.com/Wei-Shaw/sub2api/ent/user"
-	dbusersub "github.com/Wei-Shaw/sub2api/ent/usersubscription"
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
 	"github.com/Wei-Shaw/sub2api/internal/shared/pagination"
 	"github.com/Wei-Shaw/sub2api/internal/shared/usagestats"
 )
 
-const usageLogSelectColumns = "id, user_id, api_key_id, account_id, request_id, model, requested_model, upstream_model, group_id, subscription_id, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, cache_creation_5m_tokens, cache_creation_1h_tokens, image_output_tokens, image_output_cost, image_input_tokens, image_input_cost, input_cost, output_cost, cache_creation_cost, cache_read_cost, total_cost, actual_cost, rate_multiplier, account_rate_multiplier, billing_type, request_type, stream, openai_ws_mode, duration_ms, first_token_ms, user_agent, ip_address, image_count, image_size, image_input_size, image_output_size, image_size_source, image_size_breakdown, video_count, video_resolution, video_duration_seconds, service_tier, reasoning_effort, inbound_endpoint, upstream_endpoint, cache_ttl_overridden, long_context_billing_applied, channel_id, model_mapping_chain, billing_tier, billing_mode, account_stats_cost, session_id, created_at"
+const usageLogSelectColumns = "id, user_id, api_key_id, account_id, request_id, model, requested_model, upstream_model, group_id, input_tokens, output_tokens, cache_creation_tokens, cache_read_tokens, cache_creation_5m_tokens, cache_creation_1h_tokens, image_output_tokens, image_output_cost, image_input_tokens, image_input_cost, input_cost, output_cost, cache_creation_cost, cache_read_cost, total_cost, actual_cost, rate_multiplier, account_rate_multiplier, request_type, stream, openai_ws_mode, duration_ms, first_token_ms, user_agent, ip_address, image_count, image_size, image_input_size, image_output_size, image_size_source, image_size_breakdown, video_count, video_resolution, video_duration_seconds, service_tier, reasoning_effort, inbound_endpoint, upstream_endpoint, cache_ttl_overridden, long_context_billing_applied, channel_id, model_mapping_chain, billing_tier, billing_mode, account_stats_cost, session_id, created_at"
 
 func (r *usageLogRepository) GetByID(ctx context.Context, id int64) (log *service.UsageLog, err error) {
 	query := "SELECT " + usageLogSelectColumns + " FROM usage_logs WHERE id = $1"
@@ -49,47 +48,6 @@ func (r *usageLogRepository) GetByID(ctx context.Context, id int64) (log *servic
 		return nil, err
 	}
 	return log, nil
-}
-
-func (r *usageLogRepository) ListByUser(ctx context.Context, userID int64, params pagination.PaginationParams) ([]service.UsageLog, *pagination.PaginationResult, error) {
-	return r.listUsageLogsWithPagination(ctx, "WHERE user_id = $1", []any{userID}, params)
-}
-
-func (r *usageLogRepository) ListByAPIKey(ctx context.Context, apiKeyID int64, params pagination.PaginationParams) ([]service.UsageLog, *pagination.PaginationResult, error) {
-	return r.listUsageLogsWithPagination(ctx, "WHERE api_key_id = $1", []any{apiKeyID}, params)
-}
-
-func (r *usageLogRepository) ListByAccount(ctx context.Context, accountID int64, params pagination.PaginationParams) ([]service.UsageLog, *pagination.PaginationResult, error) {
-	return r.listUsageLogsWithPagination(ctx, "WHERE account_id = $1", []any{accountID}, params)
-}
-
-func (r *usageLogRepository) ListByUserAndTimeRange(ctx context.Context, userID int64, startTime, endTime time.Time) ([]service.UsageLog, *pagination.PaginationResult, error) {
-	query := "SELECT " + usageLogSelectColumns + " FROM usage_logs WHERE user_id = $1 AND created_at >= $2 AND created_at < $3 ORDER BY id DESC LIMIT 10000"
-	logs, err := r.queryUsageLogs(ctx, query, userID, startTime, endTime)
-	return logs, nil, err
-}
-
-func (r *usageLogRepository) ListByAPIKeyAndTimeRange(ctx context.Context, apiKeyID int64, startTime, endTime time.Time) ([]service.UsageLog, *pagination.PaginationResult, error) {
-	query := "SELECT " + usageLogSelectColumns + " FROM usage_logs WHERE api_key_id = $1 AND created_at >= $2 AND created_at < $3 ORDER BY id DESC LIMIT 10000"
-	logs, err := r.queryUsageLogs(ctx, query, apiKeyID, startTime, endTime)
-	return logs, nil, err
-}
-
-func (r *usageLogRepository) ListByAccountAndTimeRange(ctx context.Context, accountID int64, startTime, endTime time.Time) ([]service.UsageLog, *pagination.PaginationResult, error) {
-	query := "SELECT " + usageLogSelectColumns + " FROM usage_logs WHERE account_id = $1 AND created_at >= $2 AND created_at < $3 ORDER BY id DESC LIMIT 10000"
-	logs, err := r.queryUsageLogs(ctx, query, accountID, startTime, endTime)
-	return logs, nil, err
-}
-
-func (r *usageLogRepository) ListByModelAndTimeRange(ctx context.Context, modelName string, startTime, endTime time.Time) ([]service.UsageLog, *pagination.PaginationResult, error) {
-	query := fmt.Sprintf("SELECT %s FROM usage_logs WHERE %s = $1 AND created_at >= $2 AND created_at < $3 ORDER BY id DESC LIMIT 10000", usageLogSelectColumns, rawUsageLogModelColumn)
-	logs, err := r.queryUsageLogs(ctx, query, modelName, startTime, endTime)
-	return logs, nil, err
-}
-
-func (r *usageLogRepository) Delete(ctx context.Context, id int64) error {
-	_, err := r.sql.ExecContext(ctx, "DELETE FROM usage_logs WHERE id = $1", id)
-	return err
 }
 
 // UsageLogFilters represents filters for usage log queries
@@ -122,10 +80,6 @@ func (r *usageLogRepository) ListWithFilters(ctx context.Context, params paginat
 	}
 	conditions, args = appendUsageLogModelWhereCondition(conditions, args, filters.Model, filters.ModelFilterSource)
 	conditions, args = appendRequestTypeOrStreamWhereCondition(conditions, args, filters.RequestType, filters.Stream)
-	if filters.BillingType != nil {
-		conditions = append(conditions, fmt.Sprintf("billing_type = $%d", len(args)+1))
-		args = append(args, int16(*filters.BillingType))
-	}
 	conditions, args = appendUsageLogBillingModeWhereCondition(conditions, args, filters.BillingMode)
 	if filters.StartTime != nil {
 		conditions = append(conditions, fmt.Sprintf("created_at >= $%d", len(args)+1))
@@ -284,11 +238,6 @@ func (r *usageLogRepository) hydrateUsageLogAssociations(ctx context.Context, lo
 	if err != nil {
 		return err
 	}
-	subs, err := r.loadSubscriptions(ctx, ids.subscriptionIDs)
-	if err != nil {
-		return err
-	}
-
 	for i := range logs {
 		if user, ok := users[logs[i].UserID]; ok {
 			logs[i].User = user
@@ -304,21 +253,15 @@ func (r *usageLogRepository) hydrateUsageLogAssociations(ctx context.Context, lo
 				logs[i].Group = group
 			}
 		}
-		if logs[i].SubscriptionID != nil {
-			if sub, ok := subs[*logs[i].SubscriptionID]; ok {
-				logs[i].Subscription = sub
-			}
-		}
 	}
 	return nil
 }
 
 type usageLogIDs struct {
-	userIDs         []int64
-	apiKeyIDs       []int64
-	accountIDs      []int64
-	groupIDs        []int64
-	subscriptionIDs []int64
+	userIDs    []int64
+	apiKeyIDs  []int64
+	accountIDs []int64
+	groupIDs   []int64
 }
 
 func collectUsageLogIDs(logs []service.UsageLog) usageLogIDs {
@@ -328,8 +271,6 @@ func collectUsageLogIDs(logs []service.UsageLog) usageLogIDs {
 	apiKeyIDs := idSet()
 	accountIDs := idSet()
 	groupIDs := idSet()
-	subscriptionIDs := idSet()
-
 	for i := range logs {
 		userIDs[logs[i].UserID] = struct{}{}
 		apiKeyIDs[logs[i].APIKeyID] = struct{}{}
@@ -337,17 +278,13 @@ func collectUsageLogIDs(logs []service.UsageLog) usageLogIDs {
 		if logs[i].GroupID != nil {
 			groupIDs[*logs[i].GroupID] = struct{}{}
 		}
-		if logs[i].SubscriptionID != nil {
-			subscriptionIDs[*logs[i].SubscriptionID] = struct{}{}
-		}
 	}
 
 	return usageLogIDs{
-		userIDs:         setToSlice(userIDs),
-		apiKeyIDs:       setToSlice(apiKeyIDs),
-		accountIDs:      setToSlice(accountIDs),
-		groupIDs:        setToSlice(groupIDs),
-		subscriptionIDs: setToSlice(subscriptionIDs),
+		userIDs:    setToSlice(userIDs),
+		apiKeyIDs:  setToSlice(apiKeyIDs),
+		accountIDs: setToSlice(accountIDs),
+		groupIDs:   setToSlice(groupIDs),
 	}
 }
 
@@ -412,21 +349,6 @@ func (r *usageLogRepository) loadGroups(ctx context.Context, ids []int64) (map[i
 	return out, nil
 }
 
-func (r *usageLogRepository) loadSubscriptions(ctx context.Context, ids []int64) (map[int64]*service.UserSubscription, error) {
-	out := make(map[int64]*service.UserSubscription)
-	if len(ids) == 0 {
-		return out, nil
-	}
-	models, err := r.client.UserSubscription.Query().Where(dbusersub.IDIn(ids...)).All(ctx)
-	if err != nil {
-		return nil, err
-	}
-	for _, m := range models {
-		out[m.ID] = userSubscriptionEntityToService(m)
-	}
-	return out, nil
-}
-
 func scanUsageLog(scanner interface{ Scan(...any) error }) (*service.UsageLog, error) {
 	var (
 		id                        int64
@@ -438,7 +360,6 @@ func scanUsageLog(scanner interface{ Scan(...any) error }) (*service.UsageLog, e
 		requestedModel            sql.NullString
 		upstreamModel             sql.NullString
 		groupID                   sql.NullInt64
-		subscriptionID            sql.NullInt64
 		inputTokens               int
 		outputTokens              int
 		cacheCreationTokens       int
@@ -457,7 +378,6 @@ func scanUsageLog(scanner interface{ Scan(...any) error }) (*service.UsageLog, e
 		actualCost                float64
 		rateMultiplier            float64
 		accountRateMultiplier     sql.NullFloat64
-		billingType               int16
 		requestTypeRaw            int16
 		stream                    bool
 		openaiWSMode              bool
@@ -499,7 +419,6 @@ func scanUsageLog(scanner interface{ Scan(...any) error }) (*service.UsageLog, e
 		&requestedModel,
 		&upstreamModel,
 		&groupID,
-		&subscriptionID,
 		&inputTokens,
 		&outputTokens,
 		&cacheCreationTokens,
@@ -518,7 +437,6 @@ func scanUsageLog(scanner interface{ Scan(...any) error }) (*service.UsageLog, e
 		&actualCost,
 		&rateMultiplier,
 		&accountRateMultiplier,
-		&billingType,
 		&requestTypeRaw,
 		&stream,
 		&openaiWSMode,
@@ -577,7 +495,6 @@ func scanUsageLog(scanner interface{ Scan(...any) error }) (*service.UsageLog, e
 		ActualCost:                actualCost,
 		RateMultiplier:            rateMultiplier,
 		AccountRateMultiplier:     nullFloat64Ptr(accountRateMultiplier),
-		BillingType:               int8(billingType),
 		RequestType:               service.RequestTypeFromInt16(requestTypeRaw),
 		ImageCount:                imageCount,
 		VideoCount:                videoCount,
@@ -597,10 +514,6 @@ func scanUsageLog(scanner interface{ Scan(...any) error }) (*service.UsageLog, e
 	if groupID.Valid {
 		value := groupID.Int64
 		log.GroupID = &value
-	}
-	if subscriptionID.Valid {
-		value := subscriptionID.Int64
-		log.SubscriptionID = &value
 	}
 	if durationMs.Valid {
 		value := int(durationMs.Int64)

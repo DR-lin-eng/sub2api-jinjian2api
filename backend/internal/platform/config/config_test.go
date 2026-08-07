@@ -73,25 +73,6 @@ func TestLoadGatewayMaxLineSizeDefault(t *testing.T) {
 	require.Equal(t, 40*1024*1024, cfg.Gateway.MaxLineSize)
 }
 
-func TestLoadDurableBillingQueueDefaultsAndOverride(t *testing.T) {
-	t.Run("enabled by default", func(t *testing.T) {
-		resetViperWithJWTSecret(t)
-		cfg, err := Load()
-		require.NoError(t, err)
-		require.True(t, cfg.Billing.Queue.Enabled)
-		require.Equal(t, 4, cfg.Billing.Queue.ConsumerCount)
-		require.Equal(t, 128, cfg.Billing.Queue.ReadBatchSize)
-	})
-
-	t.Run("disabled by environment", func(t *testing.T) {
-		resetViperWithJWTSecret(t)
-		t.Setenv("BILLING_QUEUE_ENABLED", "false")
-		cfg, err := Load()
-		require.NoError(t, err)
-		require.False(t, cfg.Billing.Queue.Enabled)
-	})
-}
-
 func TestLoadRedisUsernameFromEnvironment(t *testing.T) {
 	resetViperWithJWTSecret(t)
 	t.Setenv("REDIS_USERNAME", "app-user")
@@ -110,13 +91,12 @@ func TestLoadRedisMaxIdleConnsFromEnvironment(t *testing.T) {
 	require.Equal(t, 96, cfg.Redis.MaxIdleConns)
 }
 
-func TestLoadPerformanceDefaults(t *testing.T) {
+func TestLoadRedisPerformanceDefaults(t *testing.T) {
 	resetViperWithJWTSecret(t)
 
 	cfg, err := Load()
 	require.NoError(t, err)
 	require.Zero(t, cfg.Redis.MaxIdleConns)
-	require.Equal(t, 1000, cfg.Billing.Queue.ReadBlockMilliseconds)
 }
 
 func TestLoadHTTPIngressSafetyDefaults(t *testing.T) {
@@ -244,8 +224,8 @@ func TestNormalizeRunMode(t *testing.T) {
 		input    string
 		expected string
 	}{
-		{"simple", "simple"},
-		{"SIMPLE", "simple"},
+		{"simple", "standard"},
+		{"SIMPLE", "standard"},
 		{"standard", "standard"},
 		{"invalid", "standard"},
 		{"", "standard"},
@@ -546,14 +526,6 @@ func TestLoadDefaultIdempotencyConfig(t *testing.T) {
 	}
 }
 
-func TestLoadDefaultBatchImageQueueDisabled(t *testing.T) {
-	resetViperWithJWTSecret(t)
-
-	cfg, err := Load()
-	require.NoError(t, err)
-	require.False(t, cfg.BatchImage.QueueEnabled)
-}
-
 func TestLoadIdempotencyConfigFromEnv(t *testing.T) {
 	resetViperWithJWTSecret(t)
 	t.Setenv("IDEMPOTENCY_OBSERVE_ONLY", "false")
@@ -583,52 +555,6 @@ func TestLoadSchedulingConfigFromEnv(t *testing.T) {
 	if cfg.Gateway.Scheduling.StickySessionMaxWaiting != 5 {
 		t.Fatalf("StickySessionMaxWaiting = %d, want 5", cfg.Gateway.Scheduling.StickySessionMaxWaiting)
 	}
-}
-
-func TestLoadWeChatConnectConfigFromLegacyEnv(t *testing.T) {
-	resetViperWithJWTSecret(t)
-	t.Setenv("WECHAT_OAUTH_OPEN_APP_ID", "wx-open-app")
-	t.Setenv("WECHAT_OAUTH_OPEN_APP_SECRET", "wx-open-secret")
-	t.Setenv("WECHAT_OAUTH_MP_APP_ID", "wx-mp-app")
-	t.Setenv("WECHAT_OAUTH_MP_APP_SECRET", "wx-mp-secret")
-	t.Setenv("WECHAT_OAUTH_FRONTEND_REDIRECT_URL", "/auth/wechat/legacy-callback")
-
-	cfg, err := Load()
-	require.NoError(t, err)
-	require.True(t, cfg.WeChat.Enabled)
-	require.True(t, cfg.WeChat.OpenEnabled)
-	require.True(t, cfg.WeChat.MPEnabled)
-	require.False(t, cfg.WeChat.MobileEnabled)
-	require.Equal(t, "open", cfg.WeChat.Mode)
-	require.Equal(t, "wx-open-app", cfg.WeChat.OpenAppID)
-	require.Equal(t, "wx-open-secret", cfg.WeChat.OpenAppSecret)
-	require.Equal(t, "wx-mp-app", cfg.WeChat.MPAppID)
-	require.Equal(t, "wx-mp-secret", cfg.WeChat.MPAppSecret)
-	require.Equal(t, "/auth/wechat/legacy-callback", cfg.WeChat.FrontendRedirectURL)
-}
-
-func TestLoadDefaultOIDCSecurityDefaults(t *testing.T) {
-	resetViperWithJWTSecret(t)
-
-	cfg, err := Load()
-	require.NoError(t, err)
-	require.True(t, cfg.OIDC.UsePKCE)
-	require.True(t, cfg.OIDC.ValidateIDToken)
-	require.False(t, cfg.OIDC.UsePKCEExplicit)
-	require.False(t, cfg.OIDC.ValidateIDTokenExplicit)
-}
-
-func TestLoadExplicitOIDCSecurityDefaultsFromEnvMarksFlagsExplicit(t *testing.T) {
-	resetViperWithJWTSecret(t)
-	t.Setenv("OIDC_CONNECT_USE_PKCE", "false")
-	t.Setenv("OIDC_CONNECT_VALIDATE_ID_TOKEN", "false")
-
-	cfg, err := Load()
-	require.NoError(t, err)
-	require.False(t, cfg.OIDC.UsePKCE)
-	require.False(t, cfg.OIDC.ValidateIDToken)
-	require.True(t, cfg.OIDC.UsePKCEExplicit)
-	require.True(t, cfg.OIDC.ValidateIDTokenExplicit)
 }
 
 func TestLoadForcedCodexInstructionsTemplate(t *testing.T) {
@@ -742,202 +668,6 @@ func TestLoadDefaultDatabaseSSLMode(t *testing.T) {
 	}
 }
 
-func TestValidateLinuxDoFrontendRedirectURL(t *testing.T) {
-	resetViperWithJWTSecret(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	cfg.LinuxDo.Enabled = true
-	cfg.LinuxDo.ClientID = "test-client"
-	cfg.LinuxDo.ClientSecret = "test-secret"
-	cfg.LinuxDo.RedirectURL = "https://example.com/api/v1/auth/oauth/linuxdo/callback"
-	cfg.LinuxDo.TokenAuthMethod = "client_secret_post"
-	cfg.LinuxDo.UsePKCE = true
-
-	cfg.LinuxDo.FrontendRedirectURL = "javascript:alert(1)"
-	err = cfg.Validate()
-	if err == nil {
-		t.Fatalf("Validate() expected error for javascript scheme, got nil")
-	}
-	if !strings.Contains(err.Error(), "linuxdo_connect.frontend_redirect_url") {
-		t.Fatalf("Validate() expected frontend_redirect_url error, got: %v", err)
-	}
-}
-
-func TestValidateLinuxDoAllowsDisablingPKCEForCompatibility(t *testing.T) {
-	resetViperWithJWTSecret(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	cfg.LinuxDo.Enabled = true
-	cfg.LinuxDo.ClientID = "test-client"
-	cfg.LinuxDo.ClientSecret = ""
-	cfg.LinuxDo.RedirectURL = "https://example.com/api/v1/auth/oauth/linuxdo/callback"
-	cfg.LinuxDo.FrontendRedirectURL = "/auth/linuxdo/callback"
-	cfg.LinuxDo.TokenAuthMethod = "none"
-	cfg.LinuxDo.UsePKCE = false
-
-	err = cfg.Validate()
-	if err != nil {
-		t.Fatalf("Validate() expected LinuxDo config without PKCE to pass for compatibility, got: %v", err)
-	}
-}
-
-func TestValidateOIDCScopesMustContainOpenID(t *testing.T) {
-	resetViperWithJWTSecret(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	cfg.OIDC.Enabled = true
-	cfg.OIDC.ClientID = "oidc-client"
-	cfg.OIDC.ClientSecret = "oidc-secret"
-	cfg.OIDC.IssuerURL = "https://issuer.example.com"
-	cfg.OIDC.AuthorizeURL = "https://issuer.example.com/auth"
-	cfg.OIDC.TokenURL = "https://issuer.example.com/token"
-	cfg.OIDC.JWKSURL = "https://issuer.example.com/jwks"
-	cfg.OIDC.RedirectURL = "https://example.com/api/v1/auth/oauth/oidc/callback"
-	cfg.OIDC.FrontendRedirectURL = "/auth/oidc/callback"
-	cfg.OIDC.Scopes = "profile email"
-	cfg.OIDC.UsePKCE = true
-
-	err = cfg.Validate()
-	if err == nil {
-		t.Fatalf("Validate() expected error when scopes do not include openid, got nil")
-	}
-	if !strings.Contains(err.Error(), "oidc_connect.scopes") {
-		t.Fatalf("Validate() expected oidc_connect.scopes error, got: %v", err)
-	}
-}
-
-func TestValidateOIDCAllowsIssuerOnlyEndpointsWithDiscoveryFallback(t *testing.T) {
-	resetViperWithJWTSecret(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	cfg.OIDC.Enabled = true
-	cfg.OIDC.ClientID = "oidc-client"
-	cfg.OIDC.ClientSecret = "oidc-secret"
-	cfg.OIDC.IssuerURL = "https://issuer.example.com"
-	cfg.OIDC.AuthorizeURL = ""
-	cfg.OIDC.TokenURL = ""
-	cfg.OIDC.JWKSURL = ""
-	cfg.OIDC.RedirectURL = "https://example.com/api/v1/auth/oauth/oidc/callback"
-	cfg.OIDC.FrontendRedirectURL = "/auth/oidc/callback"
-	cfg.OIDC.Scopes = "openid email profile"
-	cfg.OIDC.ValidateIDToken = true
-	cfg.OIDC.UsePKCE = true
-
-	err = cfg.Validate()
-	if err != nil {
-		t.Fatalf("Validate() expected issuer-only OIDC config to pass with discovery fallback, got: %v", err)
-	}
-}
-
-func TestValidateOIDCAllowsExplicitCompatibilityOverridesForPKCEAndIDTokenValidation(t *testing.T) {
-	resetViperWithJWTSecret(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	cfg.OIDC.Enabled = true
-	cfg.OIDC.ClientID = "oidc-client"
-	cfg.OIDC.ClientSecret = "oidc-secret"
-	cfg.OIDC.IssuerURL = "https://issuer.example.com"
-	cfg.OIDC.AuthorizeURL = "https://issuer.example.com/auth"
-	cfg.OIDC.TokenURL = "https://issuer.example.com/token"
-	cfg.OIDC.UserInfoURL = "https://issuer.example.com/userinfo"
-	cfg.OIDC.RedirectURL = "https://example.com/api/v1/auth/oauth/oidc/callback"
-	cfg.OIDC.FrontendRedirectURL = "/auth/oidc/callback"
-	cfg.OIDC.Scopes = "openid email profile"
-	cfg.OIDC.UsePKCE = false
-	cfg.OIDC.ValidateIDToken = false
-	cfg.OIDC.JWKSURL = ""
-	cfg.OIDC.AllowedSigningAlgs = ""
-
-	err = cfg.Validate()
-	if err != nil {
-		t.Fatalf("Validate() expected OIDC config without PKCE/id_token validation to pass for compatibility, got: %v", err)
-	}
-}
-
-func TestLoadDefaultDashboardCacheConfig(t *testing.T) {
-	resetViperWithJWTSecret(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	if !cfg.Dashboard.Enabled {
-		t.Fatalf("Dashboard.Enabled = false, want true")
-	}
-	if cfg.Dashboard.KeyPrefix != "sub2api:" {
-		t.Fatalf("Dashboard.KeyPrefix = %q, want %q", cfg.Dashboard.KeyPrefix, "sub2api:")
-	}
-	if cfg.Dashboard.StatsFreshTTLSeconds != 15 {
-		t.Fatalf("Dashboard.StatsFreshTTLSeconds = %d, want 15", cfg.Dashboard.StatsFreshTTLSeconds)
-	}
-	if cfg.Dashboard.StatsTTLSeconds != 30 {
-		t.Fatalf("Dashboard.StatsTTLSeconds = %d, want 30", cfg.Dashboard.StatsTTLSeconds)
-	}
-	if cfg.Dashboard.StatsRefreshTimeoutSeconds != 30 {
-		t.Fatalf("Dashboard.StatsRefreshTimeoutSeconds = %d, want 30", cfg.Dashboard.StatsRefreshTimeoutSeconds)
-	}
-}
-
-func TestValidateDashboardCacheConfigEnabled(t *testing.T) {
-	resetViperWithJWTSecret(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	cfg.Dashboard.Enabled = true
-	cfg.Dashboard.StatsFreshTTLSeconds = 10
-	cfg.Dashboard.StatsTTLSeconds = 5
-	err = cfg.Validate()
-	if err == nil {
-		t.Fatalf("Validate() expected error for stats_fresh_ttl_seconds > stats_ttl_seconds, got nil")
-	}
-	if !strings.Contains(err.Error(), "dashboard_cache.stats_fresh_ttl_seconds") {
-		t.Fatalf("Validate() expected stats_fresh_ttl_seconds error, got: %v", err)
-	}
-}
-
-func TestValidateDashboardCacheConfigDisabled(t *testing.T) {
-	resetViperWithJWTSecret(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	cfg.Dashboard.Enabled = false
-	cfg.Dashboard.StatsTTLSeconds = -1
-	err = cfg.Validate()
-	if err == nil {
-		t.Fatalf("Validate() expected error for negative stats_ttl_seconds, got nil")
-	}
-	if !strings.Contains(err.Error(), "dashboard_cache.stats_ttl_seconds") {
-		t.Fatalf("Validate() expected stats_ttl_seconds error, got: %v", err)
-	}
-}
-
 func TestLoadDefaultDashboardAggregationConfig(t *testing.T) {
 	resetViperWithJWTSecret(t)
 
@@ -963,9 +693,6 @@ func TestLoadDefaultDashboardAggregationConfig(t *testing.T) {
 	}
 	if cfg.DashboardAgg.Retention.UsageLogsDays != 90 {
 		t.Fatalf("DashboardAgg.Retention.UsageLogsDays = %d, want 90", cfg.DashboardAgg.Retention.UsageLogsDays)
-	}
-	if cfg.DashboardAgg.Retention.UsageBillingDedupDays != 365 {
-		t.Fatalf("DashboardAgg.Retention.UsageBillingDedupDays = %d, want 365", cfg.DashboardAgg.Retention.UsageBillingDedupDays)
 	}
 	if cfg.DashboardAgg.Retention.HourlyDays != 180 {
 		t.Fatalf("DashboardAgg.Retention.HourlyDays = %d, want 180", cfg.DashboardAgg.Retention.HourlyDays)
@@ -1013,69 +740,6 @@ func TestValidateDashboardAggregationBackfillMaxDays(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "dashboard_aggregation.backfill_max_days") {
 		t.Fatalf("Validate() expected backfill_max_days error, got: %v", err)
-	}
-}
-
-func TestLoadDefaultUsageCleanupConfig(t *testing.T) {
-	resetViperWithJWTSecret(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	if !cfg.UsageCleanup.Enabled {
-		t.Fatalf("UsageCleanup.Enabled = false, want true")
-	}
-	if cfg.UsageCleanup.MaxRangeDays != 31 {
-		t.Fatalf("UsageCleanup.MaxRangeDays = %d, want 31", cfg.UsageCleanup.MaxRangeDays)
-	}
-	if cfg.UsageCleanup.BatchSize != 5000 {
-		t.Fatalf("UsageCleanup.BatchSize = %d, want 5000", cfg.UsageCleanup.BatchSize)
-	}
-	if cfg.UsageCleanup.WorkerIntervalSeconds != 10 {
-		t.Fatalf("UsageCleanup.WorkerIntervalSeconds = %d, want 10", cfg.UsageCleanup.WorkerIntervalSeconds)
-	}
-	if cfg.UsageCleanup.TaskTimeoutSeconds != 1800 {
-		t.Fatalf("UsageCleanup.TaskTimeoutSeconds = %d, want 1800", cfg.UsageCleanup.TaskTimeoutSeconds)
-	}
-}
-
-func TestValidateUsageCleanupConfigEnabled(t *testing.T) {
-	resetViperWithJWTSecret(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	cfg.UsageCleanup.Enabled = true
-	cfg.UsageCleanup.MaxRangeDays = 0
-	err = cfg.Validate()
-	if err == nil {
-		t.Fatalf("Validate() expected error for usage_cleanup.max_range_days, got nil")
-	}
-	if !strings.Contains(err.Error(), "usage_cleanup.max_range_days") {
-		t.Fatalf("Validate() expected max_range_days error, got: %v", err)
-	}
-}
-
-func TestValidateUsageCleanupConfigDisabled(t *testing.T) {
-	resetViperWithJWTSecret(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	cfg.UsageCleanup.Enabled = false
-	cfg.UsageCleanup.BatchSize = -1
-	err = cfg.Validate()
-	if err == nil {
-		t.Fatalf("Validate() expected error for usage_cleanup.batch_size, got nil")
-	}
-	if !strings.Contains(err.Error(), "usage_cleanup.batch_size") {
-		t.Fatalf("Validate() expected batch_size error, got: %v", err)
 	}
 }
 
@@ -1283,33 +947,6 @@ func TestProvideConfig(t *testing.T) {
 	}
 }
 
-func TestValidateConfigWithLinuxDoEnabled(t *testing.T) {
-	resetViperWithJWTSecret(t)
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error: %v", err)
-	}
-
-	cfg.Security.CSP.Enabled = true
-	cfg.Security.CSP.Policy = "default-src 'self'"
-
-	cfg.LinuxDo.Enabled = true
-	cfg.LinuxDo.ClientID = "client"
-	cfg.LinuxDo.ClientSecret = "secret"
-	cfg.LinuxDo.AuthorizeURL = "https://example.com/oauth2/authorize"
-	cfg.LinuxDo.TokenURL = "https://example.com/oauth2/token"
-	cfg.LinuxDo.UserInfoURL = "https://example.com/oauth2/userinfo"
-	cfg.LinuxDo.RedirectURL = "https://example.com/api/v1/auth/oauth/linuxdo/callback"
-	cfg.LinuxDo.FrontendRedirectURL = "/auth/linuxdo/callback"
-	cfg.LinuxDo.TokenAuthMethod = "client_secret_post"
-	cfg.LinuxDo.UsePKCE = true
-
-	if err := cfg.Validate(); err != nil {
-		t.Fatalf("Validate() unexpected error: %v", err)
-	}
-}
-
 func TestValidateJWTSecretStrength(t *testing.T) {
 	if !isWeakJWTSecret("change-me-in-production") {
 		t.Fatalf("isWeakJWTSecret should detect weak secret")
@@ -1466,16 +1103,6 @@ func TestValidateConfigErrors(t *testing.T) {
 			wantErr: "jwt.secret must be at least 32 bytes",
 		},
 		{
-			name:    "subscription maintenance worker_count non-negative",
-			mutate:  func(c *Config) { c.SubscriptionMaintenance.WorkerCount = -1 },
-			wantErr: "subscription_maintenance.worker_count",
-		},
-		{
-			name:    "subscription maintenance queue_size non-negative",
-			mutate:  func(c *Config) { c.SubscriptionMaintenance.QueueSize = -1 },
-			wantErr: "subscription_maintenance.queue_size",
-		},
-		{
 			name:    "jwt expire hour positive",
 			mutate:  func(c *Config) { c.JWT.ExpireHour = 0 },
 			wantErr: "jwt.expire_hour must be positive",
@@ -1494,63 +1121,6 @@ func TestValidateConfigErrors(t *testing.T) {
 			name:    "csp policy required",
 			mutate:  func(c *Config) { c.Security.CSP.Enabled = true; c.Security.CSP.Policy = "" },
 			wantErr: "security.csp.policy",
-		},
-		{
-			name: "linuxdo client id required",
-			mutate: func(c *Config) {
-				c.LinuxDo.Enabled = true
-				c.LinuxDo.UsePKCE = true
-				c.LinuxDo.ClientID = ""
-			},
-			wantErr: "linuxdo_connect.client_id",
-		},
-		{
-			name: "linuxdo token auth method",
-			mutate: func(c *Config) {
-				c.LinuxDo.Enabled = true
-				c.LinuxDo.UsePKCE = true
-				c.LinuxDo.ClientID = "client"
-				c.LinuxDo.ClientSecret = "secret"
-				c.LinuxDo.AuthorizeURL = "https://example.com/authorize"
-				c.LinuxDo.TokenURL = "https://example.com/token"
-				c.LinuxDo.UserInfoURL = "https://example.com/userinfo"
-				c.LinuxDo.RedirectURL = "https://example.com/callback"
-				c.LinuxDo.FrontendRedirectURL = "/auth/callback"
-				c.LinuxDo.TokenAuthMethod = "invalid"
-			},
-			wantErr: "linuxdo_connect.token_auth_method",
-		},
-		{
-			name:    "billing circuit breaker threshold",
-			mutate:  func(c *Config) { c.Billing.CircuitBreaker.FailureThreshold = 0 },
-			wantErr: "billing.circuit_breaker.failure_threshold",
-		},
-		{
-			name:    "billing circuit breaker reset",
-			mutate:  func(c *Config) { c.Billing.CircuitBreaker.ResetTimeoutSeconds = 0 },
-			wantErr: "billing.circuit_breaker.reset_timeout_seconds",
-		},
-		{
-			name:    "billing circuit breaker half open",
-			mutate:  func(c *Config) { c.Billing.CircuitBreaker.HalfOpenRequests = 0 },
-			wantErr: "billing.circuit_breaker.half_open_requests",
-		},
-		{
-			name:    "billing minimum balance reserve",
-			mutate:  func(c *Config) { c.Billing.MinimumBalanceReserve = -0.01 },
-			wantErr: "billing.minimum_balance_reserve",
-		},
-		{
-			name: "billing queue consumers exceed maximum",
-			mutate: func(c *Config) {
-				c.Billing.Queue.ConsumerCount = c.Billing.Queue.MaxConsumerCount + 1
-			},
-			wantErr: "billing.queue.consumer_count cannot exceed max_consumer_count",
-		},
-		{
-			name:    "billing queue retry delay positive",
-			mutate:  func(c *Config) { c.Billing.Queue.MaxRetryDelaySeconds = 0 },
-			wantErr: "billing.queue.max_retry_delay_seconds must be positive",
 		},
 		{
 			name:    "database max open conns",
@@ -1598,16 +1168,6 @@ func TestValidateConfigErrors(t *testing.T) {
 			wantErr: "redis.max_idle_conns must be non-negative",
 		},
 		{
-			name:    "dashboard cache disabled negative",
-			mutate:  func(c *Config) { c.Dashboard.Enabled = false; c.Dashboard.StatsTTLSeconds = -1 },
-			wantErr: "dashboard_cache.stats_ttl_seconds",
-		},
-		{
-			name:    "dashboard cache fresh ttl positive",
-			mutate:  func(c *Config) { c.Dashboard.Enabled = true; c.Dashboard.StatsFreshTTLSeconds = 0 },
-			wantErr: "dashboard_cache.stats_fresh_ttl_seconds",
-		},
-		{
 			name:    "dashboard aggregation enabled interval",
 			mutate:  func(c *Config) { c.DashboardAgg.Enabled = true; c.DashboardAgg.IntervalSeconds = 0 },
 			wantErr: "dashboard_aggregation.interval_seconds",
@@ -1627,46 +1187,9 @@ func TestValidateConfigErrors(t *testing.T) {
 			wantErr: "dashboard_aggregation.retention.usage_logs_days",
 		},
 		{
-			name: "dashboard aggregation dedup retention",
-			mutate: func(c *Config) {
-				c.DashboardAgg.Enabled = true
-				c.DashboardAgg.Retention.UsageBillingDedupDays = 0
-			},
-			wantErr: "dashboard_aggregation.retention.usage_billing_dedup_days",
-		},
-		{
-			name: "dashboard aggregation dedup retention smaller than usage logs",
-			mutate: func(c *Config) {
-				c.DashboardAgg.Enabled = true
-				c.DashboardAgg.Retention.UsageLogsDays = 30
-				c.DashboardAgg.Retention.UsageBillingDedupDays = 29
-			},
-			wantErr: "dashboard_aggregation.retention.usage_billing_dedup_days",
-		},
-		{
 			name:    "dashboard aggregation disabled interval",
 			mutate:  func(c *Config) { c.DashboardAgg.Enabled = false; c.DashboardAgg.IntervalSeconds = -1 },
 			wantErr: "dashboard_aggregation.interval_seconds",
-		},
-		{
-			name:    "usage cleanup max range",
-			mutate:  func(c *Config) { c.UsageCleanup.Enabled = true; c.UsageCleanup.MaxRangeDays = 0 },
-			wantErr: "usage_cleanup.max_range_days",
-		},
-		{
-			name:    "usage cleanup worker interval",
-			mutate:  func(c *Config) { c.UsageCleanup.Enabled = true; c.UsageCleanup.WorkerIntervalSeconds = 0 },
-			wantErr: "usage_cleanup.worker_interval_seconds",
-		},
-		{
-			name:    "usage cleanup batch size",
-			mutate:  func(c *Config) { c.UsageCleanup.Enabled = true; c.UsageCleanup.BatchSize = 0 },
-			wantErr: "usage_cleanup.batch_size",
-		},
-		{
-			name:    "usage cleanup disabled negative",
-			mutate:  func(c *Config) { c.UsageCleanup.Enabled = false; c.UsageCleanup.BatchSize = -1 },
-			wantErr: "usage_cleanup.batch_size",
 		},
 		{
 			name:    "gateway max body size",

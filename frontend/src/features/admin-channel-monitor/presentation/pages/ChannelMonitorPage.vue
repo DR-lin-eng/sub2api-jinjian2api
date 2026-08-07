@@ -151,7 +151,7 @@ import MonitorRunResultDialog from '@/features/admin-channel-monitor/presentatio
 import MonitorPrimaryModelCell from '@/features/admin-channel-monitor/presentation/widgets/MonitorPrimaryModelCell.vue'
 import MonitorActionsCell from '@/features/admin-channel-monitor/presentation/widgets/MonitorActionsCell.vue'
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
-import { useChannelMonitorFormat } from '@/features/channel-monitor-user/presentation/composables/useChannelMonitorFormat'
+import { useChannelMonitorFormat } from '@/features/admin-channel-monitor/presentation/composables/useChannelMonitorFormat'
 
 const { t } = useI18n()
 const appStore = useAppStore()

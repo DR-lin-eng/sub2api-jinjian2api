@@ -1,4 +1,4 @@
-import type { GroupPlatform, SubscriptionType } from "@/types";
+import type { GroupPlatform } from "@/types";
 import { createDefaultMessagesDispatchFormState } from "../groupsMessagesDispatchResolver";
 import type { MessagesDispatchMappingRow } from "../groupsMessagesDispatchResolver";
 import type { ModelsListState } from "../groupsModelsListResolver";
@@ -17,18 +17,10 @@ const baseGroupFormState = () => {
     description: "",
     platform: "anthropic" as GroupPlatform,
     rate_multiplier: 1.0,
-    is_exclusive: false,
-    subscription_type: "standard" as SubscriptionType,
-    daily_limit_usd: null as number | null,
-    weekly_limit_usd: null as number | null,
-    monthly_limit_usd: null as number | null,
     allow_image_generation: false,
     openai_force_image_tool: false,
-    allow_batch_image_generation: false,
     image_rate_independent: false,
     image_rate_multiplier: 1,
-    batch_image_discount_multiplier: 0.5,
-    batch_image_hold_multiplier: 0.6,
     image_price_1k: null as number | null,
     image_price_2k: null as number | null,
     image_price_4k: null as number | null,
@@ -38,10 +30,6 @@ const baseGroupFormState = () => {
     video_price_720p: null as number | null,
     video_price_1080p: null as number | null,
     web_search_price_per_call: null as number | null,
-    peak_rate_enabled: false,
-    peak_start: "",
-    peak_end: "",
-    peak_rate_multiplier: 1.0,
     profit_control_enabled: false,
     profit_min_margin_percent: 0,
     profit_safety_buffer_percent: 0,
@@ -105,19 +93,6 @@ export const convertRoutingRulesToApiFormat = (
   return hasValidRules ? result : null;
 };
 
-export const normalizeOptionalLimit = (
-  value: number | string | null | undefined,
-): number | null => {
-  if (value === null || value === undefined) return null;
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    if (!trimmed) return null;
-    const parsed = Number(trimmed);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-  }
-  return Number.isFinite(value) && value > 0 ? value : null;
-};
-
 export const normalizeRateMultiplier = (
   value: number | string | null | undefined,
 ): number => {
@@ -129,12 +104,9 @@ export const normalizeRateMultiplier = (
 type ImagePricingFormState = {
   platform: GroupPlatform;
   allow_image_generation: boolean;
-  allow_batch_image_generation: boolean;
   rate_multiplier: number | string;
   image_rate_independent: boolean;
   image_rate_multiplier: number | string;
-  batch_image_discount_multiplier: number | string;
-  batch_image_hold_multiplier: number | string;
   image_price_1k: number | string | null;
   image_price_2k: number | string | null;
   image_price_4k: number | string | null;
@@ -245,23 +217,4 @@ export const buildWebSearchFinalPricePreview = (
     DEFAULT_WEB_SEARCH_PRICE_PER_CALL;
   const multiplier = normalizePreviewNumber(form.rate_multiplier, 1);
   return formatPricePreview(basePrice * multiplier, notConfigured);
-};
-
-export const resetDisabledBatchImagePricing = (
-  form: Pick<
-    ImagePricingFormState,
-    | "platform"
-    | "allow_image_generation"
-    | "allow_batch_image_generation"
-    | "batch_image_discount_multiplier"
-    | "batch_image_hold_multiplier"
-  >,
-) => {
-  if (form.platform !== "gemini" || !form.allow_image_generation) {
-    form.allow_batch_image_generation = false;
-  }
-  if (!form.allow_batch_image_generation) {
-    form.batch_image_discount_multiplier = 0.5;
-    form.batch_image_hold_multiplier = 0.6;
-  }
 };

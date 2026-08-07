@@ -111,15 +111,6 @@
         />
       </div>
 
-      <!-- Row: User Usage Stats -->
-      <div v-if="opsEnabled && showUserUsageStats && !(loading && !hasLoadedOnce)" class="grid grid-cols-1 gap-6">
-        <OpsUserUsageStatsCard
-          :platform-filter="platform"
-          :group-id-filter="groupId"
-          :refresh-token="dashboardRefreshToken"
-        />
-      </div>
-
       <!-- Alert Events -->
       <OpsAlertEventsCard v-if="opsEnabled && showAlertEvents && !(loading && !hasLoadedOnce)" />
 
@@ -194,7 +185,6 @@ import OpsThroughputTrendChart from '../widgets/OpsThroughputTrendChart.vue'
 import OpsSwitchRateTrendChart from '../widgets/OpsSwitchRateTrendChart.vue'
 import OpsAlertEventsCard from '../widgets/OpsAlertEventsCard.vue'
 import OpsOpenAITokenStatsCard from '../widgets/OpsOpenAITokenStatsCard.vue'
-import OpsUserUsageStatsCard from '../widgets/OpsUserUsageStatsCard.vue'
 import OpsSystemLogTable from '../widgets/OpsSystemLogTable.vue'
 import OpsRequestDetailsDialog from '../widgets/OpsRequestDetailsDialog.vue'
 import type { OpsRequestDetailsPreset } from '../opsTypeSignals'
@@ -412,7 +402,6 @@ applyRouteQueryToState()
 // Auto refresh settings
 const showAlertEvents = ref(true)
 const showOpenAITokenStats = ref(false)
-const showUserUsageStats = ref(false)
 const showSystemLogs = ref(true)
 const showConcurrency = ref(true)
 const showSwitchRateTrend = ref(true)
@@ -475,7 +464,6 @@ function applyDashboardAdvancedSettings(settings: OpsAdvancedSettings) {
   showImageGenerationStats.value = settings.display_image_generation_stats ?? true
   showAlertEvents.value = settings.display_alert_events
   showOpenAITokenStats.value = settings.display_openai_token_stats
-  showUserUsageStats.value = settings.display_user_usage_stats
   showSystemLogs.value = settings.display_system_logs
   autoRefreshEnabled.value = settings.auto_refresh_enabled
   autoRefreshIntervalMs.value = settings.auto_refresh_interval_seconds * 1000
@@ -498,7 +486,6 @@ function resetDashboardAdvancedSettings() {
   showImageGenerationStats.value = true
   showAlertEvents.value = true
   showOpenAITokenStats.value = false
-  showUserUsageStats.value = false
   showSystemLogs.value = true
   autoRefreshEnabled.value = false
   autoRefreshIntervalMs.value = 30000

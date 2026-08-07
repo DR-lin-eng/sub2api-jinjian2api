@@ -24,9 +24,8 @@ type ProfitPreviewGroupInput struct {
 	Group *Group
 	// Accounts are schedulable accounts bound to the group. Mixed scheduling may
 	// include Antigravity accounts for Anthropic or Gemini groups.
-	Accounts      []*Account
-	UserOverrides map[int64]float64
-	Models        []string
+	Accounts []*Account
+	Models   []string
 	// AssumeEnabled evaluates saved profit settings while the group remains off.
 	AssumeEnabled bool
 }
@@ -88,18 +87,8 @@ func PreviewProfitAdmission(inputs []ProfitPreviewGroupInput, evalAt time.Time) 
 			report.RemainingByModelMinD[model] = 0
 		}
 
-		peak := group.PeakMultiplierAt(evalAt)
-		defaultD := group.RateMultiplier * peak
-		minRate := group.RateMultiplier
-		for _, override := range input.UserOverrides {
-			if math.IsNaN(override) || math.IsInf(override, 0) || override < 0 {
-				continue
-			}
-			if override < minRate {
-				minRate = override
-			}
-		}
-		minD := minRate * peak
+		defaultD := group.RateMultiplier
+		minD := defaultD
 		deduction := group.ProfitMinMargin + group.ProfitSafetyBuffer
 		report.DefaultD = defaultD
 		report.MinEffectiveD = minD

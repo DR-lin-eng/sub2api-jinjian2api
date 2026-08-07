@@ -56,22 +56,6 @@ func TestDecideAdminBootstrap(t *testing.T) {
 	}
 }
 
-func TestSetupDefaultAdminConcurrency(t *testing.T) {
-	t.Run("simple mode admin uses higher concurrency", func(t *testing.T) {
-		t.Setenv("RUN_MODE", "simple")
-		if got := setupDefaultAdminConcurrency(); got != simpleModeAdminConcurrency {
-			t.Fatalf("setupDefaultAdminConcurrency()=%d, want %d", got, simpleModeAdminConcurrency)
-		}
-	})
-
-	t.Run("standard mode keeps existing default", func(t *testing.T) {
-		t.Setenv("RUN_MODE", "standard")
-		if got := setupDefaultAdminConcurrency(); got != defaultUserConcurrency {
-			t.Fatalf("setupDefaultAdminConcurrency()=%d, want %d", got, defaultUserConcurrency)
-		}
-	})
-}
-
 func TestNeedsSetupSkipsWhenSkipSetupIsEnabled(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -185,8 +169,7 @@ func TestSetupMigrationTimeout(t *testing.T) {
 	})
 }
 
-func TestWriteConfigFileKeepsDefaultUserConcurrency(t *testing.T) {
-	t.Setenv("RUN_MODE", "simple")
+func TestWriteConfigFileOmitsRemovedUserDefaults(t *testing.T) {
 	t.Setenv("DATA_DIR", t.TempDir())
 
 	if err := writeConfigFile(&SetupConfig{}); err != nil {
@@ -198,8 +181,14 @@ func TestWriteConfigFileKeepsDefaultUserConcurrency(t *testing.T) {
 		t.Fatalf("ReadFile() error = %v", err)
 	}
 
-	if !strings.Contains(string(data), "user_concurrency: 5") {
-		t.Fatalf("config missing default user concurrency, got:\n%s", string(data))
+	content := string(data)
+	for _, removed := range []string{"user_concurrency:", "requests_per_minute:", "burst_size:"} {
+		if strings.Contains(content, removed) {
+			t.Fatalf("config contains removed key %q, got:\n%s", removed, content)
+		}
+	}
+	if !strings.Contains(content, "api_key_prefix: sk-") {
+		t.Fatalf("config missing API key prefix, got:\n%s", content)
 	}
 }
 

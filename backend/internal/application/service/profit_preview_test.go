@@ -1,7 +1,6 @@
 package service
 
 import (
-	"math"
 	"testing"
 	"time"
 
@@ -47,17 +46,16 @@ func TestPreviewProfitAdmissionUsesRuntimeThresholdsAndPreinitializesModels(t *t
 	invalid.Name = "invalid"
 
 	reports := PreviewProfitAdmission([]ProfitPreviewGroupInput{{
-		Group:         group,
-		Accounts:      []*Account{cheap, boundary, expensive, invalid},
-		UserOverrides: map[int64]float64{40: 0.5},
-		Models:        []string{"gpt-sol", "gpt-luna", "gpt-no-account"},
+		Group:    group,
+		Accounts: []*Account{cheap, boundary, expensive, invalid},
+		Models:   []string{"gpt-sol", "gpt-luna", "gpt-no-account"},
 	}}, now)
 	require.Len(t, reports, 1)
 	report := reports[0]
 	require.InDelta(t, 1, report.DefaultD, 1e-12)
 	require.InDelta(t, 0.8, report.ThresholdDefault, 1e-12)
-	require.InDelta(t, 0.5, report.MinEffectiveD, 1e-12)
-	require.InDelta(t, 0.4, report.ThresholdMinD, 1e-12)
+	require.InDelta(t, 1, report.MinEffectiveD, 1e-12)
+	require.InDelta(t, 0.8, report.ThresholdMinD, 1e-12)
 
 	byID := make(map[int64]ProfitPreviewAccountVerdict, len(report.Verdicts))
 	for _, verdict := range report.Verdicts {
@@ -66,7 +64,7 @@ func TestPreviewProfitAdmissionUsesRuntimeThresholdsAndPreinitializesModels(t *t
 	require.Equal(t, ProfitPreviewClassAdmitted, byID[cheap.ID].Class)
 	require.Equal(t, ProfitPreviewRateSourceUpstreamProbe, byID[cheap.ID].RateSource)
 	require.Contains(t, byID[cheap.ID].Warnings, ProfitPreviewWarningProbeStale)
-	require.True(t, byID[cheap.ID].RejectedUnderMinD)
+	require.False(t, byID[cheap.ID].RejectedUnderMinD)
 	require.Equal(t, ProfitPreviewClassAdmitted, byID[boundary.ID].Class)
 	require.Equal(t, ProfitPreviewClassRejectedThreshold, byID[expensive.ID].Class)
 	require.Contains(t, byID[expensive.ID].Warnings, ProfitPreviewWarningManualRateOne)
@@ -106,19 +104,4 @@ func TestPreviewProfitAdmissionAssumeEnabledAndFivePlatforms(t *testing.T) {
 		require.Equal(t, ProfitPreviewClassAdmitted, reports[i].Verdicts[0].Class, platforms[i])
 	}
 	require.False(t, reports[len(reports)-1].EffectiveGate)
-}
-
-func TestPreviewProfitAdmissionIgnoresInvalidUserOverrides(t *testing.T) {
-	group := newProfitControlTestGroup(60, PlatformOpenAI)
-	group.RateMultiplier = 0.5
-	report := PreviewProfitAdmission([]ProfitPreviewGroupInput{{
-		Group: group,
-		UserOverrides: map[int64]float64{
-			1: math.NaN(),
-			2: math.Inf(1),
-			3: -1,
-			4: 0.4,
-		},
-	}}, time.Now())[0]
-	require.InDelta(t, 0.4, report.MinEffectiveD, 1e-12)
 }

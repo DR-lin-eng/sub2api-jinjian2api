@@ -5,10 +5,6 @@ import {
   serializeFingerprintRowsToJSON,
   type FingerprintSignalRow,
 } from "@/features/admin-accounts/presentation/codexFingerprintSignals";
-import type { LoginAgreementDocument } from "@/types";
-import {
-  normalizeLoginAgreementDocumentId,
-} from "./settingsAgreementResolver";
 import {
   tablePageSizeMax,
   tablePageSizeMin,
@@ -30,77 +26,12 @@ export function useSettingsStructuredEditors(form: SettingsForm) {
     () => !codexFingerprintRows.value.some((row) => row.required),
   );
 
-  function addMenuItem() {
-    form.custom_menu_items.push({
-      id: "",
-      label: "",
-      icon_svg: "",
-      url: "",
-      visibility: "user",
-      sort_order: form.custom_menu_items.length,
-    });
-  }
-
-  function removeMenuItem(index: number) {
-    form.custom_menu_items.splice(index, 1);
-    form.custom_menu_items.forEach((item, itemIndex) => {
-      item.sort_order = itemIndex;
-    });
-  }
-
-  function moveMenuItem(index: number, direction: -1 | 1) {
-    const targetIndex = index + direction;
-    if (targetIndex < 0 || targetIndex >= form.custom_menu_items.length) return;
-    const items = form.custom_menu_items;
-    const current = items[index];
-    items[index] = items[targetIndex];
-    items[targetIndex] = current;
-    items.forEach((item, itemIndex) => {
-      item.sort_order = itemIndex;
-    });
-  }
-
   function addEndpoint() {
     form.custom_endpoints.push({ name: "", endpoint: "", description: "" });
   }
 
   function removeEndpoint(index: number) {
     form.custom_endpoints.splice(index, 1);
-  }
-
-  function addLoginAgreementDocument() {
-    form.login_agreement_documents.push({
-      id: `custom-${Date.now().toString(36)}`,
-      title: "",
-      content_md: "",
-    });
-  }
-
-  function removeLoginAgreementDocument(index: number) {
-    form.login_agreement_documents.splice(index, 1);
-  }
-
-  function normalizeLoginAgreementDocumentsForSave(): LoginAgreementDocument[] {
-    return form.login_agreement_documents
-      .map((document, index) => ({
-        id:
-          normalizeLoginAgreementDocumentId(document.id || document.title) ||
-          `doc-${index + 1}`,
-        title: document.title.trim(),
-        content_md: document.content_md.trim(),
-      }))
-      .filter((document) => document.title || document.content_md);
-  }
-
-  function findDuplicateLoginAgreementDocumentId(
-    documents: LoginAgreementDocument[],
-  ): string | null {
-    const seen = new Set<string>();
-    for (const document of documents) {
-      if (seen.has(document.id)) return document.id;
-      seen.add(document.id);
-    }
-    return null;
   }
 
   function formatTablePageSizeOptions(options: number[]): string {
@@ -210,17 +141,12 @@ export function useSettingsStructuredEditors(form: SettingsForm) {
     addCodexFingerprintRow,
     addCodexWhitelistRow,
     addEndpoint,
-    addLoginAgreementDocument,
-    addMenuItem,
     codexBlacklistRows,
     codexFingerprintNoRequired,
     codexFingerprintRows,
     codexWhitelistRows,
     defaultFingerprintSignalRows,
-    findDuplicateLoginAgreementDocumentId,
     formatTablePageSizeOptions,
-    moveMenuItem,
-    normalizeLoginAgreementDocumentsForSave,
     parseCodexEntriesToRows,
     parseFingerprintSignalsToRows,
     parseTablePageSizeOptionsInput,
@@ -228,8 +154,6 @@ export function useSettingsStructuredEditors(form: SettingsForm) {
     removeCodexFingerprintRow,
     removeCodexWhitelistRow,
     removeEndpoint,
-    removeLoginAgreementDocument,
-    removeMenuItem,
     serializeCodexRowsToJSON,
     serializeFingerprintRowsToJSON,
     tablePageSizeOptionsInput,

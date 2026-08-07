@@ -56,6 +56,16 @@ func clearRefreshTokenCookie(c *gin.Context) {
 	})
 }
 
+func isRequestHTTPS(c *gin.Context) bool {
+	if c == nil || c.Request == nil {
+		return false
+	}
+	if c.Request.TLS != nil {
+		return true
+	}
+	return strings.EqualFold(strings.TrimSpace(c.GetHeader("X-Forwarded-Proto")), "https")
+}
+
 func maxAgeSeconds(value time.Duration) int {
 	if value <= 0 {
 		return 0

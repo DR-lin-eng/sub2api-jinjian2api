@@ -32,7 +32,6 @@ var usageLogInsertArgTypes = [...]string{
 	"text",        // requested_model
 	"text",        // upstream_model
 	"bigint",      // group_id
-	"bigint",      // subscription_id
 	"integer",     // input_tokens
 	"integer",     // output_tokens
 	"integer",     // cache_creation_tokens
@@ -51,7 +50,6 @@ var usageLogInsertArgTypes = [...]string{
 	"numeric",     // actual_cost
 	"numeric",     // rate_multiplier
 	"numeric",     // account_rate_multiplier
-	"smallint",    // billing_type
 	"smallint",    // request_type
 	"boolean",     // stream
 	"boolean",     // openai_ws_mode
@@ -228,7 +226,6 @@ func (r *usageLogRepository) createSingle(ctx context.Context, sqlq sqlExecutor,
 			requested_model,
 			upstream_model,
 			group_id,
-			subscription_id,
 			input_tokens,
 			output_tokens,
 			cache_creation_tokens,
@@ -247,7 +244,6 @@ func (r *usageLogRepository) createSingle(ctx context.Context, sqlq sqlExecutor,
 			actual_cost,
 			rate_multiplier,
 			account_rate_multiplier,
-			billing_type,
 			request_type,
 			stream,
 			openai_ws_mode,
@@ -283,7 +279,7 @@ func (r *usageLogRepository) createSingle(ctx context.Context, sqlq sqlExecutor,
 			$10, $11, $12, $13,
 			$14, $15, $16, $17,
 			$18, $19, $20, $21, $22, $23,
-			$24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55, $56, $57
+			$24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55
 		)
 		ON CONFLICT (request_id, api_key_id) DO NOTHING
 		RETURNING id, created_at
@@ -683,7 +679,6 @@ func buildUsageLogBatchInsertQuery(keys []string, preparedByKey map[string]usage
 			requested_model,
 			upstream_model,
 			group_id,
-			subscription_id,
 			input_tokens,
 			output_tokens,
 			cache_creation_tokens,
@@ -702,7 +697,6 @@ func buildUsageLogBatchInsertQuery(keys []string, preparedByKey map[string]usage
 			actual_cost,
 			rate_multiplier,
 			account_rate_multiplier,
-			billing_type,
 			request_type,
 			stream,
 			openai_ws_mode,
@@ -734,9 +728,9 @@ func buildUsageLogBatchInsertQuery(keys []string, preparedByKey map[string]usage
 			created_at
 		) AS (VALUES `)
 
-	// Each batch row prepends the synthetic input_index before the 57
+	// Each batch row prepends the synthetic input_index before the 55
 	// usage-log column values.
-	args := make([]any, 0, len(keys)*58)
+	args := make([]any, 0, len(keys)*56)
 	argPos := 1
 	for idx, key := range keys {
 		if idx > 0 {
@@ -773,7 +767,6 @@ func buildUsageLogBatchInsertQuery(keys []string, preparedByKey map[string]usage
 				requested_model,
 				upstream_model,
 				group_id,
-				subscription_id,
 				input_tokens,
 				output_tokens,
 				cache_creation_tokens,
@@ -792,7 +785,6 @@ func buildUsageLogBatchInsertQuery(keys []string, preparedByKey map[string]usage
 				actual_cost,
 				rate_multiplier,
 				account_rate_multiplier,
-				billing_type,
 				request_type,
 				stream,
 				openai_ws_mode,
@@ -832,7 +824,6 @@ func buildUsageLogBatchInsertQuery(keys []string, preparedByKey map[string]usage
 				requested_model,
 				upstream_model,
 				group_id,
-				subscription_id,
 				input_tokens,
 				output_tokens,
 				cache_creation_tokens,
@@ -851,7 +842,6 @@ func buildUsageLogBatchInsertQuery(keys []string, preparedByKey map[string]usage
 				actual_cost,
 				rate_multiplier,
 				account_rate_multiplier,
-				billing_type,
 				request_type,
 				stream,
 				openai_ws_mode,
@@ -931,7 +921,6 @@ func buildUsageLogBestEffortInsertQuery(preparedList []usageLogInsertPrepared) (
 			requested_model,
 			upstream_model,
 			group_id,
-			subscription_id,
 			input_tokens,
 			output_tokens,
 			cache_creation_tokens,
@@ -950,7 +939,6 @@ func buildUsageLogBestEffortInsertQuery(preparedList []usageLogInsertPrepared) (
 			actual_cost,
 			rate_multiplier,
 			account_rate_multiplier,
-			billing_type,
 			request_type,
 			stream,
 			openai_ws_mode,
@@ -982,7 +970,7 @@ func buildUsageLogBestEffortInsertQuery(preparedList []usageLogInsertPrepared) (
 			created_at
 		) AS (VALUES `)
 
-	args := make([]any, 0, len(preparedList)*57)
+	args := make([]any, 0, len(preparedList)*55)
 	argPos := 1
 	for idx, prepared := range preparedList {
 		if idx > 0 {
@@ -1016,7 +1004,6 @@ func buildUsageLogBestEffortInsertQuery(preparedList []usageLogInsertPrepared) (
 			requested_model,
 			upstream_model,
 			group_id,
-			subscription_id,
 			input_tokens,
 			output_tokens,
 			cache_creation_tokens,
@@ -1035,7 +1022,6 @@ func buildUsageLogBestEffortInsertQuery(preparedList []usageLogInsertPrepared) (
 			actual_cost,
 			rate_multiplier,
 			account_rate_multiplier,
-			billing_type,
 			request_type,
 			stream,
 			openai_ws_mode,
@@ -1075,7 +1061,6 @@ func buildUsageLogBestEffortInsertQuery(preparedList []usageLogInsertPrepared) (
 			requested_model,
 			upstream_model,
 			group_id,
-			subscription_id,
 			input_tokens,
 			output_tokens,
 			cache_creation_tokens,
@@ -1094,7 +1079,6 @@ func buildUsageLogBestEffortInsertQuery(preparedList []usageLogInsertPrepared) (
 			actual_cost,
 			rate_multiplier,
 			account_rate_multiplier,
-			billing_type,
 			request_type,
 			stream,
 			openai_ws_mode,
@@ -1142,7 +1126,6 @@ func execUsageLogInsertNoResult(ctx context.Context, sqlq sqlExecutor, prepared 
 			requested_model,
 			upstream_model,
 			group_id,
-			subscription_id,
 			input_tokens,
 			output_tokens,
 			cache_creation_tokens,
@@ -1161,7 +1144,6 @@ func execUsageLogInsertNoResult(ctx context.Context, sqlq sqlExecutor, prepared 
 			actual_cost,
 			rate_multiplier,
 			account_rate_multiplier,
-			billing_type,
 			request_type,
 			stream,
 			openai_ws_mode,
@@ -1197,7 +1179,7 @@ func execUsageLogInsertNoResult(ctx context.Context, sqlq sqlExecutor, prepared 
 			$10, $11, $12, $13,
 			$14, $15, $16, $17,
 			$18, $19, $20, $21, $22, $23,
-			$24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55, $56, $57
+			$24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55
 		)
 		ON CONFLICT (request_id, api_key_id) DO NOTHING
 	`, prepared.args...)
@@ -1218,7 +1200,6 @@ func prepareUsageLogInsert(log *service.UsageLog) usageLogInsertPrepared {
 	requestType := int16(log.RequestType)
 
 	groupID := nullInt64(log.GroupID)
-	subscriptionID := nullInt64(log.SubscriptionID)
 	duration := nullInt(log.DurationMs)
 	firstToken := nullInt(log.FirstTokenMs)
 	userAgent := nullString(log.UserAgent)
@@ -1264,7 +1245,6 @@ func prepareUsageLogInsert(log *service.UsageLog) usageLogInsertPrepared {
 			nullString(&requestedModel),
 			upstreamModel,
 			groupID,
-			subscriptionID,
 			log.InputTokens,
 			log.OutputTokens,
 			log.CacheCreationTokens,
@@ -1283,7 +1263,6 @@ func prepareUsageLogInsert(log *service.UsageLog) usageLogInsertPrepared {
 			log.ActualCost,
 			rateMultiplier,
 			log.AccountRateMultiplier,
-			log.BillingType,
 			requestType,
 			log.Stream,
 			log.OpenAIWSMode,

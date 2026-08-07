@@ -173,28 +173,6 @@ export default {
           requestsWithFirstToken: '首 Token 样本数'
         }
       },
-      userUsageStats: {
-        title: '用户用量统计',
-        description: '按用户汇总所选时间范围内的请求、Token 与实际计费，点击用户可查看逐请求明细。',
-        viewModeTopN: 'TopN',
-        viewModePagination: '分页',
-        prevPage: '上一页',
-        nextPage: '下一页',
-        pageInfo: '第 {page}/{total} 页',
-        totalUsers: '用量用户总数：{total}',
-        failedToLoad: '加载用户用量统计失败',
-        empty: '当前筛选条件下暂无用户用量数据',
-        table: {
-          user: '用户',
-          requestCount: '请求数',
-          inputTokens: '输入 Token',
-          outputTokens: '输出 Token',
-          cacheTokens: '缓存 Token',
-          totalTokens: '总 Token',
-          actualCost: '实际计费',
-          lastRequestAt: '最近请求'
-        }
-      },
       customTimeRange: {
         startTime: '开始时间',
         endTime: '结束时间'
@@ -774,8 +752,6 @@ export default {
         displayAlertEventsHint: '关闭后不加载告警事件数据，默认开启。',
         displayOpenAITokenStats: '展示 OpenAI Token 请求统计',
         displayOpenAITokenStatsHint: '关闭后不加载 OpenAI Token 请求统计，默认关闭。',
-        displayUserUsageStats: '展示用户用量统计',
-        displayUserUsageStatsHint: '关闭后不加载用户用量统计；面板默认查询近 24 小时 Top 20，默认关闭。',
         displaySystemLogs: '展示系统日志',
         displaySystemLogsHint: '控制系统日志查询面板是否显示，默认开启。关闭后不会发起系统日志相关查询。',
         autoRefreshCountdown: '自动刷新：{seconds}s',
@@ -795,10 +771,6 @@ export default {
         byPlatform: '按平台',
         byGroup: '按分组',
         byAccount: '按账号',
-        byUser: '按用户',
-        showByUserTooltip: '切换用户视图，显示每个用户的并发使用情况',
-        switchToUser: '切换到用户视图',
-        switchToPlatform: '切换回平台视图',
         totalRows: '共 {count} 项',
         disabledHint: '已在设置中关闭实时监控。',
         empty: '暂无数据',

@@ -60,7 +60,7 @@ const cards = [
     marker: 'OpenAI Fast/Flex Policy Settings',
     component: 'SettingsOpenAIFastPolicyCard',
     file: 'SettingsOpenAIFastPolicyCard.vue',
-    templateHash: '0ad4abb07f7e0b599d87a40d5839e2d5c7f4bc05cc26f3cd5b010f8ff2980bd3',
+    templateHash: 'a4138eef69b1fa539a3c2a1ea49d519e3f343148a3cd6eec94e660c7f5c39f57',
   },
 ] as const
 

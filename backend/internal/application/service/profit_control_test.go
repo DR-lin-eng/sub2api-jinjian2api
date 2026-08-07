@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/shared/ctxkey"
-	"github.com/Wei-Shaw/sub2api/internal/shared/timezone"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,7 +16,6 @@ func newProfitControlTestGroup(id int64, platform string) *Group {
 		Name:                 "profit-control",
 		Platform:             platform,
 		RateMultiplier:       1,
-		SubscriptionType:     SubscriptionTypeStandard,
 		Status:               StatusActive,
 		Hydrated:             true,
 		ProfitControlEnabled: true,
@@ -68,40 +66,27 @@ func TestProfitControlThresholdHelpers(t *testing.T) {
 	require.True(t, profitControlOverThreshold(0.0001, 0))
 }
 
-func TestResolveProfitControlGateUsesFrozenPeakAndUserRate(t *testing.T) {
+func TestResolveProfitControlGateUsesGroupRate(t *testing.T) {
 	group := newProfitControlTestGroup(41, PlatformOpenAI)
-	group.SubscriptionType = SubscriptionTypeSubscription
-	group.PeakRateEnabled = true
-	group.PeakStart = "09:00"
-	group.PeakEnd = "10:00"
-	group.PeakRateMultiplier = 1.5
 	group.ProfitMinMargin = 0.2
 	group.ProfitSafetyBuffer = 0.1
-	pricingAt := time.Date(2026, time.August, 2, 9, 30, 0, 0, timezone.Location())
-	ctx := context.WithValue(profitControlTestContext(group, pricingAt), ctxkey.UserID, int64(7))
+	pricingAt := time.Date(2026, time.August, 2, 9, 30, 0, 0, time.UTC)
+	ctx := profitControlTestContext(group, pricingAt)
 
-	resolverCalls := 0
-	gate := resolveProfitControlGate(ctx, &group.ID, nil, func(_ context.Context, userID, groupID int64, base float64) float64 {
-		resolverCalls++
-		require.Equal(t, int64(7), userID)
-		require.Equal(t, group.ID, groupID)
-		require.Equal(t, group.RateMultiplier, base)
-		return 1.6
-	})
+	gate := resolveProfitControlGate(ctx, &group.ID, nil)
 
 	require.NotNil(t, gate)
 	require.Equal(t, pricingAt, gate.pricingAt)
 	require.Equal(t, group.ID, gate.groupID)
 	require.Equal(t, PlatformOpenAI, gate.platform)
-	require.InDelta(t, 1.6*1.5*(1-0.2-0.1), gate.threshold, 1e-12)
-	require.Equal(t, 1, resolverCalls)
+	require.InDelta(t, group.RateMultiplier*(1-0.2-0.1), gate.threshold, 1e-12)
 
 	group.ProfitControlEnabled = false
-	require.Nil(t, resolveProfitControlGate(ctx, &group.ID, nil, nil))
+	require.Nil(t, resolveProfitControlGate(ctx, &group.ID, nil))
 	group.ProfitControlEnabled = true
 	group.Platform = PlatformComposite
-	require.Nil(t, resolveProfitControlGate(ctx, &group.ID, nil, nil))
-	require.Nil(t, resolveProfitControlGate(context.Background(), &group.ID, nil, nil), "metadata requests have no frozen token pricing instant")
+	require.Nil(t, resolveProfitControlGate(ctx, &group.ID, nil))
+	require.Nil(t, resolveProfitControlGate(context.Background(), &group.ID, nil), "metadata requests have no frozen token pricing instant")
 }
 
 func TestProfitControlVetoFiltersInvalidAndExpensiveAccounts(t *testing.T) {

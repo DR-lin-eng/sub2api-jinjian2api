@@ -513,16 +513,6 @@ go generate ./cmd/server
 
 ---
 
-## シンプルモード
-
-シンプルモードは、フル SaaS 機能を必要とせず、素早くアクセスしたい個人開発者や社内チーム向けに設計されています。
-
-- 有効化: 環境変数 `RUN_MODE=simple` を設定
-- 違い: SaaS 関連機能を非表示にし、課金プロセスをスキップ
-- セキュリティに関する注意: 本番環境では `SIMPLE_MODE_CONFIRM=true` も設定する必要があります
-
----
-
 ## Antigravity サポート
 
 Sub2API は [Antigravity](https://antigravity.so/) アカウントをサポートしています。認証後、Claude および Gemini モデル用の専用エンドポイントが利用可能になります。

@@ -579,16 +579,6 @@ go generate ./cmd/server
 
 ---
 
-## 简易模式
-
-简易模式适合个人开发者或内部团队快速使用，不依赖完整 SaaS 功能。
-
-- 启用方式：设置环境变量 `RUN_MODE=simple`
-- 功能差异：隐藏 SaaS 相关功能，跳过计费流程
-- 安全注意事项：生产环境需同时设置 `SIMPLE_MODE_CONFIRM=true` 才允许启动
-
----
-
 ## Antigravity 使用说明
 
 Sub2API 支持 [Antigravity](https://antigravity.so/) 账户，授权后可通过专用端点访问 Claude 和 Gemini 模型。

@@ -14,10 +14,7 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent/account"
 	"github.com/Wei-Shaw/sub2api/ent/apikey"
 	"github.com/Wei-Shaw/sub2api/ent/group"
-	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
 	"github.com/Wei-Shaw/sub2api/ent/usagelog"
-	"github.com/Wei-Shaw/sub2api/ent/user"
-	"github.com/Wei-Shaw/sub2api/ent/usersubscription"
 	"github.com/Wei-Shaw/sub2api/internal/domain"
 )
 
@@ -105,76 +102,6 @@ func (_c *GroupCreate) SetNillableRateMultiplier(v *float64) *GroupCreate {
 	return _c
 }
 
-// SetPeakRateEnabled sets the "peak_rate_enabled" field.
-func (_c *GroupCreate) SetPeakRateEnabled(v bool) *GroupCreate {
-	_c.mutation.SetPeakRateEnabled(v)
-	return _c
-}
-
-// SetNillablePeakRateEnabled sets the "peak_rate_enabled" field if the given value is not nil.
-func (_c *GroupCreate) SetNillablePeakRateEnabled(v *bool) *GroupCreate {
-	if v != nil {
-		_c.SetPeakRateEnabled(*v)
-	}
-	return _c
-}
-
-// SetPeakStart sets the "peak_start" field.
-func (_c *GroupCreate) SetPeakStart(v string) *GroupCreate {
-	_c.mutation.SetPeakStart(v)
-	return _c
-}
-
-// SetNillablePeakStart sets the "peak_start" field if the given value is not nil.
-func (_c *GroupCreate) SetNillablePeakStart(v *string) *GroupCreate {
-	if v != nil {
-		_c.SetPeakStart(*v)
-	}
-	return _c
-}
-
-// SetPeakEnd sets the "peak_end" field.
-func (_c *GroupCreate) SetPeakEnd(v string) *GroupCreate {
-	_c.mutation.SetPeakEnd(v)
-	return _c
-}
-
-// SetNillablePeakEnd sets the "peak_end" field if the given value is not nil.
-func (_c *GroupCreate) SetNillablePeakEnd(v *string) *GroupCreate {
-	if v != nil {
-		_c.SetPeakEnd(*v)
-	}
-	return _c
-}
-
-// SetPeakRateMultiplier sets the "peak_rate_multiplier" field.
-func (_c *GroupCreate) SetPeakRateMultiplier(v float64) *GroupCreate {
-	_c.mutation.SetPeakRateMultiplier(v)
-	return _c
-}
-
-// SetNillablePeakRateMultiplier sets the "peak_rate_multiplier" field if the given value is not nil.
-func (_c *GroupCreate) SetNillablePeakRateMultiplier(v *float64) *GroupCreate {
-	if v != nil {
-		_c.SetPeakRateMultiplier(*v)
-	}
-	return _c
-}
-
-// SetIsExclusive sets the "is_exclusive" field.
-func (_c *GroupCreate) SetIsExclusive(v bool) *GroupCreate {
-	_c.mutation.SetIsExclusive(v)
-	return _c
-}
-
-// SetNillableIsExclusive sets the "is_exclusive" field if the given value is not nil.
-func (_c *GroupCreate) SetNillableIsExclusive(v *bool) *GroupCreate {
-	if v != nil {
-		_c.SetIsExclusive(*v)
-	}
-	return _c
-}
-
 // SetStatus sets the "status" field.
 func (_c *GroupCreate) SetStatus(v string) *GroupCreate {
 	_c.mutation.SetStatus(v)
@@ -217,76 +144,6 @@ func (_c *GroupCreate) SetNillablePlatform(v *string) *GroupCreate {
 	return _c
 }
 
-// SetSubscriptionType sets the "subscription_type" field.
-func (_c *GroupCreate) SetSubscriptionType(v string) *GroupCreate {
-	_c.mutation.SetSubscriptionType(v)
-	return _c
-}
-
-// SetNillableSubscriptionType sets the "subscription_type" field if the given value is not nil.
-func (_c *GroupCreate) SetNillableSubscriptionType(v *string) *GroupCreate {
-	if v != nil {
-		_c.SetSubscriptionType(*v)
-	}
-	return _c
-}
-
-// SetDailyLimitUsd sets the "daily_limit_usd" field.
-func (_c *GroupCreate) SetDailyLimitUsd(v float64) *GroupCreate {
-	_c.mutation.SetDailyLimitUsd(v)
-	return _c
-}
-
-// SetNillableDailyLimitUsd sets the "daily_limit_usd" field if the given value is not nil.
-func (_c *GroupCreate) SetNillableDailyLimitUsd(v *float64) *GroupCreate {
-	if v != nil {
-		_c.SetDailyLimitUsd(*v)
-	}
-	return _c
-}
-
-// SetWeeklyLimitUsd sets the "weekly_limit_usd" field.
-func (_c *GroupCreate) SetWeeklyLimitUsd(v float64) *GroupCreate {
-	_c.mutation.SetWeeklyLimitUsd(v)
-	return _c
-}
-
-// SetNillableWeeklyLimitUsd sets the "weekly_limit_usd" field if the given value is not nil.
-func (_c *GroupCreate) SetNillableWeeklyLimitUsd(v *float64) *GroupCreate {
-	if v != nil {
-		_c.SetWeeklyLimitUsd(*v)
-	}
-	return _c
-}
-
-// SetMonthlyLimitUsd sets the "monthly_limit_usd" field.
-func (_c *GroupCreate) SetMonthlyLimitUsd(v float64) *GroupCreate {
-	_c.mutation.SetMonthlyLimitUsd(v)
-	return _c
-}
-
-// SetNillableMonthlyLimitUsd sets the "monthly_limit_usd" field if the given value is not nil.
-func (_c *GroupCreate) SetNillableMonthlyLimitUsd(v *float64) *GroupCreate {
-	if v != nil {
-		_c.SetMonthlyLimitUsd(*v)
-	}
-	return _c
-}
-
-// SetDefaultValidityDays sets the "default_validity_days" field.
-func (_c *GroupCreate) SetDefaultValidityDays(v int) *GroupCreate {
-	_c.mutation.SetDefaultValidityDays(v)
-	return _c
-}
-
-// SetNillableDefaultValidityDays sets the "default_validity_days" field if the given value is not nil.
-func (_c *GroupCreate) SetNillableDefaultValidityDays(v *int) *GroupCreate {
-	if v != nil {
-		_c.SetDefaultValidityDays(*v)
-	}
-	return _c
-}
-
 // SetAllowImageGeneration sets the "allow_image_generation" field.
 func (_c *GroupCreate) SetAllowImageGeneration(v bool) *GroupCreate {
 	_c.mutation.SetAllowImageGeneration(v)
@@ -311,20 +168,6 @@ func (_c *GroupCreate) SetOpenaiForceImageTool(v bool) *GroupCreate {
 func (_c *GroupCreate) SetNillableOpenaiForceImageTool(v *bool) *GroupCreate {
 	if v != nil {
 		_c.SetOpenaiForceImageTool(*v)
-	}
-	return _c
-}
-
-// SetAllowBatchImageGeneration sets the "allow_batch_image_generation" field.
-func (_c *GroupCreate) SetAllowBatchImageGeneration(v bool) *GroupCreate {
-	_c.mutation.SetAllowBatchImageGeneration(v)
-	return _c
-}
-
-// SetNillableAllowBatchImageGeneration sets the "allow_batch_image_generation" field if the given value is not nil.
-func (_c *GroupCreate) SetNillableAllowBatchImageGeneration(v *bool) *GroupCreate {
-	if v != nil {
-		_c.SetAllowBatchImageGeneration(*v)
 	}
 	return _c
 }
@@ -395,34 +238,6 @@ func (_c *GroupCreate) SetImagePrice4k(v float64) *GroupCreate {
 func (_c *GroupCreate) SetNillableImagePrice4k(v *float64) *GroupCreate {
 	if v != nil {
 		_c.SetImagePrice4k(*v)
-	}
-	return _c
-}
-
-// SetBatchImageDiscountMultiplier sets the "batch_image_discount_multiplier" field.
-func (_c *GroupCreate) SetBatchImageDiscountMultiplier(v float64) *GroupCreate {
-	_c.mutation.SetBatchImageDiscountMultiplier(v)
-	return _c
-}
-
-// SetNillableBatchImageDiscountMultiplier sets the "batch_image_discount_multiplier" field if the given value is not nil.
-func (_c *GroupCreate) SetNillableBatchImageDiscountMultiplier(v *float64) *GroupCreate {
-	if v != nil {
-		_c.SetBatchImageDiscountMultiplier(*v)
-	}
-	return _c
-}
-
-// SetBatchImageHoldMultiplier sets the "batch_image_hold_multiplier" field.
-func (_c *GroupCreate) SetBatchImageHoldMultiplier(v float64) *GroupCreate {
-	_c.mutation.SetBatchImageHoldMultiplier(v)
-	return _c
-}
-
-// SetNillableBatchImageHoldMultiplier sets the "batch_image_hold_multiplier" field if the given value is not nil.
-func (_c *GroupCreate) SetNillableBatchImageHoldMultiplier(v *float64) *GroupCreate {
-	if v != nil {
-		_c.SetBatchImageHoldMultiplier(*v)
 	}
 	return _c
 }
@@ -796,36 +611,6 @@ func (_c *GroupCreate) AddAPIKeys(v ...*APIKey) *GroupCreate {
 	return _c.AddAPIKeyIDs(ids...)
 }
 
-// AddRedeemCodeIDs adds the "redeem_codes" edge to the RedeemCode entity by IDs.
-func (_c *GroupCreate) AddRedeemCodeIDs(ids ...int64) *GroupCreate {
-	_c.mutation.AddRedeemCodeIDs(ids...)
-	return _c
-}
-
-// AddRedeemCodes adds the "redeem_codes" edges to the RedeemCode entity.
-func (_c *GroupCreate) AddRedeemCodes(v ...*RedeemCode) *GroupCreate {
-	ids := make([]int64, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _c.AddRedeemCodeIDs(ids...)
-}
-
-// AddSubscriptionIDs adds the "subscriptions" edge to the UserSubscription entity by IDs.
-func (_c *GroupCreate) AddSubscriptionIDs(ids ...int64) *GroupCreate {
-	_c.mutation.AddSubscriptionIDs(ids...)
-	return _c
-}
-
-// AddSubscriptions adds the "subscriptions" edges to the UserSubscription entity.
-func (_c *GroupCreate) AddSubscriptions(v ...*UserSubscription) *GroupCreate {
-	ids := make([]int64, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _c.AddSubscriptionIDs(ids...)
-}
-
 // AddUsageLogIDs adds the "usage_logs" edge to the UsageLog entity by IDs.
 func (_c *GroupCreate) AddUsageLogIDs(ids ...int64) *GroupCreate {
 	_c.mutation.AddUsageLogIDs(ids...)
@@ -854,21 +639,6 @@ func (_c *GroupCreate) AddAccounts(v ...*Account) *GroupCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddAccountIDs(ids...)
-}
-
-// AddAllowedUserIDs adds the "allowed_users" edge to the User entity by IDs.
-func (_c *GroupCreate) AddAllowedUserIDs(ids ...int64) *GroupCreate {
-	_c.mutation.AddAllowedUserIDs(ids...)
-	return _c
-}
-
-// AddAllowedUsers adds the "allowed_users" edges to the User entity.
-func (_c *GroupCreate) AddAllowedUsers(v ...*User) *GroupCreate {
-	ids := make([]int64, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _c.AddAllowedUserIDs(ids...)
 }
 
 // Mutation returns the GroupMutation object of the builder.
@@ -926,26 +696,6 @@ func (_c *GroupCreate) defaults() error {
 		v := group.DefaultRateMultiplier
 		_c.mutation.SetRateMultiplier(v)
 	}
-	if _, ok := _c.mutation.PeakRateEnabled(); !ok {
-		v := group.DefaultPeakRateEnabled
-		_c.mutation.SetPeakRateEnabled(v)
-	}
-	if _, ok := _c.mutation.PeakStart(); !ok {
-		v := group.DefaultPeakStart
-		_c.mutation.SetPeakStart(v)
-	}
-	if _, ok := _c.mutation.PeakEnd(); !ok {
-		v := group.DefaultPeakEnd
-		_c.mutation.SetPeakEnd(v)
-	}
-	if _, ok := _c.mutation.PeakRateMultiplier(); !ok {
-		v := group.DefaultPeakRateMultiplier
-		_c.mutation.SetPeakRateMultiplier(v)
-	}
-	if _, ok := _c.mutation.IsExclusive(); !ok {
-		v := group.DefaultIsExclusive
-		_c.mutation.SetIsExclusive(v)
-	}
 	if _, ok := _c.mutation.Status(); !ok {
 		v := group.DefaultStatus
 		_c.mutation.SetStatus(v)
@@ -953,14 +703,6 @@ func (_c *GroupCreate) defaults() error {
 	if _, ok := _c.mutation.Platform(); !ok {
 		v := group.DefaultPlatform
 		_c.mutation.SetPlatform(v)
-	}
-	if _, ok := _c.mutation.SubscriptionType(); !ok {
-		v := group.DefaultSubscriptionType
-		_c.mutation.SetSubscriptionType(v)
-	}
-	if _, ok := _c.mutation.DefaultValidityDays(); !ok {
-		v := group.DefaultDefaultValidityDays
-		_c.mutation.SetDefaultValidityDays(v)
 	}
 	if _, ok := _c.mutation.AllowImageGeneration(); !ok {
 		v := group.DefaultAllowImageGeneration
@@ -970,10 +712,6 @@ func (_c *GroupCreate) defaults() error {
 		v := group.DefaultOpenaiForceImageTool
 		_c.mutation.SetOpenaiForceImageTool(v)
 	}
-	if _, ok := _c.mutation.AllowBatchImageGeneration(); !ok {
-		v := group.DefaultAllowBatchImageGeneration
-		_c.mutation.SetAllowBatchImageGeneration(v)
-	}
 	if _, ok := _c.mutation.ImageRateIndependent(); !ok {
 		v := group.DefaultImageRateIndependent
 		_c.mutation.SetImageRateIndependent(v)
@@ -981,14 +719,6 @@ func (_c *GroupCreate) defaults() error {
 	if _, ok := _c.mutation.ImageRateMultiplier(); !ok {
 		v := group.DefaultImageRateMultiplier
 		_c.mutation.SetImageRateMultiplier(v)
-	}
-	if _, ok := _c.mutation.BatchImageDiscountMultiplier(); !ok {
-		v := group.DefaultBatchImageDiscountMultiplier
-		_c.mutation.SetBatchImageDiscountMultiplier(v)
-	}
-	if _, ok := _c.mutation.BatchImageHoldMultiplier(); !ok {
-		v := group.DefaultBatchImageHoldMultiplier
-		_c.mutation.SetBatchImageHoldMultiplier(v)
 	}
 	if _, ok := _c.mutation.VideoRateIndependent(); !ok {
 		v := group.DefaultVideoRateIndependent
@@ -1092,31 +822,6 @@ func (_c *GroupCreate) check() error {
 	if _, ok := _c.mutation.RateMultiplier(); !ok {
 		return &ValidationError{Name: "rate_multiplier", err: errors.New(`ent: missing required field "Group.rate_multiplier"`)}
 	}
-	if _, ok := _c.mutation.PeakRateEnabled(); !ok {
-		return &ValidationError{Name: "peak_rate_enabled", err: errors.New(`ent: missing required field "Group.peak_rate_enabled"`)}
-	}
-	if _, ok := _c.mutation.PeakStart(); !ok {
-		return &ValidationError{Name: "peak_start", err: errors.New(`ent: missing required field "Group.peak_start"`)}
-	}
-	if v, ok := _c.mutation.PeakStart(); ok {
-		if err := group.PeakStartValidator(v); err != nil {
-			return &ValidationError{Name: "peak_start", err: fmt.Errorf(`ent: validator failed for field "Group.peak_start": %w`, err)}
-		}
-	}
-	if _, ok := _c.mutation.PeakEnd(); !ok {
-		return &ValidationError{Name: "peak_end", err: errors.New(`ent: missing required field "Group.peak_end"`)}
-	}
-	if v, ok := _c.mutation.PeakEnd(); ok {
-		if err := group.PeakEndValidator(v); err != nil {
-			return &ValidationError{Name: "peak_end", err: fmt.Errorf(`ent: validator failed for field "Group.peak_end": %w`, err)}
-		}
-	}
-	if _, ok := _c.mutation.PeakRateMultiplier(); !ok {
-		return &ValidationError{Name: "peak_rate_multiplier", err: errors.New(`ent: missing required field "Group.peak_rate_multiplier"`)}
-	}
-	if _, ok := _c.mutation.IsExclusive(); !ok {
-		return &ValidationError{Name: "is_exclusive", err: errors.New(`ent: missing required field "Group.is_exclusive"`)}
-	}
 	if _, ok := _c.mutation.Status(); !ok {
 		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Group.status"`)}
 	}
@@ -1138,37 +843,17 @@ func (_c *GroupCreate) check() error {
 			return &ValidationError{Name: "platform", err: fmt.Errorf(`ent: validator failed for field "Group.platform": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.SubscriptionType(); !ok {
-		return &ValidationError{Name: "subscription_type", err: errors.New(`ent: missing required field "Group.subscription_type"`)}
-	}
-	if v, ok := _c.mutation.SubscriptionType(); ok {
-		if err := group.SubscriptionTypeValidator(v); err != nil {
-			return &ValidationError{Name: "subscription_type", err: fmt.Errorf(`ent: validator failed for field "Group.subscription_type": %w`, err)}
-		}
-	}
-	if _, ok := _c.mutation.DefaultValidityDays(); !ok {
-		return &ValidationError{Name: "default_validity_days", err: errors.New(`ent: missing required field "Group.default_validity_days"`)}
-	}
 	if _, ok := _c.mutation.AllowImageGeneration(); !ok {
 		return &ValidationError{Name: "allow_image_generation", err: errors.New(`ent: missing required field "Group.allow_image_generation"`)}
 	}
 	if _, ok := _c.mutation.OpenaiForceImageTool(); !ok {
 		return &ValidationError{Name: "openai_force_image_tool", err: errors.New(`ent: missing required field "Group.openai_force_image_tool"`)}
 	}
-	if _, ok := _c.mutation.AllowBatchImageGeneration(); !ok {
-		return &ValidationError{Name: "allow_batch_image_generation", err: errors.New(`ent: missing required field "Group.allow_batch_image_generation"`)}
-	}
 	if _, ok := _c.mutation.ImageRateIndependent(); !ok {
 		return &ValidationError{Name: "image_rate_independent", err: errors.New(`ent: missing required field "Group.image_rate_independent"`)}
 	}
 	if _, ok := _c.mutation.ImageRateMultiplier(); !ok {
 		return &ValidationError{Name: "image_rate_multiplier", err: errors.New(`ent: missing required field "Group.image_rate_multiplier"`)}
-	}
-	if _, ok := _c.mutation.BatchImageDiscountMultiplier(); !ok {
-		return &ValidationError{Name: "batch_image_discount_multiplier", err: errors.New(`ent: missing required field "Group.batch_image_discount_multiplier"`)}
-	}
-	if _, ok := _c.mutation.BatchImageHoldMultiplier(); !ok {
-		return &ValidationError{Name: "batch_image_hold_multiplier", err: errors.New(`ent: missing required field "Group.batch_image_hold_multiplier"`)}
 	}
 	if _, ok := _c.mutation.VideoRateIndependent(); !ok {
 		return &ValidationError{Name: "video_rate_independent", err: errors.New(`ent: missing required field "Group.video_rate_independent"`)}
@@ -1291,26 +976,6 @@ func (_c *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 		_spec.SetField(group.FieldRateMultiplier, field.TypeFloat64, value)
 		_node.RateMultiplier = value
 	}
-	if value, ok := _c.mutation.PeakRateEnabled(); ok {
-		_spec.SetField(group.FieldPeakRateEnabled, field.TypeBool, value)
-		_node.PeakRateEnabled = value
-	}
-	if value, ok := _c.mutation.PeakStart(); ok {
-		_spec.SetField(group.FieldPeakStart, field.TypeString, value)
-		_node.PeakStart = value
-	}
-	if value, ok := _c.mutation.PeakEnd(); ok {
-		_spec.SetField(group.FieldPeakEnd, field.TypeString, value)
-		_node.PeakEnd = value
-	}
-	if value, ok := _c.mutation.PeakRateMultiplier(); ok {
-		_spec.SetField(group.FieldPeakRateMultiplier, field.TypeFloat64, value)
-		_node.PeakRateMultiplier = value
-	}
-	if value, ok := _c.mutation.IsExclusive(); ok {
-		_spec.SetField(group.FieldIsExclusive, field.TypeBool, value)
-		_node.IsExclusive = value
-	}
 	if value, ok := _c.mutation.Status(); ok {
 		_spec.SetField(group.FieldStatus, field.TypeString, value)
 		_node.Status = value
@@ -1323,26 +988,6 @@ func (_c *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 		_spec.SetField(group.FieldPlatform, field.TypeString, value)
 		_node.Platform = value
 	}
-	if value, ok := _c.mutation.SubscriptionType(); ok {
-		_spec.SetField(group.FieldSubscriptionType, field.TypeString, value)
-		_node.SubscriptionType = value
-	}
-	if value, ok := _c.mutation.DailyLimitUsd(); ok {
-		_spec.SetField(group.FieldDailyLimitUsd, field.TypeFloat64, value)
-		_node.DailyLimitUsd = &value
-	}
-	if value, ok := _c.mutation.WeeklyLimitUsd(); ok {
-		_spec.SetField(group.FieldWeeklyLimitUsd, field.TypeFloat64, value)
-		_node.WeeklyLimitUsd = &value
-	}
-	if value, ok := _c.mutation.MonthlyLimitUsd(); ok {
-		_spec.SetField(group.FieldMonthlyLimitUsd, field.TypeFloat64, value)
-		_node.MonthlyLimitUsd = &value
-	}
-	if value, ok := _c.mutation.DefaultValidityDays(); ok {
-		_spec.SetField(group.FieldDefaultValidityDays, field.TypeInt, value)
-		_node.DefaultValidityDays = value
-	}
 	if value, ok := _c.mutation.AllowImageGeneration(); ok {
 		_spec.SetField(group.FieldAllowImageGeneration, field.TypeBool, value)
 		_node.AllowImageGeneration = value
@@ -1350,10 +995,6 @@ func (_c *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.OpenaiForceImageTool(); ok {
 		_spec.SetField(group.FieldOpenaiForceImageTool, field.TypeBool, value)
 		_node.OpenaiForceImageTool = value
-	}
-	if value, ok := _c.mutation.AllowBatchImageGeneration(); ok {
-		_spec.SetField(group.FieldAllowBatchImageGeneration, field.TypeBool, value)
-		_node.AllowBatchImageGeneration = value
 	}
 	if value, ok := _c.mutation.ImageRateIndependent(); ok {
 		_spec.SetField(group.FieldImageRateIndependent, field.TypeBool, value)
@@ -1374,14 +1015,6 @@ func (_c *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ImagePrice4k(); ok {
 		_spec.SetField(group.FieldImagePrice4k, field.TypeFloat64, value)
 		_node.ImagePrice4k = &value
-	}
-	if value, ok := _c.mutation.BatchImageDiscountMultiplier(); ok {
-		_spec.SetField(group.FieldBatchImageDiscountMultiplier, field.TypeFloat64, value)
-		_node.BatchImageDiscountMultiplier = value
-	}
-	if value, ok := _c.mutation.BatchImageHoldMultiplier(); ok {
-		_spec.SetField(group.FieldBatchImageHoldMultiplier, field.TypeFloat64, value)
-		_node.BatchImageHoldMultiplier = value
 	}
 	if value, ok := _c.mutation.VideoRateIndependent(); ok {
 		_spec.SetField(group.FieldVideoRateIndependent, field.TypeBool, value)
@@ -1507,38 +1140,6 @@ func (_c *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.RedeemCodesIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   group.RedeemCodesTable,
-			Columns: []string{group.RedeemCodesColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(redeemcode.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := _c.mutation.SubscriptionsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   group.SubscriptionsTable,
-			Columns: []string{group.SubscriptionsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(usersubscription.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
 	if nodes := _c.mutation.UsageLogsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -1570,26 +1171,6 @@ func (_c *GroupCreate) createSpec() (*Group, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		createE := &AccountGroupCreate{config: _c.config, mutation: newAccountGroupMutation(_c.config, OpCreate)}
-		createE.defaults()
-		_, specE := createE.createSpec()
-		edge.Target.Fields = specE.Fields
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := _c.mutation.AllowedUsersIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   group.AllowedUsersTable,
-			Columns: group.AllowedUsersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		createE := &UserAllowedGroupCreate{config: _c.config, mutation: newUserAllowedGroupMutation(_c.config, OpCreate)}
 		createE.defaults()
 		_, specE := createE.createSpec()
 		edge.Target.Fields = specE.Fields
@@ -1725,72 +1306,6 @@ func (u *GroupUpsert) AddRateMultiplier(v float64) *GroupUpsert {
 	return u
 }
 
-// SetPeakRateEnabled sets the "peak_rate_enabled" field.
-func (u *GroupUpsert) SetPeakRateEnabled(v bool) *GroupUpsert {
-	u.Set(group.FieldPeakRateEnabled, v)
-	return u
-}
-
-// UpdatePeakRateEnabled sets the "peak_rate_enabled" field to the value that was provided on create.
-func (u *GroupUpsert) UpdatePeakRateEnabled() *GroupUpsert {
-	u.SetExcluded(group.FieldPeakRateEnabled)
-	return u
-}
-
-// SetPeakStart sets the "peak_start" field.
-func (u *GroupUpsert) SetPeakStart(v string) *GroupUpsert {
-	u.Set(group.FieldPeakStart, v)
-	return u
-}
-
-// UpdatePeakStart sets the "peak_start" field to the value that was provided on create.
-func (u *GroupUpsert) UpdatePeakStart() *GroupUpsert {
-	u.SetExcluded(group.FieldPeakStart)
-	return u
-}
-
-// SetPeakEnd sets the "peak_end" field.
-func (u *GroupUpsert) SetPeakEnd(v string) *GroupUpsert {
-	u.Set(group.FieldPeakEnd, v)
-	return u
-}
-
-// UpdatePeakEnd sets the "peak_end" field to the value that was provided on create.
-func (u *GroupUpsert) UpdatePeakEnd() *GroupUpsert {
-	u.SetExcluded(group.FieldPeakEnd)
-	return u
-}
-
-// SetPeakRateMultiplier sets the "peak_rate_multiplier" field.
-func (u *GroupUpsert) SetPeakRateMultiplier(v float64) *GroupUpsert {
-	u.Set(group.FieldPeakRateMultiplier, v)
-	return u
-}
-
-// UpdatePeakRateMultiplier sets the "peak_rate_multiplier" field to the value that was provided on create.
-func (u *GroupUpsert) UpdatePeakRateMultiplier() *GroupUpsert {
-	u.SetExcluded(group.FieldPeakRateMultiplier)
-	return u
-}
-
-// AddPeakRateMultiplier adds v to the "peak_rate_multiplier" field.
-func (u *GroupUpsert) AddPeakRateMultiplier(v float64) *GroupUpsert {
-	u.Add(group.FieldPeakRateMultiplier, v)
-	return u
-}
-
-// SetIsExclusive sets the "is_exclusive" field.
-func (u *GroupUpsert) SetIsExclusive(v bool) *GroupUpsert {
-	u.Set(group.FieldIsExclusive, v)
-	return u
-}
-
-// UpdateIsExclusive sets the "is_exclusive" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateIsExclusive() *GroupUpsert {
-	u.SetExcluded(group.FieldIsExclusive)
-	return u
-}
-
 // SetStatus sets the "status" field.
 func (u *GroupUpsert) SetStatus(v string) *GroupUpsert {
 	u.Set(group.FieldStatus, v)
@@ -1815,108 +1330,6 @@ func (u *GroupUpsert) UpdatePlatform() *GroupUpsert {
 	return u
 }
 
-// SetSubscriptionType sets the "subscription_type" field.
-func (u *GroupUpsert) SetSubscriptionType(v string) *GroupUpsert {
-	u.Set(group.FieldSubscriptionType, v)
-	return u
-}
-
-// UpdateSubscriptionType sets the "subscription_type" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateSubscriptionType() *GroupUpsert {
-	u.SetExcluded(group.FieldSubscriptionType)
-	return u
-}
-
-// SetDailyLimitUsd sets the "daily_limit_usd" field.
-func (u *GroupUpsert) SetDailyLimitUsd(v float64) *GroupUpsert {
-	u.Set(group.FieldDailyLimitUsd, v)
-	return u
-}
-
-// UpdateDailyLimitUsd sets the "daily_limit_usd" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateDailyLimitUsd() *GroupUpsert {
-	u.SetExcluded(group.FieldDailyLimitUsd)
-	return u
-}
-
-// AddDailyLimitUsd adds v to the "daily_limit_usd" field.
-func (u *GroupUpsert) AddDailyLimitUsd(v float64) *GroupUpsert {
-	u.Add(group.FieldDailyLimitUsd, v)
-	return u
-}
-
-// ClearDailyLimitUsd clears the value of the "daily_limit_usd" field.
-func (u *GroupUpsert) ClearDailyLimitUsd() *GroupUpsert {
-	u.SetNull(group.FieldDailyLimitUsd)
-	return u
-}
-
-// SetWeeklyLimitUsd sets the "weekly_limit_usd" field.
-func (u *GroupUpsert) SetWeeklyLimitUsd(v float64) *GroupUpsert {
-	u.Set(group.FieldWeeklyLimitUsd, v)
-	return u
-}
-
-// UpdateWeeklyLimitUsd sets the "weekly_limit_usd" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateWeeklyLimitUsd() *GroupUpsert {
-	u.SetExcluded(group.FieldWeeklyLimitUsd)
-	return u
-}
-
-// AddWeeklyLimitUsd adds v to the "weekly_limit_usd" field.
-func (u *GroupUpsert) AddWeeklyLimitUsd(v float64) *GroupUpsert {
-	u.Add(group.FieldWeeklyLimitUsd, v)
-	return u
-}
-
-// ClearWeeklyLimitUsd clears the value of the "weekly_limit_usd" field.
-func (u *GroupUpsert) ClearWeeklyLimitUsd() *GroupUpsert {
-	u.SetNull(group.FieldWeeklyLimitUsd)
-	return u
-}
-
-// SetMonthlyLimitUsd sets the "monthly_limit_usd" field.
-func (u *GroupUpsert) SetMonthlyLimitUsd(v float64) *GroupUpsert {
-	u.Set(group.FieldMonthlyLimitUsd, v)
-	return u
-}
-
-// UpdateMonthlyLimitUsd sets the "monthly_limit_usd" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateMonthlyLimitUsd() *GroupUpsert {
-	u.SetExcluded(group.FieldMonthlyLimitUsd)
-	return u
-}
-
-// AddMonthlyLimitUsd adds v to the "monthly_limit_usd" field.
-func (u *GroupUpsert) AddMonthlyLimitUsd(v float64) *GroupUpsert {
-	u.Add(group.FieldMonthlyLimitUsd, v)
-	return u
-}
-
-// ClearMonthlyLimitUsd clears the value of the "monthly_limit_usd" field.
-func (u *GroupUpsert) ClearMonthlyLimitUsd() *GroupUpsert {
-	u.SetNull(group.FieldMonthlyLimitUsd)
-	return u
-}
-
-// SetDefaultValidityDays sets the "default_validity_days" field.
-func (u *GroupUpsert) SetDefaultValidityDays(v int) *GroupUpsert {
-	u.Set(group.FieldDefaultValidityDays, v)
-	return u
-}
-
-// UpdateDefaultValidityDays sets the "default_validity_days" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateDefaultValidityDays() *GroupUpsert {
-	u.SetExcluded(group.FieldDefaultValidityDays)
-	return u
-}
-
-// AddDefaultValidityDays adds v to the "default_validity_days" field.
-func (u *GroupUpsert) AddDefaultValidityDays(v int) *GroupUpsert {
-	u.Add(group.FieldDefaultValidityDays, v)
-	return u
-}
-
 // SetAllowImageGeneration sets the "allow_image_generation" field.
 func (u *GroupUpsert) SetAllowImageGeneration(v bool) *GroupUpsert {
 	u.Set(group.FieldAllowImageGeneration, v)
@@ -1938,18 +1351,6 @@ func (u *GroupUpsert) SetOpenaiForceImageTool(v bool) *GroupUpsert {
 // UpdateOpenaiForceImageTool sets the "openai_force_image_tool" field to the value that was provided on create.
 func (u *GroupUpsert) UpdateOpenaiForceImageTool() *GroupUpsert {
 	u.SetExcluded(group.FieldOpenaiForceImageTool)
-	return u
-}
-
-// SetAllowBatchImageGeneration sets the "allow_batch_image_generation" field.
-func (u *GroupUpsert) SetAllowBatchImageGeneration(v bool) *GroupUpsert {
-	u.Set(group.FieldAllowBatchImageGeneration, v)
-	return u
-}
-
-// UpdateAllowBatchImageGeneration sets the "allow_batch_image_generation" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateAllowBatchImageGeneration() *GroupUpsert {
-	u.SetExcluded(group.FieldAllowBatchImageGeneration)
 	return u
 }
 
@@ -2052,42 +1453,6 @@ func (u *GroupUpsert) AddImagePrice4k(v float64) *GroupUpsert {
 // ClearImagePrice4k clears the value of the "image_price_4k" field.
 func (u *GroupUpsert) ClearImagePrice4k() *GroupUpsert {
 	u.SetNull(group.FieldImagePrice4k)
-	return u
-}
-
-// SetBatchImageDiscountMultiplier sets the "batch_image_discount_multiplier" field.
-func (u *GroupUpsert) SetBatchImageDiscountMultiplier(v float64) *GroupUpsert {
-	u.Set(group.FieldBatchImageDiscountMultiplier, v)
-	return u
-}
-
-// UpdateBatchImageDiscountMultiplier sets the "batch_image_discount_multiplier" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateBatchImageDiscountMultiplier() *GroupUpsert {
-	u.SetExcluded(group.FieldBatchImageDiscountMultiplier)
-	return u
-}
-
-// AddBatchImageDiscountMultiplier adds v to the "batch_image_discount_multiplier" field.
-func (u *GroupUpsert) AddBatchImageDiscountMultiplier(v float64) *GroupUpsert {
-	u.Add(group.FieldBatchImageDiscountMultiplier, v)
-	return u
-}
-
-// SetBatchImageHoldMultiplier sets the "batch_image_hold_multiplier" field.
-func (u *GroupUpsert) SetBatchImageHoldMultiplier(v float64) *GroupUpsert {
-	u.Set(group.FieldBatchImageHoldMultiplier, v)
-	return u
-}
-
-// UpdateBatchImageHoldMultiplier sets the "batch_image_hold_multiplier" field to the value that was provided on create.
-func (u *GroupUpsert) UpdateBatchImageHoldMultiplier() *GroupUpsert {
-	u.SetExcluded(group.FieldBatchImageHoldMultiplier)
-	return u
-}
-
-// AddBatchImageHoldMultiplier adds v to the "batch_image_hold_multiplier" field.
-func (u *GroupUpsert) AddBatchImageHoldMultiplier(v float64) *GroupUpsert {
-	u.Add(group.FieldBatchImageHoldMultiplier, v)
 	return u
 }
 
@@ -2662,83 +2027,6 @@ func (u *GroupUpsertOne) UpdateRateMultiplier() *GroupUpsertOne {
 	})
 }
 
-// SetPeakRateEnabled sets the "peak_rate_enabled" field.
-func (u *GroupUpsertOne) SetPeakRateEnabled(v bool) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetPeakRateEnabled(v)
-	})
-}
-
-// UpdatePeakRateEnabled sets the "peak_rate_enabled" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdatePeakRateEnabled() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdatePeakRateEnabled()
-	})
-}
-
-// SetPeakStart sets the "peak_start" field.
-func (u *GroupUpsertOne) SetPeakStart(v string) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetPeakStart(v)
-	})
-}
-
-// UpdatePeakStart sets the "peak_start" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdatePeakStart() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdatePeakStart()
-	})
-}
-
-// SetPeakEnd sets the "peak_end" field.
-func (u *GroupUpsertOne) SetPeakEnd(v string) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetPeakEnd(v)
-	})
-}
-
-// UpdatePeakEnd sets the "peak_end" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdatePeakEnd() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdatePeakEnd()
-	})
-}
-
-// SetPeakRateMultiplier sets the "peak_rate_multiplier" field.
-func (u *GroupUpsertOne) SetPeakRateMultiplier(v float64) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetPeakRateMultiplier(v)
-	})
-}
-
-// AddPeakRateMultiplier adds v to the "peak_rate_multiplier" field.
-func (u *GroupUpsertOne) AddPeakRateMultiplier(v float64) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddPeakRateMultiplier(v)
-	})
-}
-
-// UpdatePeakRateMultiplier sets the "peak_rate_multiplier" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdatePeakRateMultiplier() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdatePeakRateMultiplier()
-	})
-}
-
-// SetIsExclusive sets the "is_exclusive" field.
-func (u *GroupUpsertOne) SetIsExclusive(v bool) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetIsExclusive(v)
-	})
-}
-
-// UpdateIsExclusive sets the "is_exclusive" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateIsExclusive() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateIsExclusive()
-	})
-}
-
 // SetStatus sets the "status" field.
 func (u *GroupUpsertOne) SetStatus(v string) *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
@@ -2767,125 +2055,6 @@ func (u *GroupUpsertOne) UpdatePlatform() *GroupUpsertOne {
 	})
 }
 
-// SetSubscriptionType sets the "subscription_type" field.
-func (u *GroupUpsertOne) SetSubscriptionType(v string) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetSubscriptionType(v)
-	})
-}
-
-// UpdateSubscriptionType sets the "subscription_type" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateSubscriptionType() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateSubscriptionType()
-	})
-}
-
-// SetDailyLimitUsd sets the "daily_limit_usd" field.
-func (u *GroupUpsertOne) SetDailyLimitUsd(v float64) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetDailyLimitUsd(v)
-	})
-}
-
-// AddDailyLimitUsd adds v to the "daily_limit_usd" field.
-func (u *GroupUpsertOne) AddDailyLimitUsd(v float64) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddDailyLimitUsd(v)
-	})
-}
-
-// UpdateDailyLimitUsd sets the "daily_limit_usd" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateDailyLimitUsd() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateDailyLimitUsd()
-	})
-}
-
-// ClearDailyLimitUsd clears the value of the "daily_limit_usd" field.
-func (u *GroupUpsertOne) ClearDailyLimitUsd() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.ClearDailyLimitUsd()
-	})
-}
-
-// SetWeeklyLimitUsd sets the "weekly_limit_usd" field.
-func (u *GroupUpsertOne) SetWeeklyLimitUsd(v float64) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetWeeklyLimitUsd(v)
-	})
-}
-
-// AddWeeklyLimitUsd adds v to the "weekly_limit_usd" field.
-func (u *GroupUpsertOne) AddWeeklyLimitUsd(v float64) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddWeeklyLimitUsd(v)
-	})
-}
-
-// UpdateWeeklyLimitUsd sets the "weekly_limit_usd" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateWeeklyLimitUsd() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateWeeklyLimitUsd()
-	})
-}
-
-// ClearWeeklyLimitUsd clears the value of the "weekly_limit_usd" field.
-func (u *GroupUpsertOne) ClearWeeklyLimitUsd() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.ClearWeeklyLimitUsd()
-	})
-}
-
-// SetMonthlyLimitUsd sets the "monthly_limit_usd" field.
-func (u *GroupUpsertOne) SetMonthlyLimitUsd(v float64) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetMonthlyLimitUsd(v)
-	})
-}
-
-// AddMonthlyLimitUsd adds v to the "monthly_limit_usd" field.
-func (u *GroupUpsertOne) AddMonthlyLimitUsd(v float64) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddMonthlyLimitUsd(v)
-	})
-}
-
-// UpdateMonthlyLimitUsd sets the "monthly_limit_usd" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateMonthlyLimitUsd() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateMonthlyLimitUsd()
-	})
-}
-
-// ClearMonthlyLimitUsd clears the value of the "monthly_limit_usd" field.
-func (u *GroupUpsertOne) ClearMonthlyLimitUsd() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.ClearMonthlyLimitUsd()
-	})
-}
-
-// SetDefaultValidityDays sets the "default_validity_days" field.
-func (u *GroupUpsertOne) SetDefaultValidityDays(v int) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetDefaultValidityDays(v)
-	})
-}
-
-// AddDefaultValidityDays adds v to the "default_validity_days" field.
-func (u *GroupUpsertOne) AddDefaultValidityDays(v int) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddDefaultValidityDays(v)
-	})
-}
-
-// UpdateDefaultValidityDays sets the "default_validity_days" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateDefaultValidityDays() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateDefaultValidityDays()
-	})
-}
-
 // SetAllowImageGeneration sets the "allow_image_generation" field.
 func (u *GroupUpsertOne) SetAllowImageGeneration(v bool) *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
@@ -2911,20 +2080,6 @@ func (u *GroupUpsertOne) SetOpenaiForceImageTool(v bool) *GroupUpsertOne {
 func (u *GroupUpsertOne) UpdateOpenaiForceImageTool() *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateOpenaiForceImageTool()
-	})
-}
-
-// SetAllowBatchImageGeneration sets the "allow_batch_image_generation" field.
-func (u *GroupUpsertOne) SetAllowBatchImageGeneration(v bool) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetAllowBatchImageGeneration(v)
-	})
-}
-
-// UpdateAllowBatchImageGeneration sets the "allow_batch_image_generation" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateAllowBatchImageGeneration() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateAllowBatchImageGeneration()
 	})
 }
 
@@ -3044,48 +2199,6 @@ func (u *GroupUpsertOne) UpdateImagePrice4k() *GroupUpsertOne {
 func (u *GroupUpsertOne) ClearImagePrice4k() *GroupUpsertOne {
 	return u.Update(func(s *GroupUpsert) {
 		s.ClearImagePrice4k()
-	})
-}
-
-// SetBatchImageDiscountMultiplier sets the "batch_image_discount_multiplier" field.
-func (u *GroupUpsertOne) SetBatchImageDiscountMultiplier(v float64) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetBatchImageDiscountMultiplier(v)
-	})
-}
-
-// AddBatchImageDiscountMultiplier adds v to the "batch_image_discount_multiplier" field.
-func (u *GroupUpsertOne) AddBatchImageDiscountMultiplier(v float64) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddBatchImageDiscountMultiplier(v)
-	})
-}
-
-// UpdateBatchImageDiscountMultiplier sets the "batch_image_discount_multiplier" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateBatchImageDiscountMultiplier() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateBatchImageDiscountMultiplier()
-	})
-}
-
-// SetBatchImageHoldMultiplier sets the "batch_image_hold_multiplier" field.
-func (u *GroupUpsertOne) SetBatchImageHoldMultiplier(v float64) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetBatchImageHoldMultiplier(v)
-	})
-}
-
-// AddBatchImageHoldMultiplier adds v to the "batch_image_hold_multiplier" field.
-func (u *GroupUpsertOne) AddBatchImageHoldMultiplier(v float64) *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddBatchImageHoldMultiplier(v)
-	})
-}
-
-// UpdateBatchImageHoldMultiplier sets the "batch_image_hold_multiplier" field to the value that was provided on create.
-func (u *GroupUpsertOne) UpdateBatchImageHoldMultiplier() *GroupUpsertOne {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateBatchImageHoldMultiplier()
 	})
 }
 
@@ -3898,83 +3011,6 @@ func (u *GroupUpsertBulk) UpdateRateMultiplier() *GroupUpsertBulk {
 	})
 }
 
-// SetPeakRateEnabled sets the "peak_rate_enabled" field.
-func (u *GroupUpsertBulk) SetPeakRateEnabled(v bool) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetPeakRateEnabled(v)
-	})
-}
-
-// UpdatePeakRateEnabled sets the "peak_rate_enabled" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdatePeakRateEnabled() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdatePeakRateEnabled()
-	})
-}
-
-// SetPeakStart sets the "peak_start" field.
-func (u *GroupUpsertBulk) SetPeakStart(v string) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetPeakStart(v)
-	})
-}
-
-// UpdatePeakStart sets the "peak_start" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdatePeakStart() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdatePeakStart()
-	})
-}
-
-// SetPeakEnd sets the "peak_end" field.
-func (u *GroupUpsertBulk) SetPeakEnd(v string) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetPeakEnd(v)
-	})
-}
-
-// UpdatePeakEnd sets the "peak_end" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdatePeakEnd() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdatePeakEnd()
-	})
-}
-
-// SetPeakRateMultiplier sets the "peak_rate_multiplier" field.
-func (u *GroupUpsertBulk) SetPeakRateMultiplier(v float64) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetPeakRateMultiplier(v)
-	})
-}
-
-// AddPeakRateMultiplier adds v to the "peak_rate_multiplier" field.
-func (u *GroupUpsertBulk) AddPeakRateMultiplier(v float64) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddPeakRateMultiplier(v)
-	})
-}
-
-// UpdatePeakRateMultiplier sets the "peak_rate_multiplier" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdatePeakRateMultiplier() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdatePeakRateMultiplier()
-	})
-}
-
-// SetIsExclusive sets the "is_exclusive" field.
-func (u *GroupUpsertBulk) SetIsExclusive(v bool) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetIsExclusive(v)
-	})
-}
-
-// UpdateIsExclusive sets the "is_exclusive" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateIsExclusive() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateIsExclusive()
-	})
-}
-
 // SetStatus sets the "status" field.
 func (u *GroupUpsertBulk) SetStatus(v string) *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
@@ -4003,125 +3039,6 @@ func (u *GroupUpsertBulk) UpdatePlatform() *GroupUpsertBulk {
 	})
 }
 
-// SetSubscriptionType sets the "subscription_type" field.
-func (u *GroupUpsertBulk) SetSubscriptionType(v string) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetSubscriptionType(v)
-	})
-}
-
-// UpdateSubscriptionType sets the "subscription_type" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateSubscriptionType() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateSubscriptionType()
-	})
-}
-
-// SetDailyLimitUsd sets the "daily_limit_usd" field.
-func (u *GroupUpsertBulk) SetDailyLimitUsd(v float64) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetDailyLimitUsd(v)
-	})
-}
-
-// AddDailyLimitUsd adds v to the "daily_limit_usd" field.
-func (u *GroupUpsertBulk) AddDailyLimitUsd(v float64) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddDailyLimitUsd(v)
-	})
-}
-
-// UpdateDailyLimitUsd sets the "daily_limit_usd" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateDailyLimitUsd() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateDailyLimitUsd()
-	})
-}
-
-// ClearDailyLimitUsd clears the value of the "daily_limit_usd" field.
-func (u *GroupUpsertBulk) ClearDailyLimitUsd() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.ClearDailyLimitUsd()
-	})
-}
-
-// SetWeeklyLimitUsd sets the "weekly_limit_usd" field.
-func (u *GroupUpsertBulk) SetWeeklyLimitUsd(v float64) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetWeeklyLimitUsd(v)
-	})
-}
-
-// AddWeeklyLimitUsd adds v to the "weekly_limit_usd" field.
-func (u *GroupUpsertBulk) AddWeeklyLimitUsd(v float64) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddWeeklyLimitUsd(v)
-	})
-}
-
-// UpdateWeeklyLimitUsd sets the "weekly_limit_usd" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateWeeklyLimitUsd() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateWeeklyLimitUsd()
-	})
-}
-
-// ClearWeeklyLimitUsd clears the value of the "weekly_limit_usd" field.
-func (u *GroupUpsertBulk) ClearWeeklyLimitUsd() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.ClearWeeklyLimitUsd()
-	})
-}
-
-// SetMonthlyLimitUsd sets the "monthly_limit_usd" field.
-func (u *GroupUpsertBulk) SetMonthlyLimitUsd(v float64) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetMonthlyLimitUsd(v)
-	})
-}
-
-// AddMonthlyLimitUsd adds v to the "monthly_limit_usd" field.
-func (u *GroupUpsertBulk) AddMonthlyLimitUsd(v float64) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddMonthlyLimitUsd(v)
-	})
-}
-
-// UpdateMonthlyLimitUsd sets the "monthly_limit_usd" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateMonthlyLimitUsd() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateMonthlyLimitUsd()
-	})
-}
-
-// ClearMonthlyLimitUsd clears the value of the "monthly_limit_usd" field.
-func (u *GroupUpsertBulk) ClearMonthlyLimitUsd() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.ClearMonthlyLimitUsd()
-	})
-}
-
-// SetDefaultValidityDays sets the "default_validity_days" field.
-func (u *GroupUpsertBulk) SetDefaultValidityDays(v int) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetDefaultValidityDays(v)
-	})
-}
-
-// AddDefaultValidityDays adds v to the "default_validity_days" field.
-func (u *GroupUpsertBulk) AddDefaultValidityDays(v int) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddDefaultValidityDays(v)
-	})
-}
-
-// UpdateDefaultValidityDays sets the "default_validity_days" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateDefaultValidityDays() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateDefaultValidityDays()
-	})
-}
-
 // SetAllowImageGeneration sets the "allow_image_generation" field.
 func (u *GroupUpsertBulk) SetAllowImageGeneration(v bool) *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
@@ -4147,20 +3064,6 @@ func (u *GroupUpsertBulk) SetOpenaiForceImageTool(v bool) *GroupUpsertBulk {
 func (u *GroupUpsertBulk) UpdateOpenaiForceImageTool() *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
 		s.UpdateOpenaiForceImageTool()
-	})
-}
-
-// SetAllowBatchImageGeneration sets the "allow_batch_image_generation" field.
-func (u *GroupUpsertBulk) SetAllowBatchImageGeneration(v bool) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetAllowBatchImageGeneration(v)
-	})
-}
-
-// UpdateAllowBatchImageGeneration sets the "allow_batch_image_generation" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateAllowBatchImageGeneration() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateAllowBatchImageGeneration()
 	})
 }
 
@@ -4280,48 +3183,6 @@ func (u *GroupUpsertBulk) UpdateImagePrice4k() *GroupUpsertBulk {
 func (u *GroupUpsertBulk) ClearImagePrice4k() *GroupUpsertBulk {
 	return u.Update(func(s *GroupUpsert) {
 		s.ClearImagePrice4k()
-	})
-}
-
-// SetBatchImageDiscountMultiplier sets the "batch_image_discount_multiplier" field.
-func (u *GroupUpsertBulk) SetBatchImageDiscountMultiplier(v float64) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetBatchImageDiscountMultiplier(v)
-	})
-}
-
-// AddBatchImageDiscountMultiplier adds v to the "batch_image_discount_multiplier" field.
-func (u *GroupUpsertBulk) AddBatchImageDiscountMultiplier(v float64) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddBatchImageDiscountMultiplier(v)
-	})
-}
-
-// UpdateBatchImageDiscountMultiplier sets the "batch_image_discount_multiplier" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateBatchImageDiscountMultiplier() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateBatchImageDiscountMultiplier()
-	})
-}
-
-// SetBatchImageHoldMultiplier sets the "batch_image_hold_multiplier" field.
-func (u *GroupUpsertBulk) SetBatchImageHoldMultiplier(v float64) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.SetBatchImageHoldMultiplier(v)
-	})
-}
-
-// AddBatchImageHoldMultiplier adds v to the "batch_image_hold_multiplier" field.
-func (u *GroupUpsertBulk) AddBatchImageHoldMultiplier(v float64) *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.AddBatchImageHoldMultiplier(v)
-	})
-}
-
-// UpdateBatchImageHoldMultiplier sets the "batch_image_hold_multiplier" field to the value that was provided on create.
-func (u *GroupUpsertBulk) UpdateBatchImageHoldMultiplier() *GroupUpsertBulk {
-	return u.Update(func(s *GroupUpsert) {
-		s.UpdateBatchImageHoldMultiplier()
 	})
 }
 

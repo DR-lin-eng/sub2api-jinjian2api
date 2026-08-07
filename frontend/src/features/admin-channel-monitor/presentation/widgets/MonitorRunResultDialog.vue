@@ -40,7 +40,7 @@
 import { useI18n } from 'vue-i18n'
 import type { CheckResult } from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
-import { useChannelMonitorFormat } from '@/features/channel-monitor-user/presentation/composables/useChannelMonitorFormat'
+import { useChannelMonitorFormat } from '@/features/admin-channel-monitor/presentation/composables/useChannelMonitorFormat'
 
 defineProps<{
   show: boolean

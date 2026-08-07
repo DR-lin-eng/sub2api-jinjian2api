@@ -91,7 +91,7 @@ func parseSub2APIUsage(body []byte) (*UpstreamQuotaInfo, error) {
 }
 
 func normalizeSub2APIQuotaLimited(response *sub2APIUsageResponse) (*UpstreamQuotaInfo, error) {
-	if response.Status != StatusAPIKeyActive && response.Status != StatusAPIKeyQuotaExhausted && response.Status != StatusAPIKeyExpired {
+	if response.Status != StatusAPIKeyActive && response.Status != "quota_exhausted" && response.Status != StatusAPIKeyExpired {
 		return nil, errors.New("invalid Sub2API key status")
 	}
 	windows, err := normalizeSub2APIRateLimits(response.RateLimits)

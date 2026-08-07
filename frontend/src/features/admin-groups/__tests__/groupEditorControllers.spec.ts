@@ -14,8 +14,6 @@ const {
   getAccountByID,
   showError,
   showSuccess,
-  isCurrentStep,
-  nextStep,
 } = vi.hoisted(() => ({
   createGroup: vi.fn(),
   updateGroup: vi.fn(),
@@ -25,8 +23,6 @@ const {
   getAccountByID: vi.fn(),
   showError: vi.fn(),
   showSuccess: vi.fn(),
-  isCurrentStep: vi.fn(),
-  nextStep: vi.fn(),
 }));
 
 vi.mock(
@@ -48,9 +44,6 @@ vi.mock(
 vi.mock("@/core/stores/appStore", () => ({
   useAppStore: () => ({ showError, showSuccess }),
 }));
-vi.mock("@/core/stores/onboardingStore", () => ({
-  useOnboardingStore: () => ({ isCurrentStep, nextStep }),
-}));
 vi.mock("vue-i18n", async () => {
   const actual = await vi.importActual<typeof import("vue-i18n")>("vue-i18n");
   return {
@@ -66,18 +59,10 @@ const sourceGroup: AdminGroup = {
   platform: "openai",
   rate_multiplier: 1,
   rpm_limit: 0,
-  is_exclusive: false,
   status: "active",
-  subscription_type: "standard",
-  daily_limit_usd: null,
-  weekly_limit_usd: null,
-  monthly_limit_usd: null,
   allow_image_generation: false,
-  allow_batch_image_generation: false,
   image_rate_independent: false,
   image_rate_multiplier: 1,
-  batch_image_discount_multiplier: 0.5,
-  batch_image_hold_multiplier: 0.6,
   image_price_1k: null,
   image_price_2k: null,
   image_price_4k: null,
@@ -87,10 +72,6 @@ const sourceGroup: AdminGroup = {
   video_price_720p: null,
   video_price_1080p: null,
   web_search_price_per_call: null,
-  peak_rate_enabled: false,
-  peak_start: "",
-  peak_end: "",
-  peak_rate_multiplier: 1,
   claude_code_only: false,
   fallback_group_id: null,
   fallback_group_id_on_invalid_request: null,
@@ -126,14 +107,11 @@ describe("group editor controllers", () => {
       getAccountByID,
       showError,
       showSuccess,
-      isCurrentStep,
-      nextStep,
     ]) {
       mock.mockReset();
     }
     getModelsListCandidates.mockResolvedValue([]);
     getLiveCapability.mockResolvedValue({ supported: true });
-    isCurrentStep.mockReturnValue(false);
   });
 
   afterEach(() => {
@@ -151,7 +129,6 @@ describe("group editor controllers", () => {
     })!;
     const form = controller.dialogContext.form;
     form.name = "Created";
-    form.daily_limit_usd = "";
     form.image_price_1k = "";
 
     let resolveCreate!: (group: AdminGroup) => void;
@@ -168,7 +145,6 @@ describe("group editor controllers", () => {
     const request = createGroup.mock.calls[0][0];
     expect(request).toMatchObject({
       name: "Created",
-      daily_limit_usd: null,
       image_price_1k: null,
       messages_dispatch_model_config: undefined,
     });

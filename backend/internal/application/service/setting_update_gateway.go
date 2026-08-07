@@ -15,7 +15,6 @@ func writeGatewaySystemSettingUpdates(updates map[string]string, settings *Syste
 	updates[SettingKeyRequestPriorityAdmissionEnabled] = strconv.FormatBool(settings.RequestPriorityAdmissionEnabled)
 	updates[SettingKeyRequestPriorityPendingLimitPerInstance] = strconv.Itoa(settings.RequestPriorityPendingLimitPerInstance)
 	updates[SettingKeyRequestPriorityPendingMiBPerInstance] = strconv.Itoa(settings.RequestPriorityPendingMiBPerInstance)
-	updates[SettingKeyBackendModeEnabled] = strconv.FormatBool(settings.BackendModeEnabled)
 	updates[SettingKeyStreamModePerformanceEnabled] = strconv.FormatBool(settings.StreamModePerformanceEnabled)
 	updates[SettingKeyOpenAIWSModeRouterV2Enabled] = strconv.FormatBool(settings.OpenAIWSModeRouterV2Enabled)
 
@@ -41,10 +40,6 @@ func writeGatewaySystemSettingUpdates(updates map[string]string, settings *Syste
 	updates[SettingKeyCodexCLIOnlyWhitelist] = strings.TrimSpace(settings.CodexCLIOnlyWhitelist)
 	updates[SettingKeyCodexCLIOnlyAllowAppServerClients] = strconv.FormatBool(settings.CodexCLIOnlyAllowAppServerClients)
 	updates[SettingKeyCodexCLIOnlyEngineFingerprintSignals] = strings.TrimSpace(settings.CodexCLIOnlyEngineFingerprintSignals)
-	updates[SettingPaymentVisibleMethodAlipaySource] = settings.PaymentVisibleMethodAlipaySource
-	updates[SettingPaymentVisibleMethodWxpaySource] = settings.PaymentVisibleMethodWxpaySource
-	updates[SettingPaymentVisibleMethodAlipayEnabled] = strconv.FormatBool(settings.PaymentVisibleMethodAlipayEnabled)
-	updates[SettingPaymentVisibleMethodWxpayEnabled] = strconv.FormatBool(settings.PaymentVisibleMethodWxpayEnabled)
 	updates[SettingKeyOpenAILowUpstreamRatePriorityEnabled] = strconv.FormatBool(settings.OpenAILowUpstreamRatePriorityEnabled)
 	updates[SettingKeyOpenAIOAuthSchedulingRateMultiplier] = strconv.FormatFloat(settings.OpenAIOAuthSchedulingRateMultiplier, 'f', -1, 64)
 	updates[SettingKeyOpenAIContentSessionBurstBalanceEnabled] = strconv.FormatBool(settings.OpenAIContentSessionBurstBalanceEnabled)

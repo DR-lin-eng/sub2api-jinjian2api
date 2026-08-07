@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"fmt"
-
 	"github.com/Wei-Shaw/sub2api/ent/schema/mixins"
 	"github.com/Wei-Shaw/sub2api/internal/domain"
 
@@ -50,13 +48,7 @@ func (User) Fields() []ent.Field {
 			NotEmpty(),
 		field.String("role").
 			MaxLen(20).
-			Default(domain.RoleUser),
-		field.Float("balance").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
-			Default(0),
-		field.Float("frozen_balance").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
-			Default(0),
+			Default(domain.RoleAdmin),
 		field.Int("concurrency").
 			Default(5),
 		field.Int16("request_scheduling_tier").
@@ -69,7 +61,6 @@ func (User) Fields() []ent.Field {
 		field.String("username").
 			MaxLen(100).
 			Default(""),
-		// wechat field migrated to user_attribute_values (see migration 019)
 		field.String("notes").
 			SchemaType(map[string]string{dialect.Postgres: "text"}).
 			Default(""),
@@ -84,16 +75,6 @@ func (User) Fields() []ent.Field {
 		field.Time("totp_enabled_at").
 			Optional().
 			Nillable(),
-		field.String("signup_source").
-			Validate(func(value string) error {
-				switch value {
-				case "email", "linuxdo", "wechat", "oidc", "github", "google", "dingtalk":
-					return nil
-				default:
-					return fmt.Errorf("must be one of email, linuxdo, wechat, oidc, github, google, dingtalk")
-				}
-			}).
-			Default("email"),
 		field.Time("last_login_at").
 			Optional().
 			Nillable().
@@ -102,49 +83,13 @@ func (User) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			SchemaType(map[string]string{dialect.Postgres: "timestamptz"}),
-
-		// 余额不足通知
-		field.Bool("balance_notify_enabled").
-			Default(true),
-		field.String("balance_notify_threshold_type").
-			Default("fixed"), // "fixed" | "percentage"
-		field.Float("balance_notify_threshold").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
-			Optional().
-			Nillable(),
-		field.String("balance_notify_extra_emails").
-			SchemaType(map[string]string{dialect.Postgres: "text"}).
-			Default("[]"),
-		field.Float("total_recharged").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
-			Default(0),
-
-		// 用户级每分钟请求数上限（0 = 不限制）。仅当所在分组未设置 rpm_limit 时作为兜底生效。
-		field.Int("rpm_limit").
-			Default(0),
 	}
 }
 
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("api_keys", APIKey.Type),
-		edge.To("redeem_codes", RedeemCode.Type),
-		edge.To("subscriptions", UserSubscription.Type),
-		edge.To("assigned_subscriptions", UserSubscription.Type),
-		edge.To("announcement_reads", AnnouncementRead.Type),
-		edge.To("chat_conversation", ChatConversation.Type).
-			Unique(),
-		edge.To("allowed_groups", Group.Type).
-			Through("user_allowed_groups", UserAllowedGroup.Type),
 		edge.To("usage_logs", UsageLog.Type),
-		edge.To("attribute_values", UserAttributeValue.Type),
-		edge.To("promo_code_usages", PromoCodeUsage.Type),
-		edge.To("redeem_code_usages", RedeemCodeUsage.Type),
-		edge.To("payment_orders", PaymentOrder.Type),
-		edge.To("auth_identities", AuthIdentity.Type).
-			Annotations(entsql.OnDelete(entsql.Cascade)),
-		edge.To("pending_auth_sessions", PendingAuthSession.Type),
-		edge.To("platform_quotas", UserPlatformQuota.Type),
 	}
 }
 

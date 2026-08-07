@@ -73,7 +73,7 @@
               </button>
             </div>
           </div>
-          <button @click="showCreateModal = true" class="btn btn-primary" data-tour="keys-create-btn">
+          <button @click="showCreateModal = true" class="btn btn-primary">
             <Icon name="plus" size="md" class="mr-2" />
             {{ t('keys.createKey') }}
           </button>
@@ -108,30 +108,6 @@
       :danger="true"
       @confirm="handleDelete"
       @cancel="showDeleteDialog = false"
-    />
-
-    <!-- Reset Quota Confirmation Dialog -->
-    <ConfirmDialog
-      :show="showResetQuotaDialog"
-      :title="t('keys.resetQuotaTitle')"
-      :message="t('keys.resetQuotaConfirmMessage', { name: selectedKey?.name, used: selectedKey?.quota_used?.toFixed(4) })"
-      :confirm-text="t('keys.reset')"
-      :cancel-text="t('common.cancel')"
-      :danger="true"
-      @confirm="resetQuotaUsed"
-      @cancel="showResetQuotaDialog = false"
-    />
-
-    <!-- Reset Rate Limit Confirmation Dialog -->
-    <ConfirmDialog
-      :show="showResetRateLimitDialog"
-      :title="t('keys.resetRateLimitTitle')"
-      :message="t('keys.resetRateLimitConfirmMessage', { name: selectedKey?.name })"
-      :confirm-text="t('keys.reset')"
-      :cancel-text="t('common.cancel')"
-      :danger="true"
-      @confirm="resetRateLimitUsage"
-      @cancel="showResetRateLimitDialog = false"
     />
 
     <!-- Use Key Modal -->
@@ -238,13 +214,7 @@
             <GroupOptionItem
               :name="option.label"
               :platform="option.platform"
-              :subscription-type="option.subscriptionType"
               :rate-multiplier="option.rate"
-              :user-rate-multiplier="option.userRate"
-              :peak-rate-enabled="option.peakRateEnabled"
-              :peak-start="option.peakStart"
-              :peak-end="option.peakEnd"
-              :peak-rate-multiplier="option.peakRateMultiplier"
               :description="option.description"
               :selected="
                 selectedKeyForGroup?.group_id === option.value ||
@@ -266,12 +236,11 @@
 	import { ref, reactive, computed, onMounted, onUnmounted, type ComponentPublicInstance } from 'vue'
 	import { useI18n } from 'vue-i18n'
 	import { useAppStore } from '@/core/stores/appStore'
-	import { useOnboardingStore } from '@/core/stores/onboardingStore'
 	import { useClipboard } from '@/common/composables/useClipboard'
 import { getPersistedPageSize } from '@/common/composables/usePersistedPageSize'
 
 const { t } = useI18n()
-import { keysAPI, authAPI, usageAPI, userGroupsAPI } from '@/api'
+import { keysAPI, authAPI, usageAPI } from '@/api'
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
 	import Pagination from '@/common/widgets/data/Pagination.vue'
@@ -305,7 +274,6 @@ const formatDateTimeLocal = (isoDate: string): string => {
 }
 
 const appStore = useAppStore()
-const onboardingStore = useOnboardingStore()
 const { copyToClipboard: clipboardCopy } = useClipboard()
 
 const allColumns = computed<Column[]>(() => [
@@ -315,7 +283,6 @@ const allColumns = computed<Column[]>(() => [
   { key: 'group', label: t('keys.group'), sortable: false },
   { key: 'current_concurrency', label: t('keys.currentConcurrency'), sortable: true },
   { key: 'usage', label: t('keys.usage'), sortable: false },
-  { key: 'rate_limit', label: t('keys.rateLimitColumn'), sortable: false },
   { key: 'expires_at', label: t('keys.expiresAt'), sortable: true },
   { key: 'status', label: t('common.status'), sortable: true },
   { key: 'last_used_at', label: t('keys.lastUsedAt'), sortable: true },
@@ -325,7 +292,7 @@ const allColumns = computed<Column[]>(() => [
 ])
 
 const ALWAYS_VISIBLE_COLUMNS = new Set(['name', 'actions'])
-const DEFAULT_HIDDEN_COLUMNS = ['id', 'rate_limit', 'last_used_at', 'last_used_ip']
+const DEFAULT_HIDDEN_COLUMNS = ['id', 'last_used_at', 'last_used_ip']
 const HIDDEN_COLUMNS_KEY = 'api-key-hidden-columns'
 const COLUMN_SETTINGS_VERSION_KEY = 'api-key-column-settings-version'
 const COLUMN_SETTINGS_VERSION = 3
@@ -406,8 +373,6 @@ const apiKeys = ref<ApiKey[]>([])
 const groups = ref<Group[]>([])
 const loading = ref(false)
 const submitting = ref(false)
-const now = ref(new Date())
-let resetTimer: ReturnType<typeof setInterval> | null = null
 let usageRefreshTimer: ReturnType<typeof setTimeout> | null = null
 let usageRefreshAbortController: AbortController | null = null
 let lastFullUsageRefreshAt = 0
@@ -415,16 +380,10 @@ const usageStats = ref<Record<string, BatchApiKeyUsageStats>>({})
 const usageStatsLoading = ref(false)
 const usageStatsError = ref(false)
 const pendingUsageAvailable = ref(true)
-const userGroupRates = ref<Record<number, number>>({})
 
 const pendingUsage = (apiKeyId: number) => Number(usageStats.value[apiKeyId]?.pending_actual_cost ?? 0)
 const usageCost = (apiKeyId: number, field: 'today_actual_cost' | 'total_actual_cost') =>
   Number(usageStats.value[apiKeyId]?.[field] ?? 0)
-const quotaUsedWithPending = (apiKey: ApiKey) => {
-  const settled = Number(apiKey.quota_used ?? 0)
-  return settled + (pendingUsageAvailable.value ? pendingUsage(apiKey.id) : 0)
-}
-
 const pagination = ref({
   page: 1,
   page_size: getPersistedPageSize(),
@@ -444,8 +403,6 @@ const filterGroupId = ref<string | number>('')
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showDeleteDialog = ref(false)
-const showResetQuotaDialog = ref(false)
-const showResetRateLimitDialog = ref(false)
 const showUseKeyModal = ref(false)
 const showCcsClientSelect = ref(false)
 const showColumnDropdown = ref(false)
@@ -488,15 +445,7 @@ const formData = ref({
   enable_ip_restriction: false,
   ip_whitelist: '',
   ip_blacklist: '',
-  // Quota settings (empty = unlimited)
-  enable_quota: false,
-  quota: null as number | null,
   concurrency_limit: 0,
-  // Rate limit settings
-  enable_rate_limit: false,
-  rate_limit_5h: null as number | null,
-  rate_limit_1d: null as number | null,
-  rate_limit_7d: null as number | null,
   enable_expiration: false,
   expiration_preset: '30' as '7' | '30' | '90' | 'custom',
   expiration_date: ''
@@ -524,7 +473,7 @@ const statusOptions = computed(() => [
 ])
 
 const shouldSubmitEditStatus = (key: ApiKey, status: 'active' | 'inactive') => {
-  if (key.status === 'quota_exhausted' || key.status === 'expired') {
+  if (key.status === 'expired') {
     return status === 'active'
   }
   return true
@@ -541,7 +490,6 @@ const statusFilterOptions = computed(() => [
   { value: '', label: t('keys.allStatus') },
   { value: 'active', label: t('keys.status.active') },
   { value: 'inactive', label: t('keys.status.inactive') },
-  { value: 'quota_exhausted', label: t('keys.status.quota_exhausted') },
   { value: 'expired', label: t('keys.status.expired') }
 ])
 
@@ -560,19 +508,13 @@ const onStatusFilterChange = (value: string | number | boolean | null) => {
   onFilterChange()
 }
 
-// Convert groups to Select options format with rate multiplier and subscription type
+// Convert groups to Select options.
 const groupOptions = computed(() =>
   groups.value.map((group) => ({
     value: group.id,
     label: group.name,
     description: group.description,
     rate: group.rate_multiplier,
-    userRate: userGroupRates.value[group.id] ?? null,
-    peakRateEnabled: group.peak_rate_enabled,
-    peakStart: group.peak_start,
-    peakEnd: group.peak_end,
-    peakRateMultiplier: group.peak_rate_multiplier,
-    subscriptionType: group.subscription_type,
     platform: group.platform
   }))
 )
@@ -765,17 +707,9 @@ const loadApiKeys = async () => {
 
 const loadGroups = async () => {
   try {
-    groups.value = await userGroupsAPI.getAvailable()
+    groups.value = await keysAPI.getAvailableGroups()
   } catch (error) {
     console.error('Failed to load groups:', error)
-  }
-}
-
-const loadUserGroupRates = async () => {
-  try {
-    userGroupRates.value = await userGroupsAPI.getUserGroupRates()
-  } catch (error) {
-    console.error('Failed to load user group rates:', error)
   }
 }
 
@@ -822,19 +756,13 @@ const editKey = (key: ApiKey) => {
   formData.value = {
     name: key.name,
     group_id: key.group_id,
-    status: key.status === 'quota_exhausted' || key.status === 'expired' ? 'inactive' : key.status,
+    status: key.status === 'expired' ? 'inactive' : key.status,
     use_custom_key: false,
     custom_key: '',
     enable_ip_restriction: hasIPRestriction,
     ip_whitelist: (key.ip_whitelist || []).join('\n'),
     ip_blacklist: (key.ip_blacklist || []).join('\n'),
-    enable_quota: key.quota > 0,
-    quota: key.quota > 0 ? key.quota : null,
     concurrency_limit: key.concurrency_limit ?? 0,
-    enable_rate_limit: (key.rate_limit_5h > 0) || (key.rate_limit_1d > 0) || (key.rate_limit_7d > 0),
-    rate_limit_5h: key.rate_limit_5h || null,
-    rate_limit_1d: key.rate_limit_1d || null,
-    rate_limit_7d: key.rate_limit_7d || null,
     enable_expiration: hasExpiration,
     expiration_preset: 'custom',
     expiration_date: key.expires_at ? formatDateTimeLocal(key.expires_at) : ''
@@ -945,9 +873,6 @@ const handleSubmit = async () => {
   const ipWhitelist = formData.value.enable_ip_restriction ? parseIPList(formData.value.ip_whitelist) : []
   const ipBlacklist = formData.value.enable_ip_restriction ? parseIPList(formData.value.ip_blacklist) : []
 
-  // Calculate quota value (null/empty/0 = unlimited, stored as 0)
-  const quota = formData.value.quota && formData.value.quota > 0 ? formData.value.quota : 0
-
   // Calculate expiration
   let expiresInDays: number | undefined
   let expiresAt: string | null | undefined
@@ -967,13 +892,6 @@ const handleSubmit = async () => {
     expiresAt = ''
   }
 
-  // Calculate rate limit values (send 0 when toggle is off)
-  const rateLimitData = formData.value.enable_rate_limit ? {
-    rate_limit_5h: formData.value.rate_limit_5h && formData.value.rate_limit_5h > 0 ? formData.value.rate_limit_5h : 0,
-    rate_limit_1d: formData.value.rate_limit_1d && formData.value.rate_limit_1d > 0 ? formData.value.rate_limit_1d : 0,
-    rate_limit_7d: formData.value.rate_limit_7d && formData.value.rate_limit_7d > 0 ? formData.value.rate_limit_7d : 0,
-  } : { rate_limit_5h: 0, rate_limit_1d: 0, rate_limit_7d: 0 }
-
   submitting.value = true
   try {
     if (showEditModal.value && selectedKey.value) {
@@ -982,12 +900,8 @@ const handleSubmit = async () => {
         group_id: formData.value.group_id,
         ip_whitelist: ipWhitelist,
         ip_blacklist: ipBlacklist,
-        quota: quota,
         concurrency_limit: Math.max(0, Math.trunc(Number(formData.value.concurrency_limit) || 0)),
-        expires_at: expiresAt,
-        rate_limit_5h: rateLimitData.rate_limit_5h,
-        rate_limit_1d: rateLimitData.rate_limit_1d,
-        rate_limit_7d: rateLimitData.rate_limit_7d,
+        expires_at: expiresAt
       }
       if (shouldSubmitEditStatus(selectedKey.value, formData.value.status)) {
         updates.status = formData.value.status
@@ -1002,22 +916,15 @@ const handleSubmit = async () => {
         customKey,
         ipWhitelist,
         ipBlacklist,
-        quota,
-        expiresInDays,
-        rateLimitData
+        expiresInDays
       )
       appStore.showSuccess(t('keys.keyCreatedSuccess'))
-      // Only advance tour if active, on submit step, and creation succeeded
-      if (onboardingStore.isCurrentStep('[data-tour="key-form-submit"]')) {
-        onboardingStore.nextStep(500)
-      }
     }
     closeModals()
     loadApiKeys()
   } catch (error: any) {
     const errorMsg = error.response?.data?.detail || t('keys.failedToSave')
     appStore.showError(errorMsg)
-    // Don't advance tour on error
   } finally {
     submitting.value = false
   }
@@ -1056,22 +963,11 @@ const closeModals = () => {
     enable_ip_restriction: false,
     ip_whitelist: '',
     ip_blacklist: '',
-    enable_quota: false,
-    quota: null,
     concurrency_limit: 0,
-    enable_rate_limit: false,
-    rate_limit_5h: null,
-    rate_limit_1d: null,
-    rate_limit_7d: null,
     enable_expiration: false,
     expiration_preset: '30',
     expiration_date: ''
   }
-}
-
-// Show reset quota confirmation dialog
-const confirmResetQuota = () => {
-  showResetQuotaDialog.value = true
 }
 
 // Set expiration date based on quick select days
@@ -1080,54 +976,6 @@ const setExpirationDays = (days: number) => {
   const expDate = new Date()
   expDate.setDate(expDate.getDate() + days)
   formData.value.expiration_date = formatDateTimeLocal(expDate.toISOString())
-}
-
-// Reset quota used for an API key
-const resetQuotaUsed = async () => {
-  if (!selectedKey.value) return
-  showResetQuotaDialog.value = false
-  try {
-    await keysAPI.update(selectedKey.value.id, { reset_quota: true })
-    appStore.showSuccess(t('keys.quotaResetSuccess'))
-    // Update local state
-    if (selectedKey.value) {
-      selectedKey.value.quota_used = 0
-    }
-  } catch (error: any) {
-    const errorMsg = error.response?.data?.detail || t('keys.failedToResetQuota')
-    appStore.showError(errorMsg)
-  }
-}
-
-// Show reset rate limit confirmation dialog (from edit modal)
-const confirmResetRateLimit = () => {
-  showResetRateLimitDialog.value = true
-}
-
-// Show reset rate limit confirmation dialog (from table row)
-const confirmResetRateLimitFromTable = (row: ApiKey) => {
-  selectedKey.value = row
-  showResetRateLimitDialog.value = true
-}
-
-// Reset rate limit usage for an API key
-const resetRateLimitUsage = async () => {
-  if (!selectedKey.value) return
-  showResetRateLimitDialog.value = false
-  try {
-    await keysAPI.update(selectedKey.value.id, { reset_rate_limit_usage: true })
-    appStore.showSuccess(t('keys.rateLimitResetSuccess'))
-    // Refresh key data
-    await loadApiKeys()
-    // Update the editing key with fresh data
-    const refreshedKey = apiKeys.value.find(k => k.id === selectedKey.value!.id)
-    if (refreshedKey) {
-      selectedKey.value = refreshedKey
-    }
-  } catch (error: any) {
-    const errorMsg = error.response?.data?.detail || t('keys.failedToResetRateLimit')
-    appStore.showError(errorMsg)
-  }
 }
 
 const importToCcswitch = (row: ApiKey) => {
@@ -1155,12 +1003,11 @@ const executeCcsImport = (row: ApiKey, clientType: CcSwitchClientType) => {
       headers: { "Authorization": "Bearer {{apiKey}}" }
     },
     extractor: function(response) {
-      const remaining = response?.remaining ?? response?.quota?.remaining ?? response?.balance;
-      const unit = response?.unit ?? response?.quota?.unit ?? "USD";
       return {
-        isValid: response?.is_active ?? response?.isValid ?? true,
-        remaining,
-        unit
+        isValid: response?.isValid ?? response?.status === "active",
+        mode: response?.mode ?? "informational",
+        unit: response?.unit ?? "USD",
+        usage: response?.usage ?? null
       };
     }
   })`
@@ -1202,18 +1049,6 @@ const closeCcsClientSelect = () => {
   pendingCcsRow.value = null
 }
 
-function formatResetTime(resetAt: string | null): string {
-  if (!resetAt) return ''
-  const diff = new Date(resetAt).getTime() - now.value.getTime()
-  if (diff <= 0) return t('keys.resetNow')
-  const days = Math.floor(diff / 86400000)
-  const hours = Math.floor((diff % 86400000) / 3600000)
-  const mins = Math.floor((diff % 3600000) / 60000)
-  if (days > 0) return `${days}d ${hours}h`
-  if (hours > 0) return `${hours}h ${mins}m`
-  return `${mins}m`
-}
-
 const keysTableContext: KeysTableContext = {
   columns,
   apiKeys,
@@ -1222,15 +1057,11 @@ const keysTableContext: KeysTableContext = {
   copyToClipboard,
   setGroupButtonRef,
   openGroupSelector,
-  userGroupRates,
   usageStatsLoading,
   usageStatsError,
   pendingUsageAvailable,
   usageCost,
   pendingUsage,
-  quotaUsedWithPending,
-  confirmResetRateLimitFromTable,
-  formatResetTime,
   publicSettings,
   openUseKeyModal,
   importToCcswitch,
@@ -1252,8 +1083,6 @@ const keyEditorDialogContext: KeyEditorDialogContext = {
   submitting,
   closeModals,
   handleSubmit,
-  confirmResetQuota,
-  confirmResetRateLimit,
   setExpirationDays
 }
 
@@ -1261,11 +1090,9 @@ onMounted(() => {
   loadSavedColumns()
   loadApiKeys()
   loadGroups()
-  loadUserGroupRates()
   loadPublicSettings()
   document.addEventListener('click', closeGroupSelector)
   document.addEventListener('visibilitychange', handleUsageVisibilityChange)
-  resetTimer = setInterval(() => { now.value = new Date() }, 60000)
 })
 
 onUnmounted(() => {
@@ -1273,6 +1100,5 @@ onUnmounted(() => {
   document.removeEventListener('visibilitychange', handleUsageVisibilityChange)
   stopUsageRefresh()
   abortController?.abort()
-  if (resetTimer) clearInterval(resetTimer)
 })
 </script>

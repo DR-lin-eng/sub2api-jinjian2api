@@ -18,43 +18,6 @@ import type {
   UserErrorListParams
 } from '@/types'
 
-// ==================== Dashboard Types ====================
-
-export interface PlatformDashboardStats {
-  platform: string
-  total_requests: number
-  total_tokens: number
-  total_actual_cost: number
-  today_requests: number
-  today_tokens: number
-  today_actual_cost: number
-}
-
-export interface UserDashboardStats {
-  total_api_keys: number
-  active_api_keys: number
-  total_requests: number
-  total_input_tokens: number
-  total_output_tokens: number
-  total_cache_creation_tokens: number
-  total_cache_read_tokens: number
-  total_tokens: number
-  total_cost: number // 标准计费
-  total_actual_cost: number // 实际扣除
-  today_requests: number
-  today_input_tokens: number
-  today_output_tokens: number
-  today_cache_creation_tokens: number
-  today_cache_read_tokens: number
-  today_tokens: number
-  today_cost: number // 今日标准计费
-  today_actual_cost: number // 今日实际扣除
-  average_duration_ms: number
-  rpm: number // 近5分钟平均每分钟请求数
-  tpm: number // 近5分钟平均每分钟Token数
-  by_platform?: PlatformDashboardStats[]
-}
-
 export interface TrendParams {
   start_date?: string
   end_date?: string
@@ -64,7 +27,6 @@ export interface TrendParams {
   group_id?: number
   request_type?: UsageRequestType
   stream?: boolean
-  billing_type?: number | null
   billing_mode?: string | null
   timezone?: string
 }
@@ -253,18 +215,9 @@ export async function getById(id: number): Promise<UsageLog> {
 // ==================== Dashboard API ====================
 
 /**
- * Get user dashboard statistics
- * @returns Dashboard statistics for current user
- */
-export async function getDashboardStats(): Promise<UserDashboardStats> {
-  const { data } = await apiClient.get<UserDashboardStats>('/usage/dashboard/stats')
-  return data
-}
-
-/**
- * Get user usage trend data
+ * Get gateway usage trend data
  * @param params - Query parameters for filtering
- * @returns Usage trend data for current user
+ * @returns Usage trend data for the local administrator
  */
 export async function getDashboardTrend(params?: TrendParams): Promise<TrendResponse> {
   const { data } = await apiClient.get<TrendResponse>('/usage/dashboard/trend', { params })
@@ -272,9 +225,9 @@ export async function getDashboardTrend(params?: TrendParams): Promise<TrendResp
 }
 
 /**
- * Get user model usage statistics
+ * Get gateway model usage statistics
  * @param params - Query parameters for filtering
- * @returns Model usage statistics for current user
+ * @returns Model usage statistics for the local administrator
  */
 export async function getDashboardModels(params?: {
   start_date?: string
@@ -285,7 +238,6 @@ export async function getDashboardModels(params?: {
   group_id?: number
   request_type?: UsageRequestType
   stream?: boolean
-  billing_type?: number | null
   billing_mode?: string | null
   timezone?: string
 }): Promise<ModelStatsResponse> {
@@ -401,7 +353,6 @@ export const usageAPI = {
   getByDateRange,
   getById,
   // Dashboard
-  getDashboardStats,
   getDashboardTrend,
   getDashboardModels,
   getMyApiKeyDailyUsage,

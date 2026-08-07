@@ -13,13 +13,12 @@ const mockLogin = vi.fn()
 const mockLogin2FA = vi.fn()
 const mockPush = vi.fn()
 
-vi.mock('@/api', () => ({
+vi.mock('@/features/auth/data/datasources/authDatasource', () => ({
   authAPI: {
     login: (...args: any[]) => mockLogin(...args),
     login2FA: (...args: any[]) => mockLogin2FA(...args),
     logout: vi.fn(),
     getCurrentUser: vi.fn().mockResolvedValue({ data: {} }),
-    register: vi.fn(),
     refreshToken: vi.fn(),
   },
   isTotp2FARequired: (response: any) => response?.requires_2fa === true,
@@ -27,10 +26,6 @@ vi.mock('@/api', () => ({
 
 vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
   checkUpdates: vi.fn(),
-}))
-
-vi.mock('@/features/auth/data/datasources/authDatasource', () => ({
-  getPublicSettings: vi.fn().mockResolvedValue({}),
 }))
 
 /**
@@ -95,18 +90,18 @@ describe('LoginForm 核心逻辑', () => {
     mockLogin.mockResolvedValue({
       access_token: 'token',
       token_type: 'Bearer',
-      user: { id: 1, username: 'test', email: 'test@example.com', role: 'user', balance: 0, concurrency: 5, status: 'active', allowed_groups: null, created_at: '', updated_at: '' },
+		user: { id: 1, username: 'admin', email: 'admin@example.com', role: 'admin', status: 'active', created_at: '', updated_at: '' },
     })
 
     const wrapper = mount(LoginFormTestComponent)
 
-    await wrapper.find('#email').setValue('test@example.com')
+		await wrapper.find('#email').setValue('admin@example.com')
     await wrapper.find('#password').setValue('password123')
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
     expect(mockLogin).toHaveBeenCalledWith({
-      email: 'test@example.com',
+		email: 'admin@example.com',
       password: 'password123',
     })
     expect(mockPush).toHaveBeenCalledWith('/dashboard')
@@ -169,7 +164,7 @@ describe('LoginForm 核心逻辑', () => {
     resolveLogin!({
       access_token: 'token',
       token_type: 'Bearer',
-      user: { id: 1, username: 'test', email: 'test@example.com', role: 'user', balance: 0, concurrency: 5, status: 'active', allowed_groups: null, created_at: '', updated_at: '' },
+		user: { id: 1, username: 'admin', email: 'admin@example.com', role: 'admin', status: 'active', created_at: '', updated_at: '' },
     })
     await flushPromises()
 

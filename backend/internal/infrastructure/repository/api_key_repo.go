@@ -49,13 +49,8 @@ func (r *apiKeyRepository) Create(ctx context.Context, key *service.APIKey) erro
 		SetStatus(key.Status).
 		SetNillableGroupID(key.GroupID).
 		SetNillableLastUsedAt(key.LastUsedAt).
-		SetQuota(key.Quota).
-		SetQuotaUsed(key.QuotaUsed).
 		SetNillableExpiresAt(key.ExpiresAt).
-		SetConcurrencyLimit(key.ConcurrencyLimit).
-		SetRateLimit5h(key.RateLimit5h).
-		SetRateLimit1d(key.RateLimit1d).
-		SetRateLimit7d(key.RateLimit7d)
+		SetConcurrencyLimit(key.ConcurrencyLimit)
 
 	if len(key.IPWhitelist) > 0 {
 		builder.SetIPWhitelist(key.IPWhitelist)
@@ -111,11 +106,7 @@ func (r *apiKeyRepository) GetKeyAndOwnerID(ctx context.Context, id int64) (stri
 func (r *apiKeyRepository) GetByKey(ctx context.Context, key string) (*service.APIKey, error) {
 	m, err := r.activeQuery().
 		Where(apikey.KeyEQ(key)).
-		WithUser(func(q *dbent.UserQuery) {
-			q.WithAllowedGroups(func(gq *dbent.GroupQuery) {
-				gq.Select(group.FieldID)
-			})
-		}).
+		WithUser().
 		WithGroup().
 		Only(ctx)
 	if err != nil {
@@ -138,13 +129,8 @@ func (r *apiKeyRepository) GetByKeyForAuth(ctx context.Context, key string) (*se
 			apikey.FieldStatus,
 			apikey.FieldIPWhitelist,
 			apikey.FieldIPBlacklist,
-			apikey.FieldQuota,
-			apikey.FieldQuotaUsed,
 			apikey.FieldExpiresAt,
 			apikey.FieldConcurrencyLimit,
-			apikey.FieldRateLimit5h,
-			apikey.FieldRateLimit1d,
-			apikey.FieldRateLimit7d,
 		).
 		WithUser(func(q *dbent.UserQuery) {
 			q.Select(
@@ -153,37 +139,20 @@ func (r *apiKeyRepository) GetByKeyForAuth(ctx context.Context, key string) (*se
 				user.FieldUsername,
 				user.FieldStatus,
 				user.FieldRole,
-				user.FieldBalance,
 				user.FieldConcurrency,
 				user.FieldRequestSchedulingTier,
-				user.FieldBalanceNotifyEnabled,
-				user.FieldBalanceNotifyThresholdType,
-				user.FieldBalanceNotifyThreshold,
-				user.FieldBalanceNotifyExtraEmails,
-				user.FieldTotalRecharged,
-				user.FieldSignupSource,
 				user.FieldLastLoginAt,
 				user.FieldLastActiveAt,
-				user.FieldRpmLimit,
 			)
-			q.WithAllowedGroups(func(gq *dbent.GroupQuery) {
-				gq.Select(group.FieldID)
-			})
 		}).
 		WithGroup(func(q *dbent.GroupQuery) {
 			q.Select(
 				group.FieldID,
 				group.FieldName,
 				group.FieldPlatform,
-				group.FieldIsExclusive,
 				group.FieldStatus,
-				group.FieldSubscriptionType,
 				group.FieldRateMultiplier,
-				group.FieldDailyLimitUsd,
-				group.FieldWeeklyLimitUsd,
-				group.FieldMonthlyLimitUsd,
 				group.FieldAllowImageGeneration,
-				group.FieldAllowBatchImageGeneration,
 				group.FieldImageRateIndependent,
 				group.FieldImageRateMultiplier,
 				group.FieldImagePrice1k,
@@ -210,10 +179,6 @@ func (r *apiKeyRepository) GetByKeyForAuth(ctx context.Context, key string) (*se
 				group.FieldRpmLimit,
 				group.FieldMaxReasoningEffort,
 				group.FieldReasoningEffortMappings,
-				group.FieldPeakRateEnabled,
-				group.FieldPeakStart,
-				group.FieldPeakEnd,
-				group.FieldPeakRateMultiplier,
 				group.FieldProfitControlEnabled,
 				group.FieldProfitMinMargin,
 				group.FieldProfitSafetyBuffer,
@@ -251,43 +216,8 @@ func (r *apiKeyRepository) Update(ctx context.Context, key *service.APIKey, fiel
 	if fields.Status {
 		builder.SetStatus(key.Status)
 	}
-	if fields.Quota {
-		builder.SetQuota(key.Quota)
-	}
-	if fields.QuotaUsed {
-		builder.SetQuotaUsed(key.QuotaUsed)
-	}
 	if fields.ConcurrencyLimit {
 		builder.SetConcurrencyLimit(key.ConcurrencyLimit)
-	}
-	if fields.RateLimits {
-		builder.
-			SetRateLimit5h(key.RateLimit5h).
-			SetRateLimit1d(key.RateLimit1d).
-			SetRateLimit7d(key.RateLimit7d)
-	}
-	if fields.RateLimitUsage {
-		builder.
-			SetUsage5h(key.Usage5h).
-			SetUsage1d(key.Usage1d).
-			SetUsage7d(key.Usage7d)
-
-		// Rate limit window start times
-		if key.Window5hStart != nil {
-			builder.SetWindow5hStart(*key.Window5hStart)
-		} else {
-			builder.ClearWindow5hStart()
-		}
-		if key.Window1dStart != nil {
-			builder.SetWindow1dStart(*key.Window1dStart)
-		} else {
-			builder.ClearWindow1dStart()
-		}
-		if key.Window7dStart != nil {
-			builder.SetWindow7dStart(*key.Window7dStart)
-		} else {
-			builder.ClearWindow7dStart()
-		}
 	}
 	if fields.GroupID {
 		if key.GroupID != nil {
@@ -744,47 +674,6 @@ func (r *apiKeyRepository) ListKeysByGroupID(ctx context.Context, groupID int64)
 	return keys, nil
 }
 
-// IncrementQuotaUsed 使用 Ent 原子递增 quota_used 字段并返回新值
-func (r *apiKeyRepository) IncrementQuotaUsed(ctx context.Context, id int64, amount float64) (float64, error) {
-	updated, err := r.client.APIKey.UpdateOneID(id).
-		Where(apikey.DeletedAtIsNil()).
-		AddQuotaUsed(amount).
-		Save(ctx)
-	if err != nil {
-		if dbent.IsNotFound(err) {
-			return 0, service.ErrAPIKeyNotFound
-		}
-		return 0, err
-	}
-	return updated.QuotaUsed, nil
-}
-
-// IncrementQuotaUsedAndGetState atomically increments quota_used, conditionally marks the key
-// as quota_exhausted, and returns the latest quota state in one round trip.
-func (r *apiKeyRepository) IncrementQuotaUsedAndGetState(ctx context.Context, id int64, amount float64) (*service.APIKeyQuotaUsageState, error) {
-	query := `
-		UPDATE api_keys
-		SET
-			quota_used = quota_used + $1,
-			status = CASE
-				WHEN quota > 0 AND quota_used + $1 >= quota THEN $2
-				ELSE status
-			END,
-			updated_at = NOW()
-		WHERE id = $3 AND deleted_at IS NULL
-		RETURNING quota_used, quota, key, status
-	`
-
-	state := &service.APIKeyQuotaUsageState{}
-	if err := scanSingleRow(ctx, r.sql, query, []any{amount, service.StatusAPIKeyQuotaExhausted, id}, &state.QuotaUsed, &state.Quota, &state.Key, &state.Status); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, service.ErrAPIKeyNotFound
-		}
-		return nil, err
-	}
-	return state, nil
-}
-
 func (r *apiKeyRepository) UpdateLastUsed(ctx context.Context, id int64, usedAt time.Time) error {
 	affected, err := r.client.APIKey.Update().
 		Where(apikey.IDEQ(id), apikey.DeletedAtIsNil()).
@@ -833,64 +722,6 @@ func buildAPIKeyLastUsedBatchQuery(updates map[int64]time.Time) (string, []any) 
 	return query.String(), args
 }
 
-// IncrementRateLimitUsage atomically increments all rate limit usage counters and initializes
-// window start times via COALESCE if not already set.
-func (r *apiKeyRepository) IncrementRateLimitUsage(ctx context.Context, id int64, cost float64) error {
-	_, err := r.sql.ExecContext(ctx, `
-		UPDATE api_keys SET
-			usage_5h = CASE WHEN window_5h_start IS NOT NULL AND window_5h_start + INTERVAL '5 hours' <= NOW() THEN $1 ELSE usage_5h + $1 END,
-			usage_1d = CASE WHEN window_1d_start IS NOT NULL AND window_1d_start + INTERVAL '24 hours' <= NOW() THEN $1 ELSE usage_1d + $1 END,
-			usage_7d = CASE WHEN window_7d_start IS NOT NULL AND window_7d_start + INTERVAL '7 days' <= NOW() THEN $1 ELSE usage_7d + $1 END,
-			window_5h_start = CASE WHEN window_5h_start IS NULL OR window_5h_start + INTERVAL '5 hours' <= NOW() THEN NOW() ELSE window_5h_start END,
-			window_1d_start = CASE WHEN window_1d_start IS NULL OR window_1d_start + INTERVAL '24 hours' <= NOW() THEN date_trunc('day', NOW()) ELSE window_1d_start END,
-			window_7d_start = CASE WHEN window_7d_start IS NULL OR window_7d_start + INTERVAL '7 days' <= NOW() THEN date_trunc('day', NOW()) ELSE window_7d_start END,
-			updated_at = NOW()
-		WHERE id = $2 AND deleted_at IS NULL`,
-		cost, id)
-	return err
-}
-
-// ResetRateLimitWindows resets expired rate limit windows atomically.
-func (r *apiKeyRepository) ResetRateLimitWindows(ctx context.Context, id int64) error {
-	_, err := r.sql.ExecContext(ctx, `
-		UPDATE api_keys SET
-			usage_5h = CASE WHEN window_5h_start IS NOT NULL AND window_5h_start + INTERVAL '5 hours' <= NOW() THEN 0 ELSE usage_5h END,
-			window_5h_start = CASE WHEN window_5h_start IS NOT NULL AND window_5h_start + INTERVAL '5 hours' <= NOW() THEN NOW() ELSE window_5h_start END,
-			usage_1d = CASE WHEN window_1d_start IS NOT NULL AND window_1d_start + INTERVAL '24 hours' <= NOW() THEN 0 ELSE usage_1d END,
-			window_1d_start = CASE WHEN window_1d_start IS NOT NULL AND window_1d_start + INTERVAL '24 hours' <= NOW() THEN date_trunc('day', NOW()) ELSE window_1d_start END,
-			usage_7d = CASE WHEN window_7d_start IS NOT NULL AND window_7d_start + INTERVAL '7 days' <= NOW() THEN 0 ELSE usage_7d END,
-			window_7d_start = CASE WHEN window_7d_start IS NOT NULL AND window_7d_start + INTERVAL '7 days' <= NOW() THEN date_trunc('day', NOW()) ELSE window_7d_start END,
-			updated_at = NOW()
-		WHERE id = $1 AND deleted_at IS NULL`,
-		id)
-	return err
-}
-
-// GetRateLimitData returns the current rate limit usage and window start times for an API key.
-func (r *apiKeyRepository) GetRateLimitData(ctx context.Context, id int64) (result *service.APIKeyRateLimitData, err error) {
-	rows, err := r.sql.QueryContext(ctx, `
-		SELECT usage_5h, usage_1d, usage_7d, window_5h_start, window_1d_start, window_7d_start
-		FROM api_keys
-		WHERE id = $1 AND deleted_at IS NULL`,
-		id)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if closeErr := rows.Close(); closeErr != nil && err == nil {
-			err = closeErr
-		}
-	}()
-	if !rows.Next() {
-		return nil, service.ErrAPIKeyNotFound
-	}
-	data := &service.APIKeyRateLimitData{}
-	if err := rows.Scan(&data.Usage5h, &data.Usage1d, &data.Usage7d, &data.Window5hStart, &data.Window1dStart, &data.Window7dStart); err != nil {
-		return nil, err
-	}
-	return data, rows.Err()
-}
-
 func apiKeyEntityToService(m *dbent.APIKey) *service.APIKey {
 	if m == nil {
 		return nil
@@ -907,30 +738,11 @@ func apiKeyEntityToService(m *dbent.APIKey) *service.APIKey {
 		CreatedAt:        m.CreatedAt,
 		UpdatedAt:        m.UpdatedAt,
 		GroupID:          m.GroupID,
-		Quota:            m.Quota,
-		QuotaUsed:        m.QuotaUsed,
 		ExpiresAt:        m.ExpiresAt,
 		ConcurrencyLimit: m.ConcurrencyLimit,
-		RateLimit5h:      m.RateLimit5h,
-		RateLimit1d:      m.RateLimit1d,
-		RateLimit7d:      m.RateLimit7d,
-		Usage5h:          m.Usage5h,
-		Usage1d:          m.Usage1d,
-		Usage7d:          m.Usage7d,
-		Window5hStart:    m.Window5hStart,
-		Window1dStart:    m.Window1dStart,
-		Window7dStart:    m.Window7dStart,
 	}
 	if m.Edges.User != nil {
 		out.User = userEntityToService(m.Edges.User)
-		if allowed := m.Edges.User.Edges.AllowedGroups; len(allowed) > 0 {
-			out.User.AllowedGroups = make([]int64, 0, len(allowed))
-			for _, g := range allowed {
-				if g != nil {
-					out.User.AllowedGroups = append(out.User.AllowedGroups, g.ID)
-				}
-			}
-		}
 	}
 	if m.Edges.Group != nil {
 		out.Group = groupEntityToService(m.Edges.Group)
@@ -943,35 +755,23 @@ func userEntityToService(u *dbent.User) *service.User {
 		return nil
 	}
 	out := &service.User{
-		ID:                         u.ID,
-		Email:                      u.Email,
-		Username:                   u.Username,
-		Notes:                      u.Notes,
-		PasswordHash:               u.PasswordHash,
-		Role:                       u.Role,
-		Balance:                    u.Balance,
-		FrozenBalance:              u.FrozenBalance,
-		Concurrency:                u.Concurrency,
-		SchedulingTier:             service.NormalizeRequestSchedulingTier(service.RequestSchedulingTier(u.RequestSchedulingTier)),
-		Status:                     u.Status,
-		SignupSource:               u.SignupSource,
-		LastLoginAt:                u.LastLoginAt,
-		LastActiveAt:               u.LastActiveAt,
-		TotpSecretEncrypted:        u.TotpSecretEncrypted,
-		TotpEnabled:                u.TotpEnabled,
-		TotpEnabledAt:              u.TotpEnabledAt,
-		BalanceNotifyEnabled:       u.BalanceNotifyEnabled,
-		BalanceNotifyThresholdType: u.BalanceNotifyThresholdType,
-		BalanceNotifyThreshold:     u.BalanceNotifyThreshold,
-		TotalRecharged:             u.TotalRecharged,
-		RPMLimit:                   u.RpmLimit,
-		CreatedAt:                  u.CreatedAt,
-		UpdatedAt:                  u.UpdatedAt,
-		DeletedAt:                  u.DeletedAt,
-	}
-	// Parse extra emails JSON (supports both old []string and new []NotifyEmailEntry format)
-	if u.BalanceNotifyExtraEmails != "" && u.BalanceNotifyExtraEmails != "[]" {
-		out.BalanceNotifyExtraEmails = service.ParseNotifyEmails(u.BalanceNotifyExtraEmails)
+		ID:                  u.ID,
+		Email:               u.Email,
+		Username:            u.Username,
+		Notes:               u.Notes,
+		PasswordHash:        u.PasswordHash,
+		Role:                u.Role,
+		Concurrency:         u.Concurrency,
+		SchedulingTier:      service.NormalizeRequestSchedulingTier(service.RequestSchedulingTier(u.RequestSchedulingTier)),
+		Status:              u.Status,
+		LastLoginAt:         u.LastLoginAt,
+		LastActiveAt:        u.LastActiveAt,
+		TotpSecretEncrypted: u.TotpSecretEncrypted,
+		TotpEnabled:         u.TotpEnabled,
+		TotpEnabledAt:       u.TotpEnabledAt,
+		CreatedAt:           u.CreatedAt,
+		UpdatedAt:           u.UpdatedAt,
+		DeletedAt:           u.DeletedAt,
 	}
 	return out
 }
@@ -986,31 +786,22 @@ func groupEntityToService(g *dbent.Group) *service.Group {
 		Description:                     derefString(g.Description),
 		Platform:                        g.Platform,
 		RateMultiplier:                  g.RateMultiplier,
-		IsExclusive:                     g.IsExclusive,
 		Status:                          g.Status,
 		Hydrated:                        true,
 		DuplicateOperationID:            derefString(g.DuplicateOperationID),
-		SubscriptionType:                g.SubscriptionType,
-		DailyLimitUSD:                   g.DailyLimitUsd,
-		WeeklyLimitUSD:                  g.WeeklyLimitUsd,
-		MonthlyLimitUSD:                 g.MonthlyLimitUsd,
 		AllowImageGeneration:            g.AllowImageGeneration,
 		OpenAIForceImageTool:            g.OpenaiForceImageTool,
-		AllowBatchImageGeneration:       g.AllowBatchImageGeneration,
 		ImageRateIndependent:            g.ImageRateIndependent,
 		ImageRateMultiplier:             g.ImageRateMultiplier,
 		ImagePrice1K:                    g.ImagePrice1k,
 		ImagePrice2K:                    g.ImagePrice2k,
 		ImagePrice4K:                    g.ImagePrice4k,
-		BatchImageDiscountMultiplier:    g.BatchImageDiscountMultiplier,
-		BatchImageHoldMultiplier:        g.BatchImageHoldMultiplier,
 		VideoRateIndependent:            g.VideoRateIndependent,
 		VideoRateMultiplier:             g.VideoRateMultiplier,
 		VideoPrice480P:                  g.VideoPrice480p,
 		VideoPrice720P:                  g.VideoPrice720p,
 		VideoPrice1080P:                 g.VideoPrice1080p,
 		WebSearchPricePerCall:           g.WebSearchPricePerCall,
-		DefaultValidityDays:             g.DefaultValidityDays,
 		ClaudeCodeOnly:                  g.ClaudeCodeOnly,
 		FallbackGroupID:                 g.FallbackGroupID,
 		FallbackGroupIDOnInvalidRequest: g.FallbackGroupIDOnInvalidRequest,
@@ -1029,10 +820,6 @@ func groupEntityToService(g *dbent.Group) *service.Group {
 		RPMLimit:                        g.RpmLimit,
 		MaxReasoningEffort:              g.MaxReasoningEffort,
 		ReasoningEffortMappings:         g.ReasoningEffortMappings,
-		PeakRateEnabled:                 g.PeakRateEnabled,
-		PeakStart:                       g.PeakStart,
-		PeakEnd:                         g.PeakEnd,
-		PeakRateMultiplier:              g.PeakRateMultiplier,
 		ProfitControlEnabled:            g.ProfitControlEnabled,
 		ProfitMinMargin:                 g.ProfitMinMargin,
 		ProfitSafetyBuffer:              g.ProfitSafetyBuffer,

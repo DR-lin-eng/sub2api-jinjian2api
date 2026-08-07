@@ -1,7 +1,5 @@
 export type GroupPlatform = 'anthropic' | 'openai' | 'gemini' | 'antigravity' | 'grok' | 'composite'
 
-export type SubscriptionType = 'standard' | 'subscription'
-
 export interface OpenAIMessagesDispatchModelConfig {
   opus_mapped_model?: string
   sonnet_mapped_model?: string
@@ -20,23 +18,15 @@ export interface Group {
   description: string | null
   platform: GroupPlatform
   rate_multiplier: number
-  rpm_limit?: number // Group-level RPM cap (0 = unlimited); overrides user-level rpm_limit when set
+  rpm_limit?: number // Group-level RPM cap (0 = unlimited)
   max_reasoning_effort?: string // OpenAI/Codex reasoning ceiling; empty means unlimited
   reasoning_effort_mappings?: ReasoningEffortMapping[]
-  is_exclusive: boolean
   status: 'active' | 'inactive'
-  subscription_type: SubscriptionType
-  daily_limit_usd: number | null
-  weekly_limit_usd: number | null
-  monthly_limit_usd: number | null
-  // 图片生成计费配置
+  // Media generation informational pricing configuration
   allow_image_generation: boolean
   openai_force_image_tool: boolean
-  allow_batch_image_generation: boolean
   image_rate_independent: boolean
   image_rate_multiplier: number
-  batch_image_discount_multiplier: number
-  batch_image_hold_multiplier: number
   image_price_1k: number | null
   image_price_2k: number | null
   image_price_4k: number | null
@@ -47,11 +37,6 @@ export interface Group {
   video_price_1080p: number | null
   // Codex 网页搜索单次价格（USD/次）；null 表示使用默认价 0.01
   web_search_price_per_call: number | null
-  // 高峰时段倍率配置
-  peak_rate_enabled: boolean
-  peak_start: string
-  peak_end: string
-  peak_rate_multiplier: number
   // Claude Code 客户端限制
   claude_code_only: boolean
   fallback_group_id: number | null
@@ -165,31 +150,17 @@ export interface ApiKey {
   key: string
   name: string
   group_id: number | null
-  status: 'active' | 'inactive' | 'quota_exhausted' | 'expired'
+  status: 'active' | 'inactive' | 'expired'
   ip_whitelist: string[]
   ip_blacklist: string[]
   last_used_at: string | null
   last_used_ip: string | null
-  quota: number // Quota limit in USD (0 = unlimited)
-  quota_used: number // Used quota amount in USD
   expires_at: string | null // Expiration time (null = never expires)
   created_at: string
   updated_at: string
   concurrency_limit: number // Maximum concurrent requests (0 = unlimited)
   current_concurrency: number
   group?: Group
-  rate_limit_5h: number
-  rate_limit_1d: number
-  rate_limit_7d: number
-  usage_5h: number
-  usage_1d: number
-  usage_7d: number
-  window_5h_start: string | null
-  window_1d_start: string | null
-  window_7d_start: string | null
-  reset_5h_at: string | null
-  reset_1d_at: string | null
-  reset_7d_at: string | null
 }
 
 export interface CreateApiKeyRequest {
@@ -198,11 +169,7 @@ export interface CreateApiKeyRequest {
   custom_key?: string // Optional custom API Key
   ip_whitelist?: string[]
   ip_blacklist?: string[]
-  quota?: number // Quota limit in USD (0 = unlimited)
   expires_in_days?: number // Days until expiry (null = never expires)
-  rate_limit_5h?: number
-  rate_limit_1d?: number
-  rate_limit_7d?: number
 }
 
 export interface UpdateApiKeyRequest {
@@ -211,14 +178,8 @@ export interface UpdateApiKeyRequest {
   status?: 'active' | 'inactive'
   ip_whitelist?: string[]
   ip_blacklist?: string[]
-  quota?: number // Quota limit in USD (null = no change, 0 = unlimited)
   expires_at?: string | null // Expiration time (null = no change)
-  reset_quota?: boolean // Reset quota_used to 0
   concurrency_limit?: number // Maximum concurrent requests (0 = unlimited)
-  rate_limit_5h?: number
-  rate_limit_1d?: number
-  rate_limit_7d?: number
-  reset_rate_limit_usage?: boolean
 }
 
 export interface CreateGroupRequest {
@@ -226,18 +187,10 @@ export interface CreateGroupRequest {
   description?: string | null
   platform?: GroupPlatform
   rate_multiplier?: number
-  is_exclusive?: boolean
-  subscription_type?: SubscriptionType
-  daily_limit_usd?: number | null
-  weekly_limit_usd?: number | null
-  monthly_limit_usd?: number | null
   allow_image_generation?: boolean
   openai_force_image_tool?: boolean
-  allow_batch_image_generation?: boolean
   image_rate_independent?: boolean
   image_rate_multiplier?: number
-  batch_image_discount_multiplier?: number
-  batch_image_hold_multiplier?: number
   image_price_1k?: number | null
   image_price_2k?: number | null
   image_price_4k?: number | null
@@ -247,10 +200,6 @@ export interface CreateGroupRequest {
   video_price_720p?: number | null
   video_price_1080p?: number | null
   web_search_price_per_call?: number | null
-  peak_rate_enabled?: boolean
-  peak_start?: string
-  peak_end?: string
-  peak_rate_multiplier?: number
   profit_control_enabled?: boolean
   profit_min_margin?: number
   profit_safety_buffer?: number
@@ -280,19 +229,11 @@ export interface UpdateGroupRequest {
   description?: string | null
   platform?: GroupPlatform
   rate_multiplier?: number
-  is_exclusive?: boolean
   status?: 'active' | 'inactive'
-  subscription_type?: SubscriptionType
-  daily_limit_usd?: number | null
-  weekly_limit_usd?: number | null
-  monthly_limit_usd?: number | null
   allow_image_generation?: boolean
   openai_force_image_tool?: boolean
-  allow_batch_image_generation?: boolean
   image_rate_independent?: boolean
   image_rate_multiplier?: number
-  batch_image_discount_multiplier?: number
-  batch_image_hold_multiplier?: number
   image_price_1k?: number | null
   image_price_2k?: number | null
   image_price_4k?: number | null
@@ -302,10 +243,6 @@ export interface UpdateGroupRequest {
   video_price_720p?: number | null
   video_price_1080p?: number | null
   web_search_price_per_call?: number | null
-  peak_rate_enabled?: boolean
-  peak_start?: string
-  peak_end?: string
-  peak_rate_multiplier?: number
   profit_control_enabled?: boolean
   profit_min_margin?: number
   profit_safety_buffer?: number

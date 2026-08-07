@@ -858,14 +858,38 @@ func stampUpstreamBillingSortMetadata(data map[string]any) {
 	if !startOK || !endOK {
 		return
 	}
-	startMinute, startOK := parseMinutes(peakStart)
-	endMinute, endOK := parseMinutes(peakEnd)
+	startMinute, startOK := parseUpstreamBillingClockMinutes(peakStart)
+	endMinute, endOK := parseUpstreamBillingClockMinutes(peakEnd)
 	if !startOK || !endOK {
 		return
 	}
 	data[UpstreamBillingProbePeakStartMinuteKey] = startMinute
 	data[UpstreamBillingProbePeakEndMinuteKey] = endMinute
 	data[UpstreamBillingProbeSortMetadataVersionKey] = UpstreamBillingProbeSortMetadataVersion
+}
+
+func parseUpstreamBillingClockMinutes(hhmm string) (int, bool) {
+	colon := strings.IndexByte(hhmm, ':')
+	if (colon != 1 && colon != 2) || len(hhmm)-colon-1 != 2 {
+		return 0, false
+	}
+	hour := 0
+	for i := 0; i < colon; i++ {
+		digit := hhmm[i] - '0'
+		if digit > 9 {
+			return 0, false
+		}
+		hour = hour*10 + int(digit)
+	}
+	minuteTens, minuteOnes := hhmm[colon+1]-'0', hhmm[colon+2]-'0'
+	if minuteTens > 9 || minuteOnes > 9 {
+		return 0, false
+	}
+	minute := int(minuteTens)*10 + int(minuteOnes)
+	if hour > 23 || minute > 59 {
+		return 0, false
+	}
+	return hour*60 + minute, true
 }
 
 func upstreamBillingRateAt(data map[string]any, now time.Time) (float64, bool) {
@@ -915,8 +939,8 @@ func upstreamBillingPeakMultiplierAt(data map[string]any, now time.Time) (float6
 	end, endOK := data["peak_end"].(string)
 	timezoneName, timezoneOK := data["timezone"].(string)
 	peakMultiplier, multiplierOK := resolveAccountExtraNumber(data, "peak_rate_multiplier")
-	startMinute, validStart := parseMinutes(start)
-	endMinute, validEnd := parseMinutes(end)
+	startMinute, validStart := parseUpstreamBillingClockMinutes(start)
+	endMinute, validEnd := parseUpstreamBillingClockMinutes(end)
 	if !startOK || !endOK || !timezoneOK || !multiplierOK || !validStart || !validEnd ||
 		startMinute >= endMinute || peakMultiplier < 0 || math.IsNaN(peakMultiplier) || math.IsInf(peakMultiplier, 0) {
 		return 0, false

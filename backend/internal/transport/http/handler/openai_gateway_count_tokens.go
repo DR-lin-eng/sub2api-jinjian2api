@@ -3,7 +3,6 @@ package handler
 import (
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
@@ -81,8 +80,8 @@ func (h *OpenAIGatewayHandler) GrokCountTokens(c *gin.Context) {
 }
 
 // CountTokens handles Anthropic-compatible POST /v1/messages/count_tokens for OpenAI groups.
-// It validates billing and routes to an OpenAI token-count bridge without
-// recording usage. User/account admission is applied only when enabled.
+// It routes to an OpenAI token-count bridge without downstream billing or
+// usage recording. Caller/account admission is applied only when enabled.
 func (h *OpenAIGatewayHandler) CountTokens(c *gin.Context) {
 	apiKey, ok := middleware2.GetAPIKeyFromContext(c)
 	if !ok {
@@ -173,17 +172,6 @@ func (h *OpenAIGatewayHandler) CountTokens(c *gin.Context) {
 
 	channelMapping, _ := h.gatewayService.ResolveChannelMappingAndRestrict(c.Request.Context(), apiKey.GroupID, reqModel)
 	mappedBodyForMessages := newOpenAIModelMappedBodyCache(body, h.gatewayService.ReplaceModelInBody)
-
-	subscription, _ := middleware2.GetSubscriptionFromContext(c)
-	if err := h.billingCacheService.CheckBillingEligibility(c.Request.Context(), apiKey.User, apiKey, apiKey.Group, subscription, service.QuotaPlatform(c.Request.Context(), apiKey)); err != nil {
-		reqLog.Info("openai_count_tokens.billing_eligibility_check_failed", zap.Error(err))
-		status, code, message, retryAfter := billingErrorDetails(err)
-		if retryAfter > 0 {
-			c.Header("Retry-After", strconv.Itoa(retryAfter))
-		}
-		h.anthropicErrorResponse(c, status, code, message)
-		return
-	}
 
 	sessionHash := h.gatewayService.GenerateSessionHashForRequest(c, apiKey.GroupID, body)
 	defer h.gatewayService.ReleaseOpenAIContentSessionRequest(c.Request.Context(), apiKey.GroupID, sessionHash)

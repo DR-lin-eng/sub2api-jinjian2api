@@ -16,9 +16,6 @@ func (c *Config) Validate() error {
 	if err := validateLogging(c); err != nil {
 		return err
 	}
-	if err := validateSubscriptionMaintenance(c); err != nil {
-		return err
-	}
 	if err := validateGeminiOAuth(c); err != nil {
 		return err
 	}
@@ -34,28 +31,10 @@ func (c *Config) Validate() error {
 	if err := validateWebAuthn(c); err != nil {
 		return err
 	}
-	if err := validateLinuxDoConnect(c); err != nil {
-		return err
-	}
-	if err := validateWeChatConnect(c); err != nil {
-		return err
-	}
-	if err := validateOIDCConnect(c); err != nil {
-		return err
-	}
-	if err := validateBilling(c); err != nil {
-		return err
-	}
 	if err := validateDataStores(c); err != nil {
 		return err
 	}
-	if err := validateBatchImage(c); err != nil {
-		return err
-	}
 	if err := validateDashboard(c); err != nil {
-		return err
-	}
-	if err := validateUsageCleanup(c); err != nil {
 		return err
 	}
 	if err := validateIdempotency(c); err != nil {
@@ -86,9 +65,6 @@ func (c *Config) Validate() error {
 		return err
 	}
 	if err := validateConcurrency(c); err != nil {
-		return err
-	}
-	if err := validateDingTalkConnect(c); err != nil {
 		return err
 	}
 	return nil

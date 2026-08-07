@@ -6,12 +6,18 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
 	"github.com/stretchr/testify/require"
 )
+
+func uniqueTestValue(t *testing.T, prefix string) string {
+	t.Helper()
+	return fmt.Sprintf("%s-%s-%d", prefix, t.Name(), time.Now().UnixNano())
+}
 
 // hashedTestValue returns a unique SHA-256 hex string (64 chars) that fits VARCHAR(64) columns.
 func hashedTestValue(t *testing.T, prefix string) string {

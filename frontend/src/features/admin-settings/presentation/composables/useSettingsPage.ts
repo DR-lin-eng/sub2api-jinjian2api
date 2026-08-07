@@ -9,21 +9,10 @@ import {
 } from "@/common/composables/useStepUp";
 import { useAppStore } from "@/core/stores/appStore";
 import { extractApiErrorMessage } from "@/core/utils/apiError";
-import { normalizeRegistrationEmailSuffixDomains } from "@/core/utils/registrationEmailPolicy";
-import {
-  buildAuthSourceDefaultsState,
-  defaultWeChatConnectScopesForMode,
-  deriveWeChatConnectStoredMode,
-  normalizeDefaultSubscriptionSettings,
-  normalizePlatformQuotasMap,
-  resolveWeChatConnectModeCapabilities,
-  settingsAPI,
-} from "@/features/admin-settings/data/datasources/adminSettingsDatasource";
+import { settingsAPI } from "@/features/admin-settings/data/datasources/adminSettingsDatasource";
+import { updateSettings } from "@/features/admin-settings/data/datasources/adminSystemSettingsActions";
+import { getSettings } from "@/features/admin-settings/data/datasources/adminSystemSettingsQueries";
 import { useAdminSettingsStore } from "@/features/admin-settings/presentation/stores/adminSettingsStore";
-import {
-  defaultLoginAgreementDocuments,
-  loginAgreementRoutePath,
-} from "./settingsAgreementResolver";
 import {
   createSettingsForm,
   tablePageSizeMax,
@@ -36,12 +25,9 @@ import {
 } from "./settingsSavePreparation";
 import { applySettingsSaveResponse } from "./settingsSaveResponse";
 import { useSettingsAdminApiKeys } from "./useSettingsAdminApiKeys";
-import { useSettingsAffiliate } from "./useSettingsAffiliate";
 import { useSettingsClaudePromptBlocks } from "./useSettingsClaudePromptBlocks";
+import { useSettingsClientIPAccess } from "./useSettingsClientIPAccess";
 import { useSettingsGatewayPolicies } from "./useSettingsGatewayPolicies";
-import { useSettingsIdentityAccess } from "./useSettingsIdentityAccess";
-import { useSettingsPaymentProviders } from "./useSettingsPaymentProviders";
-import { useSettingsRegistrationDefaults } from "./useSettingsRegistrationDefaults";
 import { useSettingsStructuredEditors } from "./useSettingsStructuredEditors";
 import { useSettingsWebSearch } from "./useSettingsWebSearch";
 export function useSettingsPage() {
@@ -56,40 +42,20 @@ export function useSettingsPage() {
     return isZhLocale.value ? zh : en;
   }
 
-  const paymentGuideHref = computed(() =>
-    locale.value.startsWith("zh")
-      ? "https://github.com/DR-lin-eng/sub2api-no2api/blob/main/docs/PAYMENT_CN.md"
-      : "https://github.com/DR-lin-eng/sub2api-no2api/blob/main/docs/PAYMENT.md",
-  );
-
-  const paymentMethodsHref = computed(() =>
-    locale.value.startsWith("zh")
-      ? "https://github.com/DR-lin-eng/sub2api-no2api/blob/main/docs/PAYMENT_CN.md#支持的支付方式"
-      : "https://github.com/DR-lin-eng/sub2api-no2api/blob/main/docs/PAYMENT.md#supported-payment-methods",
-  );
-
   type SettingsTab =
     | "general"
-    | "agreement"
-    | "features"
     | "security"
-    | "users"
     | "gateway"
     | "performance"
-    | "payment"
     | "email"
     | "backup";
   const activeTab = ref<SettingsTab>("general");
   const panelRateLimitSettingsMounted = ref(false);
   const settingsTabs = [
     { key: "general" as SettingsTab, icon: "home" as const },
-    { key: "agreement" as SettingsTab, icon: "document" as const },
-    { key: "features" as SettingsTab, icon: "bolt" as const },
     { key: "security" as SettingsTab, icon: "shield" as const },
-    { key: "users" as SettingsTab, icon: "user" as const },
     { key: "gateway" as SettingsTab, icon: "server" as const },
     { key: "performance" as SettingsTab, icon: "bolt" as const },
-    { key: "payment" as SettingsTab, icon: "creditCard" as const },
     { key: "email" as SettingsTab, icon: "mail" as const },
     { key: "backup" as SettingsTab, icon: "database" as const },
   ];
@@ -156,7 +122,15 @@ export function useSettingsPage() {
   const sendingTestEmail = ref(false);
   const smtpPasswordManuallyEdited = ref(false);
   const testEmailAddress = ref("");
-  const form = reactive(createSettingsForm(localText));
+  const form = reactive(createSettingsForm());
+
+  function addQuotaNotifyEmail(): void {
+    form.account_quota_notify_emails.push({
+      email: "",
+      disabled: false,
+      verified: true,
+    });
+  }
 
   const {
     addClaudeOAuthSystemPromptBlock,
@@ -176,67 +150,23 @@ export function useSettingsPage() {
   } = useSettingsClaudePromptBlocks(form, t);
 
   const {
-    aliyunCaptchaRegionOptions,
     clientIPLastRefreshText,
     clientIPResolutionModeOptions,
     clientIPTrustedProxiesText,
-    currentOrigin,
-    githubOAuthRedirectUrlSuggestion,
-    googleOAuthRedirectUrlSuggestion,
-    handleWeChatMPEnabledChange,
-    handleWeChatMobileEnabledChange,
-    handleWeChatOpenEnabledChange,
-    humanVerificationProviders,
-    linuxdoRedirectUrlSuggestion,
-    normalizeHumanVerificationProvider,
-    oidcRedirectUrlSuggestion,
     parseClientIPTrustedProxies,
-    setAndCopyEmailOAuthRedirectUrl,
-    setAndCopyLinuxdoRedirectUrl,
-    setAndCopyOIDCRedirectUrl,
-    setAndCopyWeChatRedirectUrl,
-    setHumanVerificationProvider,
-    syncWeChatConnectMode,
-    wechatRedirectUrlSuggestion,
-  } = useSettingsIdentityAccess(form, t, localText, copyToClipboard);
-
-  const {
-    addAuthSourceDefaultSubscription,
-    addDefaultSubscription,
-    addQuotaNotifyEmail,
-    authSourceDefaults,
-    authSourceDefaultsMeta,
-    commitRegistrationEmailSuffixWhitelistDraft,
-    defaultSubscriptionGroupOptions,
-    findDuplicateDefaultSubscription,
-    handleRegistrationEmailSuffixWhitelistDraftInput,
-    handleRegistrationEmailSuffixWhitelistDraftKeydown,
-    handleRegistrationEmailSuffixWhitelistPaste,
-    loadSubscriptionGroups,
-    registrationEmailSuffixWhitelistDraft,
-    registrationEmailSuffixWhitelistTags,
-    removeAuthSourceDefaultSubscription,
-    removeDefaultSubscription,
-    removeRegistrationEmailSuffixWhitelistTag,
-    subscriptionGroups,
-  } = useSettingsRegistrationDefaults(form, t, localText);
+  } = useSettingsClientIPAccess(form, t);
 
   const {
     addCodexBlacklistRow,
     addCodexFingerprintRow,
     addCodexWhitelistRow,
     addEndpoint,
-    addLoginAgreementDocument,
-    addMenuItem,
     codexBlacklistRows,
     codexFingerprintNoRequired,
     codexFingerprintRows,
     codexWhitelistRows,
     defaultFingerprintSignalRows,
-    findDuplicateLoginAgreementDocumentId,
     formatTablePageSizeOptions,
-    moveMenuItem,
-    normalizeLoginAgreementDocumentsForSave,
     parseCodexEntriesToRows,
     parseFingerprintSignalsToRows,
     parseTablePageSizeOptionsInput,
@@ -244,8 +174,6 @@ export function useSettingsPage() {
     removeCodexFingerprintRow,
     removeCodexWhitelistRow,
     removeEndpoint,
-    removeLoginAgreementDocument,
-    removeMenuItem,
     serializeCodexRowsToJSON,
     serializeFingerprintRowsToJSON,
     tablePageSizeOptionsInput,
@@ -385,131 +313,40 @@ export function useSettingsPage() {
   const { adminApiKeyExists, adminApiKeyForm, adminApiKeyLoading, adminApiKeyMasked, adminApiKeyMinExpiry, adminApiKeyOperating, adminApiKeyPanelLoading, adminApiKeyPanelOperating, adminApiKeyPanelSecret, adminApiKeyScopeOptions, cancelEditScopedAdminApiKey, copyNewKey, copyScopedAdminApiKey, createAdminApiKey, createScopedAdminApiKey, deleteAdminApiKey, editScopedAdminApiKey, editingAdminApiKeyId, formatAdminApiKeyDate, loadAdminApiKey, loadScopedAdminApiKeys, newAdminApiKey, regenerateAdminApiKey, revokeScopedAdminApiKey, rotateScopedAdminApiKey, scopedAdminApiKeys } = useSettingsAdminApiKeys(copyToClipboard)
   const { addOpenAIFastPolicyModelPattern, addOpenAIFastPolicyRule, addQuickPattern, applyBetaPreset, betaPolicyActionOptions, betaPolicyForm, betaPolicyLoading, betaPolicySaving, betaPolicyScopeOptions, betaPresets, commonModelPatterns, getBetaDisplayName, globalTempUnschedulableForm, globalTempUnschedulableLoading, globalTempUnschedulableSaving, loadBetaPolicySettings, loadGlobalTempUnschedulableSettings, loadOllamaCloudUsageSettings, loadOverloadCooldownSettings, loadRateLimit429CooldownSettings, loadRectifierSettings, loadStreamTimeoutSettings, loadUpstreamBillingProbeSettings, ollamaCloudUsageForm, ollamaCloudUsageLoading, ollamaCloudUsageSaving, openaiFastPolicyActionOptions, openaiFastPolicyForm, openaiFastPolicyLoaded, openaiFastPolicyScopeOptions, openaiFastPolicyTierOptions, overloadCooldownForm, overloadCooldownLoading, overloadCooldownSaving, rateLimit429CooldownForm, rateLimit429CooldownLoading, rateLimit429CooldownSaving, rectifierForm, rectifierLoading, rectifierSaving, removeOpenAIFastPolicyModelPattern, removeOpenAIFastPolicyRule, saveBetaPolicySettings, saveGlobalTempUnschedulableSettings, saveOllamaCloudUsageSettings, saveOverloadCooldownSettings, saveRateLimit429CooldownSettings, saveRectifierSettings, saveStreamTimeoutSettings, saveUpstreamBillingProbeSettings, streamTimeoutForm, streamTimeoutLoading, streamTimeoutSaving, upstreamBillingProbeForm, upstreamBillingProbeLoading, upstreamBillingProbeSaving } = useSettingsGatewayPolicies()
   const { addWebSearchProvider, apiKeyVisible, copyApiKey, expandedProviders, formatSubscribedAt, loadWebSearchConfig, openTestDialog, parseSubscribedAt, quotaPercentage, removeWebSearchProvider, resetWebSearchUsage, saveWebSearchConfig, testWebSearchProvider, toggleProviderExpand, webSearchConfig, webSearchProxies, wsTestDialogOpen, wsTestLoading, wsTestQuery, wsTestResult } = useSettingsWebSearch()
-  const { allPaymentTypes, cancelRateLimitModeOptions, cancelRateLimitUnitOptions, confirmDeleteProvider, editingProvider, enabledProviderKeyOptions, handleDeleteProvider, handleReorderProviders, handleSaveProvider, handleToggleField, handleToggleType, hasAnyPaymentTypeEnabled, isPaymentTypeEnabled, loadBalanceOptions, loadProviders, openCreateProvider, openEditProvider, providerDialogRef, providerKeyOptions, providerSaving, providers, providersLoading, showDeleteProviderDialog, showProviderDialog, togglePaymentType } = useSettingsPaymentProviders(form, saveSettings)
-  const { affiliateBatchModal, affiliateConfirmDialog, affiliateModal, affiliateModalCanSubmit, affiliateState, askResetAffiliateUser, cancelAffiliateConfirm, changeAffiliatePage, clearSelectedAffiliateUser, closeAffiliateModal, handleAffiliateConfirm, onAffiliateSearchInput, onAffiliateUserSearchInput, openAffiliateBatchModal, openAffiliateModal, selectAffiliateUser, submitAffiliateBatchModal, submitAffiliateModal, toggleAffiliateSelect, toggleAffiliateSelectAll } = useSettingsAffiliate(form)
+
+  function refreshStructuredEditors(): void {
+    clientIPTrustedProxiesText.value = form.client_ip_trusted_proxies.join("\n");
+    loadClaudeOAuthSystemPromptBlocks();
+    codexBlacklistRows.value = parseCodexEntriesToRows(
+      form.codex_cli_only_blacklist,
+    );
+    codexWhitelistRows.value = parseCodexEntriesToRows(
+      form.codex_cli_only_whitelist,
+    );
+    codexFingerprintRows.value = form.codex_cli_only_engine_fingerprint_signals
+      ? parseFingerprintSignalsToRows(
+          form.codex_cli_only_engine_fingerprint_signals,
+        )
+      : defaultFingerprintSignalRows();
+    tablePageSizeOptionsInput.value = formatTablePageSizeOptions(
+      form.table_page_size_options,
+    );
+  }
 
   async function loadSettings() {
     loading.value = true;
     loadFailed.value = false;
     try {
-      const settings = await settingsAPI.getSettings();
-      settings.payment_load_balance_strategy =
-        settings.payment_load_balance_strategy || "round-robin";
+      const settings = await getSettings();
       // Only assign non-null values from backend (null means unconfigured, keep defaults)
       for (const [key, value] of Object.entries(settings)) {
         if (value !== null && value !== undefined) {
           (form as Record<string, unknown>)[key] = value;
         }
       }
-      normalizeHumanVerificationProvider();
-      clientIPTrustedProxiesText.value = (
-        settings.client_ip_trusted_proxies || []
-      ).join("\n");
-      loadClaudeOAuthSystemPromptBlocks();
-      codexBlacklistRows.value = parseCodexEntriesToRows(
-        form.codex_cli_only_blacklist,
-      );
-      codexWhitelistRows.value = parseCodexEntriesToRows(
-        form.codex_cli_only_whitelist,
-      );
-      codexFingerprintRows.value = form.codex_cli_only_engine_fingerprint_signals
-        ? parseFingerprintSignalsToRows(form.codex_cli_only_engine_fingerprint_signals)
-        : defaultFingerprintSignalRows();
-      form.login_agreement_mode =
-        settings.login_agreement_mode === "checkbox" ? "checkbox" : "modal";
-      form.login_agreement_updated_at =
-        settings.login_agreement_updated_at || "2026-03-31";
-      form.login_agreement_documents =
-        Array.isArray(settings.login_agreement_documents) &&
-        settings.login_agreement_documents.length > 0
-          ? settings.login_agreement_documents.map((doc) => ({
-              id: doc.id || "",
-              title: doc.title || "",
-              content_md: doc.content_md || "",
-            }))
-          : defaultLoginAgreementDocuments(localText);
-      Object.assign(authSourceDefaults, buildAuthSourceDefaultsState(settings));
-      form.default_platform_quotas = normalizePlatformQuotasMap(settings.default_platform_quotas);
-      form.backend_mode_enabled = settings.backend_mode_enabled;
-      form.default_subscriptions = normalizeDefaultSubscriptionSettings(
-        settings.default_subscriptions,
-      );
-      registrationEmailSuffixWhitelistTags.value =
-        normalizeRegistrationEmailSuffixDomains(
-          settings.registration_email_suffix_whitelist,
-        );
-      tablePageSizeOptionsInput.value = formatTablePageSizeOptions(
-        Array.isArray(settings.table_page_size_options)
-          ? settings.table_page_size_options
-          : [10, 20, 50, 100],
-      );
-      registrationEmailSuffixWhitelistDraft.value = "";
       form.smtp_password = "";
       smtpPasswordManuallyEdited.value = false;
-      form.turnstile_secret_key = "";
-      form.recaptcha_secret_key = "";
-      form.cap_secret_key = "";
-      form.aliyun_captcha_access_key_secret = "";
-      form.linuxdo_connect_client_secret = "";
-      form.dingtalk_connect_client_secret = "";
-      form.github_oauth_client_secret = "";
-      form.google_oauth_client_secret = "";
-      form.wechat_connect_app_secret = "";
-      form.wechat_connect_open_app_secret = "";
-      form.wechat_connect_mp_app_secret = "";
-      form.wechat_connect_mobile_app_secret = "";
-      const wechatCapabilities = resolveWeChatConnectModeCapabilities(
-        settings.wechat_connect_open_enabled,
-        settings.wechat_connect_mp_enabled,
-        settings.wechat_connect_mobile_enabled,
-        settings.wechat_connect_mode,
-      );
-      form.wechat_connect_open_enabled = wechatCapabilities.openEnabled;
-      form.wechat_connect_mp_enabled = wechatCapabilities.mpEnabled;
-      form.wechat_connect_mobile_enabled = wechatCapabilities.mobileEnabled;
-      form.wechat_connect_mode = deriveWeChatConnectStoredMode(
-        wechatCapabilities.openEnabled,
-        wechatCapabilities.mpEnabled,
-        wechatCapabilities.mobileEnabled,
-        settings.wechat_connect_mode,
-      );
-      const legacyWeChatAppID = String(settings.wechat_connect_app_id || "").trim();
-      const legacyWeChatSecretConfigured = Boolean(
-        settings.wechat_connect_app_secret_configured,
-      );
-      if (!form.wechat_connect_open_app_id && wechatCapabilities.openEnabled) {
-        form.wechat_connect_open_app_id = legacyWeChatAppID;
-      }
-      if (!form.wechat_connect_mp_app_id && wechatCapabilities.mpEnabled) {
-        form.wechat_connect_mp_app_id = legacyWeChatAppID;
-      }
-      if (!form.wechat_connect_mobile_app_id && wechatCapabilities.mobileEnabled) {
-        form.wechat_connect_mobile_app_id = legacyWeChatAppID;
-      }
-      if (
-        !form.wechat_connect_open_app_secret_configured &&
-        wechatCapabilities.openEnabled
-      ) {
-        form.wechat_connect_open_app_secret_configured =
-          legacyWeChatSecretConfigured;
-      }
-      if (
-        !form.wechat_connect_mp_app_secret_configured &&
-        wechatCapabilities.mpEnabled
-      ) {
-        form.wechat_connect_mp_app_secret_configured = legacyWeChatSecretConfigured;
-      }
-      if (
-        !form.wechat_connect_mobile_app_secret_configured &&
-        wechatCapabilities.mobileEnabled
-      ) {
-        form.wechat_connect_mobile_app_secret_configured =
-          legacyWeChatSecretConfigured;
-      }
-      form.wechat_connect_scopes = defaultWeChatConnectScopesForMode(
-        form.wechat_connect_mode,
-      );
-      form.oidc_connect_client_secret = "";
+      refreshStructuredEditors();
 
       // Load OpenAI fast/flex policy rules from bulk settings.
       // 仅当 payload 真的包含该字段时填充并标记为已加载；否则保持表单空值，
@@ -521,7 +358,6 @@ export function useSettingsPage() {
         openaiFastPolicyForm.rules =
           settings.openai_fast_policy_settings.rules.map((rule) => ({
             ...rule,
-            user_ids: rule.user_ids ? [...rule.user_ids] : [],
             model_whitelist: rule.model_whitelist
               ? [...rule.model_whitelist]
               : [],
@@ -562,52 +398,6 @@ export function useSettingsPage() {
           }),
         );
         return;
-      case "loginAgreementDocumentRequired":
-        appStore.showError(
-          localText(
-            "启用登录条款确认时，至少需要保留一份文档。",
-            "At least one document is required when login agreement is enabled.",
-          ),
-        );
-        return;
-      case "loginAgreementDocumentTitleRequired":
-        appStore.showError(
-          localText(
-            "登录条款文档名称不能为空。",
-            "Login agreement document title cannot be empty.",
-          ),
-        );
-        return;
-      case "duplicateLoginAgreementDocumentId":
-        appStore.showError(
-          localText(
-            `登录条款文档路由不能重复：/legal/${error.documentId}`,
-            `Login agreement document routes cannot be duplicated: /legal/${error.documentId}`,
-          ),
-        );
-        return;
-      case "duplicateDefaultSubscription":
-        appStore.showError(
-          t("admin.settings.defaults.defaultSubscriptionsDuplicate", {
-            groupId: error.groupId,
-          }),
-        );
-        return;
-      case "duplicateAuthSourceDefaultSubscription":
-        appStore.showError(
-          `${error.sourceTitle}: ${t(
-            "admin.settings.defaults.defaultSubscriptionsDuplicate",
-            { groupId: error.groupId },
-          )}`,
-        );
-        return;
-      case "conflictingWeChatApplications":
-        appStore.showError(
-          localText(
-            "公众号和移动应用不能同时启用。",
-            "Official Account and Mobile App cannot be enabled at the same time.",
-          ),
-        );
     }
   }
 
@@ -617,13 +407,7 @@ export function useSettingsPage() {
       const preparation = prepareSettingsSave({
         form,
         tablePageSizeOptionsInput: tablePageSizeOptionsInput.value,
-        authSourceDefaults,
-        authSourceDefaultsMeta: authSourceDefaultsMeta.value,
         parseTablePageSizeOptionsInput,
-        normalizeLoginAgreementDocumentsForSave,
-        findDuplicateLoginAgreementDocumentId,
-        findDuplicateDefaultSubscription,
-        syncWeChatConnectMode,
         serializeClaudeOAuthSystemPromptBlocks,
       });
       if (!preparation.ok) {
@@ -633,14 +417,9 @@ export function useSettingsPage() {
 
       const payload = buildSettingsSavePayload({
         form,
-        normalizedDefaultSubscriptions:
-          preparation.normalizedDefaultSubscriptions,
-        registrationEmailSuffixWhitelistTags:
-          registrationEmailSuffixWhitelistTags.value,
         clientIPTrustedProxies: parseClientIPTrustedProxies(
           clientIPTrustedProxiesText.value,
         ),
-        wechatStoredMode: preparation.wechatStoredMode,
         claudeOAuthSystemPromptBlocksJSON:
           preparation.claudeOAuthSystemPromptBlocksJSON,
         codexFingerprintSignalsJSON: serializeFingerprintRowsToJSON(
@@ -648,28 +427,20 @@ export function useSettingsPage() {
         ),
         codexBlacklistJSON: serializeCodexRowsToJSON(codexBlacklistRows.value),
         codexWhitelistJSON: serializeCodexRowsToJSON(codexWhitelistRows.value),
-        currentOrigin,
         openaiFastPolicyLoaded: openaiFastPolicyLoaded.value,
         openaiFastPolicyRules: openaiFastPolicyForm.rules,
-        authSourceDefaults,
       });
 
       const updated = await settingsStepUp.run(() =>
-        settingsAPI.updateSettings(payload),
+        updateSettings(payload),
       );
       applySettingsSaveResponse({
         form,
         updated,
-        normalizeHumanVerificationProvider,
-        clientIPTrustedProxiesText,
-        authSourceDefaults,
-        registrationEmailSuffixWhitelistTags,
-        registrationEmailSuffixWhitelistDraft,
-        tablePageSizeOptionsInput,
-        formatTablePageSizeOptions,
         smtpPasswordManuallyEdited,
         openaiFastPolicyForm,
         openaiFastPolicyLoaded,
+        refreshStructuredEditors,
       });
 
       // Save web search emulation config separately (errors handled internally)
@@ -768,7 +539,6 @@ export function useSettingsPage() {
 
   onMounted(() => {
     loadSettings();
-    loadSubscriptionGroups();
     loadAdminApiKey();
     loadScopedAdminApiKeys();
     loadUpstreamBillingProbeSettings();
@@ -779,22 +549,16 @@ export function useSettingsPage() {
     loadStreamTimeoutSettings();
     loadRectifierSettings();
     loadBetaPolicySettings();
-    loadProviders();
   });
 
 
   return {
     activeTab,
-    aliyunCaptchaRegionOptions,
-    addAuthSourceDefaultSubscription,
     addClaudeOAuthSystemPromptBlock,
     addCodexBlacklistRow,
     addCodexFingerprintRow,
     addCodexWhitelistRow,
-    addDefaultSubscription,
     addEndpoint,
-    addLoginAgreementDocument,
-    addMenuItem,
     addOpenAIFastPolicyModelPattern,
     addOpenAIFastPolicyRule,
     addQuickPattern,
@@ -810,107 +574,57 @@ export function useSettingsPage() {
     adminApiKeyPanelOperating,
     adminApiKeyPanelSecret,
     adminApiKeyScopeOptions,
-    affiliateBatchModal,
-    affiliateConfirmDialog,
-    affiliateModal,
-    affiliateModalCanSubmit,
-    affiliateState,
-    allPaymentTypes,
     apiKeyVisible,
     applyBetaPreset,
     applyClaudeOAuthSystemPromptPreset,
-    askResetAffiliateUser,
-    authSourceDefaults,
-    authSourceDefaultsMeta,
     betaPolicyActionOptions,
     betaPolicyForm,
     betaPolicyLoading,
     betaPolicySaving,
     betaPolicyScopeOptions,
     betaPresets,
-    cancelAffiliateConfirm,
     cancelEditScopedAdminApiKey,
-    cancelRateLimitModeOptions,
-    cancelRateLimitUnitOptions,
-    changeAffiliatePage,
     claudeOAuthSystemPromptBlockTypeOptions,
     claudeOAuthSystemPromptBlocks,
     claudeOAuthSystemPromptCacheTTLOptions,
     claudeOAuthSystemPromptPresetOptions,
-    clearSelectedAffiliateUser,
     clientIPLastRefreshText,
     clientIPResolutionModeOptions,
     clientIPTrustedProxiesText,
-    closeAffiliateModal,
     codexBlacklistRows,
     codexFingerprintNoRequired,
     codexFingerprintRows,
     codexWhitelistRows,
-    commitRegistrationEmailSuffixWhitelistDraft,
     commonModelPatterns,
-    confirmDeleteProvider,
     copyApiKey,
     copyNewKey,
     copyScopedAdminApiKey,
     createAdminApiKey,
     createScopedAdminApiKey,
-    currentOrigin,
-    defaultSubscriptionGroupOptions,
     deleteAdminApiKey,
     editScopedAdminApiKey,
     editingAdminApiKeyId,
-    editingProvider,
-    enabledProviderKeyOptions,
     expandedProviders,
     form,
     formatAdminApiKeyDate,
     formatSubscribedAt,
     getBetaDisplayName,
     getClaudeOAuthPresetLabel,
-    githubOAuthRedirectUrlSuggestion,
     globalTempUnschedulableForm,
     globalTempUnschedulableLoading,
     globalTempUnschedulableSaving,
-    googleOAuthRedirectUrlSuggestion,
-    handleAffiliateConfirm,
-    handleDeleteProvider,
-    handleRegistrationEmailSuffixWhitelistDraftInput,
-    handleRegistrationEmailSuffixWhitelistDraftKeydown,
-    handleRegistrationEmailSuffixWhitelistPaste,
-    handleReorderProviders,
-    handleSaveProvider,
     handleSettingsTabKeydown,
-    handleToggleField,
-    handleToggleType,
-    handleWeChatMPEnabledChange,
-    handleWeChatMobileEnabledChange,
-    handleWeChatOpenEnabledChange,
-    hasAnyPaymentTypeEnabled,
-    humanVerificationProviders,
-    isPaymentTypeEnabled,
     isZhLocale,
-    linuxdoRedirectUrlSuggestion,
-    loadBalanceOptions,
     loadFailed,
-    loadProviders,
     loading,
     localText,
-    loginAgreementRoutePath,
     markClaudeOAuthSystemPromptBlockCustom,
     moveClaudeOAuthSystemPromptBlock,
-    moveMenuItem,
     newAdminApiKey,
-    oidcRedirectUrlSuggestion,
     ollamaCloudUsageForm,
     ollamaCloudUsageLoading,
     ollamaCloudUsageSaving,
-    onAffiliateSearchInput,
-    onAffiliateUserSearchInput,
     openAIAdvancedSchedulerWeightFields,
-    openAffiliateBatchModal,
-    openAffiliateModal,
-    openCreateProvider,
-    openEditProvider,
     openTestDialog,
     openaiFastPolicyActionOptions,
     openaiFastPolicyForm,
@@ -921,13 +635,6 @@ export function useSettingsPage() {
     overloadCooldownSaving,
     panelRateLimitSettingsMounted,
     parseSubscribedAt,
-    paymentGuideHref,
-    paymentMethodsHref,
-    providerDialogRef,
-    providerKeyOptions,
-    providerSaving,
-    providers,
-    providersLoading,
     quotaPercentage,
     rateLimit429CooldownForm,
     rateLimit429CooldownLoading,
@@ -936,20 +643,13 @@ export function useSettingsPage() {
     rectifierLoading,
     rectifierSaving,
     regenerateAdminApiKey,
-    registrationEmailSuffixWhitelistDraft,
-    registrationEmailSuffixWhitelistTags,
-    removeAuthSourceDefaultSubscription,
     removeClaudeOAuthSystemPromptBlock,
     removeCodexBlacklistRow,
     removeCodexFingerprintRow,
     removeCodexWhitelistRow,
-    removeDefaultSubscription,
     removeEndpoint,
-    removeLoginAgreementDocument,
-    removeMenuItem,
     removeOpenAIFastPolicyModelPattern,
     removeOpenAIFastPolicyRule,
-    removeRegistrationEmailSuffixWhitelistTag,
     removeWebSearchProvider,
     resetClaudeOAuthSystemPromptBlocks,
     resetWebSearchUsage,
@@ -968,43 +668,28 @@ export function useSettingsPage() {
     schedulerV2StatusClass,
     schedulerV2StatusLabel,
     scopedAdminApiKeys,
-    selectAffiliateUser,
     selectSettingsTab,
     sendTestEmail,
     sendingTestEmail,
-    setAndCopyEmailOAuthRedirectUrl,
-    setAndCopyLinuxdoRedirectUrl,
-    setAndCopyOIDCRedirectUrl,
-    setAndCopyWeChatRedirectUrl,
-    setHumanVerificationProvider,
     settingsStepUp,
     settingsTabs,
-    showDeleteProviderDialog,
-    showProviderDialog,
     smtpPasswordManuallyEdited,
     streamTimeoutForm,
     streamTimeoutLoading,
     streamTimeoutSaving,
-    submitAffiliateBatchModal,
-    submitAffiliateModal,
-    subscriptionGroups,
     t,
     tablePageSizeOptionsInput,
     testEmailAddress,
     testSmtpConnection,
     testWebSearchProvider,
     testingSmtp,
-    toggleAffiliateSelect,
-    toggleAffiliateSelectAll,
     toggleClaudeOAuthSystemPromptBlock,
-    togglePaymentType,
     toggleProviderExpand,
     upstreamBillingProbeForm,
     upstreamBillingProbeLoading,
     upstreamBillingProbeSaving,
     webSearchConfig,
     webSearchProxies,
-    wechatRedirectUrlSuggestion,
     wsTestDialogOpen,
     wsTestLoading,
     wsTestQuery,

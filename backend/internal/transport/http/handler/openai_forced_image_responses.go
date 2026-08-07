@@ -382,15 +382,11 @@ func (h *OpenAIGatewayHandler) recordForcedOpenAIImageChildUsage(
 			APIKey:             input.apiKey,
 			User:               input.apiKey.User,
 			Account:            account,
-			Subscription:       input.subscription,
 			InboundEndpoint:    input.inbound,
 			UpstreamEndpoint:   upstreamEndpoint,
 			UserAgent:          input.userAgent,
 			IPAddress:          input.clientIP,
 			SessionID:          input.sessionID,
-			RequestPayloadHash: input.requestHash,
-			APIKeyService:      h.apiKeyService,
-			QuotaPlatform:      input.quotaPlatform,
 			ChannelUsageFields: usageFields,
 		}); err != nil {
 			logger.L().With(
@@ -445,7 +441,6 @@ func (h *OpenAIGatewayHandler) handleForcedOpenAIImageResponses(
 	stream bool,
 	sessionHash string,
 	apiKey *service.APIKey,
-	subscription *service.UserSubscription,
 	reqLog *zap.Logger,
 	streamStarted *bool,
 ) {
@@ -463,20 +458,17 @@ func (h *OpenAIGatewayHandler) handleForcedOpenAIImageResponses(
 		return
 	}
 	input := openAIForcedImageRunInput{
-		apiKey:        apiKey,
-		subscription:  subscription,
-		plan:          plan,
-		requestModel:  requestModel,
-		stream:        stream,
-		sessionHash:   sessionHash,
-		requestHash:   service.HashUsageRequestPayload(body),
-		reqLog:        reqLog,
-		requestCtx:    c.Request.Context(),
-		userAgent:     c.GetHeader("User-Agent"),
-		clientIP:      ip.GetClientIP(c),
-		sessionID:     service.ExtractClientSessionID(c),
-		inbound:       GetInboundEndpoint(c),
-		quotaPlatform: service.QuotaPlatform(c.Request.Context(), apiKey),
+		apiKey:       apiKey,
+		plan:         plan,
+		requestModel: requestModel,
+		stream:       stream,
+		sessionHash:  sessionHash,
+		reqLog:       reqLog,
+		requestCtx:   c.Request.Context(),
+		userAgent:    c.GetHeader("User-Agent"),
+		clientIP:     ip.GetClientIP(c),
+		sessionID:    service.ExtractClientSessionID(c),
+		inbound:      GetInboundEndpoint(c),
 	}
 
 	if !stream {
@@ -587,7 +579,6 @@ func (h *OpenAIGatewayHandler) handleForcedOpenAIImageResponsesWebSocket(
 	sessionHash string,
 	apiKey *service.APIKey,
 	subject middleware2.AuthSubject,
-	subscription *service.UserSubscription,
 	reqLog *zap.Logger,
 	releaseTurnSlots func(),
 	ensureUserSlotHeld func() bool,
@@ -616,11 +607,6 @@ func (h *OpenAIGatewayHandler) handleForcedOpenAIImageResponsesWebSocket(
 		if turn > 1 {
 			if decision := h.checkSecurityAuditStage(c, reqLog, apiKey, subject, service.ContentModerationProtocolOpenAIResponses, model, payload, "subsequent_turn"); decision != nil && !decision.AllowNextStage {
 				writeSecurityAuditWSError(ctx, wsConn, decision)
-				releaseTurnSlots()
-				return
-			}
-			if err := h.billingCacheService.CheckBillingEligibility(ctx, apiKey.User, apiKey, apiKey.Group, subscription, service.QuotaPlatform(c.Request.Context(), apiKey)); err != nil {
-				_ = writeOpenAIForcedImageWSError(ctx, wsConn, http.StatusForbidden, "billing check failed")
 				releaseTurnSlots()
 				return
 			}
@@ -660,20 +646,17 @@ func (h *OpenAIGatewayHandler) handleForcedOpenAIImageResponsesWebSocket(
 			return
 		}
 		input := openAIForcedImageRunInput{
-			apiKey:        apiKey,
-			subscription:  subscription,
-			plan:          plan,
-			requestModel:  model,
-			stream:        true,
-			sessionHash:   fmt.Sprintf("%s:turn:%d", sessionHash, turn),
-			requestHash:   service.HashUsageRequestPayload(payload),
-			reqLog:        reqLog,
-			requestCtx:    c.Request.Context(),
-			userAgent:     c.GetHeader("User-Agent"),
-			clientIP:      ip.GetClientIP(c),
-			sessionID:     service.ExtractClientSessionID(c),
-			inbound:       GetInboundEndpoint(c),
-			quotaPlatform: service.QuotaPlatform(c.Request.Context(), apiKey),
+			apiKey:       apiKey,
+			plan:         plan,
+			requestModel: model,
+			stream:       true,
+			sessionHash:  fmt.Sprintf("%s:turn:%d", sessionHash, turn),
+			reqLog:       reqLog,
+			requestCtx:   c.Request.Context(),
+			userAgent:    c.GetHeader("User-Agent"),
+			clientIP:     ip.GetClientIP(c),
+			sessionID:    service.ExtractClientSessionID(c),
+			inbound:      GetInboundEndpoint(c),
 		}
 		emit := func(event map[string]any) error {
 			encoded, err := json.Marshal(event)

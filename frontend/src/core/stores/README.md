@@ -7,9 +7,8 @@
 | 文件 | Store ID | 职责 |
 | --- | --- | --- |
 | `appStore.ts` | `app` | 公开站点设置、主题/壳层状态、全局 toast 和运行模式 |
-| `onboardingStore.ts` | `onboarding` | 新手引导实例和步骤控制 |
 
-领域 Store 跟随业务 owner：认证、管理设置、公告、支付和订阅分别位于对应 feature 的 `presentation/stores/`。`frontend/src/stores/index.ts` 只提供旧导入兼容，不是 Store owner。
+领域 Store 跟随业务 owner，例如认证与管理设置位于对应 feature 的 `presentation/stores/`。`frontend/src/stores/index.ts` 只提供旧导入兼容，不是 Store owner。
 
 状态字段和 action 的最终事实以各 store 源码为准。本表只维护 owner，避免复制每个响应字段。
 

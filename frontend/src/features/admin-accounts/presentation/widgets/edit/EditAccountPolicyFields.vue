@@ -626,14 +626,11 @@
         </div>
       </div>
 
-      <!-- Group Selection - 仅标准模式显示 -->
       <GroupSelector
-        v-if="!isSimpleMode"
         v-model="form.group_ids"
         :groups="groups"
         :platform="account?.platform"
         :mixed-scheduling="mixedScheduling"
-        data-tour="account-form-groups"
       />
 </template>
 
@@ -644,5 +641,5 @@ import Select from '@/common/widgets/forms/Select.vue'
 import type { EditAccountPolicyContext } from '../../accountEditorContext'
 
 const props = defineProps<{ context: EditAccountPolicyContext }>()
-const { account, addOpenAICompactModelMapping, allowOverages, isSimpleMode, autoPause5hDisabled, autoPause5hThreshold, autoPause7dDisabled, autoPause7dThreshold, autoPauseOnExpired, baseRpm, cacheTTLOverrideEnabled, cacheTTLOverrideTarget, customBaseUrl, customBaseUrlEnabled, editPlanType, form, formatDateTime, getOpenAICompactModelMappingKey, groups, isSparkShadow, maxSessions, mixedScheduling, openAICompactMode, openAICompactModeOptions, openAICompactModelMappings, openAICompactStatusKey, planTypeOptions, removeOpenAICompactModelMapping, rpmLimitEnabled, rpmStickyBuffer, rpmStrategy, sessionIdMaskingEnabled, sessionIdleTimeout, sessionLimitEnabled, statusOptions, t, tlsFingerprintEnabled, tlsFingerprintProfileId, tlsFingerprintProfiles, umqModeOptions, userMsgQueueMode, windowCostEnabled, windowCostLimit, windowCostStickyReserve } = props.context
+const { account, addOpenAICompactModelMapping, allowOverages, autoPause5hDisabled, autoPause5hThreshold, autoPause7dDisabled, autoPause7dThreshold, autoPauseOnExpired, baseRpm, cacheTTLOverrideEnabled, cacheTTLOverrideTarget, customBaseUrl, customBaseUrlEnabled, editPlanType, form, formatDateTime, getOpenAICompactModelMappingKey, groups, isSparkShadow, maxSessions, mixedScheduling, openAICompactMode, openAICompactModeOptions, openAICompactModelMappings, openAICompactStatusKey, planTypeOptions, removeOpenAICompactModelMapping, rpmLimitEnabled, rpmStickyBuffer, rpmStrategy, sessionIdMaskingEnabled, sessionIdleTimeout, sessionLimitEnabled, statusOptions, t, tlsFingerprintEnabled, tlsFingerprintProfileId, tlsFingerprintProfiles, umqModeOptions, userMsgQueueMode, windowCostEnabled, windowCostLimit, windowCostStickyReserve } = props.context
 </script>

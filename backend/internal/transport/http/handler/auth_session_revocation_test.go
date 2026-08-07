@@ -3,6 +3,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +15,16 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
+
+type userHandlerRefreshTokenCacheStub struct {
+	service.RefreshTokenCache
+	revokedUserIDs []int64
+}
+
+func (s *userHandlerRefreshTokenCacheStub) DeleteUserRefreshTokens(_ context.Context, userID int64) error {
+	s.revokedUserIDs = append(s.revokedUserIDs, userID)
+	return nil
+}
 
 func TestAuthHandlerRevokeAllSessionsInvalidatesAccessTokens(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -35,7 +46,7 @@ func TestAuthHandlerRevokeAllSessionsInvalidatesAccessTokens(t *testing.T) {
 			ExpireHour: 1,
 		},
 	}
-	authService := service.NewAuthService(nil, repo, nil, refreshTokenCache, cfg, nil, nil, nil, nil, nil, nil, nil, nil)
+	authService := service.NewAuthService(repo, refreshTokenCache, cfg, nil)
 	handler := &AuthHandler{authService: authService}
 
 	recorder := httptest.NewRecorder()

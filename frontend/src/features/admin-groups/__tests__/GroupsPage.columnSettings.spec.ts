@@ -14,8 +14,6 @@ const {
   listAccounts,
   showError,
   showSuccess,
-  isCurrentStep,
-  nextStep,
 } = vi.hoisted(() => ({
   listGroups: vi.fn(),
   getAllGroups: vi.fn(),
@@ -26,8 +24,6 @@ const {
   listAccounts: vi.fn(),
   showError: vi.fn(),
   showSuccess: vi.fn(),
-  isCurrentStep: vi.fn(),
-  nextStep: vi.fn(),
 }))
 
 const messages: Record<string, string> = {
@@ -35,7 +31,6 @@ const messages: Record<string, string> = {
   'admin.groups.columns.name': 'Name',
   'admin.groups.columns.id': 'ID',
   'admin.groups.columns.platform': 'Platform',
-  'admin.groups.columns.billingType': 'Billing Type',
   'admin.groups.columns.rateMultiplier': 'Rate Multiplier',
   'admin.groups.columns.type': 'Type',
   'admin.groups.columns.accounts': 'Accounts',
@@ -91,13 +86,6 @@ vi.mock('@/core/stores/appStore', () => ({
   }),
 }))
 
-vi.mock('@/core/stores/onboardingStore', () => ({
-  useOnboardingStore: () => ({
-    isCurrentStep,
-    nextStep,
-  }),
-}))
-
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
   return {
@@ -115,12 +103,7 @@ const createGroup = (overrides: Partial<AdminGroup> = {}): AdminGroup => ({
   platform: 'anthropic',
   rate_multiplier: 1,
   rpm_limit: 0,
-  is_exclusive: false,
   status: 'active',
-  subscription_type: 'standard',
-  daily_limit_usd: null,
-  weekly_limit_usd: null,
-  monthly_limit_usd: null,
   allow_image_generation: false,
   image_rate_independent: false,
   image_rate_multiplier: 1,
@@ -253,8 +236,6 @@ describe('admin GroupsView column settings', () => {
     listAccounts.mockReset()
     showError.mockReset()
     showSuccess.mockReset()
-    isCurrentStep.mockReset()
-    nextStep.mockReset()
 
     listGroups.mockResolvedValue({
       items: [createGroup()],
@@ -269,7 +250,6 @@ describe('admin GroupsView column settings', () => {
     getCapacitySummary.mockResolvedValue([])
     getLiveCapability.mockResolvedValue({ supported: false })
     listAccounts.mockResolvedValue({ items: [], total: 0, page: 1, page_size: 20, pages: 0 })
-    isCurrentStep.mockReturnValue(false)
   })
 
   afterEach(() => {
@@ -282,9 +262,7 @@ describe('admin GroupsView column settings', () => {
     expect(columnKeys(wrapper)).toEqual([
       'name',
       'platform',
-      'billing_type',
       'rate_multiplier',
-      'is_exclusive',
       'account_count',
       'capacity',
       'usage',
@@ -308,9 +286,7 @@ describe('admin GroupsView column settings', () => {
       'name',
       'id',
       'platform',
-      'billing_type',
       'rate_multiplier',
-      'is_exclusive',
       'account_count',
       'status',
       'actions',
@@ -326,9 +302,7 @@ describe('admin GroupsView column settings', () => {
     expect(columnKeys(wrapper)).toEqual([
       'name',
       'platform',
-      'billing_type',
       'rate_multiplier',
-      'is_exclusive',
       'account_count',
       'capacity',
       'status',
@@ -349,9 +323,7 @@ describe('admin GroupsView column settings', () => {
     expect(columnKeys(wrapper)).toEqual([
       'name',
       'platform',
-      'billing_type',
       'rate_multiplier',
-      'is_exclusive',
       'account_count',
       'capacity',
       'status',
@@ -372,9 +344,7 @@ describe('admin GroupsView column settings', () => {
       'name',
       'id',
       'platform',
-      'billing_type',
       'rate_multiplier',
-      'is_exclusive',
       'account_count',
       'capacity',
       'usage',
@@ -387,7 +357,7 @@ describe('admin GroupsView column settings', () => {
   it('skips usage and capacity fetches until consuming columns are shown', async () => {
     localStorage.setItem(
       'group-hidden-columns',
-      JSON.stringify(['billing_type', 'usage', 'capacity']),
+      JSON.stringify(['usage', 'capacity']),
     )
 
     const wrapper = await mountView()

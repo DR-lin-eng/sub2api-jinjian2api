@@ -5,7 +5,6 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/domain"
 
 	"entgo.io/ent"
-	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
@@ -58,17 +57,6 @@ func (APIKey) Fields() []ent.Field {
 			Optional().
 			Comment("Blocked IPs/CIDRs"),
 
-		// ========== Quota fields ==========
-		// Quota limit in USD (0 = unlimited)
-		field.Float("quota").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
-			Default(0).
-			Comment("Quota limit in USD for this API key (0 = unlimited)"),
-		// Used quota amount
-		field.Float("quota_used").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
-			Default(0).
-			Comment("Used quota amount in USD"),
 		// Expiration time (nil = never expires)
 		field.Time("expires_at").
 			Optional().
@@ -78,47 +66,6 @@ func (APIKey) Fields() []ent.Field {
 			Default(0).
 			NonNegative().
 			Comment("Maximum concurrent requests for this API key (0 = unlimited)"),
-
-		// ========== Rate limit fields ==========
-		// Rate limit configuration (0 = unlimited)
-		field.Float("rate_limit_5h").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
-			Default(0).
-			Comment("Rate limit in USD per 5 hours (0 = unlimited)"),
-		field.Float("rate_limit_1d").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
-			Default(0).
-			Comment("Rate limit in USD per day (0 = unlimited)"),
-		field.Float("rate_limit_7d").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
-			Default(0).
-			Comment("Rate limit in USD per 7 days (0 = unlimited)"),
-		// Rate limit usage tracking
-		field.Float("usage_5h").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
-			Default(0).
-			Comment("Used amount in USD for the current 5h window"),
-		field.Float("usage_1d").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
-			Default(0).
-			Comment("Used amount in USD for the current 1d window"),
-		field.Float("usage_7d").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
-			Default(0).
-			Comment("Used amount in USD for the current 7d window"),
-		// Window start times
-		field.Time("window_5h_start").
-			Optional().
-			Nillable().
-			Comment("Start time of the current 5h rate limit window"),
-		field.Time("window_1d_start").
-			Optional().
-			Nillable().
-			Comment("Start time of the current 1d rate limit window"),
-		field.Time("window_7d_start").
-			Optional().
-			Nillable().
-			Comment("Start time of the current 7d rate limit window"),
 	}
 }
 
@@ -147,8 +94,6 @@ func (APIKey) Indexes() []ent.Index {
 		index.Fields("last_used_at"),
 		index.Fields("user_id", "id").
 			Annotations(entsql.IndexWhere("deleted_at IS NULL")),
-		// Index for quota queries
-		index.Fields("quota", "quota_used"),
 		index.Fields("expires_at"),
 	}
 }

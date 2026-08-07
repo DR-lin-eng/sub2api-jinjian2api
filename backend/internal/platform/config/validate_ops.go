@@ -30,10 +30,3 @@ func validateConcurrency(c *Config) error {
 	}
 	return nil
 }
-
-func validateDingTalkConnect(c *Config) error {
-	if err := ValidateDingTalkConfig(c.DingTalk); err != nil {
-		return fmt.Errorf("dingtalk_connect: %w", err)
-	}
-	return nil
-}

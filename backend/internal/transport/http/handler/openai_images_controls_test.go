@@ -35,10 +35,8 @@ func TestOpenAIGatewayHandlerImages_DisabledGroupRejectsBeforeScheduling(t *test
 	c.Set(string(middleware2.ContextKeyUser), middleware2.AuthSubject{UserID: 333, Concurrency: 1})
 
 	h := &OpenAIGatewayHandler{
-		gatewayService:      &service.OpenAIGatewayService{},
-		billingCacheService: &service.BillingCacheService{},
-		apiKeyService:       &service.APIKeyService{},
-		concurrencyHelper:   &ConcurrencyHelper{concurrencyService: &service.ConcurrencyService{}},
+		gatewayService:    &service.OpenAIGatewayService{},
+		concurrencyHelper: &ConcurrencyHelper{concurrencyService: &service.ConcurrencyService{}},
 	}
 
 	h.Images(c)

@@ -105,14 +105,23 @@ import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/common/widgets/feedback/BaseDialog.vue'
 import Input from '@/common/widgets/forms/Input.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import { useAdminComplianceStore, useAppStore, useAuthStore } from '@/stores'
 import { getLocale } from '@/core/i18n'
+import { useAppStore } from '@/core/stores/appStore'
+import { useAdminComplianceStore } from '@/features/admin-settings/presentation/stores/adminComplianceStore'
 import zhDocument from '../../../../../../docs/legal/admin-compliance.zh.md?raw'
 import enDocument from '../../../../../../docs/legal/admin-compliance.en.md?raw'
 
+const props = defineProps<{
+  isAuthenticated: boolean
+  isAdmin: boolean
+}>()
+
+const emit = defineEmits<{
+  logout: []
+}>()
+
 const { t } = useI18n()
 const complianceStore = useAdminComplianceStore()
-const authStore = useAuthStore()
 const appStore = useAppStore()
 const typedPhrase = ref('')
 const attemptedSubmit = ref(false)
@@ -122,7 +131,7 @@ marked.setOptions({
   gfm: true,
 })
 
-const visible = computed(() => authStore.isAuthenticated && authStore.isAdmin && complianceStore.shouldShow)
+const visible = computed(() => props.isAuthenticated && props.isAdmin && complianceStore.shouldShow)
 const expectedPhrase = computed(() => complianceStore.expectedPhrase)
 const canSubmit = computed(() => typedPhrase.value.trim() === expectedPhrase.value)
 const currentDocument = computed(() => getLocale() === 'zh' ? zhDocument : enDocument)
@@ -178,9 +187,8 @@ async function submit(): Promise<void> {
   }
 }
 
-async function logout(): Promise<void> {
-  await authStore.logout()
-  window.location.href = '/login'
+function logout(): void {
+  emit('logout')
 }
 </script>
 

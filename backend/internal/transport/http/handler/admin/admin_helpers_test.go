@@ -14,24 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseTimeRange(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	req := httptest.NewRequest(http.MethodGet, "/?start_date=2024-01-01&end_date=2024-01-02&timezone=UTC", nil)
-	c.Request = req
-
-	start, end := parseTimeRange(c)
-	require.Equal(t, time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC), start)
-	require.Equal(t, time.Date(2024, 1, 3, 0, 0, 0, 0, time.UTC), end)
-
-	req = httptest.NewRequest(http.MethodGet, "/?start_date=bad&timezone=UTC", nil)
-	c.Request = req
-	start, end = parseTimeRange(c)
-	require.False(t, start.IsZero())
-	require.False(t, end.IsZero())
-}
-
 func TestParseOpsViewParam(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	w := httptest.NewRecorder()
@@ -127,24 +109,6 @@ func TestParseOpsOpenAITokenStatsFilter_WithTopN(t *testing.T) {
 	require.Equal(t, 50, filter.TopN)
 	require.Equal(t, 0, filter.Page)
 	require.Equal(t, 0, filter.PageSize)
-}
-
-func TestParseOpsUserUsageStatsFilter_DefaultsToLast24Hours(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodGet, "/", nil)
-
-	before := time.Now().UTC()
-	filter, err := parseOpsUserUsageStatsFilter(c)
-	after := time.Now().UTC()
-
-	require.NoError(t, err)
-	require.Equal(t, "24h", filter.TimeRange)
-	require.Equal(t, 1, filter.Page)
-	require.Equal(t, 20, filter.PageSize)
-	require.WithinDuration(t, before.Add(-24*time.Hour), filter.StartTime, 2*time.Second)
-	require.WithinDuration(t, after, filter.EndTime, 2*time.Second)
 }
 
 func TestParseOpsOpenAITokenStatsFilter_InvalidParams(t *testing.T) {
@@ -288,12 +252,10 @@ func TestOpenAIFastPolicySettingsFromDTO_NormalizesServiceTier(t *testing.T) {
 				ServiceTier: "PRIORITY",
 				Action:      "filter",
 				Scope:       "all",
-				UserIDs:     []int64{42},
 			}},
 		}
 		out := openaiFastPolicySettingsFromDTO(in)
 		require.Equal(t, service.OpenAIFastTierPriority, out.Rules[0].ServiceTier)
-		require.Equal(t, []int64{42}, out.Rules[0].UserIDs)
 	})
 
 	t.Run("non-empty values pass through (lowercased)", func(t *testing.T) {

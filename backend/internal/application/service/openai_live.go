@@ -356,7 +356,6 @@ func (s *OpenAIGatewayService) CreateLiveCall(
 			APIKeyID:              identity.APIKeyID,
 			UserID:                identity.UserID,
 			GroupID:               liveGroupID(identity.GroupID),
-			SubscriptionID:        liveGroupID(identity.SubscriptionID),
 			LeaseID:               leaseID,
 			Model:                 model,
 			CreatedAt:             now,
@@ -947,10 +946,6 @@ func (s *OpenAIGatewayService) finalizeLiveCall(record *LiveCallRecord) {
 	upstreamEndpoint := "/backend-api/codex/realtime/calls"
 	userAgent := record.UserAgent
 	ipAddress := record.IPAddress
-	billingType := int8(BillingTypeBalance)
-	if record.SubscriptionID > 0 {
-		billingType = BillingTypeSubscription
-	}
 	writeUsageLogBestEffort(context.Background(), s.usageLogRepo, &UsageLog{
 		UserID:           record.UserID,
 		APIKeyID:         record.APIKeyID,
@@ -959,9 +954,7 @@ func (s *OpenAIGatewayService) finalizeLiveCall(record *LiveCallRecord) {
 		Model:            record.Model,
 		RequestedModel:   record.Model,
 		GroupID:          liveOptionalID(record.GroupID),
-		SubscriptionID:   liveOptionalID(record.SubscriptionID),
 		RateMultiplier:   1,
-		BillingType:      billingType,
 		RequestType:      RequestTypeLive,
 		DurationMs:       &duration,
 		UserAgent:        &userAgent,

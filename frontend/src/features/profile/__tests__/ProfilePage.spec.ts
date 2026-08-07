@@ -49,28 +49,12 @@ describe('ProfileView', () => {
       id: 1,
       username: 'alice',
       email: 'alice@example.com',
-      role: 'user',
-      balance: 10,
-      concurrency: 2,
+      role: 'admin',
       status: 'active',
-      allowed_groups: null,
-      balance_notify_enabled: true,
-      balance_notify_threshold: null,
-      balance_notify_extra_emails: [],
       created_at: '2026-04-20T00:00:00Z',
       updated_at: '2026-04-20T00:00:00Z'
     }
-    fetchPublicSettingsMock.mockResolvedValue({
-      contact_info: '',
-      balance_low_notify_enabled: false,
-      balance_low_notify_threshold: 0,
-      linuxdo_oauth_enabled: true,
-      wechat_oauth_enabled: true,
-      wechat_oauth_open_enabled: true,
-      wechat_oauth_mp_enabled: false,
-      oidc_oauth_enabled: true,
-      oidc_oauth_provider_name: 'OIDC'
-    })
+    fetchPublicSettingsMock.mockResolvedValue({})
   })
 
   it('renders the simplified single-column profile shell without separate stat cards', async () => {

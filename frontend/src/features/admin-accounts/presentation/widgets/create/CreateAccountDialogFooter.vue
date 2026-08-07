@@ -8,7 +8,6 @@
           form="create-account-form"
           :disabled="submitting"
           class="btn btn-primary"
-          data-tour="account-form-submit"
         >
           <svg
             v-if="submitting"

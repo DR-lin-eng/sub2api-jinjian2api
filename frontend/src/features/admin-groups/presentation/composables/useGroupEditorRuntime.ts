@@ -1,5 +1,4 @@
 import { computed, ref, type Ref } from "vue";
-import { useI18n } from "vue-i18n";
 import { useKeyedDebouncedSearch } from "@/common/composables/useKeyedDebouncedSearch";
 import * as accountsAPI from "@/features/admin-accounts/data/datasources/adminAccountsDatasource";
 import * as groupsAPI from "@/features/admin-groups/data/datasources/adminGroupsDatasource";
@@ -14,7 +13,6 @@ import type {
 type LiveForm = { allow_live: boolean };
 
 export function useGroupEditorRuntime() {
-  const { t } = useI18n();
   const submitting = ref(false);
   const platformOptions = computed(() => [
     { value: "anthropic", label: "Anthropic" },
@@ -24,14 +22,6 @@ export function useGroupEditorRuntime() {
     { value: "grok", label: "Grok" },
     { value: "composite", label: "Composite" },
   ]);
-  const subscriptionTypeOptions = computed(() => [
-    { value: "standard", label: t("admin.groups.subscription.standard") },
-    {
-      value: "subscription",
-      label: t("admin.groups.subscription.subscription"),
-    },
-  ]);
-
   const modelsListCandidatesTracker = createModelsListCandidatesTracker();
   const loadModelsListCandidates = async (
     mode: "create" | "edit",
@@ -212,7 +202,6 @@ export function useGroupEditorRuntime() {
   return {
     submitting,
     platformOptions,
-    subscriptionTypeOptions,
     loadModelsListCandidates,
     accountSearchKeyword,
     accountSearchResults,

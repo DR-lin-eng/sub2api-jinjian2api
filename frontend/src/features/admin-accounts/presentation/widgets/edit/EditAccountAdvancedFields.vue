@@ -207,7 +207,6 @@
             type="number"
             min="1"
             class="input"
-            data-tour="account-form-priority"
           />
           <p class="input-hint">{{ t('admin.accounts.priorityHint') }}</p>
         </div>

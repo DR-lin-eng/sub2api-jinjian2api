@@ -2,11 +2,9 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
 	infraerrors "github.com/Wei-Shaw/sub2api/internal/shared/errors"
 	"github.com/Wei-Shaw/sub2api/internal/shared/pagination"
 	"github.com/Wei-Shaw/sub2api/internal/shared/usagestats"
@@ -40,59 +38,18 @@ type CreateUsageLogRequest struct {
 	DurationMs            *int    `json:"duration_ms"`
 }
 
-// UsageStats 使用统计
-type UsageStats struct {
-	TotalRequests            int64   `json:"total_requests"`
-	TotalInputTokens         int64   `json:"total_input_tokens"`
-	TotalOutputTokens        int64   `json:"total_output_tokens"`
-	TotalCacheTokens         int64   `json:"total_cache_tokens"`
-	TotalCacheCreationTokens int64   `json:"total_cache_creation_tokens"`
-	TotalCacheReadTokens     int64   `json:"total_cache_read_tokens"`
-	TotalTokens              int64   `json:"total_tokens"`
-	TotalCost                float64 `json:"total_cost"`
-	TotalActualCost          float64 `json:"total_actual_cost"`
-	AverageDurationMs        float64 `json:"average_duration_ms"`
-}
-
 // UsageService 使用统计服务
 type UsageService struct {
-	usageRepo            UsageLogRepository
-	userRepo             UserRepository
-	entClient            *dbent.Client
-	authCacheInvalidator APIKeyAuthCacheInvalidator
+	usageRepo UsageLogRepository
 }
 
 // NewUsageService 创建使用统计服务实例
-func NewUsageService(usageRepo UsageLogRepository, userRepo UserRepository, entClient *dbent.Client, authCacheInvalidator APIKeyAuthCacheInvalidator) *UsageService {
-	return &UsageService{
-		usageRepo:            usageRepo,
-		userRepo:             userRepo,
-		entClient:            entClient,
-		authCacheInvalidator: authCacheInvalidator,
-	}
+func NewUsageService(usageRepo UsageLogRepository) *UsageService {
+	return &UsageService{usageRepo: usageRepo}
 }
 
 // Create 创建使用日志
 func (s *UsageService) Create(ctx context.Context, req CreateUsageLogRequest) (*UsageLog, error) {
-	// 使用数据库事务保证「使用日志插入」与「扣费」的原子性，避免重复扣费或漏扣风险。
-	tx, err := s.entClient.Tx(ctx)
-	if err != nil && !errors.Is(err, dbent.ErrTxStarted) {
-		return nil, fmt.Errorf("begin transaction: %w", err)
-	}
-
-	txCtx := ctx
-	if err == nil {
-		defer func() { _ = tx.Rollback() }()
-		txCtx = dbent.NewTxContext(ctx, tx)
-	}
-
-	// 验证用户存在
-	_, err = s.userRepo.GetByID(txCtx, req.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("get user: %w", err)
-	}
-
-	// 创建使用日志
 	usageLog := &UsageLog{
 		UserID:                req.UserID,
 		APIKeyID:              req.APIKeyID,
@@ -116,36 +73,12 @@ func (s *UsageService) Create(ctx context.Context, req CreateUsageLogRequest) (*
 		DurationMs:            req.DurationMs,
 	}
 
-	inserted, err := s.usageRepo.Create(txCtx, usageLog)
+	_, err := s.usageRepo.Create(ctx, usageLog)
 	if err != nil {
 		return nil, fmt.Errorf("create usage log: %w", err)
 	}
 
-	// 扣除用户余额
-	balanceUpdated := false
-	if inserted && req.ActualCost > 0 {
-		if err := s.userRepo.UpdateBalance(txCtx, req.UserID, -req.ActualCost); err != nil {
-			return nil, fmt.Errorf("update user balance: %w", err)
-		}
-		balanceUpdated = true
-	}
-
-	if tx != nil {
-		if err := tx.Commit(); err != nil {
-			return nil, fmt.Errorf("commit transaction: %w", err)
-		}
-	}
-
-	s.invalidateUsageCaches(ctx, req.UserID, balanceUpdated)
-
 	return usageLog, nil
-}
-
-func (s *UsageService) invalidateUsageCaches(ctx context.Context, userID int64, balanceUpdated bool) {
-	if !balanceUpdated || s.authCacheInvalidator == nil {
-		return
-	}
-	s.authCacheInvalidator.InvalidateAuthCacheByUserID(ctx, userID)
 }
 
 // GetByID 根据ID获取使用日志
@@ -157,163 +90,13 @@ func (s *UsageService) GetByID(ctx context.Context, id int64) (*UsageLog, error)
 	return log, nil
 }
 
-// ListByUser 获取用户的使用日志列表
-func (s *UsageService) ListByUser(ctx context.Context, userID int64, params pagination.PaginationParams) ([]UsageLog, *pagination.PaginationResult, error) {
-	logs, pagination, err := s.usageRepo.ListByUser(ctx, userID, params)
-	if err != nil {
-		return nil, nil, fmt.Errorf("list usage logs: %w", err)
-	}
-	return logs, pagination, nil
-}
-
-// ListByAPIKey 获取API Key的使用日志列表
-func (s *UsageService) ListByAPIKey(ctx context.Context, apiKeyID int64, params pagination.PaginationParams) ([]UsageLog, *pagination.PaginationResult, error) {
-	logs, pagination, err := s.usageRepo.ListByAPIKey(ctx, apiKeyID, params)
-	if err != nil {
-		return nil, nil, fmt.Errorf("list usage logs: %w", err)
-	}
-	return logs, pagination, nil
-}
-
-// ListByAccount 获取账号的使用日志列表
-func (s *UsageService) ListByAccount(ctx context.Context, accountID int64, params pagination.PaginationParams) ([]UsageLog, *pagination.PaginationResult, error) {
-	logs, pagination, err := s.usageRepo.ListByAccount(ctx, accountID, params)
-	if err != nil {
-		return nil, nil, fmt.Errorf("list usage logs: %w", err)
-	}
-	return logs, pagination, nil
-}
-
-// GetStatsByUser 获取用户的使用统计
-func (s *UsageService) GetStatsByUser(ctx context.Context, userID int64, startTime, endTime time.Time) (*UsageStats, error) {
-	stats, err := s.usageRepo.GetUserStatsAggregated(ctx, userID, startTime, endTime)
-	if err != nil {
-		return nil, fmt.Errorf("get user stats: %w", err)
-	}
-
-	return &UsageStats{
-		TotalRequests:            stats.TotalRequests,
-		TotalInputTokens:         stats.TotalInputTokens,
-		TotalOutputTokens:        stats.TotalOutputTokens,
-		TotalCacheTokens:         stats.TotalCacheTokens,
-		TotalCacheCreationTokens: stats.TotalCacheCreationTokens,
-		TotalCacheReadTokens:     stats.TotalCacheReadTokens,
-		TotalTokens:              stats.TotalTokens,
-		TotalCost:                stats.TotalCost,
-		TotalActualCost:          stats.TotalActualCost,
-		AverageDurationMs:        stats.AverageDurationMs,
-	}, nil
-}
-
-// GetStatsByAPIKey 获取API Key的使用统计
-func (s *UsageService) GetStatsByAPIKey(ctx context.Context, apiKeyID int64, startTime, endTime time.Time) (*UsageStats, error) {
-	stats, err := s.usageRepo.GetAPIKeyStatsAggregated(ctx, apiKeyID, startTime, endTime)
-	if err != nil {
-		return nil, fmt.Errorf("get api key stats: %w", err)
-	}
-
-	return &UsageStats{
-		TotalRequests:            stats.TotalRequests,
-		TotalInputTokens:         stats.TotalInputTokens,
-		TotalOutputTokens:        stats.TotalOutputTokens,
-		TotalCacheTokens:         stats.TotalCacheTokens,
-		TotalCacheCreationTokens: stats.TotalCacheCreationTokens,
-		TotalCacheReadTokens:     stats.TotalCacheReadTokens,
-		TotalTokens:              stats.TotalTokens,
-		TotalCost:                stats.TotalCost,
-		TotalActualCost:          stats.TotalActualCost,
-		AverageDurationMs:        stats.AverageDurationMs,
-	}, nil
-}
-
-// GetStatsByAccount 获取账号的使用统计
-func (s *UsageService) GetStatsByAccount(ctx context.Context, accountID int64, startTime, endTime time.Time) (*UsageStats, error) {
-	stats, err := s.usageRepo.GetAccountStatsAggregated(ctx, accountID, startTime, endTime)
-	if err != nil {
-		return nil, fmt.Errorf("get account stats: %w", err)
-	}
-
-	return &UsageStats{
-		TotalRequests:            stats.TotalRequests,
-		TotalInputTokens:         stats.TotalInputTokens,
-		TotalOutputTokens:        stats.TotalOutputTokens,
-		TotalCacheTokens:         stats.TotalCacheTokens,
-		TotalCacheCreationTokens: stats.TotalCacheCreationTokens,
-		TotalCacheReadTokens:     stats.TotalCacheReadTokens,
-		TotalTokens:              stats.TotalTokens,
-		TotalCost:                stats.TotalCost,
-		TotalActualCost:          stats.TotalActualCost,
-		AverageDurationMs:        stats.AverageDurationMs,
-	}, nil
-}
-
-// GetStatsByModel 获取模型的使用统计
-func (s *UsageService) GetStatsByModel(ctx context.Context, modelName string, startTime, endTime time.Time) (*UsageStats, error) {
-	stats, err := s.usageRepo.GetModelStatsAggregated(ctx, modelName, startTime, endTime)
-	if err != nil {
-		return nil, fmt.Errorf("get model stats: %w", err)
-	}
-
-	return &UsageStats{
-		TotalRequests:            stats.TotalRequests,
-		TotalInputTokens:         stats.TotalInputTokens,
-		TotalOutputTokens:        stats.TotalOutputTokens,
-		TotalCacheTokens:         stats.TotalCacheTokens,
-		TotalCacheCreationTokens: stats.TotalCacheCreationTokens,
-		TotalCacheReadTokens:     stats.TotalCacheReadTokens,
-		TotalTokens:              stats.TotalTokens,
-		TotalCost:                stats.TotalCost,
-		TotalActualCost:          stats.TotalActualCost,
-		AverageDurationMs:        stats.AverageDurationMs,
-	}, nil
-}
-
-// GetDailyStats 获取每日使用统计（最近N天）
-func (s *UsageService) GetDailyStats(ctx context.Context, userID int64, days int) ([]map[string]any, error) {
-	endTime := time.Now()
-	startTime := endTime.AddDate(0, 0, -days)
-
-	stats, err := s.usageRepo.GetDailyStatsAggregated(ctx, userID, startTime, endTime)
-	if err != nil {
-		return nil, fmt.Errorf("get daily stats: %w", err)
-	}
-
-	return stats, nil
-}
-
-// Delete 删除使用日志（管理员功能，谨慎使用）
-func (s *UsageService) Delete(ctx context.Context, id int64) error {
-	if err := s.usageRepo.Delete(ctx, id); err != nil {
-		return fmt.Errorf("delete usage log: %w", err)
-	}
-	return nil
-}
-
-// GetUserDashboardStats returns per-user dashboard summary stats.
-func (s *UsageService) GetUserDashboardStats(ctx context.Context, userID int64) (*usagestats.UserDashboardStats, error) {
-	stats, err := s.usageRepo.GetUserDashboardStats(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("get user dashboard stats: %w", err)
-	}
-	return stats, nil
-}
-
 // GetAPIKeyDashboardStats returns dashboard summary stats filtered by API Key.
-func (s *UsageService) GetAPIKeyDashboardStats(ctx context.Context, apiKeyID int64) (*usagestats.UserDashboardStats, error) {
+func (s *UsageService) GetAPIKeyDashboardStats(ctx context.Context, apiKeyID int64) (*usagestats.APIKeyDashboardStats, error) {
 	stats, err := s.usageRepo.GetAPIKeyDashboardStats(ctx, apiKeyID)
 	if err != nil {
 		return nil, fmt.Errorf("get api key dashboard stats: %w", err)
 	}
 	return stats, nil
-}
-
-// GetUserUsageTrendByUserID returns per-user usage trend.
-func (s *UsageService) GetUserUsageTrendByUserID(ctx context.Context, userID int64, startTime, endTime time.Time, granularity string) ([]usagestats.TrendDataPoint, error) {
-	trend, err := s.usageRepo.GetUserUsageTrendByUserID(ctx, userID, startTime, endTime, granularity)
-	if err != nil {
-		return nil, fmt.Errorf("get user usage trend: %w", err)
-	}
-	return trend, nil
 }
 
 // GetUsageTrendWithFilters returns trend data using the shared usage filter shape.
@@ -328,20 +111,11 @@ func (s *UsageService) GetUsageTrendWithFilters(ctx context.Context, startTime, 
 		}
 		return trend, nil
 	}
-	trend, err := s.usageRepo.GetUsageTrendWithFilters(ctx, startTime, endTime, granularity, filters.UserID, filters.APIKeyID, filters.AccountID, filters.GroupID, filters.Model, filters.RequestType, filters.Stream, filters.BillingType)
+	trend, err := s.usageRepo.GetUsageTrendWithFilters(ctx, startTime, endTime, granularity, filters.UserID, filters.APIKeyID, filters.AccountID, filters.GroupID, filters.Model, filters.RequestType, filters.Stream)
 	if err != nil {
 		return nil, fmt.Errorf("get usage trend with filters: %w", err)
 	}
 	return trend, nil
-}
-
-// GetUserModelStats returns per-user model usage stats.
-func (s *UsageService) GetUserModelStats(ctx context.Context, userID int64, startTime, endTime time.Time) ([]usagestats.ModelStat, error) {
-	stats, err := s.usageRepo.GetUserModelStats(ctx, userID, startTime, endTime)
-	if err != nil {
-		return nil, fmt.Errorf("get user model stats: %w", err)
-	}
-	return stats, nil
 }
 
 // GetModelStatsWithFiltersBySource returns model stats using the shared usage filter shape.
@@ -358,16 +132,16 @@ func (s *UsageService) GetModelStatsWithFiltersBySource(ctx context.Context, sta
 		return stats, nil
 	}
 	type modelStatsBySourceRepo interface {
-		GetModelStatsWithFiltersBySource(ctx context.Context, startTime, endTime time.Time, userID, apiKeyID, accountID, groupID int64, requestType *int16, stream *bool, billingType *int8, source string) ([]usagestats.ModelStat, error)
+		GetModelStatsWithFiltersBySource(ctx context.Context, startTime, endTime time.Time, userID, apiKeyID, accountID, groupID int64, requestType *int16, stream *bool, source string) ([]usagestats.ModelStat, error)
 	}
 	if sourceRepo, ok := s.usageRepo.(modelStatsBySourceRepo); ok {
-		stats, err := sourceRepo.GetModelStatsWithFiltersBySource(ctx, startTime, endTime, filters.UserID, filters.APIKeyID, filters.AccountID, filters.GroupID, filters.RequestType, filters.Stream, filters.BillingType, normalizedSource)
+		stats, err := sourceRepo.GetModelStatsWithFiltersBySource(ctx, startTime, endTime, filters.UserID, filters.APIKeyID, filters.AccountID, filters.GroupID, filters.RequestType, filters.Stream, normalizedSource)
 		if err != nil {
 			return nil, fmt.Errorf("get model stats with filters by source: %w", err)
 		}
 		return stats, nil
 	}
-	stats, err := s.usageRepo.GetModelStatsWithFilters(ctx, startTime, endTime, filters.UserID, filters.APIKeyID, filters.AccountID, filters.GroupID, filters.RequestType, filters.Stream, filters.BillingType)
+	stats, err := s.usageRepo.GetModelStatsWithFilters(ctx, startTime, endTime, filters.UserID, filters.APIKeyID, filters.AccountID, filters.GroupID, filters.RequestType, filters.Stream)
 	if err != nil {
 		return nil, fmt.Errorf("get model stats with filters: %w", err)
 	}
@@ -386,7 +160,7 @@ func (s *UsageService) GetGroupStatsWithFilters(ctx context.Context, startTime, 
 		}
 		return stats, nil
 	}
-	stats, err := s.usageRepo.GetGroupStatsWithFilters(ctx, startTime, endTime, filters.UserID, filters.APIKeyID, filters.AccountID, filters.GroupID, filters.RequestType, filters.Stream, filters.BillingType)
+	stats, err := s.usageRepo.GetGroupStatsWithFilters(ctx, startTime, endTime, filters.UserID, filters.APIKeyID, filters.AccountID, filters.GroupID, filters.RequestType, filters.Stream)
 	if err != nil {
 		return nil, fmt.Errorf("get group stats with filters: %w", err)
 	}
@@ -395,7 +169,7 @@ func (s *UsageService) GetGroupStatsWithFilters(ctx context.Context, startTime, 
 
 // GetAPIKeyModelStats returns per-model usage stats for a specific API Key.
 func (s *UsageService) GetAPIKeyModelStats(ctx context.Context, apiKeyID int64, startTime, endTime time.Time) ([]usagestats.ModelStat, error) {
-	stats, err := s.usageRepo.GetModelStatsWithFilters(ctx, startTime, endTime, 0, apiKeyID, 0, 0, nil, nil, nil)
+	stats, err := s.usageRepo.GetModelStatsWithFilters(ctx, startTime, endTime, 0, apiKeyID, 0, 0, nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get api key model stats: %w", err)
 	}
@@ -404,7 +178,7 @@ func (s *UsageService) GetAPIKeyModelStats(ctx context.Context, apiKeyID int64, 
 
 // GetAPIKeyDailyUsage returns daily usage stats for a user's API key.
 func (s *UsageService) GetAPIKeyDailyUsage(ctx context.Context, userID, apiKeyID int64, startTime, endTime time.Time) ([]usagestats.APIKeyDailyUsagePoint, error) {
-	trend, err := s.usageRepo.GetUsageTrendWithFilters(ctx, startTime, endTime, "day", userID, apiKeyID, 0, 0, "", nil, nil, nil)
+	trend, err := s.usageRepo.GetUsageTrendWithFilters(ctx, startTime, endTime, "day", userID, apiKeyID, 0, 0, "", nil, nil)
 	if err != nil {
 		return nil, fmt.Errorf("get api key daily usage: %w", err)
 	}
@@ -442,15 +216,6 @@ func (s *UsageService) ListWithFilters(ctx context.Context, params pagination.Pa
 		return nil, nil, fmt.Errorf("list usage logs with filters: %w", err)
 	}
 	return logs, result, nil
-}
-
-// GetGlobalStats returns global usage stats for a time range.
-func (s *UsageService) GetGlobalStats(ctx context.Context, startTime, endTime time.Time) (*usagestats.UsageStats, error) {
-	stats, err := s.usageRepo.GetGlobalStats(ctx, startTime, endTime)
-	if err != nil {
-		return nil, fmt.Errorf("get global usage stats: %w", err)
-	}
-	return stats, nil
 }
 
 // GetStatsWithFilters returns usage stats with optional filters.

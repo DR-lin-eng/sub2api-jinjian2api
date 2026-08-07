@@ -16,18 +16,10 @@ func BenchmarkSettingServiceParseSettings(b *testing.B) {
 	}{
 		{name: "defaults", settings: map[string]string{}},
 		{name: "persisted", settings: map[string]string{
-			SettingKeyRegistrationEnabled:               "true",
-			SettingKeyEmailVerifyEnabled:                "true",
 			SettingKeyClientIPResolutionMode:            "trusted_proxy",
 			SettingKeyClientIPTrustedProxies:            `["10.0.0.0/8","2001:db8::/32"]`,
-			SettingKeyDefaultConcurrency:                "8",
-			SettingKeyDefaultBalance:                    "12.5",
-			SettingKeyOIDCConnectEnabled:                "true",
-			SettingKeyOIDCConnectIssuerURL:              "https://issuer.example.com",
-			SettingKeyOIDCConnectScopes:                 "openid email profile",
 			SettingKeyOpenAIAdvancedSchedulerWeightLoad: "2.5",
 			SettingKeyAccountQuotaNotifyEmails:          `[{"email":"ops@example.com"}]`,
-			SettingKeyDefaultPlatformQuotas:             `{"openai":{"daily":10}}`,
 		}},
 	}
 

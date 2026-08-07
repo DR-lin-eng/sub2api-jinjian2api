@@ -2,7 +2,6 @@ import type { ComputedRef, Ref } from "vue";
 import type {
   AdminGroup,
   GroupPlatform,
-  SubscriptionType,
 } from "@/types";
 import type { ModelsListState } from "./groupsModelsListResolver";
 import type { MessagesDispatchMappingRow } from "./groupsMessagesDispatchResolver";
@@ -45,19 +44,11 @@ export interface GroupEditorFormState {
   description: string;
   platform: GroupPlatform;
   rate_multiplier: number | string;
-  is_exclusive: boolean;
   status?: "active" | "inactive";
-  subscription_type: SubscriptionType;
-  daily_limit_usd: number | string | null;
-  weekly_limit_usd: number | string | null;
-  monthly_limit_usd: number | string | null;
   allow_image_generation: boolean;
   openai_force_image_tool: boolean;
-  allow_batch_image_generation: boolean;
   image_rate_independent: boolean;
   image_rate_multiplier: number | string;
-  batch_image_discount_multiplier: number | string;
-  batch_image_hold_multiplier: number | string;
   image_price_1k: number | string | null;
   image_price_2k: number | string | null;
   image_price_4k: number | string | null;
@@ -67,10 +58,6 @@ export interface GroupEditorFormState {
   video_price_720p: number | string | null;
   video_price_1080p: number | string | null;
   web_search_price_per_call: number | string | null;
-  peak_rate_enabled: boolean;
-  peak_start: string;
-  peak_end: string;
-  peak_rate_multiplier: number | string;
   profit_control_enabled: boolean;
   profit_min_margin_percent: number | string;
   profit_safety_buffer_percent: number | string;
@@ -102,7 +89,6 @@ export interface GroupEditorDialogContext {
   submit: () => void | Promise<void>;
   submitting: Ref<boolean>;
   platformOptions: ComputedRef<GroupEditorOption[]>;
-  subscriptionTypeOptions: ComputedRef<GroupEditorOption[]>;
   copyAccountsOptions: ComputedRef<GroupEditorIDOption[]>;
   fallbackOptions: ComputedRef<GroupEditorOption[]>;
   invalidRequestFallbackOptions: ComputedRef<GroupEditorOption[]>;

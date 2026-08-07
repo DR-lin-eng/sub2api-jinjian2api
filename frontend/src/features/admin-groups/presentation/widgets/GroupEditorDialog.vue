@@ -72,7 +72,6 @@ const {
         :form="isEdit ? 'edit-group-form' : 'create-group-form'"
         :disabled="submitting"
         class="btn btn-primary"
-        data-tour="group-form-submit"
       >
         <svg
           v-if="submitting"

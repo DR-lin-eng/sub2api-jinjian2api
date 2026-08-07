@@ -415,9 +415,6 @@ var ErrNoAvailableCompactAccounts = errors.New("no available accounts support /r
 type OpenAIGatewayService struct {
 	accountRepo           AccountRepository
 	usageLogRepo          UsageLogRepository
-	usageBillingRepo      UsageBillingRepository
-	userRepo              UserRepository
-	userSubRepo           UserSubscriptionRepository
 	cache                 GatewayCache
 	cfg                   *config.Config
 	codexDetector         CodexClientRestrictionDetector
@@ -425,8 +422,6 @@ type OpenAIGatewayService struct {
 	concurrencyService    *ConcurrencyService
 	billingService        *BillingService
 	rateLimitService      *RateLimitService
-	billingCacheService   *BillingCacheService
-	userGroupRateResolver *userGroupRateResolver
 	httpUpstream          HTTPUpstream
 	deferredService       *DeferredService
 	openAITokenProvider   *OpenAITokenProvider
@@ -435,9 +430,7 @@ type OpenAIGatewayService struct {
 	openaiWSResolver      OpenAIWSProtocolResolver
 	resolver              *ModelPricingResolver
 	channelService        *ChannelService
-	balanceNotifyService  *BalanceNotifyService
 	settingService        *SettingService
-	userPlatformQuotaRepo UserPlatformQuotaRepository
 	liveAttestation       liveattestation.Provider
 	liveAttestationCipher SecretEncryptor
 
@@ -484,51 +477,33 @@ type OpenAIGatewayService struct {
 func NewOpenAIGatewayService(
 	accountRepo AccountRepository,
 	usageLogRepo UsageLogRepository,
-	usageBillingRepo UsageBillingRepository,
-	userRepo UserRepository,
-	userSubRepo UserSubscriptionRepository,
-	userGroupRateRepo UserGroupRateRepository,
 	cache GatewayCache,
 	cfg *config.Config,
 	schedulerSnapshot *SchedulerSnapshotService,
 	concurrencyService *ConcurrencyService,
 	billingService *BillingService,
 	rateLimitService *RateLimitService,
-	billingCacheService *BillingCacheService,
 	httpUpstream HTTPUpstream,
 	deferredService *DeferredService,
 	openAITokenProvider *OpenAITokenProvider,
 	grokTokenProvider *GrokTokenProvider,
 	resolver *ModelPricingResolver,
 	channelService *ChannelService,
-	balanceNotifyService *BalanceNotifyService,
 	settingService *SettingService,
-	userPlatformQuotaRepo UserPlatformQuotaRepository,
 ) *OpenAIGatewayService {
 	if cfg != nil {
 		SetCodexIdentityEnforcementEnabled(!cfg.Gateway.DisableCodexIdentityEnforcement)
 	}
 	svc := &OpenAIGatewayService{
-		accountRepo:         accountRepo,
-		usageLogRepo:        usageLogRepo,
-		usageBillingRepo:    usageBillingRepo,
-		userRepo:            userRepo,
-		userSubRepo:         userSubRepo,
-		cache:               cache,
-		cfg:                 cfg,
-		codexDetector:       NewOpenAICodexClientRestrictionDetector(cfg),
-		schedulerSnapshot:   schedulerSnapshot,
-		concurrencyService:  concurrencyService,
-		billingService:      billingService,
-		rateLimitService:    rateLimitService,
-		billingCacheService: billingCacheService,
-		userGroupRateResolver: newUserGroupRateResolver(
-			userGroupRateRepo,
-			nil,
-			resolveUserGroupRateCacheTTL(cfg),
-			nil,
-			"service.openai_gateway",
-		),
+		accountRepo:             accountRepo,
+		usageLogRepo:            usageLogRepo,
+		cache:                   cache,
+		cfg:                     cfg,
+		codexDetector:           NewOpenAICodexClientRestrictionDetector(cfg),
+		schedulerSnapshot:       schedulerSnapshot,
+		concurrencyService:      concurrencyService,
+		billingService:          billingService,
+		rateLimitService:        rateLimitService,
 		httpUpstream:            httpUpstream,
 		deferredService:         deferredService,
 		openAITokenProvider:     openAITokenProvider,
@@ -537,9 +512,7 @@ func NewOpenAIGatewayService(
 		openaiWSResolver:        nil,
 		resolver:                resolver,
 		channelService:          channelService,
-		balanceNotifyService:    balanceNotifyService,
 		settingService:          settingService,
-		userPlatformQuotaRepo:   userPlatformQuotaRepo,
 		liveAttestation:         liveattestation.NewProvider(),
 		liveAttestationCipher:   newLiveAttestationCipher(cfg),
 		responseHeaderFilter:    compileResponseHeaderFilter(cfg),
@@ -648,18 +621,6 @@ func (s *OpenAIGatewayService) getCodexSnapshotThrottle() *accountWriteThrottle 
 		return s.codexSnapshotThrottle
 	}
 	return defaultOpenAICodexSnapshotPersistThrottle
-}
-
-func (s *OpenAIGatewayService) billingDeps() *billingDeps {
-	return &billingDeps{
-		accountRepo:           s.accountRepo,
-		userRepo:              s.userRepo,
-		userSubRepo:           s.userSubRepo,
-		billingCacheService:   s.billingCacheService,
-		deferredService:       s.deferredService,
-		balanceNotifyService:  s.balanceNotifyService,
-		userPlatformQuotaRepo: s.userPlatformQuotaRepo,
-	}
 }
 
 // CloseOpenAIWSPool 关闭 OpenAI WebSocket 连接池的后台 worker 和空闲连接。

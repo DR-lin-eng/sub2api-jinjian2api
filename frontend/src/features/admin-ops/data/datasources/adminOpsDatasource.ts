@@ -293,43 +293,6 @@ export interface OpsOpenAITokenStatsParams {
   top_n?: number
 }
 
-export type OpsUserUsageStatsTimeRange = '30m' | '1h' | '24h' | '15d' | '30d'
-
-export interface OpsUserUsageStatsItem {
-  user_id: number
-  username: string
-  email: string
-  request_count: number
-  input_tokens: number
-  output_tokens: number
-  cache_tokens: number
-  total_tokens: number
-  actual_cost: number
-  last_request_at: string
-}
-
-export interface OpsUserUsageStatsResponse {
-  time_range: OpsUserUsageStatsTimeRange
-  start_time: string
-  end_time: string
-  platform?: string
-  group_id?: number | null
-  items: OpsUserUsageStatsItem[]
-  total: number
-  page?: number
-  page_size?: number
-  top_n?: number | null
-}
-
-export interface OpsUserUsageStatsParams {
-  time_range?: OpsUserUsageStatsTimeRange
-  platform?: string
-  group_id?: number | null
-  page?: number
-  page_size?: number
-  top_n?: number
-}
-
 export interface OpsSystemMetricsSnapshot {
   id: number
   created_at: string
@@ -408,22 +371,6 @@ export interface OpsConcurrencyStatsResponse {
   timestamp?: string
 }
 
-export interface UserConcurrencyInfo {
-  user_id: number
-  user_email: string
-  username: string
-  current_in_use: number
-  max_capacity: number
-  load_percentage: number
-  waiting_in_queue: number
-}
-
-export interface OpsUserConcurrencyStatsResponse {
-  enabled: boolean
-  user: Record<string, UserConcurrencyInfo>
-  timestamp?: string
-}
-
 export async function getConcurrencyStats(platform?: string, groupId?: number | null): Promise<OpsConcurrencyStatsResponse> {
   const params: Record<string, any> = {}
   if (platform) {
@@ -434,11 +381,6 @@ export async function getConcurrencyStats(platform?: string, groupId?: number | 
   }
 
   const { data } = await apiClient.get<OpsConcurrencyStatsResponse>('/admin/ops/concurrency', { params })
-  return data
-}
-
-export async function getUserConcurrencyStats(): Promise<OpsUserConcurrencyStatsResponse> {
-  const { data } = await apiClient.get<OpsUserConcurrencyStatsResponse>('/admin/ops/user-concurrency')
   return data
 }
 
@@ -897,7 +839,6 @@ export interface OpsAdvancedSettings {
   ignore_insufficient_balance_errors: boolean
   record_business_limited_429: boolean
   display_openai_token_stats: boolean
-  display_user_usage_stats: boolean
   display_alert_events: boolean
   display_system_logs: boolean
   display_concurrency: boolean
@@ -1234,17 +1175,6 @@ export async function getOpenAITokenStats(
   return data
 }
 
-export async function getUserUsageStats(
-  params: OpsUserUsageStatsParams,
-  options: OpsRequestOptions = {}
-): Promise<OpsUserUsageStatsResponse> {
-  const { data } = await apiClient.get<OpsUserUsageStatsResponse>('/admin/ops/dashboard/user-usage-stats', {
-    params,
-    signal: options.signal
-  })
-  return data
-}
-
 export type OpsErrorListView = 'errors' | 'excluded' | 'all'
 
 export type OpsErrorListQueryParams = {
@@ -1486,10 +1416,8 @@ export const opsAPI = {
   getErrorDistribution,
   getImageGenerationStats,
   getOpenAITokenStats,
-  getUserUsageStats,
   getConcurrencyStats,
   getConcurrencySnapshot,
-  getUserConcurrencyStats,
   getAccountAvailabilityStats,
   getRealtimeTrafficSummary,
   subscribeQPS,

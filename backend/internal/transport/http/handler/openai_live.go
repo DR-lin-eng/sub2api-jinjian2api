@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
@@ -63,27 +62,6 @@ func (h *OpenAIGatewayHandler) Live(c *gin.Context) {
 		return
 	}
 
-	subscription, _ := middleware2.GetSubscriptionFromContext(c)
-	if h.billingCacheService == nil {
-		h.errorResponse(c, http.StatusServiceUnavailable, "api_error", "Billing service unavailable")
-		return
-	}
-	if err := h.billingCacheService.CheckBillingEligibility(
-		c.Request.Context(),
-		apiKey.User,
-		apiKey,
-		apiKey.Group,
-		subscription,
-		service.QuotaPlatform(c.Request.Context(), apiKey),
-	); err != nil {
-		status, code, message, retryAfter := billingErrorDetails(err)
-		if retryAfter > 0 {
-			c.Header("Retry-After", strconv.Itoa(retryAfter))
-		}
-		h.errorResponse(c, status, code, message)
-		return
-	}
-
 	userRelease, acquired, err := h.concurrencyHelper.TryAcquireUserSlotForAPIKey(
 		c.Request.Context(),
 		subject.UserID,
@@ -101,7 +79,7 @@ func (h *OpenAIGatewayHandler) Live(c *gin.Context) {
 	}
 	defer userRelease()
 
-	identity := liveCallIdentity(c, apiKey, subject.UserID, subscription)
+	identity := liveCallIdentity(c, apiKey, subject.UserID)
 	created, err := h.gatewayService.CreateLiveCall(
 		c.Request.Context(),
 		request,
@@ -154,18 +132,11 @@ func liveCallIdentity(
 	c *gin.Context,
 	apiKey *service.APIKey,
 	userID int64,
-	subscription *service.UserSubscription,
 ) service.LiveCallIdentity {
-	var subscriptionID *int64
-	if subscription != nil {
-		value := subscription.ID
-		subscriptionID = &value
-	}
 	return service.LiveCallIdentity{
 		APIKeyID:        apiKey.ID,
 		UserID:          userID,
 		GroupID:         apiKey.GroupID,
-		SubscriptionID:  subscriptionID,
 		UserAgent:       c.GetHeader("User-Agent"),
 		IPAddress:       ip.GetClientIP(c),
 		InboundEndpoint: GetInboundEndpoint(c),

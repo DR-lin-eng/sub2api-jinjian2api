@@ -129,11 +129,6 @@ export default defineConfig(({ mode }) => {
               return 'vendor-vueuse'
             }
 
-            // XLSX 仅在导出流程中动态加载，不能与 VueUse 合并后进入页面 preload。
-            if (id.includes('/xlsx/')) {
-              return 'vendor-xlsx'
-            }
-
             // 图表库
             if (id.includes('/chart.js/') || id.includes('/vue-chartjs/')) {
               return 'vendor-chart'

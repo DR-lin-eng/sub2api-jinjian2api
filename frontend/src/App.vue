@@ -5,31 +5,18 @@ import Toast from '@/common/widgets/feedback/Toast.vue'
 import NavigationProgress from '@/common/widgets/feedback/NavigationProgress.vue'
 import AdminComplianceDialog from '@/features/admin-settings/presentation/widgets/AdminComplianceDialog.vue'
 import { resolveRouteDocumentTitle } from '@/core/routes/title'
-import AnnouncementPopup from '@/common/widgets/data/AnnouncementPopup.vue'
-import { useAppStore, useAuthStore, useSubscriptionStore, useAnnouncementStore, useAdminComplianceStore, useAdminSettingsStore } from '@/stores'
+import { useAppStore, useAuthStore, useAdminComplianceStore } from '@/stores'
 import { getSetupStatus } from '@/features/setup/data/datasources/setupDatasource'
-import { useSupportUnreadPolling } from '@/features/support-chat/presentation/composables/useSupportUnreadPolling'
 import { updateFavicon } from '@/core/services/branding'
 
 const router = useRouter()
 const route = useRoute()
 const appStore = useAppStore()
 const authStore = useAuthStore()
-const subscriptionStore = useSubscriptionStore()
-const announcementStore = useAnnouncementStore()
 const adminComplianceStore = useAdminComplianceStore()
-const adminSettingsStore = useAdminSettingsStore()
-useSupportUnreadPolling({
-  isAuthenticated: () => authStore.isAuthenticated,
-  isAdmin: () => authStore.isAdmin,
-})
 
 function updateDocumentTitle() {
-  const customMenuItems = [
-    ...(appStore.cachedPublicSettings?.custom_menu_items ?? []),
-    ...(authStore.isAdmin ? adminSettingsStore.customMenuItems : []),
-  ]
-  document.title = resolveRouteDocumentTitle(route, appStore.siteName, customMenuItems)
+  document.title = resolveRouteDocumentTitle(route, appStore.siteName)
 }
 
 // Watch for site settings changes and update favicon/title
@@ -49,29 +36,24 @@ watch(
     () => route.meta.title,
     () => route.meta.titleKey,
     () => appStore.siteName,
-    () => appStore.cachedPublicSettings?.custom_menu_items,
-    () => authStore.isAdmin,
-    () => adminSettingsStore.customMenuItems,
   ],
   updateDocumentTitle,
   { deep: true }
 )
-
-// Watch for authentication state and manage subscription data + announcements
-function onVisibilityChange() {
-  if (document.visibilityState === 'visible' && authStore.isAuthenticated) {
-    announcementStore.fetchAnnouncements()
-  }
-}
 
 function onAdminComplianceRequired(event: Event) {
   const detail = (event as CustomEvent<Record<string, string>>).detail || {}
   adminComplianceStore.requireAcknowledgement(detail)
 }
 
+async function logoutForAdminCompliance(): Promise<void> {
+  await authStore.logout()
+  window.location.href = '/login'
+}
+
 watch(
   () => authStore.isAuthenticated,
-  (isAuthenticated, oldValue) => {
+  (isAuthenticated) => {
     if (isAuthenticated) {
       if (authStore.isAdmin) {
         adminComplianceStore.fetchStatus().catch((error) => {
@@ -79,43 +61,14 @@ watch(
         })
       }
 
-      // User logged in: preload subscriptions and start polling
-      subscriptionStore.fetchActiveSubscriptions().catch((error) => {
-        console.error('Failed to preload subscriptions:', error)
-      })
-      subscriptionStore.startPolling()
-
-      // Announcements: new login vs page refresh restore
-      if (oldValue === false) {
-        // New login: delay 3s then force fetch
-        setTimeout(() => announcementStore.fetchAnnouncements(true), 3000)
-      } else {
-        // Page refresh restore (oldValue was undefined)
-        announcementStore.fetchAnnouncements()
-      }
-
-      // Register visibility change listener
-      document.addEventListener('visibilitychange', onVisibilityChange)
     } else {
-      // User logged out: clear data and stop polling
-      subscriptionStore.clear()
-      announcementStore.reset()
       adminComplianceStore.reset()
-      document.removeEventListener('visibilitychange', onVisibilityChange)
     }
   },
   { immediate: true }
 )
 
-// Route change trigger (throttled by store)
-router.afterEach(() => {
-  if (authStore.isAuthenticated) {
-    announcementStore.fetchAnnouncements()
-  }
-})
-
 onBeforeUnmount(() => {
-  document.removeEventListener('visibilitychange', onVisibilityChange)
   window.removeEventListener('admin-compliance-required', onAdminComplianceRequired)
 })
 
@@ -145,6 +98,9 @@ onMounted(async () => {
   <NavigationProgress />
   <RouterView />
   <Toast />
-  <AnnouncementPopup />
-  <AdminComplianceDialog />
+  <AdminComplianceDialog
+    :is-authenticated="authStore.isAuthenticated"
+    :is-admin="authStore.isAdmin"
+    @logout="logoutForAdminCompliance"
+  />
 </template>

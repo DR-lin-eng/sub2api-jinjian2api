@@ -200,7 +200,6 @@ export interface CreateAccountAdvancedContext
   allowOverages: Ref<boolean>
   anthropicAPIKeyAuthScheme: Ref<'x_api_key' | 'authorization_bearer'>
   anthropicPassthroughEnabled: Ref<boolean>
-  isSimpleMode: ComputedRef<boolean>
   autoPauseOnExpired: Ref<boolean>
   baseRpm: Ref<number | null>
   cacheTTLOverrideEnabled: Ref<boolean>
@@ -404,7 +403,6 @@ export interface EditAccountPolicyContext {
   account: ComputedRef<Account>
   addOpenAICompactModelMapping: () => void
   allowOverages: Ref<boolean>
-  isSimpleMode: ComputedRef<boolean>
   autoPause5hDisabled: Ref<boolean>
   autoPause5hThreshold: Ref<number | null>
   autoPause7dDisabled: Ref<boolean>

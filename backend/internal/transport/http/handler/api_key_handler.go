@@ -35,13 +35,7 @@ type CreateAPIKeyRequest struct {
 	CustomKey     *string  `json:"custom_key"`      // 可选的自定义key
 	IPWhitelist   []string `json:"ip_whitelist"`    // IP 白名单
 	IPBlacklist   []string `json:"ip_blacklist"`    // IP 黑名单
-	Quota         *float64 `json:"quota"`           // 配额限制 (USD)
 	ExpiresInDays *int     `json:"expires_in_days"` // 过期天数
-
-	// Rate limit fields (0 = unlimited)
-	RateLimit5h *float64 `json:"rate_limit_5h"`
-	RateLimit1d *float64 `json:"rate_limit_1d"`
-	RateLimit7d *float64 `json:"rate_limit_7d"`
 }
 
 // UpdateAPIKeyRequest represents the update API key request payload
@@ -51,16 +45,8 @@ type UpdateAPIKeyRequest struct {
 	Status           string    `json:"status" binding:"omitempty,oneof=active inactive"`
 	IPWhitelist      *[]string `json:"ip_whitelist"` // IP 白名单（nil 不修改，空数组清空）
 	IPBlacklist      *[]string `json:"ip_blacklist"` // IP 黑名单（nil 不修改，空数组清空）
-	Quota            *float64  `json:"quota"`        // 配额限制 (USD), 0=无限制
 	ExpiresAt        *string   `json:"expires_at"`   // 过期时间 (ISO 8601)
-	ResetQuota       *bool     `json:"reset_quota"`  // 重置已用配额
 	ConcurrencyLimit *int      `json:"concurrency_limit"`
-
-	// Rate limit fields (nil = no change, 0 = unlimited)
-	RateLimit5h         *float64 `json:"rate_limit_5h"`
-	RateLimit1d         *float64 `json:"rate_limit_1d"`
-	RateLimit7d         *float64 `json:"rate_limit_7d"`
-	ResetRateLimitUsage *bool    `json:"reset_rate_limit_usage"` // 重置限速用量
 }
 
 // List handles listing user's API keys with pagination
@@ -162,19 +148,6 @@ func (h *APIKeyHandler) Create(c *gin.Context) {
 		IPBlacklist:   req.IPBlacklist,
 		ExpiresInDays: req.ExpiresInDays,
 	}
-	if req.Quota != nil {
-		svcReq.Quota = *req.Quota
-	}
-	if req.RateLimit5h != nil {
-		svcReq.RateLimit5h = *req.RateLimit5h
-	}
-	if req.RateLimit1d != nil {
-		svcReq.RateLimit1d = *req.RateLimit1d
-	}
-	if req.RateLimit7d != nil {
-		svcReq.RateLimit7d = *req.RateLimit7d
-	}
-
 	executeUserIdempotentJSON(c, "user.api_keys.create", req, service.DefaultWriteIdempotencyTTL(), func(ctx context.Context) (any, error) {
 		key, err := h.apiKeyService.Create(ctx, subject.UserID, svcReq)
 		if err != nil {
@@ -206,15 +179,9 @@ func (h *APIKeyHandler) Update(c *gin.Context) {
 	}
 
 	svcReq := service.UpdateAPIKeyRequest{
-		IPWhitelist:         req.IPWhitelist,
-		IPBlacklist:         req.IPBlacklist,
-		Quota:               req.Quota,
-		ResetQuota:          req.ResetQuota,
-		ConcurrencyLimit:    req.ConcurrencyLimit,
-		RateLimit5h:         req.RateLimit5h,
-		RateLimit1d:         req.RateLimit1d,
-		RateLimit7d:         req.RateLimit7d,
-		ResetRateLimitUsage: req.ResetRateLimitUsage,
+		IPWhitelist:      req.IPWhitelist,
+		IPBlacklist:      req.IPBlacklist,
+		ConcurrencyLimit: req.ConcurrencyLimit,
 	}
 	if req.Name != "" {
 		svcReq.Name = &req.Name
@@ -292,24 +259,6 @@ func (h *APIKeyHandler) GetAvailableGroups(c *gin.Context) {
 		out = append(out, *dto.GroupFromService(&groups[i]))
 	}
 	response.Success(c, out)
-}
-
-// GetUserGroupRates 获取当前用户的专属分组倍率配置
-// GET /api/v1/groups/rates
-func (h *APIKeyHandler) GetUserGroupRates(c *gin.Context) {
-	subject, ok := middleware2.GetAuthSubjectFromContext(c)
-	if !ok {
-		response.Unauthorized(c, "User not authenticated")
-		return
-	}
-
-	rates, err := h.apiKeyService.GetUserGroupRates(c.Request.Context(), subject.UserID)
-	if err != nil {
-		response.ErrorFrom(c, err)
-		return
-	}
-
-	response.Success(c, rates)
 }
 
 // GetAuthenticatedAPIKeyGroups returns all group metadata and effective rate

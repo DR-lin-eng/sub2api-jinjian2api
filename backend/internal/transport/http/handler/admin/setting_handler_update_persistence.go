@@ -13,13 +13,7 @@ func (h *SettingHandler) persistSettingsUpdate(
 	omitted service.OmittedSettingKeys,
 ) bool {
 	settings := buildSystemSettingsUpdate(prepared)
-	authSourceDefaults := buildAuthSourceDefaultSettingsUpdate(prepared)
-	if err := h.settingService.UpdateSettingsWithAuthSourceDefaultsOmitting(
-		c.Request.Context(),
-		settings,
-		authSourceDefaults,
-		omitted,
-	); err != nil {
+	if err := h.settingService.UpdateSettingsOmitting(c.Request.Context(), settings, omitted); err != nil {
 		response.ErrorFrom(c, err)
 		return false
 	}
@@ -33,21 +27,6 @@ func (h *SettingHandler) persistSettingsUpdate(
 		); err != nil {
 			response.BadRequest(c, err.Error())
 			return false
-		}
-	}
-
-	// Payment settings are owned by PaymentConfigService. Omission must not
-	// replace that separate document with zero values.
-	if h.paymentConfigService != nil && hasPaymentFields(*req) {
-		if err := h.paymentConfigService.UpdatePaymentConfig(
-			c.Request.Context(),
-			buildPaymentConfigUpdate(req),
-		); err != nil {
-			response.ErrorFrom(c, err)
-			return false
-		}
-		if h.paymentService != nil {
-			h.paymentService.RefreshProviders(c.Request.Context())
 		}
 	}
 

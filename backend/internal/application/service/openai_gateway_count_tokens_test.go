@@ -27,6 +27,16 @@ type countTokensRuntimeStateRepo struct {
 	setErrorCalls    int
 }
 
+type countTokensUsageRepo struct {
+	UsageLogRepository
+	createCalls int
+}
+
+func (r *countTokensUsageRepo) Create(_ context.Context, _ *UsageLog) (bool, error) {
+	r.createCalls++
+	return true, nil
+}
+
 func (r *countTokensRuntimeStateRepo) SetTempUnschedulable(_ context.Context, _ int64, _ time.Time, _ string) error {
 	r.tempUnschedCalls++
 	return nil
@@ -37,7 +47,7 @@ func (r *countTokensRuntimeStateRepo) SetError(_ context.Context, _ int64, _ str
 	return nil
 }
 
-func TestOpenAIGatewayService_ForwardCountTokensAsAnthropic_APIKeyUsesResponsesInputTokens(t *testing.T) {
+func TestOpenAIGatewayService_ForwardCountTokensAsAnthropic_APIKeyUsesResponsesInputTokensWithoutDownstreamBilling(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	rec := httptest.NewRecorder()
@@ -52,12 +62,15 @@ func TestOpenAIGatewayService_ForwardCountTokensAsAnthropic_APIKeyUsesResponsesI
 		Body:       io.NopCloser(strings.NewReader(`{"object":"response.input_tokens","input_tokens":42}`)),
 	}}
 
+	usageRepo := &countTokensUsageRepo{}
 	svc := &OpenAIGatewayService{
 		cfg: &config.Config{Security: config.SecurityConfig{URLAllowlist: config.URLAllowlistConfig{
 			Enabled:           false,
 			AllowInsecureHTTP: true,
 		}}},
-		httpUpstream: upstream,
+		usageLogRepo:   usageRepo,
+		billingService: nil,
+		httpUpstream:   upstream,
 	}
 	account := &Account{
 		ID:          101,
@@ -83,6 +96,7 @@ func TestOpenAIGatewayService_ForwardCountTokensAsAnthropic_APIKeyUsesResponsesI
 	require.Equal(t, "gpt-5.3-codex", gjson.GetBytes(upstream.lastBody, "model").String())
 	require.True(t, gjson.GetBytes(upstream.lastBody, "input").Exists())
 	require.False(t, gjson.GetBytes(upstream.lastBody, "messages").Exists())
+	require.Zero(t, usageRepo.createCalls, "count_tokens must not create a downstream usage charge")
 }
 
 func TestOpenAIGatewayService_ForwardCountTokensAsAnthropic_OAuthFallsBackWhenPlatformEndpointUnsupported(t *testing.T) {

@@ -2,16 +2,12 @@ package service
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"html"
-	"log/slog"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -20,31 +16,21 @@ import (
 )
 
 const (
-	NotificationEmailEventAuthVerifyCode              = "auth.verify_code"
-	NotificationEmailEventAuthPasswordReset           = "auth.password_reset"
-	NotificationEmailEventNotificationEmailVerifyCode = "notification_email.verify_code"
-	NotificationEmailEventSubscriptionPurchaseSuccess = "subscription.purchase_success"
-	NotificationEmailEventSubscriptionExpiryReminder  = "subscription.expiry_reminder"
-	NotificationEmailEventBalanceLow                  = "balance.low"
-	NotificationEmailEventBalanceRechargeSuccess      = "balance.recharge_success"
-	NotificationEmailEventAccountQuotaAlert           = "account.quota_alert"
-	NotificationEmailEventContentModerationViolation  = "content_moderation.violation_notice"
-	NotificationEmailEventContentModerationDisabled   = "content_moderation.account_disabled"
-	NotificationEmailEventCyberPolicyNotice           = "content_moderation.cyber_policy_notice"
-	NotificationEmailEventOpsAlert                    = "ops.alert"
-	NotificationEmailEventOpsScheduledReport          = "ops.scheduled_report"
+	NotificationEmailEventAccountQuotaAlert          = "account.quota_alert"
+	NotificationEmailEventContentModerationViolation = "content_moderation.violation_notice"
+	NotificationEmailEventContentModerationDisabled  = "content_moderation.account_disabled"
+	NotificationEmailEventCyberPolicyNotice          = "content_moderation.cyber_policy_notice"
+	NotificationEmailEventOpsAlert                   = "ops.alert"
+	NotificationEmailEventOpsScheduledReport         = "ops.scheduled_report"
 
 	notificationEmailTemplateKeyPrefix    = "notification_email_template:"
-	notificationEmailPreferenceKeyPrefix  = "notification_email_preference:"
 	notificationEmailDeliveryKeyPrefix    = "notification_email_delivery:"
 	notificationEmailLocaleUserKeyPrefix  = "notification_email_locale:user:"
 	notificationEmailLocaleEmailKeyPrefix = "notification_email_locale:email:"
-	notificationEmailUnsubscribeSecretKey = "notification_email_unsubscribe_secret"
 	notificationEmailDefaultLocale        = "en"
 	notificationEmailLocaleChinese        = "zh"
 	notificationEmailMaxSubjectLength     = 200
 	notificationEmailMaxHTMLLength        = 30000
-	notificationEmailUnsubscribeTTL       = 365 * 24 * time.Hour
 )
 
 var (
@@ -88,7 +74,6 @@ type NotificationEmailEventInfo struct {
 	Label        string   `json:"label"`
 	Description  string   `json:"description"`
 	Category     string   `json:"category"`
-	Optional     bool     `json:"optional"`
 	Placeholders []string `json:"placeholders"`
 }
 
@@ -126,12 +111,6 @@ type NotificationEmailSendInput struct {
 	ReminderKey      string
 	Variables        map[string]string
 	RawHTMLVariables map[string]string
-}
-
-type NotificationEmailUnsubscribeResult struct {
-	Event string `json:"event"`
-	Email string `json:"email"`
-	Done  bool   `json:"done"`
 }
 
 type notificationEmailStoredTemplate struct {
@@ -179,12 +158,6 @@ func (e notificationEmailDeliveryError) Error() string {
 
 func (e notificationEmailDeliveryError) Unwrap() error {
 	return e.Err
-}
-
-type notificationEmailUnsubscribeClaims struct {
-	Email string `json:"email"`
-	Event string `json:"event"`
-	Exp   int64  `json:"exp"`
 }
 
 func NewNotificationEmailService(settingRepo SettingRepository, emailService *EmailService) *NotificationEmailService {
@@ -373,7 +346,7 @@ func (s *NotificationEmailService) PreviewTemplate(ctx context.Context, input No
 }
 
 func (s *NotificationEmailService) Send(ctx context.Context, input NotificationEmailSendInput) error {
-	info, normalizedEvent, err := s.eventInfo(input.Event)
+	_, normalizedEvent, err := s.eventInfo(input.Event)
 	if err != nil {
 		return notificationEmailTemplateErr(err)
 	}
@@ -381,17 +354,6 @@ func (s *NotificationEmailService) Send(ctx context.Context, input NotificationE
 	if recipient == "" {
 		return nil
 	}
-	if info.Optional {
-		unsubscribed, err := s.IsUnsubscribed(ctx, recipient, normalizedEvent)
-		if err != nil {
-			return err
-		}
-		if unsubscribed {
-			slog.Info("notification email suppressed by unsubscribe preference", "event", normalizedEvent, "recipient_hash", notificationEmailHash(recipient))
-			return nil
-		}
-	}
-
 	locale := normalizeNotificationLocale(input.Locale)
 	if strings.TrimSpace(input.Locale) == "" {
 		locale = s.ResolveRecipientLocale(ctx, input.UserID, recipient)
@@ -461,47 +423,6 @@ func (s *NotificationEmailService) ResolveRecipientLocale(ctx context.Context, u
 	return notificationEmailDefaultLocale
 }
 
-func (s *NotificationEmailService) IsUnsubscribed(ctx context.Context, email, event string) (bool, error) {
-	info, normalizedEvent, err := s.eventInfo(event)
-	if err != nil {
-		return false, err
-	}
-	if !info.Optional {
-		return false, nil
-	}
-	for _, key := range []string{notificationEmailPreferenceKey(normalizedEvent, email), legacyNotificationEmailPreferenceKey(normalizedEvent, email)} {
-		if strings.TrimSpace(key) == "" {
-			continue
-		}
-		value, err := s.settingRepo.GetValue(ctx, key)
-		if err == nil {
-			return strings.EqualFold(strings.TrimSpace(value), "unsubscribed"), nil
-		}
-		if !errors.Is(err, ErrSettingNotFound) {
-			return false, err
-		}
-	}
-	return false, nil
-}
-
-func (s *NotificationEmailService) Unsubscribe(ctx context.Context, token string) (NotificationEmailUnsubscribeResult, error) {
-	claims, err := s.parseUnsubscribeToken(ctx, token)
-	if err != nil {
-		return NotificationEmailUnsubscribeResult{}, err
-	}
-	info, normalizedEvent, err := s.eventInfo(claims.Event)
-	if err != nil {
-		return NotificationEmailUnsubscribeResult{}, err
-	}
-	if !info.Optional {
-		return NotificationEmailUnsubscribeResult{}, fmt.Errorf("%s is transactional and cannot be unsubscribed", normalizedEvent)
-	}
-	if err := s.settingRepo.Set(ctx, notificationEmailPreferenceKey(normalizedEvent, claims.Email), "unsubscribed"); err != nil {
-		return NotificationEmailUnsubscribeResult{}, err
-	}
-	return NotificationEmailUnsubscribeResult{Event: normalizedEvent, Email: claims.Email, Done: true}, nil
-}
-
 func (s *NotificationEmailService) eventInfo(event string) (NotificationEmailEventInfo, string, error) {
 	normalized := strings.ToLower(strings.TrimSpace(event))
 	info, ok := notificationEmailEventDefinitions[normalized]
@@ -518,9 +439,6 @@ func (s *NotificationEmailService) sampleVariables(ctx context.Context, event, l
 		variables[key] = value
 	}
 	variables["site_name"] = s.siteName(ctx)
-	if variables["unsubscribe_url"] == "" && info.Optional {
-		variables["unsubscribe_url"] = "https://example.com/unsubscribe"
-	}
 	return variables
 }
 
@@ -562,11 +480,6 @@ func (s *NotificationEmailService) runtimeVariables(ctx context.Context, event, 
 	if strings.TrimSpace(input.RecipientName) != "" {
 		variables["recipient_name"] = input.RecipientName
 	}
-	if notificationEmailEventDefinitions[event].Optional {
-		if unsubscribeURL, err := s.buildUnsubscribeURL(ctx, input.RecipientEmail, event); err == nil {
-			variables["unsubscribe_url"] = unsubscribeURL
-		}
-	}
 	return variables
 }
 
@@ -579,96 +492,6 @@ func (s *NotificationEmailService) siteName(ctx context.Context) string {
 		return defaultSiteName
 	}
 	return strings.TrimSpace(name)
-}
-
-func (s *NotificationEmailService) baseURL(ctx context.Context) string {
-	if s == nil || s.settingRepo == nil {
-		return ""
-	}
-	for _, key := range []string{SettingKeyAPIBaseURL, SettingKeyFrontendURL} {
-		value, err := s.settingRepo.GetValue(ctx, key)
-		if err == nil && strings.TrimSpace(value) != "" {
-			return strings.TrimRight(strings.TrimSpace(value), "/")
-		}
-	}
-	return ""
-}
-
-func (s *NotificationEmailService) buildUnsubscribeURL(ctx context.Context, email, event string) (string, error) {
-	token, err := s.createUnsubscribeToken(ctx, email, event)
-	if err != nil {
-		return "", err
-	}
-	path := "/api/v1/settings/email-unsubscribe?token=" + url.QueryEscape(token)
-	baseURL := s.baseURL(ctx)
-	if baseURL == "" {
-		return path, nil
-	}
-	return baseURL + path, nil
-}
-
-func (s *NotificationEmailService) createUnsubscribeToken(ctx context.Context, email, event string) (string, error) {
-	secret, err := s.unsubscribeSecret(ctx)
-	if err != nil {
-		return "", err
-	}
-	claims := notificationEmailUnsubscribeClaims{Email: strings.TrimSpace(email), Event: event, Exp: time.Now().Add(notificationEmailUnsubscribeTTL).Unix()}
-	payload, err := json.Marshal(claims)
-	if err != nil {
-		return "", err
-	}
-	encodedPayload := base64.RawURLEncoding.EncodeToString(payload)
-	signature := signNotificationEmailToken(secret, encodedPayload)
-	return encodedPayload + "." + signature, nil
-}
-
-func (s *NotificationEmailService) parseUnsubscribeToken(ctx context.Context, token string) (notificationEmailUnsubscribeClaims, error) {
-	parts := strings.Split(strings.TrimSpace(token), ".")
-	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return notificationEmailUnsubscribeClaims{}, errors.New("invalid unsubscribe token")
-	}
-	secret, err := s.unsubscribeSecret(ctx)
-	if err != nil {
-		return notificationEmailUnsubscribeClaims{}, err
-	}
-	expected := signNotificationEmailToken(secret, parts[0])
-	if !hmac.Equal([]byte(expected), []byte(parts[1])) {
-		return notificationEmailUnsubscribeClaims{}, errors.New("invalid unsubscribe token signature")
-	}
-	payload, err := base64.RawURLEncoding.DecodeString(parts[0])
-	if err != nil {
-		return notificationEmailUnsubscribeClaims{}, errors.New("invalid unsubscribe token payload")
-	}
-	var claims notificationEmailUnsubscribeClaims
-	if err := json.Unmarshal(payload, &claims); err != nil {
-		return notificationEmailUnsubscribeClaims{}, errors.New("invalid unsubscribe token payload")
-	}
-	if strings.TrimSpace(claims.Email) == "" || strings.TrimSpace(claims.Event) == "" {
-		return notificationEmailUnsubscribeClaims{}, errors.New("invalid unsubscribe token claims")
-	}
-	if claims.Exp <= time.Now().Unix() {
-		return notificationEmailUnsubscribeClaims{}, errors.New("unsubscribe token expired")
-	}
-	return claims, nil
-}
-
-func (s *NotificationEmailService) unsubscribeSecret(ctx context.Context) (string, error) {
-	secret, err := s.settingRepo.GetValue(ctx, notificationEmailUnsubscribeSecretKey)
-	if err == nil && strings.TrimSpace(secret) != "" {
-		return strings.TrimSpace(secret), nil
-	}
-	if err != nil && !errors.Is(err, ErrSettingNotFound) {
-		return "", err
-	}
-	buf := make([]byte, 32)
-	if _, err := rand.Read(buf); err != nil {
-		return "", err
-	}
-	secret = base64.RawURLEncoding.EncodeToString(buf)
-	if err := s.settingRepo.Set(ctx, notificationEmailUnsubscribeSecretKey, secret); err != nil {
-		return "", err
-	}
-	return secret, nil
 }
 
 func (s *NotificationEmailService) deliveryExists(ctx context.Context, keys ...string) (bool, error) {
@@ -814,18 +637,6 @@ func notificationEmailTemplateKey(event, locale string) string {
 	return notificationEmailTemplateKeyPrefix + event + ":" + locale
 }
 
-func notificationEmailPreferenceKey(event, email string) string {
-	if strings.TrimSpace(event) == "" || strings.TrimSpace(email) == "" {
-		return ""
-	}
-	identity := strings.TrimSpace(event) + "\x00" + strings.ToLower(strings.TrimSpace(email))
-	return notificationEmailPreferenceKeyPrefix + "v2:" + notificationEmailHash(identity)
-}
-
-func legacyNotificationEmailPreferenceKey(event, email string) string {
-	return notificationEmailPreferenceKeyPrefix + event + ":" + notificationEmailHash(email)
-}
-
 func notificationEmailDeliveryKey(event, sourceType, sourceID, recipient, reminderKey string) string {
 	if strings.TrimSpace(sourceType) == "" || strings.TrimSpace(sourceID) == "" || strings.TrimSpace(recipient) == "" {
 		return ""
@@ -873,12 +684,6 @@ func safeNotificationEmailKeyPart(value string) string {
 	return builder.String()
 }
 
-func signNotificationEmailToken(secret, payload string) string {
-	mac := hmac.New(sha256.New, []byte(secret))
-	_, _ = mac.Write([]byte(payload))
-	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
-}
-
 func isSafeNotificationEmailURL(raw string) bool {
 	trimmed := strings.TrimSpace(raw)
 	if trimmed == "" {
@@ -901,19 +706,6 @@ func notificationEmailSampleVariables(locale string) map[string]string {
 			"site_name":           defaultSiteName,
 			"recipient_name":      "张三",
 			"recipient_email":     "user@example.com",
-			"verification_code":   "123456",
-			"expires_in_minutes":  "15",
-			"reset_url":           "https://example.com/reset-password?token=preview",
-			"subscription_group":  "Claude Pro",
-			"subscription_days":   "30",
-			"expiry_time":         "2026-06-18 12:00",
-			"days_remaining":      "3",
-			"current_balance":     "12.34",
-			"threshold":           "20.00",
-			"recharge_url":        "https://example.com/recharge",
-			"recharge_amount":     "50.00",
-			"order_id":            "1024",
-			"unsubscribe_url":     "https://example.com/unsubscribe",
 			"account_id":          "1001",
 			"account_name":        "openai-main",
 			"platform":            "openai",
@@ -949,19 +741,6 @@ func notificationEmailSampleVariables(locale string) map[string]string {
 		"site_name":           defaultSiteName,
 		"recipient_name":      "Alex",
 		"recipient_email":     "user@example.com",
-		"verification_code":   "123456",
-		"expires_in_minutes":  "15",
-		"reset_url":           "https://example.com/reset-password?token=preview",
-		"subscription_group":  "Claude Pro",
-		"subscription_days":   "30",
-		"expiry_time":         "2026-06-18 12:00",
-		"days_remaining":      "3",
-		"current_balance":     "12.34",
-		"threshold":           "20.00",
-		"recharge_url":        "https://example.com/recharge",
-		"recharge_amount":     "50.00",
-		"order_id":            "1024",
-		"unsubscribe_url":     "https://example.com/unsubscribe",
 		"account_id":          "1001",
 		"account_name":        "openai-main",
 		"platform":            "openai",
@@ -1021,13 +800,6 @@ func addNotificationEmailOpsSummarySampleVariables(variables map[string]string) 
 }
 
 var notificationEmailEventOrder = []string{
-	NotificationEmailEventAuthVerifyCode,
-	NotificationEmailEventAuthPasswordReset,
-	NotificationEmailEventNotificationEmailVerifyCode,
-	NotificationEmailEventSubscriptionPurchaseSuccess,
-	NotificationEmailEventSubscriptionExpiryReminder,
-	NotificationEmailEventBalanceLow,
-	NotificationEmailEventBalanceRechargeSuccess,
 	NotificationEmailEventAccountQuotaAlert,
 	NotificationEmailEventContentModerationViolation,
 	NotificationEmailEventContentModerationDisabled,
@@ -1037,95 +809,35 @@ var notificationEmailEventOrder = []string{
 }
 
 var notificationEmailEventDefinitions = map[string]NotificationEmailEventInfo{
-	NotificationEmailEventAuthVerifyCode: {
-		Event:        NotificationEmailEventAuthVerifyCode,
-		Label:        "Email verification code",
-		Description:  "Sent for registration, email binding, OAuth pending email, and TOTP verification flows.",
-		Category:     "auth",
-		Optional:     false,
-		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...), "verification_code", "expires_in_minutes"),
-	},
-	NotificationEmailEventAuthPasswordReset: {
-		Event:        NotificationEmailEventAuthPasswordReset,
-		Label:        "Password reset",
-		Description:  "Sent when a user requests a password reset link.",
-		Category:     "auth",
-		Optional:     false,
-		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...), "reset_url", "expires_in_minutes"),
-	},
-	NotificationEmailEventNotificationEmailVerifyCode: {
-		Event:        NotificationEmailEventNotificationEmailVerifyCode,
-		Label:        "Notification email verification code",
-		Description:  "Sent when a user verifies an extra notification email address.",
-		Category:     "auth",
-		Optional:     false,
-		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...), "verification_code", "expires_in_minutes"),
-	},
-	NotificationEmailEventSubscriptionPurchaseSuccess: {
-		Event:        NotificationEmailEventSubscriptionPurchaseSuccess,
-		Label:        "Subscription purchase success",
-		Description:  "Sent after a subscription purchase is fulfilled.",
-		Category:     "subscription",
-		Optional:     false,
-		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...), "subscription_group", "subscription_days", "expiry_time", "order_id"),
-	},
-	NotificationEmailEventSubscriptionExpiryReminder: {
-		Event:        NotificationEmailEventSubscriptionExpiryReminder,
-		Label:        "Subscription expiry reminder",
-		Description:  "Optional reminder sent before an active subscription expires.",
-		Category:     "subscription",
-		Optional:     true,
-		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...), "subscription_group", "expiry_time", "days_remaining", "unsubscribe_url"),
-	},
-	NotificationEmailEventBalanceLow: {
-		Event:        NotificationEmailEventBalanceLow,
-		Label:        "Low balance alert",
-		Description:  "Optional alert sent when balance crosses the configured low-balance threshold.",
-		Category:     "billing",
-		Optional:     true,
-		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...), "current_balance", "threshold", "recharge_url", "unsubscribe_url"),
-	},
-	NotificationEmailEventBalanceRechargeSuccess: {
-		Event:        NotificationEmailEventBalanceRechargeSuccess,
-		Label:        "Balance recharge success",
-		Description:  "Sent after a balance recharge order is fulfilled.",
-		Category:     "billing",
-		Optional:     false,
-		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...), "recharge_amount", "current_balance", "order_id"),
-	},
 	NotificationEmailEventAccountQuotaAlert: {
 		Event:       NotificationEmailEventAccountQuotaAlert,
 		Label:       "Account quota alert",
 		Description: "Sent to configured admin notification emails when an upstream account quota threshold is crossed.",
 		Category:    "admin",
-		Optional:    false,
 		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...),
 			"account_id", "account_name", "platform", "quota_dimension", "quota_used", "quota_limit", "quota_remaining", "quota_threshold"),
 	},
 	NotificationEmailEventContentModerationViolation: {
 		Event:       NotificationEmailEventContentModerationViolation,
 		Label:       "Risk control violation notice",
-		Description: "Sent to users when a request triggers content moderation/risk control rules.",
+		Description: "Sent to configured administrators when a request triggers content moderation or risk-control rules.",
 		Category:    "risk_control",
-		Optional:    false,
 		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...),
 			"triggered_at", "group_name", "moderation_category", "moderation_score", "violation_count", "ban_threshold"),
 	},
 	NotificationEmailEventContentModerationDisabled: {
 		Event:       NotificationEmailEventContentModerationDisabled,
 		Label:       "Risk control account disabled",
-		Description: "Sent to users when content moderation automatically disables their account.",
+		Description: "Sent to configured administrators when content moderation disables the local administrator account.",
 		Category:    "risk_control",
-		Optional:    false,
 		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...),
 			"triggered_at", "group_name", "moderation_category", "moderation_score", "violation_count", "ban_threshold"),
 	},
 	NotificationEmailEventCyberPolicyNotice: {
 		Event:       NotificationEmailEventCyberPolicyNotice,
 		Label:       "Cyber policy notice",
-		Description: "Sent to users when an upstream request is blocked by cyber-security policy (cyber_policy).",
+		Description: "Sent to configured administrators when an upstream request is blocked by cyber-security policy (cyber_policy).",
 		Category:    "risk_control",
-		Optional:    false,
 		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...),
 			"triggered_at", "model", "group_name", "upstream_message"),
 	},
@@ -1134,7 +846,6 @@ var notificationEmailEventDefinitions = map[string]NotificationEmailEventInfo{
 		Label:       "Ops alert",
 		Description: "Sent to configured operations recipients when an ops alert rule fires.",
 		Category:    "ops",
-		Optional:    false,
 		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...),
 			"rule_name", "severity", "alert_status", "metric_type", "operator", "metric_value", "threshold_value", "triggered_at", "alert_description"),
 	},
@@ -1143,7 +854,6 @@ var notificationEmailEventDefinitions = map[string]NotificationEmailEventInfo{
 		Label:       "Ops scheduled report",
 		Description: "Sent to configured operations recipients for scheduled daily/weekly/error/account-health reports.",
 		Category:    "ops",
-		Optional:    false,
 		Placeholders: append(
 			append(
 				append([]string{}, notificationEmailCommonPlaceholders...),
@@ -1155,143 +865,6 @@ var notificationEmailEventDefinitions = map[string]NotificationEmailEventInfo{
 }
 
 var notificationEmailOfficialTemplates = map[string]map[string]notificationEmailOfficialTemplate{
-	NotificationEmailEventAuthVerifyCode: {
-		notificationEmailDefaultLocale: {
-			Subject: "[{{site_name}}] Email verification code",
-			HTML: notificationEmailCard("#4f46e5", "Email verification code", `
-<p>Hello {{recipient_name}},</p>
-<p>Your verification code is:</p>
-<p style="font-size: 32px; font-weight: 700; letter-spacing: 8px; text-align: center;">{{verification_code}}</p>
-<p>This code expires in <strong>{{expires_in_minutes}}</strong> minutes.</p>
-<p>If you did not request this code, please ignore this email.</p>`),
-		},
-		notificationEmailLocaleChinese: {
-			Subject: "[{{site_name}}] 邮箱验证码",
-			HTML: notificationEmailCard("#4f46e5", "邮箱验证码", `
-<p>{{recipient_name}}，您好：</p>
-<p>您的验证码是：</p>
-<p style="font-size: 32px; font-weight: 700; letter-spacing: 8px; text-align: center;">{{verification_code}}</p>
-<p>验证码将在 <strong>{{expires_in_minutes}}</strong> 分钟后失效。</p>
-<p>如果不是您本人操作，请忽略此邮件。</p>`),
-		},
-	},
-	NotificationEmailEventAuthPasswordReset: {
-		notificationEmailDefaultLocale: {
-			Subject: "[{{site_name}}] Password reset request",
-			HTML: notificationEmailCard("#7c3aed", "Password reset", `
-<p>Hello {{recipient_name}},</p>
-<p>We received a request to reset your password. Click the button below to set a new password.</p>
-<p><a class="button" href="{{reset_url}}">Reset password</a></p>
-<p>This link expires in <strong>{{expires_in_minutes}}</strong> minutes.</p>
-<p class="muted">If the button does not work, copy this link into your browser:<br>{{reset_url}}</p>
-<p>If you did not request this, you can safely ignore this email.</p>`),
-		},
-		notificationEmailLocaleChinese: {
-			Subject: "[{{site_name}}] 密码重置请求",
-			HTML: notificationEmailCard("#7c3aed", "密码重置", `
-<p>{{recipient_name}}，您好：</p>
-<p>我们收到了您的密码重置请求，请点击下方按钮设置新密码。</p>
-<p><a class="button" href="{{reset_url}}">重置密码</a></p>
-<p>此链接将在 <strong>{{expires_in_minutes}}</strong> 分钟后失效。</p>
-<p class="muted">如果按钮无法点击，请复制以下链接到浏览器中打开：<br>{{reset_url}}</p>
-<p>如果不是您本人操作，请忽略此邮件。</p>`),
-		},
-	},
-	NotificationEmailEventNotificationEmailVerifyCode: {
-		notificationEmailDefaultLocale: {
-			Subject: "[{{site_name}}] Notification email verification code",
-			HTML: notificationEmailCard("#0ea5e9", "Notification email verification", `
-<p>Hello {{recipient_name}},</p>
-<p>You are adding this address as an extra notification email.</p>
-<p>Your verification code is:</p>
-<p style="font-size: 32px; font-weight: 700; letter-spacing: 8px; text-align: center;">{{verification_code}}</p>
-<p>This code expires in <strong>{{expires_in_minutes}}</strong> minutes.</p>
-<p>If you did not request this code, please ignore this email.</p>`),
-		},
-		notificationEmailLocaleChinese: {
-			Subject: "[{{site_name}}] 通知邮箱验证码",
-			HTML: notificationEmailCard("#0ea5e9", "通知邮箱验证", `
-<p>{{recipient_name}}，您好：</p>
-<p>您正在添加额外的通知邮箱，请输入以下验证码完成验证。</p>
-<p style="font-size: 32px; font-weight: 700; letter-spacing: 8px; text-align: center;">{{verification_code}}</p>
-<p>验证码将在 <strong>{{expires_in_minutes}}</strong> 分钟后失效。</p>
-<p>如果不是您本人操作，请忽略此邮件。</p>`),
-		},
-	},
-	NotificationEmailEventSubscriptionPurchaseSuccess: {
-		notificationEmailDefaultLocale: {
-			Subject: "[{{site_name}}] Subscription purchase successful",
-			HTML: notificationEmailCard("#2563eb", "Subscription activated", `
-<p>Hello {{recipient_name}},</p>
-<p>Your subscription for <strong>{{subscription_group}}</strong> has been activated for <strong>{{subscription_days}}</strong> days.</p>
-<p>Expiry time: <strong>{{expiry_time}}</strong></p>
-<p>Order ID: {{order_id}}</p>`),
-		},
-		notificationEmailLocaleChinese: {
-			Subject: "[{{site_name}}] 订阅购买成功",
-			HTML: notificationEmailCard("#2563eb", "订阅已开通", `
-<p>{{recipient_name}}，您好：</p>
-<p>您的 <strong>{{subscription_group}}</strong> 订阅已成功开通，有效期 <strong>{{subscription_days}}</strong> 天。</p>
-<p>到期时间：<strong>{{expiry_time}}</strong></p>
-<p>订单号：{{order_id}}</p>`),
-		},
-	},
-	NotificationEmailEventSubscriptionExpiryReminder: {
-		notificationEmailDefaultLocale: {
-			Subject: "[{{site_name}}] Subscription expires in {{days_remaining}} day(s)",
-			HTML: notificationEmailCard("#f97316", "Subscription expiry reminder", `
-<p>Hello {{recipient_name}},</p>
-<p>Your <strong>{{subscription_group}}</strong> subscription will expire in <strong>{{days_remaining}}</strong> day(s).</p>
-<p>Expiry time: <strong>{{expiry_time}}</strong></p>
-<p class="muted"><a href="{{unsubscribe_url}}">Unsubscribe from optional subscription reminders</a></p>`),
-		},
-		notificationEmailLocaleChinese: {
-			Subject: "[{{site_name}}] 订阅将在 {{days_remaining}} 天后到期",
-			HTML: notificationEmailCard("#f97316", "订阅到期提醒", `
-<p>{{recipient_name}}，您好：</p>
-<p>您的 <strong>{{subscription_group}}</strong> 订阅将在 <strong>{{days_remaining}}</strong> 天后到期。</p>
-<p>到期时间：<strong>{{expiry_time}}</strong></p>
-<p class="muted"><a href="{{unsubscribe_url}}">退订此类订阅提醒</a></p>`),
-		},
-	},
-	NotificationEmailEventBalanceLow: {
-		notificationEmailDefaultLocale: {
-			Subject: "[{{site_name}}] Low balance alert",
-			HTML: notificationEmailCard("#d97706", "Low balance alert", `
-<p>Hello {{recipient_name}},</p>
-<p>Your current balance is <strong>${{current_balance}}</strong>, below the configured alert threshold of <strong>${{threshold}}</strong>.</p>
-<p>Please recharge in time to avoid service interruption.</p>
-<p><a class="button" href="{{recharge_url}}">Recharge now</a></p>
-<p class="muted"><a href="{{unsubscribe_url}}">Unsubscribe from optional balance alerts</a></p>`),
-		},
-		notificationEmailLocaleChinese: {
-			Subject: "[{{site_name}}] 余额不足提醒",
-			HTML: notificationEmailCard("#d97706", "余额不足提醒", `
-<p>{{recipient_name}}，您好：</p>
-<p>您当前余额为 <strong>${{current_balance}}</strong>，已低于提醒阈值 <strong>${{threshold}}</strong>。</p>
-<p>请及时充值以免服务中断。</p>
-<p><a class="button" href="{{recharge_url}}">立即充值</a></p>
-<p class="muted"><a href="{{unsubscribe_url}}">退订此类余额提醒</a></p>`),
-		},
-	},
-	NotificationEmailEventBalanceRechargeSuccess: {
-		notificationEmailDefaultLocale: {
-			Subject: "[{{site_name}}] Balance recharge successful",
-			HTML: notificationEmailCard("#16a34a", "Recharge successful", `
-<p>Hello {{recipient_name}},</p>
-<p>Your balance recharge of <strong>${{recharge_amount}}</strong> has been completed.</p>
-<p>Current balance: <strong>${{current_balance}}</strong></p>
-<p>Order ID: {{order_id}}</p>`),
-		},
-		notificationEmailLocaleChinese: {
-			Subject: "[{{site_name}}] 余额充值成功",
-			HTML: notificationEmailCard("#16a34a", "余额充值成功", `
-<p>{{recipient_name}}，您好：</p>
-<p>您的余额充值 <strong>${{recharge_amount}}</strong> 已完成。</p>
-<p>当前余额：<strong>${{current_balance}}</strong></p>
-			<p>订单号：{{order_id}}</p>`),
-		},
-	},
 	NotificationEmailEventAccountQuotaAlert: {
 		notificationEmailDefaultLocale: {
 			Subject: "[{{site_name}}] Account quota alert - {{account_name}}",

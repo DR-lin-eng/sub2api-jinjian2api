@@ -21,7 +21,6 @@ func profitControlSlotContext(t *testing.T, gateway *service.OpenAIGatewayServic
 		Status:               service.StatusActive,
 		Hydrated:             true,
 		RateMultiplier:       1,
-		SubscriptionType:     service.SubscriptionTypeStandard,
 		ProfitControlEnabled: true,
 		ProfitMinMargin:      0.5,
 	}

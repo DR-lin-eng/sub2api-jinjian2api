@@ -41,18 +41,8 @@ export function useGroupsListController() {
       sortable: true,
     },
     {
-      key: "billing_type",
-      label: t("admin.groups.columns.billingType"),
-      sortable: true,
-    },
-    {
       key: "rate_multiplier",
       label: t("admin.groups.columns.rateMultiplier"),
-      sortable: true,
-    },
-    {
-      key: "is_exclusive",
-      label: t("admin.groups.columns.type"),
       sortable: true,
     },
     {
@@ -149,9 +139,7 @@ export function useGroupsListController() {
   };
 
   const isColumnVisible = (key: string) => !hiddenColumns.has(key);
-  const hasVisibleUsageSummaryConsumer = computed(
-    () => isColumnVisible("usage") || isColumnVisible("billing_type"),
-  );
+  const hasVisibleUsageSummaryConsumer = computed(() => isColumnVisible("usage"));
   const hasVisibleCapacityColumn = computed(() => isColumnVisible("capacity"));
   const columns = computed<Column[]>(() =>
     allColumns.value.filter(
@@ -165,11 +153,6 @@ export function useGroupsListController() {
     { value: "", label: t("admin.groups.allStatus") },
     { value: "active", label: t("admin.accounts.status.active") },
     { value: "inactive", label: t("admin.accounts.status.inactive") },
-  ]);
-  const exclusiveOptions = computed(() => [
-    { value: "", label: t("admin.groups.allGroups") },
-    { value: "true", label: t("admin.groups.exclusive") },
-    { value: "false", label: t("admin.groups.nonExclusive") },
   ]);
   const platformFilterOptions = computed(() => [
     { value: "", label: t("admin.groups.allPlatforms") },
@@ -187,7 +170,7 @@ export function useGroupsListController() {
   const usageLoading = ref(false);
   const capacityMap = ref<Map<number, GroupCapacitySummary>>(new Map());
   const searchQuery = ref("");
-  const filters = reactive({ platform: "", status: "", is_exclusive: "" });
+  const filters = reactive({ platform: "", status: "" });
   const pagination = reactive({
     page: 1,
     page_size: getPersistedPageSize(),
@@ -256,9 +239,6 @@ export function useGroupsListController() {
         {
           platform: (filters.platform as GroupPlatform) || undefined,
           status: filters.status as "active" | "inactive",
-          is_exclusive: filters.is_exclusive
-            ? filters.is_exclusive === "true"
-            : undefined,
           search: searchQuery.value.trim() || undefined,
           sort_by: sortState.sort_by,
           sort_order: sortState.sort_order,
@@ -297,7 +277,7 @@ export function useGroupsListController() {
     if (wasHidden) hiddenColumns.delete(key);
     else hiddenColumns.add(key);
     saveColumnsToStorage();
-    if (wasHidden && (key === "usage" || key === "billing_type")) {
+    if (wasHidden && key === "usage") {
       void loadUsageSummary();
     }
     if (wasHidden && key === "capacity") void loadCapacitySummary();
@@ -307,22 +287,6 @@ export function useGroupsListController() {
     if (cost >= 1000) return cost.toFixed(0);
     if (cost >= 100) return cost.toFixed(1);
     return cost.toFixed(2);
-  };
-  const formatUsd = (cost: number | null | undefined): string =>
-    `$${formatCost(cost ?? 0)}`;
-  const getQuotaUsageClass = (
-    used: number,
-    limit: number | null | undefined,
-  ): string => {
-    if (!limit || limit <= 0) {
-      return "font-medium text-gray-700 dark:text-gray-300";
-    }
-    const ratio = used / limit;
-    if (ratio >= 1) return "font-semibold text-red-600 dark:text-red-400";
-    if (ratio >= 0.8) {
-      return "font-semibold text-amber-600 dark:text-amber-400";
-    }
-    return "font-medium text-gray-700 dark:text-gray-300";
   };
 
   let searchTimeout: ReturnType<typeof setTimeout>;
@@ -355,30 +319,13 @@ export function useGroupsListController() {
   const showSortModal = ref(false);
   const sortSubmitting = ref(false);
   const sortableGroups = ref<AdminGroup[]>([]);
-  const showRateMultipliersModal = ref(false);
-  const rateMultipliersGroup = ref<AdminGroup | null>(null);
-  const showRPMOverridesModal = ref(false);
-  const rpmOverridesGroup = ref<AdminGroup | null>(null);
   const showCompositeRoutesModal = ref(false);
   const compositeRoutesGroup = ref<AdminGroup | null>(null);
   const deleteConfirmMessage = computed(() => {
     if (!deletingGroup.value) return "";
-    if (deletingGroup.value.subscription_type === "subscription") {
-      return t("admin.groups.deleteConfirmSubscription", {
-        name: deletingGroup.value.name,
-      });
-    }
     return t("admin.groups.deleteConfirm", { name: deletingGroup.value.name });
   });
 
-  const handleRateMultipliers = (group: AdminGroup) => {
-    rateMultipliersGroup.value = group;
-    showRateMultipliersModal.value = true;
-  };
-  const handleRPMOverrides = (group: AdminGroup) => {
-    rpmOverridesGroup.value = group;
-    showRPMOverridesModal.value = true;
-  };
   const handleDuplicate = async (group: AdminGroup) => {
     if (duplicatingGroupIds.has(group.id)) return;
     duplicatingGroupIds.add(group.id);
@@ -480,7 +427,6 @@ export function useGroupsListController() {
     isColumnVisible,
     toggleColumn,
     statusOptions,
-    exclusiveOptions,
     platformFilterOptions,
     groups,
     loading,
@@ -492,8 +438,6 @@ export function useGroupsListController() {
     pagination,
     loadGroups,
     formatCost,
-    formatUsd,
-    getQuotaUsageClass,
     handleSearch,
     handlePageChange,
     handlePageSizeChange,
@@ -504,14 +448,8 @@ export function useGroupsListController() {
     showSortModal,
     sortSubmitting,
     sortableGroups,
-    showRateMultipliersModal,
-    rateMultipliersGroup,
-    showRPMOverridesModal,
-    rpmOverridesGroup,
     showCompositeRoutesModal,
     compositeRoutesGroup,
-    handleRateMultipliers,
-    handleRPMOverrides,
     handleDuplicate,
     handleCompositeRoutes,
     closeCompositeRoutesModal,

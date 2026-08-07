@@ -91,7 +91,6 @@ import {
   fetchAntigravityDefaultMappings,
   isValidWildcardPattern
 } from '@/features/admin-accounts/presentation/composables/useModelWhitelist'
-import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import {
   checkMixedChannelRisk,
   createAccount,
@@ -99,7 +98,7 @@ import {
 } from '@/features/admin-accounts/data/datasources/adminAccountActions'
 import {
   getWebSearchEmulationConfig
-} from '@/features/admin-settings/data/datasources/adminSettingsDatasource'
+} from '@/features/admin-settings/data/datasources/adminWebSearchQueries'
 import {
   list as listTLSFingerprintProfiles
 } from '@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource'
@@ -178,9 +177,6 @@ import type {
 import { isUpstreamBillingProbeEligible } from '@/features/admin-accounts/presentation/upstreamBillingProbeEligibility'
 
 const { t } = useI18n()
-const authStore = useAuthStore()
-const isSimpleMode = computed(() => authStore.isSimpleMode)
-
 const oauthStepTitle = computed(() => {
   if (form.platform === 'openai') return t('admin.accounts.oauth.openai.title')
   if (form.platform === 'gemini') return t('admin.accounts.oauth.gemini.title')
@@ -1441,7 +1437,7 @@ const createAccountCredentialContext = {
 
 const createAccountAdvancedContext = {
   accountCategory, addOpenAICompactModelMapping, addTempUnschedRule, allowOverages,
-  anthropicAPIKeyAuthScheme, anthropicPassthroughEnabled, isSimpleMode, autoPauseOnExpired, baseRpm,
+  anthropicAPIKeyAuthScheme, anthropicPassthroughEnabled, autoPauseOnExpired, baseRpm,
     cacheTTLOverrideEnabled, cacheTTLOverrideTarget, codexPrewarmContinuationEnabled,
     codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled,
   customBaseUrl, customBaseUrlEnabled, expiresAtInput, form, getOpenAICompactModelMappingKey,

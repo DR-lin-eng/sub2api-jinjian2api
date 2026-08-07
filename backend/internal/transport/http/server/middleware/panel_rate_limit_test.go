@@ -197,7 +197,7 @@ func TestPanelRateLimiterHeavyUsesOneBatchForBothBuckets(t *testing.T) {
 			Enabled: true, UserRPM: 100, HeavyRPM: 1,
 		}),
 	}
-	path := "/api/v1/usage/dashboard/stats"
+	path := "/api/v1/usage/stats"
 	router := newPanelTestRouter(path, p.Authenticated(), 9, service.RoleUser)
 	require.Equal(t, http.StatusOK, performPanelRequest(router, path, "127.0.0.1:1").Code)
 	require.Equal(t, http.StatusTooManyRequests, performPanelRequest(router, path, "127.0.0.1:1").Code)
@@ -217,7 +217,7 @@ func TestPanelRateLimiterGlobalRejectionDoesNotConsumeHeavyBucket(t *testing.T) 
 			Enabled: true, UserRPM: 1, HeavyRPM: 100,
 		}),
 	}
-	path := "/api/v1/usage/dashboard/stats"
+	path := "/api/v1/usage/stats"
 	router := newPanelTestRouter(path, p.Authenticated(), 10, service.RoleUser)
 	require.Equal(t, http.StatusOK, performPanelRequest(router, path, "127.0.0.1:1").Code)
 	require.Equal(t, http.StatusTooManyRequests, performPanelRequest(router, path, "127.0.0.1:1").Code)
@@ -296,7 +296,7 @@ func TestPanelRateLimiterPublicIP(t *testing.T) {
 
 func TestPanelHeavyPathCoverage(t *testing.T) {
 	for _, path := range []string{
-		"/api/v1/usage/dashboard/stats",
+		"/api/v1/usage/stats",
 		"/api/v1/user/api-keys/:id/usage/daily",
 		"/api/v1/admin/usage/stats",
 		"/api/v1/admin/dashboard/snapshot-v2",
@@ -369,7 +369,7 @@ func BenchmarkPanelRateLimiterEnabledRedisSuccess(b *testing.B) {
 		b.Fatal(err)
 	}
 	p := NewPanelRateLimiter(redisClient, svc)
-	path := "/api/v1/usage/dashboard/stats"
+	path := "/api/v1/usage/stats"
 	router := newPanelTestRouter(path, p.Authenticated(), 77, service.RoleUser)
 	request := httptest.NewRequest(http.MethodGet, path, nil)
 	request.RemoteAddr = "127.0.0.1:1"
@@ -405,7 +405,7 @@ func benchmarkPanelRateLimiter(b *testing.B, settings service.PanelRateLimitSett
 		b.Fatal(err)
 	}
 	p := &PanelRateLimiter{limiter: allower, settingService: svc}
-	path := "/api/v1/usage/dashboard/stats"
+	path := "/api/v1/usage/stats"
 	router := newPanelTestRouter(path, p.Authenticated(), 77, service.RoleUser)
 	if primeBackoff {
 		response := performPanelRequest(router, path, "127.0.0.1:1")

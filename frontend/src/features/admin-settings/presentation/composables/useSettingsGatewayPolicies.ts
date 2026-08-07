@@ -1,11 +1,25 @@
 import { computed, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { accountsAPI } from '@/features/admin-accounts/data/datasources/adminAccountsDatasource'
+import { updateBetaPolicySettings } from '@/features/admin-settings/data/datasources/adminBetaPolicyActions'
+import { getBetaPolicySettings } from '@/features/admin-settings/data/datasources/adminBetaPolicyQueries'
 import {
-  settingsAPI,
-  type OpenAIFastPolicyRule,
-  type ThinkingDisplayMode,
-} from '@/features/admin-settings/data/datasources/adminSettingsDatasource'
+  updateGlobalTempUnschedulableSettings,
+  updateOverloadCooldownSettings,
+  updateRateLimit429CooldownSettings,
+} from '@/features/admin-settings/data/datasources/adminSchedulerResilienceActions'
+import {
+  getGlobalTempUnschedulableSettings,
+  getOverloadCooldownSettings,
+  getRateLimit429CooldownSettings,
+} from '@/features/admin-settings/data/datasources/adminSchedulerResilienceQueries'
+import { updateRectifierSettings } from '@/features/admin-settings/data/datasources/adminRectifierActions'
+import { getRectifierSettings } from '@/features/admin-settings/data/datasources/adminRectifierQueries'
+import { updateStreamTimeoutSettings } from '@/features/admin-settings/data/datasources/adminStreamTimeoutActions'
+import { getStreamTimeoutSettings } from '@/features/admin-settings/data/datasources/adminStreamTimeoutQueries'
+import type { BetaPolicyAction, BetaPolicyRule } from '@/features/admin-settings/data/dtos/adminBetaPolicyDtos'
+import type { ThinkingDisplayMode } from '@/features/admin-settings/data/dtos/adminRectifierDtos'
+import type { OpenAIFastPolicyRule } from '@/features/admin-settings/data/dtos/adminSystemSettingsDtos'
 import { extractApiErrorMessage } from '@/core/utils/apiError'
 import { useAppStore } from '@/core/stores/appStore'
 
@@ -83,15 +97,7 @@ export function useSettingsGatewayPolicies() {
   const betaPolicyLoading = ref(true);
   const betaPolicySaving = ref(false);
   const betaPolicyForm = reactive({
-    rules: [] as Array<{
-      beta_token: string;
-      action: "pass" | "filter" | "block";
-      scope: "all" | "oauth" | "apikey" | "bedrock";
-      error_message?: string;
-      model_whitelist?: string[];
-      fallback_action?: "pass" | "filter" | "block";
-      fallback_error_message?: string;
-    }>,
+    rules: [] as BetaPolicyRule[],
   });
 
   // OpenAI Fast/Flex Policy 状态
@@ -172,7 +178,7 @@ export function useSettingsGatewayPolicies() {
   async function loadOverloadCooldownSettings() {
     overloadCooldownLoading.value = true;
     try {
-      const settings = await settingsAPI.getOverloadCooldownSettings();
+      const settings = await getOverloadCooldownSettings();
       Object.assign(overloadCooldownForm, settings);
     } catch {
       // Silent fail - settings will use defaults
@@ -184,7 +190,7 @@ export function useSettingsGatewayPolicies() {
   async function saveOverloadCooldownSettings() {
     overloadCooldownSaving.value = true;
     try {
-      const updated = await settingsAPI.updateOverloadCooldownSettings({
+      const updated = await updateOverloadCooldownSettings({
         enabled: overloadCooldownForm.enabled,
         cooldown_minutes: overloadCooldownForm.cooldown_minutes,
       });
@@ -206,7 +212,7 @@ export function useSettingsGatewayPolicies() {
   async function loadRateLimit429CooldownSettings() {
     rateLimit429CooldownLoading.value = true;
     try {
-      const settings = await settingsAPI.getRateLimit429CooldownSettings();
+      const settings = await getRateLimit429CooldownSettings();
       Object.assign(rateLimit429CooldownForm, settings);
     } catch {
       // Silent fail - settings will use defaults
@@ -218,7 +224,7 @@ export function useSettingsGatewayPolicies() {
   async function saveRateLimit429CooldownSettings() {
     rateLimit429CooldownSaving.value = true;
     try {
-      const updated = await settingsAPI.updateRateLimit429CooldownSettings({
+      const updated = await updateRateLimit429CooldownSettings({
         enabled: rateLimit429CooldownForm.enabled,
         cooldown_seconds: rateLimit429CooldownForm.cooldown_seconds,
       });
@@ -240,8 +246,7 @@ export function useSettingsGatewayPolicies() {
   async function loadGlobalTempUnschedulableSettings() {
     globalTempUnschedulableLoading.value = true;
     try {
-      const settings =
-        await settingsAPI.getGlobalTempUnschedulableSettings();
+      const settings = await getGlobalTempUnschedulableSettings();
       Object.assign(globalTempUnschedulableForm, settings);
     } catch {
       // Silent fail - settings will use defaults
@@ -253,10 +258,9 @@ export function useSettingsGatewayPolicies() {
   async function saveGlobalTempUnschedulableSettings() {
     globalTempUnschedulableSaving.value = true;
     try {
-      const updated =
-        await settingsAPI.updateGlobalTempUnschedulableSettings({
-          enabled: globalTempUnschedulableForm.enabled,
-        });
+      const updated = await updateGlobalTempUnschedulableSettings({
+        enabled: globalTempUnschedulableForm.enabled,
+      });
       Object.assign(globalTempUnschedulableForm, updated);
       appStore.showSuccess(
         t("admin.settings.globalTempUnschedulable.saved"),
@@ -277,7 +281,7 @@ export function useSettingsGatewayPolicies() {
   async function loadStreamTimeoutSettings() {
     streamTimeoutLoading.value = true;
     try {
-      const settings = await settingsAPI.getStreamTimeoutSettings();
+      const settings = await getStreamTimeoutSettings();
       Object.assign(streamTimeoutForm, settings);
     } catch {
       // Silent fail - settings will use defaults
@@ -289,7 +293,7 @@ export function useSettingsGatewayPolicies() {
   async function saveStreamTimeoutSettings() {
     streamTimeoutSaving.value = true;
     try {
-      const updated = await settingsAPI.updateStreamTimeoutSettings({
+      const updated = await updateStreamTimeoutSettings({
         response_header_timeout_degradation_enabled:
           streamTimeoutForm.response_header_timeout_degradation_enabled,
         response_header_timeout_seconds:
@@ -318,7 +322,7 @@ export function useSettingsGatewayPolicies() {
   async function loadRectifierSettings() {
     rectifierLoading.value = true;
     try {
-      const settings = await settingsAPI.getRectifierSettings();
+      const settings = await getRectifierSettings();
       Object.assign(rectifierForm, settings);
       // 确保 patterns 是数组（旧数据可能为 null）
       if (!Array.isArray(rectifierForm.apikey_signature_patterns)) {
@@ -334,7 +338,7 @@ export function useSettingsGatewayPolicies() {
   async function saveRectifierSettings() {
     rectifierSaving.value = true;
     try {
-      const updated = await settingsAPI.updateRectifierSettings({
+      const updated = await updateRectifierSettings({
         enabled: rectifierForm.enabled,
         thinking_signature_enabled: rectifierForm.thinking_signature_enabled,
         thinking_budget_enabled: rectifierForm.thinking_budget_enabled,
@@ -383,9 +387,9 @@ export function useSettingsGatewayPolicies() {
     Array<{
       label: string;
       description: string;
-      action: "pass" | "filter" | "block";
+      action: BetaPolicyAction;
       model_whitelist: string[];
-      fallback_action: "pass" | "filter" | "block";
+      fallback_action: BetaPolicyAction;
     }>
   > = {
     "context-1m-2025-08-07": [
@@ -414,9 +418,9 @@ export function useSettingsGatewayPolicies() {
   function applyBetaPreset(
     rule: (typeof betaPolicyForm.rules)[number],
     preset: {
-      action: "pass" | "filter" | "block";
+      action: BetaPolicyAction;
       model_whitelist: string[];
-      fallback_action: "pass" | "filter" | "block";
+      fallback_action: BetaPolicyAction;
     },
   ) {
     rule.action = preset.action;
@@ -437,7 +441,7 @@ export function useSettingsGatewayPolicies() {
   async function loadBetaPolicySettings() {
     betaPolicyLoading.value = true;
     try {
-      const settings = await settingsAPI.getBetaPolicySettings();
+      const settings = await getBetaPolicySettings();
       betaPolicyForm.rules = settings.rules;
     } catch {
       // Silent fail - settings will use defaults
@@ -482,7 +486,6 @@ export function useSettingsGatewayPolicies() {
       service_tier: "priority",
       action: "filter",
       scope: "all",
-      user_ids: [],
       error_message: "",
       model_whitelist: [],
       fallback_action: "pass",
@@ -510,25 +513,24 @@ export function useSettingsGatewayPolicies() {
     betaPolicySaving.value = true;
     try {
       // Clean up empty patterns before saving
-      const cleanedRules = betaPolicyForm.rules.map((rule) => {
+      const cleanedRules = betaPolicyForm.rules.map((rule): BetaPolicyRule => {
         const whitelist = rule.model_whitelist?.filter((p) => p.trim() !== "");
-        const hasWhitelist = whitelist && whitelist.length > 0;
-        return {
+        const cleanedRule: BetaPolicyRule = {
           beta_token: rule.beta_token,
           action: rule.action,
           scope: rule.scope,
           error_message: rule.error_message,
-          model_whitelist: hasWhitelist ? whitelist : undefined,
-          fallback_action: hasWhitelist
-            ? rule.fallback_action || "pass"
-            : undefined,
-          fallback_error_message:
-            hasWhitelist && rule.fallback_action === "block"
-              ? rule.fallback_error_message
-              : undefined,
         };
+        if (whitelist?.length) {
+          cleanedRule.model_whitelist = whitelist;
+          cleanedRule.fallback_action = rule.fallback_action || "pass";
+          if (cleanedRule.fallback_action === "block") {
+            cleanedRule.fallback_error_message = rule.fallback_error_message;
+          }
+        }
+        return cleanedRule;
       });
-      const updated = await settingsAPI.updateBetaPolicySettings({
+      const updated = await updateBetaPolicySettings({
         rules: cleanedRules,
       });
       betaPolicyForm.rules = updated.rules;

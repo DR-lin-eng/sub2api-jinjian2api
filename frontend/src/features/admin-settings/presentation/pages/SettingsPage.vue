@@ -45,13 +45,9 @@
         </div>
 
         <SettingsGeneralTab v-show="activeTab === 'general'" />
-        <SettingsAgreementTab v-show="activeTab === 'agreement'" />
-        <SettingsFeaturesTab v-show="activeTab === 'features'" />
         <SettingsSecurityTab v-show="activeTab === 'security'" />
-        <SettingsUsersTab v-show="activeTab === 'users'" />
         <SettingsGatewayTab v-show="activeTab === 'gateway'" />
         <SettingsPerformanceTab v-show="activeTab === 'performance'" />
-        <SettingsPaymentTab v-show="activeTab === 'payment'" />
         <SettingsEmailTab v-show="activeTab === 'email'" />
         <SettingsBackupTab v-show="activeTab === 'backup'" />
 
@@ -91,37 +87,6 @@
         </div>
       </form>
 
-      <!-- Provider dialogs placed outside the settings form to prevent form submission bubbling -->
-      <PaymentProviderDialog
-        ref="providerDialogRef"
-        :show="showProviderDialog"
-        :saving="providerSaving"
-        :editing="editingProvider"
-        :all-key-options="providerKeyOptions"
-        :enabled-key-options="enabledProviderKeyOptions"
-        :all-payment-types="allPaymentTypes"
-        :redirect-label="t('admin.settings.payment.easypayRedirect')"
-        @close="showProviderDialog = false"
-        @save="handleSaveProvider"
-      />
-      <ConfirmDialog
-        :show="showDeleteProviderDialog"
-        :title="t('admin.settings.payment.deleteProvider')"
-        :message="t('admin.settings.payment.deleteProviderConfirm')"
-        :confirm-text="t('common.delete')"
-        danger
-        @confirm="handleDeleteProvider"
-        @cancel="showDeleteProviderDialog = false"
-      />
-      <ConfirmDialog
-        :show="affiliateConfirmDialog.show"
-        :title="affiliateConfirmDialog.title"
-        :message="affiliateConfirmDialog.message"
-        :confirm-text="affiliateConfirmDialog.confirmText"
-        danger
-        @confirm="handleAffiliateConfirm"
-        @cancel="cancelAffiliateConfirm"
-      />
       <!-- 关闭 step-up 开关等敏感保存操作触发的 TOTP 二次验证 -->
       <TotpStepUpDialog :controller="settingsStepUp" />
     </div>
@@ -131,17 +96,11 @@
 <script setup lang="ts">
 import AppLayout from '@/common/widgets/layout/AppLayout.vue'
 import Icon from '@/common/widgets/icons/Icon.vue'
-import ConfirmDialog from '@/common/widgets/feedback/ConfirmDialog.vue'
-import PaymentProviderDialog from '@/features/billing/presentation/widgets/PaymentProviderDialog.vue'
 import TotpStepUpDialog from '@/features/auth/presentation/widgets/TotpStepUpDialog.vue'
 import SettingsGeneralTab from '@/features/admin-settings/presentation/widgets/settings-tabs/SettingsGeneralTab.vue'
-import SettingsAgreementTab from '@/features/admin-settings/presentation/widgets/settings-tabs/SettingsAgreementTab.vue'
-import SettingsFeaturesTab from '@/features/admin-settings/presentation/widgets/settings-tabs/SettingsFeaturesTab.vue'
 import SettingsSecurityTab from '@/features/admin-settings/presentation/widgets/settings-tabs/SettingsSecurityTab.vue'
-import SettingsUsersTab from '@/features/admin-settings/presentation/widgets/settings-tabs/SettingsUsersTab.vue'
 import SettingsGatewayTab from '@/features/admin-settings/presentation/widgets/settings-tabs/SettingsGatewayTab.vue'
 import SettingsPerformanceTab from '@/features/admin-settings/presentation/widgets/settings-tabs/SettingsPerformanceTab.vue'
-import SettingsPaymentTab from '@/features/admin-settings/presentation/widgets/settings-tabs/SettingsPaymentTab.vue'
 import SettingsEmailTab from '@/features/admin-settings/presentation/widgets/settings-tabs/SettingsEmailTab.vue'
 import SettingsBackupTab from '@/features/admin-settings/presentation/widgets/settings-tabs/SettingsBackupTab.vue'
 import { useSettingsPage } from '@/features/admin-settings/presentation/composables/useSettingsPage'
@@ -150,7 +109,7 @@ import { provideSettingsPageContext } from '@/features/admin-settings/presentati
 const settingsPage = useSettingsPage()
 provideSettingsPageContext(settingsPage)
 
-const { activeTab, affiliateConfirmDialog, allPaymentTypes, cancelAffiliateConfirm, editingProvider, enabledProviderKeyOptions, handleAffiliateConfirm, handleDeleteProvider, handleSaveProvider, handleSettingsTabKeydown, loadFailed, loading, providerDialogRef, providerKeyOptions, providerSaving, saveSettings, saving, selectSettingsTab, settingsStepUp, settingsTabs, showDeleteProviderDialog, showProviderDialog, t } = settingsPage
+const { activeTab, handleSettingsTabKeydown, loadFailed, loading, saveSettings, saving, selectSettingsTab, settingsStepUp, settingsTabs, t } = settingsPage
 </script>
 
 <style scoped>

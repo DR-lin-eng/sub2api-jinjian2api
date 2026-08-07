@@ -113,14 +113,8 @@ func newPriorityAdmissionSelectionHandler(
 		PendingLimitPerInstance: 256,
 		PendingBytesPerInstance: 256 << 20,
 	})
-	billingCache := service.NewBillingCacheService(nil, nil, nil, nil, nil, nil, cfg, nil)
-	t.Cleanup(billingCache.Stop)
 	gateway := service.NewOpenAIGatewayService(
 		&priorityAdmissionSelectionAccountRepo{account: account},
-		nil,
-		nil,
-		nil,
-		nil,
 		nil,
 		nil,
 		cfg,
@@ -128,11 +122,8 @@ func newPriorityAdmissionSelectionHandler(
 		concurrency,
 		service.NewBillingService(cfg, nil),
 		nil,
-		billingCache,
 		nil,
 		&service.DeferredService{},
-		nil,
-		nil,
 		nil,
 		nil,
 		nil,
@@ -142,8 +133,6 @@ func newPriorityAdmissionSelectionHandler(
 	h := NewOpenAIGatewayHandler(
 		gateway,
 		concurrency,
-		billingCache,
-		service.NewAPIKeyService(nil, nil, nil, nil, nil, nil, cfg),
 		nil,
 		nil,
 		nil,

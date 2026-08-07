@@ -55,10 +55,6 @@ describe("groups editor modularization", () => {
 
   it("preserves form ids, selectors, and controller-owned submit payloads", () => {
     expect(editorSource).toContain("'edit-group-form' : 'create-group-form'");
-    expect(coreFieldsSource).toContain(
-      "'edit-group-form-name' : 'group-form-name'",
-    );
-    expect(editorSource).toContain('data-tour="group-form-submit"');
     expect(editorSource).toContain('@submit.prevent="submit"');
 
     expect(createControllerSource).toContain("submit: handleCreateGroup");
@@ -106,9 +102,6 @@ describe("groups editor modularization", () => {
       expect(source).toContain("GroupEditorDialogContext");
     }
 
-    expect(coreFieldsSource).toContain('data-tour="group-form-platform"');
-    expect(coreFieldsSource).toContain('data-tour="group-form-multiplier"');
-    expect(coreFieldsSource).toContain('v-model="form.subscription_type"');
     expect(coreFieldsSource).toContain(':context="editorContext"');
     expect(antigravityFieldsSource).toContain("form.platform === 'antigravity'");
     expect(antigravityFieldsSource).toContain("@change=\"toggleScope('gemini_image')\"");

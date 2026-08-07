@@ -9,16 +9,17 @@ const { getSettings, updateSettings, showError, showSuccess } = vi.hoisted(() =>
   showSuccess: vi.fn(),
 }))
 
-vi.mock('@/api', () => ({
-  adminAPI: {
-    settings: {
-      getPanelRateLimitSettings: getSettings,
-      updatePanelRateLimitSettings: updateSettings,
-    },
-  },
-}))
+vi.mock(
+  '@/features/admin-settings/data/datasources/adminPanelRateLimitQueries',
+  () => ({ getPanelRateLimitSettings: getSettings }),
+)
 
-vi.mock('@/stores', () => ({
+vi.mock(
+  '@/features/admin-settings/data/datasources/adminPanelRateLimitActions',
+  () => ({ updatePanelRateLimitSettings: updateSettings }),
+)
+
+vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({ showError, showSuccess }),
 }))
 

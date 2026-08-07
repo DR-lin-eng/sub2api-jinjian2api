@@ -1825,7 +1825,6 @@ func (s *SchedulerSnapshotService) rebuildFullSnapshot(ctx context.Context, reas
 		return err
 	}
 	registered = dedupeBuckets(registered)
-
 	if s.isRunModeSimple() {
 		canonical := schedulerCanonicalBuckets(0)
 		captured, err := s.captureFullRebuildCanonicalTasks(ctx, canonical)

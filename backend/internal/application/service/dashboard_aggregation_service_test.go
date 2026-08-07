@@ -14,7 +14,6 @@ type dashboardAggregationRepoTestStub struct {
 	aggregateCalls       int
 	recomputeCalls       int
 	cleanupUsageCalls    int
-	cleanupDedupCalls    int
 	ensurePartitionCalls int
 	lastStart            time.Time
 	lastEnd              time.Time
@@ -23,7 +22,6 @@ type dashboardAggregationRepoTestStub struct {
 	aggregateErr         error
 	cleanupAggregatesErr error
 	cleanupUsageErr      error
-	cleanupDedupErr      error
 	ensurePartitionErr   error
 }
 
@@ -55,11 +53,6 @@ func (s *dashboardAggregationRepoTestStub) CleanupUsageLogs(ctx context.Context,
 	s.cleanupUsageCalls++
 	s.lastUsageCutoff = cutoff
 	return s.cleanupUsageErr
-}
-
-func (s *dashboardAggregationRepoTestStub) CleanupUsageBillingDedup(ctx context.Context, cutoff time.Time) error {
-	s.cleanupDedupCalls++
-	return s.cleanupDedupErr
 }
 
 func (s *dashboardAggregationRepoTestStub) EnsureUsageLogsPartitions(ctx context.Context, now time.Time) error {
@@ -107,26 +100,6 @@ func TestDashboardAggregationService_CleanupRetentionFailure_DoesNotRecord(t *te
 
 	require.Nil(t, svc.lastRetentionCleanup.Load())
 	require.Equal(t, 1, repo.cleanupUsageCalls)
-	require.Equal(t, 1, repo.cleanupDedupCalls)
-}
-
-func TestDashboardAggregationService_CleanupDedupFailure_DoesNotRecord(t *testing.T) {
-	repo := &dashboardAggregationRepoTestStub{cleanupDedupErr: errors.New("dedup cleanup failed")}
-	svc := &DashboardAggregationService{
-		repo: repo,
-		cfg: config.DashboardAggregationConfig{
-			Retention: config.DashboardAggregationRetentionConfig{
-				UsageLogsDays: 1,
-				HourlyDays:    1,
-				DailyDays:     1,
-			},
-		},
-	}
-
-	svc.maybeCleanupRetention(context.Background(), time.Now().UTC())
-
-	require.Nil(t, svc.lastRetentionCleanup.Load())
-	require.Equal(t, 1, repo.cleanupDedupCalls)
 }
 
 func TestDashboardAggregationService_UserRequestLogRetentionUsesRuntimeSetting(t *testing.T) {
@@ -138,10 +111,9 @@ func TestDashboardAggregationService_UserRequestLogRetentionUsesRuntimeSetting(t
 		settingRepo: settings,
 		cfg: config.DashboardAggregationConfig{
 			Retention: config.DashboardAggregationRetentionConfig{
-				UsageLogsDays:         90,
-				UsageBillingDedupDays: 365,
-				HourlyDays:            180,
-				DailyDays:             730,
+				UsageLogsDays: 90,
+				HourlyDays:    180,
+				DailyDays:     730,
 			},
 		},
 	}
@@ -174,10 +146,9 @@ func TestDashboardAggregationService_PartitionFailure_DoesNotAggregate(t *testin
 			IntervalSeconds: 60,
 			LookbackSeconds: 120,
 			Retention: config.DashboardAggregationRetentionConfig{
-				UsageLogsDays:         1,
-				UsageBillingDedupDays: 2,
-				HourlyDays:            1,
-				DailyDays:             1,
+				UsageLogsDays: 1,
+				HourlyDays:    1,
+				DailyDays:     1,
 			},
 		},
 	}

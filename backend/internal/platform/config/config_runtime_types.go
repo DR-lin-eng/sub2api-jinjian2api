@@ -141,42 +141,6 @@ type ProxyProbeConfig struct {
 	InsecureSkipVerify bool `mapstructure:"insecure_skip_verify"` // 已禁用：禁止跳过 TLS 证书验证
 }
 
-type BillingConfig struct {
-	CircuitBreaker CircuitBreakerConfig    `mapstructure:"circuit_breaker"`
-	Queue          UsageBillingQueueConfig `mapstructure:"queue"`
-	// MinimumBalanceReserve is the conservative preflight floor for balance billing.
-	// Requests in balance mode are rejected when the cached balance is below this
-	// amount, even if it is still positive. Set to 0 to keep the legacy balance > 0 gate.
-	MinimumBalanceReserve float64 `mapstructure:"minimum_balance_reserve"`
-	// UserPlatformQuotaCacheTTLSeconds 用户 × 平台 quota 缓存 TTL（秒），默认 86400=1天，覆盖典型 daily 窗口。
-	// 消费点：
-	//   - billing_cache_service.cacheWriteWorker 异步累加
-	//   - billing_cache_service.checkUserPlatformQuotaEligibility 首次缓存装载
-	// 读写两端必须共用同一 TTL，避免缓存生命周期不一致导致 quota 计数漂移。
-	UserPlatformQuotaCacheTTLSeconds int `mapstructure:"user_platform_quota_cache_ttl_seconds"`
-	// UserPlatformQuotaSentinelTTLSeconds sentinel(无 limit 占位)entry 的 TTL,
-	// 显著短于 quota cache 默认 86400s 以控 Redis 内存;默认 3600=1h。
-	UserPlatformQuotaSentinelTTLSeconds int `mapstructure:"user_platform_quota_sentinel_ttl_seconds"`
-}
-
-// UsageBillingQueueConfig controls the PostgreSQL WAL-backed billing queue.
-type UsageBillingQueueConfig struct {
-	Enabled               bool `mapstructure:"enabled"`
-	ConsumerCount         int  `mapstructure:"consumer_count"`
-	MaxConsumerCount      int  `mapstructure:"max_consumer_count"`
-	ReadBatchSize         int  `mapstructure:"read_batch_size"`
-	ReadBlockMilliseconds int  `mapstructure:"read_block_milliseconds"`
-	CommandTimeoutSeconds int  `mapstructure:"command_timeout_seconds"`
-	MaxRetryDelaySeconds  int  `mapstructure:"max_retry_delay_seconds"`
-}
-
-type CircuitBreakerConfig struct {
-	Enabled             bool `mapstructure:"enabled"`
-	FailureThreshold    int  `mapstructure:"failure_threshold"`
-	ResetTimeoutSeconds int  `mapstructure:"reset_timeout_seconds"`
-	HalfOpenRequests    int  `mapstructure:"half_open_requests"`
-}
-
 type ConcurrencyConfig struct {
 	// PingInterval: 并发等待期间的 SSE ping 间隔（秒）
 	PingInterval int `mapstructure:"ping_interval"`

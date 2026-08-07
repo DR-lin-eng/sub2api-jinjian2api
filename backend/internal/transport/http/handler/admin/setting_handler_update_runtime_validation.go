@@ -24,14 +24,6 @@ func validateRuntimeSettingsUpdate(c *gin.Context, prepared *preparedSettingsUpd
 		}
 		req.OpsMetricsIntervalSeconds = &v
 	}
-	defaultSubscriptions := make([]service.DefaultSubscriptionSetting, 0, len(req.DefaultSubscriptions))
-	for _, sub := range req.DefaultSubscriptions {
-		defaultSubscriptions = append(defaultSubscriptions, service.DefaultSubscriptionSetting{
-			GroupID:      sub.GroupID,
-			ValidityDays: sub.ValidityDays,
-		})
-	}
-
 	// 验证最低版本号格式（空字符串=禁用，或合法 semver）
 	if req.MinClaudeCodeVersion != "" {
 		if !semverPattern.MatchString(req.MinClaudeCodeVersion) {
@@ -115,6 +107,5 @@ func validateRuntimeSettingsUpdate(c *gin.Context, prepared *preparedSettingsUpd
 		return false
 	}
 
-	prepared.defaultSubscriptions = defaultSubscriptions
 	return true
 }

@@ -587,7 +587,6 @@
             type="number"
             min="1"
             class="input"
-            data-tour="account-form-priority"
           />
           <p class="input-hint">{{ t('admin.accounts.priorityHint') }}</p>
         </div>
@@ -1048,14 +1047,11 @@
           </div>
         </div>
 
-        <!-- Group Selection - 仅标准模式显示 -->
         <GroupSelector
-          v-if="!isSimpleMode"
           v-model="form.group_ids"
           :groups="groups"
           :platform="form.platform"
           :mixed-scheduling="mixedScheduling"
-          data-tour="account-form-groups"
         />
       </div>
 </template>
@@ -1070,5 +1066,5 @@ import Toggle from '@/common/widgets/forms/Toggle.vue'
 import type { CreateAccountAdvancedContext } from '../../accountEditorContext'
 
 const props = defineProps<{ context: CreateAccountAdvancedContext }>()
-const { accountCategory, addOpenAICompactModelMapping, addTempUnschedRule, allowOverages, anthropicAPIKeyAuthScheme, anthropicPassthroughEnabled, isSimpleMode, autoPauseOnExpired, baseRpm, cacheTTLOverrideEnabled, cacheTTLOverrideTarget, codexPrewarmContinuationEnabled, codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled, customBaseUrl, customBaseUrlEnabled, expiresAtInput, form, getOpenAICompactModelMappingKey, getTempUnschedRuleKey, groups, interceptWarmupRequests, maxSessions, mixedScheduling, moveTempUnschedRule, openAICompactMode, openAICompactModeOptions, openAICompactModelMappings, openAIEndpointCapabilities, openAIEndpointCapabilityOptions, openAIForceImageAPIEnabled, openAILongContextBillingEnabled, openAIResponsesMode, openAIResponsesModeOptions, openAITextGenerationCapabilityEnabled, openAIWSModeConcurrencyHintKey, openAIWSModeOptions, openaiPassthroughEnabled, openaiFlattenNamespacesEnabled, openaiResponsesWebSocketV2Mode, proxies, removeOpenAICompactModelMapping, removeTempUnschedRule, rpmLimitEnabled, rpmStickyBuffer, rpmStrategy, sessionIdMaskingEnabled, sessionIdleTimeout, sessionLimitEnabled, t, tempUnschedEnabled, tempUnschedPresets, tempUnschedRules, tlsFingerprintEnabled, tlsFingerprintProfileId, tlsFingerprintProfiles, toggleOpenAIEndpointCapability, toggleOpenAILongContextBilling, umqModeOptions, userMsgQueueMode, webSearchEmulationMode, webSearchGlobalEnabled, windowCostEnabled, windowCostLimit, windowCostStickyReserve } = props.context
+const { accountCategory, addOpenAICompactModelMapping, addTempUnschedRule, allowOverages, anthropicAPIKeyAuthScheme, anthropicPassthroughEnabled, autoPauseOnExpired, baseRpm, cacheTTLOverrideEnabled, cacheTTLOverrideTarget, codexPrewarmContinuationEnabled, codexCLIOnlyAppServerEnabled, codexCLIOnlyEnabled, customBaseUrl, customBaseUrlEnabled, expiresAtInput, form, getOpenAICompactModelMappingKey, getTempUnschedRuleKey, groups, interceptWarmupRequests, maxSessions, mixedScheduling, moveTempUnschedRule, openAICompactMode, openAICompactModeOptions, openAICompactModelMappings, openAIEndpointCapabilities, openAIEndpointCapabilityOptions, openAIForceImageAPIEnabled, openAILongContextBillingEnabled, openAIResponsesMode, openAIResponsesModeOptions, openAITextGenerationCapabilityEnabled, openAIWSModeConcurrencyHintKey, openAIWSModeOptions, openaiPassthroughEnabled, openaiFlattenNamespacesEnabled, openaiResponsesWebSocketV2Mode, proxies, removeOpenAICompactModelMapping, removeTempUnschedRule, rpmLimitEnabled, rpmStickyBuffer, rpmStrategy, sessionIdMaskingEnabled, sessionIdleTimeout, sessionLimitEnabled, t, tempUnschedEnabled, tempUnschedPresets, tempUnschedRules, tlsFingerprintEnabled, tlsFingerprintProfileId, tlsFingerprintProfiles, toggleOpenAIEndpointCapability, toggleOpenAILongContextBilling, umqModeOptions, userMsgQueueMode, webSearchEmulationMode, webSearchGlobalEnabled, windowCostEnabled, windowCostLimit, windowCostStickyReserve } = props.context
 </script>

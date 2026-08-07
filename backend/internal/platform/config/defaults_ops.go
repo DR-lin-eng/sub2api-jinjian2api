@@ -31,13 +31,7 @@ func setOperationsDefaults() {
 	// TOTP
 	viper.SetDefault("totp.encryption_key", "")
 
-	// Default
-	// Admin credentials are created via the setup flow (web wizard / CLI / AUTO_SETUP).
-	// Do not ship fixed defaults here to avoid insecure "known credentials" in production.
-	viper.SetDefault("default.admin_email", "")
-	viper.SetDefault("default.admin_password", "")
-	viper.SetDefault("default.user_concurrency", 5)
-	viper.SetDefault("default.user_balance", 0)
+	// Gateway defaults
 	viper.SetDefault("default.api_key_prefix", "sk-")
 	viper.SetDefault("default.rate_multiplier", 1.0)
 
@@ -70,18 +64,6 @@ func setOperationsDefaults() {
 	viper.SetDefault("api_key_auth_cache.invalid_abuse.block_seconds", 60)
 	viper.SetDefault("api_key_auth_cache.invalid_abuse.capacity", 16384)
 
-	// Subscription auth L1 cache
-	viper.SetDefault("subscription_cache.l1_size", 16384)
-	viper.SetDefault("subscription_cache.l1_ttl_seconds", 10)
-	viper.SetDefault("subscription_cache.jitter_percent", 10)
-
-	// Dashboard cache
-	viper.SetDefault("dashboard_cache.enabled", true)
-	viper.SetDefault("dashboard_cache.key_prefix", "sub2api:")
-	viper.SetDefault("dashboard_cache.stats_fresh_ttl_seconds", 15)
-	viper.SetDefault("dashboard_cache.stats_ttl_seconds", 30)
-	viper.SetDefault("dashboard_cache.stats_refresh_timeout_seconds", 30)
-
 	// Dashboard aggregation
 	viper.SetDefault("dashboard_aggregation.enabled", true)
 	viper.SetDefault("dashboard_aggregation.interval_seconds", 60)
@@ -89,17 +71,9 @@ func setOperationsDefaults() {
 	viper.SetDefault("dashboard_aggregation.backfill_enabled", false)
 	viper.SetDefault("dashboard_aggregation.backfill_max_days", 31)
 	viper.SetDefault("dashboard_aggregation.retention.usage_logs_days", 90)
-	viper.SetDefault("dashboard_aggregation.retention.usage_billing_dedup_days", 365)
 	viper.SetDefault("dashboard_aggregation.retention.hourly_days", 180)
 	viper.SetDefault("dashboard_aggregation.retention.daily_days", 730)
 	viper.SetDefault("dashboard_aggregation.recompute_days", 2)
-
-	// Usage cleanup task
-	viper.SetDefault("usage_cleanup.enabled", true)
-	viper.SetDefault("usage_cleanup.max_range_days", 31)
-	viper.SetDefault("usage_cleanup.batch_size", 5000)
-	viper.SetDefault("usage_cleanup.worker_interval_seconds", 10)
-	viper.SetDefault("usage_cleanup.task_timeout_seconds", 1800)
 
 	// Idempotency
 	viper.SetDefault("idempotency.observe_only", true)

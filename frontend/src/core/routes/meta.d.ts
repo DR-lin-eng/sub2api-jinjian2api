@@ -44,24 +44,6 @@ declare module 'vue-router' {
     hideInMenu?: boolean
 
     /**
-     * Whether this route requires internal payment system to be enabled
-     * @default false
-     */
-    requiresPayment?: boolean
-
-    /**
-     * 是否要求风控中心功能开关已启用
-     * @default false
-     */
-    requiresRiskControl?: boolean
-
-    /**
-     * Whether this route requires support chat to be enabled.
-     * @default false
-     */
-    requiresSupportChat?: boolean
-
-    /**
      * i18n key for the page title
      */
     titleKey?: string

@@ -8,17 +8,6 @@ export * from './common'
 export * from './gateway'
 export * from './usage'
 
-// Payment types
-export type { SubscriptionPlan, PaymentOrder, CheckoutInfoResponse } from './payment'
-
-export type {
-  PlatformQuotaItem,
-  PlatformQuotaUpdateItem,
-  PlatformQuotaPlatform,
-  PlatformQuotaWindow,
-  PlatformQuotasResponse,
-} from '@/features/admin-users/data/datasources/adminUsersDatasource'
-
 export type {
   CheckMixedChannelRequest,
   CheckMixedChannelResponse,

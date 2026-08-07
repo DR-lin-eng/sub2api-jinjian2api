@@ -11,55 +11,30 @@ import (
 )
 
 type preparedSettingsUpdate struct {
-	request                    *UpdateSettingsRequest
-	previousSettings           *service.SystemSettings
-	previousAuthSourceDefaults *service.AuthSourceDefaultSettings
+	request          *UpdateSettingsRequest
+	previousSettings *service.SystemSettings
 
-	passkeyEnabled          bool
-	sessionBindingEnabled   bool
-	stepUpEnabled           bool
-	localCaptchaEnabled     bool
-	recaptchaEnabled        bool
-	capEnabled              bool
-	tencentCaptchaEnabled   bool
-	aliyunCaptchaEnabled    bool
-	clientIPResolutionMode  string
-	clientIPTrustedProxies  []string
-	affiliateRebateRate     float64
-	affiliateFreezeHours    int
-	affiliateDurationDays   int
-	affiliatePerInviteeCap  float64
-	adminRechargeRebate     bool
-	loginAgreementMode      string
-	loginAgreementUpdatedAt string
-	loginAgreementDocuments []service.LoginAgreementDocument
-	oidcUsePKCE             bool
-	oidcValidateIDToken     bool
-	purchaseEnabled         bool
-	purchaseURL             string
-	customMenuJSON          string
-	customEndpointsJSON     string
-	defaultSubscriptions    []service.DefaultSubscriptionSetting
+	passkeyEnabled         bool
+	sessionBindingEnabled  bool
+	stepUpEnabled          bool
+	clientIPResolutionMode string
+	clientIPTrustedProxies []string
+	customEndpointsJSON    string
 }
 
 func (h *SettingHandler) prepareSettingsUpdate(
 	c *gin.Context,
 	req *UpdateSettingsRequest,
 	previousSettings *service.SystemSettings,
-	previousAuthSourceDefaults *service.AuthSourceDefaultSettings,
 ) (*preparedSettingsUpdate, bool) {
 	prepared := &preparedSettingsUpdate{
-		request:                    req,
-		previousSettings:           previousSettings,
-		previousAuthSourceDefaults: previousAuthSourceDefaults,
+		request:          req,
+		previousSettings: previousSettings,
 	}
 	if !h.resolveSettingsUpdateSecurity(c, prepared) {
 		return nil, false
 	}
 	if !h.validateCoreSettingsUpdate(c, prepared) {
-		return nil, false
-	}
-	if !h.validateIdentitySettingsUpdate(c, prepared) {
 		return nil, false
 	}
 	if !validatePresentationSettingsUpdate(c, prepared) {
@@ -130,26 +105,6 @@ func (h *SettingHandler) resolveSettingsUpdateSecurity(c *gin.Context, prepared 
 			return false
 		}
 	}
-	localCaptchaEnabled := previousSettings.LocalCaptchaEnabled
-	if req.LocalCaptchaEnabled != nil {
-		localCaptchaEnabled = *req.LocalCaptchaEnabled
-	}
-	recaptchaEnabled := previousSettings.RecaptchaEnabled
-	if req.RecaptchaEnabled != nil {
-		recaptchaEnabled = *req.RecaptchaEnabled
-	}
-	capEnabled := previousSettings.CapEnabled
-	if req.CapEnabled != nil {
-		capEnabled = *req.CapEnabled
-	}
-	tencentCaptchaEnabled := previousSettings.TencentCaptchaEnabled
-	if req.TencentCaptchaEnabled != nil {
-		tencentCaptchaEnabled = *req.TencentCaptchaEnabled
-	}
-	aliyunCaptchaEnabled := previousSettings.AliyunCaptchaEnabled
-	if req.AliyunCaptchaEnabled != nil {
-		aliyunCaptchaEnabled = *req.AliyunCaptchaEnabled
-	}
 	clientIPResolutionMode := previousSettings.ClientIPResolutionMode
 	if req.ClientIPResolutionMode != nil {
 		clientIPResolutionMode = *req.ClientIPResolutionMode
@@ -158,17 +113,6 @@ func (h *SettingHandler) resolveSettingsUpdateSecurity(c *gin.Context, prepared 
 	if req.ClientIPTrustedProxies != nil {
 		clientIPTrustedProxies = append([]string(nil), (*req.ClientIPTrustedProxies)...)
 	}
-	providerCount := 0
-	for _, enabled := range []bool{req.TurnstileEnabled, recaptchaEnabled, capEnabled, tencentCaptchaEnabled, aliyunCaptchaEnabled, localCaptchaEnabled} {
-		if enabled {
-			providerCount++
-		}
-	}
-	if providerCount > 1 {
-		response.BadRequest(c, "Only one human verification provider can be enabled")
-		return false
-	}
-
 	// 开启敏感操作 step-up 门控属自锁风险操作：仅允许本人已启用 TOTP 的管理员会话开启，
 	// 否则开启后操作者立即被挡在所有敏感操作之外。仅在 false→true 的开启瞬间校验，
 	// 保持开启状态的常规设置保存不受影响。
@@ -189,11 +133,6 @@ func (h *SettingHandler) resolveSettingsUpdateSecurity(c *gin.Context, prepared 
 	prepared.passkeyEnabled = passkeyEnabled
 	prepared.sessionBindingEnabled = sessionBindingEnabled
 	prepared.stepUpEnabled = stepUpEnabled
-	prepared.localCaptchaEnabled = localCaptchaEnabled
-	prepared.recaptchaEnabled = recaptchaEnabled
-	prepared.capEnabled = capEnabled
-	prepared.tencentCaptchaEnabled = tencentCaptchaEnabled
-	prepared.aliyunCaptchaEnabled = aliyunCaptchaEnabled
 	prepared.clientIPResolutionMode = clientIPResolutionMode
 	prepared.clientIPTrustedProxies = clientIPTrustedProxies
 	return true

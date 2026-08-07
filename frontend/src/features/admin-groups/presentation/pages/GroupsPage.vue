@@ -34,13 +34,6 @@
               class="w-40"
               @change="loadGroups"
             />
-            <Select
-              v-model="filters.is_exclusive"
-              :options="exclusiveOptions"
-              :placeholder="t('admin.groups.allGroups')"
-              class="w-44"
-              @change="loadGroups"
-            />
           </div>
 
           <div
@@ -101,7 +94,6 @@
             <button
               @click="openCreateModal"
               class="btn btn-primary"
-              data-tour="groups-create-btn"
             >
               <Icon name="plus" size="md" class="mr-2" />
               {{ t("admin.groups.createGroup") }}
@@ -152,111 +144,10 @@
             </span>
           </template>
 
-          <template #cell-billing_type="{ row }">
-            <div class="space-y-1">
-              <span
-                :class="[
-                  'inline-block rounded-full px-2 py-0.5 text-xs font-medium',
-                  row.subscription_type === 'subscription'
-                    ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
-                    : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
-                ]"
-              >
-                {{
-                  row.subscription_type === "subscription"
-                    ? t("admin.groups.subscription.subscription")
-                    : t("admin.groups.subscription.standard")
-                }}
-              </span>
-              <div
-                v-if="row.subscription_type === 'subscription'"
-                class="space-y-0.5 text-xs text-gray-500 dark:text-gray-400"
-              >
-                <div
-                  v-if="
-                    row.daily_limit_usd ||
-                    row.weekly_limit_usd ||
-                    row.monthly_limit_usd
-                  "
-                  class="flex flex-wrap items-center gap-x-1 gap-y-0.5"
-                >
-                  <span v-if="row.daily_limit_usd" class="whitespace-nowrap">
-                    <span
-                      v-if="usageLoading"
-                      class="font-medium text-gray-400 dark:text-gray-500"
-                      >—</span
-                    >
-                    <span
-                      v-else
-                      :class="
-                        getQuotaUsageClass(
-                          usageMap.get(row.id)?.today_cost ?? 0,
-                          row.daily_limit_usd
-                        )
-                      "
-                      >{{
-                        formatUsd(usageMap.get(row.id)?.today_cost ?? 0)
-                      }}</span
-                    >
-                    <span class="text-gray-400 dark:text-gray-500">
-                      / {{ formatUsd(row.daily_limit_usd) }}/{{
-                        t("admin.groups.limitDay")
-                      }}</span
-                    >
-                  </span>
-                  <span
-                    v-if="
-                      row.daily_limit_usd &&
-                      (row.weekly_limit_usd || row.monthly_limit_usd)
-                    "
-                    class="mx-1 text-gray-300 dark:text-gray-600"
-                    >·</span
-                  >
-                  <span v-if="row.weekly_limit_usd" class="whitespace-nowrap"
-                    >{{ formatUsd(row.weekly_limit_usd) }}/{{
-                      t("admin.groups.limitWeek")
-                    }}</span
-                  >
-                  <span
-                    v-if="row.weekly_limit_usd && row.monthly_limit_usd"
-                    class="mx-1 text-gray-300 dark:text-gray-600"
-                    >·</span
-                  >
-                  <span v-if="row.monthly_limit_usd" class="whitespace-nowrap"
-                    >{{ formatUsd(row.monthly_limit_usd) }}/{{
-                      t("admin.groups.limitMonth")
-                    }}</span
-                  >
-                </div>
-                <span v-else class="text-gray-400 dark:text-gray-500">{{
-                  t("admin.groups.subscription.noLimit")
-                }}</span>
-                <div class="text-gray-400 dark:text-gray-500">
-                  {{ t("admin.groups.usageTotal") }}
-                  <span class="ml-1 font-medium text-gray-600 dark:text-gray-300"
-                    >{{
-                      usageLoading
-                        ? "—"
-                        : formatUsd(usageMap.get(row.id)?.total_cost ?? 0)
-                    }}</span
-                  >
-                </div>
-              </div>
-            </div>
-          </template>
-
           <template #cell-rate_multiplier="{ value }">
             <span class="text-sm text-gray-700 dark:text-gray-300"
               >{{ value }}x</span
             >
-          </template>
-
-          <template #cell-is_exclusive="{ value }">
-            <span :class="['badge', value ? 'badge-primary' : 'badge-gray']">
-              {{
-                value ? t("admin.groups.exclusive") : t("admin.groups.public")
-              }}
-            </span>
           </template>
 
           <template #cell-account_count="{ row }">
@@ -393,24 +284,6 @@
                 }}</span>
               </button>
               <button
-                @click="handleRateMultipliers(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-purple-600 dark:hover:bg-dark-700 dark:hover:text-purple-400"
-              >
-                <Icon name="dollar" size="sm" />
-                <span class="text-xs">{{
-                  t("admin.groups.rateMultipliers")
-                }}</span>
-              </button>
-              <button
-                @click="handleRPMOverrides(row)"
-                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-orange-600 dark:hover:bg-dark-700 dark:hover:text-orange-400"
-              >
-                <Icon name="bolt" size="sm" />
-                <span class="text-xs">{{
-                  t("admin.groups.rpmOverrides")
-                }}</span>
-              </button>
-              <button
                 @click="handleDelete(row)"
                 class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
               >
@@ -454,10 +327,6 @@
       :sort-submitting="sortSubmitting"
       :show-composite-routes="showCompositeRoutesModal"
       :composite-routes-group="compositeRoutesGroup"
-      :show-rate-multipliers="showRateMultipliersModal"
-      :rate-multipliers-group="rateMultipliersGroup"
-      :show-rpm-overrides="showRPMOverridesModal"
-      :rpm-overrides-group="rpmOverridesGroup"
       @confirm-delete="confirmDelete"
       @close-delete="showDeleteDialog = false"
       @confirm-unsupported-live="confirmUnsupportedLive"
@@ -466,9 +335,6 @@
       @close-sort="closeSortModal"
       @save-sort="saveSortOrder"
       @close-composite-routes="closeCompositeRoutesModal"
-      @close-rate-multipliers="showRateMultipliersModal = false"
-      @close-rpm-overrides="showRPMOverridesModal = false"
-      @reload="loadGroups"
     />
   </AppLayout>
 </template>
@@ -515,7 +381,6 @@ const {
   isColumnVisible,
   toggleColumn,
   statusOptions,
-  exclusiveOptions,
   platformFilterOptions,
   groups,
   loading,
@@ -527,8 +392,6 @@ const {
   pagination,
   loadGroups,
   formatCost,
-  formatUsd,
-  getQuotaUsageClass,
   handleSearch,
   handlePageChange,
   handlePageSizeChange,
@@ -539,14 +402,8 @@ const {
   showSortModal,
   sortSubmitting,
   sortableGroups,
-  showRateMultipliersModal,
-  rateMultipliersGroup,
-  showRPMOverridesModal,
-  rpmOverridesGroup,
   showCompositeRoutesModal,
   compositeRoutesGroup,
-  handleRateMultipliers,
-  handleRPMOverrides,
   handleDuplicate,
   handleCompositeRoutes,
   closeCompositeRoutesModal,

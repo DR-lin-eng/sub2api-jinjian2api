@@ -24,8 +24,8 @@ func newStepUpSwitchTestHandler(t *testing.T, stored map[string]string) (*Settin
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 	repo := &settingHandlerRepoStub{values: stored}
-	svc := service.NewSettingService(repo, &config.Config{Default: config.DefaultConfig{UserConcurrency: 5}})
-	return NewSettingHandler(svc, nil, nil, nil, nil, nil, nil), repo
+	svc := service.NewSettingService(repo, &config.Config{})
+	return NewSettingHandler(svc, nil, nil, nil, nil, nil), repo
 }
 
 func doUpdateSettings(t *testing.T, h *SettingHandler, body map[string]any, prepare func(c *gin.Context)) *httptest.ResponseRecorder {
@@ -137,27 +137,24 @@ func TestUpdateSettingsOmittedSecuritySwitchesKeepStoredValues(t *testing.T) {
 	h, repo := newStepUpSwitchTestHandler(t, map[string]string{
 		service.SettingKeyStepUpEnabled:         "true",
 		service.SettingKeySessionBindingEnabled: "true",
-		service.SettingKeyLocalCaptchaEnabled:   "true",
 	})
 
-	rec := doUpdateSettings(t, h, map[string]any{"registration_enabled": true}, nil)
+	rec := doUpdateSettings(t, h, map[string]any{"site_name": "Gateway"}, nil)
 
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.Equal(t, "true", repo.values[service.SettingKeyStepUpEnabled])
 	require.Equal(t, "true", repo.values[service.SettingKeySessionBindingEnabled])
-	require.Equal(t, "true", repo.values[service.SettingKeyLocalCaptchaEnabled])
 }
 
 // 省略字段在开关本就关闭时同样保持关闭（默认值路径）。
 func TestUpdateSettingsOmittedSecuritySwitchesKeepDisabled(t *testing.T) {
 	h, repo := newStepUpSwitchTestHandler(t, map[string]string{})
 
-	rec := doUpdateSettings(t, h, map[string]any{"registration_enabled": true}, nil)
+	rec := doUpdateSettings(t, h, map[string]any{"site_name": "Gateway"}, nil)
 
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.Equal(t, "false", repo.values[service.SettingKeyStepUpEnabled])
 	require.Equal(t, "false", repo.values[service.SettingKeySessionBindingEnabled])
-	require.Equal(t, "false", repo.values[service.SettingKeyLocalCaptchaEnabled])
 }
 
 func TestUpdateSettingsLegacyForwardedIPFieldCannotChangeResolutionMode(t *testing.T) {
@@ -189,39 +186,4 @@ func TestUpdateSettingsRejectsInvalidClientIPProxyWithoutPartialWrite(t *testing
 
 	require.Equal(t, http.StatusBadRequest, rec.Code)
 	require.Equal(t, `[]`, repo.values[service.SettingKeyClientIPTrustedProxies])
-}
-
-func TestUpdateSettingsRejectsMultipleHumanVerificationProviders(t *testing.T) {
-	h, repo := newStepUpSwitchTestHandler(t, map[string]string{})
-
-	rec := doUpdateSettings(t, h, map[string]any{
-		"turnstile_enabled": true,
-		"recaptcha_enabled": true,
-	}, nil)
-
-	require.Equal(t, http.StatusBadRequest, rec.Code)
-	require.Contains(t, rec.Body.String(), "Only one human verification provider")
-	require.NotEqual(t, "true", repo.values[service.SettingKeyTurnstileEnabled])
-	require.NotEqual(t, "true", repo.values[service.SettingKeyRecaptchaEnabled])
-}
-
-func TestUpdateSettingsPersistsSingleHumanVerificationProvider(t *testing.T) {
-	h, repo := newStepUpSwitchTestHandler(t, map[string]string{
-		service.SettingKeyTurnstileEnabled:    "false",
-		service.SettingKeyRecaptchaEnabled:    "false",
-		service.SettingKeyCapEnabled:          "false",
-		service.SettingKeyLocalCaptchaEnabled: "false",
-	})
-
-	rec := doUpdateSettings(t, h, map[string]any{
-		"recaptcha_enabled":    true,
-		"recaptcha_site_key":   "site-key",
-		"recaptcha_secret_key": "secret-key",
-	}, nil)
-
-	require.Equal(t, http.StatusOK, rec.Code)
-	require.Equal(t, "false", repo.values[service.SettingKeyTurnstileEnabled])
-	require.Equal(t, "true", repo.values[service.SettingKeyRecaptchaEnabled])
-	require.Equal(t, "false", repo.values[service.SettingKeyCapEnabled])
-	require.Equal(t, "false", repo.values[service.SettingKeyLocalCaptchaEnabled])
 }

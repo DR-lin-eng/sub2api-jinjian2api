@@ -29,7 +29,6 @@
           form="edit-account-form"
           :disabled="submitting"
           class="btn btn-primary"
-          data-tour="account-form-submit"
         >
           <svg
             v-if="submitting"
@@ -74,14 +73,13 @@
 import { ref, reactive, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/core/stores/appStore'
-import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
 import {
   syncUpstreamModels,
   testCPAConnection as testCPAConnectionRequest
 } from '@/features/admin-accounts/data/datasources/adminAccountActions'
 import {
   getWebSearchEmulationConfig
-} from '@/features/admin-settings/data/datasources/adminSettingsDatasource'
+} from '@/features/admin-settings/data/datasources/adminWebSearchQueries'
 import {
   list as listTLSFingerprintProfiles
 } from '@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource'
@@ -173,9 +171,6 @@ const notifications = {
   showError: (message: string) => appStore.showError(message),
   showSuccess: (message: string) => appStore.showSuccess(message),
 }
-const authStore = useAuthStore()
-const isSimpleMode = computed(() => authStore.isSimpleMode)
-
 // Spark 影子账号(parent_account_id 非空):代理恒继承母账号,不可独立编辑(外审 B/P1),
 // 故隐藏代理选择器。
 const isSparkShadow = computed(() => props.account?.parent_account_id != null)
@@ -1485,7 +1480,7 @@ const editAccountAdvancedContext = {
 } satisfies EditAccountAdvancedContext
 
 const editAccountPolicyContext = {
-  account: activeAccount, addOpenAICompactModelMapping, allowOverages, isSimpleMode,
+  account: activeAccount, addOpenAICompactModelMapping, allowOverages,
   autoPause5hDisabled, autoPause5hThreshold, autoPause7dDisabled, autoPause7dThreshold,
   autoPauseOnExpired, baseRpm, cacheTTLOverrideEnabled, cacheTTLOverrideTarget, customBaseUrl,
   customBaseUrlEnabled, editPlanType, form, formatDateTime, getOpenAICompactModelMappingKey,

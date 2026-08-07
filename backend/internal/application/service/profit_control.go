@@ -96,7 +96,6 @@ func resolveProfitControlGate(
 	ctx context.Context,
 	groupID *int64,
 	loadGroup func(context.Context, int64) (*Group, error),
-	resolveUserRate func(context.Context, int64, int64, float64) float64,
 ) *profitControlGate {
 	if ctx == nil || groupID == nil || *groupID <= 0 || profitControlSuppressed(ctx) {
 		return nil
@@ -130,10 +129,6 @@ func resolveProfitControlGate(
 		}
 	}
 	downstream := billingGroup.RateMultiplier
-	if userID, _ := ctx.Value(ctxkey.UserID).(int64); userID > 0 && resolveUserRate != nil {
-		downstream = resolveUserRate(ctx, userID, billingGroup.ID, billingGroup.RateMultiplier)
-	}
-	downstream *= billingGroup.PeakMultiplierAt(pricingAt)
 	threshold := clampProfitControlThreshold(
 		downstream * (1 - group.ProfitMinMargin - group.ProfitSafetyBuffer),
 	)
@@ -172,7 +167,6 @@ func (s *GatewayService) withGatewayProfitControlGate(ctx context.Context, group
 			}
 			return s.resolveGroupByID(loadCtx, id)
 		},
-		s.ResolveUserGroupRateMultiplier,
 	)
 	return installProfitControlGate(ctx, groupID, gate)
 }
@@ -190,7 +184,6 @@ func (s *OpenAIGatewayService) withOpenAIProfitControlGate(ctx context.Context, 
 			}
 			return nil, nil
 		},
-		s.ResolveUserGroupRateMultiplier,
 	)
 	return installProfitControlGate(ctx, groupID, gate)
 }

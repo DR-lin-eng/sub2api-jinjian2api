@@ -292,7 +292,6 @@ func emailTemplateEventOptionsToDTO(events []service.NotificationEmailEventInfo)
 			Label:       event.Label,
 			Description: event.Description,
 			Category:    event.Category,
-			Optional:    event.Optional,
 		})
 	}
 	return items

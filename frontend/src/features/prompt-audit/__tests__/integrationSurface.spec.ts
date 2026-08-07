@@ -9,26 +9,22 @@ const here = dirname(fileURLToPath(import.meta.url))
 const read = (path: string) => readFileSync(resolve(here, path), 'utf8')
 
 describe('Prompt Audit integration surface', () => {
-  it('registers an admin and risk-control guarded route', () => {
+  it('registers an authenticated admin route', () => {
     const router = read('../../../core/routes/index.ts')
     expect(router).toContain("path: '/admin/prompt-audit'")
     const route = router.slice(router.indexOf("path: '/admin/prompt-audit'"), router.indexOf("path: '/admin/usage'"))
     expect(route).toContain('requiresAuth: true')
     expect(route).toContain('requiresAdmin: true')
-    expect(route).toContain('requiresRiskControl: true')
   })
 
-  it('keeps security audit available while guarding only feature-specific children', () => {
+  it('keeps the security audit tools available to the local administrator', () => {
     const sidebar = read('../../../common/widgets/layout/AppSidebar.vue')
-    const group = sidebar.slice(sidebar.indexOf("path: '/admin/security-audit'"), sidebar.indexOf("path: '/admin/redeem'"))
-    const groupHeader = group.slice(0, group.indexOf('children:'))
+    const group = sidebar.slice(sidebar.indexOf("path: '/admin/security-audit'"), sidebar.indexOf("path: '/admin/multi-instance'"))
     expect(group).toContain('expandOnly: true')
-    expect(groupHeader).not.toContain('featureFlag: flagRiskControl')
     expect(group).toContain("path: '/admin/security-audit/ingress'")
     expect(group).toContain("path: '/admin/risk-control'")
     expect(group).toContain("path: '/admin/prompt-audit'")
-    expect(group.match(/featureFlag: flagRiskControl/g)).toHaveLength(2)
-    expect(group).toContain('featureFlag: flagOpsMonitoring')
+    expect(group).not.toContain('featureFlag:')
   })
 
   it('keeps Prompt Audit locale trees symmetric and all operational controls named', () => {

@@ -60,29 +60,17 @@ func appendRuntimeSettingChanges(changed []string, before, after *service.System
 	if before.RequestPriorityPendingMiBPerInstance != after.RequestPriorityPendingMiBPerInstance {
 		changed = append(changed, "request_priority_pending_mib_per_instance")
 	}
-	if before.BackendModeEnabled != after.BackendModeEnabled {
-		changed = append(changed, "backend_mode_enabled")
-	}
 	if before.StreamModePerformanceEnabled != after.StreamModePerformanceEnabled {
 		changed = append(changed, "stream_mode_performance_enabled")
 	}
 	if before.OpenAIWSModeRouterV2Enabled != after.OpenAIWSModeRouterV2Enabled {
 		changed = append(changed, "openai_ws_mode_router_v2_enabled")
 	}
-	if before.PurchaseSubscriptionEnabled != after.PurchaseSubscriptionEnabled {
-		changed = append(changed, "purchase_subscription_enabled")
-	}
-	if before.PurchaseSubscriptionURL != after.PurchaseSubscriptionURL {
-		changed = append(changed, "purchase_subscription_url")
-	}
 	if before.TableDefaultPageSize != after.TableDefaultPageSize {
 		changed = append(changed, "table_default_page_size")
 	}
 	if !equalIntSlice(before.TablePageSizeOptions, after.TablePageSizeOptions) {
 		changed = append(changed, "table_page_size_options")
-	}
-	if before.CustomMenuItems != after.CustomMenuItems {
-		changed = append(changed, "custom_menu_items")
 	}
 	if before.CustomEndpoints != after.CustomEndpoints {
 		changed = append(changed, "custom_endpoints")

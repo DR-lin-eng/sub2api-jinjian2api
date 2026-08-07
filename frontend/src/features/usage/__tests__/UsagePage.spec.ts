@@ -36,14 +36,10 @@ const messages: Record<string, string> = {
   'admin.dashboard.granularity': 'Granularity',
   'admin.dashboard.day': 'Day',
   'admin.dashboard.hour': 'Hour',
-  'admin.users.columnSettings': 'Columns',
+  'common.columnSettings': 'Columns',
   'admin.usage.group': 'Group',
-  'admin.usage.billingType': 'Billing type',
   'admin.usage.billingMode': 'Billing mode',
   'admin.usage.allTypes': 'All types',
-  'admin.usage.allBillingTypes': 'All billing types',
-  'admin.usage.billingTypeBalance': 'Balance',
-  'admin.usage.billingTypeSubscription': 'Subscription',
   'admin.usage.allBillingModes': 'All billing modes',
   'admin.usage.billingModeToken': 'Token',
   'admin.usage.billingModePerRequest': 'Per request',
@@ -77,9 +73,7 @@ vi.mock('@/api', () => ({
   },
   keysAPI: {
     list,
-  },
-  userGroupsAPI: {
-    getAvailable,
+    getAvailableGroups: getAvailable,
   },
 }))
 
@@ -223,13 +217,7 @@ describe('user UsageView', () => {
     expect(getAvailable).toHaveBeenCalled()
   })
 
-  it('hides usage details by default and exposes the action only when enabled globally', async () => {
-    const disabledWrapper = mountUsageView()
-    await flushPromises()
-    expect(disabledWrapper.getComponent({ name: 'UsageTable' }).props('columns'))
-      .not.toEqual(expect.arrayContaining([expect.objectContaining({ key: 'actions' })]))
-
-    appStoreState.cachedPublicSettings = { allow_user_view_usage_details: true }
+  it('always exposes usage details for the local administrator', async () => {
     const enabledWrapper = mountUsageView()
     await flushPromises()
     expect(enabledWrapper.getComponent({ name: 'UsageTable' }).props('columns'))

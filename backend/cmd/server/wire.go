@@ -13,8 +13,6 @@ import (
 	"github.com/Wei-Shaw/sub2api/ent"
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
 	"github.com/Wei-Shaw/sub2api/internal/infrastructure/repository"
-	"github.com/Wei-Shaw/sub2api/internal/modules/chat"
-	"github.com/Wei-Shaw/sub2api/internal/modules/payment"
 	"github.com/Wei-Shaw/sub2api/internal/modules/securityaudit"
 	"github.com/Wei-Shaw/sub2api/internal/platform/config"
 	clientip "github.com/Wei-Shaw/sub2api/internal/shared/ip"
@@ -41,8 +39,6 @@ func initializeApplication(buildInfo handler.BuildInfo) (*Application, error) {
 		repository.ProviderSet,
 		service.ProviderSet,
 		securityaudit.ProviderSet,
-		payment.ProviderSet,
-		chat.ProviderSet,
 		middleware.ProviderSet,
 		handler.ProviderSet,
 
@@ -94,17 +90,9 @@ func provideCleanup(
 	accountExpiry *service.AccountExpiryService,
 	codexVersionSync *service.OpenAICodexVersionSyncService,
 	proxyExpiry *service.ProxyExpiryService,
-	subscriptionExpiry *service.SubscriptionExpiryService,
-	usageCleanup *service.UsageCleanupService,
 	idempotencyCleanup *service.IdempotencyCleanupService,
-	batchImageCleanup *service.BatchImageCleanupService,
-	batchImageWorker *service.BatchImageWorkerRuntime,
 	pricing *service.PricingService,
-	emailQueue *service.EmailQueueService,
-	billingCache *service.BillingCacheService,
 	usageRecordWorkerPool *service.UsageRecordWorkerPool,
-	usageBillingRepository service.UsageBillingRepository,
-	subscriptionService *service.SubscriptionService,
 	oauth *service.OAuthService,
 	openaiOAuth *service.OpenAIOAuthService,
 	geminiOAuth *service.GeminiOAuthService,
@@ -113,9 +101,7 @@ func provideCleanup(
 	openAIGateway *service.OpenAIGatewayService,
 	scheduledTestRunner *service.ScheduledTestRunnerService,
 	backupSvc *service.BackupService,
-	paymentOrderExpiry *service.PaymentOrderExpiryService,
 	channelMonitorRunner *service.ChannelMonitorRunner,
-	quotaFlusher *service.UserPlatformQuotaUsageFlusher,
 	upstreamBillingProbe *service.UpstreamBillingProbeService,
 	ollamaCloudUsage *service.OllamaCloudUsageService,
 	auditLog *service.AuditLogService,
@@ -266,27 +252,9 @@ func provideCleanup(
 				}
 				return nil
 			}},
-			{"UsageCleanupService", func() error {
-				if usageCleanup != nil {
-					usageCleanup.Stop()
-				}
-				return nil
-			}},
 			{"IdempotencyCleanupService", func() error {
 				if idempotencyCleanup != nil {
 					idempotencyCleanup.Stop()
-				}
-				return nil
-			}},
-			{"BatchImageCleanupService", func() error {
-				if batchImageCleanup != nil {
-					batchImageCleanup.Stop()
-				}
-				return nil
-			}},
-			{"BatchImageWorkerRuntime", func() error {
-				if batchImageWorker != nil {
-					batchImageWorker.Stop()
 				}
 				return nil
 			}},
@@ -302,22 +270,8 @@ func provideCleanup(
 				proxyExpiry.Stop()
 				return nil
 			}},
-			{"SubscriptionExpiryService", func() error {
-				subscriptionExpiry.Stop()
-				return nil
-			}},
-			{"SubscriptionService", func() error {
-				if subscriptionService != nil {
-					subscriptionService.Stop()
-				}
-				return nil
-			}},
 			{"PricingService", func() error {
 				pricing.Stop()
-				return nil
-			}},
-			{"EmailQueueService", func() error {
-				emailQueue.Stop()
 				return nil
 			}},
 			{"OAuthService", func() error {
@@ -360,21 +314,9 @@ func provideCleanup(
 				}
 				return nil
 			}},
-			{"PaymentOrderExpiryService", func() error {
-				if paymentOrderExpiry != nil {
-					paymentOrderExpiry.Stop()
-				}
-				return nil
-			}},
 			{"ChannelMonitorRunner", func() error {
 				if channelMonitorRunner != nil {
 					channelMonitorRunner.Stop()
-				}
-				return nil
-			}},
-			{"UserPlatformQuotaUsageFlusher", func() error {
-				if quotaFlusher != nil {
-					quotaFlusher.Stop()
 				}
 				return nil
 			}},
@@ -392,23 +334,11 @@ func provideCleanup(
 			}},
 		}
 
-		// Preserve the producer -> durable queue -> cache dependency order. Usage
-		// tasks must finish their PostgreSQL enqueue before billing consumers stop.
-		billingSteps := []cleanupStep{
+		usageSteps := []cleanupStep{
 			{"UsageRecordWorkerPool", func() error {
 				if usageRecordWorkerPool != nil {
 					usageRecordWorkerPool.Stop()
 				}
-				return nil
-			}},
-			{"UsageBillingRepository", func() error {
-				if lifecycle, ok := usageBillingRepository.(interface{ Stop() }); ok {
-					lifecycle.Stop()
-				}
-				return nil
-			}},
-			{"BillingCacheService", func() error {
-				billingCache.Stop()
 				return nil
 			}},
 		}
@@ -473,7 +403,7 @@ func provideCleanup(
 
 		runParallel(parallelSteps)
 		runSequential(timingWheelSteps)
-		runSequential(billingSteps)
+		runSequential(usageSteps)
 		runSequential(infraSteps)
 
 		// Check if context timed out

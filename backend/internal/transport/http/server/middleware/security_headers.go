@@ -18,28 +18,6 @@ const (
 	NonceTemplate = "__CSP_NONCE__"
 	// CloudflareInsightsDomain is the domain for Cloudflare Web Analytics
 	CloudflareInsightsDomain = "https://static.cloudflareinsights.com"
-	// StripeDomain is the domain for Stripe.js SDK
-	StripeDomain = "https://*.stripe.com"
-	// AirwallexStaticDomain 是 Airwallex 生产环境 SDK 脚本域名。
-	AirwallexStaticDomain = "https://static.airwallex.com"
-	// AirwallexCheckoutDomain 是 Airwallex 生产环境收银台元素和 iframe 域名。
-	AirwallexCheckoutDomain = "https://checkout.airwallex.com"
-	// AirwallexDemoStaticDomain 是 Airwallex 沙箱环境 SDK 脚本域名。
-	AirwallexDemoStaticDomain = "https://static-demo.airwallex.com"
-	// AirwallexDemoCheckoutDomain 是 Airwallex 沙箱环境收银台元素和 iframe 域名。
-	AirwallexDemoCheckoutDomain = "https://checkout-demo.airwallex.com"
-	GoogleRecaptchaDomain       = "https://www.google.com"
-	GoogleRecaptchaFrameDomain  = "https://recaptcha.google.com"
-	GoogleStaticDomain          = "https://www.gstatic.com"
-	JSDelivrDomain              = "https://cdn.jsdelivr.net"
-	TencentCaptchaDomain        = "https://turing.captcha.qcloud.com"
-	TencentCaptchaStaticDomain  = "https://*.captcha.gtimg.com"
-	AliyunCaptchaLoaderDomain   = "https://o.alicdn.com"
-	AliyunCaptchaCDNDomain      = "https://g.alicdn.com"
-	AliyunCaptchaFallbackDomain = "https://x.alicdn.com"
-	AliyunCaptchaImageCNDomain  = "https://static-captcha.aliyuncs.com"
-	AliyunCaptchaImageSGPDomain = "https://static-captcha-sgp.aliyuncs.com"
-	WASMUnsafeEval              = "'wasm-unsafe-eval'"
 )
 
 var requiredCSPDirectiveValues = []struct {
@@ -47,39 +25,9 @@ var requiredCSPDirectiveValues = []struct {
 	value     string
 }{
 	{"script-src", CloudflareInsightsDomain},
-	{"script-src", GoogleRecaptchaDomain},
-	{"script-src", GoogleStaticDomain},
-	{"script-src", JSDelivrDomain},
-	{"connect-src", JSDelivrDomain},
-	{"script-src", TencentCaptchaDomain},
-	{"connect-src", TencentCaptchaDomain},
-	{"frame-src", TencentCaptchaDomain},
-	{"style-src", TencentCaptchaStaticDomain},
-	{"script-src", AliyunCaptchaLoaderDomain},
-	{"script-src", AliyunCaptchaCDNDomain},
-	{"script-src", AliyunCaptchaFallbackDomain},
-	{"style-src", AliyunCaptchaCDNDomain},
-	{"style-src", AliyunCaptchaFallbackDomain},
-	{"img-src", AliyunCaptchaImageCNDomain},
-	{"img-src", AliyunCaptchaImageSGPDomain},
-	{"script-src", WASMUnsafeEval},
 	{"frame-src", "'self'"},
-	{"frame-src", GoogleRecaptchaDomain},
-	{"frame-src", GoogleRecaptchaFrameDomain},
 	{"worker-src", "'self'"},
 	{"worker-src", "blob:"},
-	{"script-src", StripeDomain},
-	{"frame-src", StripeDomain},
-	{"script-src", AirwallexStaticDomain},
-	{"script-src", AirwallexCheckoutDomain},
-	{"style-src", AirwallexStaticDomain},
-	{"style-src", AirwallexCheckoutDomain},
-	{"frame-src", AirwallexCheckoutDomain},
-	{"script-src", AirwallexDemoStaticDomain},
-	{"script-src", AirwallexDemoCheckoutDomain},
-	{"style-src", AirwallexDemoStaticDomain},
-	{"style-src", AirwallexDemoCheckoutDomain},
-	{"frame-src", AirwallexDemoCheckoutDomain},
 }
 
 // GenerateNonce generates a cryptographically secure random nonce.
@@ -103,10 +51,7 @@ func GetNonceFromContext(c *gin.Context) string {
 }
 
 // SecurityHeaders sets baseline security headers for all responses.
-// getFrameSrcOrigins and getConnectSrcOrigins return dynamic origins for the
-// corresponding CSP directives. The variadic connect callback keeps existing
-// callers source-compatible.
-func SecurityHeaders(cfg config.CSPConfig, getFrameSrcOrigins func() []string, getConnectSrcOrigins ...func() []string) gin.HandlerFunc {
+func SecurityHeaders(cfg config.CSPConfig) gin.HandlerFunc {
 	policy := strings.TrimSpace(cfg.Policy)
 	if policy == "" {
 		policy = config.DefaultCSPPolicy
@@ -116,14 +61,6 @@ func SecurityHeaders(cfg config.CSPConfig, getFrameSrcOrigins func() []string, g
 	policy = enhanceCSPPolicy(policy)
 
 	return func(c *gin.Context) {
-		finalPolicy := policy
-		if getFrameSrcOrigins != nil {
-			finalPolicy = addOriginsToDirective(finalPolicy, "frame-src", getFrameSrcOrigins())
-		}
-		if len(getConnectSrcOrigins) > 0 && getConnectSrcOrigins[0] != nil {
-			finalPolicy = addOriginsToDirective(finalPolicy, "connect-src", getConnectSrcOrigins[0]())
-		}
-
 		c.Header("X-Content-Type-Options", "nosniff")
 		c.Header("X-Frame-Options", "DENY")
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -138,40 +75,14 @@ func SecurityHeaders(cfg config.CSPConfig, getFrameSrcOrigins func() []string, g
 			if err != nil {
 				// crypto/rand 失败时降级为无 nonce 的 CSP 策略
 				log.Printf("[SecurityHeaders] %v — 降级为无 nonce 的 CSP", err)
-				c.Header("Content-Security-Policy", strings.ReplaceAll(finalPolicy, NonceTemplate, "'unsafe-inline'"))
+				c.Header("Content-Security-Policy", strings.ReplaceAll(policy, NonceTemplate, "'unsafe-inline'"))
 			} else {
 				c.Set(CSPNonceKey, nonce)
-				c.Header("Content-Security-Policy", strings.ReplaceAll(finalPolicy, NonceTemplate, "'nonce-"+nonce+"'"))
+				c.Header("Content-Security-Policy", strings.ReplaceAll(policy, NonceTemplate, "'nonce-"+nonce+"'"))
 			}
 		}
 		c.Next()
 	}
-}
-
-func addOriginsToDirective(policy, directive string, origins []string) string {
-	if len(origins) == 0 {
-		return policy
-	}
-	missing := make([]string, 0, len(origins))
-	seen := make(map[string]struct{}, len(origins))
-	for _, origin := range origins {
-		origin = strings.TrimSpace(origin)
-		if origin == "" {
-			continue
-		}
-		if _, exists := seen[origin]; exists {
-			continue
-		}
-		seen[origin] = struct{}{}
-		if directiveHasValue(policy, directive, origin) {
-			continue
-		}
-		missing = append(missing, origin)
-	}
-	if len(missing) == 0 {
-		return policy
-	}
-	return addToDirective(policy, directive, strings.Join(missing, " "))
 }
 
 func isAPIRoutePath(c *gin.Context) bool {
@@ -186,8 +97,7 @@ func isAPIRoutePath(c *gin.Context) bool {
 		strings.HasPrefix(path, "/images")
 }
 
-// enhanceCSPPolicy 确保 CSP 策略包含 nonce 支持和支付 SDK 必需域名。
-// 这样旧配置文件没有及时补域名时，前端支付组件仍能正常加载。
+// enhanceCSPPolicy ensures nonce support and the fixed dashboard runtime sources.
 func enhanceCSPPolicy(policy string) string {
 	// Add nonce placeholder to script-src if not present
 	if !strings.Contains(policy, NonceTemplate) && !strings.Contains(policy, "'nonce-") {

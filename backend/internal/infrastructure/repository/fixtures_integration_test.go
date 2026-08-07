@@ -24,7 +24,7 @@ func mustCreateUser(t *testing.T, client *dbent.Client, u *service.User) *servic
 		u.PasswordHash = "test-password-hash"
 	}
 	if u.Role == "" {
-		u.Role = service.RoleUser
+		u.Role = service.RoleAdmin
 	}
 	if u.Status == "" {
 		u.Status = service.StatusActive
@@ -38,7 +38,6 @@ func mustCreateUser(t *testing.T, client *dbent.Client, u *service.User) *servic
 		SetPasswordHash(u.PasswordHash).
 		SetRole(u.Role).
 		SetStatus(u.Status).
-		SetBalance(u.Balance).
 		SetConcurrency(u.Concurrency).
 		SetUsername(u.Username).
 		SetNotes(u.Notes)
@@ -56,16 +55,6 @@ func mustCreateUser(t *testing.T, client *dbent.Client, u *service.User) *servic
 	u.CreatedAt = created.CreatedAt
 	u.UpdatedAt = created.UpdatedAt
 
-	if len(u.AllowedGroups) > 0 {
-		for _, groupID := range u.AllowedGroups {
-			_, err := client.UserAllowedGroup.Create().
-				SetUserID(u.ID).
-				SetGroupID(groupID).
-				Save(ctx)
-			require.NoError(t, err, "create user_allowed_groups row")
-		}
-	}
-
 	return u
 }
 
@@ -79,28 +68,13 @@ func mustCreateGroup(t *testing.T, client *dbent.Client, g *service.Group) *serv
 	if g.Status == "" {
 		g.Status = service.StatusActive
 	}
-	if g.SubscriptionType == "" {
-		g.SubscriptionType = service.SubscriptionTypeStandard
-	}
-
 	create := client.Group.Create().
 		SetName(g.Name).
 		SetPlatform(g.Platform).
 		SetStatus(g.Status).
-		SetSubscriptionType(g.SubscriptionType).
-		SetRateMultiplier(g.RateMultiplier).
-		SetIsExclusive(g.IsExclusive)
+		SetRateMultiplier(g.RateMultiplier)
 	if g.Description != "" {
 		create.SetDescription(g.Description)
-	}
-	if g.DailyLimitUSD != nil {
-		create.SetDailyLimitUsd(*g.DailyLimitUSD)
-	}
-	if g.WeeklyLimitUSD != nil {
-		create.SetWeeklyLimitUsd(*g.WeeklyLimitUSD)
-	}
-	if g.MonthlyLimitUSD != nil {
-		create.SetMonthlyLimitUsd(*g.MonthlyLimitUSD)
 	}
 	if !g.CreatedAt.IsZero() {
 		create.SetCreatedAt(g.CreatedAt)
@@ -269,39 +243,6 @@ func mustCreateApiKey(t *testing.T, client *dbent.Client, k *service.APIKey) *se
 		SetKey(k.Key).
 		SetName(k.Name).
 		SetStatus(k.Status)
-	if k.Quota != 0 {
-		create.SetQuota(k.Quota)
-	}
-	if k.QuotaUsed != 0 {
-		create.SetQuotaUsed(k.QuotaUsed)
-	}
-	if k.RateLimit5h != 0 {
-		create.SetRateLimit5h(k.RateLimit5h)
-	}
-	if k.RateLimit1d != 0 {
-		create.SetRateLimit1d(k.RateLimit1d)
-	}
-	if k.RateLimit7d != 0 {
-		create.SetRateLimit7d(k.RateLimit7d)
-	}
-	if k.Usage5h != 0 {
-		create.SetUsage5h(k.Usage5h)
-	}
-	if k.Usage1d != 0 {
-		create.SetUsage1d(k.Usage1d)
-	}
-	if k.Usage7d != 0 {
-		create.SetUsage7d(k.Usage7d)
-	}
-	if k.Window5hStart != nil {
-		create.SetWindow5hStart(*k.Window5hStart)
-	}
-	if k.Window1dStart != nil {
-		create.SetWindow1dStart(*k.Window1dStart)
-	}
-	if k.Window7dStart != nil {
-		create.SetWindow7dStart(*k.Window7dStart)
-	}
 	if k.ExpiresAt != nil {
 		create.SetExpiresAt(*k.ExpiresAt)
 	}
@@ -322,103 +263,6 @@ func mustCreateApiKey(t *testing.T, client *dbent.Client, k *service.APIKey) *se
 	k.CreatedAt = created.CreatedAt
 	k.UpdatedAt = created.UpdatedAt
 	return k
-}
-
-func mustCreateRedeemCode(t *testing.T, client *dbent.Client, c *service.RedeemCode) *service.RedeemCode {
-	t.Helper()
-	ctx := context.Background()
-
-	if c.Status == "" {
-		c.Status = service.StatusUnused
-	}
-	if c.Type == "" {
-		c.Type = service.RedeemTypeBalance
-	}
-	if c.Code == "" {
-		c.Code = "rc-" + time.Now().Format("150405.000000")
-	}
-
-	create := client.RedeemCode.Create().
-		SetCode(c.Code).
-		SetType(c.Type).
-		SetValue(c.Value).
-		SetStatus(c.Status).
-		SetNotes(c.Notes).
-		SetValidityDays(c.ValidityDays)
-	if c.UsedBy != nil {
-		create.SetUsedBy(*c.UsedBy)
-	}
-	if c.UsedAt != nil {
-		create.SetUsedAt(*c.UsedAt)
-	}
-	if c.GroupID != nil {
-		create.SetGroupID(*c.GroupID)
-	}
-	if !c.CreatedAt.IsZero() {
-		create.SetCreatedAt(c.CreatedAt)
-	}
-
-	created, err := create.Save(ctx)
-	require.NoError(t, err, "create redeem code")
-
-	c.ID = created.ID
-	c.CreatedAt = created.CreatedAt
-	return c
-}
-
-func mustCreateSubscription(t *testing.T, client *dbent.Client, s *service.UserSubscription) *service.UserSubscription {
-	t.Helper()
-	ctx := context.Background()
-
-	if s.Status == "" {
-		s.Status = service.SubscriptionStatusActive
-	}
-	now := time.Now()
-	if s.StartsAt.IsZero() {
-		s.StartsAt = now.Add(-1 * time.Hour)
-	}
-	if s.ExpiresAt.IsZero() {
-		s.ExpiresAt = now.Add(24 * time.Hour)
-	}
-	if s.AssignedAt.IsZero() {
-		s.AssignedAt = now
-	}
-	if s.CreatedAt.IsZero() {
-		s.CreatedAt = now
-	}
-	if s.UpdatedAt.IsZero() {
-		s.UpdatedAt = now
-	}
-
-	create := client.UserSubscription.Create().
-		SetUserID(s.UserID).
-		SetGroupID(s.GroupID).
-		SetStartsAt(s.StartsAt).
-		SetExpiresAt(s.ExpiresAt).
-		SetStatus(s.Status).
-		SetAssignedAt(s.AssignedAt).
-		SetNotes(s.Notes).
-		SetDailyUsageUsd(s.DailyUsageUSD).
-		SetWeeklyUsageUsd(s.WeeklyUsageUSD).
-		SetMonthlyUsageUsd(s.MonthlyUsageUSD)
-
-	if s.AssignedBy != nil {
-		create.SetAssignedBy(*s.AssignedBy)
-	}
-	if !s.CreatedAt.IsZero() {
-		create.SetCreatedAt(s.CreatedAt)
-	}
-	if !s.UpdatedAt.IsZero() {
-		create.SetUpdatedAt(s.UpdatedAt)
-	}
-
-	created, err := create.Save(ctx)
-	require.NoError(t, err, "create user subscription")
-
-	s.ID = created.ID
-	s.CreatedAt = created.CreatedAt
-	s.UpdatedAt = created.UpdatedAt
-	return s
 }
 
 func mustBindAccountToGroup(t *testing.T, client *dbent.Client, accountID, groupID int64, priority int) {

@@ -11,26 +11,20 @@ const {
   getDashboardApiKeysUsage,
   getDashboardApiKeysPendingUsage,
   getAvailableGroups,
-  getUserGroupRates,
   updateKey,
   showError,
   showSuccess,
   copyToClipboard,
-  isCurrentStep,
-  nextStep,
 } = vi.hoisted(() => ({
   listKeys: vi.fn(),
   getPublicSettings: vi.fn(),
   getDashboardApiKeysUsage: vi.fn(),
   getDashboardApiKeysPendingUsage: vi.fn(),
   getAvailableGroups: vi.fn(),
-  getUserGroupRates: vi.fn(),
   updateKey: vi.fn(),
   showError: vi.fn(),
   showSuccess: vi.fn(),
   copyToClipboard: vi.fn(),
-  isCurrentStep: vi.fn(),
-  nextStep: vi.fn(),
 }))
 
 const messages: Record<string, string> = {
@@ -52,12 +46,10 @@ const messages: Record<string, string> = {
   'keys.currentConcurrency': 'Current Concurrency',
   'keys.lastUsedAt': 'Last Used',
   'keys.lastUsedIP': 'Last Used IP',
-  'keys.rateLimitColumn': 'Rate Limit',
   'keys.searchPlaceholder': 'Search name or key...',
   'keys.status.active': 'Active',
   'keys.status.expired': 'Expired',
   'keys.status.inactive': 'Inactive',
-  'keys.status.quota_exhausted': 'Quota exhausted',
   'keys.usage': 'Usage',
   'keys.today': 'Today',
   'keys.total': 'Last 30d',
@@ -73,6 +65,7 @@ vi.mock('@/api', () => ({
     update: updateKey,
     delete: vi.fn(),
     toggleStatus: vi.fn(),
+    getAvailableGroups,
   },
   authAPI: {
     getPublicSettings,
@@ -81,23 +74,12 @@ vi.mock('@/api', () => ({
     getDashboardApiKeysUsage,
     getDashboardApiKeysPendingUsage,
   },
-  userGroupsAPI: {
-    getAvailable: getAvailableGroups,
-    getUserGroupRates,
-  },
 }))
 
 vi.mock('@/core/stores/appStore', () => ({
   useAppStore: () => ({
     showError,
     showSuccess,
-  }),
-}))
-
-vi.mock('@/core/stores/onboardingStore', () => ({
-  useOnboardingStore: () => ({
-    isCurrentStep,
-    nextStep,
   }),
 }))
 
@@ -128,25 +110,11 @@ const createApiKey = (): ApiKey => ({
   ip_blacklist: [],
   last_used_at: null,
   last_used_ip: null,
-  quota: 0,
-  quota_used: 0,
   expires_at: null,
   created_at: '2026-06-27T00:00:00Z',
   updated_at: '2026-06-27T00:00:00Z',
   concurrency_limit: 0,
   current_concurrency: 3,
-  rate_limit_5h: 0,
-  rate_limit_1d: 0,
-  rate_limit_7d: 0,
-  usage_5h: 0,
-  usage_1d: 0,
-  usage_7d: 0,
-  window_5h_start: null,
-  window_1d_start: null,
-  window_7d_start: null,
-  reset_5h_at: null,
-  reset_1d_at: null,
-  reset_7d_at: null,
 })
 
 const AppLayoutStub = {
@@ -280,7 +248,7 @@ const getButtonByText = (wrapper: VueWrapper, text: string) => {
   return button
 }
 
-describe('user KeysView column settings', () => {
+describe('API key column settings', () => {
   beforeEach(() => {
     localStorage.clear()
 
@@ -289,13 +257,10 @@ describe('user KeysView column settings', () => {
     getDashboardApiKeysUsage.mockReset()
     getDashboardApiKeysPendingUsage.mockReset()
     getAvailableGroups.mockReset()
-    getUserGroupRates.mockReset()
     updateKey.mockReset()
     showError.mockReset()
     showSuccess.mockReset()
     copyToClipboard.mockReset()
-    isCurrentStep.mockReset()
-    nextStep.mockReset()
 
     listKeys.mockResolvedValue({
       items: [createApiKey()],
@@ -311,9 +276,7 @@ describe('user KeysView column settings', () => {
       pending_usage_available: true,
     })
     getAvailableGroups.mockResolvedValue([])
-    getUserGroupRates.mockResolvedValue({})
     updateKey.mockResolvedValue(createApiKey())
-    isCurrentStep.mockReturnValue(false)
   })
 
   afterEach(() => {
@@ -334,7 +297,6 @@ describe('user KeysView column settings', () => {
       'created_at',
       'actions',
     ])
-    expect(visibleColumnKeys(wrapper)).not.toContain('rate_limit')
     expect(visibleColumnKeys(wrapper)).not.toContain('last_used_at')
     expect(visibleColumnKeys(wrapper)).not.toContain('last_used_ip')
     expect(visibleColumnKeys(wrapper)).not.toContain('id')
@@ -344,12 +306,12 @@ describe('user KeysView column settings', () => {
     const wrapper = await mountView()
 
     await wrapper.get('button[title="Column Settings"]').trigger('click')
-    await getButtonByText(wrapper, 'Rate Limit').trigger('click')
+    await getButtonByText(wrapper, 'Last Used').trigger('click')
     await nextTick()
 
-    expect(visibleColumnKeys(wrapper)).toContain('rate_limit')
+    expect(visibleColumnKeys(wrapper)).toContain('last_used_at')
     expect(localStorage.getItem('api-key-hidden-columns')).toBe(
-      JSON.stringify(['id', 'last_used_at', 'last_used_ip'])
+      JSON.stringify(['id', 'last_used_ip'])
     )
     expect(localStorage.getItem('api-key-column-settings-version')).toBe('3')
   })
@@ -395,7 +357,6 @@ describe('user KeysView column settings', () => {
       'key',
       'current_concurrency',
       'usage',
-      'rate_limit',
       'expires_at',
       'status',
       'last_used_at',
@@ -417,7 +378,6 @@ describe('user KeysView column settings', () => {
     expect(columnMenuText).toContain('API Key')
     expect(columnMenuText).toContain('ID')
     expect(columnMenuText).toContain('Current Concurrency')
-    expect(columnMenuText).toContain('Rate Limit')
     expect(columnMenuText).toContain('Last Used IP')
     expect(columnMenuText).not.toContain('Name')
     expect(columnMenuText).not.toContain('Actions')

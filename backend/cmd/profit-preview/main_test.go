@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParsePreviewInputsIgnoresNullAndInvalidUserOverrides(t *testing.T) {
+func TestParsePreviewInputsIgnoresLegacyCommercialFields(t *testing.T) {
 	raw := []byte(`{
 		"groups": [{
 			"group": {
@@ -37,12 +37,11 @@ func TestParsePreviewInputsIgnoresNullAndInvalidUserOverrides(t *testing.T) {
 	inputs, err := parsePreviewInputs(raw, true)
 	require.NoError(t, err)
 	require.Len(t, inputs, 1)
-	require.Equal(t, map[int64]float64{41: 0.4}, inputs[0].UserOverrides)
 	require.True(t, inputs[0].AssumeEnabled)
 
 	report := service.PreviewProfitAdmission(inputs, time.Date(2026, 1, 15, 8, 30, 0, 0, time.UTC))[0]
-	require.InDelta(t, 0.4, report.MinEffectiveD, 1e-12)
-	require.InDelta(t, 0.36, report.ThresholdMinD, 1e-12)
+	require.InDelta(t, 0.5, report.MinEffectiveD, 1e-12)
+	require.InDelta(t, 0.45, report.ThresholdMinD, 1e-12)
 }
 
 func TestParsePreviewInputsRejectsEmptyGroups(t *testing.T) {

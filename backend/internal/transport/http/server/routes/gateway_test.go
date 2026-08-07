@@ -41,8 +41,6 @@ func newGatewayRoutesTestRouterWithConfig(cfg *config.Config, platform ...string
 			OpenAIGateway: &handler.OpenAIGatewayHandler{},
 			AsyncImage:    handler.NewAsyncImageHandler(nil, nil),
 			APIKey:        handler.NewAPIKeyHandler(nil),
-			Announcement:  handler.NewAnnouncementHandler(nil),
-			BatchImage:    handler.NewBatchImageHandler(nil, nil, nil),
 		},
 		servermiddleware.APIKeyAuthMiddleware(func(c *gin.Context) {
 			groupID := int64(1)
@@ -63,7 +61,6 @@ func newGatewayRoutesTestRouterWithConfig(cfg *config.Config, platform ...string
 		nil,
 		nil,
 		nil,
-		nil,
 		cfg,
 	)
 
@@ -74,16 +71,6 @@ func TestGatewayRoutesAPIKeyGroupsPathIsRegistered(t *testing.T) {
 	router := newGatewayRoutesTestRouter()
 
 	req := httptest.NewRequest(http.MethodGet, "/v1/api-key-groups", nil)
-	w := httptest.NewRecorder()
-
-	router.ServeHTTP(w, req)
-	require.NotEqual(t, http.StatusNotFound, w.Code)
-}
-
-func TestGatewayRoutesAnnouncementsPathIsRegistered(t *testing.T) {
-	router := newGatewayRoutesTestRouter()
-
-	req := httptest.NewRequest(http.MethodGet, "/v1/announcements", nil)
 	w := httptest.NewRecorder()
 
 	router.ServeHTTP(w, req)

@@ -8,9 +8,7 @@ import type { ApiResponse } from '@/types'
 import { getLocale } from '@/core/i18n'
 import {
   ADMIN_UI_REQUEST_HEADER,
-  USER_UI_REQUEST_HEADER,
   shouldMarkAdminUIRequest,
-  shouldMarkUserUIRequest,
 } from './adminUIRequest'
 import { getAPIBaseURL } from './url'
 import {
@@ -90,9 +88,6 @@ apiClient.interceptors.request.use(
       const requestURL = String(config.url || '')
       if (shouldMarkAdminUIRequest(requestURL)) {
         config.headers[ADMIN_UI_REQUEST_HEADER] = '1'
-      }
-      if (shouldMarkUserUIRequest(requestURL)) {
-        config.headers[USER_UI_REQUEST_HEADER] = '1'
       }
     }
 
@@ -190,8 +185,7 @@ apiClient.interceptors.response.use(
       // 401: Try to refresh via the HttpOnly cookie
       // This handles TOKEN_EXPIRED, INVALID_TOKEN, TOKEN_REVOKED, etc.
       if (status === 401 && !originalRequest._retry) {
-        const isAuthEndpoint =
-          url.includes('/auth/login') || url.includes('/auth/register') || url.includes('/auth/refresh')
+        const isAuthEndpoint = url.includes('/auth/login') || url.includes('/auth/refresh')
 
         // If this is not an auth endpoint, try to refresh via the cookie.
         if (!isAuthEndpoint) {

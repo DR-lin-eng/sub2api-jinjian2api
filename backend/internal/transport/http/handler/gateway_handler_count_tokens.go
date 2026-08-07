@@ -22,7 +22,7 @@ import (
 
 // CountTokens handles token counting endpoint
 // POST /v1/messages/count_tokens
-// 特点：校验订阅/余额；分级准入开启时执行用户及账号准入，但不记录使用量
+// 特点：不校验下游订阅/余额；分级准入开启时执行调用方及账号准入，但不记录使用量
 func (h *GatewayHandler) CountTokens(c *gin.Context) {
 	// 从context获取apiKey和user（ApiKeyAuth中间件已设置）
 	apiKey, ok := middleware2.GetAPIKeyFromContext(c)
@@ -105,19 +105,6 @@ func (h *GatewayHandler) CountTokens(c *gin.Context) {
 		if userReleaseFunc != nil {
 			defer userReleaseFunc()
 		}
-	}
-
-	// 获取订阅信息（可能为nil）
-	subscription, _ := middleware2.GetSubscriptionFromContext(c)
-
-	// 校验 billing eligibility（订阅/余额）；用户槽已在上方取得。
-	if err := h.billingCacheService.CheckBillingEligibility(c.Request.Context(), apiKey.User, apiKey, apiKey.Group, subscription, service.QuotaPlatform(c.Request.Context(), apiKey)); err != nil {
-		status, code, message, retryAfter := billingErrorDetails(err)
-		if retryAfter > 0 {
-			c.Header("Retry-After", strconv.Itoa(retryAfter))
-		}
-		h.errorResponse(c, status, code, message)
-		return
 	}
 
 	// 计算粘性会话 hash

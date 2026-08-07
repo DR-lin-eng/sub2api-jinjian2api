@@ -118,22 +118,6 @@
           </div>
         </div>
 
-        <!-- User Scope -->
-        <div class="mt-3">
-          <label
-            class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
-          >
-            {{ t("admin.settings.openaiFastPolicy.userIds") }}
-          </label>
-          <p class="mb-2 text-xs text-gray-400 dark:text-gray-500">
-            {{ t("admin.settings.openaiFastPolicy.userIdsHint") }}
-          </p>
-          <OpenAIFastPolicyUserSelector
-            :model-value="rule.user_ids || []"
-            @update:model-value="rule.user_ids = $event"
-          />
-        </div>
-
         <!-- Error Message (only when action=block) -->
         <div v-if="rule.action === 'block'" class="mt-3">
           <label
@@ -302,7 +286,6 @@
 
 <script setup lang="ts">
 import Select from '@/common/widgets/forms/Select.vue'
-import OpenAIFastPolicyUserSelector from '@/features/admin-settings/presentation/widgets/OpenAIFastPolicyUserSelector.vue'
 import { useSettingsPageContext } from '@/features/admin-settings/presentation/composables/settingsPageContext'
 
 const {

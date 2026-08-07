@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
-	"github.com/Wei-Shaw/sub2api/internal/platform/config"
 	"github.com/Wei-Shaw/sub2api/internal/shared/ctxkey"
 	"github.com/Wei-Shaw/sub2api/internal/shared/pagination"
 	middleware "github.com/Wei-Shaw/sub2api/internal/transport/http/server/middleware"
@@ -92,7 +91,7 @@ func (f *fakeGroupRepo) DeleteCascade(context.Context, int64) ([]int64, error) {
 func (f *fakeGroupRepo) List(context.Context, pagination.PaginationParams) ([]service.Group, *pagination.PaginationResult, error) {
 	return nil, nil, nil
 }
-func (f *fakeGroupRepo) ListWithFilters(context.Context, pagination.PaginationParams, string, string, string, *bool) ([]service.Group, *pagination.PaginationResult, error) {
+func (f *fakeGroupRepo) ListWithFilters(context.Context, pagination.PaginationParams, string, string, string) ([]service.Group, *pagination.PaginationResult, error) {
 	return nil, nil, nil
 }
 func (f *fakeGroupRepo) ListActive(context.Context) ([]service.Group, error) { return nil, nil }
@@ -166,17 +165,12 @@ func newTestGatewayHandler(t *testing.T, group *service.Group, accounts []*servi
 		nil, // accountRepo (not used: scheduler snapshot hit)
 		&fakeGroupRepo{group: group},
 		nil, // usageLogRepo
-		nil, // usageBillingRepo
-		nil, // userRepo
-		nil, // userSubRepo
-		nil, // userGroupRateRepo
 		nil, // cache (disable sticky)
 		nil, // cfg
 		schedulerSnapshot,
 		nil, // concurrencyService (disable load-aware; tryAcquire always acquired)
 		nil, // billingService
 		nil, // rateLimitService
-		nil, // billingCacheService
 		nil, // identityService
 		nil, // httpUpstream
 		nil, // deferredService
@@ -189,30 +183,20 @@ func newTestGatewayHandler(t *testing.T, group *service.Group, accounts []*servi
 		nil, // channelService
 		nil, // resolver
 		nil, // compositeResolver
-		nil, // balanceNotifyService
-		nil, // userPlatformQuotaRepo
 	)
-
-	// RunModeSimple：跳过计费检查，避免引入 repo/cache 依赖。
-	cfg := &config.Config{RunMode: config.RunModeSimple}
-	billingCacheSvc := service.NewBillingCacheService(nil, nil, nil, nil, nil, nil, cfg, nil)
 
 	concurrencySvc := service.NewConcurrencyService(&fakeConcurrencyCache{})
 	concurrencyHelper := NewConcurrencyHelper(concurrencySvc, SSEPingFormatClaude, 0)
 
 	h := &GatewayHandler{
-		gatewayService:      gwSvc,
-		billingCacheService: billingCacheSvc,
-		concurrencyHelper:   concurrencyHelper,
+		gatewayService:    gwSvc,
+		concurrencyHelper: concurrencyHelper,
 		// 这些字段对本测试不敏感，保持较小即可
 		maxAccountSwitches:       1,
 		maxAccountSwitchesGemini: 1,
 	}
 
-	cleanup := func() {
-		billingCacheSvc.Stop()
-	}
-	return h, cleanup
+	return h, func() {}
 }
 
 func TestGatewayHandlerMessages_InterceptWarmup_AntigravityAccount_MixedSchedulingV1(t *testing.T) {
@@ -271,7 +255,6 @@ func TestGatewayHandlerMessages_InterceptWarmup_AntigravityAccount_MixedScheduli
 		User: &service.User{
 			ID:          4001,
 			Concurrency: 10,
-			Balance:     100,
 		},
 		Group: group,
 	}
@@ -361,7 +344,6 @@ func TestGatewayHandlerMessages_InterceptWarmup_AntigravityAccount_ForcePlatform
 		User: &service.User{
 			ID:          4002,
 			Concurrency: 10,
-			Balance:     100,
 		},
 		Group: group,
 	}

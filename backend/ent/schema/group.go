@@ -45,24 +45,6 @@ func (Group) Fields() []ent.Field {
 		field.Float("rate_multiplier").
 			SchemaType(map[string]string{dialect.Postgres: "decimal(10,4)"}).
 			Default(1.0),
-		// 高峰时段倍率（added by migration 158）
-		field.Bool("peak_rate_enabled").
-			Default(false).
-			Comment("是否启用高峰时段倍率"),
-		field.String("peak_start").
-			MaxLen(5).
-			Default("").
-			Comment("高峰开始时间 HH:MM（含），如 14:00；空表示未配置；不支持跨天"),
-		field.String("peak_end").
-			MaxLen(5).
-			Default("").
-			Comment("高峰结束时间 HH:MM（不含），必须大于 peak_start；不支持跨天，如 22:00-02:00"),
-		field.Float("peak_rate_multiplier").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(10,4)"}).
-			Default(1.0).
-			Comment("高峰时段叠加倍率，仅在 peak_rate_enabled 且处于 [peak_start, peak_end) 时乘入文本倍率"),
-		field.Bool("is_exclusive").
-			Default(false),
 		field.String("status").
 			MaxLen(20).
 			Default(domain.StatusActive),
@@ -73,27 +55,9 @@ func (Group) Fields() []ent.Field {
 			Immutable().
 			Comment("内部幂等恢复标识，不对 API 暴露"),
 
-		// Subscription-related fields (added by migration 003)
 		field.String("platform").
 			MaxLen(50).
 			Default(domain.PlatformAnthropic),
-		field.String("subscription_type").
-			MaxLen(20).
-			Default(domain.SubscriptionTypeStandard),
-		field.Float("daily_limit_usd").
-			Optional().
-			Nillable().
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}),
-		field.Float("weekly_limit_usd").
-			Optional().
-			Nillable().
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}),
-		field.Float("monthly_limit_usd").
-			Optional().
-			Nillable().
-			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}),
-		field.Int("default_validity_days").
-			Default(30),
 
 		// 图片生成计费配置（antigravity 和 gemini 平台使用）
 		field.Bool("allow_image_generation").
@@ -102,9 +66,6 @@ func (Group) Fields() []ent.Field {
 		field.Bool("openai_force_image_tool").
 			Default(false).
 			Comment("OpenAI Responses 是否强制注入 image_generation 并改由同组 Images API 账号执行"),
-		field.Bool("allow_batch_image_generation").
-			Default(false).
-			Comment("是否允许该分组使用批量图片生成能力"),
 		field.Bool("image_rate_independent").
 			Default(false).
 			Comment("图片生成是否使用独立倍率；false 表示共享分组有效倍率"),
@@ -124,14 +85,6 @@ func (Group) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}),
-		field.Float("batch_image_discount_multiplier").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(10,4)"}).
-			Default(0.5).
-			Comment("批量图片生成折扣倍率，最终单价会乘以该值；0 表示免费"),
-		field.Float("batch_image_hold_multiplier").
-			SchemaType(map[string]string{dialect.Postgres: "decimal(10,4)"}).
-			Default(0.6).
-			Comment("批量图片生成冻结价格比例，按普通生图原价乘以该比例冻结，结算后释放差额"),
 		field.Bool("video_rate_independent").
 			Default(false).
 			Comment("视频生成是否使用独立倍率；false 表示共享分组有效倍率"),
@@ -255,15 +208,10 @@ func (Group) Fields() []ent.Field {
 func (Group) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("api_keys", APIKey.Type),
-		edge.To("redeem_codes", RedeemCode.Type),
-		edge.To("subscriptions", UserSubscription.Type),
 		edge.To("usage_logs", UsageLog.Type),
 		edge.From("accounts", Account.Type).
 			Ref("groups").
 			Through("account_groups", AccountGroup.Type),
-		edge.From("allowed_users", User.Type).
-			Ref("allowed_groups").
-			Through("user_allowed_groups", UserAllowedGroup.Type),
 		// 注意：fallback_group_id 直接作为字段使用，不定义 edge
 		// 这样允许多个分组指向同一个降级分组（M2O 关系）
 	}
@@ -274,8 +222,6 @@ func (Group) Indexes() []ent.Index {
 		// name 字段已在 Fields() 中声明 Unique()，无需重复索引
 		index.Fields("status"),
 		index.Fields("platform"),
-		index.Fields("subscription_type"),
-		index.Fields("is_exclusive"),
 		index.Fields("deleted_at"),
 		index.Fields("sort_order"),
 		index.Fields("duplicate_operation_id").

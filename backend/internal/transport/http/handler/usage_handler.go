@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -49,10 +48,9 @@ type userGroupStat struct {
 
 // UsageHandler handles usage-related requests
 type UsageHandler struct {
-	usageService   *service.UsageService
-	apiKeyService  *service.APIKeyService
-	opsService     *service.OpsService
-	settingService *service.SettingService
+	usageService  *service.UsageService
+	apiKeyService *service.APIKeyService
+	opsService    *service.OpsService
 }
 
 // NewUsageHandler creates a new UsageHandler
@@ -60,13 +58,11 @@ func NewUsageHandler(
 	usageService *service.UsageService,
 	apiKeyService *service.APIKeyService,
 	opsService *service.OpsService,
-	settingService *service.SettingService,
 ) *UsageHandler {
 	return &UsageHandler{
-		usageService:   usageService,
-		apiKeyService:  apiKeyService,
-		opsService:     opsService,
-		settingService: settingService,
+		usageService:  usageService,
+		apiKeyService: apiKeyService,
+		opsService:    opsService,
 	}
 }
 
@@ -127,17 +123,6 @@ func (h *UsageHandler) parseUserUsageFilters(c *gin.Context, requireRange bool) 
 			return nil, false
 		}
 		stream = &val
-	}
-
-	var billingType *int8
-	if billingTypeStr := strings.TrimSpace(c.Query("billing_type")); billingTypeStr != "" {
-		val, err := strconv.ParseInt(billingTypeStr, 10, 8)
-		if err != nil {
-			response.BadRequest(c, "Invalid billing_type")
-			return nil, false
-		}
-		bt := int8(val)
-		billingType = &bt
 	}
 
 	billingMode := strings.TrimSpace(c.Query("billing_mode"))
@@ -209,7 +194,6 @@ func (h *UsageHandler) parseUserUsageFilters(c *gin.Context, requireRange bool) 
 			ModelFilterSource: usagestats.ModelSourceRequested,
 			RequestType:       requestType,
 			Stream:            stream,
-			BillingType:       billingType,
 			BillingMode:       billingMode,
 			StartTime:         startPtr,
 			EndTime:           endPtr,
@@ -264,11 +248,6 @@ func (h *UsageHandler) ListErrors(c *gin.Context) {
 		return
 	}
 
-	// Visibility switch (fail-closed). Defense-in-depth: frontend also hides the tab.
-	if h.settingService == nil || !h.settingService.IsUserErrorViewAllowed(c.Request.Context()) {
-		response.Forbidden(c, "Error requests view is disabled")
-		return
-	}
 	if h.opsService == nil {
 		response.Error(c, http.StatusServiceUnavailable, "Ops service not available")
 		return
@@ -350,10 +329,6 @@ func (h *UsageHandler) GetErrorDetail(c *gin.Context) {
 		response.Unauthorized(c, "User not authenticated")
 		return
 	}
-	if h.settingService == nil || !h.settingService.IsUserErrorViewAllowed(c.Request.Context()) {
-		response.Forbidden(c, "Error requests view is disabled")
-		return
-	}
 	if h.opsService == nil {
 		response.Error(c, http.StatusServiceUnavailable, "Ops service not available")
 		return
@@ -379,11 +354,6 @@ func (h *UsageHandler) GetByID(c *gin.Context) {
 		response.Unauthorized(c, "User not authenticated")
 		return
 	}
-	if h.settingService == nil || !h.settingService.IsUserUsageDetailViewAllowed(c.Request.Context()) {
-		response.Forbidden(c, "Usage detail view is disabled")
-		return
-	}
-
 	usageID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, "Invalid usage ID")
@@ -446,24 +416,6 @@ func apiKeyDailyUsageRange(days int, userTZ string) (time.Time, time.Time) {
 	startTime := timezone.StartOfDayInUserLocation(now.AddDate(0, 0, -(days-1)), userTZ)
 	endTime := timezone.StartOfDayInUserLocation(now.AddDate(0, 0, 1), userTZ)
 	return startTime, endTime
-}
-
-// DashboardStats handles getting user dashboard statistics
-// GET /api/v1/usage/dashboard/stats
-func (h *UsageHandler) DashboardStats(c *gin.Context) {
-	subject, ok := middleware2.GetAuthSubjectFromContext(c)
-	if !ok {
-		response.Unauthorized(c, "User not authenticated")
-		return
-	}
-
-	stats, err := h.usageService.GetUserDashboardStats(c.Request.Context(), subject.UserID)
-	if err != nil {
-		response.ErrorFrom(c, err)
-		return
-	}
-
-	response.Success(c, stats)
 }
 
 // DashboardTrend handles getting user usage trend data
@@ -646,10 +598,6 @@ type BatchAPIKeysUsageRequest struct {
 	Timezone  string  `json:"timezone"`
 }
 
-type batchAPIKeysPendingUsageRequest struct {
-	APIKeyIDs []int64 `json:"api_key_ids" binding:"required"`
-}
-
 const maxDashboardAPIKeyUsageRangeDays = 366
 
 func dashboardAPIKeyUsageRange(req BatchAPIKeysUsageRequest) (time.Time, time.Time, error) {
@@ -736,77 +684,15 @@ func (h *UsageHandler) DashboardAPIKeysUsage(c *gin.Context) {
 	if stats == nil {
 		stats = make(map[int64]*usagestats.BatchAPIKeyUsageStats, len(validAPIKeyIDs))
 	}
-	pendingCosts, pendingAvailable, pendingErr := h.apiKeyService.GetPendingUsageCosts(c.Request.Context(), validAPIKeyIDs)
-	if pendingErr != nil {
-		slog.Warn("read pending API key usage failed", "user_id", subject.UserID, "api_key_count", len(validAPIKeyIDs), "error", pendingErr)
-	}
 	for _, apiKeyID := range validAPIKeyIDs {
 		stat := stats[apiKeyID]
 		if stat == nil {
 			stat = &usagestats.BatchAPIKeyUsageStats{APIKeyID: apiKeyID}
 			stats[apiKeyID] = stat
 		}
-		if pendingAvailable {
-			stat.PendingActualCost = pendingCosts[apiKeyID]
-		}
 	}
 
-	response.Success(c, gin.H{
-		"stats":                   stats,
-		"pending_usage_available": pendingAvailable,
-	})
-}
-
-// DashboardAPIKeysPendingUsage returns only the Redis pending-cost overlay.
-// POST /api/v1/usage/dashboard/api-keys-pending-usage
-func (h *UsageHandler) DashboardAPIKeysPendingUsage(c *gin.Context) {
-	subject, ok := middleware2.GetAuthSubjectFromContext(c)
-	if !ok {
-		response.Unauthorized(c, "User not authenticated")
-		return
-	}
-
-	var req batchAPIKeysPendingUsageRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "Invalid request: "+err.Error())
-		return
-	}
-	if len(req.APIKeyIDs) == 0 {
-		response.Success(c, gin.H{
-			"pending_actual_costs":    map[string]any{},
-			"pending_usage_available": true,
-		})
-		return
-	}
-	if len(req.APIKeyIDs) > 100 {
-		response.BadRequest(c, "Too many API key IDs (maximum 100 allowed)")
-		return
-	}
-
-	validAPIKeyIDs, err := h.apiKeyService.VerifyOwnership(c.Request.Context(), subject.UserID, req.APIKeyIDs)
-	if err != nil {
-		response.ErrorFrom(c, err)
-		return
-	}
-	if len(validAPIKeyIDs) == 0 {
-		response.Success(c, gin.H{
-			"pending_actual_costs":    map[string]any{},
-			"pending_usage_available": true,
-		})
-		return
-	}
-
-	pendingCosts, pendingAvailable, pendingErr := h.apiKeyService.GetPendingUsageCosts(c.Request.Context(), validAPIKeyIDs)
-	if pendingErr != nil {
-		slog.Warn("read pending API key usage failed", "user_id", subject.UserID, "api_key_count", len(validAPIKeyIDs), "error", pendingErr)
-	}
-	if pendingCosts == nil {
-		pendingCosts = make(map[int64]float64)
-	}
-	response.Success(c, gin.H{
-		"pending_actual_costs":    pendingCosts,
-		"pending_usage_available": pendingAvailable,
-	})
+	response.Success(c, gin.H{"stats": stats})
 }
 
 // GetMyAPIKeyDailyUsage handles getting daily usage details for the current user's API key.

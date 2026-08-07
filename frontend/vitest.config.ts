@@ -10,6 +10,11 @@ export default defineConfig({
       'vue-i18n': 'vue-i18n/dist/vue-i18n.runtime.esm-bundler.js'
     }
   },
+  server: {
+    fs: {
+      allow: [resolve(__dirname, '..')]
+    }
+  },
   test: {
     globals: true,
     environment: 'jsdom',

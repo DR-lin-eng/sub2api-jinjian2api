@@ -82,18 +82,12 @@ func (h *OpenAIGatewayHandler) ensureResponsesDependencies(c *gin.Context, reqLo
 }
 
 func (h *OpenAIGatewayHandler) missingResponsesDependencies() []string {
-	missing := make([]string, 0, 5)
+	missing := make([]string, 0, 3)
 	if h == nil {
 		return append(missing, "handler")
 	}
 	if h.gatewayService == nil {
 		missing = append(missing, "gatewayService")
-	}
-	if h.billingCacheService == nil {
-		missing = append(missing, "billingCacheService")
-	}
-	if h.apiKeyService == nil {
-		missing = append(missing, "apiKeyService")
 	}
 	if h.concurrencyHelper == nil || h.concurrencyHelper.concurrencyService == nil {
 		missing = append(missing, "concurrencyHelper")

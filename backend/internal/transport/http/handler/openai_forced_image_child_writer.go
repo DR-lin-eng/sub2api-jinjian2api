@@ -57,20 +57,17 @@ type openAIForcedImageChildResult struct {
 }
 
 type openAIForcedImageRunInput struct {
-	apiKey        *service.APIKey
-	subscription  *service.UserSubscription
-	plan          *service.OpenAIResponsesImagePlan
-	requestModel  string
-	stream        bool
-	sessionHash   string
-	requestHash   string
-	reqLog        *zap.Logger
-	requestCtx    context.Context
-	userAgent     string
-	clientIP      string
-	sessionID     string
-	inbound       string
-	quotaPlatform string
+	apiKey       *service.APIKey
+	plan         *service.OpenAIResponsesImagePlan
+	requestModel string
+	stream       bool
+	sessionHash  string
+	reqLog       *zap.Logger
+	requestCtx   context.Context
+	userAgent    string
+	clientIP     string
+	sessionID    string
+	inbound      string
 }
 
 type openAIForcedImageChildWriter struct {

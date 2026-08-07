@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/Wei-Shaw/sub2api/internal/platform/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,11 +26,13 @@ func TestOpenAIGatewayServiceRecordUsage_ResetsOpenAI403CounterForZeroUsage(t *t
 	rateLimitSvc := NewRateLimitService(nil, nil, nil, nil, nil)
 	rateLimitSvc.SetOpenAI403CounterCache(counter)
 
-	usageRepo := &openAIRecordUsageLogRepoStub{inserted: true}
-	billingRepo := &openAIRecordUsageBillingRepoStub{result: &UsageBillingApplyResult{Applied: true}}
-	userRepo := &openAIRecordUsageUserRepoStub{}
-	subRepo := &openAIRecordUsageSubRepoStub{}
-	svc := newOpenAIRecordUsageServiceWithBillingRepoForTest(usageRepo, billingRepo, userRepo, subRepo, nil)
+	cfg := &config.Config{}
+	cfg.Default.RateMultiplier = 1
+	usageRepo := &informationalUsageRepo{}
+	svc := NewOpenAIGatewayService(
+		nil, usageRepo, nil, cfg, nil, nil, NewBillingService(cfg, nil), nil,
+		nil, nil, nil, nil, nil, nil, nil,
+	)
 	svc.rateLimitService = rateLimitSvc
 
 	err := svc.RecordUsage(context.Background(), &OpenAIRecordUsageInput{
@@ -44,5 +47,5 @@ func TestOpenAIGatewayServiceRecordUsage_ResetsOpenAI403CounterForZeroUsage(t *t
 
 	require.NoError(t, err)
 	require.Equal(t, []int64{777}, counter.resetCalls)
-	require.Equal(t, 1, usageRepo.calls)
+	require.NotNil(t, usageRepo.created)
 }

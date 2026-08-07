@@ -67,7 +67,7 @@ func (r *panelSettingHandlerRepo) Delete(_ context.Context, key string) error {
 func newPanelSettingHandlerTest() (*SettingHandler, *panelSettingHandlerRepo) {
 	repo := &panelSettingHandlerRepo{}
 	svc := service.NewSettingService(repo, &config.Config{})
-	return NewSettingHandler(svc, nil, nil, nil, nil, nil, nil), repo
+	return NewSettingHandler(svc, nil, nil, nil, nil, nil), repo
 }
 
 func TestGetPanelRateLimitSettingsMissingDefaultsDisabled(t *testing.T) {

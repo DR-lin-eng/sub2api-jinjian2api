@@ -11,6 +11,13 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
+func cacheStatusValue(hit bool) string {
+	if hit {
+		return "hit"
+	}
+	return "miss"
+}
+
 type snapshotCacheEntry struct {
 	ETag      string
 	Payload   any

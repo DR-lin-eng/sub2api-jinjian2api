@@ -1,7 +1,6 @@
 import { computed, reactive, ref, watch, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAppStore } from "@/core/stores/appStore";
-import { useOnboardingStore } from "@/core/stores/onboardingStore";
 import { createStableObjectKeyResolver } from "@/core/utils/stableObjectKey";
 import * as groupsAPI from "@/features/admin-groups/data/datasources/adminGroupsDatasource";
 import type { AdminGroup } from "@/types";
@@ -38,9 +37,7 @@ import {
   buildWebSearchFinalPricePreview,
   convertRoutingRulesToApiFormat,
   createCreateGroupFormState,
-  normalizeOptionalLimit,
   normalizeRateMultiplier,
-  resetDisabledBatchImagePricing,
   resetModelsListState,
 } from "./groupEditorFormSupport";
 import type { GroupEditorRuntime } from "./useGroupEditorRuntime";
@@ -58,7 +55,6 @@ export function useCreateGroupController({
 }: CreateGroupControllerOptions) {
   const { t } = useI18n();
   const appStore = useAppStore();
-  const onboardingStore = useOnboardingStore();
   const showCreateModal = ref(false);
   const createForm = reactive(createCreateGroupFormState());
   const modelsListState = reactive(createModelsListState());
@@ -108,7 +104,6 @@ export function useCreateGroupController({
         (group) =>
           group.platform === "anthropic" &&
           group.status === "active" &&
-          group.subscription_type !== "subscription" &&
           group.fallback_group_id_on_invalid_request === null,
       )
       .forEach((group) => options.push({ value: group.id, label: group.name }));
@@ -200,18 +195,10 @@ export function useCreateGroupController({
     createForm.description = "";
     createForm.platform = "anthropic";
     createForm.rate_multiplier = 1.0;
-    createForm.is_exclusive = false;
-    createForm.subscription_type = "standard";
-    createForm.daily_limit_usd = null;
-    createForm.weekly_limit_usd = null;
-    createForm.monthly_limit_usd = null;
     createForm.allow_image_generation = false;
     createForm.openai_force_image_tool = false;
-    createForm.allow_batch_image_generation = false;
     createForm.image_rate_independent = false;
     createForm.image_rate_multiplier = 1;
-    createForm.batch_image_discount_multiplier = 0.5;
-    createForm.batch_image_hold_multiplier = 0.6;
     createForm.image_price_1k = null;
     createForm.image_price_2k = null;
     createForm.image_price_4k = null;
@@ -221,10 +208,6 @@ export function useCreateGroupController({
     createForm.video_price_720p = null;
     createForm.video_price_1080p = null;
     createForm.web_search_price_per_call = null;
-    createForm.peak_rate_enabled = false;
-    createForm.peak_start = "";
-    createForm.peak_end = "";
-    createForm.peak_rate_multiplier = 1.0;
     createForm.profit_control_enabled = false;
     createForm.profit_min_margin_percent = 0;
     createForm.profit_safety_buffer_percent = 0;
@@ -288,9 +271,6 @@ export function useCreateGroupController({
         profit_safety_buffer: profitControlEnabled
           ? profitPercentToDecimal(profitSafetyBufferPercent)
           : 0,
-        daily_limit_usd: normalizeOptionalLimit(createForm.daily_limit_usd),
-        weekly_limit_usd: normalizeOptionalLimit(createForm.weekly_limit_usd),
-        monthly_limit_usd: normalizeOptionalLimit(createForm.monthly_limit_usd),
         model_routing: convertRoutingRulesToApiFormat(modelRoutingRules.value),
         models_list_config: buildModelsListConfig(modelsListState),
         supported_model_scopes: normalizeSupportedModelScopesForPlatform(
@@ -306,18 +286,8 @@ export function useCreateGroupController({
         ),
       };
       const emptyToNull = (value: any) => (value === "" ? null : value);
-      requestData.daily_limit_usd = emptyToNull(requestData.daily_limit_usd);
-      requestData.weekly_limit_usd = emptyToNull(requestData.weekly_limit_usd);
-      requestData.monthly_limit_usd = emptyToNull(requestData.monthly_limit_usd);
       requestData.image_rate_multiplier = normalizeRateMultiplier(
         requestData.image_rate_multiplier,
-      );
-      resetDisabledBatchImagePricing(requestData);
-      requestData.batch_image_discount_multiplier = normalizeRateMultiplier(
-        requestData.batch_image_discount_multiplier,
-      );
-      requestData.batch_image_hold_multiplier = normalizeRateMultiplier(
-        requestData.batch_image_hold_multiplier,
       );
       requestData.video_rate_multiplier = normalizeRateMultiplier(
         requestData.video_rate_multiplier,
@@ -333,19 +303,10 @@ export function useCreateGroupController({
       requestData.web_search_price_per_call = emptyToNull(
         requestData.web_search_price_per_call,
       );
-      requestData.peak_rate_enabled = createForm.peak_rate_enabled;
-      requestData.peak_start = createForm.peak_start;
-      requestData.peak_end = createForm.peak_end;
-      requestData.peak_rate_multiplier = normalizeRateMultiplier(
-        createForm.peak_rate_multiplier,
-      );
       await groupsAPI.create(requestData);
       appStore.showSuccess(t("admin.groups.groupCreated"));
       closeCreateModal();
       loadGroups();
-      if (onboardingStore.isCurrentStep('[data-tour="group-form-submit"]')) {
-        onboardingStore.nextStep(500);
-      }
     } catch (error: any) {
       appStore.showError(
         error.response?.data?.detail || t("admin.groups.failedToCreate"),
@@ -356,20 +317,6 @@ export function useCreateGroupController({
     }
   };
 
-  watch(
-    () => createForm.subscription_type,
-    (newValue) => {
-      if (newValue === "subscription") {
-        createForm.is_exclusive = true;
-        createForm.fallback_group_id_on_invalid_request = null;
-      } else {
-        createForm.peak_rate_enabled = false;
-        createForm.peak_start = "";
-        createForm.peak_end = "";
-        createForm.peak_rate_multiplier = 1.0;
-      }
-    },
-  );
   watch(
     () => createForm.platform,
     (newValue) => {
@@ -403,7 +350,6 @@ export function useCreateGroupController({
         createForm.profit_min_margin_percent = 0;
         createForm.profit_safety_buffer_percent = 0;
       }
-      resetDisabledBatchImagePricing(createForm);
       resetModelsListState(modelsListState);
       void loadModelsListCandidates();
     },
@@ -412,7 +358,6 @@ export function useCreateGroupController({
     () => createForm.allow_image_generation,
     (enabled) => {
       if (!enabled) createForm.openai_force_image_tool = false;
-      resetDisabledBatchImagePricing(createForm);
     },
   );
   watch(
@@ -421,11 +366,6 @@ export function useCreateGroupController({
       if (enabled) createForm.allow_image_generation = true;
     },
   );
-  watch(
-    () => createForm.allow_batch_image_generation,
-    () => resetDisabledBatchImagePricing(createForm),
-  );
-
   const dialogContext: GroupEditorDialogContext = {
     show: showCreateModal,
     form: createForm,
@@ -433,7 +373,6 @@ export function useCreateGroupController({
     submit: handleCreateGroup,
     submitting: runtime.submitting,
     platformOptions: runtime.platformOptions,
-    subscriptionTypeOptions: runtime.subscriptionTypeOptions,
     copyAccountsOptions,
     fallbackOptions,
     invalidRequestFallbackOptions,

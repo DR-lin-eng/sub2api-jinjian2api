@@ -34,18 +34,12 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 	}
 	mergeOmittedUpdateSettingsRequest(&req, previousSettings, sentFields)
 
-	previousAuthSourceDefaults, err := h.settingService.GetAuthSourceDefaultSettings(c.Request.Context())
-	if err != nil {
-		response.ErrorFrom(c, err)
-		return
-	}
-
-	prepared, ok := h.prepareSettingsUpdate(c, &req, previousSettings, previousAuthSourceDefaults)
+	prepared, ok := h.prepareSettingsUpdate(c, &req, previousSettings)
 	if !ok {
 		return
 	}
 	if !h.persistSettingsUpdate(c, prepared, omitted) {
 		return
 	}
-	h.writeSettingsUpdateResponse(c, previousSettings, previousAuthSourceDefaults, submittedReq)
+	h.writeSettingsUpdateResponse(c, previousSettings, submittedReq)
 }

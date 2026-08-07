@@ -29,15 +29,10 @@ export const useAppStore = defineStore('app', () => {
   const siteName = ref<string>('Sub2API')
   const siteLogo = ref<string>('')
   const siteVersion = ref<string>('')
-  const contactInfo = ref<string>('')
   const apiBaseUrl = ref<string>('')
   const docUrl = ref<string>('')
   const cachedPublicSettings = ref<PublicSettings | null>(null)
-  // App-level primitive indicators are owned here so common layout widgets do
-  // not import a feature's private store just to render a badge.
-  const supportInboxHasUnread = ref(false)
-  const supportUserHasUnread = ref(false)
-  let publicSettingsRequest: Promise<PublicSettings | null> | null = null
+	let publicSettingsRequest: Promise<PublicSettings | null> | null = null
 
   // Version cache state
   const versionLoaded = ref<boolean>(false)
@@ -53,8 +48,7 @@ export const useAppStore = defineStore('app', () => {
 
   // ==================== Computed ====================
 
-  const hasActiveToasts = computed(() => toasts.value.length > 0)
-  const backendModeEnabled = computed(() => cachedPublicSettings.value?.backend_mode_enabled ?? false)
+	const hasActiveToasts = computed(() => toasts.value.length > 0)
 
   const loadingCount = ref<number>(0)
 
@@ -236,22 +230,7 @@ export const useAppStore = defineStore('app', () => {
     loading.value = false
     loadingCount.value = 0
     toasts.value = []
-    supportInboxHasUnread.value = false
-    supportUserHasUnread.value = false
-  }
-
-  function setSupportInboxUnread(value: boolean): void {
-    supportInboxHasUnread.value = value
-  }
-
-  function setSupportUserUnread(value: boolean): void {
-    supportUserHasUnread.value = value
-  }
-
-  function resetSupportUnread(): void {
-    supportInboxHasUnread.value = false
-    supportUserHasUnread.value = false
-  }
+	}
 
   // ==================== Version Management ====================
 
@@ -316,7 +295,6 @@ export const useAppStore = defineStore('app', () => {
     siteName.value = config.site_name || 'Sub2API'
     siteLogo.value = config.site_logo || ''
     siteVersion.value = config.version || ''
-    contactInfo.value = config.contact_info || ''
     apiBaseUrl.value = config.api_base_url || ''
     docUrl.value = config.doc_url || ''
     publicSettingsLoaded.value = true
@@ -344,63 +322,21 @@ export const useAppStore = defineStore('app', () => {
       if (cachedPublicSettings.value) {
         return Promise.resolve({ ...cachedPublicSettings.value })
       }
-      return Promise.resolve({
-        registration_enabled: false,
-        email_verify_enabled: false,
-        force_email_on_third_party_signup: false,
-        registration_email_suffix_whitelist: [],
-        promo_code_enabled: true,
-        password_reset_enabled: false,
-        invitation_code_enabled: false,
-        turnstile_enabled: false,
-        turnstile_site_key: '',
-        recaptcha_enabled: false,
-        recaptcha_site_key: '',
-        cap_enabled: false,
-        cap_api_endpoint: '',
-        tencent_captcha_enabled: false,
-        tencent_captcha_app_id: '',
-        site_name: siteName.value,
+		return Promise.resolve({
+			totp_enabled: false,
+			passkey_enabled: false,
+				site_name: siteName.value,
         site_logo: siteLogo.value,
-        site_subtitle: '',
         api_base_url: apiBaseUrl.value,
-        contact_info: contactInfo.value,
         doc_url: docUrl.value,
-		home_content: '',
-		compact_home_enabled: false,
-		hide_ccs_import_button: false,
-        payment_enabled: false,
-        table_default_page_size: 20,
+			hide_ccs_import_button: false,
+			table_default_page_size: 20,
         table_page_size_options: [10, 20, 50, 100],
-        custom_menu_items: [],
         custom_endpoints: [],
-        linuxdo_oauth_enabled: false,
-        wechat_oauth_enabled: false,
-        wechat_oauth_open_enabled: false,
-        wechat_oauth_mp_enabled: false,
-        wechat_oauth_mobile_enabled: false,
-        oidc_oauth_enabled: false,
-        oidc_oauth_provider_name: 'OIDC',
-        github_oauth_enabled: false,
-        google_oauth_enabled: false,
-        backend_mode_enabled: false,
-        passkey_enabled: false,
-        version: siteVersion.value,
-        balance_low_notify_enabled: false,
-        account_quota_notify_enabled: false,
-        balance_low_notify_threshold: 0,
-        channel_monitor_enabled: true,
-        channel_monitor_default_interval_seconds: 60,
-        available_channels_enabled: false,
-        support_chat_enabled: false,
-        model_plaza_enabled: false,
-        model_plaza_require_auth: false,
-        risk_control_enabled: false,
-        service_quota_enabled: false,
-        affiliate_enabled: false,
-        allow_user_view_error_requests: false,
-        allow_user_view_usage_details: false,
-      })
+			version: siteVersion.value,
+			channel_monitor_enabled: true,
+			channel_monitor_default_interval_seconds: 60,
+		})
     }
 
     publicSettingsLoading.value = true
@@ -469,12 +405,9 @@ export const useAppStore = defineStore('app', () => {
     siteName,
     siteLogo,
     siteVersion,
-    contactInfo,
     apiBaseUrl,
     docUrl,
     cachedPublicSettings,
-    supportInboxHasUnread,
-    supportUserHasUnread,
 
     // Version state
     versionLoaded,
@@ -487,7 +420,6 @@ export const useAppStore = defineStore('app', () => {
 
     // Computed
     hasActiveToasts,
-    backendModeEnabled,
 
     // Actions
     toggleSidebar,
@@ -505,9 +437,6 @@ export const useAppStore = defineStore('app', () => {
     withLoading,
     withLoadingAndError,
     reset,
-    setSupportInboxUnread,
-    setSupportUserUnread,
-    resetSupportUnread,
 
     // Version actions
     fetchVersion,

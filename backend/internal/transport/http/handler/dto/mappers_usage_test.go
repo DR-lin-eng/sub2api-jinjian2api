@@ -50,29 +50,6 @@ func TestUsageLogFromService_PrefersRequestTypeForLegacyFields(t *testing.T) {
 	require.True(t, adminDTO.OpenAIWSMode)
 }
 
-func TestUsageCleanupTaskFromService_RequestTypeMapping(t *testing.T) {
-	t.Parallel()
-
-	requestType := int16(service.RequestTypeStream)
-	task := &service.UsageCleanupTask{
-		ID:     1,
-		Status: service.UsageCleanupStatusPending,
-		Filters: service.UsageCleanupFilters{
-			RequestType: &requestType,
-		},
-	}
-
-	dtoTask := UsageCleanupTaskFromService(task)
-	require.NotNil(t, dtoTask)
-	require.NotNil(t, dtoTask.Filters.RequestType)
-	require.Equal(t, "stream", *dtoTask.Filters.RequestType)
-}
-
-func TestRequestTypeStringPtrNil(t *testing.T) {
-	t.Parallel()
-	require.Nil(t, requestTypeStringPtr(nil))
-}
-
 func TestUsageLogFromService_IncludesServiceTierForUserAndAdmin(t *testing.T) {
 	t.Parallel()
 

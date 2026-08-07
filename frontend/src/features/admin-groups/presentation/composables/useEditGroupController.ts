@@ -39,9 +39,7 @@ import {
   buildWebSearchFinalPricePreview,
   convertRoutingRulesToApiFormat,
   createEditGroupFormState,
-  normalizeOptionalLimit,
   normalizeRateMultiplier,
-  resetDisabledBatchImagePricing,
   resetModelsListState,
 } from "./groupEditorFormSupport";
 import type { GroupEditorRuntime } from "./useGroupEditorRuntime";
@@ -114,7 +112,6 @@ export function useEditGroupController({
         (group) =>
           group.platform === "anthropic" &&
           group.status === "active" &&
-          group.subscription_type !== "subscription" &&
           group.fallback_group_id_on_invalid_request === null &&
           group.id !== editingGroup.value?.id,
       )
@@ -200,22 +197,11 @@ export function useEditGroupController({
     editForm.description = group.description || "";
     editForm.platform = group.platform;
     editForm.rate_multiplier = group.rate_multiplier;
-    editForm.is_exclusive = group.is_exclusive;
     editForm.status = group.status;
-    editForm.subscription_type = group.subscription_type || "standard";
-    editForm.daily_limit_usd = group.daily_limit_usd;
-    editForm.weekly_limit_usd = group.weekly_limit_usd;
-    editForm.monthly_limit_usd = group.monthly_limit_usd;
     editForm.allow_image_generation = group.allow_image_generation ?? false;
     editForm.openai_force_image_tool = group.openai_force_image_tool ?? false;
-    editForm.allow_batch_image_generation =
-      group.allow_batch_image_generation ?? false;
     editForm.image_rate_independent = group.image_rate_independent ?? false;
     editForm.image_rate_multiplier = group.image_rate_multiplier ?? 1;
-    editForm.batch_image_discount_multiplier =
-      group.batch_image_discount_multiplier ?? 0.5;
-    editForm.batch_image_hold_multiplier =
-      group.batch_image_hold_multiplier ?? 0.6;
     editForm.image_price_1k = group.image_price_1k;
     editForm.image_price_2k = group.image_price_2k;
     editForm.image_price_4k = group.image_price_4k;
@@ -226,10 +212,6 @@ export function useEditGroupController({
     editForm.video_price_1080p = group.video_price_1080p;
     editForm.web_search_price_per_call =
       group.web_search_price_per_call ?? null;
-    editForm.peak_rate_enabled = group.peak_rate_enabled ?? false;
-    editForm.peak_start = group.peak_start ?? "";
-    editForm.peak_end = group.peak_end ?? "";
-    editForm.peak_rate_multiplier = group.peak_rate_multiplier ?? 1.0;
     editForm.profit_control_enabled = group.profit_control_enabled ?? false;
     editForm.profit_min_margin_percent = profitDecimalToPercent(
       group.profit_min_margin,
@@ -290,10 +272,6 @@ export function useEditGroupController({
     reasoningEffortPolicyRef.value?.resetValidation();
     modelRoutingRules.value = [];
     editForm.copy_accounts_from_group_ids = [];
-    editForm.peak_rate_enabled = false;
-    editForm.peak_start = "";
-    editForm.peak_end = "";
-    editForm.peak_rate_multiplier = 1.0;
     editForm.profit_control_enabled = false;
     editForm.profit_min_margin_percent = 0;
     editForm.profit_safety_buffer_percent = 0;
@@ -347,9 +325,6 @@ export function useEditGroupController({
         profit_safety_buffer: profitControlEnabled
           ? profitPercentToDecimal(profitSafetyBufferPercent)
           : 0,
-        daily_limit_usd: normalizeOptionalLimit(editForm.daily_limit_usd),
-        weekly_limit_usd: normalizeOptionalLimit(editForm.weekly_limit_usd),
-        monthly_limit_usd: normalizeOptionalLimit(editForm.monthly_limit_usd),
         fallback_group_id:
           editForm.fallback_group_id === null
             ? 0
@@ -372,19 +347,8 @@ export function useEditGroupController({
           editForm.reasoning_effort_mappings,
         ),
       };
-      const emptyToNull = (value: any) => (value === "" ? null : value);
-      payload.daily_limit_usd = emptyToNull(payload.daily_limit_usd);
-      payload.weekly_limit_usd = emptyToNull(payload.weekly_limit_usd);
-      payload.monthly_limit_usd = emptyToNull(payload.monthly_limit_usd);
       payload.image_rate_multiplier = normalizeRateMultiplier(
         payload.image_rate_multiplier,
-      );
-      resetDisabledBatchImagePricing(payload);
-      payload.batch_image_discount_multiplier = normalizeRateMultiplier(
-        payload.batch_image_discount_multiplier,
-      );
-      payload.batch_image_hold_multiplier = normalizeRateMultiplier(
-        payload.batch_image_hold_multiplier,
       );
       payload.video_rate_multiplier = normalizeRateMultiplier(
         payload.video_rate_multiplier,
@@ -400,12 +364,6 @@ export function useEditGroupController({
       payload.web_search_price_per_call = emptyPriceToClear(
         payload.web_search_price_per_call,
       );
-      payload.peak_rate_enabled = editForm.peak_rate_enabled;
-      payload.peak_start = editForm.peak_start;
-      payload.peak_end = editForm.peak_end;
-      payload.peak_rate_multiplier = normalizeRateMultiplier(
-        editForm.peak_rate_multiplier,
-      );
       await groupsAPI.update(editingGroup.value.id, payload);
       appStore.showSuccess(t("admin.groups.groupUpdated"));
       closeEditModal();
@@ -420,17 +378,6 @@ export function useEditGroupController({
     }
   };
 
-  watch(
-    () => editForm.subscription_type,
-    (newValue) => {
-      if (newValue !== "subscription") {
-        editForm.peak_rate_enabled = false;
-        editForm.peak_start = "";
-        editForm.peak_end = "";
-        editForm.peak_rate_multiplier = 1.0;
-      }
-    },
-  );
   watch(
     () => editForm.platform,
     (newValue) => {
@@ -465,7 +412,6 @@ export function useEditGroupController({
         editForm.profit_min_margin_percent = 0;
         editForm.profit_safety_buffer_percent = 0;
       }
-      resetDisabledBatchImagePricing(editForm);
       if (editingGroup.value) {
         resetModelsListState(
           modelsListState,
@@ -481,7 +427,6 @@ export function useEditGroupController({
     () => editForm.allow_image_generation,
     (enabled) => {
       if (!enabled) editForm.openai_force_image_tool = false;
-      resetDisabledBatchImagePricing(editForm);
     },
   );
   watch(
@@ -490,11 +435,6 @@ export function useEditGroupController({
       if (enabled) editForm.allow_image_generation = true;
     },
   );
-  watch(
-    () => editForm.allow_batch_image_generation,
-    () => resetDisabledBatchImagePricing(editForm),
-  );
-
   const dialogContext: EditGroupDialogContext = {
     show: showEditModal,
     form: editForm,
@@ -504,7 +444,6 @@ export function useEditGroupController({
     editingGroup,
     statusOptions,
     platformOptions: runtime.platformOptions,
-    subscriptionTypeOptions: runtime.subscriptionTypeOptions,
     copyAccountsOptions,
     fallbackOptions,
     invalidRequestFallbackOptions,

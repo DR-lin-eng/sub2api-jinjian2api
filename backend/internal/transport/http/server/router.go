@@ -1,11 +1,8 @@
 package server
 
 import (
-	"context"
 	"database/sql"
 	"log"
-	"sync/atomic"
-	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
 	"github.com/Wei-Shaw/sub2api/internal/platform/config"
@@ -20,20 +17,16 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-const cspOriginsRefreshTimeout = 5 * time.Second
-
 // SetupRouter 配置路由器中间件和路由
 func SetupRouter(
 	r *gin.Engine,
 	handlers *handler.Handlers,
 	jwtAuth middleware2.JWTAuthMiddleware,
-	optionalJWTAuth middleware2.OptionalJWTAuthMiddleware,
 	adminAuth middleware2.AdminAuthMiddleware,
 	apiKeyAuth middleware2.APIKeyAuthMiddleware,
 	auditLog middleware2.AuditLogMiddleware,
 	stepUpAuth middleware2.StepUpAuthMiddleware,
 	apiKeyService *service.APIKeyService,
-	subscriptionService *service.SubscriptionService,
 	opsService *service.OpsService,
 	settingService *service.SettingService,
 	compositeResolver *service.CompositeRouteResolver,
@@ -43,29 +36,6 @@ func SetupRouter(
 	db *sql.DB,
 ) *gin.Engine {
 	middleware2.SetIngressRejectRecorder(opsService)
-	// 缓存动态 CSP origin，避免每个静态资源请求都读取设置。
-	var cachedFrameOrigins atomic.Pointer[[]string]
-	var cachedConnectOrigins atomic.Pointer[[]string]
-	emptyOrigins := []string{}
-	cachedFrameOrigins.Store(&emptyOrigins)
-	cachedConnectOrigins.Store(&emptyOrigins)
-
-	refreshCSPOrigins := func() {
-		ctx, cancel := context.WithTimeout(context.Background(), cspOriginsRefreshTimeout)
-		defer cancel()
-		frameOrigins, err := settingService.GetFrameSrcOrigins(ctx)
-		if err != nil {
-			// 获取失败时保留已有缓存，避免 CSP 来源被意外清空。
-			return
-		}
-		connectOrigins, err := settingService.GetConnectSrcOrigins(ctx)
-		if err != nil {
-			return
-		}
-		cachedFrameOrigins.Store(&frameOrigins)
-		cachedConnectOrigins.Store(&connectOrigins)
-	}
-	refreshCSPOrigins() // 启动时初始化
 
 	// 应用中间件
 	r.Use(clientIPResolver.Middleware())
@@ -75,17 +45,7 @@ func SetupRouter(
 	r.Use(middleware2.SessionBindingContext(nil))
 	r.Use(middleware2.Logger())
 	r.Use(middleware2.CORS(cfg.CORS))
-	r.Use(middleware2.SecurityHeaders(cfg.Security.CSP, func() []string {
-		if p := cachedFrameOrigins.Load(); p != nil {
-			return *p
-		}
-		return nil
-	}, func() []string {
-		if p := cachedConnectOrigins.Load(); p != nil {
-			return *p
-		}
-		return nil
-	}))
+	r.Use(middleware2.SecurityHeaders(cfg.Security.CSP))
 	r.Use(middleware2.ServerTiming(cfg.Server.EnableServerTiming))
 
 	// Serve embedded frontend with settings injection if available
@@ -94,21 +54,14 @@ func SetupRouter(
 		if err != nil {                                              //nolint:staticcheck // SA4023: see above
 			log.Printf("Warning: Failed to create frontend server with settings injection: %v, using legacy mode", err)
 			r.Use(web.ServeEmbeddedFrontend())
-			settingService.SetOnUpdateCallback(refreshCSPOrigins)
 		} else {
-			// Register combined callback: invalidate HTML cache + refresh CSP origins.
-			settingService.SetOnUpdateCallback(func() {
-				frontendServer.InvalidateCache()
-				refreshCSPOrigins()
-			})
+			settingService.SetOnUpdateCallback(frontendServer.InvalidateCache)
 			r.Use(frontendServer.Middleware())
 		}
-	} else {
-		settingService.SetOnUpdateCallback(refreshCSPOrigins)
 	}
 
 	// 注册路由
-	registerRoutes(r, handlers, jwtAuth, optionalJWTAuth, adminAuth, apiKeyAuth, auditLog, stepUpAuth, apiKeyService, subscriptionService, opsService, settingService, compositeResolver, cfg, redisClient, db)
+	registerRoutes(r, handlers, jwtAuth, adminAuth, apiKeyAuth, auditLog, stepUpAuth, apiKeyService, opsService, settingService, compositeResolver, cfg, redisClient, db)
 
 	return r
 }
@@ -118,13 +71,11 @@ func registerRoutes(
 	r *gin.Engine,
 	h *handler.Handlers,
 	jwtAuth middleware2.JWTAuthMiddleware,
-	optionalJWTAuth middleware2.OptionalJWTAuthMiddleware,
 	adminAuth middleware2.AdminAuthMiddleware,
 	apiKeyAuth middleware2.APIKeyAuthMiddleware,
 	auditLog middleware2.AuditLogMiddleware,
 	stepUpAuth middleware2.StepUpAuthMiddleware,
 	apiKeyService *service.APIKeyService,
-	subscriptionService *service.SubscriptionService,
 	opsService *service.OpsService,
 	settingService *service.SettingService,
 	compositeResolver *service.CompositeRouteResolver,
@@ -145,10 +96,6 @@ func registerRoutes(
 	// 注册各模块路由
 	routes.RegisterAuthRoutes(v1, h, jwtAuth, auditLog, redisClient, db, settingService, panelRateLimiter)
 	routes.RegisterUserRoutes(v1, h, jwtAuth, auditLog, settingService, panelRateLimiter)
-	routes.RegisterModelPlazaRoutes(v1, h, optionalJWTAuth, settingService, panelRateLimiter)
 	routes.RegisterAdminRoutes(v1, h, adminAuth, auditLog, stepUpAuth, settingService, panelRateLimiter)
-	routes.RegisterGatewayRoutes(r, h, apiKeyAuth, apiKeyService, subscriptionService, opsService, settingService, compositeResolver, cfg)
-	routes.RegisterPaymentRoutes(v1, h.Payment, h.PaymentWebhook, h.Admin.Payment, jwtAuth, adminAuth, auditLog, settingService, panelRateLimiter)
-
-	handler.RegisterPageRoutes(v1, cfg.Pricing.DataDir, gin.HandlerFunc(jwtAuth), gin.HandlerFunc(adminAuth), settingService)
+	routes.RegisterGatewayRoutes(r, h, apiKeyAuth, apiKeyService, opsService, settingService, compositeResolver, cfg)
 }

@@ -20,18 +20,15 @@ type ComponentImportFn = () => Promise<unknown>
  * 只存储路由路径，不存储 import 函数，避免打包问题
  */
 const PREFETCH_ADJACENCY: Record<string, string[]> = {
-  // Admin routes - 预加载最常访问的相邻页面
-  '/admin/dashboard': ['/admin/accounts', '/admin/users'],
-  '/admin/accounts': ['/admin/dashboard', '/admin/users'],
-  '/admin/users': ['/admin/groups', '/admin/dashboard'],
-  '/admin/groups': ['/admin/subscriptions', '/admin/users'],
-  '/admin/subscriptions': ['/admin/groups', '/admin/redeem'],
-  // User routes
-  '/dashboard': ['/keys', '/usage'],
-  '/keys': ['/dashboard', '/usage'],
-  '/usage': ['/keys', '/redeem'],
-  '/redeem': ['/usage', '/profile'],
-  '/profile': ['/dashboard', '/keys']
+	'/admin/accounts': ['/admin/groups', '/admin/channels/pricing'],
+	'/admin/groups': ['/admin/accounts', '/keys'],
+	'/admin/channels/pricing': ['/admin/channels/monitor', '/admin/accounts'],
+	'/admin/channels/monitor': ['/admin/channels/pricing', '/admin/ops'],
+	'/admin/ops': ['/usage', '/admin/audit-logs'],
+	'/keys': ['/usage', '/admin/accounts'],
+	'/usage': ['/keys', '/admin/ops'],
+	'/profile': ['/admin/settings', '/admin/accounts'],
+	'/admin/settings': ['/profile', '/admin/multi-instance']
 }
 
 /**
@@ -197,6 +194,6 @@ export function useRoutePrefetch(router?: Router) {
   }
 }
 
-// 兼容旧测试的导出
+// Test-only compatibility exports.
 export const _adminPrefetchMap = PREFETCH_ADJACENCY
 export const _userPrefetchMap = PREFETCH_ADJACENCY
