@@ -188,15 +188,12 @@ func adminAPIKeyRequestAllowed(c *gin.Context, scopes []string) bool {
 func adminAPIKeyRequiredScope(method, path string) string {
 	read := strings.EqualFold(method, http.MethodGet) ||
 		strings.EqualFold(method, http.MethodHead) ||
-		strings.EqualFold(method, http.MethodOptions) ||
-		(strings.EqualFold(method, http.MethodPost) && path == "/api/v1/admin/redeem-codes/export-generated")
+		strings.EqualFold(method, http.MethodOptions)
 	verb := ".write"
 	if read {
 		verb = ".read"
 	}
 	switch {
-	case strings.HasPrefix(path, "/api/v1/admin/users"):
-		return service.AdminAPIKeyScopeUsersRead[:len(service.AdminAPIKeyScopeUsersRead)-len(".read")] + verb
 	case strings.HasPrefix(path, "/api/v1/admin/accounts"):
 		return service.AdminAPIKeyScopeAccountsRead[:len(service.AdminAPIKeyScopeAccountsRead)-len(".read")] + verb
 	case strings.HasPrefix(path, "/api/v1/admin/settings"):

@@ -42,7 +42,7 @@ func (s *ContentModerationService) buildLog(input ContentModerationCheckInput, c
 	}
 }
 
-func (s *ContentModerationService) persistContentModerationLog(ctx context.Context, cfg *ContentModerationConfig, log *ContentModerationLog, hashText string, recordHash bool, applySideEffects bool) {
+func (s *ContentModerationService) persistContentModerationLog(ctx context.Context, cfg *ContentModerationConfig, log *ContentModerationLog, hashText string, recordHash bool, notifyOnHit bool) {
 	if s == nil || log == nil {
 		return
 	}
@@ -51,10 +51,8 @@ func (s *ContentModerationService) persistContentModerationLog(ctx context.Conte
 			slog.Warn("content_moderation.record_hash_failed", "user_id", contentModerationEmailUserID(log), "endpoint", log.Endpoint, "error", err)
 		}
 	}
-	autoBanJustApplied := false
-	if applySideEffects {
-		autoBanJustApplied = s.applyFlaggedAccountSideEffects(ctx, cfg, log)
-		s.sendFlaggedNotificationSideEffects(ctx, cfg, log, autoBanJustApplied)
+	if notifyOnHit {
+		s.sendFlaggedNotificationSideEffects(ctx, cfg, log)
 	}
 	if s.repo != nil {
 		if err := s.repo.CreateLog(ctx, log); err != nil {
@@ -64,47 +62,7 @@ func (s *ContentModerationService) persistContentModerationLog(ctx context.Conte
 	}
 }
 
-func (s *ContentModerationService) applyFlaggedAccountSideEffects(ctx context.Context, cfg *ContentModerationConfig, log *ContentModerationLog) bool {
-	if s == nil || cfg == nil || log == nil || !log.Flagged || log.UserID == nil || *log.UserID <= 0 {
-		return false
-	}
-	count := 1
-	if s.repo != nil && cfg.ViolationWindowHours > 0 {
-		since := time.Now().Add(-time.Duration(cfg.ViolationWindowHours) * time.Hour)
-		if n, err := s.repo.CountFlaggedByUserSince(ctx, *log.UserID, since, cfg.CyberPolicyExcludeFromBanCount); err == nil {
-			count = n + 1
-		}
-	}
-	log.ViolationCount = count
-	autoBanJustApplied := false
-	if cfg.AutoBanEnabled && cfg.BanThreshold > 0 && count >= cfg.BanThreshold && s.userRepo != nil {
-		user, err := s.userRepo.GetByID(ctx, *log.UserID)
-		if err != nil {
-			slog.Warn("content_moderation.ban_get_user_failed", "user_id", *log.UserID, "error", err)
-			return false
-		}
-		if user.IsAdmin() {
-			slog.Warn("content_moderation.autoban_skipped_admin", "user_id", *log.UserID, "role", user.Role, "count", count, "threshold", cfg.BanThreshold)
-			// TODO: Disable the triggering API key instead when API key mutation is available here.
-			return false
-		}
-		if user.Status != StatusDisabled {
-			user.Status = StatusDisabled
-			if err := s.userRepo.Update(ctx, user, UserUpdateFields{Status: true}); err != nil {
-				slog.Warn("content_moderation.ban_update_user_failed", "user_id", *log.UserID, "error", err)
-				return false
-			}
-			if s.authCacheInvalidator != nil {
-				s.authCacheInvalidator.InvalidateAuthCacheByUserID(ctx, *log.UserID)
-			}
-			autoBanJustApplied = true
-		}
-		log.AutoBanned = true
-	}
-	return autoBanJustApplied
-}
-
-func (s *ContentModerationService) sendFlaggedNotificationSideEffects(ctx context.Context, cfg *ContentModerationConfig, log *ContentModerationLog, autoBanJustApplied bool) {
+func (s *ContentModerationService) sendFlaggedNotificationSideEffects(ctx context.Context, cfg *ContentModerationConfig, log *ContentModerationLog) {
 	if s == nil || cfg == nil || log == nil || !log.Flagged {
 		return
 	}
@@ -113,15 +71,8 @@ func (s *ContentModerationService) sendFlaggedNotificationSideEffects(ctx contex
 	}
 	emailSent := false
 	if cfg.EmailOnHit {
-		if err := s.sendViolationEmail(ctx, cfg, log); err != nil {
-			slog.Warn("content_moderation.email_failed", "user_id", *log.UserID, "email", log.UserEmail, "error", err)
-		} else {
-			emailSent = true
-		}
-	}
-	if autoBanJustApplied {
-		if err := s.sendAccountDisabledEmail(ctx, cfg, log); err != nil {
-			slog.Warn("content_moderation.ban_email_failed", "user_id", *log.UserID, "email", log.UserEmail, "error", err)
+		if err := s.sendViolationEmail(ctx, log); err != nil {
+			slog.Warn("content_moderation.email_failed", "user_id", contentModerationEmailUserID(log), "email", log.UserEmail, "error", err)
 		} else {
 			emailSent = true
 		}
@@ -129,7 +80,7 @@ func (s *ContentModerationService) sendFlaggedNotificationSideEffects(ctx contex
 	log.EmailSent = emailSent
 }
 
-func (s *ContentModerationService) sendViolationEmail(ctx context.Context, cfg *ContentModerationConfig, log *ContentModerationLog) error {
+func (s *ContentModerationService) sendViolationEmail(ctx context.Context, log *ContentModerationLog) error {
 	siteName := s.siteName(ctx)
 	if s.emailService.notificationEmailService != nil {
 		if err := s.emailService.notificationEmailService.Send(ctx, NotificationEmailSendInput{
@@ -139,7 +90,7 @@ func (s *ContentModerationService) sendViolationEmail(ctx context.Context, cfg *
 			UserID:         contentModerationEmailUserID(log),
 			SourceType:     "content_moderation",
 			SourceID:       contentModerationEmailSourceID(log),
-			Variables:      contentModerationEmailVariables(log, cfg),
+			Variables:      contentModerationEmailVariables(log),
 		}); err == nil {
 			return nil
 		} else {
@@ -149,33 +100,8 @@ func (s *ContentModerationService) sendViolationEmail(ctx context.Context, cfg *
 			slog.Warn("template content moderation violation email failed; falling back to built-in body", "log_id", log.ID, "recipient_hash", notificationEmailHash(log.UserEmail), "err", err.Error())
 		}
 	}
-	subject := fmt.Sprintf("[%s] 账户风控提醒 / Risk Control Notice", sanitizeEmailHeader(siteName))
-	body := buildContentModerationViolationEmailBody(siteName, log, cfg)
-	return s.emailService.SendEmail(ctx, log.UserEmail, subject, body)
-}
-
-func (s *ContentModerationService) sendAccountDisabledEmail(ctx context.Context, cfg *ContentModerationConfig, log *ContentModerationLog) error {
-	siteName := s.siteName(ctx)
-	if s.emailService.notificationEmailService != nil {
-		if err := s.emailService.notificationEmailService.Send(ctx, NotificationEmailSendInput{
-			Event:          NotificationEmailEventContentModerationDisabled,
-			RecipientEmail: log.UserEmail,
-			RecipientName:  emailRecipientName(log.UserEmail),
-			UserID:         contentModerationEmailUserID(log),
-			SourceType:     "content_moderation",
-			SourceID:       contentModerationEmailSourceID(log),
-			Variables:      contentModerationEmailVariables(log, cfg),
-		}); err == nil {
-			return nil
-		} else {
-			if !shouldFallbackNotificationEmail(err) {
-				return err
-			}
-			slog.Warn("template content moderation disabled email failed; falling back to built-in body", "log_id", log.ID, "recipient_hash", notificationEmailHash(log.UserEmail), "err", err.Error())
-		}
-	}
-	subject := fmt.Sprintf("[%s] 账户已被禁用 / Account Disabled", sanitizeEmailHeader(siteName))
-	body := buildContentModerationAccountDisabledEmailBody(siteName, log, cfg)
+	subject := fmt.Sprintf("[%s] 网关风控命中 / Gateway Risk Control Notice", sanitizeEmailHeader(siteName))
+	body := buildContentModerationViolationEmailBody(siteName, log)
 	return s.emailService.SendEmail(ctx, log.UserEmail, subject, body)
 }
 
@@ -187,20 +113,26 @@ func contentModerationEmailUserID(log *ContentModerationLog) int64 {
 }
 
 func contentModerationEmailSourceID(log *ContentModerationLog) string {
-	if log == nil || log.ID <= 0 {
+	if log == nil {
 		return ""
 	}
-	return fmt.Sprintf("%d", log.ID)
+	if log.ID > 0 {
+		return fmt.Sprintf("%d", log.ID)
+	}
+	return strings.TrimSpace(log.RequestID)
 }
 
-func contentModerationEmailVariables(log *ContentModerationLog, cfg *ContentModerationConfig) map[string]string {
+func contentModerationEmailVariables(log *ContentModerationLog) map[string]string {
 	variables := map[string]string{
 		"triggered_at":        time.Now().UTC().Format(time.RFC3339),
+		"request_id":          "-",
+		"api_key_name":        "-",
 		"group_name":          "-",
+		"endpoint":            "-",
+		"provider":            "-",
+		"model":               "-",
 		"moderation_category": "-",
 		"moderation_score":    "0.000",
-		"violation_count":     "0",
-		"ban_threshold":       "0",
 	}
 	if log != nil {
 		if !log.CreatedAt.IsZero() {
@@ -209,14 +141,25 @@ func contentModerationEmailVariables(log *ContentModerationLog, cfg *ContentMode
 		if strings.TrimSpace(log.GroupName) != "" {
 			variables["group_name"] = strings.TrimSpace(log.GroupName)
 		}
+		if strings.TrimSpace(log.RequestID) != "" {
+			variables["request_id"] = strings.TrimSpace(log.RequestID)
+		}
+		if strings.TrimSpace(log.APIKeyName) != "" {
+			variables["api_key_name"] = strings.TrimSpace(log.APIKeyName)
+		}
+		if strings.TrimSpace(log.Endpoint) != "" {
+			variables["endpoint"] = strings.TrimSpace(log.Endpoint)
+		}
+		if strings.TrimSpace(log.Provider) != "" {
+			variables["provider"] = strings.TrimSpace(log.Provider)
+		}
+		if strings.TrimSpace(log.Model) != "" {
+			variables["model"] = strings.TrimSpace(log.Model)
+		}
 		if strings.TrimSpace(log.HighestCategory) != "" {
 			variables["moderation_category"] = strings.TrimSpace(log.HighestCategory)
 		}
 		variables["moderation_score"] = fmt.Sprintf("%.3f", log.HighestScore)
-		variables["violation_count"] = fmt.Sprintf("%d", log.ViolationCount)
-	}
-	if cfg != nil {
-		variables["ban_threshold"] = fmt.Sprintf("%d", cfg.BanThreshold)
 	}
 	return variables
 }

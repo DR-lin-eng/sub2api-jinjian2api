@@ -8,6 +8,6 @@
 | `settings.go` | 公共与管理设置 DTO |
 | `mappers.go` | 核心模型映射 |
 | `credentials_redact.go` | 凭据输出脱敏 |
-| `announcement.go`, `channel_monitor.go` | 对应资源 DTO |
+| `channel_monitor.go` | 渠道监控 DTO |
 
 DTO 不进入 application/repository 接口，避免 HTTP 字段变更扩散到业务层。

@@ -62,15 +62,6 @@ func (s *ContentModerationService) UpdateConfig(ctx context.Context, input Updat
 	if input.EmailOnHit != nil {
 		cfg.EmailOnHit = *input.EmailOnHit
 	}
-	if input.AutoBanEnabled != nil {
-		cfg.AutoBanEnabled = *input.AutoBanEnabled
-	}
-	if input.BanThreshold != nil {
-		cfg.BanThreshold = *input.BanThreshold
-	}
-	if input.ViolationWindowHours != nil {
-		cfg.ViolationWindowHours = *input.ViolationWindowHours
-	}
 	if input.RetryCount != nil {
 		cfg.RetryCount = *input.RetryCount
 	}
@@ -100,9 +91,6 @@ func (s *ContentModerationService) UpdateConfig(ctx context.Context, input Updat
 	}
 	if input.RecordNonHits != nil {
 		cfg.RecordNonHits = *input.RecordNonHits
-	}
-	if input.CyberPolicyExcludeFromBanCount != nil {
-		cfg.CyberPolicyExcludeFromBanCount = *input.CyberPolicyExcludeFromBanCount
 	}
 	if input.Thresholds != nil {
 		cfg.Thresholds = mergeContentModerationThresholds(ContentModerationDefaultThresholds(), *input.Thresholds)

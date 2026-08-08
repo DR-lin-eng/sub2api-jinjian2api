@@ -8,7 +8,7 @@
 - `data/dtos/adminPanelRateLimitDtos.ts`: 面板限流协议、默认值与滚动升级响应归一化。
 - `data/datasources/adminPanelRateLimitQueries.ts`: 面板限流设置只读请求。
 - `data/datasources/adminPanelRateLimitActions.ts`: 面板限流设置保存动作。
-- `data/dtos/adminSystemSettingsDtos.ts`: 主设置读取、统一更新及其客户端 IP、注册默认值、平台限额和 Fast Policy 基础协议 owner。
+- `data/dtos/adminSystemSettingsDtos.ts`: 主设置读取、统一更新及其客户端 IP、网关限额和 Fast Policy 基础协议 owner。
 - `data/datasources/adminSystemSettingsQueries.ts`: 主设置文档只读请求。
 - `data/datasources/adminSystemSettingsActions.ts`: 主设置统一保存动作。
 - `data/dtos/adminApiKeyDtos.ts`: scoped 与 legacy 管理 API Key 状态、权限和写请求协议 owner。
@@ -33,10 +33,9 @@
 - `data/datasources/`: 其他独立设置子域的管理端 API。
 - `presentation/stores/adminSettingsStore.ts`: 缓存 Ops 与自定义菜单；直接依赖主设置 Query owner，并保留并发去重和失败时缓存回退。
 - `presentation/pages/`: 路由级加载、保存、step-up 与对话框编排。
-- `presentation/widgets/`: 规则、TLS 指纹、用户检索等组件直接依赖各自 datasource；合规对话框只依赖同域 Store 和核心 App Store，认证状态与登出由 `App.vue` 组合。
+- `presentation/widgets/`: 规则、TLS 指纹等组件直接依赖各自 datasource；合规对话框只依赖同域 Store 和核心 App Store，认证状态与登出由 `App.vue` 组合。
 - `presentation/widgets/settings-tabs/`: 按设置领域拆分的 tab 和 panel。
 - `presentation/widgets/settings-tabs/gateway-resilience/`: 临时不可调度、冷却、流超时、请求修正与策略设置卡片；直接复用页面 context，由网关韧性 panel 按原顺序装配。
-- `presentation/widgets/settings-tabs/identity-providers/`: LinuxDo、邮箱 OAuth、微信、钉钉与 OIDC 静态设置卡片；直接复用页面 context，由身份源 panel 按原顺序装配。
 - `presentation/composables/`: 页面局部控制器、表单初始化和纯转换；主设置、管理 API Key、Web Search、调度韧性、Stream Timeout、Rectifier 与 Beta Policy 设置直接依赖各自 Query/Action owner。
 - `presentation/composables/settingsSavePreparation.ts`: 按页面既有顺序完成统一保存前的归一化与校验。
 - `presentation/composables/settingsSavePayload.ts`: 按设置领域组装兼容 payload；新增字段放入所属 builder，不改变统一保存请求。

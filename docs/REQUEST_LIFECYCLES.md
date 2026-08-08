@@ -13,40 +13,40 @@ sequenceDiagram
     participant Handler as Protocol Handler
     participant Scheduler as Application Scheduler
     participant Upstream as Upstream Model API
-    participant Billing as Usage/Billing Pipeline
+    participant Usage as Usage/Cost Pipeline
 
     Client->>Route: API Key request
     Route->>Route: body limit, request ID, auth, group/platform resolution
     Route->>Handler: protocol-specific handler
     Handler->>Handler: parse, validate, security checks
-    Handler->>Scheduler: acquire user slot and select account
+    Handler->>Scheduler: acquire gateway slot and select account
     Scheduler->>Scheduler: sticky session, filters, account slot, failover state
     Scheduler->>Upstream: normalized upstream request
     Upstream-->>Handler: JSON, SSE or WebSocket events
     par client response
         Handler-->>Client: protocol-compatible JSON or stream events
-    and usage settlement
-        Handler->>Billing: record normalized usage
-        Billing-->>Handler: durable/idempotent billing result
+    and usage recording
+        Handler->>Usage: calculate cost and record normalized usage
+        Usage-->>Handler: durable/idempotent usage result
     end
 ```
 
-流式事件可能在最终用量结算前已经发送给客户端；这也是结算必须可恢复、幂等且不能依赖客户端连接继续存活的原因。
+流式事件可能在最终用量落库前已经发送给客户端；因此记录必须幂等、有界兜底，且不能依赖客户端连接继续存活。
 
 ### 阅读顺序
 
 1. `routes/gateway.go`：确认实际命中路径、middleware 顺序和平台分流。
-2. `server/middleware/api_key_auth.go`：确认 API Key、用户、分组和订阅如何进入 context。
+2. `server/middleware/api_key_auth.go`：确认 API Key、唯一管理员和分组路由信息如何进入 context。
 3. 协议 handler：Anthropic 从 `gateway_handler_messages.go`，OpenAI Responses 从 `openai_gateway_responses.go` 开始。
 4. `application/service/gateway_scheduling.go` 或 `openai_account_scheduler.go`：确认候选账号和会话粘性。
 5. 对应 `gateway*_forward*` / `openai*_forward*`：确认上游请求与响应转换。
-6. `gateway_usage_billing.go` 或 `openai_gateway_usage.go`：确认用量解析和计费提交。
+6. `gateway_usage_billing.go` 或 `openai_gateway_usage.go`：确认用量解析、成本计算和记录提交。
 
 ### 关键不变量
 
 - API Key auth 完成后，handler 从 context 读取完整 auth subject，不自行重查一套不一致的身份。
-- 获取用户槽位后必须再次检查计费资格；排队期间余额、订阅或平台额度可能变化。
-- 账号槽位、用户槽位和图片槽位在所有返回与取消路径释放。
+- 等待槽位后必须再次检查 API Key 和上游账号是否仍可调度。
+- 账号槽位、调用方槽位和图片槽位在所有返回与取消路径释放。
 - failover 必须记录失败账号并受最大切换次数约束。
 - SSE/WS 一旦开始写出，后续错误使用流协议事件；未开始写出时才可返回普通 HTTP JSON 错误。
 - 客户端取消应停止上游读取和后台转发，不能继续占用账号或累计无主缓存。
@@ -82,7 +82,7 @@ sequenceDiagram
 1. `frontend/src/core/routes/index.ts` 找 feature page 和权限元数据。
 2. `frontend/src/features/<domain>/presentation/` 找页面编排，再跟 import 到 widget/composable/store。
 3. 在同一 feature 的 `data/datasources/` 找请求封装；统一拦截行为在 `frontend/src/core/networks/client.ts`。
-4. 后端 `routes/auth.go`, `user.go`, `admin.go` 或 `payment.go` 找精确路由。
+4. 后端 `routes/auth.go`, `user.go` 或 `admin.go` 找精确路由。
 5. 跟到 handler、application service 接口和 infrastructure repository。
 
 跨功能复用 UI/交互位于 `frontend/src/common/`；应用级 Router、网络、i18n、主题和全局 Store 位于 `frontend/src/core/`。`frontend/src/api/` 与 `frontend/src/stores/` 只保留旧导入的过渡兼容 barrel，排障时必须继续追到实际 feature/core owner。
@@ -95,27 +95,24 @@ sequenceDiagram
 
 管理员路由的前端 guard 只改善体验。真正的管理员权限、step-up 和 scoped Admin API Key 校验在后端 middleware。
 
-### 认证人机验证
+### 单管理员认证边界
 
-登录、注册、邮箱验证码、密码找回和 OAuth 待完成注册统一通过 application 的人机验证入口。Turnstile、reCAPTCHA、CAP、Tencent Captcha、Aliyun Captcha 与本地验证码是互斥 provider；一次请求使用同一份设置快照选择 provider 和凭据，脏的多开状态必须失败关闭。旧版本允许的 Turnstile 与本地验证码组合仅保留读取兼容，管理员下一次保存会归一化。
+本支线只注册本地管理员的凭证公钥、密码登录、TOTP、Passkey、刷新、登出和会话撤销接口。没有注册、找回密码、用户 OAuth 或第三方身份源入口。`BackendModeAuthGuard` 以固定允许列表防止这些自助认证路径被重新暴露；密码登录还要求浏览器凭证信封并接受本地与 Redis 双层限流。
 
-本地验证码由路由 middleware 在进入 handler 前消费；外部 provider proof 由 handler 映射到 application 值对象后验证。邮箱验证码发送阶段已经验证过一次性 proof 时，注册提交携带有效邮箱验证码即可跳过重复消费。Tencent Captcha 与 Aliyun Captcha 的 OAuth 登录启动在启用时由前端动作触发 POST 并取得 `authorize_url`；未启用时继续保留原 GET 重定向，账户绑定入口也不扩大门禁范围。
+阅读顺序：`server/routes/auth.go` -> `server/middleware/backend_mode_guard.go` -> `handler/auth_handler.go` / `handler/passkey_handler.go` -> `application/service/auth_service.go`、`passkey.go`、`totp_service.go`。前端从 `features/auth/` 追到 `core/networks/sessionRefresh.ts`。
 
-阅读顺序：`server/routes/auth.go` -> `handler/human_verification.go` 与 `handler/auth*` -> `application/service/auth_service.go`、`turnstile_service.go`、`setting_features.go` -> `infrastructure/repository/*captcha*`。前端从 `features/auth/presentation/` 追到 `core/services/humanVerification.ts` 和同域 datasource。新增 proof 字段时还要同步审计脱敏、公开设置注入、CSP、API contract 和流转测试。
+## 用量与成本
 
-## 用量与计费
-
-Anthropic 兼容和 OpenAI 兼容 handler 分别调用自己的 `RecordUsage` 入口，但最终共享统一成本计算和持久结算语义。
+Anthropic 兼容和 OpenAI 兼容 handler 分别调用自己的 `RecordUsage` 入口，但最终共享成本计算、幂等用量写入和统计语义。`ActualCost` 是应用分组倍率后的分析值，不会扣减用户余额或订阅额度。
 
 ```text
 handler success/usage
   -> GatewayService.RecordUsage or OpenAIGatewayService.RecordUsage
   -> BillingService.CalculateCostUnified
-  -> applyUsageBilling
-  -> UsageBillingRepository.Apply
-  -> queuedUsageBillingRepository (Redis Stream when enabled)
-  -> usageBillingRepository (PostgreSQL transaction + idempotency)
-  -> billing/auth/cache projection refresh + separate usage-log write
+  -> build UsageLog with standard/rated/account costs
+  -> UsageLogRepository.CreateBestEffort
+  -> bounded in-process batch insert
+  -> synchronous PostgreSQL fallback on timeout or batch failure
 ```
 
 核心文件：
@@ -123,19 +120,17 @@ handler success/usage
 - `backend/internal/application/service/gateway_usage_billing.go`
 - `backend/internal/application/service/openai_gateway_usage.go`
 - `backend/internal/application/service/billing_service.go`
-- `backend/internal/infrastructure/repository/usage_billing_queue.go`
-- `backend/internal/infrastructure/repository/usage_billing_repo.go`
-- `backend/internal/infrastructure/repository/billing_cache.go`
+- `backend/internal/infrastructure/repository/usage_log_repo.go`
+- `backend/internal/infrastructure/repository/usage_log_repo_insert.go`
+- `backend/internal/infrastructure/repository/usage_log_repo_stats.go`
 
 ### 关键不变量
 
-- `CalculateCostUnified` 是 token、按次和图片等计费模式的统一成本入口。
-- request ID 与请求指纹用于幂等；同一 ID 的不同请求不能被静默视为重复。
-- PostgreSQL 结算事务内完成幂等占位以及余额、订阅、API Key/账号额度等账务效果。
-- usage log 是相邻的独立写入，不与结算事务共享原子性；排障时不能仅凭日志是否存在判断扣费是否成功。
-- 队列满、worker 拒绝或 Redis 不可用时，关键结算必须进入受限 fallback 或同步执行，不能丢弃。
-- 缓存回填使用版本/新旧保护，避免旧数据库快照覆盖更晚的扣费结果。
-- 修改计费时同时验证余额模式、订阅模式、重复提交、并发提交和故障恢复。
+- `CalculateCostUnified` 是 token、按次、图片和视频等模式的统一成本入口。
+- 标准费用、倍率费用和账号成本是分析维度，不是下游钱包或订阅结算。
+- request ID + API Key 用于幂等；重复记录必须由数据库冲突保护收敛。
+- 批处理队列有固定容量；入队或批写超时后使用新的有界 context 同步落库，不能静默丢弃。
+- 修改成本逻辑时同时验证倍率、价格来源、重复提交、并发提交和写入故障兜底。
 
 ## 启动与后台任务
 
@@ -150,7 +145,7 @@ cmd/server/main.go
   -> Redis/Ent/SQL close
 ```
 
-后台任务包括但不限于用量结算、缓存失效、调度快照、凭据刷新、过期清理、Ops 聚合、图片任务和支付订单处理。它们的构造与停止依赖集中在 `backend/cmd/server/wire.go` 和生成的 `wire_gen.go`。
+后台任务包括但不限于用量批写、缓存失效、调度快照、凭据刷新、过期清理、Ops 聚合和异步图片任务。它们的构造与停止依赖集中在 `backend/cmd/server/wire.go` 和生成的 `wire_gen.go`。
 
 新增后台任务必须具备：明确 owner、可取消 context/Stop、有限并发和队列、幂等或可恢复语义，以及在 `Application.Cleanup` 中正确停止的路径。
 
@@ -181,12 +176,11 @@ frontend/src
 | 现象 | 第一检查点 |
 | --- | --- |
 | 路径 404/走错平台 | `routes/gateway.go` 和 composite/force-platform middleware |
-| API Key 401/403 | API Key auth context、分组要求、billing eligibility |
+| API Key 401/403 | API Key auth context、启用状态和分组路由要求 |
 | 一直选中同一账号 | session hash、粘性缓存、候选过滤和失败账号集合 |
 | 503/429 后反复调度坏账号 | 错误分类、临时不可调度状态、scheduler exclusion |
 | 流式响应头或错误格式异常 | handler 写出时机、SSE headers、stream-started 分支 |
-| 前端有余额但网关拒绝 | 展示余额、pending/frozen 状态、billing cache 与准入一起检查 |
 | 前端登录循环 | `core/networks/client.ts` 刷新合并、session refresh API、`features/auth` store、`core/routes` guard |
-| 用量存在但余额未扣/重复扣 | RecordUsage、queue、幂等 key、DB transaction、cache refresh |
+| 用量成本缺失或重复 | RecordUsage、best-effort batch、同步 fallback、request ID + API Key 唯一约束 |
 
 功能到文件的更完整映射见 [代码地图](CODE_MAP.md)。

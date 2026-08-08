@@ -48,8 +48,8 @@ func TestServerTimingScopesAndRoleGate(t *testing.T) {
 		role        string
 		wantHeader  bool
 	}{
-		{name: "disabled", enabled: false, path: "/api/v1/admin/users", role: "admin"},
-		{name: "admin API path", enabled: true, path: "/api/v1/admin/users", role: "admin", wantHeader: true},
+		{name: "disabled", enabled: false, path: "/api/v1/admin/accounts", role: "admin"},
+		{name: "admin API path", enabled: true, path: "/api/v1/admin/accounts", role: "admin", wantHeader: true},
 		{name: "shared API marked by admin UI", enabled: true, path: "/api/v1/groups/available", adminMarker: "1", role: "admin", wantHeader: true},
 		{name: "non-admin role on panel path", enabled: true, path: "/api/v1/groups/available", role: "user"},
 		{name: "non-admin role cannot use admin marker", enabled: true, path: "/api/v1/settings/public", adminMarker: "1", role: "user"},
@@ -104,7 +104,7 @@ func TestIsPanelTimingPath(t *testing.T) {
 		{"/api/v1/redeem/history", false},
 		{"/api/v1/subscriptions/active", false},
 		{"/api/v1/channel-monitors", false},
-		{"/api/v1/admin/users", false},
+		{"/api/v1/admin/accounts", false},
 		{"/api/v1/settings/public", false},
 	}
 	for _, tt := range tests {

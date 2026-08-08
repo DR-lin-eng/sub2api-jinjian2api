@@ -54,7 +54,7 @@ func TestContentModerationProxyResolutionFailsClosed(t *testing.T) {
 func TestContentModerationProxyConfigUpdatePersistsAndClearsSelection(t *testing.T) {
 	settings := &contentModerationTestSettingRepo{values: map[string]string{}}
 	repo := &contentModerationProxyRepoStub{proxy: &Proxy{ID: 42}}
-	svc := NewContentModerationService(settings, nil, nil, nil, nil, nil, nil)
+	svc := NewContentModerationService(settings, nil, nil, nil, nil)
 	svc.proxyRepo = repo
 	svc.moderationProxyCache.Store(&moderationProxyURLCacheEntry{proxyID: 7, url: "http://old", expiresAt: time.Now().Add(time.Minute)})
 	proxyID := int64(42)

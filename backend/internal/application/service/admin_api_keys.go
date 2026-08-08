@@ -22,8 +22,6 @@ const adminAPIKeysSetting = "admin_api_keys"
 const (
 	AdminAPIKeyScopeRead          = "admin.read"
 	AdminAPIKeyScopeWrite         = "admin.write"
-	AdminAPIKeyScopeUsersRead     = "admin.users.read"
-	AdminAPIKeyScopeUsersWrite    = "admin.users.write"
 	AdminAPIKeyScopeAccountsRead  = "admin.accounts.read"
 	AdminAPIKeyScopeAccountsWrite = "admin.accounts.write"
 	AdminAPIKeyScopeSettingsRead  = "admin.settings.read"
@@ -40,7 +38,6 @@ const (
 
 var AdminAPIKeyScopes = []string{
 	AdminAPIKeyScopeRead, AdminAPIKeyScopeWrite,
-	AdminAPIKeyScopeUsersRead, AdminAPIKeyScopeUsersWrite,
 	AdminAPIKeyScopeAccountsRead, AdminAPIKeyScopeAccountsWrite,
 	AdminAPIKeyScopeSettingsRead, AdminAPIKeyScopeSettingsWrite,
 	AdminAPIKeyScopeBackupsRead, AdminAPIKeyScopeBackupsWrite,

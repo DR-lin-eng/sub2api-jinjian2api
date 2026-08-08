@@ -7,7 +7,7 @@
 1. 阅读 `docs/README.md` 选择文档入口。
 2. 阅读 `docs/ARCHITECTURE.md` 确认层级和依赖方向。
 3. 使用 `docs/CODE_MAP.md` 按任务定位文件，不要从全仓库盲搜开始。
-4. 涉及网关、计费或管理端请求时，再读 `docs/REQUEST_LIFECYCLES.md`。
+4. 涉及网关、成本记录或管理端请求时，再读 `docs/REQUEST_LIFECYCLES.md`。
 5. 进入目录后，优先读取该目录最近的 `README.md`。
 
 ## 仓库结构
@@ -26,10 +26,10 @@
 | --- | --- |
 | 新增或修改 HTTP 路由 | `backend/internal/transport/http/server/routes/` |
 | 修改请求/响应协议 | `backend/internal/transport/http/handler/` |
-| 修改网关编排、调度、计费 | `backend/internal/application/service/` |
+| 修改网关编排、调度、成本计算 | `backend/internal/application/service/` |
 | 修改 PostgreSQL、Redis 或上游访问 | `backend/internal/infrastructure/repository/` |
 | 修改表结构 | `backend/ent/schema/` 与 `backend/migrations/` |
-| 修改管理端或用户端页面 | `frontend/src/features/<domain>/presentation/pages/`，再追到同域 `widgets/`、`data/`、`stores/` |
+| 修改管理端或管理员自助页面 | `frontend/src/features/<domain>/presentation/pages/`，再追到同域 `widgets/`、`data/`、`stores/` |
 | 修改部署参数 | `deploy/config.example.yaml`、`deploy/.env.example` 和 `deploy/README.md` |
 
 更细的功能到文件映射见 `docs/CODE_MAP.md`。
@@ -39,7 +39,7 @@
 - 不在 handler 中直接访问 repository；不在 application 中导入 infrastructure。
 - 不手改 `backend/ent/` 生成代码或 `backend/cmd/server/wire_gen.go`；修改源定义后运行生成命令。
 - 保持 API JSON、SSE、WebSocket 和错误格式的兼容性。流式与非流式路径必须分别验证。
-- 计费是正确性关键路径。不得以丢弃、采样或无界内存排队代替可靠结算。
+- 用量与成本记录是正确性关键路径。不得以丢弃、采样或无界内存排队代替可靠落库。
 - 调度变更必须同时检查账号筛选、并发槽位、失败排除、粘性会话和释放路径。
 - 前端 HTTP 调用统一通过 `frontend/src/core/networks/client.ts`；浏览器权限控制不能替代后端鉴权。
 - 新增用户可见文本时同步 `frontend/src/core/i18n/locales/`。

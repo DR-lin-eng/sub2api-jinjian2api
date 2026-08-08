@@ -19,10 +19,8 @@ func TestContentModerationServiceUsesConfiguredWorkersAndStops(t *testing.T) {
 		&contentModerationTestRepo{},
 		nil,
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
 
 	service.workerMu.Lock()
 	workerCount := len(service.workerCancels)

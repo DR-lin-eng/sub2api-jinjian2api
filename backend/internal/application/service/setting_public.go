@@ -94,8 +94,7 @@ func clampChannelMonitorInterval(v int) int {
 	return v
 }
 
-// ChannelMonitorRuntime is the lightweight view of the channel monitor feature
-// consumed by the runner and user-facing handlers.
+// ChannelMonitorRuntime is the lightweight view consumed by the monitor runner.
 type ChannelMonitorRuntime struct {
 	Enabled                bool
 	DefaultIntervalSeconds int

@@ -217,8 +217,8 @@ export default {
       channelId: '渠道 ID',
       billingTier: '计费层级',
       modelMappingChain: '模型映射链',
-      actualCharge: '实际扣费',
-      reconciled: '计算结果与账单一致',
+      actualCharge: '倍率费用',
+      reconciled: '计算结果与记录的倍率费用一致',
       needsReview: '计算结果需要核对',
       longContextPricing: '长上下文计价',
       rateSnapshot: '倍率快照',
@@ -233,11 +233,11 @@ export default {
       recordedStandardCost: '日志记录的标准费用',
       effectiveUnitPriceNote: '表中单价由“分项标准费用除以对应数量”还原，已包含服务层级和长上下文价格调整，不包含最终分组倍率。',
       cacheTierAggregateNote: '缓存创建同时包含 5 分钟或 1 小时档位时，此处展示的是聚合有效单价；各档 Token 数保留在上方用量信息中。',
-      finalChargeFormula: '最终扣费公式',
+      finalChargeFormula: '倍率费用公式',
       textSubtotal: '文本及缓存费用',
       imageSubtotal: '图片 Token 费用',
-      splitRateHistoricalNote: '该记录使用图片独立倍率。日志保存了图片倍率快照和最终扣费，文本倍率未单独保存，因此上方文本倍率由落账金额反推。',
-      effectiveRateHistoricalNote: '该历史记录无法用单一倍率还原，公式使用“实际扣费除以标准费用”得到的综合有效倍率，并保留原始落账金额。',
+      splitRateHistoricalNote: '该记录使用图片独立倍率。日志保存了图片倍率快照和倍率费用，文本倍率未单独保存，因此上方文本倍率由记录费用反推。',
+      effectiveRateHistoricalNote: '该历史记录无法用单一倍率还原，公式使用“倍率费用除以标准费用”得到综合有效倍率，并保留原始记录费用。',
       tokensUnit: 'Token',
       requestsUnit: '次请求',
       imagesUnit: '张图片',
@@ -269,7 +269,7 @@ export default {
     standardCost: '标准',
     actualCost: '实际',
     accountCost: '成本',
-    userBilled: '用户扣费',
+    userBilled: '倍率费用',
     accountBilled: '账号计费',
     resetNow: '现在',
     resetPending: '待刷新',
@@ -445,72 +445,12 @@ export default {
     relativeDaysAgo: '{n} 天前'
   },
 
-  // Channel Status (user-facing read-only view)
-  channelStatus: {
-    title: '渠道状态',
-    description: '查看渠道可用性、延迟和近期状态',
-    searchPlaceholder: '搜索渠道...',
-    allProviders: '全部供应商',
-    loadError: '加载渠道状态失败',
-    detailLoadError: '加载渠道详情失败',
-    detailTitle: '渠道详情',
-    closeDetail: '关闭',
-    windowTab: {
-      '7d': '7 天',
-      '15d': '15 天',
-      '30d': '30 天'
-    },
-    overall: {
-      operational: 'OPERATIONAL',
-      degraded: 'DEGRADED',
-      unavailable: 'UNAVAILABLE'
-    },
-    columns: {
-      name: '名称',
-      provider: '供应商',
-      groupName: '分组',
-      primaryModel: '主模型',
-      availability7d: '7 天可用率',
-      latency: '延迟 (ms)'
-    },
-    detailColumns: {
-      model: '模型',
-      latestStatus: '最新状态',
-      latestLatency: '最新延迟 (ms)',
-      availability7d: '7 天可用率',
-      availability15d: '15 天可用率',
-      availability30d: '30 天可用率',
-      avgLatency7d: '7 天平均延迟 (ms)'
-    },
-    empty: {
-      title: '暂无可显示的渠道',
-      description: '管理员尚未配置可监控的渠道。'
-    }
-  },
-
-  // Available Channels (user-facing)
   profile: {
     title: '个人设置',
     description: '管理您的账户信息和设置',
-    accountBalance: '账户余额',
-    concurrencyLimit: '并发限制',
-    rpmLimit: 'RPM 限制',
-    rpmUnlimited: '不限制',
     memberSince: '注册时间',
-    overviewTitle: '账户总览',
-    overviewDescription: '快速查看账号状态、资料来源与常用设置。',
-    basicsTitle: '资料与头像',
-    basicsDescription: '维护公开展示信息，并保持头像与昵称风格一致。',
-    linkedProfileSources: '资料来源',
-    linkedProfileSourcesDescription: '部分头像和昵称可能同步自第三方登录方式。',
-    securityTitle: '安全设置',
-    securityDescription: '密码、双因素认证和通知提醒集中放在右侧。',
     administrator: '管理员',
-    user: '用户',
     username: '用户名',
-    email: '邮箱',
-    status: '状态',
-    role: '角色',
     enterUsername: '输入用户名',
     editProfile: '编辑个人资料',
     updateProfile: '更新资料',

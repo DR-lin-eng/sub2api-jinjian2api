@@ -191,7 +191,7 @@ func (r *usageLogRepository) CreateBestEffort(ctx context.Context, log *service.
 	}
 
 	// 队列满时阻塞等待而非立即丢弃：批处理器持续排空队列，短暂等待即可入队。
-	// 立即丢弃会造成“已扣费但无 usage_log”的永久数据缺口（issue #3656）；
+	// 立即丢弃会造成“请求已完成但无成本记录”的永久数据缺口（issue #3656）；
 	// 阻塞上限由调用方 ctx 期限约束，超时后由上层同步兜底。
 	select {
 	case r.bestEffortBatchCh <- req:

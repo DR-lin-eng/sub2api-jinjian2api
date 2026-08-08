@@ -19,7 +19,6 @@ const (
 	credentialSubmitGlobalLimit   = 3000 // Per instance and minute.
 	credentialKeyPath             = "/api/v1/auth/credential-key"
 	credentialLoginPath           = "/api/v1/auth/login"
-	credentialRegisterPath        = "/api/v1/auth/register"
 	credentialKeyMaxInFlight      = 128
 	credentialSubmitMaxInFlight   = 64
 )
@@ -92,7 +91,7 @@ func NewCredentialAuthIngressLimiter() gin.HandlerFunc {
 		switch {
 		case c.Request.Method == http.MethodGet && path == credentialKeyPath:
 			limitCredentialConcurrency(c, keySlots, keyHandler)
-		case c.Request.Method == http.MethodPost && (path == credentialLoginPath || path == credentialRegisterPath):
+		case c.Request.Method == http.MethodPost && path == credentialLoginPath:
 			limitCredentialConcurrency(c, submitSlots, submitHandler)
 		default:
 			c.Next()

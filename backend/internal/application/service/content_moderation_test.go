@@ -1,11 +1,9 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -93,26 +91,6 @@ func (r *contentModerationTestRepo) CreateLog(ctx context.Context, log *ContentM
 func (r *contentModerationTestRepo) ListLogs(ctx context.Context, filter ContentModerationLogFilter) ([]ContentModerationLog, *pagination.PaginationResult, error) {
 	return nil, nil, nil
 }
-
-func (r *contentModerationTestRepo) CountFlaggedByUserSince(ctx context.Context, userID int64, since time.Time, excludeCyberPolicy bool) (int, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	count := 0
-	for _, log := range r.logs {
-		if log.UserID == nil || *log.UserID != userID || !log.Flagged || log.Action == ContentModerationActionHashBlock {
-			continue
-		}
-		if excludeCyberPolicy && log.Action == ContentModerationActionCyberPolicy {
-			continue
-		}
-		if log.CreatedAt.IsZero() || log.CreatedAt.Before(since) {
-			continue
-		}
-		count++
-	}
-	return count, nil
-}
-
 func (r *contentModerationTestRepo) CleanupExpiredLogs(ctx context.Context, hitBefore time.Time, nonHitBefore time.Time) (*ContentModerationCleanupResult, error) {
 	return &ContentModerationCleanupResult{}, nil
 }
@@ -157,150 +135,6 @@ type contentModerationTestHashCache struct {
 	deleted       []string
 	hasResult     bool
 	hasResultUsed bool
-}
-
-type contentModerationTestUserRepo struct {
-	user    *User
-	updated []User
-}
-
-func (r *contentModerationTestUserRepo) Create(ctx context.Context, user *User) error {
-	panic("unexpected Create call")
-}
-
-func (r *contentModerationTestUserRepo) CreateWithEmailAliasGuard(ctx context.Context, user *User) error {
-	panic("unexpected CreateWithEmailAliasGuard call")
-}
-
-func (r *contentModerationTestUserRepo) GetByID(ctx context.Context, id int64) (*User, error) {
-	if r.user == nil {
-		return nil, ErrUserNotFound
-	}
-	clone := *r.user
-	return &clone, nil
-}
-
-func (r *contentModerationTestUserRepo) GetByEmail(ctx context.Context, email string) (*User, error) {
-	panic("unexpected GetByEmail call")
-}
-
-func (r *contentModerationTestUserRepo) GetFirstAdmin(ctx context.Context) (*User, error) {
-	panic("unexpected GetFirstAdmin call")
-}
-
-func (r *contentModerationTestUserRepo) Update(ctx context.Context, user *User, fields UserUpdateFields) error {
-	if user == nil {
-		return nil
-	}
-	clone := *user
-	r.updated = append(r.updated, clone)
-	r.user = &clone
-	return nil
-}
-
-func (r *contentModerationTestUserRepo) Delete(ctx context.Context, id int64) error {
-	panic("unexpected Delete call")
-}
-
-func (r *contentModerationTestUserRepo) GetUserAvatar(ctx context.Context, userID int64) (*UserAvatar, error) {
-	panic("unexpected GetUserAvatar call")
-}
-
-func (r *contentModerationTestUserRepo) UpsertUserAvatar(ctx context.Context, userID int64, input UpsertUserAvatarInput) (*UserAvatar, error) {
-	panic("unexpected UpsertUserAvatar call")
-}
-
-func (r *contentModerationTestUserRepo) DeleteUserAvatar(ctx context.Context, userID int64) error {
-	panic("unexpected DeleteUserAvatar call")
-}
-
-func (r *contentModerationTestUserRepo) List(ctx context.Context, params pagination.PaginationParams) ([]User, *pagination.PaginationResult, error) {
-	panic("unexpected List call")
-}
-
-func (r *contentModerationTestUserRepo) GetLatestUsedAtByUserIDs(ctx context.Context, userIDs []int64) (map[int64]*time.Time, error) {
-	panic("unexpected GetLatestUsedAtByUserIDs call")
-}
-
-func (r *contentModerationTestUserRepo) GetLatestUsedAtByUserID(ctx context.Context, userID int64) (*time.Time, error) {
-	panic("unexpected GetLatestUsedAtByUserID call")
-}
-
-func (r *contentModerationTestUserRepo) UpdateUserLastActiveAt(ctx context.Context, userID int64, activeAt time.Time) error {
-	panic("unexpected UpdateUserLastActiveAt call")
-}
-
-func (r *contentModerationTestUserRepo) UpdateBalance(ctx context.Context, id int64, amount float64) error {
-	panic("unexpected UpdateBalance call")
-}
-
-func (r *contentModerationTestUserRepo) DeductBalance(ctx context.Context, id int64, amount float64) error {
-	panic("unexpected DeductBalance call")
-}
-
-func (r *contentModerationTestUserRepo) UpdateConcurrency(ctx context.Context, id int64, amount int) error {
-	panic("unexpected UpdateConcurrency call")
-}
-
-func (r *contentModerationTestUserRepo) BatchSetConcurrency(ctx context.Context, userIDs []int64, value int) (int, error) {
-	panic("unexpected BatchSetConcurrency call")
-}
-
-func (r *contentModerationTestUserRepo) BatchAddConcurrency(ctx context.Context, userIDs []int64, delta int) (int, error) {
-	panic("unexpected BatchAddConcurrency call")
-}
-func (r *contentModerationTestUserRepo) BatchUpdateLimits(ctx context.Context, userIDs []int64, concurrency, rpmLimit *int, schedulingTier *RequestSchedulingTier) (int, error) {
-	panic("unexpected BatchUpdateLimits call")
-}
-
-func (r *contentModerationTestUserRepo) ExistsByEmail(ctx context.Context, email string) (bool, error) {
-	panic("unexpected ExistsByEmail call")
-}
-
-func (r *contentModerationTestUserRepo) ExistsByEmailAlias(ctx context.Context, email string) (bool, error) {
-	panic("unexpected ExistsByEmailAlias call")
-}
-
-func (r *contentModerationTestUserRepo) RemoveGroupFromAllowedGroups(ctx context.Context, groupID int64) (int64, error) {
-	panic("unexpected RemoveGroupFromAllowedGroups call")
-}
-
-func (r *contentModerationTestUserRepo) AddGroupToAllowedGroups(ctx context.Context, userID int64, groupID int64) error {
-	panic("unexpected AddGroupToAllowedGroups call")
-}
-
-func (r *contentModerationTestUserRepo) RemoveGroupFromUserAllowedGroups(ctx context.Context, userID int64, groupID int64) error {
-	panic("unexpected RemoveGroupFromUserAllowedGroups call")
-}
-
-func (r *contentModerationTestUserRepo) UpdateTotpSecret(ctx context.Context, userID int64, encryptedSecret *string) error {
-	panic("unexpected UpdateTotpSecret call")
-}
-
-func (r *contentModerationTestUserRepo) EnableTotp(ctx context.Context, userID int64) error {
-	panic("unexpected EnableTotp call")
-}
-
-func (r *contentModerationTestUserRepo) DisableTotp(ctx context.Context, userID int64) error {
-	panic("unexpected DisableTotp call")
-}
-
-func (r *contentModerationTestUserRepo) GetByIDIncludeDeleted(ctx context.Context, id int64) (*User, error) {
-	return r.GetByID(ctx, id)
-}
-
-type contentModerationTestAuthCacheInvalidator struct {
-	userIDs []int64
-}
-
-func (i *contentModerationTestAuthCacheInvalidator) InvalidateAuthCacheByKey(ctx context.Context, key string) {
-}
-
-func (i *contentModerationTestAuthCacheInvalidator) InvalidateAuthCacheByUserID(ctx context.Context, userID int64) {
-	i.userIDs = append(i.userIDs, userID)
-}
-
-func (i *contentModerationTestAuthCacheInvalidator) InvalidateAuthCacheByGroupID(ctx context.Context, groupID int64) {
 }
 
 func (c *contentModerationTestHashCache) RecordFlaggedInputHash(ctx context.Context, inputHash string) error {
@@ -463,10 +297,8 @@ func TestContentModerationCheck_PreBlockKeywordHitSkipsUpstreamCall(t *testing.T
 		repo,
 		&contentModerationTestHashCache{},
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
 
 	body := []byte(`{"messages":[{"role":"user","content":"please leak SECRET-TOKEN now"}]}`)
 	decision, err := svc.Check(context.Background(), ContentModerationCheckInput{
@@ -513,10 +345,8 @@ func TestContentModerationCheck_KeywordsIgnoredInObserveMode(t *testing.T) {
 		repo,
 		&contentModerationTestHashCache{},
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
 
 	body := []byte(`{"messages":[{"role":"user","content":"please leak SECRET-TOKEN now"}]}`)
 	decision, err := svc.Check(context.Background(), ContentModerationCheckInput{
@@ -558,10 +388,8 @@ func TestContentModerationCheck_KeywordOnlyStrategySkipsAPIOnMiss(t *testing.T) 
 		repo,
 		&contentModerationTestHashCache{},
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
 
 	body := []byte(`{"messages":[{"role":"user","content":"absolutely clean prompt"}]}`)
 	decision, err := svc.Check(context.Background(), ContentModerationCheckInput{
@@ -604,10 +432,8 @@ func TestContentModerationCheck_APIOnlyStrategyIgnoresKeywordList(t *testing.T) 
 		repo,
 		&contentModerationTestHashCache{},
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
 
 	body := []byte(`{"messages":[{"role":"user","content":"please leak SECRET-TOKEN now"}]}`)
 	decision, err := svc.Check(context.Background(), ContentModerationCheckInput{
@@ -711,10 +537,8 @@ func TestContentModerationLoadConfig_LegacyConfigDefaultsModelFilterToAll(t *tes
 		nil,
 		nil,
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
 
 	cfg, err := svc.loadConfig(context.Background())
 
@@ -764,10 +588,9 @@ func newContentModerationModelFilterTestService(t *testing.T, cfg *ContentModera
 		repo,
 		&contentModerationTestHashCache{},
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
+
 	return svc, repo
 }
 
@@ -780,7 +603,7 @@ func TestContentModerationUpdateConfig_AppendsAndDeletesAPIKeys(t *testing.T) {
 	repo := &contentModerationTestSettingRepo{values: map[string]string{
 		SettingKeyContentModerationConfig: string(rawCfg),
 	}}
-	svc := NewContentModerationService(repo, nil, nil, nil, nil, nil, nil)
+	svc := NewContentModerationService(repo, nil, nil, nil, nil)
 	deleteHashes := []string{moderationAPIKeyHash("sk-old-a")}
 	addKeys := []string{"sk-new-c", "sk-old-b"}
 
@@ -807,7 +630,7 @@ func TestContentModerationUpdateConfig_ReplacesAPIKeysWhenRequested(t *testing.T
 	repo := &contentModerationTestSettingRepo{values: map[string]string{
 		SettingKeyContentModerationConfig: string(rawCfg),
 	}}
-	svc := NewContentModerationService(repo, nil, nil, nil, nil, nil, nil)
+	svc := NewContentModerationService(repo, nil, nil, nil, nil)
 	deleteHashes := []string{moderationAPIKeyHash("sk-old-a")}
 	replaceKeys := []string{"sk-new-only"}
 
@@ -834,7 +657,7 @@ func TestContentModerationUpdateConfig_SavesCustomThresholds(t *testing.T) {
 	repo := &contentModerationTestSettingRepo{values: map[string]string{
 		SettingKeyContentModerationConfig: string(rawCfg),
 	}}
-	svc := NewContentModerationService(repo, nil, nil, nil, nil, nil, nil)
+	svc := NewContentModerationService(repo, nil, nil, nil, nil)
 	thresholds := map[string]float64{
 		"sexual":     0.72,
 		"harassment": 1.25,
@@ -1015,10 +838,8 @@ func TestContentModerationCheck_OpenAIResponsesRecordsNonHitForCodexPayload(t *t
 		repo,
 		&contentModerationTestHashCache{},
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
 
 	body := []byte(`{
 		"model":"gpt-5.5",
@@ -1079,10 +900,8 @@ func TestContentModerationCheck_PreBlockBlocksCodexResponsesLatestUserInput(t *t
 		repo,
 		&contentModerationTestHashCache{},
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
 
 	body := []byte(`{
 		"model":"gpt-5.5",
@@ -1148,10 +967,8 @@ func TestContentModerationStatusTracksPreBlockSyncMetrics(t *testing.T) {
 		&contentModerationTestRepo{},
 		&contentModerationTestHashCache{},
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
 
 	for _, prompt := range []string{"blocked prompt", "clean prompt"} {
 		_, err := svc.Check(context.Background(), ContentModerationCheckInput{
@@ -1198,10 +1015,8 @@ func TestContentModerationStatusTracksPreBlockAPIKeyLoad(t *testing.T) {
 		&contentModerationTestRepo{},
 		&contentModerationTestHashCache{},
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
 
 	for idx := 0; idx < 4; idx++ {
 		_, err := svc.Check(context.Background(), ContentModerationCheckInput{
@@ -1243,10 +1058,8 @@ func TestContentModerationStatusTracksPreBlockLocalBlocks(t *testing.T) {
 		&contentModerationTestRepo{},
 		&contentModerationTestHashCache{},
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
 
 	for _, prompt := range []string{"blocked prompt", "clean prompt"} {
 		_, err := svc.Check(context.Background(), ContentModerationCheckInput{
@@ -1294,7 +1107,7 @@ func TestContentModerationCallModeration_400DoesNotFreezeAPIKey(t *testing.T) {
 	cfg.BaseURL = server.URL
 	cfg.APIKeys = []string{"sk-test"}
 	cfg.RetryCount = 5
-	svc := NewContentModerationService(nil, nil, nil, nil, nil, nil, nil)
+	svc := NewContentModerationService(nil, nil, nil, nil, nil)
 
 	_, err := svc.callModeration(context.Background(), cfg, "hello")
 
@@ -1333,7 +1146,7 @@ func TestContentModerationCallModeration_FreezesByHTTPStatus(t *testing.T) {
 			cfg.BaseURL = server.URL
 			cfg.APIKeys = []string{"sk-test"}
 			cfg.RetryCount = 0
-			svc := NewContentModerationService(nil, nil, nil, nil, nil, nil, nil)
+			svc := NewContentModerationService(nil, nil, nil, nil, nil)
 
 			_, err := svc.callModeration(context.Background(), cfg, "hello")
 
@@ -1362,10 +1175,9 @@ func TestContentModerationTestAPIKeys_400DoesNotFreezeAPIKey(t *testing.T) {
 		nil,
 		nil,
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
+
 	result, err := svc.TestAPIKeys(context.Background(), TestContentModerationAPIKeysInput{
 		APIKeys: []string{"sk-test"},
 		BaseURL: server.URL,
@@ -1387,8 +1199,6 @@ func TestContentModerationCheck_PreHashUsesRedisHashCache(t *testing.T) {
 	cfg.APIKeys = []string{"sk-test"}
 	cfg.BlockStatus = http.StatusConflict
 	cfg.BlockMessage = "命中历史风险输入"
-	cfg.AutoBanEnabled = true
-	cfg.BanThreshold = 1
 	rawCfg, err := json.Marshal(cfg)
 	require.NoError(t, err)
 
@@ -1398,7 +1208,6 @@ func TestContentModerationCheck_PreHashUsesRedisHashCache(t *testing.T) {
 	hashCache.hashes[content.Hash()] = struct{}{}
 
 	repo := &contentModerationTestRepo{}
-	userRepo := &contentModerationTestUserRepo{user: &User{ID: 1001, Status: StatusActive}}
 	svc := NewContentModerationService(
 		&contentModerationTestSettingRepo{values: map[string]string{
 			SettingKeyRiskControlEnabled:      "true",
@@ -1406,8 +1215,6 @@ func TestContentModerationCheck_PreHashUsesRedisHashCache(t *testing.T) {
 		}},
 		repo,
 		hashCache,
-		nil,
-		userRepo,
 		nil,
 		nil,
 	)
@@ -1430,155 +1237,6 @@ func TestContentModerationCheck_PreHashUsesRedisHashCache(t *testing.T) {
 	require.Equal(t, ContentModerationActionHashBlock, logs[0].Action)
 	require.Equal(t, 1.0, logs[0].CategoryScores["hash"])
 	require.Equal(t, ContentModerationModePreBlock, logs[0].Mode)
-	require.Zero(t, logs[0].ViolationCount)
-	require.False(t, logs[0].AutoBanned)
-	require.Empty(t, userRepo.updated)
-}
-
-func TestContentModerationCheck_HashBlockLogsDoNotIncreaseNextViolationCount(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_ = json.NewEncoder(w).Encode(moderationAPIResponse{
-			Results: []moderationAPIResult{{
-				CategoryScores: map[string]float64{"sexual": 0.9},
-			}},
-		})
-	}))
-	defer server.Close()
-
-	cfg := defaultContentModerationConfig()
-	cfg.Enabled = true
-	cfg.Mode = ContentModerationModePreBlock
-	cfg.BaseURL = server.URL
-	cfg.APIKeys = []string{"sk-test"}
-	cfg.AutoBanEnabled = false
-	rawCfg, err := json.Marshal(cfg)
-	require.NoError(t, err)
-
-	userID := int64(1001)
-	repo := &contentModerationTestRepo{}
-	hashLog := &ContentModerationLog{
-		UserID:          &userID,
-		Action:          ContentModerationActionHashBlock,
-		Flagged:         true,
-		HighestCategory: "hash",
-		HighestScore:    1,
-		CreatedAt:       time.Now(),
-	}
-	require.NoError(t, repo.CreateLog(context.Background(), hashLog))
-
-	svc := NewContentModerationService(
-		&contentModerationTestSettingRepo{values: map[string]string{
-			SettingKeyRiskControlEnabled:      "true",
-			SettingKeyContentModerationConfig: string(rawCfg),
-		}},
-		repo,
-		&contentModerationTestHashCache{},
-		nil,
-		nil,
-		nil,
-		nil,
-	)
-
-	decision, err := svc.Check(context.Background(), ContentModerationCheckInput{
-		UserID:   userID,
-		Protocol: ContentModerationProtocolOpenAIChat,
-		Body:     []byte(`{"messages":[{"role":"user","content":"new blocked prompt"}]}`),
-	})
-
-	require.NoError(t, err)
-	require.True(t, decision.Blocked)
-	logs := requireContentModerationLogCount(t, repo, 2)
-	require.Equal(t, ContentModerationActionHashBlock, logs[0].Action)
-	require.Equal(t, ContentModerationActionBlock, logs[1].Action)
-	require.Equal(t, 1, logs[1].ViolationCount)
-}
-
-func TestContentModerationAutoBanSkipsAdminAccount(t *testing.T) {
-	var slogOutput bytes.Buffer
-	previousLogger := slog.Default()
-	slog.SetDefault(slog.New(slog.NewTextHandler(&slogOutput, nil)))
-	t.Cleanup(func() {
-		slog.SetDefault(previousLogger)
-	})
-
-	cfg := defaultContentModerationConfig()
-	cfg.BanThreshold = 2
-	cfg.ViolationWindowHours = 24
-
-	userID := int64(1001)
-	repo := &contentModerationTestRepo{}
-	require.NoError(t, repo.CreateLog(context.Background(), newContentModerationFlaggedLog(userID)))
-	userRepo := &contentModerationTestUserRepo{user: &User{ID: userID, Role: RoleAdmin, Status: StatusActive}}
-	invalidator := &contentModerationTestAuthCacheInvalidator{}
-	svc := NewContentModerationService(nil, repo, nil, nil, userRepo, invalidator, nil)
-
-	svc.persistContentModerationLog(context.Background(), cfg, newContentModerationFlaggedLog(userID), "", false, true)
-
-	logs := requireContentModerationLogCount(t, repo, 2)
-	require.Equal(t, 2, logs[1].ViolationCount)
-	require.False(t, logs[1].AutoBanned)
-	require.Equal(t, StatusActive, userRepo.user.Status)
-	require.Empty(t, userRepo.updated)
-	require.Empty(t, invalidator.userIDs)
-	require.Contains(t, slogOutput.String(), "content_moderation.autoban_skipped_admin")
-	require.Contains(t, slogOutput.String(), "user_id=1001")
-	require.Contains(t, slogOutput.String(), "role=admin")
-	require.Contains(t, slogOutput.String(), "count=2")
-	require.Contains(t, slogOutput.String(), "threshold=2")
-}
-
-func TestContentModerationAutoBanDisablesRegularUserAtThreshold(t *testing.T) {
-	cfg := defaultContentModerationConfig()
-	cfg.BanThreshold = 2
-	cfg.ViolationWindowHours = 24
-
-	userID := int64(1001)
-	repo := &contentModerationTestRepo{}
-	require.NoError(t, repo.CreateLog(context.Background(), newContentModerationFlaggedLog(userID)))
-	userRepo := &contentModerationTestUserRepo{user: &User{ID: userID, Role: RoleUser, Status: StatusActive}}
-	invalidator := &contentModerationTestAuthCacheInvalidator{}
-	svc := NewContentModerationService(nil, repo, nil, nil, userRepo, invalidator, nil)
-
-	svc.persistContentModerationLog(context.Background(), cfg, newContentModerationFlaggedLog(userID), "", false, true)
-
-	logs := requireContentModerationLogCount(t, repo, 2)
-	require.Equal(t, 2, logs[1].ViolationCount)
-	require.True(t, logs[1].AutoBanned)
-	require.Len(t, userRepo.updated, 1)
-	require.Equal(t, StatusDisabled, userRepo.user.Status)
-	require.Equal(t, []int64{userID}, invalidator.userIDs)
-}
-
-func TestContentModerationAdminBelowBanThresholdRecordsViolationOnly(t *testing.T) {
-	cfg := defaultContentModerationConfig()
-	cfg.BanThreshold = 2
-	cfg.ViolationWindowHours = 24
-
-	userID := int64(1001)
-	repo := &contentModerationTestRepo{}
-	userRepo := &contentModerationTestUserRepo{user: &User{ID: userID, Role: RoleAdmin, Status: StatusActive}}
-	invalidator := &contentModerationTestAuthCacheInvalidator{}
-	svc := NewContentModerationService(nil, repo, nil, nil, userRepo, invalidator, nil)
-
-	svc.persistContentModerationLog(context.Background(), cfg, newContentModerationFlaggedLog(userID), "", false, true)
-
-	logs := requireContentModerationLogCount(t, repo, 1)
-	require.Equal(t, 1, logs[0].ViolationCount)
-	require.False(t, logs[0].AutoBanned)
-	require.Equal(t, StatusActive, userRepo.user.Status)
-	require.Empty(t, userRepo.updated)
-	require.Empty(t, invalidator.userIDs)
-}
-
-func newContentModerationFlaggedLog(userID int64) *ContentModerationLog {
-	return &ContentModerationLog{
-		UserID:          &userID,
-		Action:          ContentModerationActionBlock,
-		Flagged:         true,
-		HighestCategory: "sexual",
-		HighestScore:    0.9,
-		CreatedAt:       time.Now(),
-	}
 }
 
 func TestContentModerationCheck_PreBlockFlaggedWritesRedisHashCache(t *testing.T) {
@@ -1614,10 +1272,8 @@ func TestContentModerationCheck_PreBlockFlaggedWritesRedisHashCache(t *testing.T
 		repo,
 		hashCache,
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
 
 	body := []byte(`{"messages":[{"role":"user","content":"repeat blocked prompt"}]}`)
 	decision, err := svc.Check(context.Background(), ContentModerationCheckInput{
@@ -1727,10 +1383,8 @@ func TestContentModerationCheck_AsyncFlaggedWritesRedisHashCache(t *testing.T) {
 		repo,
 		hashCache,
 		nil,
-		nil,
-		nil,
-		nil,
-	)
+
+		nil)
 
 	decision := svc.checkSync(context.Background(), ContentModerationCheckInput{
 		Protocol: ContentModerationProtocolOpenAIChat,
@@ -1742,98 +1396,28 @@ func TestContentModerationCheck_AsyncFlaggedWritesRedisHashCache(t *testing.T) {
 	requireContentModerationLogCount(t, repo, 1)
 }
 
-func TestBuildContentModerationAccountDisabledEmailBody_ContainsBanDetails(t *testing.T) {
-	userID := int64(1001)
-	cfg := defaultContentModerationConfig()
-	cfg.BanThreshold = 10
-	body := buildContentModerationAccountDisabledEmailBody("Sub2API <Admin>", &ContentModerationLog{
-		UserID:          &userID,
-		UserEmail:       "user@example.com",
-		GroupName:       "vip_2",
+func TestBuildContentModerationViolationEmailBody_ContainsGatewayContext(t *testing.T) {
+	body := buildContentModerationViolationEmailBody("Sub2API <Admin>", &ContentModerationLog{
+		RequestID:       "req-123",
+		APIKeyName:      "gateway-main",
+		GroupName:       "default",
+		Endpoint:        "/v1/responses",
+		Provider:        "openai",
+		Model:           "gpt-5.5",
 		HighestCategory: "sexual",
 		HighestScore:    0.926,
-		ViolationCount:  10,
-	}, cfg)
+	})
 
-	require.Contains(t, body, "账户已被自动禁用")
-	require.Contains(t, body, "封禁详情")
-	require.Contains(t, body, "账户当前处于封禁状态，所有 API 请求将被拒绝")
-	require.Contains(t, body, "10 次（阈值 10）")
+	require.Contains(t, body, "网关请求触发内容审计规则")
+	require.Contains(t, body, "req-123")
+	require.Contains(t, body, "gateway-main")
+	require.Contains(t, body, "/v1/responses")
+	require.Contains(t, body, "openai / gpt-5.5")
 	require.Contains(t, body, "sexual / 0.926")
 	require.Contains(t, body, "Sub2API &lt;Admin&gt;")
-}
-
-func TestContentModerationUnbanUser_ActivatesUserAndInvalidatesAuthCache(t *testing.T) {
-	userRepo := &contentModerationTestUserRepo{user: &User{ID: 1001, Email: "user@example.com", Status: StatusDisabled}}
-	invalidator := &contentModerationTestAuthCacheInvalidator{}
-	repo := &contentModerationTestRepo{}
-	svc := NewContentModerationService(nil, repo, nil, nil, userRepo, invalidator, nil)
-
-	result, err := svc.UnbanUser(context.Background(), 1001)
-
-	require.NoError(t, err)
-	require.Equal(t, int64(1001), result.UserID)
-	require.Equal(t, StatusActive, result.Status)
-	require.Len(t, userRepo.updated, 1)
-	require.Equal(t, StatusActive, userRepo.updated[0].Status)
-	require.Equal(t, []int64{1001}, invalidator.userIDs)
-}
-
-func TestContentModerationUnbanUser_ActiveUserOnlyInvalidatesAuthCache(t *testing.T) {
-	userRepo := &contentModerationTestUserRepo{user: &User{ID: 1001, Email: "user@example.com", Status: StatusActive}}
-	invalidator := &contentModerationTestAuthCacheInvalidator{}
-	repo := &contentModerationTestRepo{}
-	svc := NewContentModerationService(nil, repo, nil, nil, userRepo, invalidator, nil)
-
-	result, err := svc.UnbanUser(context.Background(), 1001)
-
-	require.NoError(t, err)
-	require.Equal(t, StatusActive, result.Status)
-	require.Empty(t, userRepo.updated)
-	require.Equal(t, []int64{1001}, invalidator.userIDs)
+	require.NotContains(t, body, "封禁")
 }
 
 func contentModerationIntPtr(v int) *int {
 	return &v
-}
-
-func TestContentModerationUpdateConfig_CyberPolicyExcludeFromBanCount(t *testing.T) {
-	settingRepo := &contentModerationTestSettingRepo{values: map[string]string{}}
-	svc := NewContentModerationService(settingRepo, nil, nil, nil, nil, nil, nil)
-
-	// 默认值必须是 false（计入，保持现状）
-	view, err := svc.GetConfig(context.Background())
-	require.NoError(t, err)
-	require.False(t, view.CyberPolicyExcludeFromBanCount, "默认必须计入封号计数")
-
-	// 指针式部分更新为 true
-	exclude := true
-	view, err = svc.UpdateConfig(context.Background(), UpdateContentModerationConfigInput{
-		CyberPolicyExcludeFromBanCount: &exclude,
-	})
-	require.NoError(t, err)
-	require.True(t, view.CyberPolicyExcludeFromBanCount)
-
-	// 持久化 JSON 含字段
-	var saved ContentModerationConfig
-	require.NoError(t, json.Unmarshal([]byte(settingRepo.values[SettingKeyContentModerationConfig]), &saved))
-	require.True(t, saved.CyberPolicyExcludeFromBanCount)
-
-	// 二次读取（从持久化 JSON 反序列化）roundtrip
-	view, err = svc.GetConfig(context.Background())
-	require.NoError(t, err)
-	require.True(t, view.CyberPolicyExcludeFromBanCount)
-
-	// 不传该字段的更新不得改动它（指针 nil = 保留）
-	view, err = svc.UpdateConfig(context.Background(), UpdateContentModerationConfigInput{})
-	require.NoError(t, err)
-	require.True(t, view.CyberPolicyExcludeFromBanCount)
-
-	// 主动回拨 false 必须生效（防止未来误加 if val 保护逻辑）
-	revert := false
-	view, err = svc.UpdateConfig(context.Background(), UpdateContentModerationConfigInput{
-		CyberPolicyExcludeFromBanCount: &revert,
-	})
-	require.NoError(t, err)
-	require.False(t, view.CyberPolicyExcludeFromBanCount)
 }

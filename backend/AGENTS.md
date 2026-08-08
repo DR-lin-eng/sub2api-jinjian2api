@@ -36,7 +36,7 @@ server/routes/gateway.go
   -> infrastructure/repository implementations
 ```
 
-同时验证 API Key/分组 context、计费资格复查、用户/账号槽位释放、粘性会话、失败账号排除、最大 failover 次数、流式错误格式和用量结算。
+同时验证 API Key/分组 context、等待后的可调度性复查、调用方/账号槽位释放、粘性会话、失败账号排除、最大 failover 次数、流式错误格式和用量成本落库。
 
 ## 生成与迁移
 
@@ -59,7 +59,7 @@ go test ./internal/transport/http/...
 golangci-lint run ./...
 ```
 
-按改动选择最小相关测试，但共享协议、调度、并发、计费、缓存或 repository 变更必须扩大验证。涉及 PostgreSQL/Redis 行为时运行 integration/Testcontainers；涉及性能时保留并运行相邻 benchmark；涉及发布行为时回到仓库根目录做 Docker 源码构建。
+按改动选择最小相关测试，但共享协议、调度、并发、成本计算、缓存或 repository 变更必须扩大验证。涉及 PostgreSQL/Redis 行为时运行 integration/Testcontainers；涉及性能时保留并运行相邻 benchmark；涉及发布行为时回到仓库根目录做 Docker 源码构建。
 
 宿主机默认缓存不可写时，把 `GOCACHE` 指向可写临时目录或使用 Docker，不要把缓存放进版本控制。
 

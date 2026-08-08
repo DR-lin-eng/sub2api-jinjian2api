@@ -58,12 +58,12 @@ func TestAdminAPIKeyScopesAndLifecycle(t *testing.T) {
 	expires := time.Now().Add(time.Hour)
 	created, secret, err := svc.CreateAdminAPIKey(ctx, AdminAPIKeyCreateInput{
 		Name:      "read-only",
-		Scopes:    []string{AdminAPIKeyScopeUsersRead, AdminAPIKeyScopeUsersRead},
+		Scopes:    []string{AdminAPIKeyScopeAccountsRead, AdminAPIKeyScopeAccountsRead},
 		ExpiresAt: &expires,
 	}, 42)
 	require.NoError(t, err)
 	require.NotEmpty(t, secret)
-	require.Equal(t, []string{AdminAPIKeyScopeUsersRead}, created.Scopes)
+	require.Equal(t, []string{AdminAPIKeyScopeAccountsRead}, created.Scopes)
 	require.NotContains(t, repo.values[adminAPIKeysSetting], secret)
 
 	authenticated, err := svc.AuthenticateAdminAPIKey(ctx, secret)

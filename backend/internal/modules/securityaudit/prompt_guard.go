@@ -166,7 +166,7 @@ func (g *GuardEvaluator) Evaluate(ctx context.Context, cfg ActiveConfig, snapsho
 			"guard_endpoint_id": aggregated.GuardEndpointID,
 			"decision":          kind, "risk_level": aggregated.RiskLevel, "action": aggregated.Action, "chunk_total": aggregated.ChunkTotal,
 			"latency_ms": aggregated.LatencyMS, "status": "blocked", "error_code": ErrorCodeBlocked,
-			"stage": snapshot.Stage, "upstream_dispatched": false, "billing_preconsumed": false,
+			"stage": snapshot.Stage, "upstream_dispatched": false, "usage_recorded": false,
 		}))
 	} else {
 		LogInfo(EventGuardAllowed, mergeLogFields(baseFields, map[string]any{
@@ -183,7 +183,7 @@ func logGuardFailure(snapshot PromptSnapshot, cfg ActiveConfig, kind DecisionKin
 	fields["config_version"] = cfg.ConfigVersion
 	LogWarn(EventGuardFailed, mergeLogFields(fields, map[string]any{
 		"decision": kind, "guard_endpoint_id": guardEndpointID, "latency_ms": latency.Milliseconds(),
-		"status": "failed", "error_code": code, "upstream_dispatched": false, "billing_preconsumed": false,
+		"status": "failed", "error_code": code, "upstream_dispatched": false, "usage_recorded": false,
 	}))
 }
 

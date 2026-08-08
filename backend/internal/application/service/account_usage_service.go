@@ -49,7 +49,6 @@ type UsageLogRepository interface {
 
 	// Account stats
 	GetAccountUsageStats(ctx context.Context, accountID int64, startTime, endTime time.Time) (*usagestats.AccountUsageStatsResponse, error)
-
 }
 
 type accountWindowStatsBatchReader interface {
@@ -272,7 +271,7 @@ func (c *UsageCache) cleanupExpired(now time.Time) {
 //
 // cost: 账号口径费用（total_cost * account_rate_multiplier）
 // standard_cost: 标准费用（total_cost，不含倍率）
-// user_cost: 用户/API Key 口径费用（actual_cost，受分组倍率影响）
+// user_cost: 网关倍率费用（兼容字段名，值为受分组倍率影响的 actual_cost）
 type WindowStats struct {
 	Requests     int64   `json:"requests"`
 	Tokens       int64   `json:"tokens"`

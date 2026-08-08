@@ -1,6 +1,6 @@
 # Sub2API Docker Image
 
-Sub2API is an AI API Gateway Platform for distributing and managing AI product subscription API quotas.
+This branch is a single-administrator AI API gateway for routing API-key traffic across upstream model accounts. It does not include public registration, downstream billing, subscriptions, or payments.
 
 ## Quick Start
 

@@ -269,6 +269,111 @@ VALUES (40, 'second@example.test', 'hash-40', 'admin', 'active')
 	require.NoError(t, rollbackErr)
 }
 
+func TestSingleAdminLegacySettingsMigrationRemovesCommercialStateAndNarrowsScopes(t *testing.T) {
+	ctx := context.Background()
+	tx := testTx(t)
+	schema := "single_admin_legacy_settings_fixture"
+
+	_, err := tx.ExecContext(ctx, "CREATE SCHEMA "+pq.QuoteIdentifier(schema))
+	require.NoError(t, err)
+	_, err = tx.ExecContext(ctx, "SET LOCAL search_path = "+pq.QuoteIdentifier(schema)+", pg_catalog")
+	require.NoError(t, err)
+
+	_, err = tx.ExecContext(ctx, `
+CREATE TABLE users (
+    id BIGINT PRIMARY KEY
+);
+CREATE TABLE settings (
+    id BIGSERIAL PRIMARY KEY,
+    key VARCHAR(100) NOT NULL UNIQUE,
+    value TEXT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+INSERT INTO users (id) VALUES (20);
+INSERT INTO settings (key, value) VALUES
+    ('registration_enabled', 'true'),
+    ('auth_source_default_email_balance', '10'),
+    ('auth_source_default_custom_platform_quotas', '{}'),
+    ('oidc_connect_enabled', 'true'),
+    ('aliyun_captcha_enabled', 'true'),
+    ('payment_enabled', 'true'),
+    ('ENABLED_PAYMENT_TYPES', '["stripe"]'),
+    ('affiliate_enabled', 'true'),
+    ('contact_info', 'legacy support'),
+    ('model_plaza_enabled', 'true'),
+    ('balance_low_notify_enabled', 'true'),
+    ('notification_email_template:balance.low:en', '{}'),
+    ('notification_email_preference:admin@example.test:balance.low', 'false'),
+    ('notification_email_delivery:subscription.expiry_reminder:user:20', 'sent'),
+    ('notification_email_locale:user:10', 'zh'),
+    ('notification_email_locale:user:20', 'en'),
+    ('notification_email_template:ops.alert:en', '{}'),
+    ('upstream_billing_probe_settings', '{"enabled":true}'),
+    ('openai_advanced_scheduler_subscription_priority_enabled', 'true'),
+    ('admin_api_keys', 'not-json');
+`)
+	require.NoError(t, err)
+
+	migrationSQL, err := migrations.FS.ReadFile("204_remove_single_admin_legacy_settings.sql")
+	require.NoError(t, err)
+	require.NoError(t, execMigrationSQL(ctx, tx, migrationSQL))
+	require.NoError(t, execMigrationSQL(ctx, tx, migrationSQL), "migration must be replay-safe")
+
+	for _, key := range []string{
+		"registration_enabled",
+		"auth_source_default_email_balance",
+		"auth_source_default_custom_platform_quotas",
+		"oidc_connect_enabled",
+		"aliyun_captcha_enabled",
+		"payment_enabled",
+		"ENABLED_PAYMENT_TYPES",
+		"affiliate_enabled",
+		"contact_info",
+		"model_plaza_enabled",
+		"balance_low_notify_enabled",
+		"notification_email_template:balance.low:en",
+		"notification_email_preference:admin@example.test:balance.low",
+		"notification_email_delivery:subscription.expiry_reminder:user:20",
+		"notification_email_locale:user:10",
+	} {
+		var count int
+		require.NoError(t, tx.QueryRowContext(ctx, "SELECT COUNT(*) FROM settings WHERE key = $1", key).Scan(&count))
+		require.Zero(t, count, "legacy setting %s must be removed", key)
+	}
+
+	for key, want := range map[string]string{
+		"notification_email_locale:user:20":                       "en",
+		"notification_email_template:ops.alert:en":                "{}",
+		"upstream_billing_probe_settings":                         `{"enabled":true}`,
+		"openai_advanced_scheduler_subscription_priority_enabled": "true",
+		"admin_api_keys": "not-json",
+	} {
+		var got string
+		require.NoError(t, tx.QueryRowContext(ctx, "SELECT value FROM settings WHERE key = $1", key).Scan(&got))
+		require.Equal(t, want, got, "active setting %s must be preserved", key)
+	}
+
+	_, err = tx.ExecContext(ctx, `
+UPDATE settings
+SET value = '{"version":1,"keys":[{"id":"users-only","scopes":["admin.users.read","admin.users.write"]},{"id":"mixed","scopes":["admin.read","admin.users.read","admin.accounts.write"]},{"id":"missing"}]}'
+WHERE key = 'admin_api_keys'
+`)
+	require.NoError(t, err)
+	require.NoError(t, execMigrationSQL(ctx, tx, migrationSQL))
+	require.NoError(t, execMigrationSQL(ctx, tx, migrationSQL), "scope cleanup must be replay-safe")
+
+	var adminAPIKeys string
+	require.NoError(t, tx.QueryRowContext(ctx, "SELECT value FROM settings WHERE key = 'admin_api_keys'").Scan(&adminAPIKeys))
+	require.JSONEq(t, `{
+        "version": 1,
+        "keys": [
+            {"id": "users-only", "scopes": []},
+            {"id": "mixed", "scopes": ["admin.read", "admin.accounts.write"]},
+            {"id": "missing"}
+        ]
+    }`, adminAPIKeys)
+}
+
 func execMigrationSQL(ctx context.Context, tx *sql.Tx, migrationSQL []byte) error {
 	_, err := tx.ExecContext(ctx, string(migrationSQL))
 	return err

@@ -153,19 +153,19 @@ make build
 
 | 入口 | 非流式 Allow | SSE/流式 Allow | Prompt Block | Unavailable | Invalid | 必查副作用 |
 | --- | --- | --- | --- | --- | --- | --- |
-| OpenAI Chat Completions | 原 envelope | Guard 前 0 bytes，之后原流 | 403 `prompt_guard_blocked` | 503 `prompt_guard_unavailable` | 503 `prompt_guard_invalid_response` | account/billing/upstream |
-| OpenAI Responses + aliases | 原 envelope | 同上 | 403 OpenAI-compatible | 503 | 503 | account/billing/upstream |
-| Claude Messages | 原 envelope | 同上 | 403 Anthropic envelope | 503 Anthropic envelope | 503 Anthropic envelope | account/billing/upstream |
-| Gemini generateContent | 原 envelope | 原流式行为 | 403 Google envelope + ErrorInfo reason | 503 + ErrorInfo reason | 503 + ErrorInfo reason | account/billing/upstream |
-| Images/Grok media 文本入口 | 原 envelope | 保持原 keepalive 时序 | 403 | 503 | 503 | image slot/billing/upstream/task |
-| Responses WS first turn | 正常继续 | N/A | close 4403 blocked | close 1013 unavailable | close 1013 invalid | user/account slot、billing、dial |
-| Responses WS subsequent | 本轮继续 | N/A | close 4403，stage=subsequent_turn | close 1013 | close 1013 | 本轮 slot、billing、upstream write |
+| OpenAI Chat Completions | 原 envelope | Guard 前 0 bytes，之后原流 | 403 `prompt_guard_blocked` | 503 `prompt_guard_unavailable` | 503 `prompt_guard_invalid_response` | account/usage/upstream |
+| OpenAI Responses + aliases | 原 envelope | 同上 | 403 OpenAI-compatible | 503 | 503 | account/usage/upstream |
+| Claude Messages | 原 envelope | 同上 | 403 Anthropic envelope | 503 Anthropic envelope | 503 Anthropic envelope | account/usage/upstream |
+| Gemini generateContent | 原 envelope | 原流式行为 | 403 Google envelope + ErrorInfo reason | 503 + ErrorInfo reason | 503 + ErrorInfo reason | account/usage/upstream |
+| Images/Grok media 文本入口 | 原 envelope | 保持原 keepalive 时序 | 403 | 503 | 503 | image slot/usage/upstream/task |
+| Responses WS first turn | 正常继续 | N/A | close 4403 blocked | close 1013 unavailable | close 1013 invalid | caller/account slot、usage、dial |
+| Responses WS subsequent | 本轮继续 | N/A | close 4403，stage=subsequent_turn | close 1013 | close 1013 | 本轮 slot、usage、upstream write |
 
 SSE 测试不能只断言最终状态；必须在 Guard fake 阻塞时读取连接并证明还没有 header/首字节/keepalive。
 
 WS 测试必须检查 close code、短 reason、stage 日志和上游帧计数；不能把所有 1013 错误都写成同一内部错误事实。
 
-## 5. 无账号、无计费、无上游证明
+## 5. 无账号选择、无用量记录、无上游证明
 
 ### 5.1 测试装置
 
@@ -173,10 +173,8 @@ WS 测试必须检查 close code、短 reason、stage 日志和上游帧计数�
 
 ```text
 account_select_calls
-user_slot_acquire_calls
+caller_slot_acquire_calls
 account_slot_acquire_calls
-subscription_or_balance_check_calls
-billing_preconsume_calls
 usage_write_calls
 upstream_dial_calls
 upstream_http_calls
@@ -184,18 +182,18 @@ upstream_ws_write_calls
 async_media_task_create_calls
 ```
 
-对 Prompt Block、Unavailable、Invalid 分别断言所有适用计数为 0。若基础鉴权必须读取 API key/user/group，这不算“账号选择”；证据需区分认证主体读取与上游 account scheduler。
+对 Prompt Block、Unavailable、Invalid 分别断言所有适用计数为 0。若基础鉴权必须读取 API key/administrator/group，这不算“账号选择”；证据需区分认证主体读取与上游 account scheduler。
 
 ### 5.2 数据库前后快照
 
 除 fake counter 外，测试还应记录请求前后这些业务表/统计不变：
 
-- usage/billing/余额/订阅消费记录。
-- API key/account quota 与 rate limit 计数。
+- usage 与成本记录。
+- API key/account 运行态与 rate limit 计数。
 - 上游请求/任务记录。
 - 图片/媒体占用或预扣记录。
 
-允许新增的只有 Prompt Audit 自己的脱敏 blocking job/event、结构化日志和指标。现有 Content Moderation 同时命中时，它原本会产生的记录/封号/邮件仍按既有行为执行。
+允许新增的只有 Prompt Audit 自己的脱敏 blocking job/event、结构化日志和指标。现有 Content Moderation 同时命中时，它原本的阻断、审计和管理员通知仍按既有行为执行。
 
 ### 5.3 日志断言
 
@@ -203,7 +201,7 @@ async_media_task_create_calls
 
 ```text
 upstream_dispatched=false
-billing_preconsumed=false
+usage_recorded=false
 stage=http|first_turn|subsequent_turn
 error_code=<stable code>
 ```
@@ -379,7 +377,7 @@ go test ./internal/modules/securityaudit -run TestPromptAuditSyntheticAsyncBasel
 1. 仅一个内部 group，短窗口、有人值守。
 2. 确认页面二次提示、指标和告警均工作。
 3. 执行 benign/flag/block/unavailable/invalid 合成请求。
-4. 证明拒绝时 account/billing/upstream 仍为 0。
+4. 证明拒绝时 account/usage/upstream 仍为 0。
 5. 观察至少一个高峰窗口后再扩大 group。
 
 ### 12.1 值班检查步骤
@@ -389,7 +387,7 @@ go test ./internal/modules/securityaudit -run TestPromptAuditSyntheticAsyncBasel
 1. 打开 `/admin/prompt-audit`，确认 effective mode、expected/active config version、Worker heartbeat、PostgreSQL、Redis 和至少两个 endpoint 均健康。
 2. 检查最近 5 分钟 Guard Unavailable、Invalid、timeout、bulkhead、P95/P99 和 async dropped 是否超过本节阈值。
 3. 检查 queued/retry/staging 最老年龄和容量占比；队列持续增长或 staging 未回收时禁止扩组。
-4. 对 benign、flag、block、unavailable、invalid 合成用例各执行一次，核对协议 envelope、错误码及 `upstream_dispatched=false`、`billing_preconsumed=false`。
+4. 对 benign、flag、block、unavailable、invalid 合成用例各执行一次，核对协议 envelope、错误码及 `upstream_dispatched=false`、`usage_recorded=false`。
 5. 抽查最新风险事件的脱敏预览、身份分列、分类和 IssueSummary，禁止从 Redis 导出原文。
 6. 记录值班人、时间、config version、测试 group、指标快照和结论；扩组必须由安全、运营、业务责任人共同确认。
 

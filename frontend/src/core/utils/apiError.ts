@@ -24,7 +24,7 @@ interface ApiErrorLike {
 /**
  * Extract the error code from an API error object.
  *
- * Prefers the string `reason` (e.g. "PAYMENT_PROVIDER_MISCONFIGURED") over the
+ * Prefers the string `reason` (e.g. "INVALID_CONFIGURATION") over the
  * numeric HTTP `code`, because reason is granular enough to drive i18n lookup
  * while HTTP code is not.
  */
@@ -54,7 +54,7 @@ type TranslateWithExistsFn = TranslateFn & { te?: (key: string) => boolean }
  *
  * @param err      - The caught error
  * @param t        - Vue i18n translate function
- * @param namespace- i18n key prefix, e.g. "payment.errors"
+ * @param namespace- i18n key prefix, e.g. "admin.settings.errors"
  * @param fallback - Fallback key or plain string if no localized mapping exists
  */
 export function extractI18nErrorMessage(

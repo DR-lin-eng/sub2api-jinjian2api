@@ -175,4 +175,4 @@ For URL responses, `image_url` mirrors the first `data[].url` for simple clients
 
 All submit and poll responses include `Cache-Control: no-store`, preventing a CDN from caching the `processing` state. Tasks and results expire 24 hours after their latest state update. A task executes for at most 30 minutes.
 
-Task ownership is scoped to both user and API key. Unknown task IDs and IDs owned by another key both return `404`, avoiding task-existence disclosure. Polling remains available when the completed generation used the key's remaining balance; normal authentication, disabled-key, user, IP, and group checks still apply.
+Task ownership is scoped to the local administrator and API key. Unknown task IDs and IDs owned by another key both return `404`, avoiding task-existence disclosure. Polling remains available after completion; normal API-key authentication, disabled-key, IP, and group-routing checks still apply.

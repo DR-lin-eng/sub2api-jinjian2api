@@ -190,7 +190,7 @@ export default {
         }
       },
       upstreamBilling: {
-        trustWarning: '声明倍率和额度均由上游站点针对当前 API Key 返回。Sub2API 无法验证其是否与实际扣费或余额一致，请结合账单、余额变化和实际用量自行核验。本列仅按声明倍率排序。',
+        trustWarning: '声明倍率和额度均由上游站点针对当前 API Key 返回。Sub2API 无法验证其是否与实际账单或余额一致，请结合账单、余额变化和实际用量自行核验。本列仅按声明倍率排序。',
         autoProbe: '自动探测上游声明倍率',
         autoProbeHint: '启用后按全局周期刷新上游声明倍率；此开关本身不会修改账号倍率。',
         syncRate: '同步上游声明倍率',

@@ -69,8 +69,6 @@ curl -X POST "${BASE}/api/v1/admin/settings/admin-api-keys" \
 | --- | --- |
 | `admin.read` | 所有非敏感 Admin GET/HEAD/OPTIONS 请求 |
 | `admin.write` | 未划分到专属资源的 Admin POST/PUT/PATCH/DELETE 请求 |
-| `admin.users.read` | 用户管理读取接口 |
-| `admin.users.write` | 用户管理写入接口 |
 | `admin.accounts.read` | 上游账号管理读取接口 |
 | `admin.accounts.write` | 上游账号管理写入接口 |
 | `admin.settings.read` | 系统设置读取和 Admin API Key 列表 |
@@ -103,25 +101,19 @@ BASE="https://<your-domain>"
 ADMIN_API_KEY="admin-<your-key>"
 ```
 
-读取用户，需要 `admin.users.read` 或 `admin.read`：
+读取上游账号，需要 `admin.accounts.read` 或 `admin.read`：
 
 ```bash
-curl -sS "${BASE}/api/v1/admin/users/123" \
+curl -sS "${BASE}/api/v1/admin/accounts/123" \
   -H "x-api-key: ${ADMIN_API_KEY}"
 ```
 
-调整余额，需要 `admin.users.write`：
+刷新上游账号，需要 `admin.accounts.write` 或 `admin.write`：
 
 ```bash
-curl -X POST "${BASE}/api/v1/admin/users/123/balance" \
+curl -X POST "${BASE}/api/v1/admin/accounts/123/refresh" \
   -H "x-api-key: ${ADMIN_API_KEY}" \
-  -H "Content-Type: application/json" \
-  -H "Idempotency-Key: balance-adjust-order-123" \
-  -d '{
-    "balance": 10,
-    "operation": "add",
-    "notes": "order 123"
-  }'
+  -H "Content-Type: application/json"
 ```
 
 读取运维状态，需要 `admin.ops.read` 或 `admin.read`：
@@ -155,8 +147,8 @@ curl -X PUT "${BASE}/api/v1/admin/settings/admin-api-keys/<key-id>" \
   -H "Authorization: Bearer ${ADMIN_JWT}" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "用户只读同步",
-    "scopes": ["admin.users.read"],
+    "name": "账号只读同步",
+    "scopes": ["admin.accounts.read"],
     "expires_at": "2027-01-31T00:00:00Z"
   }'
 ```
@@ -199,7 +191,7 @@ curl -X DELETE "${BASE}/api/v1/admin/settings/admin-api-keys/<key-id>" \
 | `401` | `UNAUTHORIZED` | 未提供认证信息 |
 | `401` | `INVALID_ADMIN_KEY` | Key 不存在、已撤销或已过期 |
 | `403` | `ADMIN_API_KEY_SCOPE_REQUIRED` | Key 缺少当前接口需要的 scope，或接口禁止机器 Key 调用 |
-| `403` | `FORBIDDEN` | JWT 用户不是管理员 |
+| `403` | `FORBIDDEN` | JWT 不是本地管理员会话 |
 | `423` | `ADMIN_COMPLIANCE_ACK_REQUIRED` | 管理员尚未确认当前版本的部署与运营合规承诺 |
 
 错误响应示例：
@@ -219,7 +211,4 @@ curl -X DELETE "${BASE}/api/v1/admin/settings/admin-api-keys/<key-id>" \
 - 不要通过 query string 传递 Key。
 - 不要在错误日志、审计 payload 或监控标签中记录完整 Key。
 - 定期检查 `last_used_at`，撤销长期未使用的 Key。
-- 对余额、兑换、支付回调等接口使用稳定的 `Idempotency-Key`。
 - 对系统更新、备份恢复、凭证导出等高影响操作使用管理员 JWT 和 TOTP step-up。
-
-支付集成的具体接口请参阅 [ADMIN_PAYMENT_INTEGRATION_API.md](./ADMIN_PAYMENT_INTEGRATION_API.md)。

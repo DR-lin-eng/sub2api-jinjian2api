@@ -1,6 +1,6 @@
 # Frontend
 
-本目录是 Sub2API 的 Vue 3 管理与用户界面，使用 TypeScript、Vite、Pinia、Vue Router、Tailwind CSS 和 Vitest。依赖统一由 pnpm 管理。
+本目录是 Sub2API 单管理员支线的 Vue 3 管理界面，使用 TypeScript、Vite、Pinia、Vue Router、Tailwind CSS 和 Vitest。依赖统一由 pnpm 管理。
 
 ## 启动与构建
 
@@ -75,7 +75,7 @@ ESLint 还对迁移期架构债务执行“只减不增”门禁：禁止新增 
 
 短期 access token 保存在内存中，刷新凭据由后端 HttpOnly cookie 管理。`src/core/networks/client.ts` 会合并并发 401 刷新并重试请求。
 
-Router guard 提供页面跳转和功能开关体验，但不是安全边界。管理员、step-up、用户身份和功能权限必须由后端再次验证。
+Router guard 提供页面跳转和功能开关体验，但不是安全边界。本地管理员身份、step-up 和功能权限必须由后端再次验证。
 
 修改登录/刷新流程时同时检查：
 
@@ -127,7 +127,7 @@ pnpm run lint:check
 pnpm run typecheck
 ```
 
-涉及路由、认证、API client、共享 store 或构建分包时，至少运行相关 spec、lint 和 typecheck。支付、图片、表格等交互页面还应验证 loading、empty、error 和权限受限状态。
+涉及路由、认证、API client、共享 store 或构建分包时，至少运行相关 spec、lint 和 typecheck。图片、表格等交互页面还应验证 loading、empty、error 和权限受限状态。
 
 ## 维护规则
 

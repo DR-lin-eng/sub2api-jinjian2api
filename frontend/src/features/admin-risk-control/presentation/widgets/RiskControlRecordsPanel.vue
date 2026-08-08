@@ -91,21 +91,7 @@
                 </div>
               </td>
               <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
-                <div>{{ violationCountText(row) }}</div>
-                <div class="text-xs text-gray-400">
-                  {{ row.email_sent ? t('admin.riskControl.emailSent') : t('admin.riskControl.emailNotSent') }}
-                  <span v-if="row.auto_banned"> / {{ t('admin.riskControl.autoBanned') }}</span>
-                </div>
-                <button
-                  v-if="canUnbanRow(row)"
-                  type="button"
-                  class="mt-2 inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-900/60 dark:bg-emerald-900/20 dark:text-emerald-300 dark:hover:bg-emerald-900/30"
-                  :disabled="unbanningUserId === row.user_id"
-                  @click="emit('unban', row)"
-                >
-                  <Icon name="checkCircle" size="xs" :class="unbanningUserId === row.user_id ? 'animate-spin' : ''" />
-                  {{ unbanningUserId === row.user_id ? t('common.processing') : t('admin.riskControl.unbanUser') }}
-                </button>
+				{{ row.email_sent ? t('admin.riskControl.emailSent') : t('admin.riskControl.emailNotSent') }}
               </td>
               <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
                 <div>{{ latencyText(row.upstream_latency_ms) }}</div>
@@ -236,7 +222,6 @@ const props = defineProps<{
   modelFilterPreviewModels: string[]
   hiddenModelFilterModelCount: number
   pagination: LogPagination
-  unbanningUserId: number | null
 }>()
 
 const emit = defineEmits<{
@@ -244,7 +229,6 @@ const emit = defineEmits<{
   reload: []
   pageChange: [page: number]
   pageSizeChange: [pageSize: number]
-  unban: [row: ContentModerationLog]
   updateFilter: [key: keyof LogFilters, value: string | number]
 }>()
 
@@ -278,10 +262,6 @@ const inputDetailText = computed(
   () => inputDetailRow.value?.input_excerpt || inputDetailRow.value?.error || '-',
 )
 
-function canUnbanRow(row: ContentModerationLog): boolean {
-  return Boolean(row.auto_banned && row.user_id && row.user_status === 'disabled')
-}
-
 function inputSummaryText(row: ContentModerationLog): string {
   return row.input_excerpt || row.error || '-'
 }
@@ -310,12 +290,6 @@ function percent(value: number): string {
 function latencyText(value: number | null): string {
   if (value === null || value === undefined) return '-'
   return `${value} ms`
-}
-
-function violationCountText(row: ContentModerationLog): string {
-  if (!row.flagged) return '-'
-  if (row.violation_count === 0) return t('admin.riskControl.violationNotCounted')
-  return t('admin.riskControl.violationCount', { count: row.violation_count || 1 })
 }
 
 function formatDateTime(value: string): string {

@@ -6,11 +6,10 @@
 
 | 前缀 | 职责 |
 | --- | --- |
-| `account*`, `user*`, `group*`, `api_key*` | 核心身份和账号持久化 |
-| `usage_log*`, `usage_billing*`, `billing_cache*` | 用量、计费队列和账务缓存 |
+| `account*`, `group*`, `api_key*`, `user*` | 上游账号、路由分组、网关 Key 与唯一管理员持久化 |
+| `usage_log*` | 用量、成本快照和统计查询 |
 | `scheduler*`, `concurrency*`, `session_limit*`, `rpm_cache*` | 调度与并发状态 |
 | `ops*`, `audit_log*`, `channel_monitor*` | 运维、审计和监控查询 |
-| `payment*`, `subscription*`, `promo_code*`, `redeem_code*` | 商业对象持久化 |
 | `*_oauth_*`, `http_upstream*`, `proxy*` | 外部凭据和网络访问实现 |
 | `wire.go` | repository provider 集合 |
 

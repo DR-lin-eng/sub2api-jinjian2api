@@ -7,7 +7,7 @@
 1. [开发指南](../DEV_GUIDE.md)：搭建环境、运行项目、测试和生成代码。
 2. [架构总览](ARCHITECTURE.md)：进程、层级、依赖方向和数据边界。
 3. [代码地图](CODE_MAP.md)：按功能和任务快速定位实现与测试。
-4. [关键请求链路](REQUEST_LIFECYCLES.md)：API Key 网关、管理端 API、计费与前端构建链路。
+4. [关键请求链路](REQUEST_LIFECYCLES.md)：API Key 网关、单管理员 API、用量成本与前端构建链路。
 5. [后端目录索引](../backend/README.md) 或 [前端目录索引](../frontend/README.md)：进入具体子系统。
 
 代码代理还应先读取根目录 [AGENTS.md](../AGENTS.md)。进入子树后继续读取 [backend/AGENTS.md](../backend/AGENTS.md) 或 [frontend/AGENTS.md](../frontend/AGENTS.md)；这些文件只保存高频、稳定的操作约束，细节以本目录和源码为准。
@@ -18,9 +18,7 @@
 | --- | --- |
 | [Admin API](ADMIN_API.md) | Admin API Key、权限范围和管理接口调用方式 |
 | [Cloudflare 接口分类与边缘规则建议](CLOUDFLARE_EDGE_RULES.md) | 按浏览器页、自动化 API、纯 API 和强人机验证入口分类，方便编写 CF/WAF 规则 |
-| [管理端支付集成 API](ADMIN_PAYMENT_INTEGRATION_API.md) | 外部支付页面与余额/兑换集成 |
 | [异步图片任务](ASYNC_IMAGE_TASKS.md) | 异步 Images API 的启用、提交和轮询 |
-| [批量图片 MVP](BATCH_IMAGE_MVP.md) | 批量图片任务的接口与状态模型 |
 
 路由的最终事实来源是 `backend/internal/transport/http/server/routes/`。文档不维护一份完整路由副本，以免与代码产生双重事实。
 
@@ -31,13 +29,6 @@
 | [组合分组](COMPOSITE_GROUPS.md) | Composite group 的平台解析和使用约束 |
 | [CPA 多号池动态负载](CPA_POOL_DYNAMIC_LOAD_BALANCING_CN.md) | CPA 凭据容量、动态分流和运维检查 |
 | [调度候选索引优化](SCHEDULER_CANDIDATE_INDEX_OPTIMIZATION_CN.md) | 实验调度引擎、索引一致性和回退行为 |
-| [支付系统（中文）](PAYMENT_CN.md) / [English](PAYMENT.md) | 支付服务商、订单、回调和配置 |
-
-## 长期优化计划
-
-| 文档 | 内容 |
-| --- | --- |
-| [前端架构优化计划](FRONTEND_ARCHITECTURE_OPTIMIZATION_PLAN.md) | Feature owner 收口、DTO、Query/Action、依赖门禁与分阶段迁移路线 |
 
 处于方案或交付阶段的功能记录在 `openspec/changes/`。使用这些文档前，应同时核对实现和测试，不能把 proposal 当作当前运行事实。
 

@@ -15,8 +15,8 @@ Composite groups can route to these concrete account platforms:
 - Antigravity
 - Grok
 
-The selected concrete platform is used for account selection, user platform
-quota checks, post-usage billing, ops error platform attribution, channel
+The selected concrete platform is used for account selection, upstream account
+eligibility, usage cost attribution, ops error platform attribution, channel
 mapping/pricing lookup, and platform usage reporting.
 
 ## Route Registry
@@ -73,23 +73,18 @@ guessing a provider.
 - Composite groups can copy accounts from concrete provider groups.
 - Concrete provider accounts can be assigned directly to composite groups from
   account create/edit and bulk account workflows.
-- Subscription payment plans can bind to a composite group when that group's
-  `subscription_type` is `subscription`. The plan grants access to the
-  composite group; each request is still billed and quota-checked against the
-  resolved concrete provider platform.
 - Channel configuration exposes composite groups in concrete provider sections.
   The channel `group_ids` payload is still flat; provider-specific model
   mapping and pricing remain keyed by concrete platform.
 
-## Bucket 2 Setup: OpenAI + Claude + Gemini + Grok
+## Mixed Provider Setup: OpenAI + Claude + Gemini + Grok
 
-Use one composite subscription group when one customer-facing plan should expose
-model aliases across OpenAI, Claude, Gemini, and Grok without issuing separate
-keys per provider.
+Use one composite group when one gateway API key should expose model aliases
+across OpenAI, Claude, Gemini, and Grok without separate keys per provider.
 
 1. Create concrete provider groups for the upstream account pools, for example
    `OpenAI Paid`, `Claude Paid`, `Gemini Paid`, and `Grok Paid`.
-2. Create a `composite` group with `subscription_type` set to `subscription`.
+2. Create a group with platform `composite`.
 3. Assign provider accounts directly to the composite group, or copy accounts
    from the concrete provider groups during group creation.
 4. Add explicit routes for public aliases that should not rely on built-in
@@ -104,11 +99,11 @@ keys per provider.
 
 5. Configure channel pricing and model mapping under the concrete platforms
    named in each route. Composite routing does not create pricing records.
-6. Create a subscription payment plan for the composite group.
+6. Create a gateway API key bound to the composite group.
 
 The same composite group can also rely on built-in detection for standard model
 names such as `gpt-*`, `claude-*`, `gemini-*`, and `grok-*`. Explicit routes are
-recommended for bundled plan aliases because they make endpoint, provider, and
+recommended for shared aliases because they make endpoint, provider, and
 upstream model attribution reviewable in the admin UI.
 
 ## Limits

@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 	"time"
-
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/shared/errors"
 )
 
 // AdminService interface defines admin management operations
@@ -299,27 +297,6 @@ type AdminUpdateAPIKeyGroupIDResult struct {
 	GrantedGroupName       string // the group name that was auto-granted
 }
 
-// ReplaceUserGroupResult 分组替换操作的结果
-type ReplaceUserGroupResult struct {
-	MigratedKeys int64 // 迁移的 Key 数量
-}
-
-// UserRPMStatus describes a user's current per-minute RPM usage.
-type UserRPMStatus struct {
-	UserRPMUsed  int                  `json:"user_rpm_used"`
-	UserRPMLimit int                  `json:"user_rpm_limit"`
-	PerGroup     []UserGroupRPMStatus `json:"per_group"`
-}
-
-// UserGroupRPMStatus describes current per-minute RPM usage for one user/group pair.
-type UserGroupRPMStatus struct {
-	GroupID   int64  `json:"group_id"`
-	GroupName string `json:"group_name"`
-	Used      int    `json:"used"`
-	Limit     int    `json:"limit"`
-	Source    string `json:"source"` // "group" | "override"
-}
-
 // BulkUpdateAccountsResult is the aggregated response for bulk updates.
 type BulkUpdateAccountsResult struct {
 	Success    int                       `json:"success"`
@@ -354,17 +331,6 @@ type UpdateProxyInput struct {
 	FallbackMode   string
 	BackupProxyID  *int64
 	ExpiryWarnDays int
-}
-
-type GenerateRedeemCodesInput struct {
-	Count          int
-	Type           string
-	Value          float64
-	GroupID        *int64 // 订阅类型专用：关联的分组ID
-	ValidityDays   int    // 订阅类型专用：有效天数
-	ExpiresAt      *time.Time
-	MaxUses        *int // 0 means unlimited; nil defaults to 1 for backward compatibility
-	MaxUsesPerUser *int
 }
 
 type ProxyBatchDeleteResult struct {
@@ -484,8 +450,6 @@ const (
 	proxyQualityMaxBodyBytes          = int64(8 * 1024)
 	proxyQualityClientUserAgent       = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
 )
-
-var ErrRPMStatusUnavailable = infraerrors.New(http.StatusNotImplemented, "RPM_STATUS_UNAVAILABLE", "RPM cache not available")
 
 // adminServiceImpl implements AdminService
 type adminServiceImpl struct {

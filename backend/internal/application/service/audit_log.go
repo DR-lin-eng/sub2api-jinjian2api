@@ -32,7 +32,6 @@ const (
 const (
 	AuditActionLogin                  = "auth.login"
 	AuditActionLogin2FA               = "auth.login.2fa"
-	AuditActionRegister               = "auth.register"
 	AuditActionTokenRefresh           = "auth.token.refresh"
 	AuditActionSessionBindingMismatch = "auth.session_binding.mismatch"
 	AuditActionStepUpVerify           = "auth.step_up.verify"
@@ -104,7 +103,7 @@ type AuditLogRepository interface {
 
 // auditNormalizeBodyKey 归一化键名：小写并去除分隔符，
 // 使 private_key / privateKey / privatekey / api-v3-key 等写法共享同一判定，
-// 避免子串清单假设 snake_case 而漏掉支付渠道等无分隔符风格的密钥字段。
+// 避免子串清单假设 snake_case 而漏掉 camelCase 等无分隔符风格的密钥字段。
 func auditNormalizeBodyKey(key string) string {
 	var b strings.Builder
 	b.Grow(len(key))

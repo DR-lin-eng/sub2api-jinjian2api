@@ -301,23 +301,20 @@ func TestPanelHeavyPathCoverage(t *testing.T) {
 		"/api/v1/admin/usage/stats",
 		"/api/v1/admin/dashboard/snapshot-v2",
 		"/api/v1/admin/ops/dashboard/overview",
-		"/api/v1/admin/payment/dashboard",
-		"/api/v1/admin/payment/orders",
 	} {
 		require.Truef(t, isPanelHeavyPath(path), "expected heavy route %s", path)
 	}
 	for _, path := range []string{
 		"/api/v1/user/profile",
 		"/api/v1/auth/me",
-		"/api/v1/payment/webhook/stripe",
+		"/health",
 	} {
 		require.Falsef(t, isPanelHeavyPath(path), "expected light/public route %s", path)
 	}
 }
 
-func TestPanelRateLimiterAdminPaymentAndOpsRoutesConsumeHeavyBucket(t *testing.T) {
+func TestPanelRateLimiterAdminOpsRoutesConsumeHeavyBucket(t *testing.T) {
 	for _, path := range []string{
-		"/api/v1/admin/payment/dashboard",
 		"/api/v1/admin/ops/dashboard/overview",
 	} {
 		t.Run(path, func(t *testing.T) {

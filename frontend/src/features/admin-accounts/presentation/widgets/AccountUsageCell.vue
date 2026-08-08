@@ -381,7 +381,7 @@
               class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800"
               :title="t('usage.userBilled')"
             >
-              U ${{ formatWindowUserCost(grokLocalUsage) }}
+              R ${{ formatWindowUserCost(grokLocalUsage) }}
             </span>
           </div>
         </div>
@@ -500,7 +500,7 @@
               class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800"
               :title="t('usage.userBilled')"
             >
-              U ${{ formatKeyUserCost }}
+              R ${{ formatKeyUserCost }}
             </span>
           </div>
         </div>

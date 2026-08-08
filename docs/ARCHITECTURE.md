@@ -4,7 +4,7 @@
 
 ## 系统上下文
 
-Sub2API 是一个 Go 模块化单体：同一后端进程同时提供浏览器管理 API、面向客户端的模型网关、后台任务和嵌入式前端资源。PostgreSQL 保存业务事实，Redis 承担缓存、并发协调、队列和短期运行状态。
+本支线是单本地管理员的 Go 模块化 2API 网关：同一后端进程提供浏览器管理 API、面向客户端的模型网关、后台任务和嵌入式前端资源。PostgreSQL 保存管理配置与用量事实，Redis 承担缓存、并发协调和短期运行状态。
 
 ```mermaid
 flowchart LR
@@ -18,7 +18,7 @@ flowchart LR
     Ports --> Infrastructure["infrastructure: 端口实现"]
     Infrastructure --> PostgreSQL[(PostgreSQL)]
     Infrastructure --> Redis[(Redis)]
-    Infrastructure --> Upstream["模型、支付、邮件等上游"]
+    Infrastructure --> Upstream["模型、代理、邮件等上游"]
 ```
 
 前端生产构建输出到 `backend/internal/transport/webassets/dist/`，随后嵌入后端二进制。开发模式下，Vite 和 Go 服务可分别运行。
@@ -29,7 +29,7 @@ flowchart LR
 | --- | --- | --- | --- |
 | 启动与装配 | `backend/cmd/server/` | 启动模式、Wire 图、生命周期、优雅退出 | 业务规则 |
 | Transport | `backend/internal/transport/` | 路由、中间件、DTO、HTTP/SSE/WS 响应 | SQL、Redis 细节 |
-| Application | `backend/internal/application/` | 用例编排、网关流程、调度、计费、端口接口 | Gin 路由、具体存储客户端 |
+| Application | `backend/internal/application/` | 用例编排、网关流程、调度、成本统计、端口接口 | Gin 路由、具体存储客户端 |
 | Domain | `backend/internal/domain/` | 纯领域值与规则 | 网络、数据库、运行配置读取 |
 | Modules | `backend/internal/modules/` | 可独立演进的垂直领域 | 无边界的通用 helper |
 | Infrastructure | `backend/internal/infrastructure/` | PostgreSQL、Redis、缓存和外部资源端口实现 | HTTP 响应格式 |
@@ -64,8 +64,8 @@ infrastructure implements application ports
 
 | 流量 | 典型路径 | 鉴权 | 路由事实源 |
 | --- | --- | --- | --- |
-| 公共/登录/用户/管理 API | `/api/v1/...` | 公共、JWT、Admin、step-up 等 | `routes/auth.go`, `user.go`, `admin.go`, `payment.go` |
-| 模型网关 | `/v1/...`, `/responses`, `/v1beta/...`, 专用平台前缀 | API Key + 分组/订阅约束 | `routes/gateway.go` |
+| 登录/单管理员/管理 API | `/api/v1/...` | 公共、JWT、Admin、step-up 等 | `routes/auth.go`, `user.go`, `admin.go` |
+| 模型网关 | `/v1/...`, `/responses`, `/v1beta/...`, 专用平台前缀 | API Key + 分组路由约束 | `routes/gateway.go` |
 | 健康与首次设置 | `/health`, `/setup/...` | 依端点而定 | `routes/common.go` 与 bootstrap setup |
 
 路由文件只组合路径、中间件和 handler。handler 负责协议边界；业务选择、调度、上游访问编排和计费进入 application service。
@@ -74,11 +74,11 @@ infrastructure implements application ports
 
 | 数据 | 事实源 | 说明 |
 | --- | --- | --- |
-| 用户、账号、分组、订阅、订单、用量 | PostgreSQL | Ent schema 在 `backend/ent/schema/`，版本迁移在 `backend/migrations/` |
-| 余额、订阅和 API Key 鉴权投影 | PostgreSQL + Redis 缓存 | 数据库是持久事实，缓存更新必须防止旧快照覆盖新写入 |
+| 唯一管理员、上游账号、分组、API Key、用量 | PostgreSQL | Ent schema 在 `backend/ent/schema/`，版本迁移在 `backend/migrations/` |
+| API Key 鉴权投影 | PostgreSQL + Redis 缓存 | 数据库是持久事实，缓存更新必须防止旧快照覆盖新写入 |
 | 并发槽位、限流、粘性会话、调度快照 | Redis/进程内短期状态 | 必须有过期、释放、容量上限和故障降级策略 |
-| 用量结算队列 | Redis Stream + PostgreSQL 幂等落库 | 关键计费任务不能静默丢弃；Redis 故障时使用受限 fallback |
-| 前端运行设置 | 后端注入 + 管理 API | 浏览器状态不是权限或计费事实源 |
+| 用量与成本记录 | PostgreSQL | request ID + API Key 幂等；批量写入失败时走有界同步兜底 |
+| 前端运行设置 | 后端注入 + 管理 API | 浏览器状态不是权限事实源 |
 
 数据库变更必须同时考虑 Ent schema、迁移、repository、DTO/API 兼容和测试 fixture。只改 schema 或只写迁移都不完整。
 
@@ -121,12 +121,12 @@ feature presentation -> common + core services/stores/utils
 
 ## 关键不变量
 
-- 鉴权、余额、订阅和并发准入必须在后端执行；前端只做体验层提示。
-- 等待并发槽位后要重新检查计费资格，避免排队期间状态变化造成越权请求。
-- 所有已获取的用户/账号/图片并发槽位必须在成功、错误和客户端取消路径释放。
+- 鉴权、分组路由和并发准入必须在后端执行；前端只做体验层提示。
+- 等待并发槽位后要重新检查 API Key 与上游账号是否仍可调度。
+- 所有已获取的调用方、账号和图片并发槽位必须在成功、错误和客户端取消路径释放。
 - 流式响应一旦写出状态或事件，错误必须使用对应协议格式，不能退回普通 JSON 状态码。
 - 调度失败处理必须维护失败账号集合和最大切换次数，避免在坏账号上无限重试。
-- 用量记录以 request ID/指纹保证幂等，结算成功后再更新相关缓存投影。
+- 用量记录以 request ID + API Key 保证幂等，并同时保存标准成本、倍率费用和上游账号成本快照。
 - 生产前端必须通过统一构建路径嵌入，不能手改 `webassets/dist/`。
 
 ## 扩展决策

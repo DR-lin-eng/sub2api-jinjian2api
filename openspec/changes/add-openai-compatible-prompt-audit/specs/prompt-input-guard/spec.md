@@ -185,7 +185,7 @@
 #### Scenario: 同步请求被阻断
 - **WHEN** Guard 阻断一个请求
 - **THEN** 日志 MUST 包含 request_id、user_id、api_key_id、group_id、protocol、endpoint、model、config_version、guard_endpoint_id、decision、action、chunk_total、latency_ms、status 和 error_code
-- **THEN** 日志 MUST 明确包含 `upstream_dispatched=false` 和 `billing_preconsumed=false` 或目标项目等价字段
+- **THEN** 日志 MUST 明确包含 `upstream_dispatched=false` 和 `usage_recorded=false` 或目标项目等价字段
 
 #### Scenario: 检查日志敏感字段
 - **WHEN** 测试捕获提示词审计日志

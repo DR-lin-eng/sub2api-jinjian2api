@@ -414,13 +414,12 @@ input_limit, enabled, has_token, token_status
 实施时还必须从 `backend/internal/transport/http/server/routes/gateway.go` 枚举所有携带用户文本的新增/旁路入口，重点复核：
 
 - `/v1/images/generations/async`、`/v1/images/edits/async`。
-- `/v1/images/batches` 及 batch item 的实际提交入口。
 - Grok video generation/edit/extension。
 - 任何不经过上述公共 Handler 的内部转发、兼容 alias 或后续新增路由。
 
-对额外入口有两种合法结论：接入 Coordinator；或证明它已在上游公共 Handler 处检查且不会二次收费/二次扫描。结论和测试必须加入路由矩阵，不能静默跳过。
+对额外入口有两种合法结论：接入 Coordinator；或证明它已在上游公共 Handler 处检查且不会重复记录成本或重复扫描。结论和测试必须加入路由矩阵，不能静默跳过。
 
-接入位置不变量：鉴权、body limit、基本 JSON/model 校验之后；账号选择、用户/账号并发 slot、订阅/余额预扣、usage 写入、上游拨号和 SSE 首字节之前。
+接入位置不变量：鉴权、body limit、基本 JSON/model 校验之后；账号选择、调用方/账号并发 slot、usage 写入、上游拨号和 SSE 首字节之前。
 
 ## 13. HTTP、SSE、WebSocket 处理细节
 

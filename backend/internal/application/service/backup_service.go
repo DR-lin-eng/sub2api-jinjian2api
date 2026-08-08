@@ -45,8 +45,8 @@ var (
 	// regenerated on every process start, so the persisted ciphertext becomes
 	// undecryptable after a restart/upgrade ("cipher: message authentication
 	// failed"), silently breaking S3 backup/image storage (#4524). Mirrors the
-	// existing guards for payments (payment.ProvideEncryptionKey) and TOTP
-	// enablement, which likewise refuse to depend on an auto-generated key.
+	// the TOTP enablement guard, which likewise refuses to depend on an
+	// auto-generated key.
 	ErrSecretEncryptionKeyNotConfigured = infraerrors.BadRequest(
 		"SECRET_ENCRYPTION_KEY_NOT_CONFIGURED",
 		"cannot store the S3 secret access key: no fixed secret encryption key is configured, so the auto-generated key would change on every restart and make the stored secret undecryptable after a restart or upgrade. Set a fixed TOTP_ENCRYPTION_KEY (e.g. generate one with `openssl rand -hex 32`) and try again",
@@ -307,7 +307,7 @@ func (s *BackupService) UpdateS3Config(ctx context.Context, cfg BackupS3Config) 
 		}
 	} else {
 		// 拒绝用自动生成的临时密钥加密：该密钥每次重启都会变化，落库的密文在
-		// 重启/升级后无法解密（#4524）。与支付、TOTP 的处理保持一致。
+		// 重启/升级后无法解密（#4524）。与 TOTP 的处理保持一致。
 		if !s.encryptionKeyConfigured {
 			return nil, ErrSecretEncryptionKeyNotConfigured
 		}

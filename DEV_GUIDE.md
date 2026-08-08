@@ -184,26 +184,26 @@ handler 不直接访问 repository，route 闭包不实现业务。
 
 先确认真实请求路径和平台分流，再从 handler 追到 service。至少检查：
 
-- API Key、分组和订阅 context
-- 用户槽位与账号槽位的获取/释放
+- API Key、唯一管理员和分组路由 context
+- 调用方槽位与账号槽位的获取/释放
 - 粘性会话与候选过滤
 - 失败账号排除和最大 failover 次数
 - 流式/非流式响应与错误格式
-- 用量记录、计费和缓存失效
+- 用量记录、成本计算和幂等落库
 
 调用链详见 [关键请求链路](docs/REQUEST_LIFECYCLES.md)。性能相关改动要保留已有 benchmark，并报告改动前后结果。
 
-### 修改计费
+### 修改成本计算
 
-统一成本入口是 `BillingService.CalculateCostUnified`，网关用量入口分别位于 `gateway_usage_billing.go` 和 `openai_gateway_usage.go`。计费修改至少覆盖：
+统一成本入口是 `BillingService.CalculateCostUnified`，网关用量入口分别位于 `gateway_usage_billing.go` 和 `openai_gateway_usage.go`。成本修改至少覆盖：
 
-- 余额和订阅两种模式
-- token、按次、图片等涉及的模式
-- request ID 幂等与指纹冲突
-- 并发提交与 Redis 队列恢复
-- PostgreSQL 事务和账务缓存一致性
+- token、按次、图片和视频等模式
+- 分组倍率、账号倍率与价格来源
+- request ID + API Key 幂等
+- 有界批处理、并发提交与同步 fallback
+- PostgreSQL 用量行和统计查询一致性
 
-关键结算不得使用静默丢弃或无界内存队列。
+用量成本记录不得使用静默丢弃或无界内存队列。
 
 ## 前端开发流程
 

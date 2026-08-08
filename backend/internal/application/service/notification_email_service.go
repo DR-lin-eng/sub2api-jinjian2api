@@ -18,7 +18,6 @@ import (
 const (
 	NotificationEmailEventAccountQuotaAlert          = "account.quota_alert"
 	NotificationEmailEventContentModerationViolation = "content_moderation.violation_notice"
-	NotificationEmailEventContentModerationDisabled  = "content_moderation.account_disabled"
 	NotificationEmailEventCyberPolicyNotice          = "content_moderation.cyber_policy_notice"
 	NotificationEmailEventOpsAlert                   = "ops.alert"
 	NotificationEmailEventOpsScheduledReport         = "ops.scheduled_report"
@@ -715,11 +714,14 @@ func notificationEmailSampleVariables(locale string) map[string]string {
 			"quota_remaining":     "20.00",
 			"quota_threshold":     "20%",
 			"triggered_at":        "2026-05-20 12:00:00",
+			"request_id":          "req-example",
+			"api_key_name":        "gateway-main",
 			"group_name":          "默认分组",
+			"endpoint":            "/v1/responses",
+			"provider":            "openai",
+			"model":               "gpt-5.5",
 			"moderation_category": "violence",
 			"moderation_score":    "0.982",
-			"violation_count":     "2",
-			"ban_threshold":       "3",
 			"rule_name":           "错误率过高",
 			"severity":            "critical",
 			"alert_status":        "firing",
@@ -750,11 +752,14 @@ func notificationEmailSampleVariables(locale string) map[string]string {
 		"quota_remaining":     "20.00",
 		"quota_threshold":     "20%",
 		"triggered_at":        "2026-05-20 12:00:00",
+		"request_id":          "req-example",
+		"api_key_name":        "gateway-main",
 		"group_name":          "Default group",
+		"endpoint":            "/v1/responses",
+		"provider":            "openai",
+		"model":               "gpt-5.5",
 		"moderation_category": "violence",
 		"moderation_score":    "0.982",
-		"violation_count":     "2",
-		"ban_threshold":       "3",
 		"rule_name":           "High error rate",
 		"severity":            "critical",
 		"alert_status":        "firing",
@@ -802,7 +807,6 @@ func addNotificationEmailOpsSummarySampleVariables(variables map[string]string) 
 var notificationEmailEventOrder = []string{
 	NotificationEmailEventAccountQuotaAlert,
 	NotificationEmailEventContentModerationViolation,
-	NotificationEmailEventContentModerationDisabled,
 	NotificationEmailEventCyberPolicyNotice,
 	NotificationEmailEventOpsAlert,
 	NotificationEmailEventOpsScheduledReport,
@@ -823,15 +827,7 @@ var notificationEmailEventDefinitions = map[string]NotificationEmailEventInfo{
 		Description: "Sent to configured administrators when a request triggers content moderation or risk-control rules.",
 		Category:    "risk_control",
 		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...),
-			"triggered_at", "group_name", "moderation_category", "moderation_score", "violation_count", "ban_threshold"),
-	},
-	NotificationEmailEventContentModerationDisabled: {
-		Event:       NotificationEmailEventContentModerationDisabled,
-		Label:       "Risk control account disabled",
-		Description: "Sent to configured administrators when content moderation disables the local administrator account.",
-		Category:    "risk_control",
-		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...),
-			"triggered_at", "group_name", "moderation_category", "moderation_score", "violation_count", "ban_threshold"),
+			"triggered_at", "request_id", "api_key_name", "group_name", "endpoint", "provider", "model", "moderation_category", "moderation_score"),
 	},
 	NotificationEmailEventCyberPolicyNotice: {
 		Event:       NotificationEmailEventCyberPolicyNotice,
@@ -895,58 +891,34 @@ var notificationEmailOfficialTemplates = map[string]map[string]notificationEmail
 	},
 	NotificationEmailEventContentModerationViolation: {
 		notificationEmailDefaultLocale: {
-			Subject: "[{{site_name}}] Risk control notice",
-			HTML: notificationEmailCard("#ef4444", "Risk control notice", `
-<p>Hello {{recipient_name}},</p>
-<p>Your API request triggered the platform content moderation/risk-control policy.</p>
+			Subject: "[{{site_name}}] Gateway risk control notice",
+			HTML: notificationEmailCard("#ef4444", "Gateway risk control notice", `
+<p>A gateway request triggered the configured content moderation/risk-control policy.</p>
 <table style="width:100%;border-collapse:collapse;">
   <tr><td>Triggered at</td><td>{{triggered_at}}</td></tr>
+	<tr><td>Request ID</td><td>{{request_id}}</td></tr>
+	<tr><td>API key</td><td>{{api_key_name}}</td></tr>
   <tr><td>Group</td><td>{{group_name}}</td></tr>
+	<tr><td>Endpoint</td><td>{{endpoint}}</td></tr>
+	<tr><td>Provider / Model</td><td>{{provider}} / {{model}}</td></tr>
   <tr><td>Category / Score</td><td>{{moderation_category}} / {{moderation_score}}</td></tr>
-  <tr><td>Violation count</td><td>{{violation_count}} / {{ban_threshold}}</td></tr>
 </table>
-<p>Please review your request content to avoid future service interruptions.</p>`),
+<p>Review the risk-control records for full audit context and adjust the rule, group scope, or caller API key as needed.</p>`),
 		},
 		notificationEmailLocaleChinese: {
-			Subject: "[{{site_name}}] 账户风控提醒",
-			HTML: notificationEmailCard("#ef4444", "账户风控提醒", `
-<p>{{recipient_name}}，您好：</p>
-<p>您的 API 请求触发了平台内容审核/风控策略。</p>
+			Subject: "[{{site_name}}] 网关风控命中",
+			HTML: notificationEmailCard("#ef4444", "网关风控命中", `
+<p>一次网关请求触发了配置的内容审核/风控策略。</p>
 <table style="width:100%;border-collapse:collapse;">
   <tr><td>触发时间</td><td>{{triggered_at}}</td></tr>
+	<tr><td>请求 ID</td><td>{{request_id}}</td></tr>
+	<tr><td>API Key</td><td>{{api_key_name}}</td></tr>
   <tr><td>所属分组</td><td>{{group_name}}</td></tr>
+	<tr><td>端点</td><td>{{endpoint}}</td></tr>
+	<tr><td>上游 / 模型</td><td>{{provider}} / {{model}}</td></tr>
   <tr><td>命中类别 / 分数</td><td>{{moderation_category}} / {{moderation_score}}</td></tr>
-  <tr><td>累计触发次数</td><td>{{violation_count}} / {{ban_threshold}}</td></tr>
 </table>
-<p>请检查请求内容，避免后续服务受到影响。</p>`),
-		},
-	},
-	NotificationEmailEventContentModerationDisabled: {
-		notificationEmailDefaultLocale: {
-			Subject: "[{{site_name}}] Account disabled by risk control",
-			HTML: notificationEmailCard("#b91c1c", "Account disabled", `
-<p>Hello {{recipient_name}},</p>
-<p>Your account has repeatedly triggered platform content moderation/risk-control rules and has been automatically disabled.</p>
-<table style="width:100%;border-collapse:collapse;">
-  <tr><td>Disabled at</td><td>{{triggered_at}}</td></tr>
-  <tr><td>Group</td><td>{{group_name}}</td></tr>
-  <tr><td>Category / Score</td><td>{{moderation_category}} / {{moderation_score}}</td></tr>
-  <tr><td>Violation count</td><td>{{violation_count}} / {{ban_threshold}}</td></tr>
-</table>
-<p>Please contact the administrator if you need to appeal or restore access.</p>`),
-		},
-		notificationEmailLocaleChinese: {
-			Subject: "[{{site_name}}] 账户已被禁用",
-			HTML: notificationEmailCard("#b91c1c", "账户已被禁用", `
-<p>{{recipient_name}}，您好：</p>
-<p>您的账户在统计周期内多次触发平台内容审核/风控规则，系统已自动禁用该账户。</p>
-<table style="width:100%;border-collapse:collapse;">
-  <tr><td>禁用时间</td><td>{{triggered_at}}</td></tr>
-  <tr><td>所属分组</td><td>{{group_name}}</td></tr>
-  <tr><td>命中类别 / 分数</td><td>{{moderation_category}} / {{moderation_score}}</td></tr>
-  <tr><td>累计触发次数</td><td>{{violation_count}} / {{ban_threshold}}</td></tr>
-</table>
-<p>如需申诉或恢复账号，请联系平台管理员处理。</p>`),
+<p>请在风控记录中查看完整审计上下文，并按需调整规则、分组范围或调用方 API Key。</p>`),
 		},
 	},
 	NotificationEmailEventCyberPolicyNotice: {

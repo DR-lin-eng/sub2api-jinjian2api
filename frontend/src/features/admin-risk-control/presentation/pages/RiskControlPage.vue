@@ -42,12 +42,10 @@
           :model-filter-preview-models="modelFilterPreviewModels"
           :hidden-model-filter-model-count="hiddenModelFilterModelCount"
           :pagination="pagination"
-          :unbanning-user-id="unbanningUserID"
           @refresh="loadLogs"
           @reload="reloadLogsFromFirstPage"
           @page-change="onPageChange"
           @page-size-change="onPageSizeChange"
-          @unban="unbanUser"
           @update-filter="updateLogFilter"
         />
       </template>
@@ -561,28 +559,6 @@
                 </div>
                 <Toggle v-model="configForm.email_on_hit" />
               </div>
-              <div class="flex items-center justify-between rounded-lg border border-gray-100 p-4 dark:border-dark-700">
-                <div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ t('admin.riskControl.autoBan') }}</p>
-                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.autoBanHint') }}</p>
-                </div>
-                <Toggle v-model="configForm.auto_ban_enabled" />
-              </div>
-              <div class="flex items-center justify-between rounded-lg border border-gray-100 p-4 dark:border-dark-700 lg:col-span-2">
-                <div>
-                  <p class="text-sm font-medium text-gray-900 dark:text-white">{{ t('admin.riskControl.cyberPolicyExcludeBan') }}</p>
-                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ t('admin.riskControl.cyberPolicyExcludeBanHint') }}</p>
-                </div>
-                <Toggle v-model="configForm.cyber_policy_exclude_from_ban_count" />
-              </div>
-              <div>
-                <label class="input-label">{{ t('admin.riskControl.banThreshold') }}</label>
-                <input v-model.number="configForm.ban_threshold" type="number" min="1" max="1000" class="input" />
-              </div>
-              <div>
-                <label class="input-label">{{ t('admin.riskControl.violationWindowHours') }}</label>
-                <input v-model.number="configForm.violation_window_hours" type="number" min="1" max="8760" class="input" />
-              </div>
             </div>
           </div>
 
@@ -829,7 +805,6 @@ const logsLoading = ref(false)
 const statusLoading = ref(false)
 const apiKeyTesting = ref(false)
 const hashActionLoading = ref(false)
-const unbanningUserID = ref<number | null>(null)
 const settingsOpen = ref(false)
 const activeSettingsTab = ref<RiskControlSettingsTab>('basic')
 const groupSearch = ref('')
@@ -870,10 +845,6 @@ const configForm = reactive({
   block_status: 403,
   block_message: defaultBlockMessage(),
   email_on_hit: true,
-  auto_ban_enabled: true,
-  cyber_policy_exclude_from_ban_count: false,
-  ban_threshold: 10,
-  violation_window_hours: 720,
   hit_retention_days: 180,
   non_hit_retention_days: 3,
   pre_hash_check_enabled: false,
@@ -1126,10 +1097,6 @@ function applyConfig(config: ContentModerationConfig) {
   configForm.block_status = config.block_status || 403
   configForm.block_message = config.block_message || defaultBlockMessage()
   configForm.email_on_hit = config.email_on_hit ?? true
-  configForm.auto_ban_enabled = config.auto_ban_enabled ?? true
-  configForm.cyber_policy_exclude_from_ban_count = config.cyber_policy_exclude_from_ban_count ?? false
-  configForm.ban_threshold = config.ban_threshold || 10
-  configForm.violation_window_hours = config.violation_window_hours || 720
   configForm.hit_retention_days = config.hit_retention_days || 180
   configForm.non_hit_retention_days = Math.min(Math.max(config.non_hit_retention_days || 3, 1), 3)
   configForm.pre_hash_check_enabled = config.pre_hash_check_enabled ?? false
@@ -1213,10 +1180,6 @@ async function saveConfig() {
       block_status: Number(configForm.block_status) || 403,
       block_message: configForm.block_message || defaultBlockMessage(),
       email_on_hit: configForm.email_on_hit,
-      auto_ban_enabled: configForm.auto_ban_enabled,
-      cyber_policy_exclude_from_ban_count: configForm.cyber_policy_exclude_from_ban_count,
-      ban_threshold: Number(configForm.ban_threshold) || 10,
-      violation_window_hours: Number(configForm.violation_window_hours) || 720,
       hit_retention_days: Number(configForm.hit_retention_days) || 180,
       non_hit_retention_days: Math.min(Math.max(Number(configForm.non_hit_retention_days) || 3, 1), 3),
       pre_hash_check_enabled: configForm.pre_hash_check_enabled,
@@ -1274,23 +1237,6 @@ async function loadLogs() {
     appStore.showError(extractApiErrorMessage(err, t('admin.riskControl.logsFailed')))
   } finally {
     logsLoading.value = false
-  }
-}
-
-async function unbanUser(row: ContentModerationLog) {
-  if (!row.user_id || unbanningUserID.value !== null) return
-  unbanningUserID.value = row.user_id
-  try {
-    const result = await adminAPI.riskControl.unbanUser(row.user_id)
-    logs.value = logs.value.map((item) => {
-      if (item.user_id !== row.user_id) return item
-      return { ...item, user_status: result.status }
-    })
-    appStore.showSuccess(t('admin.riskControl.unbanSuccess'))
-  } catch (err: unknown) {
-    appStore.showError(extractApiErrorMessage(err, t('admin.riskControl.unbanFailed')))
-  } finally {
-    unbanningUserID.value = null
   }
 }
 

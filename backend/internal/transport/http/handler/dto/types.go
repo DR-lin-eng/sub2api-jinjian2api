@@ -1,8 +1,6 @@
 package dto
 
 import (
-	"bytes"
-	"encoding/json"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
@@ -74,7 +72,7 @@ type Group struct {
 	// 无效请求兜底分组
 	FallbackGroupIDOnInvalidRequest *int64 `json:"fallback_group_id_on_invalid_request"`
 
-	// OpenAI Messages 调度开关（用户侧需要此字段判断是否展示 Claude Code 教程）
+	// OpenAI Messages 调度开关（API Key 页面需要此字段判断是否展示 Claude Code 教程）
 	AllowMessagesDispatch bool `json:"allow_messages_dispatch"`
 	// OpenAI Live 接口开关
 	AllowLive bool `json:"allow_live"`
@@ -83,7 +81,7 @@ type Group struct {
 	RequireOAuthOnly  bool `json:"require_oauth_only"`
 	RequirePrivacySet bool `json:"require_privacy_set"`
 
-	// RPMLimit 分组级每分钟请求数上限（0 = 不限制），设置后覆盖用户级 rpm_limit。
+	// RPMLimit 分组级每分钟请求数上限（0 = 不限制）。
 	RPMLimit int `json:"rpm_limit"`
 	// MaxReasoningEffort OpenAI/Codex 请求的推理强度上限，空字符串表示不限制。
 	MaxReasoningEffort string `json:"max_reasoning_effort"`
@@ -94,8 +92,7 @@ type Group struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// AdminGroup 是管理员接口使用的 group DTO（包含敏感/内部字段）。
-// 注意：普通用户接口不得返回 model_routing/account_count/account_groups 等内部信息。
+// AdminGroup is the management API group DTO and includes internal fields.
 type AdminGroup struct {
 	Group
 
@@ -320,93 +317,7 @@ type ProxyAccountSummary struct {
 	Notes    *string `json:"notes,omitempty"`
 }
 
-type RedeemCode struct {
-	ID             int64      `json:"id"`
-	Code           string     `json:"code"`
-	Type           string     `json:"type"`
-	Value          float64    `json:"value"`
-	Status         string     `json:"status"`
-	MaxUses        int        `json:"max_uses"`
-	UsedCount      int        `json:"used_count"`
-	MaxUsesPerUser int        `json:"max_uses_per_user"`
-	UsedBy         *int64     `json:"used_by"`
-	UsedAt         *time.Time `json:"used_at"`
-	CreatedAt      time.Time  `json:"created_at"`
-	ExpiresAt      *time.Time `json:"expires_at,omitempty"`
-
-	GroupID      *int64 `json:"group_id"`
-	ValidityDays int    `json:"validity_days"`
-
-	// Notes is only populated for admin_balance/admin_concurrency types
-	// so users can see why they were charged or credited
-	Notes *string `json:"notes,omitempty"`
-
-	User  *User  `json:"user,omitempty"`
-	Group *Group `json:"group,omitempty"`
-}
-
-// AdminRedeemCode 是管理员接口使用的 redeem code DTO（包含 notes 等字段）。
-// 注意：普通用户接口不得返回 notes 等内部信息。
-type AdminRedeemCode struct {
-	RedeemCode
-
-	Notes string `json:"notes"`
-}
-
-type NullableTimeField struct {
-	Set   bool
-	Value *time.Time
-}
-
-func (f *NullableTimeField) UnmarshalJSON(data []byte) error {
-	f.Set = true
-	if bytes.Equal(data, []byte("null")) {
-		f.Value = nil
-		return nil
-	}
-	var value time.Time
-	if err := json.Unmarshal(data, &value); err != nil {
-		return err
-	}
-	f.Value = &value
-	return nil
-}
-
-type NullableInt64Field struct {
-	Set   bool
-	Value *int64
-}
-
-func (f *NullableInt64Field) UnmarshalJSON(data []byte) error {
-	f.Set = true
-	if bytes.Equal(data, []byte("null")) {
-		f.Value = nil
-		return nil
-	}
-	var value int64
-	if err := json.Unmarshal(data, &value); err != nil {
-		return err
-	}
-	f.Value = &value
-	return nil
-}
-
-type BatchUpdateRedeemCodeFields struct {
-	Status    *string            `json:"status,omitempty"`
-	ExpiresAt NullableTimeField  `json:"expires_at,omitempty"`
-	Notes     *string            `json:"notes,omitempty"`
-	GroupID   NullableInt64Field `json:"group_id,omitempty"`
-
-	Type  *string  `json:"type,omitempty"`
-	Value *float64 `json:"value,omitempty"`
-}
-
-type BatchUpdateRedeemCodesRequest struct {
-	IDs    []int64                     `json:"ids" binding:"required,min=1"`
-	Fields BatchUpdateRedeemCodeFields `json:"fields" binding:"required"`
-}
-
-// UsageLog 是普通用户接口使用的 usage log DTO（不包含管理员字段）。
+// UsageLog is the single administrator's gateway usage DTO.
 type UsageLog struct {
 	ID        int64  `json:"id"`
 	UserID    int64  `json:"user_id"`
@@ -483,10 +394,9 @@ type UsageLog struct {
 
 	CreatedAt time.Time `json:"created_at"`
 
-	User         *User             `json:"user,omitempty"`
-	APIKey       *APIKey           `json:"api_key,omitempty"`
-	Group        *Group            `json:"group,omitempty"`
-	Subscription *UserSubscription `json:"subscription,omitempty"`
+	User   *User   `json:"user,omitempty"`
+	APIKey *APIKey `json:"api_key,omitempty"`
+	Group  *Group  `json:"group,omitempty"`
 }
 
 // AdminUsageLog 是管理员接口使用的 usage log DTO（包含管理员字段）。
@@ -528,76 +438,4 @@ type Setting struct {
 	Key       string    `json:"key"`
 	Value     string    `json:"value"`
 	UpdatedAt time.Time `json:"updated_at"`
-}
-
-type UserSubscription struct {
-	ID      int64 `json:"id"`
-	UserID  int64 `json:"user_id"`
-	GroupID int64 `json:"group_id"`
-
-	StartsAt  time.Time `json:"starts_at"`
-	ExpiresAt time.Time `json:"expires_at"`
-	Status    string    `json:"status"`
-
-	DailyWindowStart   *time.Time `json:"daily_window_start"`
-	WeeklyWindowStart  *time.Time `json:"weekly_window_start"`
-	MonthlyWindowStart *time.Time `json:"monthly_window_start"`
-
-	DailyUsageUSD   float64 `json:"daily_usage_usd"`
-	WeeklyUsageUSD  float64 `json:"weekly_usage_usd"`
-	MonthlyUsageUSD float64 `json:"monthly_usage_usd"`
-
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-	RevokedAt *time.Time `json:"revoked_at,omitempty"`
-
-	User  *User  `json:"user,omitempty"`
-	Group *Group `json:"group,omitempty"`
-}
-
-// AdminUserSubscription 是管理员接口使用的订阅 DTO（包含分配信息/备注等字段）。
-// 注意：普通用户接口不得返回 assigned_by/assigned_at/notes/assigned_by_user 等管理员字段。
-type AdminUserSubscription struct {
-	UserSubscription
-
-	AssignedBy *int64    `json:"assigned_by"`
-	AssignedAt time.Time `json:"assigned_at"`
-	Notes      string    `json:"notes"`
-
-	AssignedByUser *User `json:"assigned_by_user,omitempty"`
-}
-
-type BulkAssignResult struct {
-	SuccessCount  int                     `json:"success_count"`
-	CreatedCount  int                     `json:"created_count"`
-	ReusedCount   int                     `json:"reused_count"`
-	FailedCount   int                     `json:"failed_count"`
-	Subscriptions []AdminUserSubscription `json:"subscriptions"`
-	Errors        []string                `json:"errors"`
-	Statuses      map[string]string       `json:"statuses,omitempty"`
-}
-
-// PromoCode 注册优惠码
-type PromoCode struct {
-	ID          int64      `json:"id"`
-	Code        string     `json:"code"`
-	BonusAmount float64    `json:"bonus_amount"`
-	MaxUses     int        `json:"max_uses"`
-	UsedCount   int        `json:"used_count"`
-	Status      string     `json:"status"`
-	ExpiresAt   *time.Time `json:"expires_at"`
-	Notes       string     `json:"notes"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
-}
-
-// PromoCodeUsage 优惠码使用记录
-type PromoCodeUsage struct {
-	ID          int64     `json:"id"`
-	PromoCodeID int64     `json:"promo_code_id"`
-	UserID      int64     `json:"user_id"`
-	BonusAmount float64   `json:"bonus_amount"`
-	UsedAt      time.Time `json:"used_at"`
-
-	User *User `json:"user,omitempty"`
 }

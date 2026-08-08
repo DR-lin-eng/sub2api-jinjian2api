@@ -28,7 +28,6 @@ var panelHeavyPathPrefixes = [...]string{
 	"/api/v1/admin/usage",
 	"/api/v1/admin/dashboard",
 	"/api/v1/admin/ops",
-	"/api/v1/admin/payment",
 }
 
 type panelRateLimitAllower interface {
@@ -184,7 +183,6 @@ func isPanelHeavyPath(path string) bool {
 	}
 	switch path {
 	case "/api/v1/user/api-keys/:id/usage/daily",
-		"/api/v1/admin/users/:id/usage",
 		"/api/v1/admin/groups/usage-summary",
 		"/api/v1/admin/accounts/:id/usage",
 		"/api/v1/admin/accounts/:id/ollama-cloud-usage":

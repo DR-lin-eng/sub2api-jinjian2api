@@ -61,6 +61,6 @@ func TestPromptGuardFailureLogUsesCompleteAllowlistedContextAndNoSideEffects(t *
 	require.EqualValues(t, 7, entry["config_version"])
 	require.Equal(t, ErrorCodeUnavailable, entry["error_code"])
 	require.Equal(t, false, entry["upstream_dispatched"])
-	require.Equal(t, false, entry["billing_preconsumed"])
+	require.Equal(t, false, entry["usage_recorded"])
 	require.EqualValues(t, 25, entry["latency_ms"])
 }

@@ -52,11 +52,11 @@ func TestAdminComplianceGuardBlocksAdminRouteWhenMissing(t *testing.T) {
 		c.Next()
 	})
 	router.Use(AdminComplianceGuard(svc))
-	router.GET("/api/v1/admin/users", func(c *gin.Context) {
+	router.GET("/api/v1/admin/accounts", func(c *gin.Context) {
 		c.String(http.StatusOK, "ok")
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/users", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/accounts", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 

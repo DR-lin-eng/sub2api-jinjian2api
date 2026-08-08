@@ -19,14 +19,13 @@ func TestAdminAPIKeyScopePolicy(t *testing.T) {
 		scopes []string
 		allow  bool
 	}{
-		{http.MethodGet, "/api/v1/admin/users", []string{service.AdminAPIKeyScopeUsersRead}, true},
-		{http.MethodPost, "/api/v1/admin/users", []string{service.AdminAPIKeyScopeUsersRead}, false},
-		{http.MethodPost, "/api/v1/admin/users", []string{service.AdminAPIKeyScopeUsersWrite}, true},
+		{http.MethodGet, "/api/v1/admin/accounts", []string{service.AdminAPIKeyScopeAccountsRead}, true},
+		{http.MethodPost, "/api/v1/admin/accounts", []string{service.AdminAPIKeyScopeAccountsRead}, false},
+		{http.MethodPost, "/api/v1/admin/accounts", []string{service.AdminAPIKeyScopeAccountsWrite}, true},
 		{http.MethodGet, "/api/v1/admin/settings/admin-api-keys", []string{service.AdminAPIKeyScopeSettingsRead}, true},
 		{http.MethodDelete, "/api/v1/admin/settings/admin-api-keys/id", []string{service.AdminAPIKeyScopeSettingsRead}, false},
 		{http.MethodGet, "/api/v1/admin/accounts/data", []string{service.AdminAPIKeyScopeRead}, false},
 		{http.MethodGet, "/api/v1/admin/ops/concurrency", []string{service.AdminAPIKeyScopeRead}, true},
-		{http.MethodPost, "/api/v1/admin/redeem-codes/export-generated", []string{service.AdminAPIKeyScopeRead}, true},
 		{http.MethodGet, "/api/v1/admin/chat/conversations", []string{service.AdminAPIKeyScopeRead}, false},
 		{http.MethodPost, "/api/v1/admin/chat/conversations/1/messages", []string{service.AdminAPIKeyScopeWrite}, false},
 		{http.MethodGet, "/api/v1/admin/chat/ws", []string{service.AdminAPIKeyScopeRead}, false},
@@ -38,20 +37,4 @@ func TestAdminAPIKeyScopePolicy(t *testing.T) {
 		c.Request = &http.Request{Method: check.method, URL: parsed}
 		require.Equal(t, check.allow, adminAPIKeyRequestAllowed(c, check.scopes), "%s %s", check.method, check.path)
 	}
-}
-
-func TestGeneratedRedeemExportRequiresAdminAuthentication(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	router := gin.New()
-	router.Use(adminAuth(nil, nil, nil, nil))
-	router.POST("/api/v1/admin/redeem-codes/export-generated", func(c *gin.Context) {
-		c.Status(http.StatusOK)
-	})
-
-	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodPost, "/api/v1/admin/redeem-codes/export-generated", nil)
-	router.ServeHTTP(recorder, request)
-
-	require.Equal(t, http.StatusUnauthorized, recorder.Code)
-	require.Contains(t, recorder.Body.String(), "UNAUTHORIZED")
 }

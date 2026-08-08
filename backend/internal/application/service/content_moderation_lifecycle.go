@@ -12,25 +12,21 @@ func NewContentModerationService(
 	repo ContentModerationRepository,
 	hashCache ContentModerationHashCache,
 	groupRepo GroupRepository,
-	userRepo UserRepository,
-	authCacheInvalidator APIKeyAuthCacheInvalidator,
 	emailService *EmailService,
 ) *ContentModerationService {
 	lifecycleCtx, lifecycleCancel := context.WithCancel(context.Background())
 	svc := &ContentModerationService{
-		settingRepo:          settingRepo,
-		repo:                 repo,
-		hashCache:            hashCache,
-		groupRepo:            groupRepo,
-		userRepo:             userRepo,
-		authCacheInvalidator: authCacheInvalidator,
-		emailService:         emailService,
-		httpClient:           servertiming.InstrumentClient(nil),
-		asyncQueue:           make(chan *contentModerationTask, maxContentModerationQueueSize),
-		lifecycleCtx:         lifecycleCtx,
-		lifecycleCancel:      lifecycleCancel,
-		workerCancels:        make(map[int]context.CancelFunc),
-		keyHealth:            make(map[string]*contentModerationKeyHealth),
+		settingRepo:     settingRepo,
+		repo:            repo,
+		hashCache:       hashCache,
+		groupRepo:       groupRepo,
+		emailService:    emailService,
+		httpClient:      servertiming.InstrumentClient(nil),
+		asyncQueue:      make(chan *contentModerationTask, maxContentModerationQueueSize),
+		lifecycleCtx:    lifecycleCtx,
+		lifecycleCancel: lifecycleCancel,
+		workerCancels:   make(map[int]context.CancelFunc),
+		keyHealth:       make(map[string]*contentModerationKeyHealth),
 	}
 	if settingRepo != nil && repo != nil {
 		workerCount := defaultContentModerationWorkerCount
@@ -51,12 +47,10 @@ func ProvideContentModerationService(
 	repo ContentModerationRepository,
 	hashCache ContentModerationHashCache,
 	groupRepo GroupRepository,
-	userRepo UserRepository,
 	proxyRepo ProxyRepository,
-	authCacheInvalidator APIKeyAuthCacheInvalidator,
 	emailService *EmailService,
 ) *ContentModerationService {
-	svc := NewContentModerationService(settingRepo, repo, hashCache, groupRepo, userRepo, authCacheInvalidator, emailService)
+	svc := NewContentModerationService(settingRepo, repo, hashCache, groupRepo, emailService)
 	svc.proxyRepo = proxyRepo
 	return svc
 }

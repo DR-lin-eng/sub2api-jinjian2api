@@ -121,7 +121,7 @@ func TestLiveLeaseExpiresWithoutRefresh(t *testing.T) {
 	require.Equal(t, 1, accountCount, "the ordinary account member must outlive the Live lease")
 	userCount, err := regular.GetUserConcurrency(ctx, 20)
 	require.NoError(t, err)
-	require.Equal(t, 1, userCount, "the ordinary user member must outlive the Live lease")
+	require.Equal(t, 1, userCount, "the ordinary caller member must outlive the Live lease")
 	apiKeyCounts, err := apiKeys.GetAPIKeyConcurrencyBatch(ctx, []int64{30})
 	require.NoError(t, err)
 	require.Equal(t, 1, apiKeyCounts[30], "the ordinary API-key member must outlive the Live lease")

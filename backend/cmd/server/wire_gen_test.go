@@ -48,7 +48,7 @@ func TestProvideCleanup_WithMinimalDependencies_NoPanic(t *testing.T) {
 	timingWheelSvc, err := service.NewTimingWheelService()
 	require.NoError(t, err)
 	deferredSvc := service.NewDeferredService(nil, timingWheelSvc, time.Second)
-	contentModerationSvc := service.NewContentModerationService(nil, nil, nil, nil, nil, nil, nil)
+	contentModerationSvc := service.NewContentModerationService(nil, nil, nil, nil, nil)
 	concurrencySvc := service.NewConcurrencyService(nil)
 	userMessageQueueSvc := service.NewUserMessageQueueService(nil, nil, nil)
 

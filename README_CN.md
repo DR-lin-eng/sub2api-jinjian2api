@@ -12,7 +12,7 @@
 
 <a href="https://trendshift.io/repositories/21823" target="_blank"><img src="https://trendshift.io/api/badge/repositories/21823" alt="Wei-Shaw%2Fsub2api | Trendshift" width="250" height="55"/></a>
 
-**AI API 网关平台 - 订阅配额分发管理**
+**单管理员 AI API 网关**
 
 [English](README.md) | 中文 | [日本語](README_JA.md)
 
@@ -30,29 +30,19 @@
 
 ## 项目概述
 
-Sub2API 是一个 AI API 网关平台，用于分发和管理 AI 产品订阅的 API 配额。用户通过平台生成的 API Key 调用上游 AI 服务，平台负责鉴权、计费、负载均衡和请求转发。
+本支线是专注于 2API 转发的单管理员网关。唯一的本地管理员负责网关 API Key、上游账号、路由分组、调度、请求转发和用量成本分析；不包含公开注册、普通用户管理、下游余额、订阅、兑换码、优惠推广、分销和支付功能。
 
 ## 核心功能
 
 - **多账号管理** - 支持多种上游账号类型（OAuth、API Key）
-- **API Key 分发** - 为用户生成和管理 API Key
-- **精确计费** - Token 级别的用量追踪和成本计算
+- **网关 API Key** - 由本地管理员统一生成和管理 API Key
+- **成本分析** - 记录 Token、按次、图片和视频用量，以及标准费用、倍率费用和上游账号成本
 - **智能调度** - 智能账号选择，支持粘性会话和 [CPA 多号池动态负载分配](docs/CPA_POOL_DYNAMIC_LOAD_BALANCING_CN.md)
-- **并发控制** - 用户级和账号级并发限制
+- **并发控制** - 网关请求和上游账号并发限制
 - **速率限制** - 可配置的请求和 Token 速率限制
-- **内置支付系统** - 支持 EasyPay 易支付、支付宝官方、微信官方、Stripe，用户自助充值，无需独立部署支付服务（[配置指南](docs/PAYMENT_CN.md)）
 - **管理后台** - Web 界面进行监控和管理
 - **管理员 API 集成** - 支持细粒度 scoped Admin API Key、有效期、轮换和撤销（[调用文档](docs/ADMIN_API.md)）
 - **外部系统集成** - 支持通过 iframe 嵌入外部系统（如工单等），扩展管理后台功能
-
-## 生态项目
-
-围绕 Sub2API 的社区扩展与集成项目：
-
-| 项目 | 说明 | 功能 |
-|------|------|------|
-| ~~[Sub2ApiPay](https://github.com/touwaeriol/sub2apipay)~~ | ~~自助支付系统~~ | **已内置** — 支付功能已集成到 Sub2API 中，无需独立部署。详见 [支付配置指南](docs/PAYMENT_CN.md) |
-| [sub2api-mobile](https://github.com/ckken/sub2api-mobile) | 移动端管理控制台 | 跨平台应用（iOS/Android/Web），支持用户管理、账号管理、监控看板、多后端切换；基于 Expo + React Native 构建 |
 
 ## 技术栈
 
@@ -413,8 +403,6 @@ jwt:
   expire_hour: 24
 
 default:
-  user_concurrency: 5
-  user_balance: 0
   api_key_prefix: "sk-"
   rate_multiplier: 1.0
 ```
@@ -455,17 +443,15 @@ gateway:
 - `security.url_allowlist.allow_private_hosts` 允许私有/本地 IP 地址
 - `security.response_headers.enabled` 可启用可配置响应头过滤（关闭时使用默认白名单）
 - `security.csp` 配置 Content-Security-Policy
-- `billing.circuit_breaker` 计费异常时 fail-closed
 - 管理后台提供客户端 IP 自动兼容、严格可信代理和仅直连三种解析模式
 - `server.trusted_proxies` 可配置额外可信代理 CIDR/IP
-- `turnstile.required` 在 release 模式强制启用 Turnstile
 
 **网关防御纵深建议（重点）**
 
 - `gateway.upstream_response_read_max_bytes`：限制非流式上游响应读取大小（默认 `8MB`），用于防止异常响应导致内存放大。
 - `gateway.proxy_probe_response_read_max_bytes`：限制代理探测响应读取大小（默认 `1MB`）。
 - `gateway.gemini_debug_response_headers`：默认 `false`，仅在排障时短时开启，避免高频请求日志开销。
-- `/auth/register`、`/auth/login`、`/auth/login/2fa`、`/auth/send-verify-code` 已提供服务端兜底限流（Redis 故障时 fail-close）。
+- `/auth/login`、`/auth/login/2fa` 已提供服务端兜底限流（Redis 故障时 fail-close）。
 - 推荐将 WAF/CDN 作为第一层防护，服务端限流与响应读取上限作为第二层兜底；两层同时保留，避免旁路流量与误配置风险。
 
 **⚠️ 安全警告：HTTP URL 配置**

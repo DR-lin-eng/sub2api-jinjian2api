@@ -548,10 +548,6 @@ func (s *stubAdminService) ForceAntigravityPrivacy(ctx context.Context, account 
 	return ""
 }
 
-func (s *stubAdminService) ReplaceUserGroup(ctx context.Context, userID, oldGroupID, newGroupID int64) (*service.ReplaceUserGroupResult, error) {
-	return &service.ReplaceUserGroupResult{MigratedKeys: 0}, nil
-}
-
 func (s *stubAdminService) RevertAccountProxyFallback(ctx context.Context, id int64) error {
 	return nil
 }

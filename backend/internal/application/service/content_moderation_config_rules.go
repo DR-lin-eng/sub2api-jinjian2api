@@ -8,35 +8,31 @@ import (
 
 func defaultContentModerationConfig() *ContentModerationConfig {
 	return &ContentModerationConfig{
-		Enabled:              false,
-		Mode:                 ContentModerationModePreBlock,
-		BaseURL:              defaultContentModerationBaseURL,
-		Model:                defaultContentModerationModel,
-		TimeoutMS:            defaultContentModerationTimeoutMS,
-		SampleRate:           100,
-		AllGroups:            true,
-		GroupIDs:             []int64{},
-		RecordNonHits:        false,
-		Thresholds:           ContentModerationDefaultThresholds(),
-		WorkerCount:          defaultContentModerationWorkerCount,
-		QueueSize:            defaultContentModerationQueueSize,
-		BlockStatus:          defaultContentModerationBlockHTTPStatus,
-		BlockMessage:         defaultContentModerationBlockMessage,
-		EmailOnHit:           true,
-		AutoBanEnabled:       true,
-		BanThreshold:         defaultContentModerationBanThreshold,
-		ViolationWindowHours: defaultContentModerationViolationWindowHours,
-		RetryCount:           defaultContentModerationRetryCount,
-		HitRetentionDays:     defaultContentModerationHitRetentionDays,
-		NonHitRetentionDays:  defaultContentModerationNonHitRetentionDays,
-		PreHashCheckEnabled:  false,
-		BlockedKeywords:      []string{},
-		KeywordBlockingMode:  ContentModerationKeywordModeKeywordAndAPI,
+		Enabled:             false,
+		Mode:                ContentModerationModePreBlock,
+		BaseURL:             defaultContentModerationBaseURL,
+		Model:               defaultContentModerationModel,
+		TimeoutMS:           defaultContentModerationTimeoutMS,
+		SampleRate:          100,
+		AllGroups:           true,
+		GroupIDs:            []int64{},
+		RecordNonHits:       false,
+		Thresholds:          ContentModerationDefaultThresholds(),
+		WorkerCount:         defaultContentModerationWorkerCount,
+		QueueSize:           defaultContentModerationQueueSize,
+		BlockStatus:         defaultContentModerationBlockHTTPStatus,
+		BlockMessage:        defaultContentModerationBlockMessage,
+		EmailOnHit:          true,
+		RetryCount:          defaultContentModerationRetryCount,
+		HitRetentionDays:    defaultContentModerationHitRetentionDays,
+		NonHitRetentionDays: defaultContentModerationNonHitRetentionDays,
+		PreHashCheckEnabled: false,
+		BlockedKeywords:     []string{},
+		KeywordBlockingMode: ContentModerationKeywordModeKeywordAndAPI,
 		ModelFilter: ContentModerationModelFilter{
 			Type:   ContentModerationModelFilterAll,
 			Models: []string{},
 		},
-		CyberPolicyExcludeFromBanCount: false,
 	}
 }
 
@@ -108,12 +104,6 @@ func (cfg *ContentModerationConfig) normalize() {
 	cfg.BlockMessage = strings.TrimSpace(cfg.BlockMessage)
 	if cfg.BlockStatus <= 0 {
 		cfg.BlockStatus = defaultContentModerationBlockHTTPStatus
-	}
-	if cfg.BanThreshold <= 0 {
-		cfg.BanThreshold = defaultContentModerationBanThreshold
-	}
-	if cfg.ViolationWindowHours <= 0 {
-		cfg.ViolationWindowHours = defaultContentModerationViolationWindowHours
 	}
 	if cfg.RetryCount < 0 {
 		cfg.RetryCount = 0

@@ -36,7 +36,7 @@ func (s *ContentModerationService) enqueueAsync(input ContentModerationCheckInpu
 	}
 }
 
-func (s *ContentModerationService) enqueueRecord(input ContentModerationCheckInput, cfg *ContentModerationConfig, log *ContentModerationLog, inputHash string, recordHash bool, applySideEffects bool) {
+func (s *ContentModerationService) enqueueRecord(input ContentModerationCheckInput, cfg *ContentModerationConfig, log *ContentModerationLog, inputHash string, recordHash bool, notifyOnHit bool) {
 	if s == nil || s.asyncQueue == nil || log == nil || s.stopped.Load() {
 		return
 	}
@@ -54,13 +54,13 @@ func (s *ContentModerationService) enqueueRecord(input ContentModerationCheckInp
 		return
 	}
 	task := &contentModerationTask{
-		input:            input,
-		inputHash:        inputHash,
-		log:              log,
-		config:           cloneContentModerationConfig(cfg),
-		recordHash:       recordHash,
-		applySideEffects: applySideEffects,
-		enqueuedAt:       time.Now(),
+		input:       input,
+		inputHash:   inputHash,
+		log:         log,
+		config:      cloneContentModerationConfig(cfg),
+		recordHash:  recordHash,
+		notifyOnHit: notifyOnHit,
+		enqueuedAt:  time.Now(),
 	}
 	select {
 	case s.asyncQueue <- task:
@@ -113,7 +113,7 @@ func (s *ContentModerationService) worker(workerCtx context.Context, id int) {
 				if taskCfg == nil {
 					taskCfg = cfg
 				}
-				s.persistContentModerationLog(ctx, taskCfg, task.log, task.inputHash, task.recordHash, task.applySideEffects)
+				s.persistContentModerationLog(ctx, taskCfg, task.log, task.inputHash, task.recordHash, task.notifyOnHit)
 				s.asyncProcessed.Add(1)
 				return
 			}

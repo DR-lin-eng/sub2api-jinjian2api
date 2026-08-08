@@ -27,7 +27,7 @@
           class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800"
           :title="t('usage.userBilled')"
         >
-          U ${{ formattedUserCost }}
+          R ${{ formattedUserCost }}
         </span>
       </div>
     </div>

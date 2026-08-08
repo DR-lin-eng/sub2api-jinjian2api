@@ -14,9 +14,8 @@
 | 修改 OpenAI/Codex/Responses | `handler/openai_gateway_responses.go` | `application/service/openai*` | responses/chat/WS 的流式与非流式测试 |
 | 修改 Gemini/Antigravity/Grok | `routes/gateway.go` | `application/service/gemini*`, `antigravity*`, `grok*` | 平台专项 service/handler 测试 |
 | 修改账号调度 | `application/service/gateway_scheduling.go`, `openai_account_scheduler.go` | `infrastructure/repository/scheduler*`, `concurrency*` | scheduler、并发、失败切换测试和 benchmark |
-| 修改计费/余额 | `application/service/gateway_usage_billing.go`, `openai_gateway_usage.go` | `billing_service.go`, `infrastructure/repository/usage_billing*`, `billing_cache*` | billing unit + repository integration |
-| 修改订阅配额 | `application/service/subscription*` | `repository/subscription*`, middleware | subscription + gateway billing 测试 |
-| 修改支付 | `internal/modules/payment/` | `routes/payment.go`, payment handlers/repositories | provider、webhook、订单状态测试 |
+| 修改成本计算/用量记录 | `application/service/gateway_usage_billing.go`, `openai_gateway_usage.go` | `billing_service.go`, `infrastructure/repository/usage_log*` | billing unit + usage repository integration |
+| 修改上游额度探测 | `application/service/upstream_quota*`, `upstream_billing*` | `account_repo_quota.go`, `account_repo_upstream_billing*` | 上游解析、持久快照与管理 UI 测试 |
 | 修改数据库表 | `backend/ent/schema/` | `backend/migrations/`, repository, DTO | generate + migration/integration tests |
 | 修改运行配置 | `platform/config/` | `deploy/config.example.yaml`, setting service/admin UI | config tests + 相关 service/前端测试 |
 | 修改 Ops/审计 | `handler/admin/ops*`, `application/service/ops*` | `repository/ops*`, 前端 `features/admin-ops/`, `features/admin-audit/` | query/service + 前端 feature 测试 |
@@ -33,11 +32,11 @@
 | `gemini*`, `antigravity*`, `grok*`, `bedrock*` | 平台协议、凭据、限额和错误策略 |
 | `account*`, `group*`, `channel*` | 上游账号、分组和渠道配置 |
 | `scheduler*`, `concurrency*`, `priority_admission*` | 候选选择、槽位、优先级与背压 |
-| `billing*`, `usage*`, `pricing*`, `subscription*` | 价格、结算、用量、余额和订阅 |
-| `auth*`, `api_key*`, `oauth*`, `token*`, `totp*` | 用户身份、会话和各平台凭据 |
+| `billing*`, `usage*`, `pricing*` | 价格解析、成本计算、用量记录和统计 |
+| `auth*`, `api_key*`, `oauth*`, `token*`, `totp*`, `passkey*` | 单管理员会话、网关 Key 和各平台凭据 |
 | `ops*`, `audit*`, `content_moderation*` | 运维指标、审计和内容安全 |
 | `setting*`, `notification*`, `backup*` | 持久设置、通知和维护任务 |
-| `batch_image*`, `image_task*` | 异步和批量图片任务 |
+| `image_task*`, `image_storage*` | 异步图片任务和结果存储 |
 
 同一前缀通常按 `request`, `scheduling`, `forward`, `response`, `usage`, `support` 等职责拆分。不要先打开该前缀所有文件；从公开入口函数追调用即可。
 
@@ -47,11 +46,10 @@
 
 | 前缀 | 主要存储/资源 |
 | --- | --- |
-| `account*`, `group*`, `user*`, `api_key*` | PostgreSQL/Ent 核心业务对象与缓存 |
-| `usage_log*`, `usage_billing*`, `billing_cache*` | 用量写入、幂等结算队列、账务缓存 |
+| `account*`, `group*`, `api_key*`, `user*` | 上游账号、路由分组、网关 Key 与唯一管理员 |
+| `usage_log*` | 用量写入、幂等批处理和成本统计 |
 | `scheduler*`, `concurrency*`, `session_limit*`, `rpm_cache*` | Redis 调度和限流状态 |
 | `ops*`, `audit_log*`, `channel_monitor*` | 运维聚合、审计和探测 |
-| `payment*`, `subscription*`, `promo_code*`, `redeem_code*` | 商业对象 |
 | `http_upstream*`, `proxy*`, `*_oauth_*` | 外部 HTTP、代理和凭据访问 |
 
 复杂 repository 按 `query`, `command`, `cache`, `batch`, `recovery` 拆分。事务边界应留在同一个公开 repository 方法内。
@@ -62,12 +60,11 @@
 | --- | --- |
 | `transport/http/server/router.go` | 全局中间件、嵌入式前端和路由聚合 |
 | `server/routes/common.go` | 健康检查与公共入口 |
-| `server/routes/auth.go` | 登录、注册、OAuth、会话 |
-| `server/routes/user.go` | JWT 用户 API |
+| `server/routes/auth.go` | 本地管理员登录与会话 |
+| `server/routes/user.go` | 唯一管理员资料、安全设置、API Key 与用量 API |
 | `server/routes/admin.go` | 管理 API |
-| `server/routes/payment.go` | 用户支付、回调和管理支付 API |
 | `server/routes/gateway.go` | API Key 模型网关和平台别名 |
-| `transport/http/handler/` | 用户、网关和通用 handler |
+| `transport/http/handler/` | 单管理员、网关和通用 handler |
 | `transport/http/handler/admin/` | 管理 handler |
 | `transport/http/handler/dto/` | 输入输出 DTO 与实体映射 |
 
@@ -85,9 +82,9 @@ rg -n '"/api/v1|"/v1|"/responses' backend/internal/transport/http/server/routes
 | 应用启动 | `frontend/src/main.ts`, `App.vue` |
 | 路由与访问元数据 | `frontend/src/core/routes/index.ts`, `meta.d.ts` |
 | 管理功能 | `frontend/src/features/admin-*/`，各 feature 下分 `data/` 与 `presentation/` |
-| 用户功能 | `frontend/src/features/keys/`, `usage/`, `profile/`, `subscriptions/`, `billing/`, `support-chat/` 等 |
-| 登录和回调 | `frontend/src/features/auth/presentation/` 与 `data/datasources/authDatasource.ts` |
-| 公共页与首次设置 | `frontend/src/common/pages/`, `features/setup/`, `features/channels-user/` |
+| 管理员自助功能 | `frontend/src/features/keys/`, `usage/`, `profile/`, `passkeys/` |
+| 登录 | `frontend/src/features/auth/presentation/` 与 `data/datasources/authDatasource.ts` |
+| 公共页与首次设置 | `frontend/src/common/pages/`, `features/setup/` |
 | 领域组件与交互 | `frontend/src/features/<domain>/presentation/widgets/`, `composables/` |
 | 跨功能 UI 与交互 | `frontend/src/common/widgets/`, `common/composables/` |
 | HTTP/session 客户端 | `frontend/src/core/networks/client.ts`, `tokenStore.ts`, `sessionRefresh.ts` |
@@ -130,7 +127,7 @@ rg -n 'TargetName|expected behavior' backend/internal -g '*_test.go'
 
 ```sh
 rg --files backend/internal/application/service | rg '/openai_.*\.go$'
-rg --files backend/internal/infrastructure/repository | rg '/usage_billing.*\.go$'
+rg --files backend/internal/infrastructure/repository | rg '/usage_log.*\.go$'
 ```
 
 前端按页面反查 API：
@@ -148,7 +145,7 @@ rg -n "from '@/api|from '@/api/admin|from '@/stores" frontend/src -g '*.{ts,vue}
 | 改动 | 通常需要同步 |
 | --- | --- |
 | 新 API 字段 | DTO/mapper、service、repository、前端 datasource/type/page、兼容测试 |
-| 新管理设置 | 持久设置、运行缓存/订阅、admin handler、所属 feature 的 store/page、配置说明 |
+| 新管理设置 | 持久设置、运行缓存、admin handler、所属 feature 的 store/page、配置说明 |
 | 新数据库字段 | Ent schema、迁移、repository、备份/恢复、DTO、测试 fixture |
 | 新网关协议行为 | route/handler、service 转换与上游、流式/非流式错误、计费、审计/日志测试 |
 | 新平台/账号类型 | 常量、账号模型、调度过滤、凭据、探测、管理 UI、导入导出 |

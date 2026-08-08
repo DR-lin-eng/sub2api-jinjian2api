@@ -30,7 +30,7 @@ vi.mock('@/features/admin-settings/data/datasources/systemDatasource', () => ({
 
 /**
  * 创建一个简化的测试组件来封装登录逻辑
- * 避免引入 LoginView.vue 的全部依赖（AuthLayout、i18n、Icon 等）
+ * 避免引入登录页面的全部依赖（i18n、Icon 等）
  */
 const LoginFormTestComponent = defineComponent({
   setup() {

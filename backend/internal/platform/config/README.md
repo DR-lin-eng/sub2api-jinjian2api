@@ -12,15 +12,15 @@
 | `defaults_runtime.go` | 运行模式、部署、服务端、日志、CORS 和安全默认值 |
 | `defaults_billing.go` | 计费与可靠结算队列默认值 |
 | `defaults_identity.go` | Turnstile 与第三方身份接入默认值 |
-| `defaults_storage.go` | 数据库、Redis、批量图片和对象存储默认值 |
+| `defaults_storage.go` | 数据库、Redis 和对象存储默认值 |
 | `defaults_ops.go` | 运维、鉴权、定价、缓存、聚合和幂等默认值 |
 | `defaults_gateway.go` | 网关传输、WebSocket、调度和用量队列默认值 |
-| `defaults_maintenance.go` | 令牌刷新、Gemini 和订阅维护默认值 |
+| `defaults_maintenance.go` | 令牌刷新和 Gemini 维护默认值 |
 | `defaults_env.go` | 仅由环境注入的配置键可达性默认值 |
 | `validate.go` | 主配置校验顺序编排 |
 | `validate_runtime.go` | 部署、服务端、鉴权、日志和运行时校验 |
 | `validate_identity.go` | LinuxDo、微信和 OIDC 身份接入校验 |
-| `validate_storage.go` | 计费、存储、批处理、聚合和幂等校验 |
+| `validate_storage.go` | 成本统计、存储、聚合和幂等校验 |
 | `validate_gateway.go` | 网关传输、WebSocket、调度和用量队列校验 |
 | `validate_ops.go` | 运维、并发和钉钉接入编排校验 |
 | `helpers.go` | URL、JWT 和通用归一化辅助函数 |

@@ -212,8 +212,8 @@ export default {
       channelId: 'Channel ID',
       billingTier: 'Billing tier',
       modelMappingChain: 'Model mapping chain',
-      actualCharge: 'Actual charge',
-      reconciled: 'Calculation matches the billed amount',
+      actualCharge: 'Rated cost',
+      reconciled: 'Calculation matches the recorded rated cost',
       needsReview: 'Calculation requires review',
       longContextPricing: 'Long-context pricing',
       rateSnapshot: 'Rate snapshot',
@@ -228,11 +228,11 @@ export default {
       recordedStandardCost: 'Recorded standard cost',
       effectiveUnitPriceNote: 'Unit prices are reconstructed from component standard cost divided by quantity. They include service-tier and long-context price adjustments, but exclude the final group rate.',
       cacheTierAggregateNote: 'When cache creation includes 5-minute or 1-hour tiers, this row shows the aggregate effective unit price. Tier token counts remain visible in the usage section above.',
-      finalChargeFormula: 'Final charge formula',
+      finalChargeFormula: 'Rated cost formula',
       textSubtotal: 'Text and cache cost',
       imageSubtotal: 'Image token cost',
-      splitRateHistoricalNote: 'This record used an independent image rate. The log retained the image rate and final charge, but not the text rate, so the text rate above is reconstructed from the billed amount.',
-      effectiveRateHistoricalNote: 'This historical record cannot be reproduced with one saved rate. The formula uses the blended effective rate derived from actual charge divided by standard cost while preserving the recorded charge.',
+      splitRateHistoricalNote: 'This record used an independent image rate. The log retained the image rate and rated cost, but not the text rate, so the text rate above is reconstructed from the recorded cost.',
+      effectiveRateHistoricalNote: 'This historical record cannot be reproduced with one saved rate. The formula uses the blended effective rate derived from rated cost divided by standard cost while preserving the recorded cost.',
       tokensUnit: 'tokens',
       requestsUnit: 'requests',
       imagesUnit: 'images',
@@ -264,7 +264,7 @@ export default {
     standardCost: 'Standard',
     actualCost: 'Actual',
     accountCost: 'Cost',
-    userBilled: 'User billed',
+    userBilled: 'Rated cost',
     accountBilled: 'Account billed',
     resetNow: 'Now',
     resetPending: 'Pending refresh',
@@ -440,72 +440,12 @@ export default {
     relativeDaysAgo: '{n}d ago'
   },
 
-  // Channel Status (user-facing read-only view)
-  channelStatus: {
-    title: 'Channel Status',
-    description: 'Inspect channel availability, latency and recent status',
-    searchPlaceholder: 'Search channels...',
-    allProviders: 'All Providers',
-    loadError: 'Failed to load channel status',
-    detailLoadError: 'Failed to load channel detail',
-    detailTitle: 'Channel Detail',
-    closeDetail: 'Close',
-    windowTab: {
-      '7d': '7 days',
-      '15d': '15 days',
-      '30d': '30 days'
-    },
-    overall: {
-      operational: 'OPERATIONAL',
-      degraded: 'DEGRADED',
-      unavailable: 'UNAVAILABLE'
-    },
-    columns: {
-      name: 'Name',
-      provider: 'Provider',
-      groupName: 'Group',
-      primaryModel: 'Primary Model',
-      availability7d: '7d Availability',
-      latency: 'Latency (ms)'
-    },
-    detailColumns: {
-      model: 'Model',
-      latestStatus: 'Latest Status',
-      latestLatency: 'Latest Latency (ms)',
-      availability7d: '7d Availability',
-      availability15d: '15d Availability',
-      availability30d: '30d Availability',
-      avgLatency7d: '7d Avg Latency (ms)'
-    },
-    empty: {
-      title: 'No channels available',
-      description: 'No monitored channels have been configured yet.'
-    }
-  },
-
-  // Available Channels (user-facing)
   profile: {
     title: 'Profile Settings',
     description: 'Manage your account information and settings',
-    accountBalance: 'Account Balance',
-    concurrencyLimit: 'Concurrency Limit',
-    rpmLimit: 'RPM Limit',
-    rpmUnlimited: 'Unlimited',
     memberSince: 'Member Since',
-    overviewTitle: 'Account Overview',
-    overviewDescription: 'Check account status, profile sources, and common actions at a glance.',
-    basicsTitle: 'Profile & Avatar',
-    basicsDescription: 'Keep your public profile details and avatar aligned.',
-    linkedProfileSources: 'Profile Sources',
-    linkedProfileSourcesDescription: 'Some profile details may stay synced from third-party sign-in methods.',
-    securityTitle: 'Security Settings',
-    securityDescription: 'Password, two-factor authentication, and alerts live in the right rail.',
     administrator: 'Administrator',
-    user: 'User',
     username: 'Username',
-    email: 'Email',
-    status: 'Status',
-    role: 'Role',
     enterUsername: 'Enter username',
     editProfile: 'Edit Profile',
     updateProfile: 'Update Profile',

@@ -2,6 +2,10 @@
 
 This directory contains files for deploying Sub2API on Linux servers and Apple-silicon Macs.
 
+This branch runs one local administrator and a pure API-key gateway. It has no
+public registration, ordinary-user management, downstream subscriptions,
+wallet balances, redeem codes, or payment providers.
+
 ## Deployment Methods
 
 | Method | Best For | Setup Wizard |
@@ -159,24 +163,6 @@ When using Docker Compose with `AUTO_SETUP=true`:
 - Migrations are applied in lexicographic order (e.g. `001_...sql`, `002_...sql`).
 - `schema_migrations` tracks applied migrations (filename + checksum).
 - Migrations are forward-only; rollback requires a DB backup restore or a manual compensating SQL script.
-
-**Verify `users.allowed_groups` → `user_allowed_groups` backfill**
-
-During the incremental GORM→Ent migration, `users.allowed_groups` (legacy `BIGINT[]`) is being replaced by a normalized join table `user_allowed_groups(user_id, group_id)`.
-
-Run this query to compare the legacy data vs the join table:
-
-```sql
-WITH old_pairs AS (
-  SELECT DISTINCT u.id AS user_id, x.group_id
-  FROM users u
-  CROSS JOIN LATERAL unnest(u.allowed_groups) AS x(group_id)
-  WHERE u.allowed_groups IS NOT NULL
-)
-SELECT
-  (SELECT COUNT(*) FROM old_pairs)           AS old_pair_count,
-  (SELECT COUNT(*) FROM user_allowed_groups) AS new_pair_count;
-```
 
 ### datamanagementd（数据管理）联动
 

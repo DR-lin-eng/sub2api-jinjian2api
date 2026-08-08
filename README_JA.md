@@ -12,7 +12,7 @@
 
 <a href="https://trendshift.io/repositories/21823" target="_blank"><img src="https://trendshift.io/api/badge/repositories/21823" alt="Wei-Shaw%2Fsub2api | Trendshift" width="250" height="55"/></a>
 
-**サブスクリプションクォータ配分のための AI API ゲートウェイプラットフォーム**
+**単一管理者向け AI API ゲートウェイ**
 
 [English](README.md) | [中文](README_CN.md) | 日本語
 
@@ -29,28 +29,18 @@
 
 ## 概要
 
-Sub2API は、AI 製品のサブスクリプションから API クォータを配分・管理するために設計された AI API ゲートウェイプラットフォームです。ユーザーはプラットフォームが生成した API キーを通じて上流の AI サービスにアクセスでき、プラットフォームは認証、課金、負荷分散、リクエスト転送を処理します。
+このブランチは 2API 転送に特化した単一管理者向けゲートウェイです。ローカル管理者がゲートウェイ API キー、上流アカウント、ルーティンググループ、スケジューリング、リクエスト転送、利用コスト分析を管理します。公開登録、一般ユーザー管理、下流残高、サブスクリプション、引換コード、プロモーション、アフィリエイト、決済機能は含まれません。
 
 ## 機能
 
 - **マルチアカウント管理** - 複数の上流アカウントタイプ（OAuth、APIキー）をサポート
-- **APIキー配布** - ユーザー向けの APIキーの生成と管理
-- **精密な課金** - トークンレベルの使用量追跡とコスト計算
+- **ゲートウェイ APIキー** - ローカル管理者が APIキーを一元管理
+- **コスト分析** - トークン、リクエスト、画像、動画の使用量と標準・倍率・上流アカウントコストを記録
 - **スマートスケジューリング** - スティッキーセッション付きのインテリジェントなアカウント選択
-- **同時実行制御** - ユーザーごと・アカウントごとの同時実行数制限
+- **同時実行制御** - ゲートウェイリクエストと上流アカウントの同時実行数制限
 - **レート制限** - 設定可能なリクエスト数およびトークンレート制限
-- **内蔵決済システム** - EasyPay、Alipay、WeChat Pay、Stripe に対応。ユーザーのセルフサービスチャージが可能で、別途決済サービスのデプロイは不要（[設定ガイド](docs/PAYMENT.md)）
 - **管理ダッシュボード** - 監視・管理のための Web インターフェース
 - **外部システム連携** - 外部システム（チケット管理など）を iframe 経由で管理ダッシュボードに埋め込み可能
-
-## エコシステム
-
-Sub2API を拡張・統合するコミュニティプロジェクト:
-
-| プロジェクト | 説明 | 機能 |
-|---------|-------------|----------|
-| ~~[Sub2ApiPay](https://github.com/touwaeriol/sub2apipay)~~ | ~~セルフサービス決済システム~~ | **内蔵済み** — 決済機能は Sub2API に統合されました。別途デプロイは不要です。[決済設定ガイド](docs/PAYMENT.md)をご参照ください |
-| [sub2api-mobile](https://github.com/ckken/sub2api-mobile) | モバイル管理コンソール | ユーザー管理、アカウント管理、監視ダッシュボード、マルチバックエンド切り替えが可能なクロスプラットフォームアプリ（iOS/Android/Web）。Expo + React Native で構築 |
 
 ## 技術スタック
 
@@ -399,8 +389,6 @@ jwt:
   expire_hour: 24
 
 default:
-  user_concurrency: 5
-  user_balance: 0
   api_key_prefix: "sk-"
   rate_multiplier: 1.0
 ```
@@ -420,10 +408,8 @@ default:
 - `security.url_allowlist.allow_private_hosts` - プライベート/ローカル IP アドレスを許可
 - `security.response_headers.enabled` - 設定可能なレスポンスヘッダーフィルタリングを有効化（無効時はデフォルトの許可リストを使用）
 - `security.csp` - Content-Security-Policy ヘッダーの制御
-- `billing.circuit_breaker` - 課金エラー時にフェイルクローズ
 - 管理画面でクライアント IP の自動互換、厳格な信頼済みプロキシ、直接接続のみの各モードを設定
 - `server.trusted_proxies` - 追加の信頼済みプロキシ CIDR/IP
-- `turnstile.required` - リリースモードでの Turnstile 必須化
 
 **⚠️ セキュリティ警告: HTTP URL 設定**
 

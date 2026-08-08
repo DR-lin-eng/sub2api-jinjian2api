@@ -12,7 +12,7 @@
 
 <a href="https://trendshift.io/repositories/21823" target="_blank"><img src="https://trendshift.io/api/badge/repositories/21823" alt="Wei-Shaw%2Fsub2api | Trendshift" width="250" height="55"/></a>
 
-**AI API Gateway Platform for Subscription Quota Distribution**
+**Single-Administrator AI API Gateway**
 
 English | [中文](README_CN.md) | [日本語](README_JA.md)
 
@@ -29,29 +29,19 @@ Please read the following carefully before using this project:
 
 ## Overview
 
-Sub2API is an AI API gateway platform designed to distribute and manage API quotas from AI product subscriptions. Users can access upstream AI services through platform-generated API Keys, while the platform handles authentication, billing, load balancing, and request forwarding.
+This branch is a focused 2API gateway. One local administrator manages gateway API keys, upstream accounts, routing groups, scheduling, request forwarding, and usage-cost analytics. Public registration, ordinary-user management, downstream balances, subscriptions, redeem codes, promotions, affiliates, and payments are not included.
 
 ## Features
 
 - **Multi-Account Management** - Support multiple upstream account types (OAuth, API Key)
-- **API Key Distribution** - Generate and manage API Keys for users
-- **Precise Billing** - Token-level usage tracking and cost calculation
+- **Gateway API Keys** - Generate and manage API keys owned by the local administrator
+- **Cost Analytics** - Track token, request, image, and video usage with standard, rated, and upstream-account costs
 - **Smart Scheduling** - Intelligent account selection with sticky sessions
-- **Concurrency Control** - Per-user and per-account concurrency limits
+- **Concurrency Control** - Gateway and upstream-account concurrency limits
 - **Rate Limiting** - Configurable request and token rate limits
-- **Built-in Payment System** - Supports EasyPay, Alipay, WeChat Pay, and Stripe for user self-service top-up, no separate payment service needed ([Configuration Guide](docs/PAYMENT.md))
 - **Admin Dashboard** - Web interface for monitoring and management
 - **Composite Groups** - Admin routing layer that resolves requested models to concrete providers for multi-provider groups ([Operator Guide](docs/COMPOSITE_GROUPS.md))
 - **External System Integration** - Embed external systems (e.g. ticketing) via iframe to extend the admin dashboard
-
-## Ecosystem
-
-Community projects that extend or integrate with Sub2API:
-
-| Project | Description | Features |
-|---------|-------------|----------|
-| ~~[Sub2ApiPay](https://github.com/touwaeriol/sub2apipay)~~ | ~~Self-service payment system~~ | **Now Built-in** — Payment is now integrated into Sub2API, no separate deployment needed. See [Payment Configuration Guide](docs/PAYMENT.md) |
-| [sub2api-mobile](https://github.com/ckken/sub2api-mobile) | Mobile admin console | Cross-platform app (iOS/Android/Web) for user management, account management, monitoring dashboard, and multi-backend switching; built with Expo + React Native |
 
 ## Tech Stack
 
@@ -401,8 +391,6 @@ jwt:
   expire_hour: 24
 
 default:
-  user_concurrency: 5
-  user_balance: 0
   api_key_prefix: "sk-"
   rate_multiplier: 1.0
 ```
@@ -422,10 +410,8 @@ Additional security-related options are available in `config.yaml`:
 - `security.url_allowlist.allow_private_hosts` to allow private/local IP addresses
 - `security.response_headers.enabled` to enable configurable response header filtering (disabled uses default allowlist)
 - `security.csp` to control Content-Security-Policy headers
-- `billing.circuit_breaker` to fail closed on billing errors
 - Client IP resolution modes in admin settings for automatic reverse-proxy compatibility, strict proxy trust, or direct-peer-only operation
 - `server.trusted_proxies` for optional additional trusted proxy CIDRs/IPs
-- `turnstile.required` to require Turnstile in release mode
 
 **⚠️ Security Warning: HTTP URL Configuration**
 

@@ -4,7 +4,6 @@
 
 | 文件/目录 | 作用 |
 | --- | --- |
-| `announcement.go` | 公告领域规则 |
 | `constants.go` | 稳定领域常量 |
 | `models_list_config.go` | 模型列表配置值 |
 | `openai_messages_dispatch.go` | 消息分发领域枚举 |

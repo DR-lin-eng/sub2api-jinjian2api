@@ -5,10 +5,11 @@ The shared application shells live in `src/common/widgets/layout/`. Business pag
 ## Imports
 
 ```ts
-import { AppLayout, AuthLayout, TablePageLayout } from '@/common/widgets/layout'
+import { AppLayout } from '@/common/widgets/layout'
+import TablePageLayout from '@/common/widgets/layout/TablePageLayout.vue'
 ```
 
-Use `AppLayout` for authenticated user and admin pages, `AuthLayout` for sign-in and callback flows, and `TablePageLayout` for dense list pages inside `AppLayout`.
+Use `AppLayout` for authenticated administrator pages and `TablePageLayout` for dense list pages inside `AppLayout`. The login page owns its unauthenticated shell inside the auth feature.
 
 ## Routing
 
@@ -64,7 +65,7 @@ When adding a page, update all of the following owners where applicable:
 4. Locale messages in both `src/core/i18n/locales/en/` and `zh/`.
 5. Backend authorization for the corresponding operation.
 
-Menu visibility and router guards are user-experience controls, not authorization boundaries.
+Menu visibility and router guards are presentation controls, not authorization boundaries.
 
 ## Verification
 

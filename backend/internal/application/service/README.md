@@ -6,14 +6,14 @@
 
 | 前缀 | 职责 |
 | --- | --- |
-| `account*`, `admin_account*`, `admin_group*`, `admin_user*` | 账号与管理用例 |
-| `auth*`, `oauth*`, `token*`, `totp*` | 身份、会话和凭据刷新 |
-| `gateway*` | Anthropic/Claude 通用网关请求、调度、转发和计费 |
+| `account*`, `admin_account*`, `admin_group*` | 上游账号、分组与管理用例 |
+| `auth*`, `api_key*`, `oauth*`, `token*`, `totp*`, `passkey*` | 单管理员会话、网关 Key 和上游凭据刷新 |
+| `gateway*` | Anthropic/Claude 通用网关请求、调度、转发和用量成本 |
 | `openai*` | OpenAI/Codex/Responses/Images/WS 管线 |
 | `gemini*`, `grok*`, `antigravity*`, `bedrock*` | 各上游协议适配与重试 |
 | `scheduler*`, `channel*`, `ratelimit*`, `concurrency*` | 调度、通道和并发控制 |
-| `billing*`, `usage*`, `pricing*`, `subscription*` | 计费、用量和订阅 |
-| `payment*`, `batch_image*` | 支付应用编排与批量图片任务 |
+| `billing*`, `usage*`, `pricing*` | 成本计算、用量记录和统计 |
+| `image_task*`, `image_storage*` | 异步图片任务与结果存储 |
 | `ops*`, `audit*`, `content_moderation*` | 运维、审计和内容策略 |
 | `setting*`, `notification*`, `backup*` | 配置、通知和维护用例 |
 | `wire.go` | application provider 集合 |
@@ -27,13 +27,12 @@
 | `content_moderation_check.go`, `content_moderation_queue.go` | 同步审核决策与异步任务处理 |
 | `content_moderation_runtime.go`, `content_moderation_cleanup.go`, `content_moderation_admin.go` | 运行快照、清理和管理查询 |
 | `content_moderation_client.go`, `content_moderation_key_health.go` | 上游审核 API 和密钥健康状态 |
-| `content_moderation_side_effects.go`, `content_moderation_cyber_policy.go` | 命中后的账户、通知和网络安全事件处理 |
+| `content_moderation_side_effects.go`, `content_moderation_cyber_policy.go` | 命中后的审计、通知和网络安全事件处理 |
 | `content_moderation_test_input.go` | 管理端测试输入和确定性评分辅助 |
 | `setting_parse.go`, `setting_parse_core.go` | 持久设置默认值、解析编排与基础站点设置 |
-| `setting_parse_identity.go`, `setting_parse_oidc.go` | LinuxDo、DingTalk、OIDC、OAuth 与微信身份源设置 |
-| `setting_parse_features.go`, `setting_parse_gateway.go`, `setting_parse_notifications.go` | 功能开关、网关调度与通知展示设置 |
+| `setting_parse_features.go`, `setting_parse_gateway.go`, `setting_parse_notifications.go` | 网关功能、调度与通知设置 |
 | `setting_update.go`, `setting_update_prepare.go` | 持久设置更新编排、首错顺序与跨域预处理 |
-| `setting_update_core.go`, `setting_update_identity.go`, `setting_update_product.go` | 注册访问、身份源与产品默认设置写入 |
+| `setting_update_core.go`, `setting_update_product.go` | 单管理员产品设置写入 |
 | `setting_update_gateway.go`, `setting_update_notifications.go` | 网关调度、通知与平台额度设置写入 |
 
 ## 拆分约定

@@ -775,7 +775,7 @@ func parseUpstreamBillingProbeResponse(body []byte) (map[string]any, error) {
 		}
 	}
 	if response.UserRateMultiplier != nil && (*response.UserRateMultiplier < 0 || math.IsNaN(*response.UserRateMultiplier) || math.IsInf(*response.UserRateMultiplier, 0)) {
-		return nil, fmt.Errorf("invalid user billing multiplier")
+		return nil, fmt.Errorf("invalid upstream billing override")
 	}
 	expectedResolved := *response.GroupRateMultiplier
 	if response.UserRateMultiplier != nil {

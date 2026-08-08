@@ -14,9 +14,9 @@
 ## 路由域
 
 - `/setup`: 首次安装。
-- 公共/认证：`/home`, `/login`, `/register`, OAuth 回调、密码重置、法律文档等。
-- 用户：dashboard、API Key、用量、订阅、支付、渠道、个人设置等。
-- 管理：dashboard、Ops、账号/分组/渠道、用户、支付、设置、审计和风控等。
+- 公共/认证：`/setup`、`/login` 与本地管理员会话恢复。
+- 管理员自助：API Key、用量、资料、TOTP 与 Passkey。
+- 管理：Ops、上游账号/分组/渠道/代理、设置、审计和风控。
 - `/:pathMatch(.*)*`: 404。
 
 查精确路径或组件时：
@@ -33,8 +33,6 @@ rg -n 'path:|name:|component:' frontend/src/core/routes/index.ts
 | --- | --- |
 | `requiresAuth` | 是否登录；未设置时默认为 `true` |
 | `requiresAdmin` | 是否要求管理员 |
-| `requiresPayment` | 是否要求内部支付功能启用 |
-| `requiresSupportChat` | 是否要求在线客服功能显式启用 |
 | `title`, `titleKey`, `descriptionKey` | 页面标题和 i18n 元数据 |
 | `breadcrumbs`, `icon`, `hideInMenu` | 导航展示元数据 |
 
@@ -47,11 +45,9 @@ rg -n 'path:|name:|component:' frontend/src/core/routes/index.ts
 1. 启动导航 loading，并首次恢复内存 access token。
 2. 根据站点设置和路由元数据生成标题。
 3. 处理 `/setup` 已完成重定向。
-4. 处理公共路由、登录态和 backend mode 公共白名单。
-5. 验证登录和管理员角色。
-6. 确保支付/风控所需的公开设置已加载，再应用功能开关。
-7. 应用 simple mode 和 backend mode 的访问限制。
-8. 导航完成后停止 loading 并触发空闲预加载。
+4. 验证登录和管理员角色。
+5. 加载并执行管理员合规确认门禁。
+6. 导航完成后停止 loading 并触发空闲预加载。
 
 动态 import 在部署更新后可能失效。`router.onError` 对 chunk load error 做一次受控刷新；修改时必须保留防循环机制。
 

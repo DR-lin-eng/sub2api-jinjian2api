@@ -228,7 +228,7 @@ func (h *OpenAIGatewayHandler) AlphaSearch(c *gin.Context) {
 
 // recordAlphaSearchUsage 为一次成功的 alpha/search 网页搜索落按次计费用量行
 // （上游不返回 usage 字段，按 WebSearchCalls 走分组单价 × 倍率的按次口径）。
-// 与 images 一致使用 mandatory 池提交，池满时同步兜底执行，保证扣费不丢。
+// 与 images 一致使用 mandatory 池提交，池满时同步兜底执行，保证成本记录不丢。
 func (h *OpenAIGatewayHandler) recordAlphaSearchUsage(
 	c *gin.Context,
 	apiKey *service.APIKey,
