@@ -466,6 +466,9 @@ func ProvideOpsMetricsCollector(
 	redisClient *redis.Client,
 	cfg *config.Config,
 ) *OpsMetricsCollector {
+	if !opsRuntimeEnabled(cfg) {
+		return nil
+	}
 	collector := NewOpsMetricsCollector(opsRepo, settingRepo, accountRepo, concurrencyService, db, redisClient, cfg)
 	collector.Start()
 	return collector
@@ -479,6 +482,9 @@ func ProvideOpsAggregationService(
 	redisClient *redis.Client,
 	cfg *config.Config,
 ) *OpsAggregationService {
+	if !opsRuntimeEnabled(cfg) {
+		return nil
+	}
 	svc := NewOpsAggregationService(opsRepo, settingRepo, db, redisClient, cfg)
 	svc.Start()
 	return svc
@@ -493,6 +499,9 @@ func ProvideOpsAlertEvaluatorService(
 	cfg *config.Config,
 	proxyRepo ProxyRepository,
 ) *OpsAlertEvaluatorService {
+	if !opsRuntimeEnabled(cfg) {
+		return nil
+	}
 	svc := NewOpsAlertEvaluatorService(opsService, opsRepo, emailService, redisClient, cfg, proxyRepo)
 	svc.Start()
 	return svc
@@ -512,6 +521,9 @@ func ProvideOpsCleanupService(
 	settingRepo SettingRepository,
 	opsService *OpsService,
 ) *OpsCleanupService {
+	if !opsRuntimeEnabled(cfg) {
+		return nil
+	}
 	svc := NewOpsCleanupService(opsRepo, db, redisClient, cfg, channelMonitorSvc, settingRepo)
 	svc.Start()
 	if opsService != nil {
@@ -520,7 +532,11 @@ func ProvideOpsCleanupService(
 	return svc
 }
 
-func ProvideOpsSystemLogSink(opsRepo OpsRepository, redisClient *redis.Client, settingRepo SettingRepository) *OpsSystemLogSink {
+func ProvideOpsSystemLogSink(opsRepo OpsRepository, redisClient *redis.Client, settingRepo SettingRepository, cfg *config.Config) *OpsSystemLogSink {
+	if !opsRuntimeEnabled(cfg) {
+		logger.SetSink(nil)
+		return nil
+	}
 	sink := NewOpsSystemLogSink(opsRepo)
 	sink.ConfigureRedisOnlyStore(redisClient, settingRepo)
 	sink.Start()
@@ -611,6 +627,9 @@ func ProvideOpsScheduledReportService(
 	redisClient *redis.Client,
 	cfg *config.Config,
 ) *OpsScheduledReportService {
+	if !opsRuntimeEnabled(cfg) {
+		return nil
+	}
 	svc := NewOpsScheduledReportService(opsService, userService, emailService, redisClient, cfg)
 	svc.Start()
 	return svc
@@ -708,21 +727,28 @@ func ProvideOpsService(
 		systemLogSink,
 	)
 	if settingService != nil {
-		svc.SetOpenAIQuotaAutoPauseSettingsSink(settingService.SetOpenAIQuotaAutoPauseSettings)
 		settingService.SetRequestPriorityAdmissionSettingsSink(concurrencyService.ApplyRequestPriorityAdmissionSettings)
-		// Optional warm-up so the first scheduled request after process start observes
-		// a populated cache rather than zero defaults. Best-effort, sync-bounded.
-		settingService.WarmOpenAIQuotaAutoPauseSettings(context.Background())
+		if opsRuntimeEnabled(cfg) {
+			svc.SetOpenAIQuotaAutoPauseSettingsSink(settingService.SetOpenAIQuotaAutoPauseSettings)
+			// Optional warm-up so the first scheduled request after process start observes
+			// a populated cache rather than zero defaults. Best-effort, sync-bounded.
+			settingService.WarmOpenAIQuotaAutoPauseSettings(context.Background())
+		}
 	}
 	svc.authCacheInvalidationWorker = authCacheInvalidationWorker
 	svc.apiKeyService = apiKeyService
-	svc.StartRuntimeSettingsRefresh(context.Background())
+	if opsRuntimeEnabled(cfg) {
+		svc.StartRuntimeSettingsRefresh(context.Background())
+	}
 	return svc
 }
 
 // ProvideOpsIngressRejectAggregator starts the bounded security aggregation
 // runtime and attaches it to OpsService, which is the middleware recorder.
-func ProvideOpsIngressRejectAggregator(opsRepo OpsRepository, opsService *OpsService) *OpsIngressRejectAggregator {
+func ProvideOpsIngressRejectAggregator(opsRepo OpsRepository, opsService *OpsService, cfg *config.Config) *OpsIngressRejectAggregator {
+	if !opsRuntimeEnabled(cfg) || opsService == nil {
+		return nil
+	}
 	repo, ok := opsRepo.(OpsIngressRejectRepository)
 	if !ok {
 		return nil

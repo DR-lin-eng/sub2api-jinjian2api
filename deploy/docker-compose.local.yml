@@ -56,11 +56,20 @@ services:
       - ENABLE_SERVER_TIMING=${ENABLE_SERVER_TIMING:-false}
       - DEPLOYMENT_MODE=${DEPLOYMENT_MODE:-standalone}
       - NODE_NAME=${NODE_NAME:-}
-      - WORKER_ENABLED=${WORKER_ENABLED:-auto}
+      - WORKER_ENABLED=${WORKER_ENABLED:-false}
       - DEPLOYMENT_HEARTBEAT_INTERVAL_SECONDS=${DEPLOYMENT_HEARTBEAT_INTERVAL_SECONDS:-30}
       - DEPLOYMENT_STALE_AFTER_SECONDS=${DEPLOYMENT_STALE_AFTER_SECONDS:-90}
       - DEPLOYMENT_TASK_LEASE_SECONDS=${DEPLOYMENT_TASK_LEASE_SECONDS:-60}
       - UPDATE_GITHUB_TOKEN=${UPDATE_GITHUB_TOKEN:-}
+
+      # Lightweight single-admin defaults. Opt in through .env when needed.
+      - LOG_OUTPUT_TO_STDOUT=${LOG_OUTPUT_TO_STDOUT:-true}
+      - LOG_OUTPUT_TO_FILE=${LOG_OUTPUT_TO_FILE:-false}
+      - LOG_SAMPLING_ENABLED=${LOG_SAMPLING_ENABLED:-true}
+      - LOG_SAMPLING_INITIAL=${LOG_SAMPLING_INITIAL:-10}
+      - LOG_SAMPLING_THEREAFTER=${LOG_SAMPLING_THEREAFTER:-100}
+      - OPS_ENABLED=${OPS_ENABLED:-false}
+      - DASHBOARD_AGGREGATION_ENABLED=${DASHBOARD_AGGREGATION_ENABLED:-false}
 
       # =======================================================================
       # Database Configuration (PostgreSQL)
@@ -71,8 +80,8 @@ services:
       - DATABASE_PASSWORD=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       - DATABASE_DBNAME=${POSTGRES_DB:-sub2api}
       - DATABASE_SSLMODE=disable
-      - DATABASE_MAX_OPEN_CONNS=${DATABASE_MAX_OPEN_CONNS:-50}
-      - DATABASE_MAX_IDLE_CONNS=${DATABASE_MAX_IDLE_CONNS:-10}
+      - DATABASE_MAX_OPEN_CONNS=${DATABASE_MAX_OPEN_CONNS:-20}
+      - DATABASE_MAX_IDLE_CONNS=${DATABASE_MAX_IDLE_CONNS:-4}
       - DATABASE_CONN_MAX_LIFETIME_MINUTES=${DATABASE_CONN_MAX_LIFETIME_MINUTES:-30}
       - DATABASE_CONN_MAX_IDLE_TIME_MINUTES=${DATABASE_CONN_MAX_IDLE_TIME_MINUTES:-5}
 
@@ -84,9 +93,9 @@ services:
       - REDIS_USERNAME=${REDIS_USERNAME:-}
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
       - REDIS_DB=${REDIS_DB:-0}
-      - REDIS_POOL_SIZE=${REDIS_POOL_SIZE:-1024}
-      - REDIS_MIN_IDLE_CONNS=${REDIS_MIN_IDLE_CONNS:-10}
-      - REDIS_MAX_IDLE_CONNS=${REDIS_MAX_IDLE_CONNS:-0}
+      - REDIS_POOL_SIZE=${REDIS_POOL_SIZE:-64}
+      - REDIS_MIN_IDLE_CONNS=${REDIS_MIN_IDLE_CONNS:-2}
+      - REDIS_MAX_IDLE_CONNS=${REDIS_MAX_IDLE_CONNS:-8}
       - REDIS_ENABLE_TLS=${REDIS_ENABLE_TLS:-false}
 
       # =======================================================================
@@ -236,7 +245,7 @@ services:
     container_name: sub2api-redis
     restart: unless-stopped
     # Small-machine default. See REDIS_TUNING.md for the 50k+ RPM preset.
-    mem_limit: ${REDIS_MEM_LIMIT:-2g}
+    mem_limit: ${REDIS_MEM_LIMIT:-512m}
     sysctls:
       net.core.somaxconn: 65535
     ulimits:
@@ -248,16 +257,16 @@ services:
       - -c
       - >-
         exec redis-server --save "" --appendonly no
-        --maxmemory "$${REDIS_MAXMEMORY:-1536mb}"
+        --maxmemory "$${REDIS_MAXMEMORY:-384mb}"
         --maxmemory-policy allkeys-lru
-        --maxclients "$${REDIS_MAXCLIENTS:-50000}"
+        --maxclients "$${REDIS_MAXCLIENTS:-10000}"
         --tcp-backlog 65535
         $${REDIS_PASSWORD:+--requirepass "$${REDIS_PASSWORD}"}
     environment:
       - TZ=${TZ:-Asia/Shanghai}
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-      - REDIS_MAXMEMORY=${REDIS_MAXMEMORY:-1536mb}
-      - REDIS_MAXCLIENTS=${REDIS_MAXCLIENTS:-50000}
+      - REDIS_MAXMEMORY=${REDIS_MAXMEMORY:-384mb}
+      - REDIS_MAXCLIENTS=${REDIS_MAXCLIENTS:-10000}
       # REDISCLI_AUTH lets redis-cli authenticate without exposing -a in argv.
       - REDISCLI_AUTH=${REDIS_PASSWORD:-}
     networks:

@@ -34,10 +34,14 @@ func (s *testLogSink) list() []*logger.LogEvent {
 }
 
 func initMiddlewareTestLogger(t *testing.T) *testLogSink {
-	return initMiddlewareTestLoggerWithLevel(t, "debug")
+	return initMiddlewareTestLoggerWithOptions(t, "debug", logger.SamplingOptions{})
 }
 
 func initMiddlewareTestLoggerWithLevel(t *testing.T, level string) *testLogSink {
+	return initMiddlewareTestLoggerWithOptions(t, level, logger.SamplingOptions{})
+}
+
+func initMiddlewareTestLoggerWithOptions(t *testing.T, level string, sampling logger.SamplingOptions) *testLogSink {
 	t.Helper()
 	level = strings.TrimSpace(level)
 	if level == "" {
@@ -52,6 +56,7 @@ func initMiddlewareTestLoggerWithLevel(t *testing.T, level string) *testLogSink 
 			ToStdout: false,
 			ToFile:   false,
 		},
+		Sampling: sampling,
 	}); err != nil {
 		t.Fatalf("init logger: %v", err)
 	}
@@ -310,5 +315,31 @@ func TestLogger_AccessLogDroppedWhenLevelWarn(t *testing.T) {
 		if event != nil && event.Message == "http request completed" {
 			t.Fatalf("access log should not be indexed when level=warn: %+v", event)
 		}
+	}
+}
+
+func TestLogger_SamplesSuccessfulAccessBeforeBuildingLogEvent(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	sink := initMiddlewareTestLoggerWithOptions(t, "debug", logger.SamplingOptions{
+		Enabled:    true,
+		Initial:    2,
+		Thereafter: 3,
+	})
+	r := gin.New()
+	r.Use(Logger())
+	r.GET("/api/test", func(c *gin.Context) { c.Status(http.StatusOK) })
+
+	for i := 0; i < 8; i++ {
+		r.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/api/test", nil))
+	}
+
+	accessEvents := 0
+	for _, event := range sink.list() {
+		if event != nil && event.Message == "http request completed" {
+			accessEvents++
+		}
+	}
+	if accessEvents != 4 {
+		t.Fatalf("sampled access events=%d, want 4", accessEvents)
 	}
 }

@@ -8,7 +8,7 @@ import (
 
 func setOperationsDefaults() {
 	// Ops (vNext)
-	viper.SetDefault("ops.enabled", true)
+	viper.SetDefault("ops.enabled", false)
 	viper.SetDefault("ops.use_preaggregated_tables", true)
 	viper.SetDefault("ops.cleanup.enabled", true)
 	viper.SetDefault("ops.cleanup.schedule", "0 2 * * *")
@@ -65,7 +65,7 @@ func setOperationsDefaults() {
 	viper.SetDefault("api_key_auth_cache.invalid_abuse.capacity", 16384)
 
 	// Dashboard aggregation
-	viper.SetDefault("dashboard_aggregation.enabled", true)
+	viper.SetDefault("dashboard_aggregation.enabled", false)
 	viper.SetDefault("dashboard_aggregation.interval_seconds", 60)
 	viper.SetDefault("dashboard_aggregation.lookback_seconds", 120)
 	viper.SetDefault("dashboard_aggregation.backfill_enabled", false)

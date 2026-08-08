@@ -6,6 +6,12 @@ This branch runs one local administrator and a pure API-key gateway. It has no
 public registration, ordinary-user management, downstream subscriptions,
 wallet balances, redeem codes, or payment providers.
 
+Fresh deployments use a lightweight runtime profile: Ops monitoring,
+dashboard pre-aggregation, scheduled workers and duplicate file logging are
+disabled. Repetitive logs are sampled, and PostgreSQL/Redis pools are sized for
+a single gateway instance. Every setting remains available as an explicit
+environment override for larger installations.
+
 ## Deployment Methods
 
 | Method | Best For | Setup Wizard |

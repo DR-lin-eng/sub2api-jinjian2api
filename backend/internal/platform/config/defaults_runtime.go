@@ -9,7 +9,7 @@ func setRuntimeDefaults() {
 	// controls cluster identity and scheduled worker candidacy.
 	viper.SetDefault("deployment.mode", DeploymentModeStandalone)
 	viper.SetDefault("deployment.node_name", "")
-	viper.SetDefault("deployment.worker_enabled", WorkerModeAuto)
+	viper.SetDefault("deployment.worker_enabled", WorkerModeDisabled)
 	viper.SetDefault("deployment.heartbeat_interval_seconds", 30)
 	viper.SetDefault("deployment.stale_after_seconds", 90)
 	viper.SetDefault("deployment.task_lease_seconds", 60)
@@ -40,15 +40,15 @@ func setRuntimeDefaults() {
 	viper.SetDefault("log.caller", true)
 	viper.SetDefault("log.stacktrace_level", "error")
 	viper.SetDefault("log.output.to_stdout", true)
-	viper.SetDefault("log.output.to_file", true)
+	viper.SetDefault("log.output.to_file", false)
 	viper.SetDefault("log.output.file_path", "")
 	viper.SetDefault("log.rotation.max_size_mb", 100)
 	viper.SetDefault("log.rotation.max_backups", 10)
 	viper.SetDefault("log.rotation.max_age_days", 7)
 	viper.SetDefault("log.rotation.compress", true)
 	viper.SetDefault("log.rotation.local_time", true)
-	viper.SetDefault("log.sampling.enabled", false)
-	viper.SetDefault("log.sampling.initial", 100)
+	viper.SetDefault("log.sampling.enabled", true)
+	viper.SetDefault("log.sampling.initial", 10)
 	viper.SetDefault("log.sampling.thereafter", 100)
 
 	// CORS

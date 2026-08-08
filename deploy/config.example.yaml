@@ -13,16 +13,16 @@
 deployment:
   # standalone or multi_instance. Every node always serves the complete API and frontend.
   # standalone 或 multi_instance。每个节点始终提供完整 API 与前端。
-  # standalone keeps user/API-key request slots in-process for single-hot-key throughput;
+  # standalone keeps API-key request slots in-process for single-hot-key throughput;
   # multi_instance uses Redis-backed distributed slots across replicas.
   # standalone 使用进程内用户/API Key 槽位以承受单热 Key；multi_instance 使用 Redis 分布式槽位。
   mode: "standalone"
   # Stable operator-defined node name. Empty falls back to the hostname.
   # 稳定节点名；留空时使用 hostname。多机部署建议显式设置且各节点不同。
   node_name: ""
-  # auto, true, or false. auto joins worker election; false disables only cluster jobs.
-  # auto、true 或 false。auto 自动参与 Worker 选举；false 仅停用集群后台任务。
-  worker_enabled: "auto"
+  # false keeps scheduled tests, backups and monitoring jobs off; opt in with auto or true.
+  # false 默认关闭定时测试、备份和监控任务；需要时可设为 auto 或 true。
+  worker_enabled: "false"
   heartbeat_interval_seconds: 30
   stale_after_seconds: 90
   task_lease_seconds: 60
@@ -575,9 +575,9 @@ log:
     # Keep stdout/stderr output for container log collection
     # 保持标准输出用于容器日志采集
     to_stdout: true
-    # Enable file output (default path auto-derived)
-    # 启用文件输出（默认路径自动推导）
-    to_file: true
+    # File output is opt-in; container logs already persist stdout when configured by Docker.
+    # 文件输出按需开启；容器日志已可由 Docker 持久化 stdout。
+    to_file: false
     # Empty means:
     # - DATA_DIR set: {{DATA_DIR}}/logs/sub2api.log
     # - otherwise: /app/data/logs/sub2api.log
@@ -604,10 +604,10 @@ log:
   sampling:
     # Enable zap sampler (reduce high-frequency repetitive logs)
     # 启用 zap 采样（减少高频重复日志）
-    enabled: false
+    enabled: true
     # Number of first entries per second to always log
     # 每秒无采样保留的前 N 条日志
-    initial: 100
+    initial: 10
     # Thereafter keep 1 out of N entries per second
     # 之后每 N 条保留 1 条
     thereafter: 100
@@ -685,7 +685,7 @@ api_key_auth_cache:
 dashboard_aggregation:
   # Enable aggregation job
   # 启用聚合作业
-  enabled: true
+  enabled: false
   # Refresh interval (seconds)
   # 刷新间隔（秒）
   interval_seconds: 60
@@ -776,10 +776,10 @@ database:
   # Per-instance maximum. Cluster demand = replica_count * max_open_conns.
   # Keep that total below PostgreSQL max_connections after reserving admin/migration slots.
   # 单实例最大连接数。集群总需求 = 实例数 * max_open_conns；还需为管理和迁移预留连接。
-  max_open_conns: 256
-  # Max idle connections (建议为 max_open_conns 的 50%，减少频繁建连开销)
+  max_open_conns: 20
+  # Max idle connections
   # 最大空闲连接数
-  max_idle_conns: 128
+  max_idle_conns: 4
   # Connection max lifetime (minutes)
   # 连接最大存活时间（分钟）
   conn_max_lifetime_minutes: 30
@@ -809,15 +809,13 @@ redis:
   # Per-instance pool size. Redis maxclients must exceed replica_count * pool_size
   # plus connections used by operators and other services.
   # 单实例连接池大小；Redis maxclients 需覆盖 实例数 * pool_size 及运维/其他服务连接。
-  pool_size: 1024
-  # Minimum number of idle connections (高并发场景建议 128+，保持足够热连接)
+  pool_size: 64
+  # Minimum number of idle connections
   # 最小空闲连接数
-  min_idle_conns: 128
-  # Maximum number of idle connections retained after a traffic spike; 0 keeps
-  # hot connections up to pool_size. Set a positive limit on memory-first hosts.
-  # 流量峰值结束后保留的最大空闲连接数；0 表示在 pool_size 内保留热连接。
-  # 内存优先的小机器可显式设置正数上限。
-  max_idle_conns: 0
+  min_idle_conns: 2
+  # Maximum number of idle connections retained after a traffic spike.
+  # 流量峰值结束后保留的最大空闲连接数。
+  max_idle_conns: 8
   # Enable TLS/SSL connection
   # 是否启用 TLS/SSL 连接
   enable_tls: false
@@ -833,7 +831,7 @@ ops:
   # 设置为 false 可在左侧栏隐藏运维监控菜单并禁用所有运维监控功能
   # Other detailed settings (cleanup, aggregation, etc.) are configured in ops settings dialog
   # 其他详细设置（数据清理、预聚合等）在运维监控设置对话框中配置
-  enabled: true
+  enabled: false
 
 # =============================================================================
 # JWT Configuration

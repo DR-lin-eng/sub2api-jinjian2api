@@ -1,15 +1,87 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/platform/config"
 	"github.com/stretchr/testify/require"
 )
+
+type blockingPricingRemoteClient struct {
+	hashStarted chan struct{}
+	release     chan struct{}
+	startOnce   sync.Once
+}
+
+func (c *blockingPricingRemoteClient) FetchPricingJSON(context.Context, string) ([]byte, error) {
+	return nil, errors.New("unexpected pricing download")
+}
+
+func (c *blockingPricingRemoteClient) FetchHashText(ctx context.Context, _ string) (string, error) {
+	c.startOnce.Do(func() { close(c.hashStarted) })
+	select {
+	case <-c.release:
+		return "", errors.New("remote unavailable")
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+}
+
+func TestPricingInitializeUsesBundledFallbackWithoutBlockingOnRemote(t *testing.T) {
+	dataDir := t.TempDir()
+	fallbackFile := filepath.Join(t.TempDir(), "pricing.json")
+	require.NoError(t, os.WriteFile(fallbackFile, []byte(`{
+		"gpt-test": {
+			"input_cost_per_token": 0.000001,
+			"output_cost_per_token": 0.000002
+		}
+	}`), 0o600))
+
+	remote := &blockingPricingRemoteClient{
+		hashStarted: make(chan struct{}),
+		release:     make(chan struct{}),
+	}
+	svc := NewPricingService(&config.Config{Pricing: config.PricingConfig{
+		RemoteURL:                "https://example.com/pricing.json",
+		HashURL:                  "https://example.com/pricing.sha256",
+		DataDir:                  dataDir,
+		FallbackFile:             fallbackFile,
+		HashCheckIntervalMinutes: 10,
+	}}, remote)
+	t.Cleanup(func() {
+		select {
+		case <-remote.release:
+		default:
+			close(remote.release)
+		}
+		svc.Stop()
+	})
+
+	initialized := make(chan error, 1)
+	go func() { initialized <- svc.Initialize() }()
+
+	select {
+	case err := <-initialized:
+		require.NoError(t, err)
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("Initialize blocked on remote pricing refresh")
+	}
+	require.NotNil(t, svc.GetModelPricing("gpt-test"))
+	require.FileExists(t, filepath.Join(dataDir, "model_pricing.json"))
+
+	select {
+	case <-remote.hashStarted:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("background pricing refresh did not start")
+	}
+}
 
 func TestPricingSchedulerBlankRemoteURLDoesNotStart(t *testing.T) {
 	svc := NewPricingService(&config.Config{Pricing: config.PricingConfig{RemoteURL: "  \t  "}}, nil)

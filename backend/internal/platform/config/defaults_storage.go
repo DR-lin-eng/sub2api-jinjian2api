@@ -10,8 +10,8 @@ func setStorageDefaults() {
 	viper.SetDefault("database.password", "postgres")
 	viper.SetDefault("database.dbname", "sub2api")
 	viper.SetDefault("database.sslmode", "prefer")
-	viper.SetDefault("database.max_open_conns", 256)
-	viper.SetDefault("database.max_idle_conns", 128)
+	viper.SetDefault("database.max_open_conns", 20)
+	viper.SetDefault("database.max_idle_conns", 4)
 	viper.SetDefault("database.conn_max_lifetime_minutes", 30)
 	viper.SetDefault("database.conn_max_idle_time_minutes", 5)
 
@@ -24,9 +24,9 @@ func setStorageDefaults() {
 	viper.SetDefault("redis.dial_timeout_seconds", 5)
 	viper.SetDefault("redis.read_timeout_seconds", 3)
 	viper.SetDefault("redis.write_timeout_seconds", 3)
-	viper.SetDefault("redis.pool_size", 1024)
-	viper.SetDefault("redis.min_idle_conns", 128)
-	viper.SetDefault("redis.max_idle_conns", 0)
+	viper.SetDefault("redis.pool_size", 64)
+	viper.SetDefault("redis.min_idle_conns", 2)
+	viper.SetDefault("redis.max_idle_conns", 8)
 	viper.SetDefault("redis.enable_tls", false)
 
 	// Image storage (async image task result offload to S3-compatible object storage)

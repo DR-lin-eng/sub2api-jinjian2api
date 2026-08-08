@@ -189,17 +189,24 @@ func NewPricingService(cfg *config.Config, remoteClient PricingRemoteClient) *Pr
 
 // Initialize 初始化价格服务
 func (s *PricingService) Initialize() error {
+	if s == nil || s.cfg == nil {
+		return fmt.Errorf("pricing configuration is required")
+	}
+
 	// 确保数据目录存在
 	if err := os.MkdirAll(s.cfg.Pricing.DataDir, 0755); err != nil {
 		logger.LegacyPrintf("service.pricing", "[Pricing] Failed to create data directory: %v", err)
 	}
 
-	// 首次加载价格数据
-	if err := s.checkAndUpdatePricing(); err != nil {
-		logger.LegacyPrintf("service.pricing", "[Pricing] Initial load failed, using fallback: %v", err)
-		if err := s.useFallbackPricing(); err != nil {
+	// 启动只依赖本地或镜像内置数据。仅当两者都不可用时，才同步访问远程源。
+	if err := s.loadStartupPricing(); err != nil {
+		logger.LegacyPrintf("service.pricing", "[Pricing] Local startup data unavailable, downloading: %v", err)
+		if err := s.downloadPricingData(); err != nil {
 			return fmt.Errorf("failed to load pricing data: %w", err)
 		}
+	} else {
+		// 本地数据已经可用，远程新鲜度检查不应延迟 HTTP 服务启动。
+		s.startInitialRemoteSync()
 	}
 
 	// 启动定时更新
@@ -207,6 +214,42 @@ func (s *PricingService) Initialize() error {
 
 	logger.LegacyPrintf("service.pricing", "[Pricing] Service initialized with %d models", len(s.pricingData))
 	return nil
+}
+
+func (s *PricingService) loadStartupPricing() error {
+	pricingFile := s.getPricingFilePath()
+	if err := s.loadPricingData(pricingFile); err == nil {
+		return nil
+	} else {
+		logger.L().Info("local pricing catalog unavailable; trying bundled catalog",
+			zap.String("path", pricingFile),
+			zap.Error(err),
+		)
+	}
+
+	if err := s.useFallbackPricing(); err != nil {
+		return fmt.Errorf("load bundled fallback: %w", err)
+	}
+	return nil
+}
+
+func (s *PricingService) startInitialRemoteSync() {
+	if s == nil || s.cfg == nil || strings.TrimSpace(s.cfg.Pricing.RemoteURL) == "" {
+		return
+	}
+
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
+		select {
+		case <-s.stopCh:
+			return
+		default:
+		}
+		if err := s.syncWithRemote(); err != nil {
+			logger.LegacyPrintf("service.pricing", "[Pricing] Initial background sync failed: %v", err)
+		}
+	}()
 }
 
 // Stop 停止价格服务
@@ -248,63 +291,6 @@ func (s *PricingService) startUpdateScheduler() {
 	}()
 
 	logger.LegacyPrintf("service.pricing", "[Pricing] Update scheduler started (check every %v)", hashInterval)
-}
-
-// checkAndUpdatePricing 检查并更新价格数据
-func (s *PricingService) checkAndUpdatePricing() error {
-	pricingFile := s.getPricingFilePath()
-
-	// 检查本地文件是否存在
-	if _, err := os.Stat(pricingFile); os.IsNotExist(err) {
-		logger.LegacyPrintf("service.pricing", "%s", "[Pricing] Local pricing file not found, downloading...")
-		return s.downloadPricingData()
-	}
-
-	// 先加载本地文件（确保服务可用），再检查是否需要更新
-	if err := s.loadPricingData(pricingFile); err != nil {
-		logger.LegacyPrintf("service.pricing", "[Pricing] Failed to load local file, downloading: %v", err)
-		return s.downloadPricingData()
-	}
-
-	// 如果配置了哈希URL，通过远程哈希检查是否有更新
-	if s.cfg.Pricing.HashURL != "" {
-		remoteHash, err := s.fetchRemoteHash()
-		if err != nil {
-			logger.LegacyPrintf("service.pricing", "[Pricing] Failed to fetch remote hash on startup: %v", err)
-			return nil // 已加载本地文件，哈希获取失败不影响启动
-		}
-
-		s.mu.RLock()
-		localHash := s.localHash
-		s.mu.RUnlock()
-
-		if localHash == "" || remoteHash != localHash {
-			logger.LegacyPrintf("service.pricing", "[Pricing] Remote hash differs on startup (local=%s remote=%s), downloading...",
-				localHash[:min(8, len(localHash))], remoteHash[:min(8, len(remoteHash))])
-			if err := s.downloadPricingData(); err != nil {
-				logger.LegacyPrintf("service.pricing", "[Pricing] Download failed, using existing file: %v", err)
-			}
-		}
-		return nil
-	}
-
-	// 没有哈希URL时，基于文件年龄检查
-	info, err := os.Stat(pricingFile)
-	if err != nil {
-		return nil // 已加载本地文件
-	}
-
-	fileAge := time.Since(info.ModTime())
-	maxAge := time.Duration(s.cfg.Pricing.UpdateIntervalHours) * time.Hour
-
-	if fileAge > maxAge {
-		logger.LegacyPrintf("service.pricing", "[Pricing] Local file is %v old, updating...", fileAge.Round(time.Hour))
-		if err := s.downloadPricingData(); err != nil {
-			logger.LegacyPrintf("service.pricing", "[Pricing] Download failed, using existing file: %v", err)
-		}
-	}
-
-	return nil
 }
 
 // syncWithRemote 与远程同步（基于哈希校验）
@@ -587,7 +573,7 @@ func (s *PricingService) useFallbackPricing() error {
 		return fmt.Errorf("fallback file not found: %s", fallbackFile)
 	}
 
-	logger.LegacyPrintf("service.pricing", "[Pricing] Using fallback file: %s", fallbackFile)
+	logger.L().Info("using bundled pricing catalog", zap.String("path", fallbackFile))
 
 	// 复制到数据目录
 	data, err := os.ReadFile(fallbackFile)

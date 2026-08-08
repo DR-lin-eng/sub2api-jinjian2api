@@ -150,9 +150,22 @@ func NewOpsService(
 		antigravityGatewayService: antigravityGatewayService,
 		systemLogSink:             systemLogSink,
 	}
-	svc.initRuntimeSettings(context.Background())
-	svc.applyRuntimeLogConfigOnStartup(context.Background())
+	if opsRuntimeEnabled(cfg) {
+		svc.initRuntimeSettings(context.Background())
+		svc.applyRuntimeLogConfigOnStartup(context.Background())
+	} else {
+		defaults := defaultOpsAdvancedSettingsForConfig(cfg)
+		svc.runtimeSettings.Store(&opsRuntimeSettingsSnapshot{
+			monitoringEnabled: false,
+			metricsInterval:   opsMetricsCollectorMinInterval,
+			advanced:          *defaults,
+		})
+	}
 	return svc
+}
+
+func opsRuntimeEnabled(cfg *config.Config) bool {
+	return cfg == nil || cfg.Ops.Enabled
 }
 
 func (s *OpsService) RequireMonitoringEnabled(ctx context.Context) error {

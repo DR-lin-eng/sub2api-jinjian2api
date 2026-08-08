@@ -42,14 +42,23 @@ func TestLoadServerTimingConfig(t *testing.T) {
 }
 
 func TestLoadDeploymentWorkerModes(t *testing.T) {
-	t.Run("auto is the default worker candidate", func(t *testing.T) {
+	t.Run("scheduled workers are disabled by default", func(t *testing.T) {
 		resetViperWithJWTSecret(t)
 		cfg, err := Load()
 		require.NoError(t, err)
 		require.Equal(t, DeploymentModeStandalone, cfg.Deployment.Mode)
+		require.Equal(t, WorkerModeDisabled, cfg.Deployment.WorkerMode())
+		require.False(t, cfg.Deployment.WorkerEnabledResolved())
+		require.NotEmpty(t, cfg.Deployment.NodeName)
+	})
+
+	t.Run("auto remains available as an explicit worker mode", func(t *testing.T) {
+		resetViperWithJWTSecret(t)
+		t.Setenv("WORKER_ENABLED", WorkerModeAuto)
+		cfg, err := Load()
+		require.NoError(t, err)
 		require.Equal(t, WorkerModeAuto, cfg.Deployment.WorkerMode())
 		require.True(t, cfg.Deployment.WorkerEnabledResolved())
-		require.NotEmpty(t, cfg.Deployment.NodeName)
 	})
 
 	t.Run("explicit api-only node keeps worker disabled", func(t *testing.T) {
@@ -91,12 +100,29 @@ func TestLoadRedisMaxIdleConnsFromEnvironment(t *testing.T) {
 	require.Equal(t, 96, cfg.Redis.MaxIdleConns)
 }
 
-func TestLoadRedisPerformanceDefaults(t *testing.T) {
+func TestLoadLightweightStorageDefaults(t *testing.T) {
 	resetViperWithJWTSecret(t)
 
 	cfg, err := Load()
 	require.NoError(t, err)
-	require.Zero(t, cfg.Redis.MaxIdleConns)
+	require.Equal(t, 20, cfg.Database.MaxOpenConns)
+	require.Equal(t, 4, cfg.Database.MaxIdleConns)
+	require.Equal(t, 64, cfg.Redis.PoolSize)
+	require.Equal(t, 2, cfg.Redis.MinIdleConns)
+	require.Equal(t, 8, cfg.Redis.MaxIdleConns)
+}
+
+func TestLoadLightweightObservabilityDefaults(t *testing.T) {
+	resetViperWithJWTSecret(t)
+
+	cfg, err := Load()
+	require.NoError(t, err)
+	require.False(t, cfg.Log.Output.ToFile)
+	require.True(t, cfg.Log.Sampling.Enabled)
+	require.Equal(t, 10, cfg.Log.Sampling.Initial)
+	require.Equal(t, 100, cfg.Log.Sampling.Thereafter)
+	require.False(t, cfg.Ops.Enabled)
+	require.False(t, cfg.DashboardAgg.Enabled)
 }
 
 func TestLoadHTTPIngressSafetyDefaults(t *testing.T) {
@@ -676,8 +702,8 @@ func TestLoadDefaultDashboardAggregationConfig(t *testing.T) {
 		t.Fatalf("Load() error: %v", err)
 	}
 
-	if !cfg.DashboardAgg.Enabled {
-		t.Fatalf("DashboardAgg.Enabled = false, want true")
+	if cfg.DashboardAgg.Enabled {
+		t.Fatalf("DashboardAgg.Enabled = true, want false")
 	}
 	if cfg.DashboardAgg.IntervalSeconds != 60 {
 		t.Fatalf("DashboardAgg.IntervalSeconds = %d, want 60", cfg.DashboardAgg.IntervalSeconds)
@@ -732,6 +758,7 @@ func TestValidateDashboardAggregationBackfillMaxDays(t *testing.T) {
 		t.Fatalf("Load() error: %v", err)
 	}
 
+	cfg.DashboardAgg.Enabled = true
 	cfg.DashboardAgg.BackfillEnabled = true
 	cfg.DashboardAgg.BackfillMaxDays = 0
 	err = cfg.Validate()

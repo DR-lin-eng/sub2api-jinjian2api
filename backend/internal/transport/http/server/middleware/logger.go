@@ -34,13 +34,7 @@ func Logger() gin.HandlerFunc {
 		endTime := time.Now()
 		latency := endTime.Sub(startTime)
 
-		method := c.Request.Method
 		statusCode := c.Writer.Status()
-		clientIP := ip.GetClientIP(c)
-		protocol := c.Request.Proto
-		accountID, hasAccountID := c.Request.Context().Value(ctxkey.AccountID).(int64)
-		platform, _ := c.Request.Context().Value(ctxkey.Platform).(string)
-		model, _ := c.Request.Context().Value(ctxkey.Model).(string)
 		reason, rejected := GetIngressRejectReason(c)
 		if rejected {
 			recordIngressReject(c, reason)
@@ -56,6 +50,19 @@ func Logger() gin.HandlerFunc {
 				return
 			}
 		}
+
+		baseLogger := logger.FromContext(c.Request.Context())
+		accessEntry := baseLogger.Check(zap.InfoLevel, "http request completed")
+		if accessEntry == nil && len(c.Errors) == 0 {
+			return
+		}
+
+		method := c.Request.Method
+		clientIP := ip.GetClientIP(c)
+		protocol := c.Request.Proto
+		accountID, hasAccountID := c.Request.Context().Value(ctxkey.AccountID).(int64)
+		platform, _ := c.Request.Context().Value(ctxkey.Platform).(string)
+		model, _ := c.Request.Context().Value(ctxkey.Model).(string)
 
 		fields := []zap.Field{
 			zap.String("component", "http.access"),
@@ -82,11 +89,12 @@ func Logger() gin.HandlerFunc {
 			fields = append(fields, zap.String("model", model))
 		}
 
-		l := logger.FromContext(c.Request.Context()).With(fields...)
-		l.Info("http request completed", zap.Time("completed_at", endTime))
+		if accessEntry != nil {
+			accessEntry.Write(append(fields, zap.Time("completed_at", endTime))...)
+		}
 
 		if len(c.Errors) > 0 {
-			l.Warn("http request contains gin errors", zap.String("errors", c.Errors.String()))
+			baseLogger.With(fields...).Warn("http request contains gin errors", zap.String("errors", c.Errors.String()))
 		}
 	}
 }
