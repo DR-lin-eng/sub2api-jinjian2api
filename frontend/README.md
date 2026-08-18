@@ -75,6 +75,8 @@ ESLint 还对迁移期架构债务执行“只减不增”门禁：禁止新增 
 
 短期 access token 保存在内存中，刷新凭据由后端 HttpOnly cookie 管理。`src/core/networks/client.ts` 会合并并发 401 刷新并重试请求。
 
+密码登录始终发送 `RSA-OAEP-256+A256GCM` 凭证信封。HTTPS/localhost 使用原生 Web Crypto；普通 `http://IP:端口` 无法使用 `crypto.subtle` 时，登录页按需加载协议等价的 JavaScript 加密实现，后端仍不接受浏览器明文密码。HTTP 无法提供服务端身份认证，公网或不可信网络仍应使用 HTTPS。
+
 Router guard 提供页面跳转和功能开关体验，但不是安全边界。本地管理员身份、step-up 和功能权限必须由后端再次验证。
 
 修改登录/刷新流程时同时检查：

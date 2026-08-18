@@ -16,6 +16,8 @@ type clusterRepositoryStub struct {
 	instances map[string]ClusterInstance
 	tasks     map[string]ClusterTaskRun
 	renewals  int
+	upserts   int
+	stops     int
 }
 
 type clusterHealthCheckerStub bool
@@ -31,6 +33,7 @@ func newClusterRepositoryStub() *clusterRepositoryStub {
 func (r *clusterRepositoryStub) UpsertInstance(_ context.Context, instance ClusterInstance) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	r.upserts++
 	r.instances[instance.RunnerID] = instance
 	return nil
 }
@@ -38,6 +41,7 @@ func (r *clusterRepositoryStub) UpsertInstance(_ context.Context, instance Clust
 func (r *clusterRepositoryStub) MarkInstanceStopped(_ context.Context, runnerID string, stoppedAt time.Time) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	r.stops++
 	instance := r.instances[runnerID]
 	instance.StoppedAt = &stoppedAt
 	r.instances[runnerID] = instance
@@ -192,4 +196,53 @@ func TestClusterService_StatusReportsCurrentNodeAndWorker(t *testing.T) {
 	require.Len(t, status.Instances, 1)
 	require.True(t, status.Instances[0].Current)
 	require.True(t, status.Instances[0].RedisOK)
+}
+
+func TestProvideClusterServiceSkipsIdleStandaloneHeartbeat(t *testing.T) {
+	repo := newClusterRepositoryStub()
+	cfg := &config.Config{Deployment: config.DeploymentConfig{
+		Mode:          config.DeploymentModeStandalone,
+		WorkerEnabled: config.WorkerModeDisabled,
+	}}
+	node := ProvideClusterService(repo, cfg, nil, BuildInfo{})
+	node.Stop()
+
+	repo.mu.Lock()
+	defer repo.mu.Unlock()
+	require.Zero(t, repo.upserts)
+	require.Zero(t, repo.stops)
+}
+
+func TestProvideClusterServiceStopsOnDemandStatusRegistration(t *testing.T) {
+	repo := newClusterRepositoryStub()
+	cfg := &config.Config{Deployment: config.DeploymentConfig{
+		Mode:          config.DeploymentModeStandalone,
+		WorkerEnabled: config.WorkerModeDisabled,
+	}}
+	node := ProvideClusterService(repo, cfg, nil, BuildInfo{})
+
+	_, err := node.GetStatus(context.Background())
+	require.NoError(t, err)
+	node.Stop()
+
+	repo.mu.Lock()
+	defer repo.mu.Unlock()
+	require.Equal(t, 1, repo.upserts)
+	require.Equal(t, 1, repo.stops)
+}
+
+func TestProvideClusterServiceStartsWhenRuntimeIsNeeded(t *testing.T) {
+	for _, cfg := range []*config.Config{
+		clusterTestConfig("multi", config.WorkerModeDisabled),
+		{Deployment: config.DeploymentConfig{Mode: config.DeploymentModeStandalone, WorkerEnabled: config.WorkerModeEnabled}},
+	} {
+		repo := newClusterRepositoryStub()
+		node := ProvideClusterService(repo, cfg, nil, BuildInfo{})
+		node.Stop()
+
+		repo.mu.Lock()
+		require.Equal(t, 1, repo.upserts)
+		require.Equal(t, 1, repo.stops)
+		repo.mu.Unlock()
+	}
 }

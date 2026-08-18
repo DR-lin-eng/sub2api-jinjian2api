@@ -48,6 +48,22 @@ func TestRunSecurityAuditDoesNotSkipSubsequentWebSocketTurns(t *testing.T) {
 	require.Equal(t, int64(2), engine.enqueues.Load(), "subsequent WebSocket turns must be audited again")
 }
 
+func TestRunSecurityAuditSkipsKnownDisabledEnginesBeforeRequestConstruction(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	engine := &turnCountingEngine{mode: securityaudit.ModeOff}
+	coordinator := securityaudit.NewCoordinator(nil, engine)
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodPost, "/v1/chat/completions", nil)
+
+	decision := runSecurityAudit(c, nil, coordinator, nil, nil, middleware2.AuthSubject{UserID: 1},
+		"openai_chat_completions", "gpt-test", []byte(`{"messages":[{"role":"user","content":"skip"}]}`), "http")
+	require.Nil(t, decision)
+	require.Zero(t, engine.enqueues.Load())
+	_, cached := c.Get(securityAuditCompletedContextKey)
+	require.False(t, cached)
+}
+
 type turnCountingEngine struct {
 	mode     securityaudit.Mode
 	enqueues atomic.Int64

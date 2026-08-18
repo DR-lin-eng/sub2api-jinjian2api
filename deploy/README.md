@@ -12,6 +12,13 @@ disabled. Repetitive logs are sampled, and PostgreSQL/Redis pools are sized for
 a single gateway instance. Every setting remains available as an explicit
 environment override for larger installations.
 
+In the default `standalone` profile, cross-instance API-key/config Pub/Sub and
+cluster heartbeats are not started. Prompt Audit and content moderation keep no
+worker pool while disabled; enabling asynchronous audit/risk control starts the
+configured workers on demand. Set `DEPLOYMENT_MODE=multi_instance` to restore
+cross-instance subscriptions, or `WORKER_ENABLED=auto`/`true` to restore
+scheduled workers and cluster coordination in a standalone deployment.
+
 ## Deployment Methods
 
 | Method | Best For | Setup Wizard |

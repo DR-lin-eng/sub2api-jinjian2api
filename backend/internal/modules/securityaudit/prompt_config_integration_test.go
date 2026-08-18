@@ -148,8 +148,9 @@ func TestPromptAuditConfigCASSecretRoundTripInvalidationAndTTL(t *testing.T) {
 	t.Cleanup(func() { require.NoError(t, redisClient.Close()) })
 	require.NoError(t, redisClient.Ping(context.Background()).Err())
 
-	managerOne := NewConfigManager(db, settingRepo, redisClient, encryptor, testTotpKeyConfig())
-	managerTwo := NewConfigManager(db, settingRepo, redisClient, encryptor, testTotpKeyConfig())
+	multiInstanceCfg := testTotpKeyConfigWithDeployment(config.DeploymentModeMultiInstance)
+	managerOne := NewConfigManager(db, settingRepo, redisClient, encryptor, multiInstanceCfg)
+	managerTwo := NewConfigManager(db, settingRepo, redisClient, encryptor, multiInstanceCfg)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	require.NoError(t, managerOne.Start(ctx))

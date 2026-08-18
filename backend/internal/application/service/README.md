@@ -40,3 +40,9 @@
 单个功能按 `types/plan/request/forward/response/billing/runtime` 职责拆文件，不按“公共 helper”堆积。新增功能若不需要访问本包大量私有状态，应建立 `modules/<domain>` 并通过接口接入。
 
 本包禁止导入 `internal/infrastructure/repository`；例外只能在 lint 配置中显式记录并附迁移原因。
+
+内容审计的队列与 worker 按运行快照惰性启动；全局风控关闭、内容审计禁用或
+`mode=off` 时不预分配大队列，也不保留 worker。运行时配置关闭或缩容会先完成
+已接受的记录任务；进程关机仍通过生命周期上下文取消在途 I/O 并有界退出。
+已确认关闭的运行快照也会让网关跳过审计请求对象与日志构造；未知或加载失败状态
+保持保守路径并继续进入审计检查。

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -34,6 +35,7 @@ type ConfigManager struct {
 	// auto-generated (per-boot) key, newly saved endpoint tokens would become
 	// undecryptable after the next restart, so Save rejects them (issue #4887).
 	encryptionKeyConfigured bool
+	multiInstance           bool
 
 	snapshot atomic.Pointer[activeConfigSnapshot]
 	expected atomic.Int64
@@ -62,6 +64,7 @@ func NewConfigManager(db *sql.DB, settings service.SettingRepository, redisClien
 	return &ConfigManager{
 		db: db, settings: settings, redis: redisClient, encryptor: encryptor, clock: realClock{},
 		encryptionKeyConfigured: cfg != nil && cfg.Totp.EncryptionKeyConfigured,
+		multiInstance:           cfg != nil && cfg.Deployment.IsMultiInstance(),
 	}
 }
 
@@ -83,7 +86,7 @@ func (m *ConfigManager) Start(ctx context.Context) error {
 	}
 	m.wg.Add(1)
 	go m.refreshLoop(runCtx)
-	if m.redis != nil {
+	if m.multiInstance && m.redis != nil {
 		m.wg.Add(1)
 		go m.subscribeLoop(runCtx)
 	}
@@ -138,10 +141,32 @@ func (m *ConfigManager) Reload(ctx context.Context) error {
 	m.configUntrusted.Store(false)
 	m.clearLoadError()
 	m.logInvalidTokenEndpoints(previous, active)
-	LogInfo(EventConfigLoaded, map[string]any{
-		"config_version": storage.ConfigVersion, "status": "loaded",
-	})
+	if promptAuditConfigChanged(previous, storage, active) {
+		LogInfo(EventConfigLoaded, map[string]any{
+			"config_version": storage.ConfigVersion, "status": "loaded",
+		})
+	}
 	return nil
+}
+
+func promptAuditConfigChanged(previous *activeConfigSnapshot, storage storageConfig, active ActiveConfig) bool {
+	if previous == nil {
+		return true
+	}
+	prior := previous.storage
+	return prior.Enabled != storage.Enabled ||
+		prior.BlockingEnabled != storage.BlockingEnabled ||
+		prior.BlockingLatestTurnOnly != storage.BlockingLatestTurnOnly ||
+		prior.StorePassEvents != storage.StorePassEvents ||
+		prior.Strategy != storage.Strategy ||
+		prior.WorkerCount != storage.WorkerCount ||
+		prior.QueueCapacity != storage.QueueCapacity ||
+		prior.AllGroups != storage.AllGroups ||
+		prior.ConfigVersion != storage.ConfigVersion ||
+		!slices.Equal(prior.Scanners, storage.Scanners) ||
+		!slices.Equal(prior.GroupIDs, storage.GroupIDs) ||
+		!slices.Equal(prior.Endpoints, storage.Endpoints) ||
+		previous.active.RiskControlEnabled != active.RiskControlEnabled
 }
 
 // logInvalidTokenEndpoints warns once per change (not on every 5s refresh)
@@ -326,7 +351,7 @@ func (m *ConfigManager) Save(ctx context.Context, req UpdateConfigRequest, actor
 	LogInfo(EventConfigUpdated, map[string]any{
 		"config_version": next.ConfigVersion, "status": "updated",
 	})
-	if m.redis != nil {
+	if m.multiInstance && m.redis != nil {
 		if err := m.redis.Publish(ctx, ConfigInvalidationChannel, strconv.FormatInt(next.ConfigVersion, 10)).Err(); err != nil {
 			LogWarn(EventConfigReloadDegraded, map[string]any{
 				"config_version": next.ConfigVersion, "status": "degraded", "error_code": "config_invalidation_publish_failed",

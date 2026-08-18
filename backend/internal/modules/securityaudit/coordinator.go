@@ -23,8 +23,31 @@ type Coordinator struct {
 	prompt PromptEngine
 }
 
+type runtimeLegacyEngine interface {
+	RuntimeAuditEnabled() bool
+}
+
 func NewCoordinator(legacy LegacyEngine, prompt PromptEngine) *Coordinator {
 	return &Coordinator{legacy: legacy, prompt: prompt}
+}
+
+// RequiresCheck lets handlers bypass request construction and audit logging
+// only when both engines are known to be disabled. Unknown legacy engines are
+// treated as enabled to preserve behavior for alternate implementations.
+func (c *Coordinator) RequiresCheck() bool {
+	if c == nil {
+		return false
+	}
+	if c.prompt != nil && c.prompt.EffectiveMode() != ModeOff {
+		return true
+	}
+	if c.legacy == nil {
+		return false
+	}
+	if runtime, ok := c.legacy.(runtimeLegacyEngine); ok {
+		return runtime.RuntimeAuditEnabled()
+	}
+	return true
 }
 
 func (c *Coordinator) Check(ctx context.Context, req Request) Decision {

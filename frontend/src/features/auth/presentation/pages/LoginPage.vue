@@ -85,9 +85,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import { prefetchCredentialKey } from '@/core/networks/credentialEncryption'
 import { useAppStore } from '@/core/stores/appStore'
 import { isTotp2FARequired } from '@/features/auth/data/datasources/authDatasource'
 import { useAuthStore } from '@/features/auth/presentation/stores/authStore'
@@ -108,6 +109,10 @@ const errorMessage = ref('')
 
 const siteName = computed(() => appStore.siteName || 'Sub2API')
 const siteLogo = computed(() => appStore.siteLogo || '/logo.svg')
+
+onMounted(() => {
+  void prefetchCredentialKey()
+})
 
 function destination(): string {
   const requested = typeof route.query.redirect === 'string' ? route.query.redirect : ''

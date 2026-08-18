@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Wei-Shaw/sub2api/internal/platform/config"
@@ -129,6 +130,7 @@ type ClusterService struct {
 	cancel          context.CancelFunc
 	startOnce       sync.Once
 	stopOnce        sync.Once
+	registered      atomic.Bool
 	wg              sync.WaitGroup
 	maintenanceMu   sync.Mutex
 	lastMaintenance time.Time
@@ -155,8 +157,14 @@ func NewClusterService(repo ClusterRepository, cfg *config.Config, health Cluste
 
 func ProvideClusterService(repo ClusterRepository, cfg *config.Config, health ClusterHealthChecker, buildInfo BuildInfo) *ClusterService {
 	svc := NewClusterService(repo, cfg, health, buildInfo)
-	svc.Start()
+	if clusterRuntimeEnabled(cfg) {
+		svc.Start()
+	}
 	return svc
+}
+
+func clusterRuntimeEnabled(cfg *config.Config) bool {
+	return cfg != nil && (cfg.Deployment.IsMultiInstance() || cfg.Deployment.WorkerEnabledResolved())
 }
 
 func (s *ClusterService) Start() {
@@ -190,7 +198,7 @@ func (s *ClusterService) Stop() {
 	s.stopOnce.Do(func() {
 		s.cancel()
 		s.wg.Wait()
-		if s.repo != nil {
+		if s.repo != nil && s.registered.Load() {
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
 			_ = s.repo.MarkInstanceStopped(ctx, s.runnerID, time.Now().UTC())
@@ -267,6 +275,7 @@ func (s *ClusterService) reportWithLog() {
 		logger.LegacyPrintf("service.cluster", "[Cluster] heartbeat failed node=%s: %v", s.nodeName, err)
 		return
 	}
+	s.registered.Store(true)
 	now := time.Now().UTC()
 	if !s.beginMaintenance(now) {
 		return
@@ -301,6 +310,7 @@ func (s *ClusterService) GetStatus(ctx context.Context) (*ClusterStatus, error) 
 	if err := s.repo.UpsertInstance(ctx, s.currentInstance(ctx)); err != nil {
 		return nil, fmt.Errorf("refresh current cluster instance: %w", err)
 	}
+	s.registered.Store(true)
 	now := time.Now().UTC()
 	_ = s.repo.ExpireStaleTasks(ctx, now)
 	instances, err := s.repo.ListInstances(ctx)

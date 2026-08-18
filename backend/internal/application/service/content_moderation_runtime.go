@@ -65,6 +65,23 @@ func (s *ContentModerationService) runtimeSnapshotTTL() time.Duration {
 	return contentModerationRuntimeCacheTTL
 }
 
+// RuntimeAuditEnabled is a lock-free hot-path hint. Unknown state stays
+// enabled so load failures still flow through Check and preserve its existing
+// error handling; only a trusted disabled snapshot may bypass request setup.
+func (s *ContentModerationService) RuntimeAuditEnabled() bool {
+	if s == nil || s.settingRepo == nil || s.repo == nil || s.stopped.Load() {
+		return false
+	}
+	snapshot := s.runtimeSnapshot.Load()
+	if snapshot == nil || snapshot.config == nil {
+		return true
+	}
+	if time.Since(snapshot.loadedAt) >= s.runtimeSnapshotTTL() {
+		s.triggerRuntimeSnapshotRefresh()
+	}
+	return snapshot.riskControlEnabled && snapshot.config.Enabled && snapshot.config.Mode != ContentModerationModeOff
+}
+
 func (s *ContentModerationService) triggerRuntimeSnapshotRefresh() {
 	if s == nil || s.runtimeRefreshDeferred() || !s.runtimeRefreshMu.TryLock() {
 		return
@@ -100,10 +117,11 @@ func (s *ContentModerationService) refreshRuntimeSnapshot(ctx context.Context) (
 		return nil, fmt.Errorf("get content moderation runtime settings: %w", err)
 	}
 	rawConfig := values[SettingKeyContentModerationConfig]
+	riskControlEnabled := values[SettingKeyRiskControlEnabled] == "true"
 	configDigest := sha256.Sum256([]byte(rawConfig))
 	if current := s.runtimeSnapshot.Load(); current != nil && current.configDigest == configDigest {
 		snapshot := &contentModerationRuntimeSnapshot{
-			riskControlEnabled: values[SettingKeyRiskControlEnabled] == "true",
+			riskControlEnabled: riskControlEnabled,
 			config:             current.config,
 			keywordMatcher:     current.keywordMatcher,
 			configDigest:       configDigest,
@@ -111,6 +129,7 @@ func (s *ContentModerationService) refreshRuntimeSnapshot(ctx context.Context) (
 		}
 		s.runtimeSnapshot.Store(snapshot)
 		s.runtimeRefreshRetryAt.Store(0)
+		s.reconcileWorkers(snapshot)
 		return snapshot, nil
 	}
 	cfg, err := parseContentModerationConfig(rawConfig)
@@ -118,7 +137,7 @@ func (s *ContentModerationService) refreshRuntimeSnapshot(ctx context.Context) (
 		return nil, err
 	}
 	snapshot := &contentModerationRuntimeSnapshot{
-		riskControlEnabled: values[SettingKeyRiskControlEnabled] == "true",
+		riskControlEnabled: riskControlEnabled,
 		config:             cfg,
 		keywordMatcher:     newContentModerationKeywordMatcher(cfg.BlockedKeywords),
 		configDigest:       configDigest,
@@ -126,6 +145,7 @@ func (s *ContentModerationService) refreshRuntimeSnapshot(ctx context.Context) (
 	}
 	s.runtimeSnapshot.Store(snapshot)
 	s.runtimeRefreshRetryAt.Store(0)
+	s.reconcileWorkers(snapshot)
 	return snapshot, nil
 }
 
@@ -156,6 +176,21 @@ func (s *ContentModerationService) replaceRuntimeConfig(cfg *ContentModerationCo
 		configDigest:       configDigest,
 		loadedAt:           time.Now(),
 	})
+	s.reconcileWorkers(s.runtimeSnapshot.Load())
+}
+
+func (s *ContentModerationService) reconcileWorkers(snapshot *contentModerationRuntimeSnapshot) {
+	workerCount := 0
+	if snapshot != nil && snapshot.riskControlEnabled && snapshot.config != nil &&
+		snapshot.config.Enabled && snapshot.config.Mode != ContentModerationModeOff {
+		workerCount = snapshot.config.WorkerCount
+	} else if queue := s.asyncTaskQueue(); len(queue) > 0 || s.asyncInFlight.Load() > 0 {
+		// Preserve already accepted audit records while shutting the feature down.
+		// One worker drains queued work; workers already in flight retire after
+		// their current task completes.
+		workerCount = 1
+	}
+	s.resizeWorkers(workerCount)
 }
 
 func (s *contentModerationRuntimeSnapshot) matchBlockedKeyword(text string) (string, bool) {

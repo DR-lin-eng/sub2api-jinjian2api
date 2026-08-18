@@ -455,7 +455,12 @@ type OpenAIGatewayService struct {
 	openaiProxyStreamFailOpenLogAt atomic.Int64
 	openaiContentSessions          *openAIContentSessionTracker
 
-	openaiWSFallbackUntil               sync.Map // key: int64(accountID), value: time.Time
+	openaiWSFallbackUntil sync.Map // key: int64(accountID), value: time.Time
+	// openaiCodexTurnStateOrigins tracks which OAuth account minted the latest
+	// turn-state for a downstream API-key/session pair. It prevents a failover
+	// request from replaying an opaque state minted by another account.
+	openaiCodexTurnStateOrigins         sync.Map
+	openaiCodexTurnStateWrites          atomic.Uint64
 	openaiAccountRuntimeBlockUntil      sync.Map // key: int64(accountID), value: time.Time
 	openaiAccountRuntimeBlockReason     sync.Map // key: int64(accountID), value: string
 	openaiAccountRuntimeBlockLocks      sync.Map // key: int64(accountID), value: *sync.Mutex

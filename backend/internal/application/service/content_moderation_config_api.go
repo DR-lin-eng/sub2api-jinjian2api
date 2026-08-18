@@ -131,7 +131,6 @@ func (s *ContentModerationService) UpdateConfig(ctx context.Context, input Updat
 	s.replaceRuntimeConfig(cfg, raw)
 	s.moderationProxyCache.Store(nil)
 	s.pruneAPIKeyHealth(cfg.apiKeys())
-	s.resizeWorkers(cfg.WorkerCount)
 	return s.configView(cfg), nil
 }
 

@@ -30,6 +30,17 @@ type fakePromptEngine struct {
 	evaluates atomic.Int64
 }
 
+type runtimeLegacyStub struct {
+	enabled bool
+	calls   atomic.Int64
+}
+
+func (s *runtimeLegacyStub) RuntimeAuditEnabled() bool { return s.enabled }
+func (s *runtimeLegacyStub) Check(context.Context, Request) (*LegacyDecision, error) {
+	s.calls.Add(1)
+	return &LegacyDecision{Allowed: true}, nil
+}
+
 type copyingPromptEngine struct {
 	mode Mode
 	body []byte
@@ -87,6 +98,15 @@ func TestCoordinatorModesAndPriority(t *testing.T) {
 			require.Equal(t, tt.wantEvaluation, prompt.evaluates.Load())
 		})
 	}
+}
+
+func TestCoordinatorRequiresCheckIsConservativeAndSkipsKnownDisabledEngines(t *testing.T) {
+	require.False(t, (*Coordinator)(nil).RequiresCheck())
+	require.False(t, NewCoordinator(nil, &fakePromptEngine{mode: ModeOff}).RequiresCheck())
+	require.True(t, NewCoordinator(&fakeLegacyEngine{}, &fakePromptEngine{mode: ModeOff}).RequiresCheck(), "unknown legacy engine must stay conservative")
+	require.False(t, NewCoordinator(&runtimeLegacyStub{}, &fakePromptEngine{mode: ModeOff}).RequiresCheck())
+	require.True(t, NewCoordinator(&runtimeLegacyStub{enabled: true}, &fakePromptEngine{mode: ModeOff}).RequiresCheck())
+	require.True(t, NewCoordinator(&runtimeLegacyStub{}, &fakePromptEngine{mode: ModeAsync}).RequiresCheck())
 }
 
 func TestCoordinatorDoesNotMutateRequestBody(t *testing.T) {

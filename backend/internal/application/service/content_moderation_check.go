@@ -10,12 +10,6 @@ import (
 func (s *ContentModerationService) Check(ctx context.Context, input ContentModerationCheckInput) (*ContentModerationDecision, error) {
 	allow := &ContentModerationDecision{Allowed: true, Action: ContentModerationActionAllow}
 	if s == nil || s.settingRepo == nil || s.repo == nil {
-		slog.Info("content_moderation.skip_unavailable",
-			"user_id", input.UserID,
-			"api_key_id", input.APIKeyID,
-			"group_id", contentModerationLogGroupID(input.GroupID),
-			"endpoint", input.Endpoint,
-			"protocol", input.Protocol)
 		return allow, nil
 	}
 	runtimeSnapshot, err := s.loadRuntimeSnapshot(ctx)
@@ -30,18 +24,15 @@ func (s *ContentModerationService) Check(ctx context.Context, input ContentModer
 		return allow, nil
 	}
 	if !runtimeSnapshot.riskControlEnabled {
-		slog.Info("content_moderation.skip_feature_disabled",
-			"user_id", input.UserID,
-			"api_key_id", input.APIKeyID,
-			"group_id", contentModerationLogGroupID(input.GroupID),
-			"endpoint", input.Endpoint,
-			"protocol", input.Protocol)
 		return allow, nil
 	}
 	cfg := runtimeSnapshot.config
+	if cfg == nil || !cfg.Enabled || cfg.Mode == ContentModerationModeOff {
+		return allow, nil
+	}
 	inGroupScope := cfg.includesGroup(input.GroupID)
 	inModelScope := cfg.includesModel(input.Model)
-	slog.Info("content_moderation.config_loaded",
+	slog.Debug("content_moderation.config_loaded",
 		"user_id", input.UserID,
 		"api_key_id", input.APIKeyID,
 		"group_id", contentModerationLogGroupID(input.GroupID),
@@ -62,26 +53,8 @@ func (s *ContentModerationService) Check(ctx context.Context, input ContentModer
 		"api_key_count", len(cfg.apiKeys()),
 		"pre_hash_check_enabled", cfg.PreHashCheckEnabled,
 		"record_non_hits", cfg.RecordNonHits)
-	if !cfg.Enabled {
-		slog.Info("content_moderation.skip_config_disabled",
-			"user_id", input.UserID,
-			"api_key_id", input.APIKeyID,
-			"group_id", contentModerationLogGroupID(input.GroupID),
-			"endpoint", input.Endpoint,
-			"protocol", input.Protocol)
-		return allow, nil
-	}
-	if cfg.Mode == ContentModerationModeOff {
-		slog.Info("content_moderation.skip_mode_off",
-			"user_id", input.UserID,
-			"api_key_id", input.APIKeyID,
-			"group_id", contentModerationLogGroupID(input.GroupID),
-			"endpoint", input.Endpoint,
-			"protocol", input.Protocol)
-		return allow, nil
-	}
 	if !inGroupScope {
-		slog.Info("content_moderation.skip_group_out_of_scope",
+		slog.Debug("content_moderation.skip_group_out_of_scope",
 			"user_id", input.UserID,
 			"api_key_id", input.APIKeyID,
 			"group_id", contentModerationLogGroupID(input.GroupID),
@@ -93,7 +66,7 @@ func (s *ContentModerationService) Check(ctx context.Context, input ContentModer
 		return allow, nil
 	}
 	if !inModelScope {
-		slog.Info("content_moderation.skip_model_out_of_scope",
+		slog.Debug("content_moderation.skip_model_out_of_scope",
 			"user_id", input.UserID,
 			"api_key_id", input.APIKeyID,
 			"group_id", contentModerationLogGroupID(input.GroupID),
@@ -107,7 +80,7 @@ func (s *ContentModerationService) Check(ctx context.Context, input ContentModer
 	}
 	content := ExtractContentModerationInput(input.Protocol, input.Body)
 	if content.IsEmpty() {
-		slog.Info("content_moderation.skip_empty_input",
+		slog.Debug("content_moderation.skip_empty_input",
 			"user_id", input.UserID,
 			"api_key_id", input.APIKeyID,
 			"group_id", contentModerationLogGroupID(input.GroupID),
@@ -117,7 +90,7 @@ func (s *ContentModerationService) Check(ctx context.Context, input ContentModer
 		return allow, nil
 	}
 	content.Normalize()
-	slog.Info("content_moderation.input_extracted",
+	slog.Debug("content_moderation.input_extracted",
 		"user_id", input.UserID,
 		"api_key_id", input.APIKeyID,
 		"group_id", contentModerationLogGroupID(input.GroupID),
@@ -204,7 +177,7 @@ func (s *ContentModerationService) Check(ctx context.Context, input ContentModer
 		if cfg.Mode == ContentModerationModePreBlock {
 			s.recordPreBlockSyncMetric(0, ContentModerationActionAllow)
 		}
-		slog.Info("content_moderation.skip_sample_rate",
+		slog.Debug("content_moderation.skip_sample_rate",
 			"user_id", input.UserID,
 			"api_key_id", input.APIKeyID,
 			"group_id", contentModerationLogGroupID(input.GroupID),
@@ -226,13 +199,17 @@ func (s *ContentModerationService) Check(ctx context.Context, input ContentModer
 		return allow, nil
 	}
 	if cfg.Mode == ContentModerationModeObserve {
+		queueLength := 0
+		if queue := s.asyncTaskQueue(); queue != nil {
+			queueLength = len(queue)
+		}
 		slog.Info("content_moderation.enqueue_observe",
 			"user_id", input.UserID,
 			"api_key_id", input.APIKeyID,
 			"group_id", contentModerationLogGroupID(input.GroupID),
 			"endpoint", input.Endpoint,
 			"protocol", input.Protocol,
-			"queue_len", len(s.asyncQueue))
+			"queue_len", queueLength)
 		s.enqueueAsync(input, cfg, content, hashText)
 		return allow, nil
 	}

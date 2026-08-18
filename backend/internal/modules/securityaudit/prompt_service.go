@@ -178,7 +178,10 @@ func (s *PromptService) Runtime(ctx context.Context) RuntimeSnapshot {
 	mode := s.EffectiveMode()
 	workerTotal, queueCapacity := 0, 0
 	if hasConfig {
-		workerTotal, queueCapacity = cfg.WorkerCount, cfg.QueueCapacity
+		queueCapacity = cfg.QueueCapacity
+	}
+	if s.runner != nil {
+		workerTotal = s.runner.workerTotal()
 	}
 	runtime := RuntimeSnapshot{
 		ProcessStatus: "disabled", EffectiveMode: mode, ExpectedConfigVersion: expected,
@@ -218,11 +221,15 @@ func (s *PromptService) Runtime(ctx context.Context) RuntimeSnapshot {
 		if loadError != "" || runtime.DatabaseStatus != "ok" || runtime.RedisStatus != "ok" || activeVersion != expected {
 			runtime.ProcessStatus = "degraded"
 		}
-		if heartbeat == nil || s.clock.Now().Sub(*heartbeat) > 10*time.Second {
+		if promptAuditWorkerHeartbeatStale(mode, heartbeat, s.clock.Now()) {
 			runtime.ProcessStatus = "degraded"
 		}
 	}
 	return runtime
+}
+
+func promptAuditWorkerHeartbeatStale(mode Mode, heartbeat *time.Time, now time.Time) bool {
+	return mode == ModeAsync && (heartbeat == nil || now.Sub(*heartbeat) > 10*time.Second)
 }
 
 type ProbeRequest struct {

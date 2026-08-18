@@ -22,20 +22,15 @@ func NewContentModerationService(
 		groupRepo:       groupRepo,
 		emailService:    emailService,
 		httpClient:      servertiming.InstrumentClient(nil),
-		asyncQueue:      make(chan *contentModerationTask, maxContentModerationQueueSize),
 		lifecycleCtx:    lifecycleCtx,
 		lifecycleCancel: lifecycleCancel,
-		workerCancels:   make(map[int]context.CancelFunc),
+		workerHandles:   make(map[int]*contentModerationWorkerHandle),
 		keyHealth:       make(map[string]*contentModerationKeyHealth),
 	}
 	if settingRepo != nil && repo != nil {
-		workerCount := defaultContentModerationWorkerCount
 		loadCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		if cfg, err := svc.loadConfig(loadCtx); err == nil && cfg != nil {
-			workerCount = cfg.WorkerCount
-		}
+		_, _ = svc.refreshRuntimeSnapshot(loadCtx)
 		cancel()
-		svc.resizeWorkers(workerCount)
 		svc.workerWG.Add(1)
 		go svc.cleanupWorker(lifecycleCtx)
 	}
@@ -56,14 +51,17 @@ func ProvideContentModerationService(
 }
 
 func (s *ContentModerationService) resizeWorkers(count int) {
-	if s == nil || s.stopped.Load() || s.asyncQueue == nil {
+	if s == nil || s.lifecycleCtx == nil || s.stopped.Load() {
 		return
 	}
-	if count <= 0 {
-		count = defaultContentModerationWorkerCount
+	if count < 0 {
+		count = 0
 	}
 	if count > maxContentModerationWorkerCount {
 		count = maxContentModerationWorkerCount
+	}
+	if count > 0 {
+		s.ensureAsyncQueue()
 	}
 
 	s.workerMu.Lock()
@@ -71,20 +69,24 @@ func (s *ContentModerationService) resizeWorkers(count int) {
 	if s.stopped.Load() {
 		return
 	}
-	for id, cancel := range s.workerCancels {
-		if id >= count {
-			cancel()
-			delete(s.workerCancels, id)
+	for id, handle := range s.workerHandles {
+		if id >= count && !handle.retiring {
+			handle.retiring = true
+			handle.retire()
 		}
 	}
 	for id := 0; id < count; id++ {
-		if _, exists := s.workerCancels[id]; exists {
+		if s.lifecycleCtx.Err() != nil {
+			return
+		}
+		if _, exists := s.workerHandles[id]; exists {
 			continue
 		}
 		workerCtx, cancel := context.WithCancel(s.lifecycleCtx)
-		s.workerCancels[id] = cancel
+		handle := &contentModerationWorkerHandle{retire: cancel}
+		s.workerHandles[id] = handle
 		s.workerWG.Add(1)
-		go s.worker(workerCtx, id)
+		go s.worker(workerCtx, id, handle)
 	}
 }
 
@@ -99,18 +101,67 @@ func (s *ContentModerationService) Stop() {
 			s.lifecycleCancel()
 		}
 		s.workerMu.Lock()
-		for id, cancel := range s.workerCancels {
-			cancel()
-			delete(s.workerCancels, id)
+		for _, handle := range s.workerHandles {
+			handle.retire()
 		}
 		s.workerMu.Unlock()
 		s.workerWG.Wait()
+		queue := s.asyncTaskQueue()
+		if queue == nil {
+			return
+		}
 		for {
 			select {
-			case <-s.asyncQueue:
+			case <-queue:
 			default:
 				return
 			}
 		}
 	})
+}
+
+func (s *ContentModerationService) workerExited(id int, handle *contentModerationWorkerHandle) {
+	s.workerMu.Lock()
+	if s.workerHandles[id] == handle {
+		delete(s.workerHandles, id)
+	}
+	stopped := s.stopped.Load()
+	s.workerMu.Unlock()
+	if !stopped {
+		s.reconcileWorkers(s.runtimeSnapshot.Load())
+	}
+}
+
+func (s *ContentModerationService) ensureAsyncQueue() chan *contentModerationTask {
+	if s == nil || s.lifecycleCtx == nil || s.stopped.Load() || s.lifecycleCtx.Err() != nil {
+		return nil
+	}
+	if queue := s.asyncQueue.Load(); queue != nil {
+		return queue.tasks
+	}
+	queue := &contentModerationQueue{tasks: make(chan *contentModerationTask, maxContentModerationQueueSize)}
+	if s.asyncQueue.CompareAndSwap(nil, queue) {
+		return queue.tasks
+	}
+	return s.asyncQueue.Load().tasks
+}
+
+func (s *ContentModerationService) asyncTaskQueue() chan *contentModerationTask {
+	if s == nil {
+		return nil
+	}
+	queue := s.asyncQueue.Load()
+	if queue == nil {
+		return nil
+	}
+	return queue.tasks
+}
+
+func (s *ContentModerationService) runtimeWorkerCount() int {
+	if s == nil {
+		return 0
+	}
+	s.workerMu.Lock()
+	defer s.workerMu.Unlock()
+	return len(s.workerHandles)
 }

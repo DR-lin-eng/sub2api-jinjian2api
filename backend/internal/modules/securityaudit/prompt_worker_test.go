@@ -31,21 +31,34 @@ func (c *advancingClock) Now() time.Time {
 }
 
 type fakeConfigStore struct {
+	mu     sync.RWMutex
 	cfg    ActiveConfig
 	active bool
 }
 
 func (s *fakeConfigStore) Start(context.Context) error    { return nil }
 func (s *fakeConfigStore) Shutdown(context.Context) error { return nil }
-func (s *fakeConfigStore) Active() (ActiveConfig, bool)   { return cloneActiveConfig(s.cfg), s.active }
+func (s *fakeConfigStore) Active() (ActiveConfig, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return cloneActiveConfig(s.cfg), s.active
+}
 func (s *fakeConfigStore) EffectiveMode() Mode {
 	if s.BlockingActivationDegraded() {
 		return ModeBlocking
 	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	if !s.active {
 		return ModeOff
 	}
 	return s.cfg.EffectiveMode()
+}
+func (s *fakeConfigStore) set(cfg ActiveConfig, active bool) {
+	s.mu.Lock()
+	s.cfg = cfg
+	s.active = active
+	s.mu.Unlock()
 }
 func (s *fakeConfigStore) BlockingActivationDegraded() bool { return false }
 func (s *fakeConfigStore) Public() (PublicConfig, error)    { return PublicConfig{}, nil }
@@ -53,6 +66,8 @@ func (s *fakeConfigStore) Save(context.Context, UpdateConfigRequest, int64) (Pub
 	return PublicConfig{}, nil
 }
 func (s *fakeConfigStore) RuntimeState() (int64, int64, *time.Time, string) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.cfg.ConfigVersion, s.cfg.ConfigVersion, nil, ""
 }
 func (s *fakeConfigStore) Encrypt(value string) (string, error) { return value, nil }
@@ -488,11 +503,115 @@ func TestWorkerPanicLeaseLossAndLifecycleAreContained(t *testing.T) {
 		require.NoError(t, runner.Start(context.Background()))
 		require.NoError(t, runner.Start(context.Background()))
 		_, _, _, _, _, code, _ := runner.Snapshot()
-		require.Equal(t, "payload_store_unavailable", code)
+		require.Empty(t, code, "disabled audit must not touch the payload store")
+		require.Zero(t, runner.workerTotal())
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
 		require.NoError(t, runner.Shutdown(ctx))
 		require.NoError(t, runner.Shutdown(ctx))
+	})
+
+	t.Run("workers follow async mode", func(t *testing.T) {
+		cfg := asyncConfig()
+		cfg.Enabled = false
+		configStore := &fakeConfigStore{cfg: cfg, active: true}
+		runner := NewRunner(
+			configStore,
+			&fakeJobRepository{},
+			&fakePayloadStore{},
+			PromptScannerFunc(func(context.Context, ActiveEndpoint, string, []string) (*NormalizedResult, error) {
+				return integrationResult(EventPass), nil
+			}),
+			NewAtomicMetrics(),
+		)
+		require.NoError(t, runner.Start(context.Background()))
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			require.NoError(t, runner.Shutdown(ctx))
+		})
+		require.Zero(t, runner.workerTotal())
+
+		cfg.Enabled = true
+		cfg.WorkerCount = 2
+		configStore.set(cfg, true)
+		require.Eventually(t, func() bool { return runner.workerTotal() == 2 }, 2*time.Second, 10*time.Millisecond)
+
+		cfg.BlockingEnabled = true
+		configStore.set(cfg, true)
+		require.Eventually(t, func() bool { return runner.workerTotal() == 0 }, 2*time.Second, 10*time.Millisecond)
+	})
+
+	t.Run("mode change retires worker after claimed job completes", func(t *testing.T) {
+		cfg := asyncConfig()
+		configStore := &fakeConfigStore{cfg: cfg, active: true}
+		repo := &fakeJobRepository{claimQueue: []*Job{workerJob(1, 3)}}
+		payload := &fakePayloadStore{values: map[int64]string{51: "abc"}}
+		started := make(chan struct{})
+		release := make(chan struct{})
+		canceled := make(chan struct{})
+		runner := NewRunner(
+			configStore,
+			repo,
+			payload,
+			PromptScannerFunc(func(ctx context.Context, endpoint ActiveEndpoint, _ string, _ []string) (*NormalizedResult, error) {
+				close(started)
+				select {
+				case <-release:
+					return integrationResult(EventPass), nil
+				case <-ctx.Done():
+					close(canceled)
+					return nil, ctx.Err()
+				}
+			}),
+			NewAtomicMetrics(),
+		)
+		require.NoError(t, runner.Start(context.Background()))
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			require.NoError(t, runner.Shutdown(ctx))
+		})
+		require.Eventually(t, func() bool {
+			select {
+			case <-started:
+				return true
+			default:
+				return false
+			}
+		}, 2*time.Second, 10*time.Millisecond)
+
+		cfg.BlockingEnabled = true
+		configStore.set(cfg, true)
+		require.Eventually(t, func() bool {
+			runner.workerMu.Lock()
+			defer runner.workerMu.Unlock()
+			handle := runner.workerHandles[0]
+			return handle != nil && handle.retiring
+		}, 2*time.Second, 10*time.Millisecond)
+		select {
+		case <-time.After(50 * time.Millisecond):
+		case <-canceled:
+			t.Fatal("mode change canceled an already claimed audit job")
+		}
+
+		close(release)
+		require.Eventually(t, func() bool {
+			repo.mu.Lock()
+			defer repo.mu.Unlock()
+			return repo.completeCount == 1 && repo.failed == 0
+		}, time.Second, 10*time.Millisecond)
+		require.Eventually(t, func() bool { return runner.workerTotal() == 0 }, time.Second, 10*time.Millisecond)
+	})
+
+	t.Run("blocking mode does not require async worker heartbeat", func(t *testing.T) {
+		now := time.Now()
+		require.False(t, promptAuditWorkerHeartbeatStale(ModeBlocking, nil, now))
+		require.True(t, promptAuditWorkerHeartbeatStale(ModeAsync, nil, now))
+		stale := now.Add(-11 * time.Second)
+		require.True(t, promptAuditWorkerHeartbeatStale(ModeAsync, &stale, now))
+		fresh := now.Add(-time.Second)
+		require.False(t, promptAuditWorkerHeartbeatStale(ModeAsync, &fresh, now))
 	})
 
 	t.Run("shutdown timeout is bounded", func(t *testing.T) {

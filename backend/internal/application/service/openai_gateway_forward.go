@@ -1100,6 +1100,7 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 		}
 	}
 	if account.Type == AccountTypeOAuth {
+		s.guardOpenAICodexTurnStateEcho(c, account, req.Header)
 		compatMessagesBridge := isOpenAICompatMessagesBridgeContext(c) || isOpenAICompatMessagesBridgeBody(body)
 		// 清除客户端透传的 session 头，后续用隔离后的值重新设置，防止跨用户会话碰撞。
 		clientConversationID := strings.TrimSpace(req.Header.Get("conversation_id"))
@@ -1110,7 +1111,6 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 			req.Header.Del("OpenAI-Beta")
 			req.Header.Del("originator")
 		} else {
-			req.Header.Set("OpenAI-Beta", "responses=experimental")
 			req.Header.Set("originator", resolveOpenAIUpstreamOriginator(c, isCodexCLI))
 		}
 		apiKeyID := getAPIKeyIDFromContext(c)
@@ -1162,6 +1162,7 @@ func (s *OpenAIGatewayService) buildUpstreamRequest(ctx context.Context, c *gin.
 
 	// 账号级请求头覆写（仅 openai api_key 账号启用时生效；OAuth 路径 no-op）
 	account.ApplyHeaderOverrides(req.Header)
+	applyOpenAICodexRoutingHintFromBody(ctx, account, "http", req.Header, body, "not_applicable")
 
 	return req, nil
 }

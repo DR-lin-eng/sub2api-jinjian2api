@@ -293,6 +293,9 @@ func ProvideGrokTokenProvider(
 
 // ProvideDashboardAggregationService 创建并启动仪表盘聚合服务
 func ProvideDashboardAggregationService(repo DashboardAggregationRepository, timingWheel *TimingWheelService, lockCache LeaderLockCache, db *sql.DB, cfg *config.Config, settingRepo SettingRepository) *DashboardAggregationService {
+	if cfg == nil || !cfg.DashboardAgg.Enabled {
+		return nil
+	}
 	svc := NewDashboardAggregationService(repo, timingWheel, cfg)
 	svc.SetLeaderLock(lockCache, db)
 	svc.SetRetentionSettingRepository(settingRepo)
@@ -636,9 +639,12 @@ func ProvideOpsScheduledReportService(
 }
 
 // ProvideAPIKeyAuthCacheInvalidator 提供 API Key 认证缓存失效能力
-func ProvideAPIKeyAuthCacheInvalidator(apiKeyService *APIKeyService) APIKeyAuthCacheInvalidator {
-	// Start Pub/Sub subscriber for L1 cache invalidation across instances
-	apiKeyService.StartAuthCacheInvalidationSubscriber(context.Background())
+func ProvideAPIKeyAuthCacheInvalidator(apiKeyService *APIKeyService, cfg *config.Config) APIKeyAuthCacheInvalidator {
+	// Local mutations clear L1 directly. Pub/Sub is only needed to invalidate
+	// caches owned by other processes.
+	if apiKeyService != nil && cfg != nil && cfg.Deployment.IsMultiInstance() {
+		apiKeyService.StartAuthCacheInvalidationSubscriber(context.Background())
+	}
 	return apiKeyService
 }
 
@@ -776,7 +782,9 @@ func ProvideSettingService(settingRepo SettingRepository, proxyRepo ProxyReposit
 	if err := svc.LoadRequestPriorityAdmissionSettings(context.Background()); err != nil {
 		logger.LegacyPrintf("service.setting", "Warning: load request priority admission settings failed: %v", err)
 	}
-	svc.StartRequestPriorityAdmissionSettingsSync(context.Background(), notifier)
+	if cfg != nil && cfg.Deployment.IsMultiInstance() {
+		svc.StartRequestPriorityAdmissionSettingsSync(context.Background(), notifier)
+	}
 	if err := svc.MigrateOpenAIAllowClaudeCodeCodexPluginSetting(context.Background()); err != nil {
 		logger.LegacyPrintf("service.setting", "Warning: migrate openai allow Claude Code Codex plugin setting failed: %v", err)
 	}

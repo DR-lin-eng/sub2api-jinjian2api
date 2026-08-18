@@ -7,14 +7,18 @@ import (
 )
 
 func (s *ContentModerationService) enqueueAsync(input ContentModerationCheckInput, cfg *ContentModerationConfig, content ContentModerationInput, hashText string) {
-	if s == nil || s.asyncQueue == nil || s.stopped.Load() {
+	if s == nil || s.stopped.Load() {
+		return
+	}
+	queue := s.ensureAsyncQueue()
+	if queue == nil {
 		return
 	}
 	queueSize := defaultContentModerationQueueSize
 	if cfg != nil && cfg.QueueSize > 0 {
 		queueSize = cfg.QueueSize
 	}
-	if len(s.asyncQueue) >= queueSize {
+	if len(queue) >= queueSize {
 		slog.Warn("content_moderation.async_queue_full", "user_id", input.UserID, "endpoint", input.Endpoint, "queue_size", queueSize)
 		s.asyncDropped.Add(1)
 		return
@@ -26,7 +30,7 @@ func (s *ContentModerationService) enqueueAsync(input ContentModerationCheckInpu
 		enqueuedAt: time.Now(),
 	}
 	select {
-	case s.asyncQueue <- task:
+	case queue <- task:
 		s.asyncEnqueued.Add(1)
 	case <-s.lifecycleCtx.Done():
 		s.asyncDropped.Add(1)
@@ -37,14 +41,18 @@ func (s *ContentModerationService) enqueueAsync(input ContentModerationCheckInpu
 }
 
 func (s *ContentModerationService) enqueueRecord(input ContentModerationCheckInput, cfg *ContentModerationConfig, log *ContentModerationLog, inputHash string, recordHash bool, notifyOnHit bool) {
-	if s == nil || s.asyncQueue == nil || log == nil || s.stopped.Load() {
+	if s == nil || log == nil || s.stopped.Load() {
+		return
+	}
+	queue := s.ensureAsyncQueue()
+	if queue == nil {
 		return
 	}
 	queueSize := defaultContentModerationQueueSize
 	if cfg != nil && cfg.QueueSize > 0 {
 		queueSize = cfg.QueueSize
 	}
-	if len(s.asyncQueue) >= queueSize {
+	if len(queue) >= queueSize {
 		slog.Warn("content_moderation.record_queue_full",
 			"user_id", input.UserID,
 			"endpoint", input.Endpoint,
@@ -63,7 +71,7 @@ func (s *ContentModerationService) enqueueRecord(input ContentModerationCheckInp
 		enqueuedAt:  time.Now(),
 	}
 	select {
-	case s.asyncQueue <- task:
+	case queue <- task:
 		s.asyncEnqueued.Add(1)
 	case <-s.lifecycleCtx.Done():
 		s.asyncDropped.Add(1)
@@ -76,9 +84,15 @@ func (s *ContentModerationService) enqueueRecord(input ContentModerationCheckInp
 	}
 }
 
-func (s *ContentModerationService) worker(workerCtx context.Context, id int) {
-	defer s.workerWG.Done()
+func (s *ContentModerationService) worker(workerCtx context.Context, id int, handle *contentModerationWorkerHandle) {
+	defer func() {
+		s.workerExited(id, handle)
+		s.workerWG.Done()
+	}()
 	for {
+		if workerCtx.Err() != nil {
+			return
+		}
 		task, ok := s.dequeueAsyncTask(workerCtx, 0)
 		if !ok {
 			if workerCtx.Err() != nil {
@@ -89,11 +103,24 @@ func (s *ContentModerationService) worker(workerCtx context.Context, id int) {
 		if task == nil {
 			continue
 		}
-		ctx, cancel := context.WithTimeout(workerCtx, maxContentModerationTimeoutMS*time.Millisecond+10*time.Second)
+		s.asyncInFlight.Add(1)
+		// Retirement stops new dequeues but lets an accepted task finish. The
+		// service lifecycle context still cancels in-flight I/O on real shutdown.
+		ctx, cancel := context.WithTimeout(s.lifecycleCtx, maxContentModerationTimeoutMS*time.Millisecond+10*time.Second)
 		runtimeSnapshot, err := s.loadRuntimeSnapshot(ctx)
 		if err != nil || runtimeSnapshot == nil || runtimeSnapshot.config == nil {
+			if task.log != nil {
+				taskCfg := task.config
+				if taskCfg == nil {
+					taskCfg = defaultContentModerationConfig()
+				}
+				s.persistContentModerationLog(ctx, taskCfg, task.log, task.inputHash, task.recordHash, task.notifyOnHit)
+				s.asyncProcessed.Add(1)
+			}
 			cancel()
 			s.asyncErrors.Add(1)
+			s.asyncInFlight.Add(-1)
+			s.reconcileWorkers(s.runtimeSnapshot.Load())
 			continue
 		}
 		cfg := runtimeSnapshot.config
@@ -102,6 +129,10 @@ func (s *ContentModerationService) worker(workerCtx context.Context, id int) {
 			defer func() {
 				if r := recover(); r != nil {
 					slog.Error("content_moderation.worker_panic", "worker_id", id, "recover", r)
+				}
+				s.asyncInFlight.Add(-1)
+				if queue := s.asyncTaskQueue(); len(queue) == 0 && s.asyncInFlight.Load() == 0 {
+					s.reconcileWorkers(s.runtimeSnapshot.Load())
 				}
 			}()
 			if task.log != nil {
@@ -136,12 +167,13 @@ func (s *ContentModerationService) worker(workerCtx context.Context, id int) {
 }
 
 func (s *ContentModerationService) dequeueAsyncTask(ctx context.Context, idleWait time.Duration) (*contentModerationTask, bool) {
-	if s == nil || s.asyncQueue == nil {
+	queue := s.asyncTaskQueue()
+	if queue == nil {
 		return nil, false
 	}
 	if idleWait <= 0 {
 		select {
-		case task, ok := <-s.asyncQueue:
+		case task, ok := <-queue:
 			return task, ok
 		case <-ctx.Done():
 			return nil, false
@@ -150,7 +182,7 @@ func (s *ContentModerationService) dequeueAsyncTask(ctx context.Context, idleWai
 	timer := time.NewTimer(idleWait)
 	defer timer.Stop()
 	select {
-	case task, ok := <-s.asyncQueue:
+	case task, ok := <-queue:
 		return task, ok
 	case <-ctx.Done():
 		return nil, false

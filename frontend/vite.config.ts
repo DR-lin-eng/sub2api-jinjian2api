@@ -114,6 +114,12 @@ export default defineConfig(({ mode }) => {
          */
         manualChunks(id: string) {
           if (id.includes('node_modules')) {
+            // The pure-JS credential cipher is loaded only when Web Crypto is
+            // unavailable (for example, direct HTTP access by IP address).
+            if (id.includes('/node-forge/')) {
+              return 'credential-crypto-fallback'
+            }
+
             // Vue 核心库
             if (
               id.includes('/vue/') ||

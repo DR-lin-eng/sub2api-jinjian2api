@@ -31,10 +31,22 @@ type Runner struct {
 	mu     sync.Mutex
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
+
+	workerMu        sync.Mutex
+	workerHandles   map[int]*runnerWorkerHandle
+	reclaimerCancel context.CancelFunc
+}
+
+type runnerWorkerHandle struct {
+	retire   context.CancelFunc
+	retiring bool
 }
 
 func NewRunner(config ConfigStore, repo JobRepository, payload PayloadStore, scanner PromptScanner, metrics Metrics) *Runner {
-	return &Runner{config: config, repo: repo, payload: payload, scanner: scanner, metrics: metrics, clock: realClock{}}
+	return &Runner{
+		config: config, repo: repo, payload: payload, scanner: scanner, metrics: metrics, clock: realClock{},
+		workerHandles: make(map[int]*runnerWorkerHandle),
+	}
 }
 
 func (r *Runner) Start(ctx context.Context) error {
@@ -46,18 +58,14 @@ func (r *Runner) Start(ctx context.Context) error {
 		r.mu.Unlock()
 		return nil
 	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	runCtx, cancel := context.WithCancel(ctx)
 	r.cancel = cancel
 	r.mu.Unlock()
-	if err := r.payload.Ping(runCtx); err != nil {
-		r.setLastError("payload_store_unavailable", err.Error())
-	}
-	for workerID := 0; workerID < MaxWorkerCount; workerID++ {
-		r.wg.Add(1)
-		go r.worker(runCtx, workerID)
-	}
 	r.wg.Add(1)
-	go r.reclaimer(runCtx)
+	go r.supervise(runCtx)
 	return nil
 }
 
@@ -83,23 +91,42 @@ func (r *Runner) Shutdown(ctx context.Context) error {
 	}
 }
 
-func (r *Runner) worker(ctx context.Context, workerID int) {
-	defer r.wg.Done()
+func (r *Runner) worker(serviceCtx, workerCtx context.Context, workerID int, handle *runnerWorkerHandle) {
+	defer func() {
+		r.workerExited(workerID, handle)
+		r.wg.Done()
+		if serviceCtx.Err() == nil {
+			r.reconcileWorkers(serviceCtx)
+		}
+	}()
 	ticker := time.NewTicker(500 * time.Millisecond)
 	defer ticker.Stop()
 	for {
 		select {
-		case <-ctx.Done():
+		case <-workerCtx.Done():
 			return
 		case <-ticker.C:
 			r.runtime.heartbeatNS.Store(r.clock.Now().UnixNano())
 			cfg, ok := r.config.Active()
-			if !ok || !cfg.RiskControlEnabled || !cfg.Enabled || workerID >= cfg.WorkerCount {
+			if !ok || cfg.EffectiveMode() != ModeAsync || workerID >= cfg.WorkerCount {
 				continue
 			}
 			for {
-				job, claimed, err := r.repo.ClaimNextJob(ctx, r.clock.Now())
+				select {
+				case <-workerCtx.Done():
+					return
+				default:
+				}
+				current, active := r.config.Active()
+				if !active || current.EffectiveMode() != ModeAsync || workerID >= current.WorkerCount {
+					break
+				}
+				cfg = current
+				job, claimed, err := r.repo.ClaimNextJob(workerCtx, r.clock.Now())
 				if err != nil {
+					if workerCtx.Err() != nil {
+						return
+					}
 					r.setLastError("claim_job_failed", err.Error())
 					break
 				}
@@ -107,11 +134,102 @@ func (r *Runner) worker(ctx context.Context, workerID int) {
 					break
 				}
 				r.runtime.active.Add(1)
-				r.processSafely(ctx, workerID, cfg, job)
+				r.processSafely(serviceCtx, workerID, cfg, job)
 				r.runtime.active.Add(-1)
 			}
 		}
 	}
+}
+
+func (r *Runner) supervise(ctx context.Context) {
+	defer r.wg.Done()
+	defer r.resizeWorkers(ctx, 0)
+
+	r.reconcileWorkers(ctx)
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			r.reconcileWorkers(ctx)
+		}
+	}
+}
+
+func (r *Runner) reconcileWorkers(ctx context.Context) {
+	desired := 0
+	if cfg, ok := r.config.Active(); ok && cfg.EffectiveMode() == ModeAsync {
+		desired = cfg.WorkerCount
+		if desired < 1 {
+			desired = DefaultWorkerCount
+		}
+		if desired > MaxWorkerCount {
+			desired = MaxWorkerCount
+		}
+	}
+	r.resizeWorkers(ctx, desired)
+}
+
+func (r *Runner) resizeWorkers(ctx context.Context, desired int) {
+	r.workerMu.Lock()
+	defer r.workerMu.Unlock()
+
+	for workerID, handle := range r.workerHandles {
+		if workerID >= desired && !handle.retiring {
+			handle.retiring = true
+			handle.retire()
+		}
+	}
+	if desired == 0 {
+		if r.reclaimerCancel != nil {
+			r.reclaimerCancel()
+			r.reclaimerCancel = nil
+		}
+		return
+	}
+	if ctx.Err() != nil {
+		return
+	}
+	if len(r.workerHandles) == 0 {
+		if err := r.payload.Ping(ctx); err != nil {
+			r.setLastError("payload_store_unavailable", err.Error())
+		}
+	}
+	for workerID := 0; workerID < desired; workerID++ {
+		if _, exists := r.workerHandles[workerID]; exists {
+			continue
+		}
+		workerCtx, cancel := context.WithCancel(ctx)
+		handle := &runnerWorkerHandle{retire: cancel}
+		r.workerHandles[workerID] = handle
+		r.wg.Add(1)
+		go r.worker(ctx, workerCtx, workerID, handle)
+	}
+	if r.reclaimerCancel == nil {
+		reclaimerCtx, cancel := context.WithCancel(ctx)
+		r.reclaimerCancel = cancel
+		r.wg.Add(1)
+		go r.reclaimer(reclaimerCtx)
+	}
+}
+
+func (r *Runner) workerExited(workerID int, handle *runnerWorkerHandle) {
+	r.workerMu.Lock()
+	defer r.workerMu.Unlock()
+	if r.workerHandles[workerID] == handle {
+		delete(r.workerHandles, workerID)
+	}
+}
+
+func (r *Runner) workerTotal() int {
+	if r == nil {
+		return 0
+	}
+	r.workerMu.Lock()
+	defer r.workerMu.Unlock()
+	return len(r.workerHandles)
 }
 
 func (r *Runner) processSafely(ctx context.Context, workerID int, cfg ActiveConfig, job *Job) {

@@ -1,9 +1,11 @@
 package securityaudit
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"strings"
 	"testing"
 
@@ -25,7 +27,14 @@ func (prefixEncryptor) Decrypt(value string) (string, error) {
 // testTotpKeyConfig mirrors a deployment with a fixed TOTP_ENCRYPTION_KEY so
 // unit tests may persist endpoint tokens.
 func testTotpKeyConfig() *config.Config {
-	return &config.Config{Totp: config.TotpConfig{EncryptionKeyConfigured: true}}
+	return testTotpKeyConfigWithDeployment(config.DeploymentModeStandalone)
+}
+
+func testTotpKeyConfigWithDeployment(mode string) *config.Config {
+	return &config.Config{
+		Totp:       config.TotpConfig{EncryptionKeyConfigured: true},
+		Deployment: config.DeploymentConfig{Mode: mode},
+	}
 }
 
 func TestDefaultConfigIsOff(t *testing.T) {
@@ -90,6 +99,36 @@ func TestConfigRuntimeLoadErrorIsStableBoundedAndSecretFree(t *testing.T) {
 	require.Equal(t, stableErrorMessage("config_load_failed"), message)
 	require.NotContains(t, message, canary)
 	require.LessOrEqual(t, len([]rune(message)), 160)
+}
+
+func TestConfigManagerReloadLogsOnlyWhenRuntimeConfigurationChanges(t *testing.T) {
+	var output bytes.Buffer
+	previousLogger := slog.Default()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(&output, nil)))
+	t.Cleanup(func() { slog.SetDefault(previousLogger) })
+
+	repository := staticSettingRepository{values: map[string]string{
+		SettingKeyPromptAuditConfig: "",
+		SettingKeyRiskControl:       "false",
+	}}
+	manager := NewConfigManager(nil, repository, nil, prefixEncryptor{}, testTotpKeyConfig())
+
+	require.NoError(t, manager.Reload(context.Background()))
+	require.Equal(t, 1, strings.Count(output.String(), EventConfigLoaded))
+	require.NoError(t, manager.Reload(context.Background()))
+	require.Equal(t, 1, strings.Count(output.String(), EventConfigLoaded), "unchanged TTL reload must stay quiet")
+
+	repository.values[SettingKeyRiskControl] = "true"
+	require.NoError(t, manager.Reload(context.Background()))
+	require.Equal(t, 2, strings.Count(output.String(), EventConfigLoaded), "global gate changes must remain observable")
+
+	storage := DefaultStorageConfig()
+	storage.WorkerCount = 2
+	raw, err := json.Marshal(storage)
+	require.NoError(t, err)
+	repository.values[SettingKeyPromptAuditConfig] = string(raw)
+	require.NoError(t, manager.Reload(context.Background()))
+	require.Equal(t, 3, strings.Count(output.String(), EventConfigLoaded), "same-version config changes must remain observable")
 }
 
 func TestConfigManagerPublicRequiresSuccessfullyLoadedSnapshot(t *testing.T) {

@@ -173,6 +173,32 @@ func TestContentModerationRuntimeSnapshotCachesSettings(t *testing.T) {
 	require.Equal(t, 1, getMultiple)
 }
 
+func TestContentModerationRuntimeAuditEnabledUsesTrustedSnapshot(t *testing.T) {
+	require.False(t, (*ContentModerationService)(nil).RuntimeAuditEnabled())
+	require.False(t, (&ContentModerationService{}).RuntimeAuditEnabled(), "unavailable service already skips Check")
+	unknown := &ContentModerationService{settingRepo: &contentModerationRuntimeSettingRepo{}, repo: &contentModerationTestRepo{}}
+	require.True(t, unknown.RuntimeAuditEnabled(), "unknown configured state must stay conservative")
+
+	disabled := &ContentModerationService{settingRepo: &contentModerationRuntimeSettingRepo{}, repo: &contentModerationTestRepo{}}
+	disabled.runtimeSnapshot.Store(&contentModerationRuntimeSnapshot{
+		riskControlEnabled: false,
+		config:             defaultContentModerationConfig(),
+		loadedAt:           time.Now(),
+	})
+	require.False(t, disabled.RuntimeAuditEnabled())
+
+	enabledConfig := defaultContentModerationConfig()
+	enabledConfig.Enabled = true
+	enabledConfig.Mode = ContentModerationModeObserve
+	enabled := &ContentModerationService{settingRepo: &contentModerationRuntimeSettingRepo{}, repo: &contentModerationTestRepo{}}
+	enabled.runtimeSnapshot.Store(&contentModerationRuntimeSnapshot{
+		riskControlEnabled: true,
+		config:             enabledConfig,
+		loadedAt:           time.Now(),
+	})
+	require.True(t, enabled.RuntimeAuditEnabled())
+}
+
 func TestContentModerationRuntimeSnapshotUpdateConfigIsImmediate(t *testing.T) {
 	repo := &contentModerationRuntimeSettingRepo{values: map[string]string{
 		SettingKeyRiskControlEnabled:      "true",

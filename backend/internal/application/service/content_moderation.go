@@ -464,15 +464,16 @@ type ContentModerationService struct {
 	emailService             *EmailService
 	httpClient               *http.Client
 	moderationProxyCache     atomic.Pointer[moderationProxyURLCacheEntry]
-	asyncQueue               chan *contentModerationTask
+	asyncQueue               atomic.Pointer[contentModerationQueue]
 	lifecycleCtx             context.Context
 	lifecycleCancel          context.CancelFunc
 	workerMu                 sync.Mutex
-	workerCancels            map[int]context.CancelFunc
+	workerHandles            map[int]*contentModerationWorkerHandle
 	workerWG                 sync.WaitGroup
 	stopOnce                 sync.Once
 	stopped                  atomic.Bool
 	apiKeyCursor             atomic.Uint64
+	asyncInFlight            atomic.Int64
 	asyncActive              atomic.Int64
 	asyncEnqueued            atomic.Int64
 	asyncDropped             atomic.Int64
@@ -501,6 +502,15 @@ type contentModerationRuntimeSnapshot struct {
 	keywordMatcher     *contentModerationKeywordMatcher
 	configDigest       [sha256.Size]byte
 	loadedAt           time.Time
+}
+
+type contentModerationQueue struct {
+	tasks chan *contentModerationTask
+}
+
+type contentModerationWorkerHandle struct {
+	retire   context.CancelFunc
+	retiring bool
 }
 
 type contentModerationTask struct {

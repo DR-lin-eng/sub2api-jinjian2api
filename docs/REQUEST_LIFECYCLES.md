@@ -51,6 +51,12 @@ sequenceDiagram
 - SSE/WS 一旦开始写出，后续错误使用流协议事件；未开始写出时才可返回普通 HTTP JSON 错误。
 - 客户端取消应停止上游读取和后台转发，不能继续占用账号或累计无主缓存。
 
+### 上游 OAuth 凭据与 Codex 状态
+
+上游 OAuth 不属于本支线的管理员登录 OAuth。OpenAI 的授权码交换、刷新和 PAT `whoami` 请求统一使用同一组规范 Codex `User-Agent + originator`，不发送推理面专用的 `version` 头；Responses HTTP/WS 请求在最终模型与服务等级确定后才生成 `x-codex-routing-hint`，API Key 路径会清除调用方伪造的同名头。上游返回的 `x-codex-turn-state` 在 JSON/SSE 响应提交前回传给客户端，并记录铸造账号；发生 OAuth 账号 failover 时，只剥离已知由其他账号铸造的状态，未知外部状态保持透传。
+
+Grok 刷新时以新 access-token JWT 的 tier 声明为准，只有声明缺失或令牌为不透明格式时才保留旧凭据；Claude 延迟加载工具不会携带 Anthropic 拒绝的 `cache_control`。相关事实源集中在 `application/service/openai_*`, `grok_oauth_service.go`, `gateway_tool_rewrite.go` 和 `shared/xai/subscription_tier.go`。
+
 ## 浏览器管理请求
 
 浏览器 API 主要位于 `/api/v1/...`。前端不直接拼接鉴权、刷新或统一错误逻辑。
@@ -98,6 +104,8 @@ sequenceDiagram
 ### 单管理员认证边界
 
 本支线只注册本地管理员的凭证公钥、密码登录、TOTP、Passkey、刷新、登出和会话撤销接口。没有注册、找回密码、用户 OAuth 或第三方身份源入口。`BackendModeAuthGuard` 以固定允许列表防止这些自助认证路径被重新暴露；密码登录还要求浏览器凭证信封并接受本地与 Redis 双层限流。
+
+前端在安全来源优先使用原生 Web Crypto 生成 `RSA-OAEP-256+A256GCM` 信封。直接通过普通 `http://IP:端口` 访问时，浏览器不提供 `crypto.subtle`，登录页会按需加载同协议的 JavaScript 后备实现；请求和后端解密契约不变，也不存在浏览器明文兼容分支。该后备只解决浏览器 API 兼容性，HTTP 本身仍不认证服务端身份，生产和不可信网络必须使用 HTTPS。
 
 阅读顺序：`server/routes/auth.go` -> `server/middleware/backend_mode_guard.go` -> `handler/auth_handler.go` / `handler/passkey_handler.go` -> `application/service/auth_service.go`、`passkey.go`、`totp_service.go`。前端从 `features/auth/` 追到 `core/networks/sessionRefresh.ts`。
 
