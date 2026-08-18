@@ -651,9 +651,9 @@ import {
 import { useClipboard } from '@/common/composables/useClipboard'
 import Icon from '@/common/widgets/icons/Icon.vue'
 
-const GITHUB_REPO = 'DR-lin-eng/sub2api-no2api'
+const GITHUB_REPO = 'DR-lin-eng/sub2api-jinjian2api'
 // GHCR image published by this repository's release workflow.
-const DOCKER_IMAGE = 'ghcr.io/dr-lin-eng/sub2api-no2api'
+const DOCKER_IMAGE = 'ghcr.io/dr-lin-eng/sub2api-jinjian2api'
 
 const { t } = useI18n()
 

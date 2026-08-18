@@ -81,7 +81,7 @@ GitHub Releases からビルド済みバイナリをダウンロードするワ�
 #### インストール手順
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-no2api/main/deploy/install.sh -o sub2api-install.sh && chmod 700 sub2api-install.sh
+curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-jinjian2api/main/deploy/install.sh -o sub2api-install.sh && chmod 700 sub2api-install.sh
 # ダウンロードしたインストーラーを確認してから root 権限で実行してください。
 sudo bash ./sub2api-install.sh
 ```
@@ -133,7 +133,7 @@ sudo journalctl -u sub2api -f
 sudo systemctl restart sub2api
 
 # アンインストール
-curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-no2api/main/deploy/install.sh -o sub2api-install.sh && chmod 700 sub2api-install.sh
+curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-jinjian2api/main/deploy/install.sh -o sub2api-install.sh && chmod 700 sub2api-install.sh
 # ダウンロードしたインストーラーを確認してから root 権限で実行してください。
 sudo bash ./sub2api-install.sh uninstall -y
 ```
@@ -158,7 +158,7 @@ PostgreSQL と Redis のコンテナを含む Docker Compose でデプロイし�
 mkdir -p sub2api-deploy && cd sub2api-deploy
 
 # デプロイ準備スクリプトをダウンロードして実行
-curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-no2api/main/deploy/docker-deploy.sh -o docker-deploy.sh && chmod 700 docker-deploy.sh
+curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-jinjian2api/main/deploy/docker-deploy.sh -o docker-deploy.sh && chmod 700 docker-deploy.sh
 # ダウンロードした準備スクリプトを確認してから実行してください。
 bash ./docker-deploy.sh
 
@@ -182,7 +182,7 @@ docker compose logs -f sub2api
 
 ```bash
 # 1. リポジトリをクローン
-git clone https://github.com/DR-lin-eng/sub2api-no2api.git sub2api
+git clone https://github.com/DR-lin-eng/sub2api-jinjian2api.git sub2api
 cd sub2api/deploy
 
 # 2. 環境設定ファイルをコピー
@@ -312,7 +312,7 @@ rm -rf data/ postgres_data/
 Apple シリコン搭載 Mac と macOS 26 では、Apple `container` 1.1.0 以降を使用して Sub2API、PostgreSQL、Redis の完全なスタックを実行できます:
 
 ```bash
-git clone https://github.com/DR-lin-eng/sub2api-no2api.git sub2api
+git clone https://github.com/DR-lin-eng/sub2api-jinjian2api.git sub2api
 cd sub2api/deploy
 ./apple-container.sh init
 ./apple-container.sh up
@@ -338,7 +338,7 @@ cd sub2api/deploy
 
 ```bash
 # 1. リポジトリをクローン
-git clone https://github.com/DR-lin-eng/sub2api-no2api.git sub2api
+git clone https://github.com/DR-lin-eng/sub2api-jinjian2api.git sub2api
 cd sub2api
 
 # 2. pnpm をインストール（未インストールの場合）
@@ -560,11 +560,11 @@ sub2api-no2api/
 
 ## スター履歴
 
-<a href="https://star-history.com/#DR-lin-eng/sub2api-no2api&Date">
+<a href="https://star-history.com/#DR-lin-eng/sub2api-jinjian2api&Date">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=DR-lin-eng/sub2api-no2api&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=DR-lin-eng/sub2api-no2api&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=DR-lin-eng/sub2api-no2api&type=Date" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=DR-lin-eng/sub2api-jinjian2api&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=DR-lin-eng/sub2api-jinjian2api&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=DR-lin-eng/sub2api-jinjian2api&type=Date" />
  </picture>
 </a>
 

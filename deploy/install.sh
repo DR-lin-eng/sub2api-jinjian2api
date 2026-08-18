@@ -31,7 +31,7 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Configuration
-GITHUB_REPO="DR-lin-eng/sub2api-no2api"
+GITHUB_REPO="DR-lin-eng/sub2api-jinjian2api"
 INSTALL_DIR="/opt/sub2api"
 SERVICE_NAME="sub2api"
 SERVICE_USER="sub2api"
@@ -756,7 +756,7 @@ install_service() {
     cat > /etc/systemd/system/sub2api.service << EOF
 [Unit]
 Description=Sub2API - AI API Gateway Platform
-Documentation=https://github.com/DR-lin-eng/sub2api-no2api
+Documentation=https://github.com/DR-lin-eng/sub2api-jinjian2api
 After=network.target postgresql.service redis.service
 Wants=postgresql.service redis.service
 

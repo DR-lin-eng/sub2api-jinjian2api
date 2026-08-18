@@ -21,7 +21,7 @@ The matching private key must only be stored as the GitHub Actions secret
 migration, configure the secret from the ignored file without printing it:
 
 ```bash
-gh secret set UPDATE_SIGNING_PRIVATE_KEY --repo DR-lin-eng/sub2api-no2api < .release-secrets/update-signing-key.pem
+gh secret set UPDATE_SIGNING_PRIVATE_KEY --repo DR-lin-eng/sub2api-jinjian2api < .release-secrets/update-signing-key.pem
 ```
 
 Back up the private key in an approved secret manager before removing the local copy.

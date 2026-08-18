@@ -88,7 +88,7 @@
                 </router-link>
 
                 <a
-                  href="https://github.com/DR-lin-eng/sub2api-no2api"
+                  href="https://github.com/DR-lin-eng/sub2api-jinjian2api"
                   target="_blank"
                   rel="noopener noreferrer"
                   @click="closeDropdown"

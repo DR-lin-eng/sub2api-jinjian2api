@@ -83,7 +83,7 @@ Nginx 默认会丢弃名称中含下划线的请求头（如 `session_id`），�
 #### 安装步骤
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-no2api/main/deploy/install.sh -o sub2api-install.sh && chmod 700 sub2api-install.sh
+curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-jinjian2api/main/deploy/install.sh -o sub2api-install.sh && chmod 700 sub2api-install.sh
 # 请先检查下载的安装脚本，再授予 root 权限。
 sudo bash ./sub2api-install.sh
 ```
@@ -135,7 +135,7 @@ sudo journalctl -u sub2api -f
 sudo systemctl restart sub2api
 
 # 卸载
-curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-no2api/main/deploy/install.sh -o sub2api-install.sh && chmod 700 sub2api-install.sh
+curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-jinjian2api/main/deploy/install.sh -o sub2api-install.sh && chmod 700 sub2api-install.sh
 # 请先检查下载的安装脚本，再授予 root 权限。
 sudo bash ./sub2api-install.sh uninstall -y
 ```
@@ -160,7 +160,7 @@ sudo bash ./sub2api-install.sh uninstall -y
 mkdir -p sub2api-deploy && cd sub2api-deploy
 
 # 下载并运行部署准备脚本
-curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-no2api/main/deploy/docker-deploy.sh -o docker-deploy.sh && chmod 700 docker-deploy.sh
+curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-jinjian2api/main/deploy/docker-deploy.sh -o docker-deploy.sh && chmod 700 docker-deploy.sh
 # 请先检查下载的准备脚本，再运行它。
 bash ./docker-deploy.sh
 
@@ -184,7 +184,7 @@ docker compose logs -f sub2api
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/DR-lin-eng/sub2api-no2api.git sub2api
+git clone https://github.com/DR-lin-eng/sub2api-jinjian2api.git sub2api
 cd sub2api/deploy
 
 # 2. 复制环境配置文件
@@ -326,7 +326,7 @@ rm -rf data/ postgres_data/
 Apple 芯片 Mac 在 macOS 26 上可使用 Apple `container` 1.1.0 或更高版本运行完整的 Sub2API、PostgreSQL 和 Redis：
 
 ```bash
-git clone https://github.com/DR-lin-eng/sub2api-no2api.git sub2api
+git clone https://github.com/DR-lin-eng/sub2api-jinjian2api.git sub2api
 cd sub2api/deploy
 ./apple-container.sh init
 ./apple-container.sh up
@@ -352,7 +352,7 @@ cd sub2api/deploy
 
 ```bash
 # 1. 克隆仓库
-git clone https://github.com/DR-lin-eng/sub2api-no2api.git sub2api
+git clone https://github.com/DR-lin-eng/sub2api-jinjian2api.git sub2api
 cd sub2api
 
 # 2. 安装 pnpm（如果还没有安装）
@@ -626,11 +626,11 @@ sub2api-no2api/
 
 ## Star History
 
-<a href="https://star-history.com/#DR-lin-eng/sub2api-no2api&Date">
+<a href="https://star-history.com/#DR-lin-eng/sub2api-jinjian2api&Date">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=DR-lin-eng/sub2api-no2api&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=DR-lin-eng/sub2api-no2api&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=DR-lin-eng/sub2api-no2api&type=Date" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=DR-lin-eng/sub2api-jinjian2api&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=DR-lin-eng/sub2api-jinjian2api&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=DR-lin-eng/sub2api-jinjian2api&type=Date" />
  </picture>
 </a>
 

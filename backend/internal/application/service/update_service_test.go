@@ -77,7 +77,7 @@ func TestUpdateServicePerformUpdateNoUpdateReturnsSentinel(t *testing.T) {
 	require.Error(t, err)
 	require.True(t, errors.Is(err, ErrNoUpdateAvailable))
 	require.ErrorIs(t, err, ErrNoUpdateAvailable)
-	require.Equal(t, "DR-lin-eng/sub2api-no2api", client.latestRepo)
+	require.Equal(t, "DR-lin-eng/sub2api-jinjian2api", client.latestRepo)
 }
 
 func TestUpdateServicePerformUpdateFailsWhenLiveReleaseLookupFails(t *testing.T) {
@@ -94,14 +94,14 @@ func TestUpdateServicePerformUpdateFailsWhenLiveReleaseLookupFails(t *testing.T)
 
 	require.ErrorIs(t, err, latestErr)
 	require.NotErrorIs(t, err, ErrNoUpdateAvailable)
-	require.Equal(t, "DR-lin-eng/sub2api-no2api", client.latestRepo)
+	require.Equal(t, "DR-lin-eng/sub2api-jinjian2api", client.latestRepo)
 }
 
 func TestApplyReleaseAssetsRequiresSignedChecksumManifest(t *testing.T) {
 	svc := NewUpdateService(&updateServiceCacheStub{}, &updateServiceGitHubClientStub{}, "0.1.132", "release")
 	archive := Asset{
 		Name:        "sub2api_0.1.133_" + svc.getArchiveName() + ".tar.gz",
-		DownloadURL: "https://github.com/DR-lin-eng/sub2api-no2api/releases/download/v0.1.133/sub2api.tar.gz",
+		DownloadURL: "https://github.com/DR-lin-eng/sub2api-jinjian2api/releases/download/v0.1.133/sub2api.tar.gz",
 	}
 
 	err := svc.applyReleaseAssets(context.Background(), []Asset{archive})
@@ -109,7 +109,7 @@ func TestApplyReleaseAssetsRequiresSignedChecksumManifest(t *testing.T) {
 
 	err = svc.applyReleaseAssets(context.Background(), []Asset{
 		archive,
-		{Name: "checksums.txt", DownloadURL: "https://github.com/DR-lin-eng/sub2api-no2api/releases/download/v0.1.133/checksums.txt"},
+		{Name: "checksums.txt", DownloadURL: "https://github.com/DR-lin-eng/sub2api-jinjian2api/releases/download/v0.1.133/checksums.txt"},
 	})
 	require.ErrorContains(t, err, "missing checksums.txt.sig")
 }

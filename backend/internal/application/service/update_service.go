@@ -32,7 +32,7 @@ var (
 const (
 	updateCacheKey = "update_check_cache"
 	updateCacheTTL = 1200 // 20 minutes
-	githubRepo     = "DR-lin-eng/sub2api-no2api"
+	githubRepo     = "DR-lin-eng/sub2api-jinjian2api"
 
 	// UpdateSigningPublicKey is the repository release key committed in
 	// deploy/update-signing-public-key.txt. The private key only exists in the

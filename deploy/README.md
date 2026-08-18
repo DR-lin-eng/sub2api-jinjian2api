@@ -75,12 +75,12 @@ Use the automated preparation script for the easiest setup:
 
 ```bash
 # Download and run the preparation script
-curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-no2api/main/deploy/docker-deploy.sh -o docker-deploy.sh && chmod 700 docker-deploy.sh
+curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-jinjian2api/main/deploy/docker-deploy.sh -o docker-deploy.sh && chmod 700 docker-deploy.sh
 # Review the downloaded preparation script before running it.
 bash ./docker-deploy.sh
 
 # Or download first, then run
-curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/DR-lin-eng/sub2api-no2api/main/deploy/docker-deploy.sh -o docker-deploy.sh
+curl -fsSL --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/DR-lin-eng/sub2api-jinjian2api/main/deploy/docker-deploy.sh -o docker-deploy.sh
 chmod +x docker-deploy.sh
 ./docker-deploy.sh
 ```
@@ -113,7 +113,7 @@ If you prefer manual control:
 
 ```bash
 # Clone repository
-git clone https://github.com/DR-lin-eng/sub2api-no2api.git sub2api
+git clone https://github.com/DR-lin-eng/sub2api-jinjian2api.git sub2api
 cd sub2api/deploy
 
 # Configure environment
@@ -385,14 +385,14 @@ For production servers using systemd.
 ### One-Line Installation
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-no2api/main/deploy/install.sh -o sub2api-install.sh && chmod 700 sub2api-install.sh
+curl -fsSL https://raw.githubusercontent.com/DR-lin-eng/sub2api-jinjian2api/main/deploy/install.sh -o sub2api-install.sh && chmod 700 sub2api-install.sh
 # Review the downloaded installer before granting root access.
 sudo bash ./sub2api-install.sh
 ```
 
 ### Manual Installation
 
-1. Download the latest release from [GitHub Releases](https://github.com/DR-lin-eng/sub2api-no2api/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/DR-lin-eng/sub2api-jinjian2api/releases)
 2. Extract and copy the binary to `/opt/sub2api/`
 3. Copy `sub2api.service` to `/etc/systemd/system/`
 4. Run:
