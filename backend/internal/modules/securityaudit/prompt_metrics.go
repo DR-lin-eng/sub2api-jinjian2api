@@ -2,7 +2,6 @@ package securityaudit
 
 import (
 	"sort"
-	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -19,14 +18,15 @@ type AtomicMetrics struct {
 	timeouts     atomic.Int64
 	failovers    atomic.Int64
 	bulkheadFull atomic.Int64
+	cacheHits    atomic.Int64
+	coalesced    atomic.Int64
 	recordFailed atomic.Int64
 	latencyTotal atomic.Int64
 	latencyMax   atomic.Int64
 	enqueued     atomic.Int64
 	dropped      atomic.Int64
-	latencyMu    sync.RWMutex
-	latencies    []int64
-	latencyNext  int
+	latencies    [latencySampleCapacity]atomic.Int64
+	latencyNext  atomic.Uint64
 }
 
 func NewAtomicMetrics() *AtomicMetrics { return &AtomicMetrics{} }
@@ -39,14 +39,22 @@ func (m *AtomicMetrics) Snapshot() GuardMetricsSnapshot {
 		Total: m.total.Load(), Allowed: m.allowed.Load(), Flagged: m.flagged.Load(),
 		Blocked: m.blocked.Load(), Unavailable: m.unavailable.Load(), Invalid: m.invalid.Load(),
 		Timeouts: m.timeouts.Load(), Failovers: m.failovers.Load(), BulkheadFull: m.bulkheadFull.Load(),
+		CacheHits: m.cacheHits.Load(), Coalesced: m.coalesced.Load(),
 		RecordFailed: m.recordFailed.Load(), LatencyCount: m.total.Load(), LatencyMaxMS: m.latencyMax.Load(),
 	}
 	if snapshot.LatencyCount > 0 {
 		snapshot.LatencyAvgMS = m.latencyTotal.Load() / snapshot.LatencyCount
 	}
-	m.latencyMu.RLock()
-	samples := append([]int64(nil), m.latencies...)
-	m.latencyMu.RUnlock()
+	sampleTotal := m.latencyNext.Load()
+	if sampleTotal > latencySampleCapacity {
+		sampleTotal = latencySampleCapacity
+	}
+	samples := make([]int64, 0, sampleTotal)
+	for index := range m.latencies {
+		if encoded := m.latencies[index].Load(); encoded > 0 {
+			samples = append(samples, encoded-1)
+		}
+	}
 	if len(samples) > 0 {
 		sort.Slice(samples, func(i, j int) bool { return samples[i] < samples[j] })
 		snapshot.LatencyP50MS = percentile(samples, 0.50)
@@ -75,14 +83,8 @@ func (m *AtomicMetrics) Observe(kind DecisionKind, latency time.Duration) {
 	m.latencyTotal.Add(latencyMS)
 	for current := m.latencyMax.Load(); latencyMS > current && !m.latencyMax.CompareAndSwap(current, latencyMS); current = m.latencyMax.Load() {
 	}
-	m.latencyMu.Lock()
-	if len(m.latencies) < latencySampleCapacity {
-		m.latencies = append(m.latencies, latencyMS)
-	} else {
-		m.latencies[m.latencyNext] = latencyMS
-		m.latencyNext = (m.latencyNext + 1) % latencySampleCapacity
-	}
-	m.latencyMu.Unlock()
+	latencyIndex := m.latencyNext.Add(1) - 1
+	m.latencies[latencyIndex%latencySampleCapacity].Store(latencyMS + 1)
 	switch kind {
 	case DecisionFlag:
 		m.flagged.Add(1)
@@ -136,6 +138,16 @@ func (m *AtomicMetrics) IncFailover() {
 func (m *AtomicMetrics) IncBulkheadFull() {
 	if m != nil {
 		m.bulkheadFull.Add(1)
+	}
+}
+func (m *AtomicMetrics) IncCacheHit() {
+	if m != nil {
+		m.cacheHits.Add(1)
+	}
+}
+func (m *AtomicMetrics) IncCoalesced() {
+	if m != nil {
+		m.coalesced.Add(1)
 	}
 }
 func (m *AtomicMetrics) IncRecordFailed() {

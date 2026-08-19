@@ -84,7 +84,7 @@ func runSecurityAudit(c *gin.Context, reqLog *zap.Logger, coordinator *securitya
 	}
 	request := buildSecurityAuditRequest(c, apiKey, subject, protocol, model, body, stage)
 	if reqLog != nil {
-		reqLog.Info("security_audit.gateway_check_start",
+		reqLog.Debug("security_audit.gateway_check_start",
 			zap.String("request_id", request.RequestID), zap.Int64("user_id", request.UserID),
 			zap.Int64("api_key_id", request.APIKeyID), zap.Int64p("group_id", request.GroupID),
 			zap.String("endpoint", request.Endpoint), zap.String("provider", request.Provider),
@@ -96,7 +96,7 @@ func runSecurityAudit(c *gin.Context, reqLog *zap.Logger, coordinator *securitya
 		c.Set(securityAuditCompletedContextKey, true)
 	}
 	if reqLog != nil {
-		reqLog.Info("security_audit.gateway_check_done",
+		reqLog.Debug("security_audit.gateway_check_done",
 			zap.String("request_id", request.RequestID), zap.String("decision", string(decision.Kind)),
 			zap.String("error_code", decision.ErrorCode), zap.Bool("allow_next_stage", decision.AllowNextStage),
 			zap.String("stage", request.Stage))

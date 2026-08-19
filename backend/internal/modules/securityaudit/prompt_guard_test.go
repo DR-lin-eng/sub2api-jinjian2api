@@ -3,8 +3,10 @@ package securityaudit
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -129,6 +131,177 @@ func TestGuardEvaluatorPerNodeBulkheadIsNonBlocking(t *testing.T) {
 	require.NoError(t, <-done)
 }
 
+func TestGuardEvaluatorCoalescesConcurrentIdenticalChunksBeforeBulkheads(t *testing.T) {
+	release := make(chan struct{})
+	entered := make(chan struct{}, 1)
+	var scannerCalls atomic.Int64
+	scanner := PromptScannerFunc(func(ctx context.Context, _ ActiveEndpoint, _ string, _ []string) (*NormalizedResult, error) {
+		scannerCalls.Add(1)
+		select {
+		case entered <- struct{}{}:
+		default:
+		}
+		select {
+		case <-release:
+			return &NormalizedResult{
+				Decision: EventPass, RiskLevel: RiskLow, Action: ActionAllow, Safety: "Safe",
+				ScannerScores: map[string]float64{}, ScannerEvidence: map[string]string{},
+			}, nil
+		case <-ctx.Done():
+			return nil, guardContextError(ctx)
+		}
+	})
+	metrics := NewAtomicMetrics()
+	evaluator := newGuardEvaluator(scanner, nil, metrics, 1, 1)
+	cfg := guardConfig(ActiveEndpoint{ID: "one", Enabled: true, TimeoutMS: 2000, InputLimit: 100})
+	snapshot := PromptSnapshot{ScanText: "same prompt", PromptLength: 11}
+
+	type evaluationResult struct {
+		decision *PromptDecision
+		err      error
+	}
+	leaderDone := make(chan evaluationResult, 1)
+	go func() {
+		decision, err := evaluator.Evaluate(context.Background(), cfg, snapshot)
+		leaderDone <- evaluationResult{decision: decision, err: err}
+	}()
+	select {
+	case <-entered:
+	case <-time.After(time.Second):
+		t.Fatal("leader did not enter scanner")
+	}
+
+	const followers = 48
+	followerDone := make(chan evaluationResult, followers)
+	ready := make(chan struct{}, followers)
+	start := make(chan struct{})
+	for range followers {
+		go func() {
+			ready <- struct{}{}
+			<-start
+			decision, err := evaluator.Evaluate(context.Background(), cfg, snapshot)
+			followerDone <- evaluationResult{decision: decision, err: err}
+		}()
+	}
+	for range followers {
+		<-ready
+	}
+	close(start)
+	require.Never(t, func() bool { return len(followerDone) > 0 }, 30*time.Millisecond, time.Millisecond,
+		"followers must join the in-flight scan instead of failing the full bulkhead")
+	close(release)
+
+	leaderResult := <-leaderDone
+	require.NoError(t, leaderResult.err)
+	require.Equal(t, DecisionAllow, leaderResult.decision.Kind)
+	for range followers {
+		result := <-followerDone
+		require.NoError(t, result.err)
+		require.Equal(t, DecisionAllow, result.decision.Kind)
+	}
+	require.Equal(t, int64(1), scannerCalls.Load())
+	metricSnapshot := metrics.Snapshot()
+	require.Zero(t, metricSnapshot.BulkheadFull)
+	require.Equal(t, int64(followers+1), metricSnapshot.Total)
+	require.Equal(t, int64(followers), metricSnapshot.CacheHits+metricSnapshot.Coalesced)
+}
+
+func TestGuardEvaluatorCoalescedFollowerCanCancelWithoutStoppingLeader(t *testing.T) {
+	release := make(chan struct{})
+	entered := make(chan struct{}, 1)
+	var scannerCalls atomic.Int64
+	evaluator := newGuardEvaluator(PromptScannerFunc(func(ctx context.Context, _ ActiveEndpoint, _ string, _ []string) (*NormalizedResult, error) {
+		scannerCalls.Add(1)
+		select {
+		case entered <- struct{}{}:
+		default:
+		}
+		select {
+		case <-release:
+			return &NormalizedResult{
+				Decision: EventPass, RiskLevel: RiskLow, Action: ActionAllow,
+				ScannerScores: map[string]float64{}, ScannerEvidence: map[string]string{},
+			}, nil
+		case <-ctx.Done():
+			return nil, guardContextError(ctx)
+		}
+	}), nil, NewAtomicMetrics(), 1, 1)
+	cfg := guardConfig(ActiveEndpoint{ID: "one", Enabled: true, TimeoutMS: 2000, InputLimit: 100})
+	snapshot := PromptSnapshot{ScanText: "shared cancellation", PromptLength: 19}
+	leaderDone := make(chan error, 1)
+	go func() {
+		_, err := evaluator.Evaluate(context.Background(), cfg, snapshot)
+		leaderDone <- err
+	}()
+	select {
+	case <-entered:
+	case <-time.After(time.Second):
+		t.Fatal("leader did not enter scanner")
+	}
+
+	followerCtx, cancelFollower := context.WithCancel(context.Background())
+	cancelFollower()
+	started := time.Now()
+	_, err := evaluator.Evaluate(followerCtx, cfg, snapshot)
+	require.Error(t, err)
+	require.Less(t, time.Since(started), 100*time.Millisecond)
+	require.Equal(t, int64(1), scannerCalls.Load())
+
+	close(release)
+	require.NoError(t, <-leaderDone)
+}
+
+func TestGuardEvaluatorCacheIsPolicyScopedAndStillRecordsEveryRequest(t *testing.T) {
+	repo := &fakeJobRepository{}
+	metrics := NewAtomicMetrics()
+	scannerCalls := 0
+	evaluator := newGuardEvaluator(PromptScannerFunc(func(_ context.Context, endpoint ActiveEndpoint, _ string, _ []string) (*NormalizedResult, error) {
+		scannerCalls++
+		return &NormalizedResult{
+			Decision: EventCritical, RiskLevel: RiskCritical, Action: ActionBlock, Safety: "Unsafe",
+			Categories: []string{"jailbreak"}, MatchedScanners: []string{"jailbreak"},
+			ScannerScores: map[string]float64{"jailbreak": 1}, ScannerEvidence: map[string]string{"jailbreak": "Jailbreak"},
+			GuardEndpointID: endpoint.ID,
+		}, nil
+	}), repo, metrics, 4, 4)
+	cfg := guardConfig(ActiveEndpoint{ID: "one", Model: "guard-v1", Enabled: true, TimeoutMS: 1000, InputLimit: 100})
+
+	for index := range 2 {
+		decision, err := evaluator.Evaluate(context.Background(), cfg, PromptSnapshot{
+			RequestID: fmt.Sprintf("request-%d", index), ScanText: "repeated attack", PromptLength: 15,
+		})
+		require.NoError(t, err)
+		require.Equal(t, DecisionBlock, decision.Kind)
+	}
+	require.Equal(t, 1, scannerCalls)
+	require.Equal(t, 2, repo.recordBlockingCalls, "cache hits must preserve per-request audit persistence")
+	require.Equal(t, int64(1), metrics.Snapshot().CacheHits)
+
+	cfg.ConfigVersion++
+	_, err := evaluator.Evaluate(context.Background(), cfg, PromptSnapshot{RequestID: "new-policy", ScanText: "repeated attack", PromptLength: 15})
+	require.NoError(t, err)
+	require.Equal(t, 2, scannerCalls, "config changes must not reuse old decisions")
+
+	cfg.Endpoints[0].Model = "guard-v2"
+	_, err = evaluator.Evaluate(context.Background(), cfg, PromptSnapshot{RequestID: "new-model", ScanText: "repeated attack", PromptLength: 15})
+	require.NoError(t, err)
+	require.Equal(t, 3, scannerCalls, "endpoint policy changes must not reuse old decisions even with the same version")
+}
+
+func TestGuardEvaluatorFailuresAreNeverCached(t *testing.T) {
+	var scannerCalls atomic.Int64
+	evaluator := newGuardEvaluator(PromptScannerFunc(func(context.Context, ActiveEndpoint, string, []string) (*NormalizedResult, error) {
+		scannerCalls.Add(1)
+		return nil, &GuardError{Code: ErrorCodeUnavailable, Retryable: true}
+	}), nil, NewAtomicMetrics(), 4, 4)
+	cfg := guardConfig(ActiveEndpoint{ID: "one", Enabled: true, TimeoutMS: 1000, InputLimit: 100})
+	for range 2 {
+		_, err := evaluator.Evaluate(context.Background(), cfg, PromptSnapshot{ScanText: "retry failure", PromptLength: 13})
+		require.Error(t, err)
+	}
+	require.Equal(t, int64(2), scannerCalls.Load())
+}
+
 func TestGuardEvaluatorLastChunkFailureNeverAllows(t *testing.T) {
 	call := 0
 	scanner := PromptScannerFunc(func(context.Context, ActiveEndpoint, string, []string) (*NormalizedResult, error) {
@@ -153,6 +326,7 @@ func TestGuardEvaluatorScansLatestUserPromptAsIndependentFirstChunk(t *testing.T
 		return &NormalizedResult{Decision: EventPass, RiskLevel: RiskLow, Action: ActionAllow, ScannerScores: map[string]float64{}, ScannerEvidence: map[string]string{}}, nil
 	})
 	evaluator := newGuardEvaluator(scanner, nil, NewAtomicMetrics(), 2, 2)
+	evaluator.resultCache = nil
 	_, err := evaluator.Evaluate(context.Background(), guardConfig(
 		ActiveEndpoint{ID: "one", Enabled: true, TimeoutMS: 1000, InputLimit: 128},
 	), PromptSnapshot{ScanText: latest + promptAuditPrioritySeparator + history, PromptLength: len([]rune(latest + history))})
