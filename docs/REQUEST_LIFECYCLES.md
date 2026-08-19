@@ -42,6 +42,15 @@ sequenceDiagram
 5. 对应 `gateway*_forward*` / `openai*_forward*`：确认上游请求与响应转换。
 6. `gateway_usage_billing.go` 或 `openai_gateway_usage.go`：确认用量解析、成本计算和记录提交。
 
+OpenAI Responses 请求在首个语义事件前使用
+`gateway.openai_first_output_timeout_seconds`（默认 90 秒；
+`high/xhigh/max` 可由 `gateway.openai_high_effort_first_output_timeout_seconds`
+单独设置，默认 180 秒）。`response.created`、`response.in_progress` 和 SSE
+注释心跳不计作语义输出；超时会关闭当前上游连接，并在尚未提交语义字节时最多
+切换一个账号。该策略覆盖原生 HTTP、HTTP 透传、WSv2 正式请求及其预热；显式设为
+`0` 可关闭这项语义首输出保护；各 transport 仍有自己的响应/读超时约束，
+但会重新暴露客户端侧 5 分钟回收风险。
+
 ### 关键不变量
 
 - API Key auth 完成后，handler 从 context 读取完整 auth subject，不自行重查一套不一致的身份。
@@ -49,6 +58,8 @@ sequenceDiagram
 - 等待槽位后必须再次检查 API Key 和上游账号是否仍可调度。
 - 账号槽位、调用方槽位和图片槽位在所有返回与取消路径释放。
 - failover 必须记录失败账号并受最大切换次数约束。
+- 首语义输出超时只能在响应尚未提交语义字节时重放；超时可能已经产生上游用量，
+  因此切号可能造成重复计费，必须保留有界切换和调度失败记录。
 - SSE/WS 一旦开始写出，后续错误使用流协议事件；未开始写出时才可返回普通 HTTP JSON 错误。
 - 客户端取消应停止上游读取和后台转发，不能继续占用账号或累计无主缓存。
 

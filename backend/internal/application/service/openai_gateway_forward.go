@@ -689,6 +689,10 @@ func (s *OpenAIGatewayService) Forward(ctx context.Context, c *gin.Context, acco
 			if wsErr == nil {
 				break
 			}
+			var wsFailoverErr *UpstreamFailoverError
+			if errors.As(wsErr, &wsFailoverErr) && wsFailoverErr.SafeToFailoverAfterWrite {
+				return nil, wsFailoverErr
+			}
 			if c != nil && c.Writer != nil && c.Writer.Written() {
 				break
 			}

@@ -60,6 +60,16 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 	)
 
 	payload := s.buildOpenAIWSCreatePayload(reqBody, account)
+	reasoningEffort := ""
+	if effort := extractOpenAIReasoningEffort(reqBody, mappedModel, originalModel); effort != nil {
+		reasoningEffort = strings.TrimSpace(*effort)
+	}
+	firstOutputTimeout := time.Duration(0)
+	if account.Platform == PlatformOpenAI {
+		firstOutputTimeout = s.openAIFirstOutputTimeout(reasoningEffort)
+	}
+	firstOutputDeadline := startTime.Add(firstOutputTimeout)
+	firstOutputComplete := false
 	payloadStrategy, removedKeys := applyOpenAIWSRetryPayloadStrategy(payload, attempt)
 	previousResponseID := openAIWSPayloadString(payload, "previous_response_id")
 	previousResponseIDKind := ClassifyOpenAIPreviousResponseIDKind(previousResponseID)
@@ -331,6 +341,13 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 		account,
 		stateStore,
 		groupID,
+		&openAIWSPrewarmFirstOutputGuard{
+			c:               c,
+			startedAt:       startTime,
+			timeout:         firstOutputTimeout,
+			originalModel:   originalModel,
+			reasoningEffort: reasoningEffort,
+		},
 	); err != nil {
 		return nil, err
 	}
@@ -473,7 +490,29 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 			message = pendingJSONDocuments[0]
 			pendingJSONDocuments = pendingJSONDocuments[1:]
 		} else {
-			message, readErr = lease.ReadMessageWithContextTimeout(ctx, readTimeout)
+			readCtx := ctx
+			var cancelRead context.CancelFunc
+			if firstOutputTimeout > 0 && !firstOutputComplete {
+				remaining := time.Until(firstOutputDeadline)
+				if remaining <= 0 {
+					readErr = context.DeadlineExceeded
+				} else {
+					readCtx, cancelRead = context.WithTimeout(ctx, remaining)
+				}
+			}
+			if readErr == nil {
+				message, readErr = lease.ReadMessageWithContextTimeout(readCtx, readTimeout)
+			}
+			if cancelRead != nil {
+				cancelRead()
+			}
+			if readErr != nil && firstOutputTimeout > 0 && !firstOutputComplete && ctx.Err() == nil && !time.Now().Before(firstOutputDeadline) {
+				lease.MarkBroken()
+				return nil, s.newOpenAIFirstOutputTimeoutError(
+					ctx, c, account, startTime, originalModel, reasoningEffort,
+					firstOutputTimeout, "websocket_semantic_output", lease.HandshakeHeaders(),
+				)
+			}
 			if readErr == nil {
 				if documents, repaired := splitOpenAIConcatenatedJSONDocuments(message); repaired {
 					logOpenAIWSModeInfo(
@@ -560,6 +599,9 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 		isTerminalEvent := isOpenAIWSTerminalEvent(eventType)
 		if isTerminalEvent {
 			terminalEventCount++
+		}
+		if !firstOutputComplete && (isTerminalEvent || openAIStreamDataStartsClientOutput(string(message), eventType)) {
+			firstOutputComplete = true
 		}
 		if firstTokenMs == nil && isTokenEvent {
 			ms := int(time.Since(startTime).Milliseconds())
@@ -751,6 +793,9 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 					)
 				}
 				if bufferedStreamEventBytes-bufferedRateLimitsEventBytes >= openAIStreamPreOutputBufferLimit {
+					// The preamble is about to become client-visible. It is no longer
+					// safe to replay this attempt on another account.
+					firstOutputComplete = true
 					flushBufferedStreamEvents("buffer_limit")
 				}
 			} else {
