@@ -62,13 +62,31 @@ func LogInfo(event string, fields map[string]any) {
 	if _, ok := knownLogEvents[event]; !ok {
 		return
 	}
-	slog.LogAttrs(context.Background(), slog.LevelInfo, event, safeAttrs(fields)...)
+	ctx := context.Background()
+	if !slog.Default().Enabled(ctx, slog.LevelInfo) {
+		return
+	}
+	slog.LogAttrs(ctx, slog.LevelInfo, event, safeAttrs(fields)...)
+}
+func LogDebug(event string, fields map[string]any) {
+	if _, ok := knownLogEvents[event]; !ok {
+		return
+	}
+	ctx := context.Background()
+	if !slog.Default().Enabled(ctx, slog.LevelDebug) {
+		return
+	}
+	slog.LogAttrs(ctx, slog.LevelDebug, event, safeAttrs(fields)...)
 }
 func LogWarn(event string, fields map[string]any) {
 	if _, ok := knownLogEvents[event]; !ok {
 		return
 	}
 	slog.LogAttrs(context.Background(), slog.LevelWarn, event, safeAttrs(fields)...)
+}
+
+func promptAuditDebugLoggingEnabled() bool {
+	return slog.Default().Enabled(context.Background(), slog.LevelDebug)
 }
 func LogError(event string, fields map[string]any) {
 	if _, ok := knownLogEvents[event]; !ok {

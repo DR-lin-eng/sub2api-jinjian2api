@@ -109,6 +109,19 @@ func TestCoordinatorRequiresCheckIsConservativeAndSkipsKnownDisabledEngines(t *t
 	require.True(t, NewCoordinator(&runtimeLegacyStub{}, &fakePromptEngine{mode: ModeAsync}).RequiresCheck())
 }
 
+func TestCoordinatorBlockingPromptOnlySkipsLegacyCheck(t *testing.T) {
+	legacy := &runtimeLegacyStub{enabled: false}
+	prompt := &fakePromptEngine{
+		mode:     ModeBlocking,
+		decision: &PromptDecision{Kind: DecisionAllow, AllowNextStage: true},
+	}
+	decision := NewCoordinator(legacy, prompt).Check(context.Background(), Request{Body: []byte(`{"input":"hello"}`)})
+	require.Equal(t, DecisionAllow, decision.Kind)
+	require.True(t, decision.AllowNextStage)
+	require.Zero(t, legacy.calls.Load())
+	require.Equal(t, int64(1), prompt.evaluates.Load())
+}
+
 func TestCoordinatorDoesNotMutateRequestBody(t *testing.T) {
 	body := []byte(`{"messages":[{"role":"user","content":"hello"}]}`)
 	original := append([]byte(nil), body...)

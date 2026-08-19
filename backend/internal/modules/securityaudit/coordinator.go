@@ -74,35 +74,46 @@ func (c *Coordinator) Check(ctx context.Context, req Request) Decision {
 }
 
 func (c *Coordinator) checkBlocking(ctx context.Context, req Request) Decision {
+	if c.legacy == nil || c.legacyKnownDisabled() {
+		return prioritize(nil, c.evaluatePrompt(ctx, req))
+	}
 	var wg sync.WaitGroup
 	wg.Add(1)
 	var legacy *LegacyDecision
 	var prompt *PromptDecision
 	go func() {
 		defer wg.Done()
-		if c.prompt == nil {
-			prompt = unavailablePromptDecision(ErrorCodeUnavailable)
-			return
-		}
-		result, err := c.prompt.Evaluate(ctx, req.Clone())
-		if err != nil {
-			var guardErr *GuardError
-			if errors.As(err, &guardErr) && guardErr.Code == ErrorCodeInvalidResponse {
-				prompt = unavailablePromptDecision(ErrorCodeInvalidResponse)
-				return
-			}
-			prompt = unavailablePromptDecision(ErrorCodeUnavailable)
-			return
-		}
-		if result == nil {
-			prompt = unavailablePromptDecision(ErrorCodeUnavailable)
-			return
-		}
-		prompt = result
+		prompt = c.evaluatePrompt(ctx, req.Clone())
 	}()
 	legacy, _ = c.checkLegacy(ctx, req)
 	wg.Wait()
 	return prioritize(legacy, prompt)
+}
+
+func (c *Coordinator) legacyKnownDisabled() bool {
+	if c == nil || c.legacy == nil {
+		return true
+	}
+	runtime, ok := c.legacy.(runtimeLegacyEngine)
+	return ok && !runtime.RuntimeAuditEnabled()
+}
+
+func (c *Coordinator) evaluatePrompt(ctx context.Context, req Request) *PromptDecision {
+	if c == nil || c.prompt == nil {
+		return unavailablePromptDecision(ErrorCodeUnavailable)
+	}
+	result, err := c.prompt.Evaluate(ctx, req)
+	if err != nil {
+		var guardErr *GuardError
+		if errors.As(err, &guardErr) && guardErr.Code == ErrorCodeInvalidResponse {
+			return unavailablePromptDecision(ErrorCodeInvalidResponse)
+		}
+		return unavailablePromptDecision(ErrorCodeUnavailable)
+	}
+	if result == nil {
+		return unavailablePromptDecision(ErrorCodeUnavailable)
+	}
+	return result
 }
 
 func (c *Coordinator) checkLegacy(ctx context.Context, req Request) (*LegacyDecision, error) {

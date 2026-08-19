@@ -104,6 +104,8 @@ const guardMetricItems = computed(() => {
     { label: t('admin.promptAudit.metrics.unavailable'), value: metrics.unavailable },
     { label: t('admin.promptAudit.metrics.timeouts'), value: metrics.timeouts },
     { label: t('admin.promptAudit.metrics.failovers'), value: metrics.failovers },
+    { label: t('admin.promptAudit.metrics.cacheHits'), value: metrics.cache_hits ?? 0 },
+    { label: t('admin.promptAudit.metrics.coalesced'), value: metrics.coalesced ?? 0 },
     { label: 'P95', value: metrics.latency_p95_ms != null ? `${metrics.latency_p95_ms} ms` : '—' },
   ]
 })

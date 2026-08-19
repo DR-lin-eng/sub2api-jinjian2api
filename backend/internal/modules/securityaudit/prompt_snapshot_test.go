@@ -366,6 +366,22 @@ func TestResponsesOutputTextIncludedInFullAndLatestTurnSnapshots(t *testing.T) {
 	require.NotContains(t, latestTurn.ScanText, "earlier user input")
 }
 
+func TestLatestTurnSnapshotStaysStableAcrossAssistantAndToolUpdates(t *testing.T) {
+	first, err := ExtractBlockingPromptSnapshot(Request{
+		Protocol: "openai_chat_completions",
+		Body:     []byte(`{"messages":[{"role":"assistant","content":"previous output"},{"role":"user","content":"same user turn"},{"role":"assistant","content":"first tool call"},{"role":"tool","content":"first tool result"}]}`),
+	}, true)
+	require.NoError(t, err)
+	second, err := ExtractBlockingPromptSnapshot(Request{
+		Protocol: "openai_chat_completions",
+		Body:     []byte(`{"messages":[{"role":"assistant","content":"previous output"},{"role":"user","content":"same user turn"},{"role":"assistant","content":"second tool call"},{"role":"tool","content":"second tool result"}]}`),
+	}, true)
+	require.NoError(t, err)
+	require.Equal(t, first.ScanText, second.ScanText)
+	require.Equal(t, first.PromptHash, second.PromptHash)
+	require.NotEmpty(t, first.PromptHash)
+}
+
 func TestBlockingPromptSnapshotPreservesFullScopeByDefaultAndWithoutUserInput(t *testing.T) {
 	req := Request{Protocol: "openai_chat_completions", Body: []byte(`{"messages":[{"role":"system","content":"system instruction"},{"role":"user","content":"older user input"},{"role":"assistant","content":"previous output"},{"role":"user","content":"latest user input"}]}`)}
 	full, err := ExtractPromptSnapshot(req)

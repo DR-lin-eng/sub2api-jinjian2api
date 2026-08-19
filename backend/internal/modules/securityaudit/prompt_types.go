@@ -205,6 +205,8 @@ type GuardMetricsSnapshot struct {
 	Timeouts     int64 `json:"timeouts"`
 	Failovers    int64 `json:"failovers"`
 	BulkheadFull int64 `json:"bulkhead_full"`
+	CacheHits    int64 `json:"cache_hits"`
+	Coalesced    int64 `json:"coalesced"`
 	RecordFailed int64 `json:"record_failed"`
 	LatencyCount int64 `json:"latency_count"`
 	LatencyAvgMS int64 `json:"latency_avg_ms"`
@@ -271,6 +273,8 @@ type Metrics interface {
 	IncTimeout()
 	IncFailover()
 	IncBulkheadFull()
+	IncCacheHit()
+	IncCoalesced()
 	IncRecordFailed()
 }
 

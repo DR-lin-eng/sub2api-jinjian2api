@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 type GuardEvaluator struct {
@@ -17,6 +18,8 @@ type GuardEvaluator struct {
 	perNodeLimit int
 	nodeMu       sync.Mutex
 	nodes        map[string]chan struct{}
+	resultCache  *guardResultCache
+	resultFlight guardResultFlight
 }
 
 func NewGuardEvaluator(scanner PromptScanner, repo JobRepository, metrics Metrics) *GuardEvaluator {
@@ -31,7 +34,8 @@ func newGuardEvaluator(scanner PromptScanner, repo JobRepository, metrics Metric
 		perNodeLimit = 16
 	}
 	return &GuardEvaluator{scanner: scanner, repo: repo, metrics: metrics, clock: realClock{},
-		global: make(chan struct{}, globalLimit), perNodeLimit: perNodeLimit, nodes: map[string]chan struct{}{}}
+		global: make(chan struct{}, globalLimit), perNodeLimit: perNodeLimit, nodes: map[string]chan struct{}{},
+		resultCache: newGuardResultCache(guardResultCacheMaxEntries, guardResultCacheTTL)}
 }
 
 func (g *GuardEvaluator) Evaluate(ctx context.Context, cfg ActiveConfig, snapshot PromptSnapshot) (*PromptDecision, error) {
@@ -53,17 +57,6 @@ func (g *GuardEvaluator) Evaluate(ctx context.Context, cfg ActiveConfig, snapsho
 		logGuardFailure(snapshot, cfg, DecisionUnavailable, ErrorCodeUnavailable, "", g.clock.Now().Sub(start))
 		return nil, &GuardError{Code: ErrorCodeUnavailable}
 	}
-	select {
-	case g.global <- struct{}{}:
-		defer func() { <-g.global }()
-	default:
-		if g.metrics != nil {
-			g.metrics.IncBulkheadFull()
-			g.metrics.Observe(DecisionUnavailable, g.clock.Now().Sub(start))
-		}
-		logGuardFailure(snapshot, cfg, DecisionUnavailable, ErrorCodeUnavailable, "", g.clock.Now().Sub(start))
-		return nil, &GuardError{Code: ErrorCodeUnavailable}
-	}
 	timeout := time.Duration(endpoints[0].TimeoutMS) * time.Millisecond
 	if timeout <= 0 {
 		timeout = DefaultTimeoutMS * time.Millisecond
@@ -78,21 +71,28 @@ func (g *GuardEvaluator) Evaluate(ctx context.Context, cfg ActiveConfig, snapsho
 		}
 		return &PromptDecision{Kind: DecisionAllow, AllowNextStage: true}, nil
 	}
-	LogInfo(EventEvaluationStarted, mergeLogFields(baseFields, map[string]any{"chunk_total": len(chunks), "status": "started"}))
+	debugLogging := promptAuditDebugLoggingEnabled()
+	if debugLogging {
+		LogDebug(EventEvaluationStarted, mergeLogFields(baseFields, map[string]any{"chunk_total": len(chunks), "status": "started"}))
+	}
 	results := make([]*NormalizedResult, 0, len(chunks))
+	policyFingerprint := guardPolicyFingerprint(cfg, endpoints)
 	for index, chunk := range chunks {
 		chunkStarted := g.clock.Now()
-		LogInfo(EventChunkStarted, mergeLogFields(baseFields, map[string]any{
-			"chunk_index": index + 1, "chunk_total": len(chunks),
-			"chunk_chars": len([]rune(chunk)), "input_chars": snapshot.PromptLength, "input_limit": inputLimit,
-			"status": "started",
-		}))
-		result, err := g.scanChunk(evalCtx, cfg, endpoints, chunk)
+		chunkChars := utf8.RuneCountInString(chunk)
+		if debugLogging {
+			LogDebug(EventChunkStarted, mergeLogFields(baseFields, map[string]any{
+				"chunk_index": index + 1, "chunk_total": len(chunks),
+				"chunk_chars": chunkChars, "input_chars": snapshot.PromptLength, "input_limit": inputLimit,
+				"status": "started",
+			}))
+		}
+		result, err := g.scanChunk(evalCtx, cfg, endpoints, policyFingerprint, chunk)
 		if err != nil {
 			code := guardErrorCode(err)
 			LogWarn(EventChunkFailed, mergeLogFields(baseFields, map[string]any{
 				"chunk_index": index + 1, "chunk_total": len(chunks),
-				"chunk_chars": len([]rune(chunk)), "input_chars": snapshot.PromptLength, "input_limit": inputLimit,
+				"chunk_chars": chunkChars, "input_chars": snapshot.PromptLength, "input_limit": inputLimit,
 				"latency_ms": g.clock.Now().Sub(chunkStarted).Milliseconds(), "error_code": code, "status": "failed",
 			}))
 			kind := DecisionUnavailable
@@ -111,12 +111,14 @@ func (g *GuardEvaluator) Evaluate(ctx context.Context, cfg ActiveConfig, snapsho
 		}
 		result.ChunkTotal = len(chunks)
 		results = append(results, result)
-		LogInfo(EventChunkCompleted, mergeLogFields(baseFields, map[string]any{
-			"chunk_index": index + 1, "chunk_total": len(chunks),
-			"chunk_chars": len([]rune(chunk)), "input_chars": snapshot.PromptLength, "input_limit": inputLimit,
-			"guard_endpoint_id": result.GuardEndpointID, "action": result.Action,
-			"latency_ms": g.clock.Now().Sub(chunkStarted).Milliseconds(), "status": "completed",
-		}))
+		if debugLogging {
+			LogDebug(EventChunkCompleted, mergeLogFields(baseFields, map[string]any{
+				"chunk_index": index + 1, "chunk_total": len(chunks),
+				"chunk_chars": chunkChars, "input_chars": snapshot.PromptLength, "input_limit": inputLimit,
+				"guard_endpoint_id": result.GuardEndpointID, "action": result.Action,
+				"latency_ms": g.clock.Now().Sub(chunkStarted).Milliseconds(), "status": "completed",
+			}))
+		}
 		if result.Action == ActionBlock {
 			break
 		}
@@ -144,12 +146,14 @@ func (g *GuardEvaluator) Evaluate(ctx context.Context, cfg ActiveConfig, snapsho
 	if g.metrics != nil {
 		g.metrics.Observe(kind, g.clock.Now().Sub(start))
 	}
-	LogInfo(EventChunksAggregated, mergeLogFields(baseFields, map[string]any{
-		"decision":   kind,
-		"risk_level": aggregated.RiskLevel, "action": aggregated.Action, "chunk_total": aggregated.ChunkTotal,
-		"latency_ms": aggregated.LatencyMS, "guard_endpoint_id": aggregated.GuardEndpointID, "stage": snapshot.Stage,
-		"status": "completed",
-	}))
+	if debugLogging {
+		LogDebug(EventChunksAggregated, mergeLogFields(baseFields, map[string]any{
+			"decision":   kind,
+			"risk_level": aggregated.RiskLevel, "action": aggregated.Action, "chunk_total": aggregated.ChunkTotal,
+			"latency_ms": aggregated.LatencyMS, "guard_endpoint_id": aggregated.GuardEndpointID, "stage": snapshot.Stage,
+			"status": "completed",
+		}))
+	}
 	if g.repo != nil {
 		if _, recordErr := g.repo.RecordBlocking(ctx, snapshot.Redacted(), cfg.ConfigVersion, aggregated, cfg.StorePassEvents); recordErr != nil {
 			if g.metrics != nil {
@@ -169,11 +173,13 @@ func (g *GuardEvaluator) Evaluate(ctx context.Context, cfg ActiveConfig, snapsho
 			"stage": snapshot.Stage, "upstream_dispatched": false, "usage_recorded": false,
 		}))
 	} else {
-		LogInfo(EventGuardAllowed, mergeLogFields(baseFields, map[string]any{
-			"decision": kind, "risk_level": aggregated.RiskLevel, "action": aggregated.Action,
-			"guard_endpoint_id": aggregated.GuardEndpointID, "chunk_total": aggregated.ChunkTotal,
-			"latency_ms": aggregated.LatencyMS, "stage": snapshot.Stage, "status": "allowed",
-		}))
+		if debugLogging {
+			LogDebug(EventGuardAllowed, mergeLogFields(baseFields, map[string]any{
+				"decision": kind, "risk_level": aggregated.RiskLevel, "action": aggregated.Action,
+				"guard_endpoint_id": aggregated.GuardEndpointID, "chunk_total": aggregated.ChunkTotal,
+				"latency_ms": aggregated.LatencyMS, "stage": snapshot.Stage, "status": "allowed",
+			}))
+		}
 	}
 	return decision, nil
 }
@@ -187,7 +193,54 @@ func logGuardFailure(snapshot PromptSnapshot, cfg ActiveConfig, kind DecisionKin
 	}))
 }
 
-func (g *GuardEvaluator) scanChunk(ctx context.Context, cfg ActiveConfig, endpoints []ActiveEndpoint, chunk string) (*NormalizedResult, error) {
+func (g *GuardEvaluator) scanChunk(ctx context.Context, cfg ActiveConfig, endpoints []ActiveEndpoint, policyFingerprint [32]byte, chunk string) (*NormalizedResult, error) {
+	key := guardResultKey(policyFingerprint, chunk)
+	if cached, ok := g.resultCache.Get(key, g.clock.Now()); ok {
+		if g.metrics != nil {
+			g.metrics.IncCacheHit()
+		}
+		return cached, nil
+	}
+
+	result, err, coalesced := g.resultFlight.Do(ctx, key, func() (*NormalizedResult, error) {
+		if cached, ok := g.resultCache.Get(key, g.clock.Now()); ok {
+			if g.metrics != nil {
+				g.metrics.IncCacheHit()
+			}
+			return cached, nil
+		}
+		result, err := g.scanChunkUncached(ctx, cfg, endpoints, chunk)
+		if err == nil && result != nil {
+			g.resultCache.Set(key, result, g.clock.Now())
+		}
+		return result, err
+	})
+	if coalesced && g.metrics != nil {
+		g.metrics.IncCoalesced()
+	}
+	if err != nil {
+		return nil, err
+	}
+	if result == nil {
+		return nil, &GuardError{Code: ErrorCodeInvalidResponse}
+	}
+	return cloneNormalizedResult(result), nil
+}
+
+func (g *GuardEvaluator) scanChunkUncached(ctx context.Context, cfg ActiveConfig, endpoints []ActiveEndpoint, chunk string) (*NormalizedResult, error) {
+	if ctx.Err() != nil {
+		return nil, guardContextError(ctx)
+	}
+	select {
+	case g.global <- struct{}{}:
+		defer func() { <-g.global }()
+	default:
+		if g.metrics != nil {
+			g.metrics.IncBulkheadFull()
+		}
+		return nil, &GuardError{Code: ErrorCodeUnavailable}
+	}
+
 	var lastErr error
 	for index, endpoint := range endpoints {
 		semaphore := g.nodeSemaphore(endpoint.ID)
@@ -226,6 +279,14 @@ func (g *GuardEvaluator) scanChunk(ctx context.Context, cfg ActiveConfig, endpoi
 		lastErr = &GuardError{Code: ErrorCodeUnavailable}
 	}
 	return nil, lastErr
+}
+
+func guardContextError(ctx context.Context) *GuardError {
+	err := ctx.Err()
+	return &GuardError{
+		Code: ErrorCodeUnavailable, Retryable: true,
+		Timeout: errors.Is(err, context.DeadlineExceeded), Cause: err,
+	}
 }
 
 func callPromptScanner(ctx context.Context, scanner PromptScanner, endpoint ActiveEndpoint, chunk string, scanners []string) (result *NormalizedResult, err error) {

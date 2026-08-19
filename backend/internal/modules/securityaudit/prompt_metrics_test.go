@@ -18,6 +18,8 @@ func TestAtomicMetricsExposeCountsLatencyDistributionAndAsyncDelivery(t *testing
 	metrics.IncTimeout()
 	metrics.IncFailover()
 	metrics.IncBulkheadFull()
+	metrics.IncCacheHit()
+	metrics.IncCoalesced()
 	metrics.IncRecordFailed()
 	metrics.IncEnqueued()
 	metrics.IncDropped()
@@ -30,6 +32,8 @@ func TestAtomicMetricsExposeCountsLatencyDistributionAndAsyncDelivery(t *testing
 	require.Equal(t, int64(40), snapshot.LatencyP95MS)
 	require.Equal(t, int64(40), snapshot.LatencyP99MS)
 	require.Equal(t, int64(100), snapshot.LatencyMaxMS)
+	require.Equal(t, int64(1), snapshot.CacheHits)
+	require.Equal(t, int64(1), snapshot.Coalesced)
 	require.Equal(t, AuditMetricsSnapshot{Enqueued: 1, Dropped: 1}, metrics.AuditSnapshot())
 }
 
@@ -46,7 +50,22 @@ func TestAtomicMetricsConcurrentObservationIsBoundedAndRaceSafe(t *testing.T) {
 	}
 	wg.Wait()
 	require.Equal(t, int64(observations), metrics.Snapshot().Total)
-	metrics.latencyMu.RLock()
-	require.LessOrEqual(t, len(metrics.latencies), latencySampleCapacity)
-	metrics.latencyMu.RUnlock()
+	require.Equal(t, uint64(observations), metrics.latencyNext.Load())
+	stored := 0
+	for index := range metrics.latencies {
+		if metrics.latencies[index].Load() > 0 {
+			stored++
+		}
+	}
+	require.Equal(t, latencySampleCapacity, stored)
+}
+
+func BenchmarkAtomicMetricsObserveParallel(b *testing.B) {
+	metrics := NewAtomicMetrics()
+	b.ReportAllocs()
+	b.RunParallel(func(parallel *testing.PB) {
+		for parallel.Next() {
+			metrics.Observe(DecisionAllow, 10*time.Millisecond)
+		}
+	})
 }

@@ -101,6 +101,8 @@ export interface PromptGuardMetrics {
   timeouts: number
   failovers: number
   bulkhead_full: number
+  cache_hits?: number
+  coalesced?: number
   record_failed: number
   latency_avg_ms?: number
   latency_p50_ms?: number
