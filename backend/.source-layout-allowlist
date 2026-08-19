@@ -8,11 +8,9 @@ internal/application/service/antigravity_gateway_retry.go
 internal/application/service/antigravity_gateway_service_test.go
 internal/application/service/antigravity_rate_limit_test.go
 internal/application/service/antigravity_smart_retry_test.go
-internal/application/service/backup_service.go
 internal/application/service/billing_service.go
 internal/application/service/billing_service_test.go
 internal/application/service/channel_service_test.go
-internal/application/service/content_moderation_test.go
 internal/application/service/crs_sync_service.go
 internal/application/service/gateway_anthropic_apikey_passthrough_test.go
 internal/application/service/gateway_claude_oauth_body.go
@@ -25,7 +23,6 @@ internal/application/service/gateway_upstream_response.go
 internal/application/service/gemini_messages_compat_service.go
 internal/application/service/gemini_oauth_service_test.go
 internal/application/service/grok_credential_failure_test.go
-internal/application/service/notification_email_service.go
 internal/application/service/openai_account_scheduler.go
 internal/application/service/openai_account_scheduler_test.go
 internal/application/service/openai_codex_models_service_test.go

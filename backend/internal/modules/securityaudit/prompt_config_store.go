@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -28,14 +27,12 @@ type activeConfigSnapshot struct {
 type ConfigManager struct {
 	db        *sql.DB
 	settings  service.SettingRepository
-	redis     *redis.Client
 	encryptor SecretEncryptor
 	clock     Clock
 	// encryptionKeyConfigured mirrors cfg.Totp.EncryptionKeyConfigured. With an
 	// auto-generated (per-boot) key, newly saved endpoint tokens would become
 	// undecryptable after the next restart, so Save rejects them (issue #4887).
 	encryptionKeyConfigured bool
-	multiInstance           bool
 
 	snapshot atomic.Pointer[activeConfigSnapshot]
 	expected atomic.Int64
@@ -60,11 +57,10 @@ type ConfigManager struct {
 	wg          sync.WaitGroup
 }
 
-func NewConfigManager(db *sql.DB, settings service.SettingRepository, redisClient *redis.Client, encryptor service.SecretEncryptor, cfg *config.Config) *ConfigManager {
+func NewConfigManager(db *sql.DB, settings service.SettingRepository, _ *redis.Client, encryptor service.SecretEncryptor, cfg *config.Config) *ConfigManager {
 	return &ConfigManager{
-		db: db, settings: settings, redis: redisClient, encryptor: encryptor, clock: realClock{},
+		db: db, settings: settings, encryptor: encryptor, clock: realClock{},
 		encryptionKeyConfigured: cfg != nil && cfg.Totp.EncryptionKeyConfigured,
-		multiInstance:           cfg != nil && cfg.Deployment.IsMultiInstance(),
 	}
 }
 
@@ -86,10 +82,6 @@ func (m *ConfigManager) Start(ctx context.Context) error {
 	}
 	m.wg.Add(1)
 	go m.refreshLoop(runCtx)
-	if m.multiInstance && m.redis != nil {
-		m.wg.Add(1)
-		go m.subscribeLoop(runCtx)
-	}
 	return loadErr
 }
 
@@ -113,13 +105,13 @@ func (m *ConfigManager) Reload(ctx context.Context) error {
 		m.markUntrustedIfNoActiveSnapshot()
 		return errors.New("prompt audit setting repository unavailable")
 	}
-	values, err := m.settings.GetMultiple(ctx, []string{SettingKeyPromptAuditConfig, SettingKeyRiskControl})
+	values, err := m.settings.GetMultiple(ctx, []string{SettingKeyPromptAuditConfig})
 	if err != nil {
 		m.recordLoadError(err)
 		m.markUntrustedIfNoActiveSnapshot()
 		return err
 	}
-	m.observeExpectedState(values[SettingKeyPromptAuditConfig], values[SettingKeyRiskControl] == "true")
+	m.observeExpectedState(values[SettingKeyPromptAuditConfig])
 	storage, err := ParseStorageConfig(values[SettingKeyPromptAuditConfig])
 	if err != nil {
 		m.recordLoadError(err)
@@ -127,8 +119,8 @@ func (m *ConfigManager) Reload(ctx context.Context) error {
 		return err
 	}
 	m.expected.Store(storage.ConfigVersion)
-	m.expectedBlocking.Store(values[SettingKeyRiskControl] == "true" && storage.Enabled && storage.BlockingEnabled)
-	active, err := ActiveFromStorage(storage, values[SettingKeyRiskControl] == "true", m.encryptor)
+	m.expectedBlocking.Store(storage.Enabled && storage.BlockingEnabled)
+	active, err := ActiveFromStorage(storage, true, m.encryptor)
 	if err != nil {
 		m.recordLoadError(err)
 		// expectedBlocking may already require fail-closed via BlockingActivationDegraded.
@@ -165,8 +157,7 @@ func promptAuditConfigChanged(previous *activeConfigSnapshot, storage storageCon
 		prior.ConfigVersion != storage.ConfigVersion ||
 		!slices.Equal(prior.Scanners, storage.Scanners) ||
 		!slices.Equal(prior.GroupIDs, storage.GroupIDs) ||
-		!slices.Equal(prior.Endpoints, storage.Endpoints) ||
-		previous.active.RiskControlEnabled != active.RiskControlEnabled
+		!slices.Equal(prior.Endpoints, storage.Endpoints)
 }
 
 // logInvalidTokenEndpoints warns once per change (not on every 5s refresh)
@@ -275,7 +266,7 @@ func (m *ConfigManager) Public() (PublicConfig, error) {
 	if snapshot == nil {
 		return PublicConfig{}, infraerrors.ServiceUnavailable(ErrorCodeConfigUnavailable, "提示词审计配置暂不可用")
 	}
-	return PublicFromStorage(cloneStorageConfig(snapshot.storage), snapshot.active.RiskControlEnabled, snapshot.active.InvalidTokenEndpointIDs()), nil
+	return PublicFromStorage(cloneStorageConfig(snapshot.storage), true, snapshot.active.InvalidTokenEndpointIDs()), nil
 }
 
 func (m *ConfigManager) Save(ctx context.Context, req UpdateConfigRequest, actorID int64) (PublicConfig, error) {
@@ -329,18 +320,12 @@ func (m *ConfigManager) Save(ctx context.Context, req UpdateConfigRequest, actor
 	if err := tx.Commit(); err != nil {
 		return PublicConfig{}, err
 	}
-	// Install the snapshot with the current global gate, not merely the value
-	// cached when this process last reloaded Prompt Audit configuration.
-	riskControlEnabled := m.currentRiskControlEnabled()
-	if values, getErr := m.settings.GetMultiple(ctx, []string{SettingKeyRiskControl}); getErr == nil {
-		riskControlEnabled = values[SettingKeyRiskControl] == "true"
-	}
-	active, err := ActiveFromStorage(next, riskControlEnabled, m.encryptor)
+	active, err := ActiveFromStorage(next, true, m.encryptor)
 	if err != nil {
 		return PublicConfig{}, err
 	}
 	m.expected.Store(next.ConfigVersion)
-	m.expectedBlocking.Store(active.RiskControlEnabled && next.Enabled && next.BlockingEnabled)
+	m.expectedBlocking.Store(next.Enabled && next.BlockingEnabled)
 	previous := m.snapshot.Load()
 	m.snapshot.Store(&activeConfigSnapshot{storage: cloneStorageConfig(next), active: cloneActiveConfig(active), loadedAt: m.clock.Now()})
 	// A successful admin save installs a trustworthy snapshot; clear any prior
@@ -351,14 +336,7 @@ func (m *ConfigManager) Save(ctx context.Context, req UpdateConfigRequest, actor
 	LogInfo(EventConfigUpdated, map[string]any{
 		"config_version": next.ConfigVersion, "status": "updated",
 	})
-	if m.multiInstance && m.redis != nil {
-		if err := m.redis.Publish(ctx, ConfigInvalidationChannel, strconv.FormatInt(next.ConfigVersion, 10)).Err(); err != nil {
-			LogWarn(EventConfigReloadDegraded, map[string]any{
-				"config_version": next.ConfigVersion, "status": "degraded", "error_code": "config_invalidation_publish_failed",
-			})
-		}
-	}
-	return PublicFromStorage(next, active.RiskControlEnabled, active.InvalidTokenEndpointIDs()), nil
+	return PublicFromStorage(next, true, active.InvalidTokenEndpointIDs()), nil
 }
 
 func (m *ConfigManager) buildNextStorage(current storageConfig, req UpdateConfigRequest, actorID int64) (storageConfig, error) {
@@ -435,14 +413,7 @@ func (m *ConfigManager) RuntimeState() (expected int64, active int64, loadedAt *
 func (m *ConfigManager) Encrypt(value string) (string, error) { return m.encryptor.Encrypt(value) }
 func (m *ConfigManager) Decrypt(value string) (string, error) { return m.encryptor.Decrypt(value) }
 
-func (m *ConfigManager) currentRiskControlEnabled() bool {
-	if snapshot := m.snapshot.Load(); snapshot != nil {
-		return snapshot.active.RiskControlEnabled
-	}
-	return false
-}
-
-func (m *ConfigManager) observeExpectedState(raw string, riskControlEnabled bool) {
+func (m *ConfigManager) observeExpectedState(raw string, _ ...bool) {
 	if m == nil {
 		return
 	}
@@ -463,7 +434,7 @@ func (m *ConfigManager) observeExpectedState(raw string, riskControlEnabled bool
 		intent.ConfigVersion = 1
 	}
 	m.expected.Store(intent.ConfigVersion)
-	m.expectedBlocking.Store(riskControlEnabled && intent.Enabled && intent.BlockingEnabled)
+	m.expectedBlocking.Store(intent.Enabled && intent.BlockingEnabled)
 }
 
 func (m *ConfigManager) refreshLoop(ctx context.Context) {
@@ -477,38 +448,6 @@ func (m *ConfigManager) refreshLoop(ctx context.Context) {
 		case <-ticker.C:
 			if err := m.Reload(ctx); err != nil {
 				LogWarn(EventConfigReloadDegraded, map[string]any{"status": "degraded", "error_code": "config_ttl_reload_failed"})
-			}
-		}
-	}
-}
-
-func (m *ConfigManager) subscribeLoop(ctx context.Context) {
-	defer m.wg.Done()
-	pubsub := m.redis.Subscribe(ctx, ConfigInvalidationChannel)
-	defer func() { _ = pubsub.Close() }()
-	channel := pubsub.Channel()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case message, ok := <-channel:
-			if !ok {
-				return
-			}
-			version, err := strconv.ParseInt(strings.TrimSpace(message.Payload), 10, 64)
-			if err != nil || version < 1 {
-				continue
-			}
-			m.expected.Store(version)
-			if err := m.Reload(ctx); err != nil {
-				// A newer published version failed to activate. Until reload
-				// succeeds, do not keep serving a potentially stale weaker mode.
-				if active, ok := m.Active(); !ok || active.ConfigVersion < version {
-					m.markConfigUntrusted()
-				}
-				LogWarn(EventConfigReloadDegraded, map[string]any{
-					"config_version": version, "status": "degraded", "error_code": "config_invalidation_reload_failed",
-				})
 			}
 		}
 	}

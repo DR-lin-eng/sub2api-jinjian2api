@@ -38,7 +38,6 @@ export interface SystemSettings {
   passkey_rp_origins: string[];
   session_binding_enabled: boolean;
   step_up_enabled: boolean;
-  audit_log_retention_days: number;
 
   smtp_host: string;
   smtp_port: number;
@@ -146,9 +145,6 @@ export interface SystemSettings {
   account_quota_notify_emails: NotifyEmailEntry[];
   channel_monitor_enabled: boolean;
   channel_monitor_default_interval_seconds: number;
-  risk_control_enabled: boolean;
-  cyber_session_block_enabled: boolean;
-  cyber_session_block_ttl_seconds: number;
   openai_fast_policy_settings?: OpenAIFastPolicySettings;
 }
 

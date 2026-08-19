@@ -70,18 +70,6 @@ function validateRuntimeSettings(settings: OpsAlertRuntimeSettings): ValidationR
     }
   }
 
-  const lock = settings.distributed_lock
-  if (lock?.enabled) {
-    if (!lock.key || lock.key.trim().length < 3) {
-      errors.push(t('admin.ops.runtime.validation.lockKeyRequired'))
-    } else if (!lock.key.startsWith('ops:')) {
-      errors.push(t('admin.ops.runtime.validation.lockKeyPrefix', { prefix: 'ops:' }))
-    }
-    if (!Number.isFinite(lock.ttl_seconds) || lock.ttl_seconds < 1 || lock.ttl_seconds > 86400) {
-      errors.push(t('admin.ops.runtime.validation.lockTtlRange'))
-    }
-  }
-
   // Silencing validation (alert-only)
   const silencing = settings.silencing
   if (silencing?.enabled) {
@@ -146,9 +134,6 @@ function openAlertEditor() {
 
   // Backwards-compat: ensure nested settings exist even if API payload is older.
   if (draftAlert.value) {
-    if (!draftAlert.value.distributed_lock) {
-      draftAlert.value.distributed_lock = { enabled: true, key: 'ops:alert:evaluator:leader', ttl_seconds: 30 }
-    }
     if (!draftAlert.value.silencing) {
       draftAlert.value.silencing = { enabled: false, global_until_rfc3339: '', global_reason: '', entries: [] }
     }
@@ -279,25 +264,6 @@ onMounted(() => {
             <span class="ml-1 font-mono text-gray-900 dark:text-white">{{ alertSettings.silencing.global_until_rfc3339 }}</span>
           </div>
 
-          <details class="col-span-1 md:col-span-2">
-            <summary class="cursor-pointer text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400">
-              {{ t('admin.ops.runtime.showAdvancedDeveloperSettings') }}
-            </summary>
-            <div class="mt-2 grid grid-cols-1 gap-3 rounded-lg bg-gray-100 p-3 dark:bg-dark-800 md:grid-cols-2">
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                {{ t('admin.ops.runtime.lockEnabled') }}:
-                <span class="ml-1 font-mono text-gray-700 dark:text-gray-300">{{ alertSettings.distributed_lock.enabled }}</span>
-              </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                {{ t('admin.ops.runtime.lockKey') }}:
-                <span class="ml-1 font-mono text-gray-700 dark:text-gray-300">{{ alertSettings.distributed_lock.key }}</span>
-              </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                {{ t('admin.ops.runtime.lockTTLSeconds') }}:
-                <span class="ml-1 font-mono text-gray-700 dark:text-gray-300">{{ alertSettings.distributed_lock.ttl_seconds }}s</span>
-              </div>
-            </div>
-          </details>
         </div>
       </div>
     </div>
@@ -499,28 +465,6 @@ onMounted(() => {
         </div>
       </div>
 
-      <details class="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-dark-600 dark:bg-dark-800">
-        <summary class="cursor-pointer text-xs font-medium text-gray-600 dark:text-gray-400">{{ t('admin.ops.runtime.advancedSettingsSummary') }}</summary>
-        <div class="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label class="inline-flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
-              <input v-model="draftAlert.distributed_lock.enabled" type="checkbox" class="h-4 w-4 rounded border-gray-300" />
-              <span>{{ t('admin.ops.runtime.lockEnabled') }}</span>
-            </label>
-          </div>
-          <div class="md:col-span-2">
-            <div class="mb-1 text-xs font-medium text-gray-500">{{ t('admin.ops.runtime.lockKey') }}</div>
-            <input v-model="draftAlert.distributed_lock.key" type="text" class="input text-xs font-mono" />
-            <p v-if="draftAlert.distributed_lock.enabled" class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
-              {{ t('admin.ops.runtime.validation.lockKeyHint', { prefix: 'ops:' }) }}
-            </p>
-          </div>
-          <div>
-            <div class="mb-1 text-xs font-medium text-gray-500">{{ t('admin.ops.runtime.lockTTLSeconds') }}</div>
-            <input v-model.number="draftAlert.distributed_lock.ttl_seconds" type="number" min="1" max="86400" class="input text-xs font-mono" />
-          </div>
-        </div>
-      </details>
     </div>
 
     <template #footer>
@@ -533,4 +477,3 @@ onMounted(() => {
     </template>
   </BaseDialog>
 </template>
-

@@ -20,7 +20,6 @@ export function createSettingsForm(): SettingsForm {
     passkey_rp_origins: [],
     session_binding_enabled: false,
     step_up_enabled: false,
-    audit_log_retention_days: 180,
 
     smtp_host: "",
     smtp_port: 587,
@@ -136,8 +135,5 @@ export function createSettingsForm(): SettingsForm {
     account_quota_notify_emails: [],
     channel_monitor_enabled: true,
     channel_monitor_default_interval_seconds: 60,
-    risk_control_enabled: false,
-    cyber_session_block_enabled: false,
-    cyber_session_block_ttl_seconds: 3600,
   };
 }

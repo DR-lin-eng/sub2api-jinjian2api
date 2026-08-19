@@ -14,9 +14,7 @@ export type AdminApiKeyScope =
   | "admin.backups.write"
   | "admin.system.read"
   | "admin.system.write"
-  | "admin.audit.read"
-  | "admin.audit.write"
-  | "admin.ops.read"
+	| "admin.ops.read"
   | "admin.ops.write";
 
 export interface AdminApiKey {

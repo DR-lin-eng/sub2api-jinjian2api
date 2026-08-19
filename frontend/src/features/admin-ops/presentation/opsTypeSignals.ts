@@ -23,7 +23,6 @@ export type {
   MetricType,
   Operator,
   EmailNotificationConfig,
-  OpsDistributedLockSettings,
   OpsAlertRuntimeSettings,
   OpsMetricThresholds,
   OpsAdvancedSettings,

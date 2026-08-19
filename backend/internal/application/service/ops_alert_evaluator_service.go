@@ -11,25 +11,13 @@ import (
 
 	"github.com/Wei-Shaw/sub2api/internal/platform/config"
 	"github.com/Wei-Shaw/sub2api/internal/shared/logger"
-	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 )
 
 const (
 	opsAlertEvaluatorJobName = "ops_alert_evaluator"
 
-	opsAlertEvaluatorTimeout         = 45 * time.Second
-	opsAlertEvaluatorLeaderLockKey   = "ops:alert:evaluator:leader"
-	opsAlertEvaluatorLeaderLockTTL   = 90 * time.Second
-	opsAlertEvaluatorSkipLogInterval = 1 * time.Minute
+	opsAlertEvaluatorTimeout = 45 * time.Second
 )
-
-var opsAlertEvaluatorReleaseScript = redis.NewScript(`
-if redis.call("GET", KEYS[1]) == ARGV[1] then
-  return redis.call("DEL", KEYS[1])
-end
-return 0
-`)
 
 type OpsAlertEvaluatorService struct {
 	opsService   *OpsService
@@ -37,9 +25,7 @@ type OpsAlertEvaluatorService struct {
 	emailService *EmailService
 	proxyRepo    ProxyRepository
 
-	redisClient *redis.Client
-	cfg         *config.Config
-	instanceID  string
+	cfg *config.Config
 
 	stopCh    chan struct{}
 	startOnce sync.Once
@@ -50,11 +36,6 @@ type OpsAlertEvaluatorService struct {
 	ruleStates map[int64]*opsAlertRuleState
 
 	emailLimiter *slidingWindowLimiter
-
-	skipLogMu sync.Mutex
-	skipLogAt time.Time
-
-	warnNoRedisOnce sync.Once
 }
 
 type opsAlertRuleState struct {
@@ -66,7 +47,6 @@ func NewOpsAlertEvaluatorService(
 	opsService *OpsService,
 	opsRepo OpsRepository,
 	emailService *EmailService,
-	redisClient *redis.Client,
 	cfg *config.Config,
 	proxyRepo ProxyRepository,
 ) *OpsAlertEvaluatorService {
@@ -75,9 +55,7 @@ func NewOpsAlertEvaluatorService(
 		opsRepo:      opsRepo,
 		emailService: emailService,
 		proxyRepo:    proxyRepo,
-		redisClient:  redisClient,
 		cfg:          cfg,
-		instanceID:   uuid.NewString(),
 		ruleStates:   map[int64]*opsAlertRuleState{},
 		emailLimiter: newSlidingWindowLimiter(0, time.Hour),
 	}
@@ -173,14 +151,6 @@ func (s *OpsAlertEvaluatorService) evaluateOnce(interval time.Duration) {
 		if loaded, err := s.opsService.GetOpsAlertRuntimeSettings(ctx); err == nil && loaded != nil {
 			runtimeCfg = loaded
 		}
-	}
-
-	release, ok := s.tryAcquireLeaderLock(ctx, runtimeCfg.DistributedLock)
-	if !ok {
-		return
-	}
-	if release != nil {
-		defer release()
 	}
 
 	startedAt := time.Now().UTC()
@@ -901,57 +871,6 @@ func isOpsAlertSilenced(now time.Time, rule *OpsAlertRule, event *OpsAlertEvent,
 	}
 
 	return false
-}
-
-func (s *OpsAlertEvaluatorService) tryAcquireLeaderLock(ctx context.Context, lock OpsDistributedLockSettings) (func(), bool) {
-	if !lock.Enabled {
-		return nil, true
-	}
-	if s.redisClient == nil {
-		s.warnNoRedisOnce.Do(func() {
-			logger.LegacyPrintf("service.ops_alert_evaluator", "[OpsAlertEvaluator] redis not configured; running without distributed lock")
-		})
-		return nil, true
-	}
-	key := strings.TrimSpace(lock.Key)
-	if key == "" {
-		key = opsAlertEvaluatorLeaderLockKey
-	}
-	ttl := time.Duration(lock.TTLSeconds) * time.Second
-	if ttl <= 0 {
-		ttl = opsAlertEvaluatorLeaderLockTTL
-	}
-
-	ok, err := s.redisClient.SetNX(ctx, key, s.instanceID, ttl).Result()
-	if err != nil {
-		// Prefer fail-closed to avoid duplicate evaluators stampeding the DB when Redis is flaky.
-		// Single-node deployments can disable the distributed lock via runtime settings.
-		s.warnNoRedisOnce.Do(func() {
-			logger.LegacyPrintf("service.ops_alert_evaluator", "[OpsAlertEvaluator] leader lock SetNX failed; skipping this cycle: %v", err)
-		})
-		return nil, false
-	}
-	if !ok {
-		s.maybeLogSkip(key)
-		return nil, false
-	}
-	return func() {
-		releaseCtx, releaseCancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer releaseCancel()
-		_, _ = opsAlertEvaluatorReleaseScript.Run(releaseCtx, s.redisClient, []string{key}, s.instanceID).Result()
-	}, true
-}
-
-func (s *OpsAlertEvaluatorService) maybeLogSkip(key string) {
-	s.skipLogMu.Lock()
-	defer s.skipLogMu.Unlock()
-
-	now := time.Now()
-	if !s.skipLogAt.IsZero() && now.Sub(s.skipLogAt) < opsAlertEvaluatorSkipLogInterval {
-		return
-	}
-	s.skipLogAt = now
-	logger.LegacyPrintf("service.ops_alert_evaluator", "[OpsAlertEvaluator] leader lock held by another instance; skipping (key=%q)", key)
 }
 
 func (s *OpsAlertEvaluatorService) recordHeartbeatSuccess(runAt time.Time, duration time.Duration, result string) {

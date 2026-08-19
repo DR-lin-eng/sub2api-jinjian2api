@@ -25,7 +25,6 @@ func (s *SettingService) parseCoreSystemSettings(settings map[string]string) *Sy
 		PasskeyEnabled:            s.passkeySettingEnabled(settings),
 		SessionBindingEnabled:     settings[SettingKeySessionBindingEnabled] == "true", // 默认关闭
 		StepUpEnabled:             settings[SettingKeyStepUpEnabled] == "true",         // 默认关闭
-		AuditLogRetentionDays:     parseAuditLogRetentionDays(settings[SettingKeyAuditLogRetentionDays]),
 		SMTPHost:                  settings[SettingKeySMTPHost],
 		SMTPUsername:              settings[SettingKeySMTPUsername],
 		SMTPFrom:                  settings[SettingKeySMTPFrom],

@@ -173,14 +173,14 @@ type UpdateAPIKeyRequest struct {
 // APIKeyGroupRateInfo describes the effective group billing multiplier for one
 // authenticated API key.
 type APIKeyGroupRateInfo struct {
-	APIKeyID            int64    `json:"api_key_id"`
-	GroupID             int64    `json:"group_id"`
-	GroupName           string   `json:"group_name"`
-	Platform            string   `json:"platform"`
-	RateMultiplier      float64  `json:"rate_multiplier"`
-	GroupRateMultiplier float64  `json:"group_rate_multiplier"`
-	Source              string   `json:"source"`
-	Bound               bool     `json:"bound"`
+	APIKeyID            int64   `json:"api_key_id"`
+	GroupID             int64   `json:"group_id"`
+	GroupName           string  `json:"group_name"`
+	Platform            string  `json:"platform"`
+	RateMultiplier      float64 `json:"rate_multiplier"`
+	GroupRateMultiplier float64 `json:"group_rate_multiplier"`
+	Source              string  `json:"source"`
+	Bound               bool    `json:"bound"`
 }
 
 // APIKeyService API Key服务
@@ -200,7 +200,6 @@ type APIKeyService struct {
 	authLookupTotal           atomic.Uint64
 	authLookupRejected        atomic.Uint64
 	authLookupInFlight        atomic.Int64
-	invalidAuthAbuse          *invalidAuthAbuseLimiter
 	authInvalidationStart     sync.Once
 	authInvalidationStop      sync.Once
 	authInvalidationCancel    context.CancelFunc
@@ -252,7 +251,6 @@ func NewAPIKeyService(
 		lookupConcurrency = cfg.APIKeyAuth.LookupConcurrency
 	}
 	svc.authLookupSlots = make(chan struct{}, lookupConcurrency)
-	svc.invalidAuthAbuse = newInvalidAuthAbuseLimiter(cfg)
 	return svc
 }
 

@@ -26,7 +26,7 @@ func newOptionalJWTTestEnv(users map[int64]*service.User) (*gin.Engine, *service
 	userRepo := &stubJWTUserRepo{users: users}
 	authSvc := service.NewAuthService(userRepo, nil, cfg, nil)
 	userSvc := service.NewUserService(userRepo)
-	mw := NewOptionalJWTAuthMiddleware(authSvc, userSvc, nil, nil)
+	mw := NewOptionalJWTAuthMiddleware(authSvc, userSvc, nil)
 
 	r := gin.New()
 	r.Use(gin.HandlerFunc(mw))

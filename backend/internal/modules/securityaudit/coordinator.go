@@ -4,13 +4,10 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"sync"
 )
 
-type LegacyEngine interface {
-	Check(ctx context.Context, req Request) (*LegacyDecision, error)
-}
-
+// PromptEngine is the only request-audit engine in this branch. The former
+// content-moderation/risk-control engine was intentionally removed.
 type PromptEngine interface {
 	EffectiveMode() Mode
 	// Enqueue must copy request memory before retaining it beyond the call.
@@ -19,83 +16,46 @@ type PromptEngine interface {
 }
 
 type Coordinator struct {
-	legacy LegacyEngine
 	prompt PromptEngine
 }
 
-type runtimeLegacyEngine interface {
-	RuntimeAuditEnabled() bool
+// NewCoordinator accepts an optional compatibility prefix while older callers
+// migrate to the prompt-only constructor.
+func NewCoordinator(first PromptEngine, rest ...PromptEngine) *Coordinator {
+	prompt := first
+	if len(rest) > 0 {
+		prompt = rest[len(rest)-1]
+	}
+	return &Coordinator{prompt: prompt}
 }
 
-func NewCoordinator(legacy LegacyEngine, prompt PromptEngine) *Coordinator {
-	return &Coordinator{legacy: legacy, prompt: prompt}
+func NewPromptCoordinator(prompt PromptEngine) *Coordinator {
+	return NewCoordinator(prompt)
 }
 
-// RequiresCheck lets handlers bypass request construction and audit logging
-// only when both engines are known to be disabled. Unknown legacy engines are
-// treated as enabled to preserve behavior for alternate implementations.
+// RequiresCheck lets handlers avoid request construction when Prompt Audit is
+// explicitly disabled or not yet available.
 func (c *Coordinator) RequiresCheck() bool {
-	if c == nil {
-		return false
-	}
-	if c.prompt != nil && c.prompt.EffectiveMode() != ModeOff {
-		return true
-	}
-	if c.legacy == nil {
-		return false
-	}
-	if runtime, ok := c.legacy.(runtimeLegacyEngine); ok {
-		return runtime.RuntimeAuditEnabled()
-	}
-	return true
+	return c != nil && c.prompt != nil && c.prompt.EffectiveMode() != ModeOff
 }
 
 func (c *Coordinator) Check(ctx context.Context, req Request) Decision {
-	if c == nil {
-		return allowDecision(nil, nil)
+	if c == nil || c.prompt == nil {
+		return allowDecision()
 	}
-	mode := ModeOff
-	if c.prompt != nil {
-		mode = c.prompt.EffectiveMode()
-	}
-	switch mode {
+	switch c.prompt.EffectiveMode() {
 	case ModeAsync:
-		// Enqueue is deliberately best-effort. The implementation owns a bounded
-		// context and copies request memory before it can outlive the Handler.
 		_ = c.prompt.Enqueue(ctx, req)
-		legacy, _ := c.checkLegacy(ctx, req)
-		return prioritize(legacy, nil)
+		return allowDecision()
 	case ModeBlocking:
 		return c.checkBlocking(ctx, req)
 	default:
-		legacy, _ := c.checkLegacy(ctx, req)
-		return prioritize(legacy, nil)
+		return allowDecision()
 	}
 }
 
 func (c *Coordinator) checkBlocking(ctx context.Context, req Request) Decision {
-	if c.legacy == nil || c.legacyKnownDisabled() {
-		return prioritize(nil, c.evaluatePrompt(ctx, req))
-	}
-	var wg sync.WaitGroup
-	wg.Add(1)
-	var legacy *LegacyDecision
-	var prompt *PromptDecision
-	go func() {
-		defer wg.Done()
-		prompt = c.evaluatePrompt(ctx, req.Clone())
-	}()
-	legacy, _ = c.checkLegacy(ctx, req)
-	wg.Wait()
-	return prioritize(legacy, prompt)
-}
-
-func (c *Coordinator) legacyKnownDisabled() bool {
-	if c == nil || c.legacy == nil {
-		return true
-	}
-	runtime, ok := c.legacy.(runtimeLegacyEngine)
-	return ok && !runtime.RuntimeAuditEnabled()
+	return promptDecision(c.evaluatePrompt(ctx, req))
 }
 
 func (c *Coordinator) evaluatePrompt(ctx context.Context, req Request) *PromptDecision {
@@ -116,50 +76,29 @@ func (c *Coordinator) evaluatePrompt(ctx context.Context, req Request) *PromptDe
 	return result
 }
 
-func (c *Coordinator) checkLegacy(ctx context.Context, req Request) (*LegacyDecision, error) {
-	if c.legacy == nil {
-		return nil, nil
-	}
-	return c.legacy.Check(ctx, req)
-}
-
-func prioritize(legacy *LegacyDecision, prompt *PromptDecision) Decision {
-	if legacy != nil && legacy.Blocked {
-		status := legacy.StatusCode
-		if status < 400 || status > 599 {
-			status = http.StatusForbidden
-		}
-		code := legacy.ErrorCode
-		if code == "" {
-			code = "content_policy_violation"
-		}
-		return Decision{
-			Kind: DecisionBlock, HTTPStatus: status, ErrorCode: code, ClientMessage: legacy.Message,
-			Legacy: legacy, Prompt: prompt, AllowNextStage: false,
-		}
-	}
+func promptDecision(prompt *PromptDecision) Decision {
 	if prompt == nil {
-		return allowDecision(legacy, nil)
+		return allowDecision()
 	}
 	switch prompt.Kind {
 	case DecisionBlock:
 		return Decision{Kind: DecisionBlock, HTTPStatus: http.StatusForbidden, ErrorCode: ErrorCodeBlocked,
-			ClientMessage: "提示词安全审计拒绝了该请求，请调整输入后重试", Legacy: legacy, Prompt: prompt}
+			ClientMessage: "提示词安全审计拒绝了该请求，请调整输入后重试", Prompt: prompt}
 	case DecisionInvalid:
 		return Decision{Kind: DecisionInvalid, HTTPStatus: http.StatusServiceUnavailable, ErrorCode: ErrorCodeInvalidResponse,
-			ClientMessage: "提示词安全审计暂时不可用，请稍后重试", Legacy: legacy, Prompt: prompt}
+			ClientMessage: "提示词安全审计暂时不可用，请稍后重试", Prompt: prompt}
 	case DecisionUnavailable:
 		return Decision{Kind: DecisionUnavailable, HTTPStatus: http.StatusServiceUnavailable, ErrorCode: ErrorCodeUnavailable,
-			ClientMessage: "提示词安全审计暂时不可用，请稍后重试", Legacy: legacy, Prompt: prompt}
+			ClientMessage: "提示词安全审计暂时不可用，请稍后重试", Prompt: prompt}
 	case DecisionFlag:
-		return Decision{Kind: DecisionFlag, HTTPStatus: http.StatusOK, Legacy: legacy, Prompt: prompt, AllowNextStage: true}
+		return Decision{Kind: DecisionFlag, HTTPStatus: http.StatusOK, Prompt: prompt, AllowNextStage: true}
 	default:
-		return allowDecision(legacy, prompt)
+		return Decision{Kind: DecisionAllow, HTTPStatus: http.StatusOK, Prompt: prompt, AllowNextStage: true}
 	}
 }
 
-func allowDecision(legacy *LegacyDecision, prompt *PromptDecision) Decision {
-	return Decision{Kind: DecisionAllow, HTTPStatus: http.StatusOK, Legacy: legacy, Prompt: prompt, AllowNextStage: true}
+func allowDecision() Decision {
+	return Decision{Kind: DecisionAllow, HTTPStatus: http.StatusOK, AllowNextStage: true}
 }
 
 func unavailablePromptDecision(code string) *PromptDecision {

@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
 	"github.com/Wei-Shaw/sub2api/internal/application/service"
 	"github.com/Wei-Shaw/sub2api/internal/modules/securityaudit"
+	"github.com/Wei-Shaw/sub2api/internal/shared/ctxkey"
 	middleware2 "github.com/Wei-Shaw/sub2api/internal/transport/http/server/middleware"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -13,9 +15,9 @@ import (
 
 const securityAuditCompletedContextKey = "sub2api.security_audit.completed"
 
-// cachesSecurityAuditCompletion reports whether a successful audit may be
-// reused for the rest of the gin request. WebSocket turns share one Context
-// across many response.create frames and must be audited independently.
+// cachesSecurityAuditCompletion reports whether a successful Prompt Audit may
+// be reused for the rest of one HTTP request. WebSocket turns share one Gin
+// context and must be audited independently.
 func cachesSecurityAuditCompletion(stage string) bool {
 	switch strings.TrimSpace(stage) {
 	case "", "http":
@@ -25,36 +27,44 @@ func cachesSecurityAuditCompletion(stage string) bool {
 	}
 }
 
+func clientRequestedModel(c *gin.Context, fallback string) string {
+	fallback = strings.TrimSpace(fallback)
+	if c == nil || c.Request == nil {
+		return fallback
+	}
+	if model, ok := service.RequestedPublicModelFromContext(c.Request.Context()); ok {
+		return model
+	}
+	return fallback
+}
+
+func clientRequestedUsageFields(c *gin.Context, mapping service.ChannelMappingResult, fallbackModel, upstreamModel string) service.ChannelUsageFields {
+	return mapping.ToUsageFields(clientRequestedModel(c, fallbackModel), upstreamModel)
+}
+
 func (h *GatewayHandler) checkSecurityAudit(c *gin.Context, reqLog *zap.Logger, apiKey *service.APIKey, subject middleware2.AuthSubject, protocol, model string, body []byte) *securityaudit.Decision {
 	if h == nil {
 		return nil
 	}
-	return runSecurityAudit(c, reqLog, h.securityAuditCoordinator, h.contentModerationService, apiKey, subject, protocol, model, body, "http")
+	return runSecurityAudit(c, reqLog, h.securityAuditCoordinator, nil, apiKey, subject, protocol, model, body, "http")
 }
 
 func (h *OpenAIGatewayHandler) checkSecurityAudit(c *gin.Context, reqLog *zap.Logger, apiKey *service.APIKey, subject middleware2.AuthSubject, protocol, model string, body []byte) *securityaudit.Decision {
 	if h == nil {
 		return nil
 	}
-	return runSecurityAudit(c, reqLog, h.securityAuditCoordinator, h.contentModerationService, apiKey, subject, protocol, model, body, "http")
+	return runSecurityAudit(c, reqLog, h.securityAuditCoordinator, nil, apiKey, subject, protocol, model, body, "http")
 }
 
 func (h *OpenAIGatewayHandler) checkSecurityAuditStage(c *gin.Context, reqLog *zap.Logger, apiKey *service.APIKey, subject middleware2.AuthSubject, protocol, model string, body []byte, stage string) *securityaudit.Decision {
 	if h == nil {
 		return nil
 	}
-	return runSecurityAudit(c, reqLog, h.securityAuditCoordinator, h.contentModerationService, apiKey, subject, protocol, model, body, stage)
+	return runSecurityAudit(c, reqLog, h.securityAuditCoordinator, nil, apiKey, subject, protocol, model, body, stage)
 }
 
-func runSecurityAudit(c *gin.Context, reqLog *zap.Logger, coordinator *securityaudit.Coordinator, legacy *service.ContentModerationService, apiKey *service.APIKey, subject middleware2.AuthSubject, protocol, model string, body []byte, stage string) *securityaudit.Decision {
-	if c == nil || c.Request == nil {
-		return nil
-	}
-	if coordinator != nil {
-		if !coordinator.RequiresCheck() {
-			return nil
-		}
-	} else if legacy == nil || !legacy.RuntimeAuditEnabled() {
+func runSecurityAudit(c *gin.Context, reqLog *zap.Logger, coordinator *securityaudit.Coordinator, _ any, apiKey *service.APIKey, subject middleware2.AuthSubject, protocol, model string, body []byte, stage string) *securityaudit.Decision {
+	if c == nil || c.Request == nil || coordinator == nil || !coordinator.RequiresCheck() {
 		return nil
 	}
 	cacheCompletion := cachesSecurityAuditCompletion(stage)
@@ -63,28 +73,9 @@ func runSecurityAudit(c *gin.Context, reqLog *zap.Logger, coordinator *securitya
 			return nil
 		}
 	}
-	if coordinator == nil {
-		legacyDecision := runContentModeration(c, reqLog, legacy, apiKey, subject, protocol, model, body)
-		if legacyDecision == nil {
-			return nil
-		}
-		decision := securityaudit.Decision{Kind: securityaudit.DecisionAllow, HTTPStatus: http.StatusOK, AllowNextStage: true}
-		decision.Legacy = &securityaudit.LegacyDecision{
-			Allowed: legacyDecision.Allowed, Blocked: legacyDecision.Blocked, Flagged: legacyDecision.Flagged,
-			Message: legacyDecision.Message, StatusCode: legacyDecision.StatusCode,
-			ErrorCode: "content_policy_violation", Action: legacyDecision.Action,
-		}
-		if legacyDecision.Blocked {
-			decision.Kind, decision.HTTPStatus, decision.ErrorCode, decision.ClientMessage, decision.AllowNextStage = securityaudit.DecisionBlock, contentModerationStatus(legacyDecision), "content_policy_violation", legacyDecision.Message, false
-		}
-		if decision.AllowNextStage && cacheCompletion {
-			c.Set(securityAuditCompletedContextKey, true)
-		}
-		return &decision
-	}
 	request := buildSecurityAuditRequest(c, apiKey, subject, protocol, model, body, stage)
 	if reqLog != nil {
-		reqLog.Debug("security_audit.gateway_check_start",
+		reqLog.Debug("prompt_audit.gateway_check_start",
 			zap.String("request_id", request.RequestID), zap.Int64("user_id", request.UserID),
 			zap.Int64("api_key_id", request.APIKeyID), zap.Int64p("group_id", request.GroupID),
 			zap.String("endpoint", request.Endpoint), zap.String("provider", request.Provider),
@@ -96,7 +87,7 @@ func runSecurityAudit(c *gin.Context, reqLog *zap.Logger, coordinator *securitya
 		c.Set(securityAuditCompletedContextKey, true)
 	}
 	if reqLog != nil {
-		reqLog.Debug("security_audit.gateway_check_done",
+		reqLog.Debug("prompt_audit.gateway_check_done",
 			zap.String("request_id", request.RequestID), zap.String("decision", string(decision.Kind)),
 			zap.String("error_code", decision.ErrorCode), zap.Bool("allow_next_stage", decision.AllowNextStage),
 			zap.String("stage", request.Stage))
@@ -105,23 +96,62 @@ func runSecurityAudit(c *gin.Context, reqLog *zap.Logger, coordinator *securitya
 }
 
 func buildSecurityAuditRequest(c *gin.Context, apiKey *service.APIKey, subject middleware2.AuthSubject, protocol, model string, body []byte, stage string) securityaudit.Request {
-	legacy := buildContentModerationInput(c, apiKey, subject, protocol, model, body)
-	request := securityaudit.Request{
-		RequestID: legacy.RequestID, UserID: legacy.UserID, UserEmail: legacy.UserEmail,
-		APIKeyID: legacy.APIKeyID, APIKeyName: legacy.APIKeyName, GroupID: cloneSecurityAuditGroupID(legacy.GroupID),
-		GroupName: legacy.GroupName, Provider: legacy.Provider, Endpoint: legacy.Endpoint,
-		Protocol: legacy.Protocol, Model: legacy.Model, Body: body, Stage: strings.TrimSpace(stage),
+	ctx := context.Background()
+	if c != nil && c.Request != nil {
+		ctx = c.Request.Context()
 	}
-	if apiKey != nil && apiKey.User != nil {
-		request.Username = apiKey.User.Username
-		if request.UserEmail == "" {
+	provider := ""
+	if apiKey != nil && apiKey.Group != nil {
+		provider = strings.TrimSpace(apiKey.Group.Platform)
+	}
+	if resolvedPlatform, ok := service.ResolvedTargetPlatformFromContext(ctx); ok {
+		provider = resolvedPlatform
+	}
+	if forcedPlatform, ok := middleware2.GetForcePlatformFromContext(c); ok {
+		provider = strings.TrimSpace(forcedPlatform)
+	}
+	endpoint := GetInboundEndpoint(c)
+	if endpoint == "" && c != nil && c.Request != nil && c.Request.URL != nil {
+		endpoint = c.Request.URL.Path
+	}
+	request := securityaudit.Request{
+		RequestID: promptAuditRequestID(ctx),
+		UserID:    subject.UserID,
+		Provider:  provider,
+		Endpoint:  endpoint,
+		Protocol:  protocol,
+		Model:     clientRequestedModel(c, model),
+		Body:      body,
+		Stage:     strings.TrimSpace(stage),
+	}
+	if apiKey != nil {
+		request.APIKeyID = apiKey.ID
+		request.APIKeyName = apiKey.Name
+		if apiKey.GroupID != nil {
+			request.GroupID = cloneSecurityAuditGroupID(apiKey.GroupID)
+		}
+		if apiKey.Group != nil {
+			request.GroupName = apiKey.Group.Name
+		}
+		if apiKey.User != nil {
 			request.UserEmail = apiKey.User.Email
+			request.Username = apiKey.User.Username
 		}
 	}
 	if request.Stage == "" {
 		request.Stage = "http"
 	}
 	return request
+}
+
+func promptAuditRequestID(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	if requestID, ok := ctx.Value(ctxkey.RequestID).(string); ok {
+		return strings.TrimSpace(requestID)
+	}
+	return ""
 }
 
 func securityAuditStatus(decision *securityaudit.Decision) int {
@@ -133,22 +163,19 @@ func securityAuditStatus(decision *securityaudit.Decision) int {
 
 func securityAuditErrorCode(decision *securityaudit.Decision) string {
 	if decision == nil || strings.TrimSpace(decision.ErrorCode) == "" {
-		return "content_policy_violation"
+		return securityaudit.ErrorCodeBlocked
 	}
 	return decision.ErrorCode
 }
 
 func securityAuditMessage(decision *securityaudit.Decision) string {
 	if decision == nil {
-		return "Request blocked by content policy"
-	}
-	if decision.Legacy != nil && decision.Legacy.Blocked && strings.TrimSpace(decision.Legacy.Message) != "" {
-		return decision.Legacy.Message
+		return "Prompt Audit blocked this request"
 	}
 	if strings.TrimSpace(decision.ClientMessage) != "" {
 		return decision.ClientMessage
 	}
-	return "Request blocked by content policy"
+	return "Prompt Audit blocked this request"
 }
 
 func cloneSecurityAuditGroupID(value *int64) *int64 {

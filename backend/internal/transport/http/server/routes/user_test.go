@@ -22,7 +22,7 @@ func TestRegisterUserRoutes_SingleAdminSurface(t *testing.T) {
 		Passkey: &handler.PasskeyHandler{},
 	}, middleware.JWTAuthMiddleware(func(c *gin.Context) {
 		c.Next()
-	}), nil, nil, nil)
+	}), nil, nil)
 
 	paths := make(map[string]struct{})
 	for _, route := range router.Routes() {

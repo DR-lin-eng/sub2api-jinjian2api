@@ -48,7 +48,6 @@ func TestProvideCleanup_WithMinimalDependencies_NoPanic(t *testing.T) {
 	timingWheelSvc, err := service.NewTimingWheelService()
 	require.NoError(t, err)
 	deferredSvc := service.NewDeferredService(nil, timingWheelSvc, time.Second)
-	contentModerationSvc := service.NewContentModerationService(nil, nil, nil, nil, nil)
 	concurrencySvc := service.NewConcurrencyService(nil)
 	userMessageQueueSvc := service.NewUserMessageQueueService(nil, nil, nil)
 
@@ -63,7 +62,6 @@ func TestProvideCleanup_WithMinimalDependencies_NoPanic(t *testing.T) {
 		opsSystemLogSinkSvc,
 		nil, // opsService
 		nil, // settingService
-		nil, // opsIngressRejectAggregator
 		nil, // apiKeyService
 		nil, // authCacheInvalidationWorker
 		schedulerSnapshotSvc,
@@ -85,15 +83,12 @@ func TestProvideCleanup_WithMinimalDependencies_NoPanic(t *testing.T) {
 		nil, // channelMonitorRunner
 		nil, // upstreamBillingProbe
 		nil, // ollamaCloudUsage
-		nil, // auditLog
 		nil, // promptAudit
-		contentModerationSvc,
 		concurrencySvc,
 		userMessageQueueSvc,
 		&service.DashboardAggregationService{},
 		deferredSvc,
 		timingWheelSvc,
-		nil, // cluster
 		nil, // clientIPResolver
 	)
 

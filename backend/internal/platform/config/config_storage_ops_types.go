@@ -167,22 +167,13 @@ type RateLimitConfig struct {
 
 // APIKeyAuthCacheConfig API Key 认证缓存配置
 type APIKeyAuthCacheConfig struct {
-	L1Size             int                    `mapstructure:"l1_size"`
-	L1TTLSeconds       int                    `mapstructure:"l1_ttl_seconds"`
-	L2TTLSeconds       int                    `mapstructure:"l2_ttl_seconds"`
-	NegativeTTLSeconds int                    `mapstructure:"negative_ttl_seconds"`
-	JitterPercent      int                    `mapstructure:"jitter_percent"`
-	Singleflight       bool                   `mapstructure:"singleflight"`
-	LookupConcurrency  int                    `mapstructure:"lookup_concurrency"`
-	InvalidAbuse       InvalidAuthAbuseConfig `mapstructure:"invalid_abuse"`
-}
-
-type InvalidAuthAbuseConfig struct {
-	Enabled       bool `mapstructure:"enabled"`
-	Threshold     int  `mapstructure:"threshold"`
-	WindowSeconds int  `mapstructure:"window_seconds"`
-	BlockSeconds  int  `mapstructure:"block_seconds"`
-	Capacity      int  `mapstructure:"capacity"`
+	L1Size             int  `mapstructure:"l1_size"`
+	L1TTLSeconds       int  `mapstructure:"l1_ttl_seconds"`
+	L2TTLSeconds       int  `mapstructure:"l2_ttl_seconds"`
+	NegativeTTLSeconds int  `mapstructure:"negative_ttl_seconds"`
+	JitterPercent      int  `mapstructure:"jitter_percent"`
+	Singleflight       bool `mapstructure:"singleflight"`
+	LookupConcurrency  int  `mapstructure:"lookup_concurrency"`
 }
 
 // DashboardAggregationConfig 仪表盘预聚合配置

@@ -77,8 +77,6 @@ curl -X POST "${BASE}/api/v1/admin/settings/admin-api-keys" \
 | `admin.backups.write` | 备份创建、恢复和删除 |
 | `admin.system.read` | 系统状态和版本读取 |
 | `admin.system.write` | 系统生命周期操作 |
-| `admin.audit.read` | 审计日志读取 |
-| `admin.audit.write` | 审计日志管理操作 |
 | `admin.ops.read` | 运维监控读取 |
 | `admin.ops.write` | 运维规则、告警和配置修改 |
 

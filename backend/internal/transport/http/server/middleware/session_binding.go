@@ -35,7 +35,7 @@ func requestSessionBinding(c *gin.Context) *service.SessionBinding {
 	}
 }
 
-// SecurityClientIP 返回当前请求用于安全敏感记录（审计日志等）的客户端 IP。
+// SecurityClientIP 返回当前请求用于安全敏感逻辑的客户端 IP。
 // 与会话绑定、API Key IP 限制共用请求级统一解析结果。
 func SecurityClientIP(c *gin.Context) string {
 	if binding := service.SessionBindingFromContext(c.Request.Context()); binding != nil &&
@@ -52,7 +52,7 @@ func newSessionBinding(c *gin.Context) *service.SessionBinding {
 }
 
 // enforceSessionBinding 校验 access token 的会话指纹（始终绑定 UA，按可信代理配置可选绑定 IP）。
-// 指纹不匹配时：撤销该会话家族的所有 refresh token、写入审计安全事件、返回 401。
+// 指纹不匹配时：撤销该会话家族的所有 refresh token并返回 401。
 // 返回 false 表示请求已被中断。
 //
 // 兼容性：claims.BindingHash 为空（功能上线前签发的旧 token）时放行，
@@ -61,7 +61,6 @@ func enforceSessionBinding(
 	c *gin.Context,
 	authService *service.AuthService,
 	settingService *service.SettingService,
-	auditService *service.AuditLogService,
 	claims *service.JWTClaims,
 ) bool {
 	if settingService == nil || !settingService.IsSessionBindingEnabled(c.Request.Context()) {
@@ -78,25 +77,6 @@ func enforceSessionBinding(
 
 	if authService != nil {
 		_ = authService.RevokeSessionFamily(c.Request.Context(), claims.SessionID)
-	}
-	if auditService != nil {
-		uid := claims.UserID
-		path := c.FullPath()
-		if path == "" {
-			path = c.Request.URL.Path
-		}
-		auditService.Record(&service.AuditLog{
-			ActorUserID: &uid,
-			ActorEmail:  claims.Email,
-			ActorRole:   claims.Role,
-			AuthMethod:  service.AuditAuthMethodJWT,
-			Action:      service.AuditActionSessionBindingMismatch,
-			Method:      c.Request.Method,
-			Path:        path,
-			ClientIP:    binding.IP,
-			UserAgent:   normalizePersistentText(c.Request.UserAgent(), maxPersistentUserAgentBytes),
-			StatusCode:  401,
-		})
 	}
 	AbortWithError(c, 401, "SESSION_BINDING_MISMATCH", "Session network fingerprint changed, please login again")
 	return false

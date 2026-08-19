@@ -160,7 +160,6 @@ export default {
     accounts: '账号管理',
     proxies: 'IP管理',
     ops: '运维监控',
-    multiInstance: '多机部署',
     settings: '系统设置',
     lightMode: '浅色模式',
     darkMode: '深色模式',
@@ -172,11 +171,7 @@ export default {
     channelManagement: '渠道管理',
     channelPricing: '渠道定价',
     channelMonitor: '渠道监控',
-    securityAudit: '安全审计',
-    ingressRisk: '入口风控',
-    contentModeration: '内容审核',
     promptAudit: '提示词审计',
-    auditLogs: '操作日志',
   },
 
   // Auth

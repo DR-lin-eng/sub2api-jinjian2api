@@ -40,11 +40,7 @@ const (
 
 // Setting keys
 const (
-	SettingKeyFrontendURL                 = "frontend_url"                    // 前端基础 URL，用于生成运维邮件和本地密码重置链接
-	SettingKeyRiskControlEnabled          = "risk_control_enabled"            // 是否启用风控中心入口与审计链路
-	SettingKeyContentModerationConfig     = "content_moderation_config"       // 内容审计配置（JSON）
-	SettingKeyCyberSessionBlockEnabled    = "cyber_session_block_enabled"     // cyber 命中后会话级自动屏蔽总开关(默认关)
-	SettingKeyCyberSessionBlockTTLSeconds = "cyber_session_block_ttl_seconds" // 会话屏蔽 TTL 秒数(默认 3600)
+	SettingKeyFrontendURL = "frontend_url" // 前端基础 URL，用于生成运维邮件和本地密码重置链接
 
 	// 邮件服务设置
 	SettingKeySMTPHost     = "smtp_host"      // SMTP服务器地址
@@ -74,7 +70,6 @@ const (
 	SettingKeyPanelRateLimitSettings = "panel_rate_limit_settings"
 
 	// 操作审计日志设置
-	SettingKeyAuditLogRetentionDays = "audit_log_retention_days" // 审计日志保留天数（<=0 永久保留），默认 180
 
 	// OEM设置
 	SettingKeySiteName             = "site_name"               // 网站名称

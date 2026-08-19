@@ -445,19 +445,7 @@ const adminNavItems = computed((): NavItem[] => [
   },
   { path: '/admin/proxies', label: t('nav.proxies'), icon: ServerIcon },
   { path: '/admin/ops', label: t('nav.ops'), icon: ChartIcon },
-  {
-    path: '/admin/security-audit',
-    label: t('nav.securityAudit'),
-    icon: ShieldIcon,
-    expandOnly: true,
-    children: [
-      { path: '/admin/security-audit/ingress', label: t('nav.ingressRisk'), icon: ShieldIcon },
-      { path: '/admin/risk-control', label: t('nav.contentModeration'), icon: ShieldIcon },
-      { path: '/admin/prompt-audit', label: t('nav.promptAudit'), icon: ShieldIcon }
-    ]
-  },
-  { path: '/admin/multi-instance', label: t('nav.multiInstance'), icon: ServerIcon },
-  { path: '/admin/audit-logs', label: t('nav.auditLogs'), icon: ShieldIcon },
+  { path: '/admin/prompt-audit', label: t('nav.promptAudit'), icon: ShieldIcon },
   { path: '/profile', label: t('nav.profile'), icon: UserIcon },
   { path: '/admin/settings', label: t('nav.settings'), icon: CogIcon }
 ])

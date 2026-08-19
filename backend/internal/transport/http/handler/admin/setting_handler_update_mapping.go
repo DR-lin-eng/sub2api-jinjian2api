@@ -23,7 +23,6 @@ func buildSystemSettingsUpdate(prepared *preparedSettingsUpdate) *service.System
 		PasskeyEnabled:        passkeyEnabled,
 		SessionBindingEnabled: sessionBindingEnabled,
 		StepUpEnabled:         stepUpEnabled,
-		AuditLogRetentionDays: req.AuditLogRetentionDays,
 		SMTPHost:              req.SMTPHost,
 		SMTPPort:              req.SMTPPort,
 		SMTPUsername:          req.SMTPUsername,
@@ -107,9 +106,6 @@ func buildSystemSettingsUpdate(prepared *preparedSettingsUpdate) *service.System
 		AccountQuotaNotifyEmails:                           notifyEmailEntriesValueOrDefault(req.AccountQuotaNotifyEmails, previousSettings.AccountQuotaNotifyEmails),
 		ChannelMonitorEnabled:                              boolValueOrDefault(req.ChannelMonitorEnabled, previousSettings.ChannelMonitorEnabled),
 		ChannelMonitorDefaultIntervalSeconds:               intValueOrDefault(req.ChannelMonitorDefaultIntervalSeconds, previousSettings.ChannelMonitorDefaultIntervalSeconds),
-		RiskControlEnabled:                                 boolValueOrDefault(req.RiskControlEnabled, previousSettings.RiskControlEnabled),
-		CyberSessionBlockEnabled:                           boolValueOrDefault(req.CyberSessionBlockEnabled, previousSettings.CyberSessionBlockEnabled),
-		CyberSessionBlockTTLSeconds:                        intValueOrDefault(req.CyberSessionBlockTTLSeconds, previousSettings.CyberSessionBlockTTLSeconds),
 	}
 }
 

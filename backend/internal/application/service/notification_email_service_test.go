@@ -96,8 +96,6 @@ func TestNotificationEmailEventsAreListedAndPreviewable(t *testing.T) {
 		placeholder string
 	}{
 		{NotificationEmailEventAccountQuotaAlert, "account_name"},
-		{NotificationEmailEventContentModerationViolation, "moderation_category"},
-		{NotificationEmailEventCyberPolicyNotice, "upstream_message"},
 		{NotificationEmailEventOpsAlert, "rule_name"},
 		{NotificationEmailEventOpsScheduledReport, "report_html"},
 	}
@@ -111,27 +109,6 @@ func TestNotificationEmailEventsAreListedAndPreviewable(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, preview.Subject)
 		require.NotEmpty(t, preview.HTML)
-	}
-}
-
-func TestCyberPolicyNoticeTemplateWrapsLongUpstreamMessages(t *testing.T) {
-	ctx := context.Background()
-	svc := NewNotificationEmailService(newNotificationEmailMemorySettingRepo(), nil)
-	longMessage := strings.Repeat("0123456789abcdef", 256)
-
-	for _, locale := range []string{"en", "zh"} {
-		preview, err := svc.PreviewTemplate(ctx, NotificationEmailPreviewInput{
-			Event:  NotificationEmailEventCyberPolicyNotice,
-			Locale: locale,
-			Variables: map[string]string{
-				"upstream_message": longMessage,
-			},
-		})
-		require.NoError(t, err)
-		require.Contains(t, preview.HTML, "table-layout:fixed")
-		require.Contains(t, preview.HTML, "overflow-wrap:anywhere")
-		require.Contains(t, preview.HTML, "word-break:break-all")
-		require.NotContains(t, preview.HTML, "{{upstream_message}}")
 	}
 }
 

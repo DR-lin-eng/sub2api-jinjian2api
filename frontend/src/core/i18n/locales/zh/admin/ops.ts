@@ -604,20 +604,11 @@ export default {
             timeFormat: '静默时间必须为合法的 RFC3339 时间戳'
           }
         },
-        lockEnabled: '启用分布式锁',
-        lockKey: '分布式锁 Key',
-        lockTTLSeconds: '分布式锁 TTL（秒）',
-        showAdvancedDeveloperSettings: '显示高级开发者设置 (Distributed Lock)',
-        advancedSettingsSummary: '高级设置 (分布式锁)',
         evalIntervalHint: '检测任务的执行频率，建议保持默认。',
         validation: {
           title: '请先修正以下问题',
           invalid: '设置不合法',
           evalIntervalRange: '评估间隔必须在 1 到 86400 秒之间',
-          lockKeyRequired: '启用分布式锁时必须填写 Lock Key',
-          lockKeyPrefix: '分布式锁 Key 必须以「{prefix}」开头',
-          lockKeyHint: '建议以「{prefix}」开头以避免冲突',
-          lockTtlRange: '分布式锁 TTL 必须在 1 到 86400 秒之间',
           slaMinPercentRange: 'SLA 最低值必须在 0-100 之间',
           ttftP99MaxRange: 'TTFT P99 最大值必须大于或等于 0',
           requestErrorRateMaxRange: '请求错误率最大值必须在 0-100 之间',

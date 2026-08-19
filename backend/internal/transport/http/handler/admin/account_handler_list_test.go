@@ -429,6 +429,10 @@ func TestAccountHandlerListSchedulerScoreIgnoresPagination(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &payload))
 	require.Len(t, payload.Data.Items, 1)
 	require.Equal(t, int64(301), payload.Data.Items[0].ID)
-	require.Less(t, payload.Data.Items[0].SchedulerScore.BaseScore, 3.75)
+	// The fixed high-concurrency scheduler weights contribute 5.3 for this
+	// zero-load account when the hidden priority-1 peer is included in the
+	// scoring pool. Keep the assertion tied to that stable policy rather than
+	// the retired config-default weight sum.
+	require.InDelta(t, 5.3, payload.Data.Items[0].SchedulerScore.BaseScore, 0.001)
 	require.Empty(t, payload.Data.Items[0].SchedulerScores)
 }

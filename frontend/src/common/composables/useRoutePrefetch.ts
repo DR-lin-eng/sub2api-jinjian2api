@@ -24,11 +24,11 @@ const PREFETCH_ADJACENCY: Record<string, string[]> = {
 	'/admin/groups': ['/admin/accounts', '/keys'],
 	'/admin/channels/pricing': ['/admin/channels/monitor', '/admin/accounts'],
 	'/admin/channels/monitor': ['/admin/channels/pricing', '/admin/ops'],
-	'/admin/ops': ['/usage', '/admin/audit-logs'],
+	'/admin/ops': ['/usage', '/admin/accounts'],
 	'/keys': ['/usage', '/admin/accounts'],
 	'/usage': ['/keys', '/admin/ops'],
 	'/profile': ['/admin/settings', '/admin/accounts'],
-	'/admin/settings': ['/profile', '/admin/multi-instance']
+	'/admin/settings': ['/profile', '/admin/accounts']
 }
 
 /**

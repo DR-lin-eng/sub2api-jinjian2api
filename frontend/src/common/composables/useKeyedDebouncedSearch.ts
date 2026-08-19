@@ -13,7 +13,7 @@ interface UseKeyedDebouncedSearchOptions<T> {
 }
 
 /**
- * 多实例隔离的防抖搜索：每个 key 有独立的防抖、请求取消与过期响应保护。
+ * 按 key 隔离的防抖搜索：每个 key 有独立的防抖、请求取消与过期响应保护。
  */
 export function useKeyedDebouncedSearch<T>(options: UseKeyedDebouncedSearchOptions<T>) {
   const delay = options.delay ?? 300

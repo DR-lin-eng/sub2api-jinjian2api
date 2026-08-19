@@ -3,7 +3,6 @@
 module.exports = {
   legacyBarrelImports: {
     '@/api': [
-      'src/features/admin-audit/presentation/pages/AuditLogPage.vue',
       'src/features/admin-backup/presentation/pages/BackupPage.vue',
       'src/features/admin-ops/presentation/widgets/OpsAlertRulesCard.vue',
       'src/features/auth/presentation/widgets/TotpStepUpDialog.vue',
@@ -18,16 +17,13 @@ module.exports = {
     ],
     '@/api/admin': [
       'src/common/widgets/data/ProxySelector.vue',
-      'src/features/admin-audit/presentation/pages/AuditLogPage.vue',
       'src/features/admin-channel-monitor/presentation/pages/ChannelMonitorPage.vue',
       'src/features/admin-channel-monitor/presentation/widgets/MonitorFormDialog.vue',
       'src/features/admin-channel-monitor/presentation/widgets/MonitorTemplateApplyPickerDialog.vue',
       'src/features/admin-channel-monitor/presentation/widgets/MonitorTemplateManagerDialog.vue',
       'src/features/admin-channels/presentation/pages/ChannelsPage.vue',
-      'src/features/admin-cluster/presentation/pages/MultiInstancePage.vue',
       'src/features/admin-groups/presentation/widgets/CompositeRoutesDialog.vue',
       'src/features/admin-proxies/presentation/widgets/ImportDataDialog.vue',
-      'src/features/admin-risk-control/presentation/pages/RiskControlPage.vue',
     ],
     '@/stores': [
       'src/App.vue',
@@ -35,7 +31,6 @@ module.exports = {
       'src/common/widgets/layout/AppHeader.vue',
       'src/common/widgets/layout/AppLayout.vue',
       'src/common/widgets/layout/AppSidebar.vue',
-      'src/features/admin-audit/presentation/pages/AuditLogPage.vue',
       'src/features/admin-backup/presentation/pages/BackupPage.vue',
       'src/features/admin-ops/presentation/pages/OpsDashboardPage.vue',
       'src/features/admin-ops/presentation/widgets/OpsErrorDetailDialog.vue',
@@ -60,9 +55,6 @@ module.exports = {
     ],
     'src/features/admin-ops/presentation/composables/useOpsRealtimeTraffic.ts': [
       '@/features/admin-settings/presentation/stores/adminSettingsStore',
-    ],
-    'src/features/admin-risk-control/presentation/pages/RiskControlPage.vue': [
-      '@/features/admin-accounts/presentation/widgets/ModelWhitelistSelector.vue',
     ],
     'src/features/admin-settings/presentation/composables/useSettingsStructuredEditors.ts': [
       '@/features/admin-accounts/presentation/codexFingerprintSignals',

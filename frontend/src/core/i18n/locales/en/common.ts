@@ -160,7 +160,6 @@ export default {
     accounts: 'Accounts',
     proxies: 'Proxies',
     ops: 'Ops',
-    multiInstance: 'Multi-instance',
     settings: 'Settings',
     lightMode: 'Light Mode',
     darkMode: 'Dark Mode',
@@ -172,11 +171,7 @@ export default {
     channelManagement: 'Channels',
     channelPricing: 'Channel Pricing',
     channelMonitor: 'Channel Monitor',
-    securityAudit: 'Security Audit',
-    ingressRisk: 'Ingress Protection',
-    contentModeration: 'Content Moderation',
     promptAudit: 'Prompt Audit',
-    auditLogs: 'Audit Logs',
   },
 
   // Auth

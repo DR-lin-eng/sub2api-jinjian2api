@@ -23,9 +23,8 @@ type SystemSettings struct {
 	PasskeyConfigured           bool     `json:"passkey_configured"`
 	PasskeyRPID                 string   `json:"passkey_rp_id"`
 	PasskeyRPOrigins            []string `json:"passkey_rp_origins"`
-	SessionBindingEnabled       bool     `json:"session_binding_enabled"`  // 会话 IP/UA 绑定
-	StepUpEnabled               bool     `json:"step_up_enabled"`          // 敏感操作 step-up 2FA
-	AuditLogRetentionDays       int      `json:"audit_log_retention_days"` // 审计日志保留天数
+	SessionBindingEnabled       bool     `json:"session_binding_enabled"` // 会话 IP/UA 绑定
+	StepUpEnabled               bool     `json:"step_up_enabled"`         // 敏感操作 step-up 2FA
 
 	SMTPHost               string `json:"smtp_host"`
 	SMTPPort               int    `json:"smtp_port"`
@@ -148,13 +147,6 @@ type SystemSettings struct {
 	// Channel Monitor feature switch
 	ChannelMonitorEnabled                bool `json:"channel_monitor_enabled"`
 	ChannelMonitorDefaultIntervalSeconds int  `json:"channel_monitor_default_interval_seconds"`
-
-	// 风控中心功能开关
-	RiskControlEnabled bool `json:"risk_control_enabled"`
-
-	// cyber 会话屏蔽开关 + TTL
-	CyberSessionBlockEnabled    bool `json:"cyber_session_block_enabled"`
-	CyberSessionBlockTTLSeconds int  `json:"cyber_session_block_ttl_seconds"`
 
 	// OpenAI fast/flex policy
 	OpenAIFastPolicySettings *OpenAIFastPolicySettings `json:"openai_fast_policy_settings,omitempty"`

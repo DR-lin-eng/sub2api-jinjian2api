@@ -21,7 +21,6 @@ type SystemSettings struct {
 	PasskeyEnabled        bool // Passkey 登录
 	SessionBindingEnabled bool // 会话 IP/UA 绑定（变更即失效）
 	StepUpEnabled         bool // 敏感操作 step-up 2FA 门控
-	AuditLogRetentionDays int  // 审计日志保留天数（<=0 永久保留）
 
 	SMTPHost               string
 	SMTPPort               int
@@ -45,10 +44,6 @@ type SystemSettings struct {
 	TableDefaultPageSize int
 	TablePageSizeOptions []int
 	CustomEndpoints      string // JSON array of custom endpoints
-
-	RiskControlEnabled          bool
-	CyberSessionBlockEnabled    bool
-	CyberSessionBlockTTLSeconds int
 
 	// Model fallback configuration
 	EnableModelFallback      bool   `json:"enable_model_fallback"`

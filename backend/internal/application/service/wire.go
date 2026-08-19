@@ -356,7 +356,7 @@ func ProvideDeferredService(accountRepo AccountRepository, apiKeyRepo APIKeyRepo
 func ProvideConcurrencyService(cache ConcurrencyCache, accountRepo AccountRepository, cfg *config.Config) *ConcurrencyService {
 	svc := NewConcurrencyService(cache)
 	if cfg != nil {
-		svc.SetStandaloneRequestSlots(!cfg.Deployment.IsMultiInstance())
+		svc.SetStandaloneRequestSlots(true)
 	}
 	if err := svc.CleanupStaleProcessSlots(context.Background()); err != nil {
 		logger.LegacyPrintf("service.concurrency", "Warning: startup cleanup stale process slots failed: %v", err)
@@ -498,14 +498,13 @@ func ProvideOpsAlertEvaluatorService(
 	opsService *OpsService,
 	opsRepo OpsRepository,
 	emailService *EmailService,
-	redisClient *redis.Client,
 	cfg *config.Config,
 	proxyRepo ProxyRepository,
 ) *OpsAlertEvaluatorService {
 	if !opsRuntimeEnabled(cfg) {
 		return nil
 	}
-	svc := NewOpsAlertEvaluatorService(opsService, opsRepo, emailService, redisClient, cfg, proxyRepo)
+	svc := NewOpsAlertEvaluatorService(opsService, opsRepo, emailService, cfg, proxyRepo)
 	svc.Start()
 	return svc
 }
@@ -545,14 +544,6 @@ func ProvideOpsSystemLogSink(opsRepo OpsRepository, redisClient *redis.Client, s
 	sink.Start()
 	logger.SetSink(sink)
 	return sink
-}
-
-// ProvideAuditLogService 创建操作审计日志服务并启动异步写入与保留期清理协程。
-// 停止逻辑挂在 cmd/server 的 provideCleanup。
-func ProvideAuditLogService(repo AuditLogRepository, settingService *SettingService) *AuditLogService {
-	svc := NewAuditLogService(repo, settingService)
-	svc.Start()
-	return svc
 }
 
 func buildIdempotencyConfig(cfg *config.Config) IdempotencyConfig {
@@ -611,12 +602,10 @@ func ProvideScheduledTestRunnerService(
 	lockCache LeaderLockCache,
 	db *sql.DB,
 	cfg *config.Config,
-	cluster *ClusterService,
 ) *ScheduledTestRunnerService {
 	svc := NewScheduledTestRunnerService(planRepo, scheduledSvc, accountTestSvc, rateLimitSvc, cfg)
 	svc.SetLeaderLock(lockCache, db)
-	svc.SetClusterTaskCoordinator(cluster)
-	if cfg.Deployment.WorkerEnabledResolved() {
+	if cfg.Deployment.BackgroundWorkersEnabled() {
 		svc.Start()
 	}
 	return svc
@@ -639,12 +628,10 @@ func ProvideOpsScheduledReportService(
 }
 
 // ProvideAPIKeyAuthCacheInvalidator 提供 API Key 认证缓存失效能力
-func ProvideAPIKeyAuthCacheInvalidator(apiKeyService *APIKeyService, cfg *config.Config) APIKeyAuthCacheInvalidator {
-	// Local mutations clear L1 directly. Pub/Sub is only needed to invalidate
-	// caches owned by other processes.
-	if apiKeyService != nil && cfg != nil && cfg.Deployment.IsMultiInstance() {
-		apiKeyService.StartAuthCacheInvalidationSubscriber(context.Background())
-	}
+func ProvideAPIKeyAuthCacheInvalidator(apiKeyService *APIKeyService) APIKeyAuthCacheInvalidator {
+	// Local mutations clear the process-local L1 cache directly. The service
+	// still owns the durable Redis-backed cache invalidation path for upgrades
+	// and shared cache entries; no cluster identity is required.
 	return apiKeyService
 }
 
@@ -688,12 +675,10 @@ func ProvideBackupService(
 	dumper DBDumper,
 	lockCache LeaderLockCache,
 	db *sql.DB,
-	cluster *ClusterService,
 ) *BackupService {
 	svc := NewBackupService(settingRepo, cfg, encryptor, storeFactory, dumper)
 	svc.SetLeaderLock(lockCache, db)
-	svc.SetClusterTaskCoordinator(cluster)
-	if cfg.Deployment.WorkerEnabledResolved() {
+	if cfg.Deployment.BackgroundWorkersEnabled() {
 		svc.Start()
 	}
 	return svc
@@ -749,22 +734,6 @@ func ProvideOpsService(
 	return svc
 }
 
-// ProvideOpsIngressRejectAggregator starts the bounded security aggregation
-// runtime and attaches it to OpsService, which is the middleware recorder.
-func ProvideOpsIngressRejectAggregator(opsRepo OpsRepository, opsService *OpsService, cfg *config.Config) *OpsIngressRejectAggregator {
-	if !opsRuntimeEnabled(cfg) || opsService == nil {
-		return nil
-	}
-	repo, ok := opsRepo.(OpsIngressRejectRepository)
-	if !ok {
-		return nil
-	}
-	aggregator := NewOpsIngressRejectAggregator(repo)
-	aggregator.Start()
-	opsService.SetIngressRejectAggregator(aggregator)
-	return aggregator
-}
-
 // ProvideSettingService wires gateway runtime dependencies.
 func ProvideSettingService(settingRepo SettingRepository, proxyRepo ProxyRepository, schedulerSnapshot *SchedulerSnapshotService, notifier RequestPriorityAdmissionSettingsNotifier, cfg *config.Config) *SettingService {
 	svc := NewSettingService(settingRepo, cfg)
@@ -782,9 +751,8 @@ func ProvideSettingService(settingRepo SettingRepository, proxyRepo ProxyReposit
 	if err := svc.LoadRequestPriorityAdmissionSettings(context.Background()); err != nil {
 		logger.LegacyPrintf("service.setting", "Warning: load request priority admission settings failed: %v", err)
 	}
-	if cfg != nil && cfg.Deployment.IsMultiInstance() {
-		svc.StartRequestPriorityAdmissionSettingsSync(context.Background(), notifier)
-	}
+	// Runtime settings are local to the standalone process; no cross-instance
+	// invalidation subscriber is required.
 	if err := svc.MigrateOpenAIAllowClaudeCodeCodexPluginSetting(context.Background()); err != nil {
 		logger.LegacyPrintf("service.setting", "Warning: migrate openai allow Claude Code Codex plugin setting failed: %v", err)
 	}
@@ -963,7 +931,6 @@ func ProvideLiteOpenAIGatewayService(
 
 // ProviderSet is the Wire provider set for all services
 var ProviderSet = wire.NewSet(
-	ProvideClusterService,
 	// Core services
 	ProvideLiteAuthService,
 	NewPasskeyService,
@@ -1014,8 +981,6 @@ var ProviderSet = wire.NewSet(
 	ProvideBackupService,
 	ProvideOpsSystemLogSink,
 	ProvideOpsService,
-	ProvideOpsIngressRejectAggregator,
-	ProvideAuditLogService,
 	ProvideOpsMetricsCollector,
 	ProvideOpsAggregationService,
 	ProvideOpsAlertEvaluatorService,
@@ -1053,7 +1018,6 @@ var ProviderSet = wire.NewSet(
 	NewGroupCapacityService,
 	NewChannelService,
 	NewModelPricingResolver,
-	ProvideContentModerationService,
 	ProvideChannelMonitorService,
 	ProvideChannelMonitorRunner,
 	NewChannelMonitorRequestTemplateService,
@@ -1076,11 +1040,10 @@ func ProvideChannelMonitorService(
 // 通过 SetScheduler 注入回 service 后再 Start，确保启动时加载所有 enabled monitor，
 // 后续 CRUD 也能即时同步任务表。Runner.Stop 由 cleanup function 调用。
 // settingService 用于 runner 每次 fire 读取功能开关。
-func ProvideChannelMonitorRunner(svc *ChannelMonitorService, settingService *SettingService, lockCache LeaderLockCache, db *sql.DB, cfg *config.Config, cluster *ClusterService) *ChannelMonitorRunner {
+func ProvideChannelMonitorRunner(svc *ChannelMonitorService, settingService *SettingService, lockCache LeaderLockCache, db *sql.DB, cfg *config.Config) *ChannelMonitorRunner {
 	r := NewChannelMonitorRunner(svc, settingService)
 	r.SetLeaderLock(lockCache, db)
-	r.SetClusterTaskCoordinator(cluster)
-	if cfg.Deployment.WorkerEnabledResolved() {
+	if cfg.Deployment.BackgroundWorkersEnabled() {
 		svc.SetScheduler(r)
 		r.Start()
 	}

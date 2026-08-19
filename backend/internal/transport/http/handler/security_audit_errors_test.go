@@ -142,18 +142,3 @@ func TestPromptGuardWebSocketCloseMappingGolden(t *testing.T) {
 	require.Equal(t, int64(1013), int64(securityAuditWSCloseStatus(promptGuardDecision(securityaudit.DecisionInvalid))))
 	require.Equal(t, securityaudit.ErrorCodeInvalidResponse, securityAuditWSCloseReason(promptGuardDecision(securityaudit.DecisionInvalid)))
 }
-
-func TestLegacyModerationErrorKeepsExistingClientPriority(t *testing.T) {
-	legacy := &securityaudit.Decision{
-		Kind: securityaudit.DecisionBlock, HTTPStatus: http.StatusForbidden,
-		ErrorCode: "content_policy_violation", ClientMessage: "legacy exact message",
-		Legacy: &securityaudit.LegacyDecision{Blocked: true, StatusCode: http.StatusForbidden, ErrorCode: "content_policy_violation", Message: "legacy exact message"},
-		Prompt: &securityaudit.PromptDecision{Kind: securityaudit.DecisionBlock, ErrorCode: securityaudit.ErrorCodeBlocked},
-	}
-	c, recorder := securityAuditErrorTestContext(t)
-	(&GatewayHandler{}).openAISecurityAuditError(c, legacy)
-	require.Equal(t, http.StatusForbidden, recorder.Code)
-	require.Contains(t, recorder.Body.String(), "legacy exact message")
-	require.Contains(t, recorder.Body.String(), "content_policy_violation")
-	require.NotContains(t, recorder.Body.String(), securityaudit.ErrorCodeBlocked)
-}

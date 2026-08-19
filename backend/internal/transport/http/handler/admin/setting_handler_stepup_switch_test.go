@@ -61,7 +61,7 @@ func TestUpdateSettingsEnableStepUpRejectsAdminAPIKey(t *testing.T) {
 	h, _ := newStepUpSwitchTestHandler(t, map[string]string{})
 
 	rec := doUpdateSettings(t, h, map[string]any{"step_up_enabled": true}, func(c *gin.Context) {
-		c.Set("auth_method", service.AuditAuthMethodAdminAPIKey)
+		c.Set(middleware.ContextKeyAuthMethod, middleware.AuthMethodAdminAPIKey)
 	})
 
 	require.Equal(t, http.StatusForbidden, rec.Code)
@@ -99,7 +99,7 @@ func TestUpdateSettingsDisableStepUpRejectsAdminAPIKey(t *testing.T) {
 	})
 
 	rec := doUpdateSettings(t, h, map[string]any{"step_up_enabled": false}, func(c *gin.Context) {
-		c.Set("auth_method", service.AuditAuthMethodAdminAPIKey)
+		c.Set(middleware.ContextKeyAuthMethod, middleware.AuthMethodAdminAPIKey)
 	})
 
 	require.Equal(t, http.StatusForbidden, rec.Code)

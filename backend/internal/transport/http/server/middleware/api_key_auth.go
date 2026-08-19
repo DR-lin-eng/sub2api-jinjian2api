@@ -25,13 +25,8 @@ func NewAPIKeyAuthMiddleware(apiKeyService *service.APIKeyService, cfg *config.C
 func apiKeyAuth(apiKeyService *service.APIKeyService, _ *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// ── 1. 提取 API Key ──────────────────────────────────────────
-		if rejectInvalidAuthAbuse(c, apiKeyService) {
-			AbortWithError(c, http.StatusTooManyRequests, "INVALID_AUTH_RATE_LIMITED", "Too many invalid authentication attempts; retry later")
-			return
-		}
 
 		if apiKeyHeadersTooLarge(c) {
-			recordInvalidAuthFailure(c, apiKeyService)
 			MarkIngressRejected(c, IngressRejectInvalidAPIKey)
 			AbortWithError(c, http.StatusUnauthorized, "INVALID_API_KEY", "Invalid API key")
 			return
@@ -40,7 +35,6 @@ func apiKeyAuth(apiKeyService *service.APIKeyService, _ *config.Config) gin.Hand
 		queryKey := strings.TrimSpace(c.Query("key"))
 		queryApiKey := strings.TrimSpace(c.Query("api_key"))
 		if queryKey != "" || queryApiKey != "" {
-			recordInvalidAuthFailure(c, apiKeyService)
 			MarkIngressRejected(c, IngressRejectQueryAPIKeyDeprecated)
 			AbortWithError(c, 400, "api_key_in_query_deprecated", "API key in query parameter is deprecated. Please use Authorization header instead.")
 			return
@@ -63,7 +57,6 @@ func apiKeyAuth(apiKeyService *service.APIKeyService, _ *config.Config) gin.Hand
 			apiKeyString = c.GetHeader("x-api-key")
 		}
 		if len(apiKeyString) > service.MaxAPIKeyCredentialBytes {
-			recordInvalidAuthFailure(c, apiKeyService)
 			MarkIngressRejected(c, IngressRejectInvalidAPIKey)
 			AbortWithError(c, http.StatusUnauthorized, "INVALID_API_KEY", "Invalid API key")
 			return
@@ -76,7 +69,6 @@ func apiKeyAuth(apiKeyService *service.APIKeyService, _ *config.Config) gin.Hand
 
 		// 如果所有header都没有API key
 		if apiKeyString == "" {
-			recordInvalidAuthFailure(c, apiKeyService)
 			if hasAPIKeyCredentialInput(c) {
 				MarkIngressRejected(c, IngressRejectInvalidAPIKey)
 			} else {
@@ -91,7 +83,6 @@ func apiKeyAuth(apiKeyService *service.APIKeyService, _ *config.Config) gin.Hand
 		apiKey, err := apiKeyService.GetByKey(c.Request.Context(), apiKeyString)
 		if err != nil {
 			if errors.Is(err, service.ErrAPIKeyNotFound) {
-				recordInvalidAuthFailure(c, apiKeyService)
 				MarkIngressRejected(c, IngressRejectInvalidAPIKey)
 				AbortWithError(c, 401, "INVALID_API_KEY", "Invalid API key")
 				return

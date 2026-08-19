@@ -29,17 +29,10 @@ type ScheduledTestRunnerService struct {
 	lockCache      LeaderLockCache
 	db             *sql.DB
 	instanceID     string
-	cluster        ClusterTaskCoordinator
 
 	cron      *cron.Cron
 	startOnce sync.Once
 	stopOnce  sync.Once
-}
-
-func (s *ScheduledTestRunnerService) SetClusterTaskCoordinator(cluster ClusterTaskCoordinator) {
-	if s != nil {
-		s.cluster = cluster
-	}
 }
 
 // NewScheduledTestRunnerService creates a new runner.
@@ -120,16 +113,6 @@ func (s *ScheduledTestRunnerService) runScheduled() {
 func (s *ScheduledTestRunnerService) runScheduledNow() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
-	if s.cluster != nil {
-		_, err := s.cluster.RunTask(ctx, "scheduled_test:scan", nil, func(taskCtx context.Context) (map[string]any, error) {
-			count, runErr := s.executeScheduled(taskCtx)
-			return map[string]any{"due_plans": count}, runErr
-		})
-		if err != nil {
-			logger.LegacyPrintf("service.scheduled_test_runner", "[ScheduledTestRunner] cluster task error: %v", err)
-		}
-		return
-	}
 	release, ok := tryAcquireSingletonLeaderLock(ctx, s.lockCache, s.db, scheduledTestLeaderLockKey, s.instanceID, scheduledTestLeaderLockTTL)
 	if !ok {
 		return

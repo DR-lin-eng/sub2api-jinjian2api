@@ -18,7 +18,7 @@
 | 修改上游额度探测 | `application/service/upstream_quota*`, `upstream_billing*` | `account_repo_quota.go`, `account_repo_upstream_billing*` | 上游解析、持久快照与管理 UI 测试 |
 | 修改数据库表 | `backend/ent/schema/` | `backend/migrations/`, repository, DTO | generate + migration/integration tests |
 | 修改运行配置 | `platform/config/` | `deploy/config.example.yaml`, setting service/admin UI | config tests + 相关 service/前端测试 |
-| 修改 Ops/审计 | `handler/admin/ops*`, `application/service/ops*` | `repository/ops*`, 前端 `features/admin-ops/`, `features/admin-audit/` | query/service + 前端 feature 测试 |
+| 修改 Ops | `handler/admin/ops*`, `application/service/ops*` | `repository/ops*`, 前端 `features/admin-ops/` | query/service + 前端 feature 测试 |
 | 修改前端页面 | `frontend/src/core/routes/index.ts`, `features/<domain>/presentation/pages/` | 同 feature 的 `widgets/`, `composables/`, `stores/`, `data/datasources/` 与 `core/i18n/` | 相邻 spec + typecheck |
 
 ## 后端功能前缀
@@ -34,7 +34,7 @@
 | `scheduler*`, `concurrency*`, `priority_admission*` | 候选选择、槽位、优先级与背压 |
 | `billing*`, `usage*`, `pricing*` | 价格解析、成本计算、用量记录和统计 |
 | `auth*`, `api_key*`, `oauth*`, `token*`, `totp*`, `passkey*` | 单管理员会话、网关 Key 和各平台凭据 |
-| `ops*`, `audit*`, `content_moderation*` | 运维指标、审计和内容安全 |
+| `ops*` | 运维指标、告警和维护任务 |
 | `setting*`, `notification*`, `backup*` | 持久设置、通知和维护任务 |
 | `image_task*`, `image_storage*` | 异步图片任务和结果存储 |
 
@@ -49,7 +49,7 @@
 | `account*`, `group*`, `api_key*`, `user*` | 上游账号、路由分组、网关 Key 与唯一管理员 |
 | `usage_log*` | 用量写入、幂等批处理和成本统计 |
 | `scheduler*`, `concurrency*`, `session_limit*`, `rpm_cache*` | Redis 调度和限流状态 |
-| `ops*`, `audit_log*`, `channel_monitor*` | 运维聚合、审计和探测 |
+| `ops*`, `channel_monitor*` | 运维聚合和探测 |
 | `http_upstream*`, `proxy*`, `*_oauth_*` | 外部 HTTP、代理和凭据访问 |
 
 复杂 repository 按 `query`, `command`, `cache`, `batch`, `recovery` 拆分。事务边界应留在同一个公开 repository 方法内。

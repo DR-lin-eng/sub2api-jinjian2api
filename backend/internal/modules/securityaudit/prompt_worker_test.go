@@ -248,7 +248,7 @@ func (s *fakePayloadStore) Ping(context.Context) error { return s.pingErr }
 
 func asyncConfig() ActiveConfig {
 	return ActiveConfig{
-		RiskControlEnabled: true, Enabled: true, BlockingEnabled: false, Strategy: "priority",
+		Enabled: true, BlockingEnabled: false, Strategy: "priority",
 		WorkerCount: 1, QueueCapacity: 8, Scanners: []string{"pii"}, AllGroups: true, ConfigVersion: 7,
 		Endpoints: []ActiveEndpoint{{ID: "guard", Enabled: true, TimeoutMS: 1000, InputLimit: 3}},
 	}

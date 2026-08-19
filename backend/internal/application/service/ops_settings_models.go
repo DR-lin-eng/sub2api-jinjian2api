@@ -38,12 +38,6 @@ type OpsEmailNotificationConfigUpdateRequest struct {
 	Report *OpsEmailReportConfig `json:"report"`
 }
 
-type OpsDistributedLockSettings struct {
-	Enabled    bool   `json:"enabled"`
-	Key        string `json:"key"`
-	TTLSeconds int    `json:"ttl_seconds"`
-}
-
 type OpsAlertSilenceEntry struct {
 	RuleID     *int64   `json:"rule_id,omitempty"`
 	Severities []string `json:"severities,omitempty"`
@@ -86,9 +80,8 @@ type OpsRuntimeLogConfig struct {
 type OpsAlertRuntimeSettings struct {
 	EvaluationIntervalSeconds int `json:"evaluation_interval_seconds"`
 
-	DistributedLock OpsDistributedLockSettings `json:"distributed_lock"`
-	Silencing       OpsAlertSilencingSettings  `json:"silencing"`
-	Thresholds      OpsMetricThresholds        `json:"thresholds"` // 指标阈值配置
+	Silencing  OpsAlertSilencingSettings `json:"silencing"`
+	Thresholds OpsMetricThresholds       `json:"thresholds"` // 指标阈值配置
 }
 
 // OpsAdvancedSettings stores advanced ops configuration (data retention, aggregation).

@@ -75,7 +75,7 @@ func TestOpsProvidersStayUnconstructedWhenHardDisabled(t *testing.T) {
 	if got := ProvideOpsAggregationService(nil, nil, nil, nil, cfg); got != nil {
 		t.Fatal("disabled ops aggregation service must not be constructed")
 	}
-	if got := ProvideOpsAlertEvaluatorService(nil, nil, nil, nil, cfg, nil); got != nil {
+	if got := ProvideOpsAlertEvaluatorService(nil, nil, nil, cfg, nil); got != nil {
 		t.Fatal("disabled ops alert evaluator must not be constructed")
 	}
 	if got := ProvideOpsCleanupService(nil, nil, nil, cfg, nil, nil, nil); got != nil {
@@ -86,9 +86,6 @@ func TestOpsProvidersStayUnconstructedWhenHardDisabled(t *testing.T) {
 	}
 	if got := ProvideOpsSystemLogSink(nil, nil, nil, cfg); got != nil {
 		t.Fatal("disabled ops system log sink must not be constructed")
-	}
-	if got := ProvideOpsIngressRejectAggregator(nil, nil, cfg); got != nil {
-		t.Fatal("disabled ingress reject aggregator must not be constructed")
 	}
 }
 
@@ -129,7 +126,7 @@ func TestLightweightProvidersSkipDisabledAndStandaloneRuntimes(t *testing.T) {
 		}
 	})
 
-	t.Run("api key invalidation subscriber", func(t *testing.T) {
+	t.Run("api key invalidation subscriber stays disabled", func(t *testing.T) {
 		cache := &wireAuthCacheStub{}
 		svc := NewAPIKeyService(nil, nil, nil, cache, &config.Config{})
 		localCache, err := ristretto.NewCache(&ristretto.Config{NumCounters: 10, MaxCost: 1, BufferItems: 64})
@@ -139,7 +136,7 @@ func TestLightweightProvidersSkipDisabledAndStandaloneRuntimes(t *testing.T) {
 		defer localCache.Close()
 		svc.authNegativeCacheL1 = localCache
 
-		ProvideAPIKeyAuthCacheInvalidator(svc, &config.Config{Deployment: config.DeploymentConfig{Mode: config.DeploymentModeStandalone}})
+		ProvideAPIKeyAuthCacheInvalidator(svc)
 		t.Cleanup(svc.StopAuthCacheInvalidationSubscriber)
 		time.Sleep(10 * time.Millisecond)
 		if calls := cache.subscribeCalls.Load(); calls != 0 {
@@ -150,7 +147,7 @@ func TestLightweightProvidersSkipDisabledAndStandaloneRuntimes(t *testing.T) {
 	t.Run("request priority sync", func(t *testing.T) {
 		repo := newRuntimeSettingRepoStub()
 		notifier := newRequestPrioritySettingsNotifier()
-		svc := ProvideSettingService(repo, nil, nil, notifier, &config.Config{Deployment: config.DeploymentConfig{Mode: config.DeploymentModeStandalone}})
+		svc := ProvideSettingService(repo, nil, nil, notifier, &config.Config{})
 		t.Cleanup(svc.StopRequestPriorityAdmissionSettingsSync)
 		time.Sleep(10 * time.Millisecond)
 		if subscribers := notifier.subscriberCount(); subscribers != 0 {

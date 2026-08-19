@@ -46,10 +46,8 @@ func TestLoadDeploymentWorkerModes(t *testing.T) {
 		resetViperWithJWTSecret(t)
 		cfg, err := Load()
 		require.NoError(t, err)
-		require.Equal(t, DeploymentModeStandalone, cfg.Deployment.Mode)
 		require.Equal(t, WorkerModeDisabled, cfg.Deployment.WorkerMode())
-		require.False(t, cfg.Deployment.WorkerEnabledResolved())
-		require.NotEmpty(t, cfg.Deployment.NodeName)
+		require.False(t, cfg.Deployment.BackgroundWorkersEnabled())
 	})
 
 	t.Run("auto remains available as an explicit worker mode", func(t *testing.T) {
@@ -58,20 +56,7 @@ func TestLoadDeploymentWorkerModes(t *testing.T) {
 		cfg, err := Load()
 		require.NoError(t, err)
 		require.Equal(t, WorkerModeAuto, cfg.Deployment.WorkerMode())
-		require.True(t, cfg.Deployment.WorkerEnabledResolved())
-	})
-
-	t.Run("explicit api-only node keeps worker disabled", func(t *testing.T) {
-		resetViperWithJWTSecret(t)
-		t.Setenv("DEPLOYMENT_MODE", DeploymentModeMultiInstance)
-		t.Setenv("NODE_NAME", "api-only-01")
-		t.Setenv("WORKER_ENABLED", "false")
-		cfg, err := Load()
-		require.NoError(t, err)
-		require.Equal(t, DeploymentModeMultiInstance, cfg.Deployment.Mode)
-		require.Equal(t, "api-only-01", cfg.Deployment.NodeName)
-		require.Equal(t, WorkerModeDisabled, cfg.Deployment.WorkerMode())
-		require.False(t, cfg.Deployment.WorkerEnabledResolved())
+		require.True(t, cfg.Deployment.BackgroundWorkersEnabled())
 	})
 }
 
@@ -134,9 +119,6 @@ func TestLoadHTTPIngressSafetyDefaults(t *testing.T) {
 	require.Empty(t, cfg.Server.TrustedProxies)
 	require.False(t, cfg.TrustForwardedIPForAPIKeyACL())
 	require.Equal(t, int64(32*1024*1024), cfg.Gateway.TextMaxBodySize)
-	require.True(t, cfg.APIKeyAuth.InvalidAbuse.Enabled)
-	require.Equal(t, 120, cfg.APIKeyAuth.InvalidAbuse.Threshold)
-	require.Equal(t, 16384, cfg.APIKeyAuth.InvalidAbuse.Capacity)
 }
 
 func TestLoadTrustedProxiesFromEnvironment(t *testing.T) {
@@ -1115,20 +1097,6 @@ func TestValidateConfigErrors(t *testing.T) {
 				c.Server.H2C.MaxReadFrameSize = 16 * 1024 * 1024
 			},
 			wantErr: "server.h2c.max_read_frame_size",
-		},
-		{
-			name: "invalid auth abuse threshold too small",
-			mutate: func(c *Config) {
-				c.APIKeyAuth.InvalidAbuse.Threshold = 9
-			},
-			wantErr: "api_key_auth_cache.invalid_abuse.threshold",
-		},
-		{
-			name: "invalid auth abuse capacity too small",
-			mutate: func(c *Config) {
-				c.APIKeyAuth.InvalidAbuse.Capacity = 255
-			},
-			wantErr: "api_key_auth_cache.invalid_abuse.capacity",
 		},
 		{
 			name:    "jwt secret required",

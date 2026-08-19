@@ -16,9 +16,8 @@ func NewAdminAuthMiddleware(
 	authService *service.AuthService,
 	userService *service.UserService,
 	settingService *service.SettingService,
-	auditService *service.AuditLogService,
 ) AdminAuthMiddleware {
-	return AdminAuthMiddleware(adminAuth(authService, userService, settingService, auditService))
+	return AdminAuthMiddleware(adminAuth(authService, userService, settingService))
 }
 
 // adminAuth 管理员认证中间件实现
@@ -29,7 +28,6 @@ func adminAuth(
 	authService *service.AuthService,
 	userService *service.UserService,
 	settingService *service.SettingService,
-	auditService *service.AuditLogService,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// WebSocket upgrade requests cannot set Authorization headers in browsers.
@@ -38,7 +36,7 @@ func adminAuth(
 		//   Sec-WebSocket-Protocol: sub2api-admin, jwt.<token>
 		if isWebSocketUpgradeRequest(c) {
 			if token := extractJWTFromWebSocketSubprotocol(c); token != "" {
-				if !validateJWTForAdmin(c, token, authService, userService, settingService, auditService) {
+				if !validateJWTForAdmin(c, token, authService, userService, settingService) {
 					return
 				}
 				c.Next()
@@ -66,7 +64,7 @@ func adminAuth(
 					AbortWithError(c, 401, "UNAUTHORIZED", "Authorization required")
 					return
 				}
-				if !validateJWTForAdmin(c, token, authService, userService, settingService, auditService) {
+				if !validateJWTForAdmin(c, token, authService, userService, settingService) {
 					return
 				}
 				c.Next()
@@ -148,7 +146,7 @@ func validateAdminAPIKey(
 	setAuthSubject(c, admin.ID, admin.Concurrency, admin.SchedulingTier)
 	c.Set(string(ContextKeyUserRole), admin.Role)
 	c.Set(ContextKeyAuthEmail, admin.Email)
-	c.Set("auth_method", "admin_api_key")
+	c.Set(ContextKeyAuthMethod, AuthMethodAdminAPIKey)
 	c.Set("admin_api_key_id", keyInfo.ID)
 	c.Set("admin_api_key_scopes", append([]string(nil), keyInfo.Scopes...))
 	return true
@@ -202,8 +200,6 @@ func adminAPIKeyRequiredScope(method, path string) string {
 		return service.AdminAPIKeyScopeBackupsRead[:len(service.AdminAPIKeyScopeBackupsRead)-len(".read")] + verb
 	case strings.HasPrefix(path, "/api/v1/admin/system"):
 		return service.AdminAPIKeyScopeSystemRead[:len(service.AdminAPIKeyScopeSystemRead)-len(".read")] + verb
-	case strings.HasPrefix(path, "/api/v1/admin/audit"):
-		return service.AdminAPIKeyScopeAuditRead[:len(service.AdminAPIKeyScopeAuditRead)-len(".read")] + verb
 	case strings.HasPrefix(path, "/api/v1/admin/ops"):
 		return service.AdminAPIKeyScopeOpsRead[:len(service.AdminAPIKeyScopeOpsRead)-len(".read")] + verb
 	default:
@@ -221,7 +217,6 @@ func validateJWTForAdmin(
 	authService *service.AuthService,
 	userService *service.UserService,
 	settingService *service.SettingService,
-	auditService *service.AuditLogService,
 ) bool {
 	// 验证 JWT token
 	claims, err := authService.ValidateToken(token)
@@ -254,7 +249,7 @@ func validateJWTForAdmin(
 	}
 
 	// 会话绑定校验：始终绑定 UA，按可信代理配置可选绑定 IP（功能可在系统设置中关闭）
-	if !enforceSessionBinding(c, authService, settingService, auditService, claims) {
+	if !enforceSessionBinding(c, authService, settingService, claims) {
 		return false
 	}
 
@@ -271,7 +266,7 @@ func validateJWTForAdmin(
 	if claims.ExpiresAt != nil {
 		c.Set(string(ContextKeyJWTExpiresAt), claims.ExpiresAt.Time)
 	}
-	c.Set("auth_method", "jwt")
+	c.Set(ContextKeyAuthMethod, AuthMethodJWT)
 
 	return true
 }

@@ -15,7 +15,6 @@ func TestDiffSettings_PreservesDomainOrderAndSecretSemantics(t *testing.T) {
 		MinClaudeCodeVersion:                 "1.2.3",
 		OpenAILowUpstreamRatePriorityEnabled: true,
 		ChannelMonitorEnabled:                true,
-		RiskControlEnabled:                   true,
 	}
 	req := UpdateSettingsRequest{
 		SMTPPassword: "new-smtp-password",
@@ -30,7 +29,6 @@ func TestDiffSettings_PreservesDomainOrderAndSecretSemantics(t *testing.T) {
 		"min_claude_code_version",
 		"openai_low_upstream_rate_priority_enabled",
 		"channel_monitor_enabled",
-		"risk_control_enabled",
 	}, changed)
 }
 

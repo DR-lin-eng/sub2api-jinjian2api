@@ -21,11 +21,7 @@ import tlsFingerprintProfileAPI from '@/features/admin-settings/data/datasources
 import channelsAPI from '@/features/admin-channels/data/datasources/adminChannelsDatasource'
 import channelMonitorAPI from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorDatasource'
 import channelMonitorTemplateAPI from '@/features/admin-channel-monitor/data/datasources/adminChannelMonitorTemplateDatasource'
-import riskControlAPI from '@/features/admin-risk-control/data/datasources/adminRiskControlDatasource'
 import adminComplianceAPI from '@/features/admin-settings/data/datasources/complianceDatasource'
-import auditAPI from '@/features/admin-audit/data/datasources/adminAuditDatasource'
-import clusterAPI from '@/features/admin-cluster/data/datasources/adminClusterDatasource'
-import ingressRiskAPI from '@/features/admin-risk-control/data/datasources/ingressRiskDatasource'
 
 /**
  * Unified admin API object for convenient access
@@ -49,11 +45,7 @@ export const adminAPI = {
   channels: channelsAPI,
   channelMonitor: channelMonitorAPI,
   channelMonitorTemplate: channelMonitorTemplateAPI,
-  riskControl: riskControlAPI,
-  compliance: adminComplianceAPI,
-  audit: auditAPI,
-  cluster: clusterAPI,
-  ingressRisk: ingressRiskAPI
+	compliance: adminComplianceAPI
 }
 
 export {
@@ -75,26 +67,12 @@ export {
   channelsAPI,
   channelMonitorAPI,
   channelMonitorTemplateAPI,
-  riskControlAPI,
-  adminComplianceAPI,
-  auditAPI,
-  clusterAPI,
-  ingressRiskAPI
+	adminComplianceAPI
 }
 
 export default adminAPI
 
 // Re-export types used by components
-export type { AuditLog, AuditLogQuery, AuditLogListResponse } from '@/features/admin-audit/data/datasources/adminAuditDatasource'
 export type { ErrorPassthroughRule, CreateRuleRequest, UpdateRuleRequest } from '@/features/admin-settings/data/datasources/errorPassthroughDatasource'
 export type { BackupAgentHealth, DataManagementConfig } from '@/features/admin-backup/data/datasources/dataManagementDatasource'
 export type { TLSFingerprintProfile, CreateProfileRequest, UpdateProfileRequest } from '@/features/admin-settings/data/datasources/tlsFingerprintProfileDatasource'
-export type { ContentModerationConfig, ContentModerationLog, ModerationMode } from '@/features/admin-risk-control/data/datasources/adminRiskControlDatasource'
-export type {
-  AuthCacheHealth,
-  IngressCollectorHealth,
-  IngressRejection,
-  IngressRejectionList,
-  IngressRejectionQuery,
-  IngressRiskTimeRange,
-} from '@/features/admin-risk-control/data/datasources/ingressRiskDatasource'

@@ -14,7 +14,6 @@ func RegisterAdminRoutes(
 	v1 *gin.RouterGroup,
 	h *handler.Handlers,
 	adminAuth middleware.AdminAuthMiddleware,
-	auditLog middleware.AuditLogMiddleware,
 	stepUpAuth middleware.StepUpAuthMiddleware,
 	settingService *service.SettingService,
 	panelRateLimiter *middleware.PanelRateLimiter,
@@ -22,8 +21,6 @@ func RegisterAdminRoutes(
 	admin := v1.Group("/admin")
 	admin.Use(gin.HandlerFunc(adminAuth))
 	admin.Use(panelRateLimiter.Authenticated())
-	// 审计中间件挂在认证之后：所有管理面变更类操作 + 敏感读取入审计日志
-	admin.Use(gin.HandlerFunc(auditLog))
 	admin.Use(middleware.AdminComplianceGuard(settingService))
 	{
 		// 部署与运营合规确认
@@ -65,9 +62,6 @@ func RegisterAdminRoutes(
 		// 系统管理
 		registerSystemRoutes(admin, h)
 
-		// 多机部署状态
-		registerClusterRoutes(admin, h)
-
 		// 错误透传规则管理
 		registerErrorPassthroughRoutes(admin, h)
 
@@ -83,14 +77,9 @@ func RegisterAdminRoutes(
 		// 渠道监控
 		registerChannelMonitorRoutes(admin, h)
 
-		// 风控中心
-		registerContentModerationRoutes(admin, h)
-
 		// 独立提示词输入审计
 		registerPromptAuditRoutes(admin, h)
 
-		// 操作审计日志
-		registerAuditLogRoutes(admin, h, stepUpAuth)
 	}
 }
 
@@ -110,41 +99,11 @@ func registerPromptAuditRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 	}
 }
 
-func registerAuditLogRoutes(admin *gin.RouterGroup, h *handler.Handlers, _ middleware.StepUpAuthMiddleware) {
-	auditLogs := admin.Group("/audit-logs")
-	{
-		auditLogs.GET("", h.Admin.AuditLog.List)
-		auditLogs.GET("/:id", h.Admin.AuditLog.Get)
-		// 清空需现场 TOTP 校验（在 handler 内强制），不复用 step-up sudo 窗口
-		auditLogs.POST("/clear", h.Admin.AuditLog.Clear)
-	}
-}
-
-func registerClusterRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
-	cluster := admin.Group("/cluster")
-	{
-		cluster.GET("/status", h.Admin.Cluster.GetStatus)
-	}
-}
-
 func registerAdminComplianceRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 	compliance := admin.Group("/compliance")
 	{
 		compliance.GET("", h.Admin.Compliance.GetStatus)
 		compliance.POST("/accept", h.Admin.Compliance.Accept)
-	}
-}
-
-func registerContentModerationRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
-	risk := admin.Group("/risk-control")
-	{
-		risk.GET("/config", h.Admin.ContentModeration.GetConfig)
-		risk.PUT("/config", h.Admin.ContentModeration.UpdateConfig)
-		risk.POST("/api-keys/test", h.Admin.ContentModeration.TestAPIKeys)
-		risk.GET("/status", h.Admin.ContentModeration.GetStatus)
-		risk.GET("/logs", h.Admin.ContentModeration.ListLogs)
-		risk.DELETE("/hashes", h.Admin.ContentModeration.DeleteFlaggedHash)
-		risk.DELETE("/hashes/all", h.Admin.ContentModeration.ClearFlaggedHashes)
 	}
 }
 
@@ -209,11 +168,6 @@ func registerOpsRoutes(admin *gin.RouterGroup, h *handler.Handlers) {
 		ops.GET("/request-errors/:id", h.Admin.Ops.GetRequestError)
 		ops.GET("/request-errors/:id/upstream-errors", h.Admin.Ops.ListRequestErrorUpstreamErrors)
 		ops.PUT("/request-errors/:id/resolve", h.Admin.Ops.ResolveRequestError)
-
-		// Bounded ingress-admission rejection aggregates.
-		ops.GET("/ingress-rejections", h.Admin.Ops.ListIngressRejects)
-		ops.GET("/ingress-rejections/health", h.Admin.Ops.GetIngressRejectHealth)
-		ops.GET("/auth-cache-invalidation/health", h.Admin.Ops.GetAuthCacheInvalidationHealth)
 
 		// Upstream errors (independent upstream failures)
 		ops.GET("/upstream-errors", h.Admin.Ops.ListUpstreamErrors)

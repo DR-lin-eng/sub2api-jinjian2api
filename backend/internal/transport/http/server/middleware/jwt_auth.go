@@ -15,9 +15,8 @@ func NewJWTAuthMiddleware(
 	authService *service.AuthService,
 	userService *service.UserService,
 	settingService *service.SettingService,
-	auditService *service.AuditLogService,
 ) JWTAuthMiddleware {
-	return JWTAuthMiddleware(jwtAuth(authService, userService, userService, settingService, auditService))
+	return JWTAuthMiddleware(jwtAuth(authService, userService, userService, settingService))
 }
 
 type jwtUserReader interface {
@@ -34,7 +33,6 @@ func jwtAuth(
 	userService jwtUserReader,
 	activityToucher userActivityToucher,
 	settingService *service.SettingService,
-	auditService *service.AuditLogService,
 ) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// WebSocket upgrade requests cannot set Authorization headers in browsers.
@@ -43,7 +41,7 @@ func jwtAuth(
 		//   Sec-WebSocket-Protocol: sub2api-chat, jwt.<token>
 		if isWebSocketUpgradeRequest(c) {
 			if token := extractJWTFromWebSocketSubprotocol(c); token != "" {
-				if !validateJWTForUser(c, token, authService, userService, activityToucher, settingService, auditService) {
+				if !validateJWTForUser(c, token, authService, userService, activityToucher, settingService) {
 					return
 				}
 				c.Next()
@@ -71,7 +69,7 @@ func jwtAuth(
 			return
 		}
 
-		if !validateJWTForUser(c, tokenString, authService, userService, activityToucher, settingService, auditService) {
+		if !validateJWTForUser(c, tokenString, authService, userService, activityToucher, settingService) {
 			return
 		}
 
@@ -90,7 +88,6 @@ func validateJWTForUser(
 	userService jwtUserReader,
 	activityToucher userActivityToucher,
 	settingService *service.SettingService,
-	auditService *service.AuditLogService,
 ) bool {
 	claims, err := authService.ValidateToken(token)
 	if err != nil {
@@ -123,7 +120,7 @@ func validateJWTForUser(
 	}
 
 	// 会话绑定校验：始终绑定 UA，按可信代理配置可选绑定 IP（功能可在系统设置中关闭）
-	if !enforceSessionBinding(c, authService, settingService, auditService, claims) {
+	if !enforceSessionBinding(c, authService, settingService, claims) {
 		return false
 	}
 

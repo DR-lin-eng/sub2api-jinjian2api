@@ -12,12 +12,10 @@ disabled. Repetitive logs are sampled, and PostgreSQL/Redis pools are sized for
 a single gateway instance. Every setting remains available as an explicit
 environment override for larger installations.
 
-In the default `standalone` profile, cross-instance API-key/config Pub/Sub and
-cluster heartbeats are not started. Prompt Audit and content moderation keep no
-worker pool while disabled; enabling asynchronous audit/risk control starts the
-configured workers on demand. Set `DEPLOYMENT_MODE=multi_instance` to restore
-cross-instance subscriptions, or `WORKER_ENABLED=auto`/`true` to restore
-scheduled workers and cluster coordination in a standalone deployment.
+The runtime is standalone by design. Cluster identity, heartbeats, and rollout
+coordination are not part of this branch. Prompt Audit keeps no worker pool
+while disabled; `WORKER_ENABLED=auto`/`true` starts the optional local scheduled
+jobs.
 
 ## Deployment Methods
 
@@ -39,14 +37,12 @@ scheduled workers and cluster coordination in a standalone deployment.
 | `.env.example` | Container environment variables template |
 | `DOCKER.md` | Docker Hub documentation |
 | `REDIS_TUNING.md` | Redis memory sizing and 50k+ RPM preset |
-| `MULTI_INSTANCE.md` | Multi-instance secrets, OAuth, workers, WebSocket, and capacity guidance |
 | `install.sh` | One-click binary installation script |
 | `install-datamanagementd.sh` | datamanagementd 一键安装脚本 |
 | `sub2api.service` | Systemd service unit file |
 | `sub2api-datamanagementd.service` | datamanagementd systemd service unit file |
 | `DATAMANAGEMENTD_CN.md` | datamanagementd 部署与联动说明（中文） |
 | `config.example.yaml` | Example configuration file |
-| `EDGE_SECURITY.md` | Reverse proxy, CDN/WAF, trusted proxy, and ingress hardening guide |
 
 ---
 
@@ -156,13 +152,9 @@ When using Docker Compose with `AUTO_SETUP=true`:
 1. On first run, the system automatically:
    - Connects to PostgreSQL and Redis
    - Applies database migrations (SQL files in `backend/migrations/*.sql`) and records them in `schema_migrations`
-   - Persists a cluster-wide JWT secret in PostgreSQL (if not provided)
+   - Persists the JWT secret in PostgreSQL (if not provided)
    - Creates admin account (password auto-generated if not provided)
    - Writes the local config.yaml and installation marker
-
-   Concurrent replicas serialize this first-install sequence with a PostgreSQL
-   advisory lock. Once the database installation marker exists, later replicas
-   adopt it and only materialize their local files.
 
 2. No manual Setup Wizard needed - just configure `.env` and start
 
@@ -254,8 +246,6 @@ docker compose down -v
 See `.env.example` for all available options.
 
 > **Note:** The `docker-deploy.sh` script automatically generates `JWT_SECRET`, `TOTP_ENCRYPTION_KEY`, and `POSTGRES_PASSWORD` for you.
-
-For load-balanced replicas, follow [MULTI_INSTANCE.md](./MULTI_INSTANCE.md).
 
 ### Easy Migration (Local Directory Version)
 

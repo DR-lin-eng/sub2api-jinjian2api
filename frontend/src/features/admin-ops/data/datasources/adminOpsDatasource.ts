@@ -800,15 +800,8 @@ export interface OpsMetricThresholds {
   upstream_error_rate_percent_max?: number | null // 上游错误率高于此值变红
 }
 
-export interface OpsDistributedLockSettings {
-  enabled: boolean
-  key: string
-  ttl_seconds: number
-}
-
 export interface OpsAlertRuntimeSettings {
   evaluation_interval_seconds: number
-  distributed_lock: OpsDistributedLockSettings
   silencing: {
     enabled: boolean
     global_until_rfc3339: string

@@ -145,30 +145,6 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
-    path: '/admin/audit-logs',
-    name: 'AdminAuditLogs',
-    component: () => import('@/features/admin-audit/presentation/pages/AuditLogPage.vue'),
-    meta: {
-      requiresAuth: true,
-      requiresAdmin: true,
-      title: 'Audit Logs',
-      titleKey: 'admin.audit.title',
-      descriptionKey: 'admin.audit.description'
-    }
-  },
-  {
-    path: '/admin/multi-instance',
-    name: 'AdminMultiInstance',
-    component: () => import('@/features/admin-cluster/presentation/pages/MultiInstancePage.vue'),
-    meta: {
-      requiresAuth: true,
-      requiresAdmin: true,
-      title: 'Multi-instance Deployment',
-      titleKey: 'admin.cluster.title',
-      descriptionKey: 'admin.cluster.description'
-    }
-  },
-  {
     path: '/admin/settings',
     name: 'AdminSettings',
     component: () => import('@/features/admin-settings/presentation/pages/SettingsPage.vue'),
@@ -178,30 +154,6 @@ const routes: RouteRecordRaw[] = [
       title: 'System Settings',
       titleKey: 'admin.settings.title',
       descriptionKey: 'admin.settings.description'
-    }
-  },
-  {
-    path: '/admin/security-audit/ingress',
-    name: 'AdminIngressRisk',
-    component: () => import('@/features/admin-risk-control/presentation/pages/IngressRiskPage.vue'),
-    meta: {
-      requiresAuth: true,
-      requiresAdmin: true,
-      title: 'Ingress Protection',
-      titleKey: 'admin.ingressRisk.title',
-      descriptionKey: 'admin.ingressRisk.description'
-    }
-  },
-  {
-    path: '/admin/risk-control',
-    name: 'AdminRiskControl',
-    component: () => import('@/features/admin-risk-control/presentation/pages/RiskControlPage.vue'),
-    meta: {
-      requiresAuth: true,
-      requiresAdmin: true,
-      title: 'Risk Control',
-      titleKey: 'admin.riskControl.title',
-      descriptionKey: 'admin.riskControl.description'
     }
   },
   {

@@ -15,14 +15,5 @@ func appendNotificationAndRiskSettingChanges(changed []string, before, after *se
 	if before.ChannelMonitorDefaultIntervalSeconds != after.ChannelMonitorDefaultIntervalSeconds {
 		changed = append(changed, "channel_monitor_default_interval_seconds")
 	}
-	if before.RiskControlEnabled != after.RiskControlEnabled {
-		changed = append(changed, "risk_control_enabled")
-	}
-	if before.CyberSessionBlockEnabled != after.CyberSessionBlockEnabled {
-		changed = append(changed, "cyber_session_block_enabled")
-	}
-	if before.CyberSessionBlockTTLSeconds != after.CyberSessionBlockTTLSeconds {
-		changed = append(changed, "cyber_session_block_ttl_seconds")
-	}
 	return changed
 }

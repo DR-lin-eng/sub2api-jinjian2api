@@ -29,9 +29,7 @@ const createMockRouter = (): Router => {
 		{ path: '/admin/channels/pricing', components: { default: mockImportFn } },
 		{ path: '/admin/channels/monitor', components: { default: mockImportFn } },
 		{ path: '/admin/ops', components: { default: mockImportFn } },
-		{ path: '/admin/audit-logs', components: { default: mockImportFn } },
 		{ path: '/admin/settings', components: { default: mockImportFn } },
-		{ path: '/admin/multi-instance', components: { default: mockImportFn } },
 		{ path: '/keys', components: { default: mockImportFn } },
 		{ path: '/usage', components: { default: mockImportFn } },
 		{ path: '/profile', components: { default: mockImportFn } }

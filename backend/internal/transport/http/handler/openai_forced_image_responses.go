@@ -605,7 +605,7 @@ func (h *OpenAIGatewayHandler) handleForcedOpenAIImageResponsesWebSocket(
 			return
 		}
 		if turn > 1 {
-			if decision := h.checkSecurityAuditStage(c, reqLog, apiKey, subject, service.ContentModerationProtocolOpenAIResponses, model, payload, "subsequent_turn"); decision != nil && !decision.AllowNextStage {
+			if decision := h.checkSecurityAuditStage(c, reqLog, apiKey, subject, service.PromptAuditProtocolOpenAIResponses, model, payload, "subsequent_turn"); decision != nil && !decision.AllowNextStage {
 				writeSecurityAuditWSError(ctx, wsConn, decision)
 				releaseTurnSlots()
 				return

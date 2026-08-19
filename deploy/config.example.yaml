@@ -11,21 +11,9 @@
 # 部署配置
 # =============================================================================
 deployment:
-  # standalone or multi_instance. Every node always serves the complete API and frontend.
-  # standalone 或 multi_instance。每个节点始终提供完整 API 与前端。
-  # standalone keeps API-key request slots in-process for single-hot-key throughput;
-  # multi_instance uses Redis-backed distributed slots across replicas.
-  # standalone 使用进程内用户/API Key 槽位以承受单热 Key；multi_instance 使用 Redis 分布式槽位。
-  mode: "standalone"
-  # Stable operator-defined node name. Empty falls back to the hostname.
-  # 稳定节点名；留空时使用 hostname。多机部署建议显式设置且各节点不同。
-  node_name: ""
-  # false keeps scheduled tests, backups and monitoring jobs off; opt in with auto or true.
-  # false 默认关闭定时测试、备份和监控任务；需要时可设为 auto 或 true。
+  # false keeps optional scheduled jobs off; opt in with auto or true.
+  # false 默认关闭可选定时任务；需要时可设为 auto 或 true。
   worker_enabled: "false"
-  heartbeat_interval_seconds: 30
-  stale_after_seconds: 90
-  task_lease_seconds: 60
 
 # =============================================================================
 # Server Configuration
@@ -460,7 +448,7 @@ gateway:
   # 图片非流式 JSON keepalive 间隔（秒），0=禁用；首个心跳后 HTTP 状态会固化为 200
   image_nonstream_keepalive_interval: 15
   # Image generation independent concurrency limiter (process-local, default disabled)
-  # 图片生成独立并发限制（进程级，默认关闭；多实例总上限约为实例数×该值）
+  # 图片生成独立并发限制（进程级，默认关闭）
   image_concurrency:
     # Enable image-only concurrency protection; false keeps existing behavior unchanged
     # 是否启用图片独立并发保护；false 保持现有行为不变
@@ -664,20 +652,6 @@ api_key_auth_cache:
   # Maximum concurrent database lookups for authentication cache misses
   # 认证缓存未命中时允许并发回源数据库的最大数量
   lookup_concurrency: 64
-  # Process-local invalid-auth abuse protection. Counts only missing, malformed,
-  # deprecated-query, and confirmed invalid credentials; valid requests and
-  # Redis/DB failures do not consume the budget.
-  # 本机无效鉴权防护：仅统计缺失、格式错误、废弃 query 及确认无效的凭据。
-  invalid_abuse:
-    enabled: true
-    # Invalid attempts per trusted client IP (IPv6 grouped by /64) per window.
-    # 每个可信客户端 IP（IPv6 按 /64 聚合）在窗口内允许的无效次数。
-    threshold: 120
-    window_seconds: 60
-    block_seconds: 60
-    # Maximum tracked client identities per process; memory remains bounded.
-    # 每进程最多跟踪的客户端身份数量，确保内存有界。
-    capacity: 16384
 
 # =============================================================================
 # Dashboard Aggregation Configuration
@@ -774,9 +748,8 @@ database:
   # SSL 模式：disable（禁用）, prefer（优先加密，默认）, require（要求）, verify-ca（验证CA）, verify-full（完全验证）
   # 默认值为 "prefer"，数据库支持 SSL 时自动使用加密连接，不支持时回退明文
   sslmode: "prefer"
-  # Per-instance maximum. Cluster demand = replica_count * max_open_conns.
-  # Keep that total below PostgreSQL max_connections after reserving admin/migration slots.
-  # 单实例最大连接数。集群总需求 = 实例数 * max_open_conns；还需为管理和迁移预留连接。
+  # Maximum connections used by this standalone process.
+  # 单机进程最大连接数。
   max_open_conns: 20
   # Max idle connections
   # 最大空闲连接数
@@ -839,9 +812,9 @@ ops:
 # JWT 配置
 # =============================================================================
 jwt:
-  # Explicitly configure the same value on every replica. If omitted during
-  # bootstrap, PostgreSQL persists the first generated value as the cluster value.
-  # 建议所有实例显式注入同一个值；若首次启动留空，PostgreSQL 会持久化首个生成值。
+  # Explicitly configure a stable value for upgrades. If omitted during
+  # bootstrap, PostgreSQL persists the generated value.
+  # 建议显式注入稳定值；若首次启动留空，PostgreSQL 会持久化生成值。
   # Generate with / 生成命令: openssl rand -hex 32
   secret: "change-this-to-a-secure-random-string"
   # Token expiration time in hours (max 168)
@@ -864,9 +837,9 @@ jwt:
 # TOTP 双因素认证配置
 # =============================================================================
 totp:
-  # Prefer explicitly configuring the same key on every replica. If omitted,
-  # PostgreSQL persists one generated key and all replicas load that cluster value.
-  # 建议所有实例显式注入同一个密钥；若留空，PostgreSQL 会持久化并统一使用一个生成值。
+  # Prefer explicitly configuring a stable key. If omitted, PostgreSQL persists
+  # one generated key for subsequent restarts.
+  # 建议显式注入稳定密钥；若留空，PostgreSQL 会持久化生成值。
   # Generate with / 生成命令: openssl rand -hex 32
   encryption_key: ""
 

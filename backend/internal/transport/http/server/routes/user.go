@@ -13,7 +13,6 @@ func RegisterUserRoutes(
 	v1 *gin.RouterGroup,
 	h *handler.Handlers,
 	jwtAuth middleware.JWTAuthMiddleware,
-	auditLog middleware.AuditLogMiddleware,
 	settingService *service.SettingService,
 	panelRateLimiter *middleware.PanelRateLimiter,
 ) {
@@ -21,8 +20,6 @@ func RegisterUserRoutes(
 	authenticated.Use(gin.HandlerFunc(jwtAuth))
 	authenticated.Use(middleware.BackendModeUserGuard(settingService))
 	authenticated.Use(panelRateLimiter.Authenticated())
-	// 本地管理员资料与安全设置变更入审计。
-	authenticated.Use(gin.HandlerFunc(auditLog))
 	{
 		// Single administrator profile and local security controls.
 		user := authenticated.Group("/user")
