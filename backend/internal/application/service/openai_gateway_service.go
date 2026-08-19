@@ -885,6 +885,75 @@ func shouldFallbackCodexPrewarmWSForbiddenToHTTP(account *Account, err error) bo
 	return errors.As(fallbackErr.Err, &dialErr) && dialErr != nil && dialErr.StatusCode == http.StatusForbidden
 }
 
+func openAIWSFallbackReasonCanSwitchAccount(reason string) bool {
+	reason = strings.TrimPrefix(strings.TrimSpace(reason), "prewarm_")
+	switch reason {
+	case "read_event",
+		"write_request",
+		"write",
+		"acquire_timeout",
+		"acquire_conn",
+		"conn_queue_full",
+		"preferred_conn_unavailable",
+		"dial_failed",
+		"upstream_5xx",
+		"event_error",
+		"error_event",
+		"upstream_error_event",
+		"missing_final_response",
+		"invalid_event_json",
+		"missing_response_id":
+		return true
+	default:
+		return false
+	}
+}
+
+// openAIWSFallbackAccountSwitch converts an exhausted pre-output WS transport
+// fallback into an account failover. Protocol, policy and authentication
+// errors remain on their existing paths because another account cannot safely
+// repair those classes without additional classification.
+func (s *OpenAIGatewayService) openAIWSFallbackAccountSwitch(
+	ctx context.Context,
+	account *Account,
+	canonicalModel string,
+	err error,
+) *UpstreamFailoverError {
+	if err == nil || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return nil
+	}
+	var fallbackErr *openAIWSFallbackError
+	if !errors.As(err, &fallbackErr) || fallbackErr == nil || !openAIWSFallbackReasonCanSwitchAccount(fallbackErr.Reason) {
+		return nil
+	}
+
+	statusCode := http.StatusBadGateway
+	var headers http.Header
+	var body []byte
+	message := strings.TrimSpace(err.Error())
+	var dialErr *openAIWSDialError
+	if errors.As(fallbackErr.Err, &dialErr) && dialErr != nil {
+		if dialErr.StatusCode > 0 {
+			statusCode = dialErr.StatusCode
+		}
+		headers = dialErr.ResponseHeaders
+		body = dialErr.ResponseBody
+		if dialErr.Err != nil {
+			message = strings.TrimSpace(dialErr.Err.Error())
+		}
+	}
+	if !shouldFailoverOpenAIWSPreOutputFailure(statusCode, body) {
+		return nil
+	}
+	// Dial 429/5xx paths record their account state at acquisition time. Other
+	// transport failures reach this boundary only after local reconnect is
+	// exhausted, so record one synthetic 502 observation here.
+	if dialErr == nil || dialErr.StatusCode <= 0 {
+		s.handleOpenAIAccountUpstreamError(ctx, account, statusCode, headers, body, canonicalModel)
+	}
+	return newOpenAIWSPreOutputFailoverError(statusCode, headers, body, message)
+}
+
 func isOpenAIWSUpgradeRequiredDialError(err error) bool {
 	if err == nil {
 		return false

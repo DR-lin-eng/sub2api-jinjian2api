@@ -814,6 +814,19 @@ type openAIAccountCandidateScore struct {
 	streamDegraded     bool
 }
 
+// shouldPreferStickyCandidate keeps prompt-cache affinity only while the
+// bound account is healthy enough for a fast path. A sticky bonus must never
+// outrank a known 429/502 burst or a long first-token tail.
+func (s *defaultOpenAIAccountScheduler) shouldPreferStickyCandidate(candidate openAIAccountCandidateScore) bool {
+	if candidate.account == nil || candidate.streamDegraded {
+		return false
+	}
+	if candidate.errorRate >= openAIFixedStickyEscapeErrorRate {
+		return false
+	}
+	return !candidate.hasTTFT || candidate.ttft <= float64(openAIFixedStickyEscapeTTFTMs)
+}
+
 type openAIAccountCandidateHeap []openAIAccountCandidateScore
 
 func (h openAIAccountCandidateHeap) Len() int {
@@ -1137,15 +1150,18 @@ func (s *defaultOpenAIAccountScheduler) buildOpenAIAccountLoadPlan(
 	}
 	plan.loadSkew = calcLoadSkewByMoments(loadRateSum, loadRateSumSquares, len(candidates))
 
-	weights := s.service.openAIWSSchedulerWeightsForRequest(ctx)
+	// Gateway scheduling is fixed for the high-concurrency pool. Reading the
+	// administrator override document here would add a cold-path DB lookup and
+	// let different instances use different affinity/health weights.
+	weights := fixedOpenAISchedulerWeights()
 	now := time.Now()
 	if req.UseUpstreamTokenCost && weights.UpstreamCost > 0 {
-		plan.includeOverflowFallback = applyOpenAIUpstreamCostFactors(candidates, now, s.service.openAIOAuthSchedulingRateMultiplier(ctx))
+		plan.includeOverflowFallback = applyOpenAIUpstreamCostFactors(candidates, now, openAIFixedOAuthSchedulingRateMultiplier)
 	}
 
 	// Reset 因子（use-it-or-lose-it）：在拥有「未来会话窗口结束时间」的账号中，
 	// 剩余时间越短 → 因子越接近 1（越早重置越优先用尽）。无活跃窗口的账号因子为 0。
-	// 仅在 weights.Reset > 0 时计算，默认关闭不影响原有行为。
+	// 固定策略始终计算该因子，避免即将重置的窗口被闲置。
 	minResetRemaining, maxResetRemaining := 0.0, 0.0
 	hasResetSample := false
 	if weights.Reset > 0 {
@@ -1221,7 +1237,7 @@ func (s *defaultOpenAIAccountScheduler) buildOpenAIAccountLoadPlan(
 	}
 	plan.candidates = candidates
 
-	plan.topK = s.service.openAIWSLBTopKForRequest(ctx)
+	plan.topK = openAIFixedSchedulerTopK
 	if plan.topK > len(candidates) {
 		plan.topK = len(candidates)
 	}
@@ -1257,7 +1273,7 @@ func (s *defaultOpenAIAccountScheduler) buildOpenAISelectionOrder(
 					continue
 				}
 				for i, candidate := range ranked {
-					if candidate.account != nil && candidate.account.ID == stickyID {
+					if candidate.account != nil && candidate.account.ID == stickyID && s.shouldPreferStickyCandidate(candidate) {
 						primary = append([]openAIAccountCandidateScore{candidate}, ranked[:i]...)
 						primary = append(primary, ranked[i+1:]...)
 						break
@@ -1316,7 +1332,7 @@ func (s *defaultOpenAIAccountScheduler) buildOpenAISelectionOrder(
 			for _, stickyID := range []int64{req.StickyPreviousAccountID, sessionStickyID} {
 				eligible := false
 				for _, candidate := range ranked {
-					if candidate.account != nil && candidate.account.ID == stickyID {
+					if candidate.account != nil && candidate.account.ID == stickyID && s.shouldPreferStickyCandidate(candidate) {
 						eligible = true
 						break
 					}
@@ -1325,10 +1341,7 @@ func (s *defaultOpenAIAccountScheduler) buildOpenAISelectionOrder(
 					continue
 				}
 				for i, candidate := range selectionOrder {
-					if candidate.account != nil && candidate.account.ID == stickyID {
-						if req.IsStreaming && candidate.streamDegraded {
-							continue
-						}
+					if candidate.account != nil && candidate.account.ID == stickyID && s.shouldPreferStickyCandidate(candidate) {
 						copy(selectionOrder[1:i+1], selectionOrder[:i])
 						selectionOrder[0] = candidate
 						return selectionOrder
@@ -1551,6 +1564,12 @@ func (s *defaultOpenAIAccountScheduler) tryFallbackToWeightedSticky(
 		}
 		if !s.isAccountRequestCompatible(ctx, account, req) || !s.isAccountTransportCompatible(account, req.RequiredTransport) {
 			continue
+		}
+		if s.stats != nil {
+			errorRate, ttft, hasTTFT := s.stats.snapshot(account.ID)
+			if errorRate >= openAIFixedStickyEscapeErrorRate || hasTTFT && ttft > float64(openAIFixedStickyEscapeTTFTMs) {
+				continue
+			}
 		}
 		account = s.service.recheckSelectedOpenAIAccountFromDB(ctx, account, req.GroupID, req.Platform, req.RequestedModel, req.RequireCompact, req.RequiredCapability)
 		if account == nil {
@@ -2114,6 +2133,13 @@ func (s *defaultOpenAIAccountScheduler) isAccountRequestCompatibleReason(ctx con
 	if req.RequestedModel != "" && !account.IsModelSupported(req.RequestedModel) {
 		return false, "model_not_supported"
 	}
+	// Model-scoped cooldowns must be checked here as well as in the snapshot
+	// candidate predicate. Sticky sessions and a freshly hydrated account can
+	// otherwise bypass the model quarantine and send another request to the
+	// same 429/502 channel.
+	if req.RequestedModel != "" && account.IsSchedulable() && !account.IsSchedulableForModelWithContext(ctx, req.RequestedModel) {
+		return false, "model_rate_limited"
+	}
 	if req.GroupID != nil && s != nil && s.service != nil &&
 		s.service.needsUpstreamChannelRestrictionCheck(ctx, req.GroupID) &&
 		s.service.isUpstreamModelRestrictedByChannel(ctx, *req.GroupID, account, req.RequestedModel, req.RequireCompact) {
@@ -2404,6 +2430,24 @@ func (s *OpenAIGatewayService) getOpenAIAccountScheduler(ctx context.Context) Op
 	return s.openaiScheduler
 }
 
+// getFixedOpenAIAccountScheduler is used by the gateway request/health paths.
+// It intentionally bypasses the legacy settings gate; the public getter above
+// remains compatibility-only for admin diagnostics and older callers.
+func (s *OpenAIGatewayService) getFixedOpenAIAccountScheduler() OpenAIAccountScheduler {
+	if s == nil {
+		return nil
+	}
+	s.openaiSchedulerOnce.Do(func() {
+		if s.openaiAccountStats == nil {
+			s.openaiAccountStats = newOpenAIAccountRuntimeStats()
+		}
+		if s.openaiScheduler == nil {
+			s.openaiScheduler = newDefaultOpenAIAccountScheduler(s, s.openaiAccountStats)
+		}
+	})
+	return s.openaiScheduler
+}
+
 func resetOpenAIAdvancedSchedulerSettingCacheForTest() {
 	openAIAdvancedSchedulerSettingCache = atomic.Value{}
 	openAIAdvancedSchedulerSettingSF = singleflight.Group{}
@@ -2539,7 +2583,7 @@ func (s *OpenAIGatewayService) selectAccountWithSchedulerOnce(
 	contentSessionOverflow := openAIContentSessionRequestOverflow(ctx)
 	contentSessionBurst := contentSessionConcurrent || contentSessionOverflow
 	decision := OpenAIAccountScheduleDecision{}
-	scheduler := s.getOpenAIAccountScheduler(ctx)
+	scheduler := s.getFixedOpenAIAccountScheduler()
 	if scheduler == nil {
 		decision.Layer = openAIAccountScheduleLayerLoadBalance
 		if contentSessionOverflow {
@@ -2624,8 +2668,11 @@ func (s *OpenAIGatewayService) selectAccountWithSchedulerOnce(
 	}
 	// Overflow requests must return to the sticky account after admission. Letting
 	// weighted sticky run here would still scan the full pool for every overflow.
-	stickyWeighted := !contentSessionOverflow && s.isOpenAIAdvancedSchedulerStickyWeightedEnabled(ctx)
-	subscriptionPriority := s.isOpenAIAdvancedSchedulerSubscriptionPriorityEnabled(ctx)
+	// Keep cache affinity for sequential turns, while the load-plan health
+	// guard below can still move a degraded sticky account. Concurrent turns use
+	// the bounded content-session burst path to spread load across accounts.
+	stickyWeighted := !contentSessionOverflow && openAIFixedSchedulerStickyWeighted
+	subscriptionPriority := openAIFixedSchedulerSubscriptionPriority
 	stickyPreviousAccountID := int64(0)
 	if stickyWeighted && previousResponseCanMove && strings.TrimSpace(previousResponseID) != "" && platform == PlatformOpenAI {
 		stickyPreviousAccountID = s.ResolveAccountIDByPreviousResponseIDForScheduler(ctx, groupID, previousResponseID, requestedModel, excludedIDs, requiredCapability, requireCompact)
@@ -2702,7 +2749,7 @@ func (s *OpenAIGatewayService) ReportOpenAIAccountScheduleResult(accountID int64
 	if success {
 		s.clearOpenAIAccountModelTransientState(accountID, normalizeOpenAIAccountModelTransientModel(model))
 	}
-	scheduler := s.getOpenAIAccountScheduler(context.Background())
+	scheduler := s.openaiScheduler
 	if scheduler == nil {
 		return
 	}
@@ -2725,7 +2772,7 @@ func (s *OpenAIGatewayService) ReportOpenAIAccountStreamScheduleResult(accountID
 }
 
 func (s *OpenAIGatewayService) RecordOpenAIAccountSwitch() {
-	scheduler := s.getOpenAIAccountScheduler(context.Background())
+	scheduler := s.openaiScheduler
 	if scheduler == nil {
 		return
 	}
@@ -2733,7 +2780,7 @@ func (s *OpenAIGatewayService) RecordOpenAIAccountSwitch() {
 }
 
 func (s *OpenAIGatewayService) SnapshotOpenAIAccountSchedulerMetrics() OpenAIAccountSchedulerMetricsSnapshot {
-	scheduler := s.getOpenAIAccountScheduler(context.Background())
+	scheduler := s.openaiScheduler
 	if scheduler == nil {
 		return OpenAIAccountSchedulerMetricsSnapshot{}
 	}
@@ -2748,98 +2795,27 @@ func (s *OpenAIGatewayService) openAIWSSessionStickyTTL() time.Duration {
 }
 
 func (s *OpenAIGatewayService) openAIWSLBTopK() int {
-	if s != nil && s.cfg != nil && s.cfg.Gateway.OpenAIWS.LBTopK > 0 {
-		return s.cfg.Gateway.OpenAIWS.LBTopK
-	}
-	return 7
+	return openAIFixedSchedulerTopK
 }
 
-func (s *OpenAIGatewayService) openAIWSLBTopKForRequest(ctx context.Context) int {
-	base := s.openAIWSLBTopK()
-	settings := s.openAIAdvancedSchedulerRuntimeSettings(ctx)
-	// DB 覆盖值与 stickyWeighted/subscriptionPriority 一样受总开关门控：
-	// 关闭高级调度器后所有调用方（含管理页分数快照）都应回到配置/默认行为。
-	if !settings.enabled {
-		return base
-	}
-	if settings.lbTopKOverride > 0 {
-		return settings.lbTopKOverride
-	}
-	return base
+func (s *OpenAIGatewayService) openAIWSLBTopKForRequest(_ context.Context) int {
+	return openAIFixedSchedulerTopK
 }
 
 func (s *OpenAIGatewayService) openAIStickyEscapeConfig() openAIStickyEscapeConfig {
-	if s != nil && s.cfg != nil {
-		cfg := s.cfg.Gateway.OpenAIScheduler
-		enabled := cfg.StickyEscapeEnabled
-		if !enabled && cfg.StickyEscapeTTFTMs == 0 && cfg.StickyEscapeErrorRate == 0 {
-			enabled = true
-		}
-		ttftMs := float64(cfg.StickyEscapeTTFTMs)
-		if ttftMs <= 0 {
-			ttftMs = 15000
-		}
-		errorRate := cfg.StickyEscapeErrorRate
-		if errorRate < 0 || errorRate > 1 {
-			errorRate = 0.5
-		}
-		if errorRate == 0 && cfg.StickyEscapeTTFTMs == 0 && cfg.StickyEscapeErrorRate == 0 {
-			errorRate = 0.5
-		}
-		return openAIStickyEscapeConfig{
-			enabled:   enabled,
-			ttftMs:    ttftMs,
-			errorRate: errorRate,
-		}
-	}
 	return openAIStickyEscapeConfig{
 		enabled:   true,
-		ttftMs:    15000,
-		errorRate: 0.5,
+		ttftMs:    openAIFixedStickyEscapeTTFTMs,
+		errorRate: openAIFixedStickyEscapeErrorRate,
 	}
 }
 
 func (s *OpenAIGatewayService) openAIWSSchedulerWeights() GatewayOpenAIWSSchedulerScoreWeightsView {
-	if s != nil && s.cfg != nil {
-		return GatewayOpenAIWSSchedulerScoreWeightsView{
-			Priority:      s.cfg.Gateway.OpenAIWS.SchedulerScoreWeights.Priority,
-			Load:          s.cfg.Gateway.OpenAIWS.SchedulerScoreWeights.Load,
-			Queue:         s.cfg.Gateway.OpenAIWS.SchedulerScoreWeights.Queue,
-			ErrorRate:     s.cfg.Gateway.OpenAIWS.SchedulerScoreWeights.ErrorRate,
-			TTFT:          s.cfg.Gateway.OpenAIWS.SchedulerScoreWeights.TTFT,
-			Reset:         s.cfg.Gateway.OpenAIWS.SchedulerScoreWeights.Reset,
-			QuotaHeadroom: s.cfg.Gateway.OpenAIWS.SchedulerScoreWeights.QuotaHeadroom,
-			UpstreamCost:  s.cfg.Gateway.OpenAIWS.SchedulerScoreWeights.UpstreamCost,
-			Previous:      s.cfg.Gateway.OpenAIWS.SchedulerScoreWeights.PreviousResponse,
-			SessionSticky: s.cfg.Gateway.OpenAIWS.SchedulerScoreWeights.SessionSticky,
-		}
-	}
-	return GatewayOpenAIWSSchedulerScoreWeightsView{
-		Priority:      1.0,
-		Load:          1.0,
-		Queue:         0.7,
-		ErrorRate:     0.8,
-		TTFT:          0.5,
-		Reset:         0.0,
-		QuotaHeadroom: 0.0,
-		UpstreamCost:  0.0,
-		Previous:      5.0,
-		SessionSticky: 3.0,
-	}
+	return fixedOpenAISchedulerWeights()
 }
 
-func (s *OpenAIGatewayService) openAIWSSchedulerWeightsForRequest(ctx context.Context) GatewayOpenAIWSSchedulerScoreWeightsView {
-	weights := s.openAIWSSchedulerWeights()
-	settings := s.openAIAdvancedSchedulerRuntimeSettings(ctx)
-	// 同 openAIWSLBTopKForRequest：总开关关闭时不应用 DB 覆盖值。
-	if !settings.enabled {
-		return weights
-	}
-	overridden := applyOpenAIAdvancedSchedulerWeightOverrides(weights, settings.weightOverrides)
-	if !overridden.configWeights().IsValid() {
-		return weights
-	}
-	return overridden
+func (s *OpenAIGatewayService) openAIWSSchedulerWeightsForRequest(_ context.Context) GatewayOpenAIWSSchedulerScoreWeightsView {
+	return fixedOpenAISchedulerWeights()
 }
 
 func applyOpenAIAdvancedSchedulerWeightOverrides(

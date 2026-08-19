@@ -701,6 +701,14 @@ func (s *OpenAIGatewayService) Forward(ctx context.Context, c *gin.Context, acco
 			if reason != "" {
 				wsLastFailureReason = reason
 			}
+			// A failed Codex prewarm has not sent the business request. Switching
+			// accounts immediately is both safer and faster than repeating the
+			// empty prewarm up to the generic reconnect limit on the same account.
+			if account.IsCodexPrewarmContinuationEnabled() &&
+				strings.HasPrefix(strings.TrimSpace(reason), "prewarm_") &&
+				openAIWSFallbackReasonCanSwitchAccount(reason) {
+				retryable = false
+			}
 			// previous_response_not_found 说明续链锚点不可用：
 			// 对非 function_call_output 场景，允许一次“去掉 previous_response_id 后重放”。
 			if reason == "previous_response_not_found" && recoverPrevResponseNotFound(attempt) {
@@ -816,6 +824,11 @@ func (s *OpenAIGatewayService) Forward(ctx context.Context, c *gin.Context, acco
 				s.openAIWSFallbackCooldown(),
 			)
 		} else {
+			if canReplayThroughHTTP {
+				if failoverErr := s.openAIWSFallbackAccountSwitch(ctx, account, upstreamModel, wsErr); failoverErr != nil {
+					return nil, failoverErr
+				}
+			}
 			s.writeOpenAIWSFallbackErrorResponse(c, account, wsErr)
 			return nil, wsErr
 		}

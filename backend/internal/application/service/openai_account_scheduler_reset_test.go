@@ -55,7 +55,8 @@ func TestBuildOpenAIAccountLoadPlan_ResetWeightPrefersSoonestReset(t *testing.T)
 	require.Greater(t, scores[2], scores[1], "重置时间最早的账号（ID=2）得分更高")
 }
 
-// Reset 权重为 0（默认）时，窗口重置时间不应影响打分，保持原有行为。
+// Reset is part of the fixed gateway policy, so legacy zero-valued config
+// cannot disable the use-it-or-lose-it preference.
 func TestBuildOpenAIAccountLoadPlan_ResetWeightZeroNoEffect(t *testing.T) {
 	now := time.Now()
 	soon := now.Add(1 * time.Hour)
@@ -68,7 +69,7 @@ func TestBuildOpenAIAccountLoadPlan_ResetWeightZeroNoEffect(t *testing.T) {
 
 	plan := sched.buildOpenAIAccountLoadPlan(context.Background(), OpenAIAccountScheduleRequest{}, filtered, map[int64]*AccountLoadInfo{})
 	scores := openAIPlanScores(plan)
-	require.Equal(t, scores[1], scores[2], "Reset 权重为 0 时两账号得分相同")
+	require.Greater(t, scores[2], scores[1], "固定策略仍优先窗口更早重置的账号")
 }
 
 // 无活跃窗口的账号 reset 因子为 0，应低于拥有未来窗口的账号。
@@ -193,5 +194,5 @@ func TestBuildOpenAIAccountLoadPlan_QuotaHeadroomZeroNoEffect(t *testing.T) {
 
 	plan := sched.buildOpenAIAccountLoadPlan(context.Background(), OpenAIAccountScheduleRequest{}, filtered, map[int64]*AccountLoadInfo{})
 	scores := openAIPlanScores(plan)
-	require.Equal(t, scores[1], scores[2], "quota_headroom 权重为 0 时不应影响打分")
+	require.Greater(t, scores[2], scores[1], "固定策略仍优先剩余额度更健康的账号")
 }

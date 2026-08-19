@@ -462,6 +462,26 @@ func buildOpenAILegacyWeightedSelectionOrder(
 		pool = append(pool[:selectedIdx], pool[selectedIdx+1:]...)
 		weights = append(weights[:selectedIdx], weights[selectedIdx+1:]...)
 	}
+	// Weighted sampling is useful when accounts are close, but a large load
+	// gap should be deterministic in a high-concurrency pool. Otherwise a hot
+	// sticky account can still win the first probe often enough to amplify
+	// queueing and TTFT tails.
+	if len(order) > 1 {
+		minLoad, maxLoad := order[0].loadInfo.LoadRate, order[0].loadInfo.LoadRate
+		for _, candidate := range order[1:] {
+			if candidate.loadInfo.LoadRate < minLoad {
+				minLoad = candidate.loadInfo.LoadRate
+			}
+			if candidate.loadInfo.LoadRate > maxLoad {
+				maxLoad = candidate.loadInfo.LoadRate
+			}
+		}
+		if maxLoad-minLoad >= openAIFixedDeterministicLoadGap {
+			sort.SliceStable(order, func(i, j int) bool {
+				return isOpenAIAccountCandidateBetter(order[i], order[j])
+			})
+		}
+	}
 	return order
 }
 

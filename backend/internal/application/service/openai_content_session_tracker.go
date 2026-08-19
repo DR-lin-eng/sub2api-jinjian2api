@@ -193,7 +193,9 @@ func (s *OpenAIGatewayService) beginOpenAIContentSessionRequest(
 	groupID *int64,
 	sessionHash string,
 ) (tracked bool, concurrent bool, overflow bool) {
-	if sessionHash == "" || !s.isOpenAIContentSessionBurstBalanceEnabled(ctx) {
+	// Burst balancing is part of the fixed high-concurrency gateway policy;
+	// the former settings toggle is intentionally ignored on the request path.
+	if sessionHash == "" || !openAIFixedContentSessionBurstBalance {
 		return false, false, false
 	}
 	tracker := s.openAIContentSessionTracker()

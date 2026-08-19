@@ -109,6 +109,10 @@ func (s *OpenAIGatewayService) performOpenAIWSGeneratePrewarm(
 		return nil
 	}
 	prewarmStart := time.Now()
+	prewarmModel := strings.TrimSpace(openAIWSPayloadString(payload, "model"))
+	if mapped := strings.TrimSpace(account.GetMappedModel(prewarmModel)); mapped != "" {
+		prewarmModel = mapped
+	}
 	logOpenAIWSModeInfo("prewarm_start account_id=%d conn_id=%s", account.ID, connID)
 
 	prewarmPayload := make(map[string]any, len(payload)+1)
@@ -176,12 +180,29 @@ func (s *OpenAIGatewayService) performOpenAIWSGeneratePrewarm(
 
 		if eventType == "error" {
 			errCodeRaw, errTypeRaw, errMsgRaw := parseOpenAIWSErrorEventFields(message)
-			s.persistOpenAIWSRateLimitSignal(ctx, account, lease.HandshakeHeaders(), message, errCodeRaw, errTypeRaw, errMsgRaw)
 			errMsg := strings.TrimSpace(errMsgRaw)
 			if errMsg == "" {
 				errMsg = "OpenAI websocket prewarm error"
 			}
 			fallbackReason, canFallback := classifyOpenAIWSErrorEventFromRaw(errCodeRaw, errTypeRaw, errMsgRaw)
+			statusCode := openAIWSErrorHTTPStatusFromRaw(errCodeRaw, errTypeRaw)
+			if fallbackReason != "upgrade_required" && fallbackReason != "ws_unsupported" &&
+				fallbackReason != "ws_connection_limit_reached" && fallbackReason != "previous_response_not_found" &&
+				fallbackReason != "invalid_encrypted_content" {
+				if failoverErr := s.handleOpenAIWSPreOutputFailure(
+					ctx,
+					account,
+					prewarmModel,
+					statusCode,
+					lease.HandshakeHeaders(),
+					message,
+					errMsg,
+				); failoverErr != nil {
+					lease.MarkBroken()
+					return failoverErr
+				}
+			}
+			s.persistOpenAIWSRateLimitSignal(ctx, account, lease.HandshakeHeaders(), message, errCodeRaw, errTypeRaw, errMsgRaw, prewarmModel)
 			errCode, errType, errMessage := summarizeOpenAIWSErrorEventFieldsFromRaw(errCodeRaw, errTypeRaw, errMsgRaw)
 			logOpenAIWSModeInfo(
 				"prewarm_error_event account_id=%d conn_id=%s idx=%d fallback_reason=%s can_fallback=%v err_code=%s err_type=%s err_message=%s",
@@ -202,6 +223,24 @@ func (s *OpenAIGatewayService) performOpenAIWSGeneratePrewarm(
 		}
 
 		if isOpenAIWSTerminalEvent(eventType) {
+			if normalizeOpenAIWSTerminalEvent(eventType) == "response.failed" {
+				statusCode := openAIWSPayloadStatusCode(message)
+				if statusCode == 0 {
+					statusCode = openAIWSPayloadSemanticTransientStatus(message)
+				}
+				if failoverErr := s.handleOpenAIWSPreOutputFailure(
+					ctx,
+					account,
+					prewarmModel,
+					statusCode,
+					lease.HandshakeHeaders(),
+					message,
+					extractUpstreamErrorMessage(message),
+				); failoverErr != nil {
+					lease.MarkBroken()
+					return failoverErr
+				}
+			}
 			prewarmTerminalCount++
 			break
 		}
@@ -469,6 +508,56 @@ func openAIWSPayloadSemanticTransientStatus(payload []byte) int {
 	default:
 		return 0
 	}
+}
+
+func shouldFailoverOpenAIWSPreOutputFailure(statusCode int, payload []byte) bool {
+	return statusCode == http.StatusTooManyRequests ||
+		shouldCooldownOpenAITransientUpstreamError(statusCode, payload)
+}
+
+func newOpenAIWSPreOutputFailoverError(statusCode int, headers http.Header, payload []byte, message string) *UpstreamFailoverError {
+	if statusCode <= 0 {
+		statusCode = http.StatusBadGateway
+	}
+	body := append([]byte(nil), payload...)
+	if len(body) == 0 {
+		errType := "upstream_error"
+		if statusCode == http.StatusTooManyRequests {
+			errType = "rate_limit_error"
+		}
+		body, _ = json.Marshal(map[string]any{
+			"error": map[string]any{
+				"type":    errType,
+				"message": strings.TrimSpace(message),
+			},
+		})
+	}
+	return &UpstreamFailoverError{
+		StatusCode:        statusCode,
+		ResponseBody:      body,
+		ResponseHeaders:   cloneHeader(headers),
+		Scope:             GatewayFailureScopeAccount,
+		NextAccountAction: NextAccountRetry,
+	}
+}
+
+// handleOpenAIWSPreOutputFailure turns a retryable WS failure into the same
+// account-switch contract used by HTTP/SSE. It must be called before any
+// semantic bytes are written downstream.
+func (s *OpenAIGatewayService) handleOpenAIWSPreOutputFailure(
+	ctx context.Context,
+	account *Account,
+	canonicalModel string,
+	statusCode int,
+	headers http.Header,
+	payload []byte,
+	message string,
+) *UpstreamFailoverError {
+	if !shouldFailoverOpenAIWSPreOutputFailure(statusCode, payload) {
+		return nil
+	}
+	s.handleOpenAIAccountUpstreamError(ctx, account, statusCode, headers, payload, canonicalModel)
+	return newOpenAIWSPreOutputFailoverError(statusCode, headers, payload, message)
 }
 
 func (s *OpenAIGatewayService) handleOpenAIWSTerminalTransientFailure(ctx context.Context, account *Account, canonicalModel string, headers http.Header, payload []byte) string {
@@ -814,14 +903,14 @@ func isOpenAIWSRateLimitsPreamble(eventType string) bool {
 		strings.HasPrefix(eventType, "response.rate_limits.")
 }
 
-func (s *OpenAIGatewayService) persistOpenAIWSRateLimitSignal(ctx context.Context, account *Account, headers http.Header, responseBody []byte, codeRaw, errTypeRaw, msgRaw string) {
+func (s *OpenAIGatewayService) persistOpenAIWSRateLimitSignal(ctx context.Context, account *Account, headers http.Header, responseBody []byte, codeRaw, errTypeRaw, msgRaw string, canonicalModel ...string) {
 	if s == nil || s.rateLimitService == nil || account == nil || account.Platform != PlatformOpenAI {
 		return
 	}
 	if !isOpenAIWSRateLimitError(codeRaw, errTypeRaw, msgRaw) {
 		return
 	}
-	s.handleOpenAIAccountUpstreamError(ctx, account, http.StatusTooManyRequests, headers, responseBody)
+	s.handleOpenAIAccountUpstreamError(ctx, account, http.StatusTooManyRequests, headers, responseBody, canonicalModel...)
 }
 
 func classifyOpenAIWSErrorEventFromRaw(codeRaw, errTypeRaw, msgRaw string) (string, bool) {

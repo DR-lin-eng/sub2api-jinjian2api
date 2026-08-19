@@ -149,6 +149,7 @@ func TestAccount_CodexPrewarmContinuationBypassesOnly429ModelLimits(t *testing.T
 		{name: "Codex quota 429", reason: openAIModelRateLimitReason, want: true},
 		{name: "Codex fallback 429", reason: openAIModelRateLimitReason + ":no_reset_time", want: true},
 		{name: "custom temp 429", reason: `{"status_code":429}`, want: true},
+		{name: "fixed prewarm circuit 429", reason: `{"status_code":429,"reason":"codex_prewarm_transient"}`, want: false},
 		{name: "model not found", reason: upstreamModelNotFoundReason, want: false},
 		{name: "plan gated", reason: upstreamCodexPlanGatedModelReason, want: false},
 		{name: "custom temp 503", reason: `{"status_code":503}`, want: false},

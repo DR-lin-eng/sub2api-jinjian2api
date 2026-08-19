@@ -46,6 +46,33 @@ func TestOpenAI429FastPath_CodexPrewarmContinuationKeepsAccountEligible(t *testi
 	require.Zero(t, svc.openaiOAuth429WindowCount.Load(), "opted 429s must not arm the global storm breaker")
 }
 
+func TestOpenAIPrewarmFailureBurstQuarantinesOnlyAccountModel(t *testing.T) {
+	repo := &rateLimitAccountRepoStub{}
+	svc := &OpenAIGatewayService{rateLimitService: &RateLimitService{accountRepo: repo}}
+	account := &Account{
+		ID:          422,
+		Platform:    PlatformOpenAI,
+		Type:        AccountTypeOAuth,
+		Status:      StatusActive,
+		Schedulable: true,
+		Extra:       map[string]any{CodexPrewarmContinuationExtraKey: true},
+	}
+	body := []byte(`{"error":{"type":"server_error","message":"bad gateway"}}`)
+
+	for range 2 {
+		require.False(t, svc.handleOpenAIAccountUpstreamError(
+			context.Background(), account, http.StatusBadGateway, http.Header{}, body, "gpt-5.5",
+		))
+	}
+
+	require.Equal(t, 1, repo.modelRateLimitCalls)
+	require.Equal(t, "gpt-5.5", repo.lastModelRateScope)
+	require.Contains(t, repo.lastModelRateReason, "codex_prewarm_transient")
+	require.True(t, svc.isOpenAIAccountModelRuntimeBlocked(account, "gpt-5.5"))
+	require.False(t, svc.isOpenAIAccountModelRuntimeBlocked(account, "gpt-5.6"))
+	require.True(t, account.IsSchedulable(), "the account-wide prewarm bypass remains intact")
+}
+
 func TestOpenAIRuntimeBlock_CodexPrewarmContinuationClearsOnly429Reason(t *testing.T) {
 	svc := &OpenAIGatewayService{}
 	account := &Account{ID: 421, Platform: PlatformOpenAI, Type: AccountTypeOAuth}

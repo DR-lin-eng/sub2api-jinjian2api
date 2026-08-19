@@ -359,8 +359,8 @@ func TestPriorityAdmissionRefreshStartsNewWebSocketTurn(t *testing.T) {
 
 	svc.SetPriorityAdmissionRuntimeConfig(DefaultPriorityAdmissionRuntimeConfig())
 	ctx, enabled = svc.RefreshPriorityAdmissionRequestSnapshot(ctx, RequestSchedulingTierLow)
-	require.False(t, enabled)
-	require.False(t, svc.PriorityAdmissionEnabledForRequest(ctx))
+	require.True(t, enabled, "fixed high-concurrency admission remains enabled after refresh")
+	require.True(t, svc.PriorityAdmissionEnabledForRequest(ctx))
 }
 
 func TestPriorityAdmissionLowTierNeverCreatesWaitLease(t *testing.T) {

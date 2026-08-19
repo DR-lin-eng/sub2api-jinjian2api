@@ -214,9 +214,9 @@ func testOpenAIWSv2RejectsMalformedEventBeforeWritingDownstream(t *testing.T, ma
 
 	result, err := svc.Forward(context.Background(), c, account, []byte(`{"model":"gpt-5.6-sol","stream":true,"input":"hello"}`))
 	require.Error(t, err)
-	var fallbackErr *openAIWSFallbackError
-	require.ErrorAs(t, err, &fallbackErr)
-	require.Equal(t, "invalid_event_json", fallbackErr.Reason)
+	var failoverErr *UpstreamFailoverError
+	require.ErrorAs(t, err, &failoverErr)
+	require.Equal(t, http.StatusBadGateway, failoverErr.StatusCode)
 	require.Nil(t, result)
 	require.Empty(t, recorder.Body.String())
 	require.True(t, captureConn.closed)

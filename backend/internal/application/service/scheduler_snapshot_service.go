@@ -732,6 +732,25 @@ func (s *SchedulerSnapshotService) runInitialRebuild() {
 		s.activateSchedulerV2("startup")
 		return
 	}
+	// Scheduler V2 is the only gateway candidate path in production. A legacy
+	// Redis state can survive an upgrade from the old toggle, so promote it to
+	// the bounded indexed engine before the first full rebuild. The persisted
+	// setting remains a compatibility record and is no longer an opt-out.
+	if cache, ok := s.cache.(SchedulerV2Cache); ok {
+		state := SchedulerEngineState{
+			Engine:         SchedulerEngineV2,
+			Status:         SchedulerEngineStatusBuilding,
+			CandidateLimit: DefaultSchedulerCandidateFetchLimit,
+			ScanLimit:      DefaultSchedulerCandidateScanLimit,
+		}
+		if err := cache.SetSchedulerV2Limits(context.Background(), state.CandidateLimit, state.ScanLimit); err == nil {
+			if err := cache.SetSchedulerEngineState(context.Background(), state); err == nil {
+				s.setLocalEngineState(state)
+				s.activateSchedulerV2("startup_fixed_policy")
+				return
+			}
+		}
+	}
 	_ = s.coalesceFullRebuild(func() error {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()

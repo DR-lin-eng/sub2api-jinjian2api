@@ -239,7 +239,15 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 		)
 		var dialErr *openAIWSDialError
 		if errors.As(err, &dialErr) && dialErr != nil && dialErr.StatusCode == http.StatusTooManyRequests {
-			s.persistOpenAIWSRateLimitSignal(ctx, account, dialErr.ResponseHeaders, nil, "rate_limit_exceeded", "rate_limit_error", strings.TrimSpace(err.Error()))
+			s.persistOpenAIWSRateLimitSignal(ctx, account, dialErr.ResponseHeaders, nil, "rate_limit_exceeded", "rate_limit_error", strings.TrimSpace(err.Error()), mappedModel)
+		}
+		if dialErr != nil && shouldFailoverOpenAIWSPreOutputFailure(dialErr.StatusCode, dialErr.ResponseBody) {
+			return nil, newOpenAIWSPreOutputFailoverError(
+				dialErr.StatusCode,
+				dialErr.ResponseHeaders,
+				dialErr.ResponseBody,
+				dialErr.Error(),
+			)
 		}
 		return nil, wrapOpenAIWSFallback(classifyOpenAIWSAcquireError(err), err)
 	}
@@ -600,14 +608,31 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 		}
 
 		if eventType == "error" {
-			s.handleOpenAIWSErrorEventTransientFailure(ctx, account, mappedModel, lease.HandshakeHeaders(), message)
 			errCodeRaw, errTypeRaw, errMsgRaw := parseOpenAIWSErrorEventFields(message)
-			s.persistOpenAIWSRateLimitSignal(ctx, account, lease.HandshakeHeaders(), message, errCodeRaw, errTypeRaw, errMsgRaw)
 			errMsg := strings.TrimSpace(errMsgRaw)
 			if errMsg == "" {
 				errMsg = "Upstream websocket error"
 			}
 			fallbackReason, canFallback := classifyOpenAIWSErrorEventFromRaw(errCodeRaw, errTypeRaw, errMsgRaw)
+			statusCode := openAIWSErrorHTTPStatusFromRaw(errCodeRaw, errTypeRaw)
+			if !wroteDownstream && fallbackReason != "upgrade_required" && fallbackReason != "ws_unsupported" &&
+				fallbackReason != "ws_connection_limit_reached" && fallbackReason != "previous_response_not_found" &&
+				fallbackReason != "invalid_encrypted_content" {
+				if failoverErr := s.handleOpenAIWSPreOutputFailure(
+					ctx,
+					account,
+					mappedModel,
+					statusCode,
+					lease.HandshakeHeaders(),
+					message,
+					errMsg,
+				); failoverErr != nil {
+					lease.MarkBroken()
+					return nil, failoverErr
+				}
+			}
+			s.handleOpenAIWSErrorEventTransientFailure(ctx, account, mappedModel, lease.HandshakeHeaders(), message)
+			s.persistOpenAIWSRateLimitSignal(ctx, account, lease.HandshakeHeaders(), message, errCodeRaw, errTypeRaw, errMsgRaw, mappedModel)
 			errCode, errType, errMessage := summarizeOpenAIWSErrorEventFieldsFromRaw(errCodeRaw, errTypeRaw, errMsgRaw)
 			logOpenAIWSModeInfo(
 				"error_event account_id=%d conn_id=%s idx=%d fallback_reason=%s can_fallback=%v err_code=%s err_type=%s err_message=%s",
@@ -648,18 +673,9 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 			}
 			// error 事件后连接不再可复用，避免回池后污染下一请求。
 			lease.MarkBroken()
-			if account.BypassesLocalOpenAI429SchedulingBlocks() && !wroteDownstream &&
-				isOpenAIWSRateLimitError(errCodeRaw, errTypeRaw, errMsgRaw) {
-				return nil, &UpstreamFailoverError{
-					StatusCode:      http.StatusTooManyRequests,
-					ResponseBody:    append([]byte(nil), message...),
-					ResponseHeaders: cloneHeader(lease.HandshakeHeaders()),
-				}
-			}
 			if !wroteDownstream && canFallback {
 				return nil, wrapOpenAIWSFallback(fallbackReason, errors.New(errMsg))
 			}
-			statusCode := openAIWSErrorHTTPStatusFromRaw(errCodeRaw, errTypeRaw)
 			setOpsUpstreamError(c, statusCode, errMsg, "")
 			if reqStream && !clientDisconnected {
 				flushBufferedStreamEvents("error_event")
@@ -676,14 +692,22 @@ func (s *OpenAIGatewayService) forwardOpenAIWSV2(
 			return nil, fmt.Errorf("openai ws error event: %s", errMsg)
 		}
 
-		if eventType == "response.failed" && account.BypassesLocalOpenAI429SchedulingBlocks() &&
-			!wroteDownstream && openAIWSPayloadStatusCode(message) == http.StatusTooManyRequests {
-			s.handleOpenAIWSTerminalTransientFailure(ctx, account, mappedModel, lease.HandshakeHeaders(), message)
-			lease.MarkBroken()
-			return nil, &UpstreamFailoverError{
-				StatusCode:      http.StatusTooManyRequests,
-				ResponseBody:    append([]byte(nil), message...),
-				ResponseHeaders: cloneHeader(lease.HandshakeHeaders()),
+		if eventType == "response.failed" && !wroteDownstream {
+			statusCode := openAIWSPayloadStatusCode(message)
+			if statusCode == 0 {
+				statusCode = openAIWSPayloadSemanticTransientStatus(message)
+			}
+			if failoverErr := s.handleOpenAIWSPreOutputFailure(
+				ctx,
+				account,
+				mappedModel,
+				statusCode,
+				lease.HandshakeHeaders(),
+				message,
+				extractUpstreamErrorMessage(message),
+			); failoverErr != nil {
+				lease.MarkBroken()
+				return nil, failoverErr
 			}
 		}
 

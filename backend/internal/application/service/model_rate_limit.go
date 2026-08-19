@@ -183,6 +183,12 @@ func (a *Account) bypassesLocalOpenAI429ModelRateLimit(reason string) bool {
 		return false
 	}
 	reason = strings.TrimSpace(reason)
+	// The fixed prewarm circuit uses a model-scoped quarantine after repeated
+	// failures. It must remain effective even though the account-level 429
+	// bypass is enabled for the continuation flow.
+	if strings.Contains(reason, "codex_prewarm_transient") {
+		return false
+	}
 	return isOpenAIQuotaModelRateLimitReason(reason) ||
 		reason == openAIImageRateLimitReason ||
 		tempUnschedulableReasonHasStatusCode(reason, 429)

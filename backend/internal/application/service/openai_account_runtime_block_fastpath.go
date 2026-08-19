@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -83,6 +84,11 @@ func (s *OpenAIGatewayService) handleOpenAIAccountUpstreamError(ctx context.Cont
 			persistOpenAI429PlanType(stateCtx, s.rateLimitService.accountRepo, account, responseBody)
 			s.rateLimitService.persistOpenAICodexSnapshot(stateCtx, account, headers)
 		}
+		// Prewarm continuation deliberately keeps the normal local 429 gate
+		// open. After a short consecutive burst, quarantine only this
+		// (account, model) pair so cache affinity cannot pin traffic to a dead
+		// upstream window.
+		s.recordOpenAIPrewarmModelFailure(stateCtx, account, modelScope, statusCode)
 		return false
 	}
 
@@ -146,13 +152,15 @@ func (s *OpenAIGatewayService) handleOpenAIAccountUpstreamError(ctx context.Cont
 	// same-account retry budget. Recording the generic account+model transient
 	// cooldown here would block the next approved retry before that budget is used.
 	poolModeRetryable := account.IsPoolMode() && account.IsPoolModeRetryableStatus(statusCode)
-	if !shouldDisable && account.Platform == PlatformOpenAI && account.Type == AccountTypeAPIKey &&
-		shouldCooldownOpenAITransientUpstreamError(statusCode, responseBody) && !poolModeRetryable {
+	if !shouldDisable && account.Platform == PlatformOpenAI &&
+		(account.Type == AccountTypeAPIKey || account.IsCodexPrewarmContinuationEnabled()) &&
+		(shouldCooldownOpenAITransientUpstreamError(statusCode, responseBody) ||
+			statusCode == http.StatusTooManyRequests && account.IsCodexPrewarmContinuationEnabled()) && !poolModeRetryable {
 		model := ""
 		if len(canonicalModel) > 0 {
 			model = canonicalModel[0]
 		}
-		decision := s.recordOpenAIAccountModelTransientFailure(account, model, time.Now())
+		decision := s.recordOpenAIPrewarmModelFailure(stateCtx, account, model, statusCode)
 		if decision.FailureStreak > 0 {
 			slog.Warn("openai_model_transient_state",
 				"account_id", account.ID,
@@ -164,6 +172,43 @@ func (s *OpenAIGatewayService) handleOpenAIAccountUpstreamError(ctx context.Cont
 		}
 	}
 	return shouldDisable
+}
+
+// recordOpenAIPrewarmModelFailure updates the bounded local health state and,
+// after the second consecutive failure, publishes a short model-scoped
+// quarantine. The persisted reason is intentionally distinct from upstream
+// quota 429 reasons, so the prewarm continuation bypass cannot clear it.
+func (s *OpenAIGatewayService) recordOpenAIPrewarmModelFailure(ctx context.Context, account *Account, model string, statusCode int) openAIAccountModelTransientDecision {
+	if s == nil || account == nil {
+		return openAIAccountModelTransientDecision{}
+	}
+	decision := s.recordOpenAIAccountModelTransientFailure(account, model, time.Now())
+	if !account.IsCodexPrewarmContinuationEnabled() ||
+		decision.FailureStreak != openAIFixedPrewarmFailurePersistAfterStreak ||
+		s.rateLimitService == nil || s.rateLimitService.accountRepo == nil {
+		return decision
+	}
+	model = openAIAccountModelTransientModel(model)
+	if model == "" || decision.BlockUntil.IsZero() {
+		return decision
+	}
+	reason := fmt.Sprintf(`{"status_code":%d,"reason":"codex_prewarm_transient"}`, statusCode)
+	if err := s.rateLimitService.accountRepo.SetModelRateLimit(ctx, account.ID, model, decision.BlockUntil, reason); err != nil {
+		slog.Warn("codex_prewarm_model_quarantine_persist_failed",
+			"account_id", account.ID,
+			"model", model,
+			"status_code", statusCode,
+			"error", err,
+		)
+	} else {
+		slog.Warn("codex_prewarm_model_quarantined",
+			"account_id", account.ID,
+			"model", model,
+			"status_code", statusCode,
+			"until", decision.BlockUntil,
+		)
+	}
+	return decision
 }
 
 func shouldCooldownOpenAITransientUpstreamError(statusCode int, responseBody []byte) bool {

@@ -75,7 +75,7 @@ func (s *ConcurrencyService) WithPriorityAdmissionRequestSnapshot(ctx context.Co
 		return ctx, snapshot.config.enabled
 	}
 	config := s.priorityAdmissionConfigSnapshot()
-	if !config.enabled {
+	if !config.enabled || !s.priorityAdmissionSupported() {
 		return ctx, false
 	}
 	baseContext := ctx
@@ -98,7 +98,7 @@ func (s *ConcurrencyService) RefreshPriorityAdmissionRequestSnapshot(ctx context
 	baseContext := ctx
 	ctx = WithRequestSchedulingTier(baseContext, tier)
 	ctx = context.WithValue(ctx, priorityAdmissionRequestSnapshotContextKey{}, &priorityAdmissionRequestSnapshot{config: config, baseContext: baseContext})
-	return ctx, config.enabled
+	return ctx, config.enabled && s.priorityAdmissionSupported()
 }
 
 func (s *ConcurrencyService) priorityAdmissionRequestConfig(ctx context.Context) (priorityAdmissionRuntimeConfig, *priorityAdmissionRequestSnapshot) {
@@ -112,12 +112,12 @@ func (s *ConcurrencyService) priorityAdmissionRequestConfig(ctx context.Context)
 
 func (s *ConcurrencyService) PriorityAdmissionEnabledForRequest(ctx context.Context) bool {
 	config, _ := s.priorityAdmissionRequestConfig(ctx)
-	return config.enabled
+	return config.enabled && s.priorityAdmissionSupported()
 }
 
 func DefaultPriorityAdmissionRuntimeConfig() PriorityAdmissionRuntimeConfig {
 	return PriorityAdmissionRuntimeConfig{
-		Enabled:                 false,
+		Enabled:                 true,
 		PendingLimitPerInstance: DefaultPriorityPendingLimitPerInstance,
 		PendingBytesPerInstance: DefaultPriorityPendingBytesPerInstance,
 	}
@@ -145,9 +145,9 @@ func (s *ConcurrencyService) SetPriorityAdmissionRuntimeConfig(config PriorityAd
 // reads ConcurrencyService's own atomic snapshot.
 func (s *ConcurrencyService) ApplyRequestPriorityAdmissionSettings(settings RequestPriorityAdmissionSettings) {
 	s.SetPriorityAdmissionRuntimeConfig(PriorityAdmissionRuntimeConfig{
-		Enabled:                 settings.Enabled,
-		PendingLimitPerInstance: settings.PendingLimitPerInstance,
-		PendingBytesPerInstance: settings.PendingBytesPerInstance(),
+		Enabled:                 true,
+		PendingLimitPerInstance: DefaultPriorityPendingLimitPerInstance,
+		PendingBytesPerInstance: DefaultPriorityPendingBytesPerInstance,
 	})
 }
 
@@ -161,7 +161,25 @@ func (s *ConcurrencyService) PriorityAdmissionRuntimeConfig() PriorityAdmissionR
 }
 
 func (s *ConcurrencyService) PriorityAdmissionEnabled() bool {
-	return s != nil && s.priorityAdmissionConfigSnapshot().enabled
+	return s != nil && s.priorityAdmissionConfigSnapshot().enabled && s.priorityAdmissionSupported()
+}
+
+// priorityAdmissionSupported keeps the fixed policy fail-open on legacy or
+// test cache implementations that do not expose the atomic priority Lua
+// operations. A real Redis scheduler cache implements this interface.
+func (s *ConcurrencyService) priorityAdmissionSupported() bool {
+	if s == nil {
+		return false
+	}
+	// A nil cache is a real runtime outage and must surface as the existing
+	// ErrPriorityAdmissionUnavailable signal. A non-nil legacy cache simply
+	// lacks the optional priority operations and should use the safe legacy
+	// account-slot path.
+	if s.cache == nil {
+		return true
+	}
+	_, ok := s.cache.(PriorityAdmissionCache)
+	return ok
 }
 
 func (s *ConcurrencyService) priorityAdmissionConfigSnapshot() priorityAdmissionRuntimeConfig {

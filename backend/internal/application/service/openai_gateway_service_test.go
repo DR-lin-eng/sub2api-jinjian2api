@@ -410,7 +410,7 @@ func TestOpenAIGatewayService_GenerateSessionHash_AttachesLegacyHashToContext(t 
 	require.NotEmpty(t, openAILegacySessionHashFromContext(c.Request.Context()))
 }
 
-func TestOpenAIGatewayService_ContentSessionRequestTracking_DefaultOff(t *testing.T) {
+func TestOpenAIGatewayService_ContentSessionRequestTracking_FixedOn(t *testing.T) {
 	resetOpenAIAdvancedSchedulerSettingCacheForTest()
 	defer resetOpenAIAdvancedSchedulerSettingCacheForTest()
 
@@ -428,9 +428,11 @@ func TestOpenAIGatewayService_ContentSessionRequestTracking_DefaultOff(t *testin
 	c2 := newContext()
 	hash2 := svc.GenerateSessionHashForRequest(c2, &groupID, body)
 	require.Equal(t, hash1, hash2)
-	require.False(t, openAIContentSessionRequestTracked(c1.Request.Context()))
-	require.False(t, openAIContentSessionRequestConcurrent(c2.Request.Context()))
-	require.Nil(t, svc.openaiContentSessions)
+	require.True(t, openAIContentSessionRequestTracked(c1.Request.Context()))
+	require.True(t, openAIContentSessionRequestConcurrent(c2.Request.Context()))
+	require.NotNil(t, svc.openaiContentSessions)
+	svc.ReleaseOpenAIContentSessionRequest(c2.Request.Context(), &groupID, hash2)
+	svc.ReleaseOpenAIContentSessionRequest(c1.Request.Context(), &groupID, hash1)
 }
 
 func TestOpenAIGatewayService_ContentSessionRequestTracking_OnlyOverlappingContent(t *testing.T) {

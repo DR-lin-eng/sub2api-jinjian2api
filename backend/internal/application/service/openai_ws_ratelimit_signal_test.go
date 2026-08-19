@@ -169,10 +169,13 @@ func TestOpenAIGatewayService_Forward_WSv2ErrorEventUsageLimitPersistsRateLimit(
 	result, err := svc.Forward(context.Background(), c, &account, body)
 	require.Error(t, err)
 	require.Nil(t, result)
-	require.Equal(t, http.StatusTooManyRequests, rec.Code)
+	var failoverErr *UpstreamFailoverError
+	require.ErrorAs(t, err, &failoverErr)
+	require.Equal(t, http.StatusTooManyRequests, failoverErr.StatusCode)
+	require.Empty(t, rec.Body.Bytes(), "pre-output 429 must remain available to the handler failover loop")
 	require.Nil(t, upstream.lastReq, "WS 限流 error event 不应回退到同账号 HTTP")
-	require.Len(t, repo.rateLimitCalls, 1)
-	require.WithinDuration(t, time.Unix(resetAt, 0), repo.rateLimitCalls[0], 2*time.Second)
+	require.Empty(t, repo.rateLimitCalls)
+	require.Equal(t, []string{"gpt-5.1"}, repo.modelRateLimitCalls)
 }
 
 func TestOpenAIGatewayService_Forward_WSv2Handshake429PersistsRateLimit(t *testing.T) {
@@ -239,9 +242,13 @@ func TestOpenAIGatewayService_Forward_WSv2Handshake429PersistsRateLimit(t *testi
 	result, err := svc.Forward(context.Background(), c, &account, body)
 	require.Error(t, err)
 	require.Nil(t, result)
-	require.Equal(t, http.StatusTooManyRequests, rec.Code)
+	var failoverErr *UpstreamFailoverError
+	require.ErrorAs(t, err, &failoverErr)
+	require.Equal(t, http.StatusTooManyRequests, failoverErr.StatusCode)
+	require.Empty(t, rec.Body.Bytes(), "pre-output handshake 429 must remain available to the handler failover loop")
 	require.Nil(t, upstream.lastReq, "WS 握手 429 不应回退到同账号 HTTP")
-	require.Len(t, repo.rateLimitCalls, 1)
+	require.Empty(t, repo.rateLimitCalls)
+	require.Equal(t, []string{"gpt-5.1"}, repo.modelRateLimitCalls)
 	require.NotEmpty(t, repo.updateExtra, "握手 429 的 x-codex 头应立即落库")
 	require.Contains(t, repo.updateExtra[0], "codex_usage_updated_at")
 }
@@ -355,6 +362,71 @@ func TestOpenAIGatewayService_Forward_CodexPrewarmRateLimits429ReturnsFailoverWi
 	require.Empty(t, repo.rateLimitCalls)
 	require.Empty(t, repo.modelRateLimitCalls)
 	require.True(t, account.IsSchedulable())
+}
+
+func TestOpenAIGatewayService_CodexPrewarmTerminalFailureFailsOverBeforeBusinessWrite(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		statusCode int
+		errorBody  string
+	}{
+		{
+			name:       "rate limited",
+			statusCode: http.StatusTooManyRequests,
+			errorBody:  `{"status_code":429,"code":"rate_limit_exceeded","message":"limited"}`,
+		},
+		{
+			name:       "bad gateway",
+			statusCode: http.StatusBadGateway,
+			errorBody:  `{"status_code":502,"code":"server_error","message":"bad gateway"}`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newOpenAIWSV2TestConfig()
+			cfg.Gateway.OpenAIWS.MaxConnsPerAccount = 1
+			cfg.Gateway.OpenAIWS.MinIdlePerAccount = 0
+			cfg.Gateway.OpenAIWS.MaxIdlePerAccount = 1
+			captureConn := &openAIWSCaptureConn{events: [][]byte{
+				[]byte(`{"type":"response.failed","response":{"id":"resp_prewarm_failed","error":` + tc.errorBody + `}}`),
+			}}
+			pool := newOpenAIWSConnPool(cfg)
+			pool.setClientDialerForTest(&openAIWSCaptureDialer{conn: captureConn})
+			account := Account{
+				ID:          507,
+				Platform:    PlatformOpenAI,
+				Type:        AccountTypeOAuth,
+				Status:      StatusActive,
+				Schedulable: true,
+				Concurrency: 1,
+				Credentials: map[string]any{"access_token": "oauth-token"},
+				Extra:       map[string]any{CodexPrewarmContinuationExtraKey: true},
+			}
+			repo := &openAIWSRateLimitSignalRepo{stubOpenAIAccountRepo: stubOpenAIAccountRepo{accounts: []Account{account}}}
+			svc := &OpenAIGatewayService{
+				accountRepo:      repo,
+				rateLimitService: &RateLimitService{accountRepo: repo},
+				httpUpstream:     &httpUpstreamRecorder{},
+				cache:            &stubGatewayCache{},
+				cfg:              cfg,
+				openaiWSResolver: NewOpenAIWSProtocolResolver(cfg),
+				toolCorrector:    NewCodexToolCorrector(),
+				openaiWSPool:     pool,
+			}
+			rec := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(rec)
+			c.Request = httptest.NewRequest(http.MethodPost, "/openai/v1/responses", nil)
+			c.Request.Header.Set("User-Agent", "codex_cli_rs/0.98.0")
+
+			result, err := svc.Forward(context.Background(), c, &account, []byte(`{"model":"gpt-5.5","stream":false,"input":"hello"}`))
+			require.Error(t, err)
+			require.Nil(t, result)
+			var failoverErr *UpstreamFailoverError
+			require.ErrorAs(t, err, &failoverErr)
+			require.Equal(t, tc.statusCode, failoverErr.StatusCode)
+			require.Len(t, captureConn.writes, 1, "failed prewarm must not send the business request on the same account")
+			require.Empty(t, rec.Body.Bytes())
+		})
+	}
 }
 
 func TestOpenAIGatewayService_ProxyResponsesWebSocketFromClient_ErrorEventUsageLimitPersistsRateLimit(t *testing.T) {

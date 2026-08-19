@@ -306,7 +306,7 @@ func TestAcquireUserSlotWithWait_ImmediateAcquireSkipsWaitQueue(t *testing.T) {
 	require.Equal(t, 1, cache.userReleaseCalls)
 }
 
-func TestPriorityAdmissionRequestMetadataIsLazyWhenFeatureDisabled(t *testing.T) {
+func TestPriorityAdmissionRequestMetadataIsLazyWhenCacheUnsupported(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	recorder := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(recorder)
@@ -326,20 +326,16 @@ func TestPriorityAdmissionRequestMetadataIsLazyWhenFeatureDisabled(t *testing.T)
 	_, hasTierContext := service.RequestSchedulingTierFromContextOK(c.Request.Context())
 	require.False(t, hasTierContext)
 
-	concurrencyService.SetPriorityAdmissionRuntimeConfig(service.PriorityAdmissionRuntimeConfig{
-		Enabled:                 true,
-		PendingLimitPerInstance: 256,
-		PendingBytesPerInstance: 256 << 20,
-	})
+	// Fixed admission remains fail-open when the injected cache does not expose
+	// the atomic priority operations.
 	helper.SetPriorityAdmissionPendingBytes(c, 123)
 
-	require.Equal(t, int64(123), priorityAdmissionPendingBytes(c))
-	tier, hasTierContext := service.RequestSchedulingTierFromContextOK(c.Request.Context())
-	require.True(t, hasTierContext)
-	require.Equal(t, service.RequestSchedulingTierLow, tier)
+	require.Zero(t, priorityAdmissionPendingBytes(c))
+	_, hasTierContext = service.RequestSchedulingTierFromContextOK(c.Request.Context())
+	require.False(t, hasTierContext)
 }
 
-func TestPriorityAdmissionWebSocketTurnRefreshClearsBytesAndUsesCurrentSwitch(t *testing.T) {
+func TestPriorityAdmissionWebSocketTurnRefreshClearsBytesWhenCacheUnsupported(t *testing.T) {
 	c, _ := newHelperTestContext(http.MethodPost, "/v1/responses")
 	c.Set(string(middleware2.ContextKeyUser), middleware2.AuthSubject{
 		UserID:         1,
@@ -347,18 +343,13 @@ func TestPriorityAdmissionWebSocketTurnRefreshClearsBytesAndUsesCurrentSwitch(t 
 		SchedulingTier: service.RequestSchedulingTierLow,
 	})
 	concurrencyService := service.NewConcurrencyService(&helperConcurrencyCacheStub{})
-	concurrencyService.SetPriorityAdmissionRuntimeConfig(service.PriorityAdmissionRuntimeConfig{
-		Enabled:                 true,
-		PendingLimitPerInstance: 256,
-		PendingBytesPerInstance: 256 << 20,
-	})
 	helper := NewConcurrencyHelper(concurrencyService, SSEPingFormatNone, time.Second)
 	helper.SetPriorityAdmissionPendingBytes(c, 123)
-	require.Equal(t, int64(123), priorityAdmissionPendingBytes(c))
-
-	require.True(t, helper.RefreshPriorityAdmissionRequestSnapshot(c))
 	require.Zero(t, priorityAdmissionPendingBytes(c))
-	require.True(t, concurrencyService.PriorityAdmissionEnabledForRequest(c.Request.Context()))
+
+	require.False(t, helper.RefreshPriorityAdmissionRequestSnapshot(c))
+	require.Zero(t, priorityAdmissionPendingBytes(c))
+	require.False(t, concurrencyService.PriorityAdmissionEnabledForRequest(c.Request.Context()))
 
 	concurrencyService.SetPriorityAdmissionRuntimeConfig(service.DefaultPriorityAdmissionRuntimeConfig())
 	require.False(t, helper.RefreshPriorityAdmissionRequestSnapshot(c))
