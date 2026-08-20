@@ -79,23 +79,6 @@ func TestMergeOmittedUpdateSettingsRequestClonesTableOptions(t *testing.T) {
 	require.Equal(t, []int{10, 20}, previous.TablePageSizeOptions)
 }
 
-func TestUpdateSettingsPartialPayloadKeepsUnsentKeys(t *testing.T) {
-	h, repo := newStepUpSwitchTestHandler(t, map[string]string{
-		service.SettingKeySiteName:   "Example Gateway",
-		service.SettingKeyAPIBaseURL: "https://api.example.com",
-		service.SettingKeySMTPHost:   "smtp.example.com",
-		service.SettingKeySMTPFrom:   "noreply@example.com",
-	})
-
-	rec := doUpdateSettings(t, h, map[string]any{"risk_control_enabled": true}, nil)
-	require.Equal(t, http.StatusOK, rec.Code)
-	require.Equal(t, "true", repo.values[service.SettingKeyRiskControlEnabled])
-	require.Equal(t, "Example Gateway", repo.values[service.SettingKeySiteName])
-	require.Equal(t, "https://api.example.com", repo.values[service.SettingKeyAPIBaseURL])
-	require.Equal(t, "smtp.example.com", repo.values[service.SettingKeySMTPHost])
-	require.Equal(t, "noreply@example.com", repo.values[service.SettingKeySMTPFrom])
-}
-
 func TestUpdateSettingsPartialPayloadMergesStoredCrossFieldValues(t *testing.T) {
 	stored := map[string]string{service.SettingKeyMinCodexVersion: "0.200.0"}
 	h, repo := newStepUpSwitchTestHandler(t, maps.Clone(stored))
@@ -131,7 +114,7 @@ func TestUpdateSettingsPartialPayloadPreservesCodexVersions(t *testing.T) {
 	}
 	h, repo := newStepUpSwitchTestHandler(t, maps.Clone(stored))
 
-	rec := doUpdateSettings(t, h, map[string]any{"risk_control_enabled": true}, nil)
+	rec := doUpdateSettings(t, h, map[string]any{}, nil)
 
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.Equal(t, "0.150.0", repo.values[service.SettingKeyOpenAICodexClientVersion])
@@ -156,7 +139,6 @@ func TestUpdateSettingsCannotWriteSynchronizedCodexVersion(t *testing.T) {
 
 	rec := doUpdateSettings(t, h, map[string]any{
 		"openai_codex_client_version_synced": "9.9.9",
-		"risk_control_enabled":               true,
 	}, nil)
 
 	require.Equal(t, http.StatusOK, rec.Code)

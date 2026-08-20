@@ -53,7 +53,7 @@ func newStepUpTestContext(t *testing.T) (*gin.Context, *httptest.ResponseRecorde
 
 func TestEnforceStepUpRejectsAdminAPIKey(t *testing.T) {
 	c, rec := newStepUpTestContext(t)
-	c.Set("auth_method", service.AuditAuthMethodAdminAPIKey)
+	c.Set(ContextKeyAuthMethod, AuthMethodAdminAPIKey)
 
 	ok := enforceStepUp(c, stubStepUpGrantChecker{granted: true}, stubStepUpUserReader{user: &service.User{TotpEnabled: true}}, stepUpEnabled)
 
@@ -131,7 +131,7 @@ func TestEnforceStepUpDisabledSkipsAllChecks(t *testing.T) {
 
 	t.Run("admin api key", func(t *testing.T) {
 		c, _ := newStepUpTestContext(t)
-		c.Set("auth_method", service.AuditAuthMethodAdminAPIKey)
+		c.Set(ContextKeyAuthMethod, AuthMethodAdminAPIKey)
 
 		ok := enforceStepUp(c, stubStepUpGrantChecker{granted: false}, stubStepUpUserReader{user: nil, err: errors.New("should not be called")}, disabled)
 

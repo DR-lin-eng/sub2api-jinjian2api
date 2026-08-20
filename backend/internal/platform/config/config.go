@@ -11,9 +11,6 @@ const (
 	RunModeStandard = "standard"
 	RunModeSimple   = "simple"
 
-	DeploymentModeStandalone    = "standalone"
-	DeploymentModeMultiInstance = "multi_instance"
-
 	WorkerModeAuto     = "auto"
 	WorkerModeEnabled  = "true"
 	WorkerModeDisabled = "false"
@@ -85,21 +82,11 @@ type Config struct {
 	ImageStorage ImageStorageConfig         `mapstructure:"image_storage"`
 }
 
-// DeploymentConfig controls cluster identity and cluster-wide scheduled work.
-// Every node always serves the complete API and embedded frontend. WorkerEnabled
-// is tri-state: auto/true are worker candidates, while false disables only
-// cluster-wide scheduled workers on this node.
+// DeploymentConfig controls optional background workers for a standalone node.
+// The gateway is intentionally single-process; there is no cluster identity or
+// distributed worker election in this branch.
 type DeploymentConfig struct {
-	Mode                     string `mapstructure:"mode"`
-	NodeName                 string `mapstructure:"node_name"`
-	WorkerEnabled            string `mapstructure:"worker_enabled"`
-	HeartbeatIntervalSeconds int    `mapstructure:"heartbeat_interval_seconds"`
-	StaleAfterSeconds        int    `mapstructure:"stale_after_seconds"`
-	TaskLeaseSeconds         int    `mapstructure:"task_lease_seconds"`
-}
-
-func (c DeploymentConfig) IsMultiInstance() bool {
-	return c.Mode == DeploymentModeMultiInstance
+	WorkerEnabled string `mapstructure:"worker_enabled"`
 }
 
 func (c DeploymentConfig) WorkerMode() string {
@@ -114,10 +101,9 @@ func (c DeploymentConfig) WorkerMode() string {
 	}
 }
 
-// WorkerEnabledResolved reports whether this node may contend for distributed
-// work. Auto deliberately enables candidacy on every node; the task lease picks
-// the actual executor and preserves failover without a manually selected master.
-func (c DeploymentConfig) WorkerEnabledResolved() bool {
+// BackgroundWorkersEnabled reports whether this standalone process should run
+// optional scheduled jobs such as backups and channel probes.
+func (c DeploymentConfig) BackgroundWorkersEnabled() bool {
 	return c.WorkerMode() != WorkerModeDisabled
 }
 

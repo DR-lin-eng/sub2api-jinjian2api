@@ -62,7 +62,7 @@ func newJWTTestEnv(users map[int64]*service.User) (*gin.Engine, *service.AuthSer
 	userRepo := &stubJWTUserRepo{users: users}
 	authSvc := service.NewAuthService(userRepo, nil, cfg, nil)
 	userSvc := service.NewUserService(userRepo)
-	mw := NewJWTAuthMiddleware(authSvc, userSvc, nil, nil)
+	mw := NewJWTAuthMiddleware(authSvc, userSvc, nil)
 
 	r := gin.New()
 	r.Use(gin.HandlerFunc(mw))
@@ -151,7 +151,7 @@ func TestJWTAuth_ValidToken_TouchesLastActive(t *testing.T) {
 	toucher := &recordingActivityToucher{}
 
 	r := gin.New()
-	r.Use(jwtAuth(authSvc, userSvc, toucher, nil, nil))
+	r.Use(jwtAuth(authSvc, userSvc, toucher, nil))
 	r.GET("/protected", func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})

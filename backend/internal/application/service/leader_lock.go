@@ -6,10 +6,8 @@ import (
 	"time"
 )
 
-// LeaderLockCache provides cross-instance mutual exclusion for periodic background
-// jobs. It is implemented in the repository layer (Redis-backed) so the service
-// layer never depends on Redis directly. Release is a compare-and-delete keyed by
-// owner so a stale holder can never delete a peer's lock.
+// LeaderLockCache provides process-local mutual exclusion for optional scheduled
+// jobs. The standalone branch deliberately does not coordinate replicas.
 type LeaderLockCache interface {
 	// TryAcquireLeaderLock sets key=owner with the given TTL iff key is absent.
 	// It returns true when the caller becomes the owner.
@@ -18,26 +16,20 @@ type LeaderLockCache interface {
 	ReleaseLeaderLock(ctx context.Context, key, owner string) error
 }
 
-// tryAcquireSingletonLeaderLock provides best-effort single-flight execution of a
-// periodic background job across multiple instances. It prefers the Redis-backed
-// LeaderLockCache and falls back to a Postgres advisory lock when the cache is
-// unavailable or errors, mirroring the approach used by the Ops background
-// services.
+// tryAcquireSingletonLeaderLock provides best-effort single-flight execution of
+// a periodic background job inside this process.
 //
 // Semantics:
 //   - acquired      -> returns a non-nil release func and true; callers should
 //     defer the release once the job finishes.
-//   - held by peer  -> returns (nil, false); callers should skip this cycle.
-//   - no backend    -> when neither the cache nor a DB is configured (e.g. unit
-//     tests, or a single-instance deployment without Redis) it runs without
-//     gating, returning a no-op release and true, so the job is never silently
-//     starved.
+//   - held by another local task -> returns (nil, false); callers skip this cycle.
+//   - no cache -> runs without gating, so a standalone deployment never starves.
 //
 // The TTL is purely a crash-safety bound: callers release the lock as soon as the
 // job completes, so leadership is re-contested every cycle rather than pinned to
-// one instance. The TTL must therefore be larger than the job's worst-case
+// one process. The TTL must therefore be larger than the job's worst-case
 // runtime so the lock does not expire mid-run.
-func tryAcquireSingletonLeaderLock(ctx context.Context, cache LeaderLockCache, db *sql.DB, key, owner string, ttl time.Duration) (func(), bool) {
+func tryAcquireSingletonLeaderLock(ctx context.Context, cache LeaderLockCache, _ *sql.DB, key, owner string, ttl time.Duration) (func(), bool) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -55,12 +47,7 @@ func tryAcquireSingletonLeaderLock(ctx context.Context, cache LeaderLockCache, d
 			}
 			return release, true
 		}
-		// Cache error: fall through to the DB advisory lock so a flaky Redis does
-		// not stampede the job across every instance.
-	}
-
-	if db != nil {
-		return tryAcquireDBAdvisoryLock(ctx, db, hashAdvisoryLockID(key))
+		// A local cache error should not prevent the optional task from running.
 	}
 
 	// No coordination backend available: run without gating.

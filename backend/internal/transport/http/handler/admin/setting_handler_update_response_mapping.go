@@ -22,7 +22,6 @@ func buildSettingsUpdateResponsePayload(
 		PasskeyRPOrigins:            passkeyRPOrigins,
 		SessionBindingEnabled:       settings.SessionBindingEnabled,
 		StepUpEnabled:               settings.StepUpEnabled,
-		AuditLogRetentionDays:       settings.AuditLogRetentionDays,
 
 		SMTPHost:               settings.SMTPHost,
 		SMTPPort:               settings.SMTPPort,
@@ -128,8 +127,5 @@ func buildSettingsUpdateResponsePayload(
 		AccountQuotaNotifyEmails:             dto.NotifyEmailEntriesFromService(settings.AccountQuotaNotifyEmails),
 		ChannelMonitorEnabled:                settings.ChannelMonitorEnabled,
 		ChannelMonitorDefaultIntervalSeconds: settings.ChannelMonitorDefaultIntervalSeconds,
-		RiskControlEnabled:                   settings.RiskControlEnabled,
-		CyberSessionBlockEnabled:             settings.CyberSessionBlockEnabled,
-		CyberSessionBlockTTLSeconds:          settings.CyberSessionBlockTTLSeconds,
 	}
 }

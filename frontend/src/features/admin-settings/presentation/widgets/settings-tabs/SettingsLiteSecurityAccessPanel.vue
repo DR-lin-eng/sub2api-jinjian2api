@@ -58,17 +58,6 @@
           <Toggle v-model="form.session_binding_enabled" />
         </div>
 
-        <div class="flex items-center justify-between gap-4 border-t border-gray-100 pt-4 dark:border-dark-700">
-          <div>
-            <label class="font-medium text-gray-900 dark:text-white">
-              {{ t('admin.settings.security.auditRetention') }}
-            </label>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-              {{ t('admin.settings.security.auditRetentionHint') }}
-            </p>
-          </div>
-          <input v-model.number="form.audit_log_retention_days" type="number" min="0" class="input w-28 text-right" />
-        </div>
       </div>
     </div>
 

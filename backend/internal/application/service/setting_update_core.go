@@ -8,7 +8,6 @@ func writeLocalAuthSystemSettingUpdates(updates map[string]string, settings *Sys
 	updates[SettingKeyPasskeyEnabled] = strconv.FormatBool(settings.PasskeyEnabled)
 	updates[SettingKeySessionBindingEnabled] = strconv.FormatBool(settings.SessionBindingEnabled)
 	updates[SettingKeyStepUpEnabled] = strconv.FormatBool(settings.StepUpEnabled)
-	updates[SettingKeyAuditLogRetentionDays] = strconv.Itoa(settings.AuditLogRetentionDays)
 }
 
 func writeAccessSystemSettingUpdates(updates map[string]string, settings *SystemSettings, clientIPTrustedProxiesJSON string) {

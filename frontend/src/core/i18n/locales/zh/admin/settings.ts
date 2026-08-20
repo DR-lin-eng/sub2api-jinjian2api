@@ -29,16 +29,6 @@ export default {
           defaultInterval: '默认检测间隔（秒）',
           defaultIntervalHint: '新建渠道监控时表单的默认值，可被单个渠道覆盖。范围 15 – 3600 秒。',
         },
-        riskControl: {
-          title: '风控中心',
-          description: '启用内容审计菜单和全端点请求审核入口。默认关闭。',
-          configureLink: '前往 风控中心 配置内容审计',
-          enabled: '启用风控中心',
-          enabledHint: '关闭后管理员侧边栏入口隐藏，网关内容审计不会执行。',
-          cyberSessionBlock: 'cyber 会话自动屏蔽',
-          cyberSessionBlockHint: '开启后,被上游网络安全策略(cyber_policy)拦截的会话将在 TTL 内被本地屏蔽,不再发往上游。仅屏蔽该会话,不影响同 Key 其他会话。',
-          cyberSessionBlockTTL: '屏蔽时长(秒)',
-        },
       },
       security: {
         title: '访问安全',
@@ -58,8 +48,6 @@ export default {
         stepUpEnableRequiresTotp: '开启敏感操作二次验证前，请先在个人资料中为当前账号启用 2FA (TOTP)。',
         sessionBinding: '会话 IP/UA 绑定',
         sessionBindingHint: '将登录会话与客户端 IP 和 User-Agent 绑定，任一变化即强制该会话失效并需重新登录（提升被盗凭证的利用门槛）。',
-        auditRetention: '操作日志保留天数',
-        auditRetentionHint: '超过该天数的操作日志将被自动清理；填 0 表示永久保留（仅支持手动清空）。'
       },
       panelRateLimit: {
         title: '面板接口限流',
@@ -82,7 +70,7 @@ export default {
       },
       apiKeyAcl: {
         title: '客户端 IP 解析',
-        description: '统一控制限流、API Key IP 规则、使用记录、操作审计与会话绑定所使用的客户端 IP',
+        description: '统一控制限流、API Key IP 规则、使用记录、提示词审查与会话绑定所使用的客户端 IP',
         resolutionMode: '解析模式',
         resolutionModeHint: '自动兼容模式无需修改 Nginx、Caddy、Cloudflare 或 Docker 配置',
         trustedProxies: '额外可信代理',

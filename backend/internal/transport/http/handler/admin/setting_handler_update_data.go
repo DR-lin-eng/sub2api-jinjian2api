@@ -5,11 +5,10 @@ import "github.com/Wei-Shaw/sub2api/internal/transport/http/handler/dto"
 // UpdateSettingsRequest 更新设置请求
 type UpdateSettingsRequest struct {
 	FrontendURL           string `json:"frontend_url"`
-	TotpEnabled           bool   `json:"totp_enabled"`             // TOTP 双因素认证
-	PasskeyEnabled        *bool  `json:"passkey_enabled"`          // Passkey 登录（省略=保持现值）
-	SessionBindingEnabled *bool  `json:"session_binding_enabled"`  // 会话 IP/UA 绑定（省略=保持现值）
-	StepUpEnabled         *bool  `json:"step_up_enabled"`          // 敏感操作 step-up 2FA（省略=保持现值）
-	AuditLogRetentionDays int    `json:"audit_log_retention_days"` // 审计日志保留天数
+	TotpEnabled           bool   `json:"totp_enabled"`            // TOTP 双因素认证
+	PasskeyEnabled        *bool  `json:"passkey_enabled"`         // Passkey 登录（省略=保持现值）
+	SessionBindingEnabled *bool  `json:"session_binding_enabled"` // 会话 IP/UA 绑定（省略=保持现值）
+	StepUpEnabled         *bool  `json:"step_up_enabled"`         // 敏感操作 step-up 2FA（省略=保持现值）
 
 	// 邮件服务设置
 	SMTPHost     string `json:"smtp_host"`
@@ -116,13 +115,6 @@ type UpdateSettingsRequest struct {
 	// Channel Monitor feature switch
 	ChannelMonitorEnabled                *bool `json:"channel_monitor_enabled"`
 	ChannelMonitorDefaultIntervalSeconds *int  `json:"channel_monitor_default_interval_seconds"`
-
-	// 风控中心功能开关
-	RiskControlEnabled *bool `json:"risk_control_enabled"`
-
-	// cyber 会话屏蔽开关 + TTL
-	CyberSessionBlockEnabled    *bool `json:"cyber_session_block_enabled"`
-	CyberSessionBlockTTLSeconds *int  `json:"cyber_session_block_ttl_seconds"`
 
 	// OpenAI fast/flex policy (optional, only updated when provided)
 	OpenAIFastPolicySettings *dto.OpenAIFastPolicySettings `json:"openai_fast_policy_settings,omitempty"`

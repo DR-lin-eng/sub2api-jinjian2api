@@ -29,16 +29,6 @@ export default {
           defaultInterval: 'Default check interval (seconds)',
           defaultIntervalHint: 'Pre-fills the interval when creating a new monitor; each monitor can override it. Range 15 – 3600.',
         },
-        riskControl: {
-          title: 'Risk Control',
-          description: 'Enable the content moderation menu and gateway audit entry point. Disabled by default.',
-          configureLink: 'Configure content moderation in Risk Control',
-          enabled: 'Enable Risk Control',
-          enabledHint: 'When off, the admin sidebar entry is hidden and gateway moderation is skipped.',
-          cyberSessionBlock: 'Cyber session auto-block',
-          cyberSessionBlockHint: 'When enabled, sessions hit by upstream cyber_policy are blocked locally for the TTL and no longer forwarded. Only the offending session is blocked; other sessions on the same key are unaffected.',
-          cyberSessionBlockTTL: 'Block TTL (seconds)',
-        },
       },
       security: {
         title: 'Access Security',
@@ -59,8 +49,6 @@ export default {
         stepUpEnableRequiresTotp: 'Enable 2FA (TOTP) for your own account in Profile before turning on step-up verification.',
         sessionBinding: 'Session IP/UA Binding',
         sessionBindingHint: 'Bind login sessions to the client IP and User-Agent. Any change immediately invalidates the session and forces re-login, raising the bar for stolen-credential reuse.',
-        auditRetention: 'Audit Log Retention (days)',
-        auditRetentionHint: 'Audit logs older than this are cleaned up automatically. Set to 0 to keep them forever (manual clear only).'
       },
       panelRateLimit: {
         title: 'Panel API Rate Limiting',
@@ -84,7 +72,7 @@ export default {
       apiKeyAcl: {
         title: 'Client IP Resolution',
         description:
-          'Use one client IP for rate limits, API Key IP rules, usage records, audit logs, and session binding',
+          'Use one client IP for rate limits, API Key IP rules, usage records, Prompt Audit, and session binding',
         resolutionMode: 'Resolution mode',
         resolutionModeHint: 'Automatic compatibility works with Nginx, Caddy, Cloudflare, and Docker without configuration changes',
         trustedProxies: 'Additional trusted proxies',

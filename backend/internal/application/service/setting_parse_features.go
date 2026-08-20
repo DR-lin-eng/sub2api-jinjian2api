@@ -44,17 +44,6 @@ func (s *SettingService) applyFeatureSettings(result *SystemSettings, settings m
 		settings[SettingKeyChannelMonitorDefaultIntervalSeconds],
 	)
 
-	// 风控中心功能（默认关闭，严格 true 才启用）
-	result.RiskControlEnabled = settings[SettingKeyRiskControlEnabled] == "true"
-
-	// cyber 会话屏蔽（默认关闭，TTL 默认 3600s）
-	result.CyberSessionBlockEnabled = settings[SettingKeyCyberSessionBlockEnabled] == "true"
-	if v, err := strconv.Atoi(strings.TrimSpace(settings[SettingKeyCyberSessionBlockTTLSeconds])); err == nil && v > 0 {
-		result.CyberSessionBlockTTLSeconds = v
-	} else {
-		result.CyberSessionBlockTTLSeconds = 3600
-	}
-
 	// Claude Code version check
 	result.MinClaudeCodeVersion = settings[SettingKeyMinClaudeCodeVersion]
 	result.MaxClaudeCodeVersion = settings[SettingKeyMaxClaudeCodeVersion]

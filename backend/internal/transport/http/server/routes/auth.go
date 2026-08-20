@@ -18,7 +18,6 @@ func RegisterAuthRoutes(
 	v1 *gin.RouterGroup,
 	h *handler.Handlers,
 	jwtAuth servermiddleware.JWTAuthMiddleware,
-	auditLog servermiddleware.AuditLogMiddleware,
 	redisClient *redis.Client,
 	db *sql.DB,
 	settingService *service.SettingService,
@@ -38,14 +37,12 @@ func RegisterAuthRoutes(
 		rateLimiter.LimitWithOptions("auth-login", 20, time.Minute, middleware.RateLimitOptions{
 			FailureMode: middleware.RateLimitFailClose,
 		}),
-		gin.HandlerFunc(auditLog),
 		h.Auth.Login,
 	)
 
 	// The 2API branch only exposes local administrator session endpoints.
 	auth := v1.Group("/auth")
 	auth.Use(servermiddleware.BackendModeAuthGuard(settingService))
-	auth.Use(gin.HandlerFunc(auditLog))
 	{
 		auth.POST("/login/2fa", rateLimiter.LimitWithOptions("auth-login-2fa", 20, time.Minute, middleware.RateLimitOptions{
 			FailureMode: middleware.RateLimitFailClose,

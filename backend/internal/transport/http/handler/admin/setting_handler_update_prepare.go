@@ -49,7 +49,7 @@ func (h *SettingHandler) prepareSettingsUpdate(
 // ensureActorTotpForStepUp requires an interactive admin session whose actor
 // already has TOTP enabled before the global step-up gate can be enabled.
 func (h *SettingHandler) ensureActorTotpForStepUp(c *gin.Context) bool {
-	if c.GetString("auth_method") == service.AuditAuthMethodAdminAPIKey {
+	if c.GetString(middleware.ContextKeyAuthMethod) == middleware.AuthMethodAdminAPIKey {
 		response.ErrorWithDetails(c, http.StatusForbidden,
 			"Admin API key cannot enable step-up verification; use an admin session with TOTP enabled",
 			"STEP_UP_ADMIN_API_KEY_FORBIDDEN", nil)

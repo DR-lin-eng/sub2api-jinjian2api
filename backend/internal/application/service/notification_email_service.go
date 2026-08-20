@@ -16,11 +16,9 @@ import (
 )
 
 const (
-	NotificationEmailEventAccountQuotaAlert          = "account.quota_alert"
-	NotificationEmailEventContentModerationViolation = "content_moderation.violation_notice"
-	NotificationEmailEventCyberPolicyNotice          = "content_moderation.cyber_policy_notice"
-	NotificationEmailEventOpsAlert                   = "ops.alert"
-	NotificationEmailEventOpsScheduledReport         = "ops.scheduled_report"
+	NotificationEmailEventAccountQuotaAlert  = "account.quota_alert"
+	NotificationEmailEventOpsAlert           = "ops.alert"
+	NotificationEmailEventOpsScheduledReport = "ops.scheduled_report"
 
 	notificationEmailTemplateKeyPrefix    = "notification_email_template:"
 	notificationEmailDeliveryKeyPrefix    = "notification_email_delivery:"
@@ -806,8 +804,6 @@ func addNotificationEmailOpsSummarySampleVariables(variables map[string]string) 
 
 var notificationEmailEventOrder = []string{
 	NotificationEmailEventAccountQuotaAlert,
-	NotificationEmailEventContentModerationViolation,
-	NotificationEmailEventCyberPolicyNotice,
 	NotificationEmailEventOpsAlert,
 	NotificationEmailEventOpsScheduledReport,
 }
@@ -820,22 +816,6 @@ var notificationEmailEventDefinitions = map[string]NotificationEmailEventInfo{
 		Category:    "admin",
 		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...),
 			"account_id", "account_name", "platform", "quota_dimension", "quota_used", "quota_limit", "quota_remaining", "quota_threshold"),
-	},
-	NotificationEmailEventContentModerationViolation: {
-		Event:       NotificationEmailEventContentModerationViolation,
-		Label:       "Risk control violation notice",
-		Description: "Sent to configured administrators when a request triggers content moderation or risk-control rules.",
-		Category:    "risk_control",
-		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...),
-			"triggered_at", "request_id", "api_key_name", "group_name", "endpoint", "provider", "model", "moderation_category", "moderation_score"),
-	},
-	NotificationEmailEventCyberPolicyNotice: {
-		Event:       NotificationEmailEventCyberPolicyNotice,
-		Label:       "Cyber policy notice",
-		Description: "Sent to configured administrators when an upstream request is blocked by cyber-security policy (cyber_policy).",
-		Category:    "risk_control",
-		Placeholders: append(append([]string{}, notificationEmailCommonPlaceholders...),
-			"triggered_at", "model", "group_name", "upstream_message"),
 	},
 	NotificationEmailEventOpsAlert: {
 		Event:       NotificationEmailEventOpsAlert,
@@ -887,66 +867,6 @@ var notificationEmailOfficialTemplates = map[string]map[string]notificationEmail
   <tr><td>剩余额度</td><td>{{quota_remaining}}</td></tr>
   <tr><td>告警阈值</td><td>{{quota_threshold}}</td></tr>
 </table>`),
-		},
-	},
-	NotificationEmailEventContentModerationViolation: {
-		notificationEmailDefaultLocale: {
-			Subject: "[{{site_name}}] Gateway risk control notice",
-			HTML: notificationEmailCard("#ef4444", "Gateway risk control notice", `
-<p>A gateway request triggered the configured content moderation/risk-control policy.</p>
-<table style="width:100%;border-collapse:collapse;">
-  <tr><td>Triggered at</td><td>{{triggered_at}}</td></tr>
-	<tr><td>Request ID</td><td>{{request_id}}</td></tr>
-	<tr><td>API key</td><td>{{api_key_name}}</td></tr>
-  <tr><td>Group</td><td>{{group_name}}</td></tr>
-	<tr><td>Endpoint</td><td>{{endpoint}}</td></tr>
-	<tr><td>Provider / Model</td><td>{{provider}} / {{model}}</td></tr>
-  <tr><td>Category / Score</td><td>{{moderation_category}} / {{moderation_score}}</td></tr>
-</table>
-<p>Review the risk-control records for full audit context and adjust the rule, group scope, or caller API key as needed.</p>`),
-		},
-		notificationEmailLocaleChinese: {
-			Subject: "[{{site_name}}] 网关风控命中",
-			HTML: notificationEmailCard("#ef4444", "网关风控命中", `
-<p>一次网关请求触发了配置的内容审核/风控策略。</p>
-<table style="width:100%;border-collapse:collapse;">
-  <tr><td>触发时间</td><td>{{triggered_at}}</td></tr>
-	<tr><td>请求 ID</td><td>{{request_id}}</td></tr>
-	<tr><td>API Key</td><td>{{api_key_name}}</td></tr>
-  <tr><td>所属分组</td><td>{{group_name}}</td></tr>
-	<tr><td>端点</td><td>{{endpoint}}</td></tr>
-	<tr><td>上游 / 模型</td><td>{{provider}} / {{model}}</td></tr>
-  <tr><td>命中类别 / 分数</td><td>{{moderation_category}} / {{moderation_score}}</td></tr>
-</table>
-<p>请在风控记录中查看完整审计上下文，并按需调整规则、分组范围或调用方 API Key。</p>`),
-		},
-	},
-	NotificationEmailEventCyberPolicyNotice: {
-		notificationEmailDefaultLocale: {
-			Subject: "[{{site_name}}] Cyber-security policy notice",
-			HTML: notificationEmailCard("#ef4444", "Cyber-security policy notice", `
-<p>Hello {{recipient_name}},</p>
-<p>Your request was blocked by the upstream provider's cyber-security policy.</p>
-<table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-  <tr><td style="width:128px;vertical-align:top;">Triggered at</td><td style="overflow-wrap:anywhere;word-break:break-word;">{{triggered_at}}</td></tr>
-  <tr><td style="width:128px;vertical-align:top;">Model</td><td style="overflow-wrap:anywhere;word-break:break-word;">{{model}}</td></tr>
-  <tr><td style="width:128px;vertical-align:top;">Group</td><td style="overflow-wrap:anywhere;word-break:break-word;">{{group_name}}</td></tr>
-  <tr><td style="width:128px;vertical-align:top;">Upstream message</td><td style="overflow-wrap:anywhere;word-break:break-all;white-space:pre-wrap;">{{upstream_message}}</td></tr>
-</table>
-<p>If you believe this is a mistake, try rephrasing your request, or apply for authorized security access.</p>`),
-		},
-		notificationEmailLocaleChinese: {
-			Subject: "[{{site_name}}] 网络安全策略拦截提醒",
-			HTML: notificationEmailCard("#ef4444", "网络安全策略拦截提醒", `
-<p>{{recipient_name}}，您好：</p>
-<p>您的请求被上游服务商的网络安全策略（cyber policy）拦截。</p>
-<table style="width:100%;border-collapse:collapse;table-layout:fixed;">
-  <tr><td style="width:128px;vertical-align:top;">触发时间</td><td style="overflow-wrap:anywhere;word-break:break-word;">{{triggered_at}}</td></tr>
-  <tr><td style="width:128px;vertical-align:top;">模型</td><td style="overflow-wrap:anywhere;word-break:break-word;">{{model}}</td></tr>
-  <tr><td style="width:128px;vertical-align:top;">所属分组</td><td style="overflow-wrap:anywhere;word-break:break-word;">{{group_name}}</td></tr>
-  <tr><td style="width:128px;vertical-align:top;">上游说明</td><td style="overflow-wrap:anywhere;word-break:break-all;white-space:pre-wrap;">{{upstream_message}}</td></tr>
-</table>
-<p>如认为系误判，可调整请求措辞后重试，或申请获得授权的安全访问权限。</p>`),
 		},
 	},
 	NotificationEmailEventOpsAlert: {

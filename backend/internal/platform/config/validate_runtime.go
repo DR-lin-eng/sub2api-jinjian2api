@@ -9,21 +9,6 @@ import (
 
 func validateDeployment(c *Config) error {
 	normalizeDeploymentConfig(&c.Deployment)
-	if c.Deployment.Mode != DeploymentModeStandalone && c.Deployment.Mode != DeploymentModeMultiInstance {
-		return fmt.Errorf("deployment.mode must be one of: standalone/multi_instance")
-	}
-	if c.Deployment.HeartbeatIntervalSeconds <= 0 {
-		return fmt.Errorf("deployment.heartbeat_interval_seconds must be positive")
-	}
-	if c.Deployment.StaleAfterSeconds < c.Deployment.HeartbeatIntervalSeconds*2 {
-		return fmt.Errorf("deployment.stale_after_seconds must be at least twice heartbeat_interval_seconds")
-	}
-	if c.Deployment.TaskLeaseSeconds < 15 {
-		return fmt.Errorf("deployment.task_lease_seconds must be at least 15")
-	}
-	if len(c.Deployment.NodeName) > 128 {
-		return fmt.Errorf("deployment.node_name must not exceed 128 characters")
-	}
 	return nil
 }
 
@@ -60,23 +45,7 @@ func validateServerRuntime(c *Config) error {
 	return nil
 }
 
-func validateAPIKeyAuth(c *Config) error {
-	if c.APIKeyAuth.InvalidAbuse.Enabled {
-		if c.APIKeyAuth.InvalidAbuse.Threshold < 10 {
-			return fmt.Errorf("api_key_auth_cache.invalid_abuse.threshold must be at least 10")
-		}
-		if c.APIKeyAuth.InvalidAbuse.WindowSeconds < 1 || c.APIKeyAuth.InvalidAbuse.WindowSeconds > 3600 {
-			return fmt.Errorf("api_key_auth_cache.invalid_abuse.window_seconds must be between 1 and 3600")
-		}
-		if c.APIKeyAuth.InvalidAbuse.BlockSeconds < 1 || c.APIKeyAuth.InvalidAbuse.BlockSeconds > 3600 {
-			return fmt.Errorf("api_key_auth_cache.invalid_abuse.block_seconds must be between 1 and 3600")
-		}
-		if c.APIKeyAuth.InvalidAbuse.Capacity < 256 || c.APIKeyAuth.InvalidAbuse.Capacity > 1_000_000 {
-			return fmt.Errorf("api_key_auth_cache.invalid_abuse.capacity must be between 256 and 1000000")
-		}
-	}
-	return nil
-}
+func validateAPIKeyAuth(*Config) error { return nil }
 
 func validateJWTSecret(c *Config) error {
 	jwtSecret := strings.TrimSpace(c.JWT.Secret)

@@ -24,7 +24,6 @@ func newSystemSettingsUpdateFixture(svc *SettingService) *SystemSettings {
 	settings.TablePageSizeOptions = []int{20, 50, 100}
 	settings.OpsMetricsIntervalSeconds = 17
 	settings.ChannelMonitorDefaultIntervalSeconds = 31
-	settings.CyberSessionBlockTTLSeconds = 47
 	settings.OpenAIOAuthSchedulingRateMultiplier = 0.25
 	settings.OpenAIAdvancedSchedulerLBTopK = " 3 "
 	settings.OpenAIAdvancedSchedulerWeightPriority = "2.5"

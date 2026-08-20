@@ -47,7 +47,7 @@ func (s *scriptedScanner) Scan(ctx context.Context, endpoint ActiveEndpoint, _ s
 }
 
 func guardConfig(endpoints ...ActiveEndpoint) ActiveConfig {
-	return ActiveConfig{RiskControlEnabled: true, Enabled: true, BlockingEnabled: true, ConfigVersion: 2, Scanners: AllScannerIDs, Endpoints: endpoints}
+	return ActiveConfig{Enabled: true, BlockingEnabled: true, ConfigVersion: 2, Scanners: AllScannerIDs, Endpoints: endpoints}
 }
 
 func TestGuardEvaluatorOrderedFailoverAndInvalidTerminal(t *testing.T) {

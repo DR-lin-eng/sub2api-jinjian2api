@@ -102,8 +102,7 @@ func (h *PasskeyHandler) FinishLogin(c *gin.Context) {
 		response.ErrorFrom(c, err)
 		return
 	}
-	middleware2.SetAuditActor(c, user.ID, user.Email)
-	c.Set("auth_method", service.AuditAuthMethodPasskey)
+	c.Set(middleware2.ContextKeyAuthMethod, middleware2.AuthMethodPasskey)
 	h.authHandler.authService.RecordSuccessfulLogin(c.Request.Context(), user.ID)
 	h.authHandler.respondWithTokenPair(c, user)
 }

@@ -30,8 +30,6 @@ const (
 	AdminAPIKeyScopeBackupsWrite  = "admin.backups.write"
 	AdminAPIKeyScopeSystemRead    = "admin.system.read"
 	AdminAPIKeyScopeSystemWrite   = "admin.system.write"
-	AdminAPIKeyScopeAuditRead     = "admin.audit.read"
-	AdminAPIKeyScopeAuditWrite    = "admin.audit.write"
 	AdminAPIKeyScopeOpsRead       = "admin.ops.read"
 	AdminAPIKeyScopeOpsWrite      = "admin.ops.write"
 )
@@ -42,7 +40,6 @@ var AdminAPIKeyScopes = []string{
 	AdminAPIKeyScopeSettingsRead, AdminAPIKeyScopeSettingsWrite,
 	AdminAPIKeyScopeBackupsRead, AdminAPIKeyScopeBackupsWrite,
 	AdminAPIKeyScopeSystemRead, AdminAPIKeyScopeSystemWrite,
-	AdminAPIKeyScopeAuditRead, AdminAPIKeyScopeAuditWrite,
 	AdminAPIKeyScopeOpsRead, AdminAPIKeyScopeOpsWrite,
 }
 

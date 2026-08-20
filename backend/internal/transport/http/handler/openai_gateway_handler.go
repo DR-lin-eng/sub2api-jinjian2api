@@ -18,7 +18,6 @@ type OpenAIGatewayHandler struct {
 	gatewayService             *service.OpenAIGatewayService
 	usageRecordWorkerPool      *service.UsageRecordWorkerPool
 	errorPassthroughService    *service.ErrorPassthroughService
-	contentModerationService   *service.ContentModerationService
 	securityAuditCoordinator   *securityaudit.Coordinator
 	grokMediaEligibilityProber grokMediaEligibilityProber
 	opsService                 *service.OpsService
@@ -161,7 +160,7 @@ func NewOpenAIGatewayHandler(
 	concurrencyService *service.ConcurrencyService,
 	usageRecordWorkerPool *service.UsageRecordWorkerPool,
 	errorPassthroughService *service.ErrorPassthroughService,
-	contentModerationService *service.ContentModerationService,
+	_ any,
 	opsService *service.OpsService,
 	cfg *config.Config,
 ) *OpenAIGatewayHandler {
@@ -174,15 +173,14 @@ func NewOpenAIGatewayHandler(
 		}
 	}
 	h := &OpenAIGatewayHandler{
-		gatewayService:           gatewayService,
-		usageRecordWorkerPool:    usageRecordWorkerPool,
-		errorPassthroughService:  errorPassthroughService,
-		contentModerationService: contentModerationService,
-		opsService:               opsService,
-		concurrencyHelper:        NewConcurrencyHelper(concurrencyService, SSEPingFormatComment, pingInterval),
-		imageLimiter:             &imageConcurrencyLimiter{},
-		maxAccountSwitches:       maxAccountSwitches,
-		cfg:                      cfg,
+		gatewayService:          gatewayService,
+		usageRecordWorkerPool:   usageRecordWorkerPool,
+		errorPassthroughService: errorPassthroughService,
+		opsService:              opsService,
+		concurrencyHelper:       NewConcurrencyHelper(concurrencyService, SSEPingFormatComment, pingInterval),
+		imageLimiter:            &imageConcurrencyLimiter{},
+		maxAccountSwitches:      maxAccountSwitches,
+		cfg:                     cfg,
 	}
 	if opsService != nil {
 		opsService.SetImageConcurrencySnapshotProvider(h.imageLimiter.Snapshot)

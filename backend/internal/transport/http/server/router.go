@@ -24,7 +24,6 @@ func SetupRouter(
 	jwtAuth middleware2.JWTAuthMiddleware,
 	adminAuth middleware2.AdminAuthMiddleware,
 	apiKeyAuth middleware2.APIKeyAuthMiddleware,
-	auditLog middleware2.AuditLogMiddleware,
 	stepUpAuth middleware2.StepUpAuthMiddleware,
 	apiKeyService *service.APIKeyService,
 	opsService *service.OpsService,
@@ -35,8 +34,6 @@ func SetupRouter(
 	redisClient *redis.Client,
 	db *sql.DB,
 ) *gin.Engine {
-	middleware2.SetIngressRejectRecorder(opsService)
-
 	// 应用中间件
 	r.Use(clientIPResolver.Middleware())
 	r.Use(coremiddleware.NewCredentialAuthIngressLimiter())
@@ -61,7 +58,7 @@ func SetupRouter(
 	}
 
 	// 注册路由
-	registerRoutes(r, handlers, jwtAuth, adminAuth, apiKeyAuth, auditLog, stepUpAuth, apiKeyService, opsService, settingService, compositeResolver, cfg, redisClient, db)
+	registerRoutes(r, handlers, jwtAuth, adminAuth, apiKeyAuth, stepUpAuth, apiKeyService, opsService, settingService, compositeResolver, cfg, redisClient, db)
 
 	return r
 }
@@ -73,7 +70,6 @@ func registerRoutes(
 	jwtAuth middleware2.JWTAuthMiddleware,
 	adminAuth middleware2.AdminAuthMiddleware,
 	apiKeyAuth middleware2.APIKeyAuthMiddleware,
-	auditLog middleware2.AuditLogMiddleware,
 	stepUpAuth middleware2.StepUpAuthMiddleware,
 	apiKeyService *service.APIKeyService,
 	opsService *service.OpsService,
@@ -94,8 +90,8 @@ func registerRoutes(
 	panelRateLimiter := middleware2.NewPanelRateLimiter(redisClient, settingService)
 
 	// 注册各模块路由
-	routes.RegisterAuthRoutes(v1, h, jwtAuth, auditLog, redisClient, db, settingService, panelRateLimiter)
-	routes.RegisterUserRoutes(v1, h, jwtAuth, auditLog, settingService, panelRateLimiter)
-	routes.RegisterAdminRoutes(v1, h, adminAuth, auditLog, stepUpAuth, settingService, panelRateLimiter)
+	routes.RegisterAuthRoutes(v1, h, jwtAuth, redisClient, db, settingService, panelRateLimiter)
+	routes.RegisterUserRoutes(v1, h, jwtAuth, settingService, panelRateLimiter)
+	routes.RegisterAdminRoutes(v1, h, adminAuth, stepUpAuth, settingService, panelRateLimiter)
 	routes.RegisterGatewayRoutes(r, h, apiKeyAuth, apiKeyService, opsService, settingService, compositeResolver, cfg)
 }

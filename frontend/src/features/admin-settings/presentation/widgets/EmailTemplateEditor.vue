@@ -334,16 +334,6 @@ const eventDisplayMeta: Record<string, EventDisplayMeta> = {
     timing: "上游账号的用量达到配置的额度告警阈值时发送给管理员通知邮箱。",
     categoryLabel: "管理告警",
   },
-  "content_moderation.violation_notice": {
-	label: "网关内容审计提醒",
-		timing: "网关请求命中内容审计或风控规则时发送给管理员。",
-	categoryLabel: "风控",
-  },
-	"content_moderation.cyber_policy_notice": {
-		label: "上游安全策略提醒",
-		timing: "上游因 cyber_policy 安全策略拦截网关请求时发送给管理员。",
-		categoryLabel: "风控",
-	},
   "ops.alert": {
     label: "运维告警",
     timing: "运维监控规则触发告警并满足邮件通知配置时发送给运维收件人。",
@@ -362,16 +352,6 @@ const eventDisplayMetaEn: Record<string, EventDisplayMeta> = {
     timing: "Sent to admin notification emails when an upstream account reaches the configured quota alert threshold.",
     categoryLabel: "Admin",
   },
-  "content_moderation.violation_notice": {
-	label: "Gateway Risk Control Notice",
-		timing: "Sent to administrators when a gateway request triggers content moderation or risk-control rules.",
-	categoryLabel: "Risk Control",
-  },
-	"content_moderation.cyber_policy_notice": {
-		label: "Upstream Security Policy Notice",
-		timing: "Sent to administrators when an upstream cyber_policy rule blocks a gateway request.",
-		categoryLabel: "Risk Control",
-	},
   "ops.alert": {
     label: "Ops Alert",
     timing: "Sent to ops recipients when an ops monitoring rule fires and email notification settings allow it.",
@@ -420,7 +400,6 @@ function formatCategory(category: string): string {
   if (!normalized) return localText("通知", "Notification");
   const labels: Record<string, { zh: string; en: string }> = {
     admin: { zh: "管理告警", en: "Admin" },
-    risk_control: { zh: "风控", en: "Risk Control" },
     ops: { zh: "运维", en: "Ops" },
   };
   const item = labels[normalized];

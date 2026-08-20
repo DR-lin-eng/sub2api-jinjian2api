@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const promptAuditRedisTestEnv = "PROMPT_AUDIT_TEST_REDIS_ADDR"
+
 type prefixEncryptor struct{}
 
 func (prefixEncryptor) Encrypt(value string) (string, error) { return "enc:" + value, nil }
@@ -27,13 +29,24 @@ func (prefixEncryptor) Decrypt(value string) (string, error) {
 // testTotpKeyConfig mirrors a deployment with a fixed TOTP_ENCRYPTION_KEY so
 // unit tests may persist endpoint tokens.
 func testTotpKeyConfig() *config.Config {
-	return testTotpKeyConfigWithDeployment(config.DeploymentModeStandalone)
+	return testTotpKeyConfigWithDeployment("")
 }
 
-func testTotpKeyConfigWithDeployment(mode string) *config.Config {
+func testTotpKeyConfigWithDeployment(_ string) *config.Config {
 	return &config.Config{
-		Totp:       config.TotpConfig{EncryptionKeyConfigured: true},
-		Deployment: config.DeploymentConfig{Mode: mode},
+		Totp: config.TotpConfig{EncryptionKeyConfigured: true},
+	}
+}
+
+func promptAuditUpdateRequest(version int64, workerCount int, token string) UpdateConfigRequest {
+	return UpdateConfigRequest{
+		ExpectedConfigVersion: version, Enabled: true, BlockingEnabled: false, StorePassEvents: false,
+		Strategy: "priority", WorkerCount: workerCount, QueueCapacity: 64, Scanners: []string{"pii", "jailbreak"},
+		AllGroups: true, Endpoints: []UpdateEndpoint{{
+			ID: "guard-one", Name: "Guard One", Protocol: "openai_compatible",
+			BaseURL: "http://127.0.0.1:18080", Model: "", Token: token,
+			TimeoutMS: 1000, InputLimit: 1024, Enabled: true,
+		}},
 	}
 }
 
@@ -109,7 +122,6 @@ func TestConfigManagerReloadLogsOnlyWhenRuntimeConfigurationChanges(t *testing.T
 
 	repository := staticSettingRepository{values: map[string]string{
 		SettingKeyPromptAuditConfig: "",
-		SettingKeyRiskControl:       "false",
 	}}
 	manager := NewConfigManager(nil, repository, nil, prefixEncryptor{}, testTotpKeyConfig())
 
@@ -118,9 +130,8 @@ func TestConfigManagerReloadLogsOnlyWhenRuntimeConfigurationChanges(t *testing.T
 	require.NoError(t, manager.Reload(context.Background()))
 	require.Equal(t, 1, strings.Count(output.String(), EventConfigLoaded), "unchanged TTL reload must stay quiet")
 
-	repository.values[SettingKeyRiskControl] = "true"
 	require.NoError(t, manager.Reload(context.Background()))
-	require.Equal(t, 2, strings.Count(output.String(), EventConfigLoaded), "global gate changes must remain observable")
+	require.Equal(t, 1, strings.Count(output.String(), EventConfigLoaded), "unrelated settings must not affect Prompt Audit")
 
 	storage := DefaultStorageConfig()
 	storage.WorkerCount = 2
@@ -128,14 +139,13 @@ func TestConfigManagerReloadLogsOnlyWhenRuntimeConfigurationChanges(t *testing.T
 	require.NoError(t, err)
 	repository.values[SettingKeyPromptAuditConfig] = string(raw)
 	require.NoError(t, manager.Reload(context.Background()))
-	require.Equal(t, 3, strings.Count(output.String(), EventConfigLoaded), "same-version config changes must remain observable")
+	require.Equal(t, 2, strings.Count(output.String(), EventConfigLoaded), "same-version config changes must remain observable")
 }
 
 func TestConfigManagerPublicRequiresSuccessfullyLoadedSnapshot(t *testing.T) {
 	t.Run("absent persisted setting is legitimate default", func(t *testing.T) {
 		manager := NewConfigManager(nil, staticSettingRepository{values: map[string]string{
 			SettingKeyPromptAuditConfig: "",
-			SettingKeyRiskControl:       "false",
 		}}, nil, prefixEncryptor{}, testTotpKeyConfig())
 		require.NoError(t, manager.Reload(context.Background()))
 
@@ -151,7 +161,6 @@ func TestConfigManagerPublicRequiresSuccessfullyLoadedSnapshot(t *testing.T) {
 			// Endpoint without id/name fails validation, so no trustworthy
 			// snapshot can be installed from this raw value.
 			SettingKeyPromptAuditConfig: `{"enabled":true,"config_version":9,"endpoints":[{"token_ciphertext":"` + canary + `"}]}`,
-			SettingKeyRiskControl:       "true",
 		}}, nil, prefixEncryptor{}, testTotpKeyConfig())
 		require.Error(t, manager.Reload(context.Background()))
 
@@ -170,7 +179,6 @@ func TestConfigManagerPublicRequiresSuccessfullyLoadedSnapshot(t *testing.T) {
 		require.NoError(t, err)
 		repository := &switchableSettingRepository{staticSettingRepository: staticSettingRepository{values: map[string]string{
 			SettingKeyPromptAuditConfig: string(raw),
-			SettingKeyRiskControl:       "false",
 		}}}
 		manager := NewConfigManager(nil, repository, nil, prefixEncryptor{}, testTotpKeyConfig())
 		require.NoError(t, manager.Reload(context.Background()))
@@ -193,7 +201,6 @@ func TestConfigManagerUndecryptableTokenKeepsConfigVisibleAndRecoverable(t *test
 	persisted := `{"enabled":true,"blocking_enabled":false,"config_version":9,"endpoints":[{"id":"g1","name":"Guard","protocol":"openai_compatible","base_url":"http://127.0.0.1:8080","model":"m","token_ciphertext":"` + canary + `","timeout_ms":1000,"input_limit":1000,"enabled":true}]}`
 	manager := NewConfigManager(nil, staticSettingRepository{values: map[string]string{
 		SettingKeyPromptAuditConfig: persisted,
-		SettingKeyRiskControl:       "true",
 	}}, nil, prefixEncryptor{}, testTotpKeyConfig())
 	require.NoError(t, manager.Reload(context.Background()), "an undecryptable token must not fail the whole config load")
 
@@ -225,7 +232,6 @@ func TestConfigManagerUndecryptableTokenStillFailsClosedForBlockingIntent(t *tes
 	persisted := `{"enabled":true,"blocking_enabled":true,"config_version":9,"endpoints":[{"id":"g1","name":"Guard","protocol":"openai_compatible","base_url":"http://127.0.0.1:8080","model":"m","token_ciphertext":"undecryptable","timeout_ms":1000,"input_limit":1000,"enabled":true}]}`
 	manager := NewConfigManager(nil, staticSettingRepository{values: map[string]string{
 		SettingKeyPromptAuditConfig: persisted,
-		SettingKeyRiskControl:       "true",
 	}}, nil, prefixEncryptor{}, testTotpKeyConfig())
 	require.NoError(t, manager.Reload(context.Background()))
 	require.Equal(t, ModeBlocking, manager.EffectiveMode())
@@ -298,14 +304,13 @@ func TestBuildNextStorageRejectsNewTokenWithoutConfiguredEncryptionKey(t *testin
 
 func TestEffectiveModeTruthTable(t *testing.T) {
 	tests := []struct {
-		risk, enabled, blocking bool
-		want                    Mode
+		enabled, blocking bool
+		want              Mode
 	}{
-		{false, false, false, ModeOff}, {false, true, true, ModeOff}, {true, false, false, ModeOff},
-		{true, true, false, ModeAsync}, {true, true, true, ModeBlocking},
+		{false, false, ModeOff}, {true, false, ModeAsync}, {true, true, ModeBlocking},
 	}
 	for _, tt := range tests {
-		cfg := ActiveConfig{RiskControlEnabled: tt.risk, Enabled: tt.enabled, BlockingEnabled: tt.blocking}
+		cfg := ActiveConfig{Enabled: tt.enabled, BlockingEnabled: tt.blocking}
 		require.Equal(t, tt.want, cfg.EffectiveMode())
 	}
 }
@@ -319,7 +324,7 @@ func TestConfigManagerColdStartOnlyFailsClosedForExplicitBlockingIntent(t *testi
 	require.False(t, manager.BlockingActivationDegraded())
 
 	manager.observeExpectedState(`{"enabled":true,"blocking_enabled":true,"config_version":43}`, false)
-	require.Equal(t, ModeOff, manager.EffectiveMode(), "the global risk-control switch still gates blocking")
+	require.Equal(t, ModeBlocking, manager.EffectiveMode(), "Prompt Audit blocking is controlled by its own config")
 
 	manager.observeExpectedState(`{"enabled":true,"blocking_enabled":true,"config_version":44}`, true)
 	require.Equal(t, ModeBlocking, manager.EffectiveMode())
@@ -331,7 +336,7 @@ func TestConfigManagerColdStartOnlyFailsClosedForExplicitBlockingIntent(t *testi
 
 func TestConfigManagerStaleWeakerSnapshotFailsClosedWhenBlockingExpected(t *testing.T) {
 	manager := &ConfigManager{}
-	async := ActiveConfig{RiskControlEnabled: true, Enabled: true, BlockingEnabled: false, ConfigVersion: 1}
+	async := ActiveConfig{Enabled: true, BlockingEnabled: false, ConfigVersion: 1}
 	manager.snapshot.Store(&activeConfigSnapshot{active: async, storage: DefaultStorageConfig(), loadedAt: fixedClock{}.Now()})
 	manager.expected.Store(2)
 	manager.expectedBlocking.Store(true)
@@ -460,10 +465,9 @@ func TestParseLegacyConfigDefaultsMissingFieldsWithoutEnablingBlocking(t *testin
 
 func BenchmarkConfigManagerEffectiveMode(b *testing.B) {
 	active := ActiveConfig{
-		RiskControlEnabled: true,
-		Scanners:           append([]string(nil), AllScannerIDs...),
-		GroupIDs:           make([]int64, 64),
-		Endpoints:          make([]ActiveEndpoint, 32),
+		Scanners:  append([]string(nil), AllScannerIDs...),
+		GroupIDs:  make([]int64, 64),
+		Endpoints: make([]ActiveEndpoint, 32),
 	}
 	manager := &ConfigManager{}
 	manager.snapshot.Store(&activeConfigSnapshot{active: active})

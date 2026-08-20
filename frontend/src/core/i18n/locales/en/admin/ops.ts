@@ -604,20 +604,11 @@ export default {
             timeFormat: 'Silence time must be a valid RFC3339 timestamp'
           }
         },
-        lockEnabled: 'Distributed Lock Enabled',
-        lockKey: 'Distributed Lock Key',
-        lockTTLSeconds: 'Distributed Lock TTL (seconds)',
-        showAdvancedDeveloperSettings: 'Show advanced developer settings (Distributed Lock)',
-        advancedSettingsSummary: 'Advanced settings (Distributed Lock)',
         evalIntervalHint: 'How often the evaluator runs. Keeping the default is recommended.',
         validation: {
           title: 'Please fix the following issues',
           invalid: 'Invalid settings',
           evalIntervalRange: 'Evaluation interval must be between 1 and 86400 seconds',
-          lockKeyRequired: 'Distributed lock key is required when lock is enabled',
-          lockKeyPrefix: 'Distributed lock key must start with "{prefix}"',
-          lockKeyHint: 'Recommended: start with "{prefix}" to avoid conflicts',
-          lockTtlRange: 'Distributed lock TTL must be between 1 and 86400 seconds',
           slaMinPercentRange: 'SLA minimum percentage must be between 0 and 100',
           ttftP99MaxRange: 'TTFT P99 maximum must be a number ≥ 0',
           requestErrorRateMaxRange: 'Request error rate maximum must be between 0 and 100',

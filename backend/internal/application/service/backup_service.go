@@ -133,7 +133,6 @@ type BackupService struct {
 	lockCache               LeaderLockCache
 	db                      *sql.DB
 	instanceID              string
-	cluster                 ClusterTaskCoordinator
 
 	opMu      sync.Mutex // 保护 backingUp/restoring 标志
 	backingUp bool
@@ -183,12 +182,6 @@ func (s *BackupService) SetLeaderLock(lockCache LeaderLockCache, db *sql.DB) {
 	}
 	s.lockCache = lockCache
 	s.db = db
-}
-
-func (s *BackupService) SetClusterTaskCoordinator(cluster ClusterTaskCoordinator) {
-	if s != nil {
-		s.cluster = cluster
-	}
 }
 
 // Start 启动定时备份调度器并清理孤立记录
@@ -444,22 +437,9 @@ func (s *BackupService) runScheduledBackup() {
 
 	ctx, cancel := context.WithTimeout(s.bgCtx, 30*time.Minute)
 	defer cancel()
-	if s.cluster != nil {
-		ran, err := s.cluster.RunTask(ctx, "backup:scheduled", nil, func(taskCtx context.Context) (map[string]any, error) {
-			return s.executeScheduledBackup(taskCtx)
-		})
-		if !ran {
-			logger.LegacyPrintf("service.backup", "[Backup] 定时备份跳过: 其他实例正在执行或当前节点未启用 worker")
-			return
-		}
-		if err != nil {
-			logger.LegacyPrintf("service.backup", "[Backup] 定时备份失败: %v", err)
-		}
-		return
-	}
 	release, ok := tryAcquireSingletonLeaderLock(ctx, s.lockCache, s.db, backupScheduledLockKey, s.instanceID, backupScheduledLockTTL)
 	if !ok {
-		logger.LegacyPrintf("service.backup", "[Backup] 定时备份跳过: 其他实例正在执行")
+		logger.LegacyPrintf("service.backup", "[Backup] 定时备份跳过: 当前进程已有任务执行")
 		return
 	}
 	defer release()

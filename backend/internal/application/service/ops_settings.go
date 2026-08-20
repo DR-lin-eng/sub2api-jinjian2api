@@ -11,11 +11,6 @@ import (
 	"github.com/Wei-Shaw/sub2api/internal/shared/logger"
 )
 
-const (
-	opsAlertEvaluatorLeaderLockKeyDefault = "ops:alert:evaluator:leader"
-	opsAlertEvaluatorLeaderLockTTLDefault = 30 * time.Second
-)
-
 // =========================
 // Email notification config
 // =========================
@@ -201,30 +196,12 @@ func validateOpsEmailNotificationConfig(cfg *OpsEmailNotificationConfig) error {
 func defaultOpsAlertRuntimeSettings() *OpsAlertRuntimeSettings {
 	return &OpsAlertRuntimeSettings{
 		EvaluationIntervalSeconds: 60,
-		DistributedLock: OpsDistributedLockSettings{
-			Enabled:    true,
-			Key:        opsAlertEvaluatorLeaderLockKeyDefault,
-			TTLSeconds: int(opsAlertEvaluatorLeaderLockTTLDefault.Seconds()),
-		},
 		Silencing: OpsAlertSilencingSettings{
 			Enabled:            false,
 			GlobalUntilRFC3339: "",
 			GlobalReason:       "",
 			Entries:            []OpsAlertSilenceEntry{},
 		},
-	}
-}
-
-func normalizeOpsDistributedLockSettings(s *OpsDistributedLockSettings, defaultKey string, defaultTTLSeconds int) {
-	if s == nil {
-		return
-	}
-	s.Key = strings.TrimSpace(s.Key)
-	if s.Key == "" {
-		s.Key = defaultKey
-	}
-	if s.TTLSeconds <= 0 {
-		s.TTLSeconds = defaultTTLSeconds
 	}
 }
 
@@ -241,16 +218,6 @@ func normalizeOpsAlertSilencingSettings(s *OpsAlertSilencingSettings) {
 		s.Entries[i].UntilRFC3339 = strings.TrimSpace(s.Entries[i].UntilRFC3339)
 		s.Entries[i].Reason = strings.TrimSpace(s.Entries[i].Reason)
 	}
-}
-
-func validateOpsDistributedLockSettings(s OpsDistributedLockSettings) error {
-	if strings.TrimSpace(s.Key) == "" {
-		return errors.New("distributed_lock.key is required")
-	}
-	if s.TTLSeconds <= 0 || s.TTLSeconds > int((24*time.Hour).Seconds()) {
-		return errors.New("distributed_lock.ttl_seconds must be between 1 and 86400")
-	}
-	return nil
 }
 
 func validateOpsAlertSilencingSettings(s OpsAlertSilencingSettings) error {
@@ -306,7 +273,6 @@ func (s *OpsService) GetOpsAlertRuntimeSettings(ctx context.Context) (*OpsAlertR
 	if cfg.EvaluationIntervalSeconds <= 0 {
 		cfg.EvaluationIntervalSeconds = defaultCfg.EvaluationIntervalSeconds
 	}
-	normalizeOpsDistributedLockSettings(&cfg.DistributedLock, opsAlertEvaluatorLeaderLockKeyDefault, defaultCfg.DistributedLock.TTLSeconds)
 	normalizeOpsAlertSilencingSettings(&cfg.Silencing)
 
 	return cfg, nil
@@ -326,19 +292,12 @@ func (s *OpsService) UpdateOpsAlertRuntimeSettings(ctx context.Context, cfg *Ops
 	if cfg.EvaluationIntervalSeconds < 1 || cfg.EvaluationIntervalSeconds > int((24*time.Hour).Seconds()) {
 		return nil, errors.New("evaluation_interval_seconds must be between 1 and 86400")
 	}
-	if cfg.DistributedLock.Enabled {
-		if err := validateOpsDistributedLockSettings(cfg.DistributedLock); err != nil {
-			return nil, err
-		}
-	}
 	if cfg.Silencing.Enabled {
 		if err := validateOpsAlertSilencingSettings(cfg.Silencing); err != nil {
 			return nil, err
 		}
 	}
 
-	defaultCfg := defaultOpsAlertRuntimeSettings()
-	normalizeOpsDistributedLockSettings(&cfg.DistributedLock, opsAlertEvaluatorLeaderLockKeyDefault, defaultCfg.DistributedLock.TTLSeconds)
 	normalizeOpsAlertSilencingSettings(&cfg.Silencing)
 
 	raw, err := json.Marshal(cfg)

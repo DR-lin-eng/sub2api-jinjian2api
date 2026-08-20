@@ -53,8 +53,6 @@ export function useSettingsAdminApiKeys(
     { value: "admin.backups.write", label: "备份操作" },
     { value: "admin.system.read", label: "系统读取" },
     { value: "admin.system.write", label: "系统操作" },
-    { value: "admin.audit.read", label: "审计读取" },
-    { value: "admin.audit.write", label: "审计操作" },
     { value: "admin.ops.read", label: "运维读取" },
     { value: "admin.ops.write", label: "运维操作" },
   ];

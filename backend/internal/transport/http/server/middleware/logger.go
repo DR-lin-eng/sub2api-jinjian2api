@@ -36,20 +36,6 @@ func Logger() gin.HandlerFunc {
 
 		statusCode := c.Writer.Status()
 		reason, rejected := GetIngressRejectReason(c)
-		if rejected {
-			recordIngressReject(c, reason)
-			allowed, droppedSummary := globalIngressRejectAccessSampler.allow(endTime)
-			if droppedSummary > 0 {
-				logger.FromContext(c.Request.Context()).Info("ingress rejection access logs dropped",
-					zap.String("component", "http.access"),
-					zap.Uint64("dropped_count", droppedSummary),
-					zap.Bool(logger.OpsSystemLogSkipField, true),
-				)
-			}
-			if !allowed {
-				return
-			}
-		}
 
 		baseLogger := logger.FromContext(c.Request.Context())
 		accessEntry := baseLogger.Check(zap.InfoLevel, "http request completed")

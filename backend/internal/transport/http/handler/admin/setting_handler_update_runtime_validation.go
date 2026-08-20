@@ -101,11 +101,5 @@ func validateRuntimeSettingsUpdate(c *gin.Context, prepared *preparedSettingsUpd
 		}
 	}
 
-	// cyber 会话屏蔽 TTL 校验：提供时必须 > 0
-	if req.CyberSessionBlockTTLSeconds != nil && *req.CyberSessionBlockTTLSeconds <= 0 {
-		response.BadRequest(c, "cyber_session_block_ttl_seconds must be > 0")
-		return false
-	}
-
 	return true
 }

@@ -99,7 +99,6 @@ type ActiveEndpoint struct {
 }
 
 type ActiveConfig struct {
-	RiskControlEnabled     bool
 	Enabled                bool
 	BlockingEnabled        bool
 	BlockingLatestTurnOnly bool
@@ -345,7 +344,7 @@ func validateUpdateConfigRequest(req UpdateConfigRequest) error {
 }
 
 func (cfg ActiveConfig) EffectiveMode() Mode {
-	if !cfg.RiskControlEnabled || !cfg.Enabled {
+	if !cfg.Enabled {
 		return ModeOff
 	}
 	if cfg.BlockingEnabled {
@@ -387,7 +386,7 @@ func (cfg ActiveConfig) InvalidTokenEndpointIDs() []string {
 	return ids
 }
 
-func PublicFromStorage(cfg storageConfig, riskControlEnabled bool, invalidTokenEndpointIDs []string) PublicConfig {
+func PublicFromStorage(cfg storageConfig, _ bool, invalidTokenEndpointIDs []string) PublicConfig {
 	invalid := make(map[string]struct{}, len(invalidTokenEndpointIDs))
 	for _, id := range invalidTokenEndpointIDs {
 		invalid[id] = struct{}{}
@@ -410,7 +409,7 @@ func PublicFromStorage(cfg storageConfig, riskControlEnabled bool, invalidTokenE
 			Enabled: ep.Enabled, HasToken: hasToken, TokenStatus: status,
 		})
 	}
-	active := ActiveConfig{RiskControlEnabled: riskControlEnabled, Enabled: cfg.Enabled, BlockingEnabled: cfg.BlockingEnabled}
+	active := ActiveConfig{Enabled: cfg.Enabled, BlockingEnabled: cfg.BlockingEnabled}
 	return PublicConfig{
 		Enabled: cfg.Enabled, BlockingEnabled: cfg.BlockingEnabled, BlockingLatestTurnOnly: cfg.BlockingLatestTurnOnly, StorePassEvents: cfg.StorePassEvents,
 		EffectiveMode: active.EffectiveMode(), Strategy: cfg.Strategy, WorkerCount: cfg.WorkerCount,
@@ -420,9 +419,9 @@ func PublicFromStorage(cfg storageConfig, riskControlEnabled bool, invalidTokenE
 	}
 }
 
-func ActiveFromStorage(cfg storageConfig, riskControlEnabled bool, encryptor SecretEncryptor) (ActiveConfig, error) {
+func ActiveFromStorage(cfg storageConfig, _ bool, encryptor SecretEncryptor) (ActiveConfig, error) {
 	active := ActiveConfig{
-		RiskControlEnabled: riskControlEnabled, Enabled: cfg.Enabled, BlockingEnabled: cfg.BlockingEnabled,
+		Enabled: cfg.Enabled, BlockingEnabled: cfg.BlockingEnabled,
 		BlockingLatestTurnOnly: cfg.BlockingLatestTurnOnly,
 		StorePassEvents:        cfg.StorePassEvents, Strategy: cfg.Strategy, WorkerCount: cfg.WorkerCount,
 		QueueCapacity: cfg.QueueCapacity, Scanners: append([]string(nil), cfg.Scanners...), AllGroups: cfg.AllGroups,

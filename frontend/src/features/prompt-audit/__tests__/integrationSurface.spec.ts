@@ -17,23 +17,15 @@ describe('Prompt Audit integration surface', () => {
     expect(route).toContain('requiresAdmin: true')
   })
 
-  it('keeps the security audit tools available to the local administrator', () => {
+  it('keeps Prompt Audit available to the local administrator', () => {
     const sidebar = read('../../../common/widgets/layout/AppSidebar.vue')
-    const group = sidebar.slice(sidebar.indexOf("path: '/admin/security-audit'"), sidebar.indexOf("path: '/admin/multi-instance'"))
-    expect(group).toContain('expandOnly: true')
-    expect(group).toContain("path: '/admin/security-audit/ingress'")
-    expect(group).toContain("path: '/admin/risk-control'")
-    expect(group).toContain("path: '/admin/prompt-audit'")
-    expect(group).not.toContain('featureFlag:')
+    expect(sidebar).toContain("path: '/admin/prompt-audit'")
+    expect(sidebar).not.toContain("path: '/admin/risk-control'")
+    expect(sidebar).not.toContain("path: '/admin/security-audit/ingress'")
   })
 
   it('keeps Prompt Audit locale trees symmetric and all operational controls named', () => {
     expect(Object.keys(zh.admin.promptAudit)).toEqual(Object.keys(en.admin.promptAudit))
-    expect(Object.keys(zh.admin.ingressRisk)).toEqual(Object.keys(en.admin.ingressRisk))
-    expect(zh.nav.securityAudit).toBeTruthy()
-    expect(en.nav.securityAudit).toBeTruthy()
-    expect(zh.nav.ingressRisk).toBeTruthy()
-    expect(en.nav.ingressRisk).toBeTruthy()
     const endpoint = read('../presentation/widgets/EndpointPool.vue')
     const events = read('../presentation/widgets/EventWorkspace.vue')
     expect(endpoint).toContain('aria-label')

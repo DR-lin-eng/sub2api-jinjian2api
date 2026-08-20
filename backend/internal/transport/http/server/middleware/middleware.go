@@ -31,6 +31,16 @@ const (
 	// ContextKeyJWTExpiresAt records the verified access-token expiry so
 	// long-lived transports can stop when the authentication grant expires.
 	ContextKeyJWTExpiresAt ContextKey = "jwt_expires_at"
+
+	// Authentication metadata is owned by the authentication middleware. These
+	// keys used to live beside the retired management-audit middleware.
+	ContextKeyAuthEmail  = "auth_email"
+	ContextKeySessionID  = "session_id"
+	ContextKeyAuthMethod = "auth_method"
+
+	AuthMethodJWT         = "jwt"
+	AuthMethodAdminAPIKey = "admin_api_key"
+	AuthMethodPasskey     = "passkey"
 )
 
 // GetJWTExpiresAtFromContext returns the expiry of the JWT authenticated for

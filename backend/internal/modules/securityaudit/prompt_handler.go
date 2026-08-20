@@ -43,36 +43,24 @@ func (h *PromptAdminHandler) GetConfig(c *gin.Context) {
 func (h *PromptAdminHandler) UpdateConfig(c *gin.Context) {
 	var request UpdateConfigRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		setPromptAdminAudit(c, "failed", "prompt_audit_invalid_config_request", nil)
 		response.ErrorFrom(c, infraerrors.BadRequest("prompt_audit_invalid_config_request", "提示词审计配置请求无效"))
 		return
 	}
 	config, err := h.service.SaveConfig(c.Request.Context(), request, adminID(c))
 	if err != nil {
-		setPromptAdminAudit(c, "failed", infraerrors.Reason(err), configAuditFields(request, nil))
 		response.ErrorFrom(c, err)
 		return
 	}
-	setPromptAdminAudit(c, "success", "", configAuditFields(request, &config))
 	response.Success(c, config)
 }
 
 func (h *PromptAdminHandler) ProbeEndpoint(c *gin.Context) {
 	var request ProbeRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		setPromptAdminAudit(c, "failed", "prompt_audit_invalid_probe_request", nil)
 		response.ErrorFrom(c, infraerrors.BadRequest("prompt_audit_invalid_probe_request", "审计节点探测请求无效"))
 		return
 	}
 	result := h.service.Probe(c.Request.Context(), request)
-	status := "failed"
-	if result.OK {
-		status = "success"
-	}
-	setPromptAdminAudit(c, status, result.ErrorCode, map[string]any{
-		"guard_endpoint_id": request.Endpoint.ID, "http_status": result.HTTPStatus,
-		"latency_ms": result.LatencyMS, "token_applied": result.TokenApplied, "retryable": result.Retryable,
-	})
 	response.Success(c, result)
 }
 
@@ -125,17 +113,14 @@ func (h *PromptAdminHandler) GetEvent(c *gin.Context) {
 func (h *PromptAdminHandler) DeleteEvent(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil || id <= 0 {
-		setPromptAdminAudit(c, "failed", "prompt_audit_invalid_event_id", nil)
 		response.ErrorFrom(c, infraerrors.BadRequest("prompt_audit_invalid_event_id", "事件 ID 无效"))
 		return
 	}
 	result, err := h.service.DeleteEvent(c.Request.Context(), id)
 	if err != nil {
-		setPromptAdminAudit(c, "failed", infraerrors.Reason(err), map[string]any{"event_id": id})
 		response.ErrorFrom(c, err)
 		return
 	}
-	setPromptAdminAudit(c, "success", "", deleteAuditFields(result, map[string]any{"event_id": id}))
 	LogWarn(EventEventDeleted, map[string]any{"user_id": adminID(c), "event_id": id, "status": "deleted"})
 	response.Success(c, result)
 }
@@ -147,24 +132,20 @@ type batchDeleteRequest struct {
 func (h *PromptAdminHandler) BatchDelete(c *gin.Context) {
 	var request batchDeleteRequest
 	if err := c.ShouldBindJSON(&request); err != nil || len(request.IDs) == 0 || len(request.IDs) > 500 {
-		setPromptAdminAudit(c, "failed", "prompt_audit_invalid_delete_batch", nil)
 		response.ErrorFrom(c, infraerrors.BadRequest("prompt_audit_invalid_delete_batch", "批量删除必须包含 1-500 个事件 ID"))
 		return
 	}
 	for _, id := range request.IDs {
 		if id <= 0 {
-			setPromptAdminAudit(c, "failed", "prompt_audit_invalid_event_id", map[string]any{"requested_count": len(request.IDs)})
 			response.ErrorFrom(c, infraerrors.BadRequest("prompt_audit_invalid_event_id", "事件 ID 无效"))
 			return
 		}
 	}
 	result, err := h.service.DeleteEventsByIDs(c.Request.Context(), request.IDs)
 	if err != nil {
-		setPromptAdminAudit(c, "failed", infraerrors.Reason(err), map[string]any{"requested_count": len(request.IDs)})
 		response.ErrorFrom(c, err)
 		return
 	}
-	setPromptAdminAudit(c, "success", "", deleteAuditFields(result, map[string]any{"requested_count": len(request.IDs)}))
 	LogWarn(EventEventsDeleted, map[string]any{"user_id": adminID(c), "status": "deleted"})
 	response.Success(c, result)
 }
@@ -172,79 +153,29 @@ func (h *PromptAdminHandler) BatchDelete(c *gin.Context) {
 func (h *PromptAdminHandler) DeletePreview(c *gin.Context) {
 	var filter EventFilter
 	if err := c.ShouldBindJSON(&filter); err != nil {
-		setPromptAdminAudit(c, "failed", "prompt_audit_delete_preview_invalid", nil)
 		response.ErrorFrom(c, infraerrors.BadRequest("prompt_audit_delete_preview_invalid", "删除预览筛选无效"))
 		return
 	}
 	preview, err := h.service.PreviewDelete(c.Request.Context(), filter, adminID(c))
 	if err != nil {
-		setPromptAdminAudit(c, "failed", "prompt_audit_delete_preview_invalid", nil)
 		response.ErrorFrom(c, infraerrors.BadRequest("prompt_audit_delete_preview_invalid", "删除预览筛选无效"))
 		return
 	}
-	setPromptAdminAudit(c, "success", "", map[string]any{
-		"matched_count": preview.MatchedCount, "snapshot_max_id": preview.SnapshotMaxID, "filter_hash": preview.FilterHash,
-	})
 	response.Success(c, preview)
 }
 
 func (h *PromptAdminHandler) DeleteByFilter(c *gin.Context) {
 	var request DeleteByFilterRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		setPromptAdminAudit(c, "failed", "prompt_audit_delete_confirmation_invalid", nil)
 		response.ErrorFrom(c, infraerrors.BadRequest("prompt_audit_delete_confirmation_invalid", "删除确认无效或已过期"))
 		return
 	}
 	result, err := h.service.DeleteByFilter(c.Request.Context(), request, adminID(c))
 	if err != nil {
-		setPromptAdminAudit(c, "failed", "prompt_audit_delete_confirmation_invalid", map[string]any{
-			"snapshot_max_id": request.SnapshotMaxID, "filter_hash": request.FilterHash, "confirm": request.Confirm,
-		})
 		response.ErrorFrom(c, infraerrors.BadRequest("prompt_audit_delete_confirmation_invalid", "删除确认无效或已过期"))
 		return
 	}
-	setPromptAdminAudit(c, "success", "", deleteAuditFields(result, map[string]any{
-		"snapshot_max_id": request.SnapshotMaxID, "filter_hash": request.FilterHash, "confirm": request.Confirm,
-	}))
 	response.Success(c, result)
-}
-
-func setPromptAdminAudit(c *gin.Context, result, errorCode string, fields map[string]any) {
-	details := make(map[string]any, len(fields)+2)
-	details["result"] = result
-	if strings.TrimSpace(errorCode) != "" {
-		details["error_code"] = errorCode
-	}
-	for key, value := range fields {
-		details[key] = value
-	}
-	middleware.SetAuditExtra(c, details)
-}
-
-func configAuditFields(request UpdateConfigRequest, saved *PublicConfig) map[string]any {
-	version := request.ExpectedConfigVersion
-	if saved != nil {
-		version = saved.ConfigVersion
-	}
-	return map[string]any{
-		"enabled": request.Enabled, "blocking_enabled": request.BlockingEnabled,
-		"blocking_latest_turn_only": request.BlockingLatestTurnOnly,
-		"config_version":            version, "endpoint_count": len(request.Endpoints),
-		"scanner_count": len(request.Scanners), "all_groups": request.AllGroups,
-		"group_count": len(request.GroupIDs),
-	}
-}
-
-func deleteAuditFields(result *DeleteResult, base map[string]any) map[string]any {
-	fields := make(map[string]any, len(base)+2)
-	for key, value := range base {
-		fields[key] = value
-	}
-	if result != nil {
-		fields["deleted_events"] = result.DeletedEvents
-		fields["deleted_jobs"] = result.DeletedJobs
-	}
-	return fields
 }
 
 func adminID(c *gin.Context) int64 {

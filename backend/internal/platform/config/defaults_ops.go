@@ -58,11 +58,6 @@ func setOperationsDefaults() {
 	viper.SetDefault("api_key_auth_cache.jitter_percent", 10)
 	viper.SetDefault("api_key_auth_cache.singleflight", true)
 	viper.SetDefault("api_key_auth_cache.lookup_concurrency", 64)
-	viper.SetDefault("api_key_auth_cache.invalid_abuse.enabled", true)
-	viper.SetDefault("api_key_auth_cache.invalid_abuse.threshold", 120)
-	viper.SetDefault("api_key_auth_cache.invalid_abuse.window_seconds", 60)
-	viper.SetDefault("api_key_auth_cache.invalid_abuse.block_seconds", 60)
-	viper.SetDefault("api_key_auth_cache.invalid_abuse.capacity", 16384)
 
 	// Dashboard aggregation
 	viper.SetDefault("dashboard_aggregation.enabled", false)

@@ -20,20 +20,6 @@ type stubMonitorSvc struct {
 	runHoldFor time.Duration // RunCheck 内额外阻塞的时长，用来测试 Stop 等待行为
 }
 
-type inlineClusterTaskCoordinator struct{}
-
-func (inlineClusterTaskCoordinator) RunTask(
-	ctx context.Context,
-	_ string,
-	_ map[string]any,
-	fn func(context.Context) (map[string]any, error),
-) (bool, error) {
-	_, err := fn(ctx)
-	return true, err
-}
-
-func (inlineClusterTaskCoordinator) WorkerEnabled() bool { return true }
-
 func (s *stubMonitorSvc) ListEnabledMonitors(_ context.Context) ([]*ChannelMonitor, error) {
 	if s.listErr != nil {
 		return nil, s.listErr
@@ -235,42 +221,6 @@ func TestRunOne_DecryptFailureUnschedulesTask(t *testing.T) {
 	waitFor(t, time.Second, "decrypt-failed task unscheduled", func() bool { return runnerTaskCount(r) == 0 })
 
 	stoppedWithin(t, r, 3*time.Second)
-}
-
-func TestRunOne_ClusterDecryptFailureUnschedulesTask(t *testing.T) {
-	svc := &stubMonitorSvc{
-		runCalled: make(chan int64, 1),
-		runErr:    ErrChannelMonitorAPIKeyDecryptFailed,
-	}
-	r := newRunnerForTest(svc)
-	r.SetClusterTaskCoordinator(inlineClusterTaskCoordinator{})
-	r.Start()
-
-	r.Schedule(&ChannelMonitor{ID: 13, Enabled: true, IntervalSeconds: 60})
-	select {
-	case id := <-svc.runCalled:
-		if id != 13 {
-			t.Fatalf("expected failing monitor id=13 to fire, got %d", id)
-		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("expected cluster-coordinated monitor to fire immediately")
-	}
-	waitFor(t, time.Second, "cluster decrypt-failed task unscheduled", func() bool { return runnerTaskCount(r) == 0 })
-
-	stoppedWithin(t, r, 3*time.Second)
-}
-
-// TestSchedule_InvalidIntervalSkipped 验证 IntervalSeconds<=0 不会注册任务（防御性检查）。
-func TestSchedule_InvalidIntervalSkipped(t *testing.T) {
-	svc := &stubMonitorSvc{}
-	r := newRunnerForTest(svc)
-	r.Start()
-
-	r.Schedule(&ChannelMonitor{ID: 1, Enabled: true, IntervalSeconds: 0})
-	if got := runnerTaskCount(r); got != 0 {
-		t.Fatalf("expected no task for invalid interval, got %d", got)
-	}
-	r.Stop()
 }
 
 // TestSchedule_BeforeStartIsNoOp 验证 Start 之前调用 Schedule 不会注册任务。

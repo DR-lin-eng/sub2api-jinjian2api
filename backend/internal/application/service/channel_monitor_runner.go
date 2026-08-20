@@ -59,7 +59,6 @@ type ChannelMonitorRunner struct {
 	lockCache      LeaderLockCache
 	db             *sql.DB
 	instanceID     string
-	cluster        ClusterTaskCoordinator
 
 	pool         pond.Pool
 	parentCtx    context.Context
@@ -132,12 +131,6 @@ func (r *ChannelMonitorRunner) SetLeaderLock(lockCache LeaderLockCache, db *sql.
 	}
 	r.lockCache = lockCache
 	r.db = db
-}
-
-func (r *ChannelMonitorRunner) SetClusterTaskCoordinator(cluster ClusterTaskCoordinator) {
-	if r != nil {
-		r.cluster = cluster
-	}
 }
 
 // Start 加载所有 enabled monitor 并为每个建立独立定时任务。
@@ -329,24 +322,6 @@ func (r *ChannelMonitorRunner) runOne(id int64, name string) {
 	defer cancel()
 
 	defer r.releaseInFlight(id)
-	if r.cluster != nil {
-		_, err := r.cluster.RunTask(
-			ctx,
-			fmt.Sprintf("channel_monitor:%d", id),
-			map[string]any{"monitor_id": id, "name": name},
-			func(taskCtx context.Context) (map[string]any, error) {
-				_, runErr := r.svc.RunCheck(taskCtx, id)
-				return map[string]any{"monitor_id": id}, runErr
-			},
-		)
-		if err != nil {
-			if errors.Is(err, ErrChannelMonitorAPIKeyDecryptFailed) {
-				r.Unschedule(id)
-			}
-			slog.Warn("channel_monitor: cluster task failed", "monitor_id", id, "name", name, "error", err)
-		}
-		return
-	}
 	release, ok := tryAcquireSingletonLeaderLock(
 		ctx,
 		r.lockCache,

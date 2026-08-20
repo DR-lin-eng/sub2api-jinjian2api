@@ -82,7 +82,6 @@ func provideCleanup(
 	opsSystemLogSink *service.OpsSystemLogSink,
 	opsService *service.OpsService,
 	settingService *service.SettingService,
-	opsIngressReject *service.OpsIngressRejectAggregator,
 	apiKeyService *service.APIKeyService,
 	authCacheInvalidationWorker *service.AuthCacheInvalidationWorker,
 	schedulerSnapshot *service.SchedulerSnapshotService,
@@ -104,15 +103,12 @@ func provideCleanup(
 	channelMonitorRunner *service.ChannelMonitorRunner,
 	upstreamBillingProbe *service.UpstreamBillingProbeService,
 	ollamaCloudUsage *service.OllamaCloudUsageService,
-	auditLog *service.AuditLogService,
 	promptAudit *securityaudit.PromptService,
-	contentModeration *service.ContentModerationService,
 	concurrency *service.ConcurrencyService,
 	userMessageQueue *service.UserMessageQueueService,
 	dashboardAggregation *service.DashboardAggregationService,
 	deferred *service.DeferredService,
 	timingWheel *service.TimingWheelService,
-	cluster *service.ClusterService,
 	clientIPResolver *clientip.Resolver,
 ) func() {
 	return func() {
@@ -138,12 +134,6 @@ func provideCleanup(
 				}
 				return nil
 			}},
-			{"OpsIngressRejectAggregator", func() error {
-				if opsIngressReject != nil {
-					opsIngressReject.Stop()
-				}
-				return nil
-			}},
 			{"AuthCacheInvalidationWorker", func() error {
 				if authCacheInvalidationWorker != nil {
 					authCacheInvalidationWorker.Stop()
@@ -165,18 +155,6 @@ func provideCleanup(
 			{"PromptAuditService", func() error {
 				if promptAudit != nil {
 					return promptAudit.Shutdown(ctx)
-				}
-				return nil
-			}},
-			{"ClusterService", func() error {
-				if cluster != nil {
-					cluster.Stop()
-				}
-				return nil
-			}},
-			{"ContentModerationService", func() error {
-				if contentModeration != nil {
-					contentModeration.Stop()
 				}
 				return nil
 			}},
@@ -213,12 +191,6 @@ func provideCleanup(
 			{"OpsSystemLogSink", func() error {
 				if opsSystemLogSink != nil {
 					opsSystemLogSink.Stop()
-				}
-				return nil
-			}},
-			{"AuditLogService", func() error {
-				if auditLog != nil {
-					auditLog.Stop()
 				}
 				return nil
 			}},

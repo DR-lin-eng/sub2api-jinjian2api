@@ -192,13 +192,6 @@ func TestMigrationsRunner_IsIdempotent_AndSchemaIsUpToDate(t *testing.T) {
 	requireColumn(t, tx, "ops_system_logs", "api_key_id", "bigint", 0, true)
 	requireIndex(t, tx, "ops_system_logs", "idx_ops_system_logs_api_key_id_created_at")
 
-	// Bounded ingress rejection security aggregates.
-	requireColumn(t, tx, "ops_ingress_reject_aggregates", "bucket_start", "timestamp with time zone", 0, false)
-	requireColumn(t, tx, "ops_ingress_reject_aggregates", "client_ip", "inet", 0, false)
-	requireColumn(t, tx, "ops_ingress_reject_aggregates", "request_count", "bigint", 0, false)
-	requireIndex(t, tx, "ops_ingress_reject_aggregates", "idx_ops_ingress_reject_aggregates_bucket")
-	requireIndex(t, tx, "ops_ingress_reject_aggregates", "idx_ops_ingress_reject_aggregates_ip_bucket")
-
 	// account_groups: created_at should be timestamptz
 	requireColumn(t, tx, "account_groups", "created_at", "timestamp with time zone", 0, false)
 }
@@ -244,6 +237,11 @@ func TestMigrationsRunner_RemovedProductSchemaIsAbsent(t *testing.T) {
 		"user_affiliates",
 		"usage_dashboard_hourly_users",
 		"usage_dashboard_daily_users",
+		"cluster_instances",
+		"cluster_task_runs",
+		"content_moderation_logs",
+		"ops_ingress_reject_aggregates",
+		"audit_logs",
 	} {
 		requireTableAbsent(t, tx, table)
 	}

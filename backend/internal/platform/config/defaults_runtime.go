@@ -5,14 +5,8 @@ import "github.com/spf13/viper"
 func setRuntimeDefaults() {
 	viper.SetDefault("run_mode", RunModeStandard)
 
-	// Deployment. API and frontend remain enabled on every node; this only
-	// controls cluster identity and scheduled worker candidacy.
-	viper.SetDefault("deployment.mode", DeploymentModeStandalone)
-	viper.SetDefault("deployment.node_name", "")
+	// Standalone background workers are opt-in.
 	viper.SetDefault("deployment.worker_enabled", WorkerModeDisabled)
-	viper.SetDefault("deployment.heartbeat_interval_seconds", 30)
-	viper.SetDefault("deployment.stale_after_seconds", 90)
-	viper.SetDefault("deployment.task_lease_seconds", 60)
 
 	// Server
 	viper.SetDefault("server.host", "0.0.0.0")

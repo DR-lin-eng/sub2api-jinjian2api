@@ -107,7 +107,7 @@ func TestAsyncImageSuccessfulPrecheckIsNotRepeatedByDetachedExecution(t *testing
 	h.execute = func(_ string, c *gin.Context) {
 		apiKey, _ := middleware2.GetAPIKeyFromContext(c)
 		subject, _ := middleware2.GetAuthSubjectFromContext(c)
-		decision := openAI.checkSecurityAudit(c, nil, apiKey, subject, service.ContentModerationProtocolOpenAIImages, "gpt-image-2", []byte(`{"prompt":"must not rescan"}`))
+		decision := openAI.checkSecurityAudit(c, nil, apiKey, subject, service.PromptAuditProtocolOpenAIImages, "gpt-image-2", []byte(`{"prompt":"must not rescan"}`))
 		executionMu.Lock()
 		repeatedDecision = decision != nil
 		executionMu.Unlock()
@@ -154,7 +154,7 @@ func TestSecurityAuditBlockingFailuresLeaveAllDownstreamCountersAtZero(t *testin
 			groupID := int64(3)
 			apiKey := &service.APIKey{ID: 9, UserID: 7, GroupID: &groupID, Group: &service.Group{ID: groupID, Platform: service.PlatformOpenAI}}
 			subject := middleware2.AuthSubject{UserID: 7, Concurrency: 2}
-			decision := runSecurityAudit(c, nil, coordinator, nil, apiKey, subject, service.ContentModerationProtocolOpenAIChat, "gpt-test", []byte(`{"messages":[{"role":"user","content":"guard me"}]}`), "http")
+			decision := runSecurityAudit(c, nil, coordinator, nil, apiKey, subject, service.PromptAuditProtocolOpenAIChat, "gpt-test", []byte(`{"messages":[{"role":"user","content":"guard me"}]}`), "http")
 			require.NotNil(t, decision)
 			require.False(t, decision.AllowNextStage)
 			require.False(t, recorder.Result().Header.Get("Content-Type") != "", "Guard evaluation itself must not start SSE/HTTP output")

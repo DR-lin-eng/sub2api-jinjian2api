@@ -33,12 +33,6 @@ func load(allowMissingJWTSecret bool) (*Config, error) {
 	// 环境变量支持
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	if err := viper.BindEnv("deployment.mode", "DEPLOYMENT_MODE"); err != nil {
-		return nil, fmt.Errorf("bind DEPLOYMENT_MODE: %w", err)
-	}
-	if err := viper.BindEnv("deployment.node_name", "NODE_NAME"); err != nil {
-		return nil, fmt.Errorf("bind NODE_NAME: %w", err)
-	}
 	if err := viper.BindEnv("deployment.worker_enabled", "WORKER_ENABLED"); err != nil {
 		return nil, fmt.Errorf("bind WORKER_ENABLED: %w", err)
 	}
@@ -179,27 +173,5 @@ func normalizeDeploymentConfig(cfg *DeploymentConfig) {
 	if cfg == nil {
 		return
 	}
-	cfg.Mode = strings.ToLower(strings.TrimSpace(cfg.Mode))
-	if cfg.Mode == "" {
-		cfg.Mode = DeploymentModeStandalone
-	}
 	cfg.WorkerEnabled = cfg.WorkerMode()
-	cfg.NodeName = strings.TrimSpace(cfg.NodeName)
-	if cfg.NodeName == "" {
-		if hostname, err := os.Hostname(); err == nil {
-			cfg.NodeName = strings.TrimSpace(hostname)
-		}
-	}
-	if cfg.NodeName == "" {
-		cfg.NodeName = "sub2api-node"
-	}
-	if cfg.HeartbeatIntervalSeconds <= 0 {
-		cfg.HeartbeatIntervalSeconds = 30
-	}
-	if cfg.StaleAfterSeconds <= 0 {
-		cfg.StaleAfterSeconds = 90
-	}
-	if cfg.TaskLeaseSeconds <= 0 {
-		cfg.TaskLeaseSeconds = 60
-	}
 }

@@ -60,9 +60,6 @@ export function buildSettingsSavePayload({
     passkey_enabled: form.passkey_enabled,
     session_binding_enabled: form.session_binding_enabled,
     step_up_enabled: form.step_up_enabled,
-    audit_log_retention_days: Number.isFinite(form.audit_log_retention_days)
-      ? form.audit_log_retention_days
-      : 180,
 
     smtp_host: form.smtp_host,
     smtp_port: Number(form.smtp_port) || 587,
@@ -185,10 +182,6 @@ export function buildSettingsSavePayload({
     channel_monitor_enabled: form.channel_monitor_enabled,
     channel_monitor_default_interval_seconds:
       Number(form.channel_monitor_default_interval_seconds) || 60,
-    risk_control_enabled: form.risk_control_enabled,
-    cyber_session_block_enabled: form.cyber_session_block_enabled,
-    cyber_session_block_ttl_seconds:
-      Number(form.cyber_session_block_ttl_seconds) || 3600,
   };
 
   if (openaiFastPolicyLoaded) {
